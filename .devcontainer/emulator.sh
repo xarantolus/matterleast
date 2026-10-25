@@ -6,6 +6,7 @@
 #   emulator.sh start [avd]   boot headless and wait for it to come up
 #   emulator.sh wait-idle     block until the device stops pulling data
 #   emulator.sh stop
+#   emulator.sh fix-bars     restart SystemUI when the status bar is drawn clipped
 #   emulator.sh status
 set -uo pipefail
 
@@ -65,6 +66,12 @@ wait-idle)
     done
     echo "emulator: network idle after ${waited}s"
     ;;
+fix-bars)
+    # After a boot the emulator sometimes draws the status bar half off-screen
+    # inside apps; restarting SystemUI puts it back.
+    adb root >/dev/null 2>&1; sleep 1
+    adb shell killall com.android.systemui >/dev/null 2>&1 && echo "emulator: SystemUI restarted"
+    ;;
 stop)
     adb emu kill 2>/dev/null && echo "emulator: stopped" || echo "emulator: not running"
     ;;
@@ -72,7 +79,7 @@ status)
     adb devices | grep emulator || echo "emulator: not running"
     ;;
 *)
-    sed -n '2,9p' "$0"
+    sed -n '2,10p' "$0"
     exit 2
     ;;
 esac

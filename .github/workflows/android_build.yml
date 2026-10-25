@@ -43,6 +43,9 @@ jobs:
 
       - run: flutter analyze
 
+      # The analyzer plugins (riverpod_lint) only run through dart analyze.
+      - run: dart analyze
+
       - run: flutter test
 
       - name: Extract env variables

@@ -111,7 +111,7 @@ RUN npm install -g @mobilenext/mobile-mcp@1.0.2
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get install -y --no-install-recommends \
-        podman crun conmon netavark aardvark-dns fuse-overlayfs
+        podman crun conmon netavark aardvark-dns fuse-overlayfs librsvg2-bin
 COPY .devcontainer/containers.conf /etc/containers/containers.conf
 
 # Container marker podman doesn't create. Flutter checks it to skip its
