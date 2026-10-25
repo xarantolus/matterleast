@@ -869,7 +869,7 @@ class ServerStore {
         b.deleteWhere(db.outbox, (o) => o.pendingPostId.isIn(pendingIds));
       }
       b.insertAllOnConflictUpdate(db.posts, [
-        for (final p in posts) postCompanion(p),
+        for (final p in posts) safePostCompanion(p),
       ]);
       b.insertAllOnConflictUpdate(db.users, [
         for (final p in posts)

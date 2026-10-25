@@ -43,6 +43,7 @@ void main(List<String> args) {
   for (final (_, file) in classes) {
     dart.writeln("import '$_modelsImport/$file';");
   }
+  dart.writeln("import 'package:$_package/api/json/lenient.dart';");
   final yaml = StringBuffer();
   for (final (name, _) in classes) {
     dart.write(_converters(name));
@@ -67,7 +68,7 @@ class Lenient$c implements JsonConverter<$c?, Object?> {
   const Lenient$c();
   @override
   $c? fromJson(Object? json) =>
-      json is Map<String, Object?> ? $c.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, $c.fromJson) : null;
   @override
   Object? toJson($c? object) => object?.toJson();
 }
@@ -78,7 +79,7 @@ class LenientListOf$c implements JsonConverter<List<$c>, Object?> {
   List<$c> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) $c.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, $c.fromJson),
         ]
       : const [];
   @override
@@ -91,8 +92,8 @@ class LenientMapOf$c implements JsonConverter<Map<String, $c>?, Object?> {
   Map<String, $c>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: $c.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, $c.fromJson),
         }
       : null;
   @override

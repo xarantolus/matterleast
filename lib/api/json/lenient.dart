@@ -1,4 +1,24 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:matterleast/log.dart';
+
+/// Decodes one object of another party's JSON; a shape the generated code
+/// cannot read drops that object (logged by type, no content) instead of
+/// failing the list or page around it.
+T? decodeOrSkip<T extends Object>(
+  Map<String, Object?> json,
+  T Function(Map<String, Object?>) decode,
+) {
+  try {
+    return decode(json);
+  } on Object catch (e) {
+    final id = json['id'];
+    Log.warn(
+      'json',
+      'skipped unreadable $T${id is String ? ' $id' : ''}: ${e.runtimeType}',
+    );
+    return null;
+  }
+}
 
 class LenientString implements JsonConverter<String?, Object?> {
   const LenientString();

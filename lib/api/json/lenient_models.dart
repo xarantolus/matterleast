@@ -140,13 +140,14 @@ import 'package:matterleast/api/generated/models/user_terms_of_service.dart';
 import 'package:matterleast/api/generated/models/user_thread.dart';
 import 'package:matterleast/api/generated/models/user_threads.dart';
 import 'package:matterleast/api/generated/models/webapp2.dart';
+import 'package:matterleast/api/json/lenient.dart';
 
 class LenientAccessControlResource
     implements JsonConverter<AccessControlResource?, Object?> {
   const LenientAccessControlResource();
   @override
   AccessControlResource? fromJson(Object? json) => json is Map<String, Object?>
-      ? AccessControlResource.fromJson(json)
+      ? decodeOrSkip(json, AccessControlResource.fromJson)
       : null;
   @override
   Object? toJson(AccessControlResource? object) => object?.toJson();
@@ -159,7 +160,8 @@ class LenientListOfAccessControlResource
   List<AccessControlResource> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) AccessControlResource.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, AccessControlResource.fromJson),
         ]
       : const [];
   @override
@@ -176,10 +178,8 @@ class LenientMapOfAccessControlResource
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: AccessControlResource.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, AccessControlResource.fromJson),
         }
       : null;
   @override
@@ -191,7 +191,7 @@ class LenientAction implements JsonConverter<Action?, Object?> {
   const LenientAction();
   @override
   Action? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Action.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, Action.fromJson) : null;
   @override
   Object? toJson(Action? object) => object?.toJson();
 }
@@ -202,7 +202,7 @@ class LenientListOfAction implements JsonConverter<List<Action>, Object?> {
   List<Action> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Action.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Action.fromJson),
         ]
       : const [];
   @override
@@ -216,8 +216,8 @@ class LenientMapOfAction
   Map<String, Action>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Action.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Action.fromJson),
         }
       : null;
   @override
@@ -229,8 +229,9 @@ class LenientActionSearchPage
     implements JsonConverter<ActionSearchPage?, Object?> {
   const LenientActionSearchPage();
   @override
-  ActionSearchPage? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ActionSearchPage.fromJson(json) : null;
+  ActionSearchPage? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ActionSearchPage.fromJson)
+      : null;
   @override
   Object? toJson(ActionSearchPage? object) => object?.toJson();
 }
@@ -242,7 +243,8 @@ class LenientListOfActionSearchPage
   List<ActionSearchPage> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ActionSearchPage.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ActionSearchPage.fromJson),
         ]
       : const [];
   @override
@@ -259,10 +261,8 @@ class LenientMapOfActionSearchPage
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ActionSearchPage.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ActionSearchPage.fromJson),
         }
       : null;
   @override
@@ -274,8 +274,9 @@ class LenientActionSearchRequest
     implements JsonConverter<ActionSearchRequest?, Object?> {
   const LenientActionSearchRequest();
   @override
-  ActionSearchRequest? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ActionSearchRequest.fromJson(json) : null;
+  ActionSearchRequest? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ActionSearchRequest.fromJson)
+      : null;
   @override
   Object? toJson(ActionSearchRequest? object) => object?.toJson();
 }
@@ -287,7 +288,8 @@ class LenientListOfActionSearchRequest
   List<ActionSearchRequest> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ActionSearchRequest.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ActionSearchRequest.fromJson),
         ]
       : const [];
   @override
@@ -304,10 +306,8 @@ class LenientMapOfActionSearchRequest
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ActionSearchRequest.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ActionSearchRequest.fromJson),
         }
       : null;
   @override
@@ -319,8 +319,9 @@ class LenientActionSearchResponse
     implements JsonConverter<ActionSearchResponse?, Object?> {
   const LenientActionSearchResponse();
   @override
-  ActionSearchResponse? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ActionSearchResponse.fromJson(json) : null;
+  ActionSearchResponse? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ActionSearchResponse.fromJson)
+      : null;
   @override
   Object? toJson(ActionSearchResponse? object) => object?.toJson();
 }
@@ -332,7 +333,8 @@ class LenientListOfActionSearchResponse
   List<ActionSearchResponse> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ActionSearchResponse.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ActionSearchResponse.fromJson),
         ]
       : const [];
   @override
@@ -349,10 +351,8 @@ class LenientMapOfActionSearchResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ActionSearchResponse.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ActionSearchResponse.fromJson),
         }
       : null;
   @override
@@ -364,8 +364,9 @@ class LenientActionSearchResult
     implements JsonConverter<ActionSearchResult?, Object?> {
   const LenientActionSearchResult();
   @override
-  ActionSearchResult? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ActionSearchResult.fromJson(json) : null;
+  ActionSearchResult? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ActionSearchResult.fromJson)
+      : null;
   @override
   Object? toJson(ActionSearchResult? object) => object?.toJson();
 }
@@ -377,7 +378,8 @@ class LenientListOfActionSearchResult
   List<ActionSearchResult> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ActionSearchResult.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ActionSearchResult.fromJson),
         ]
       : const [];
   @override
@@ -394,10 +396,8 @@ class LenientMapOfActionSearchResult
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ActionSearchResult.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ActionSearchResult.fromJson),
         }
       : null;
   @override
@@ -409,8 +409,9 @@ class LenientActionSearchSubject
     implements JsonConverter<ActionSearchSubject?, Object?> {
   const LenientActionSearchSubject();
   @override
-  ActionSearchSubject? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ActionSearchSubject.fromJson(json) : null;
+  ActionSearchSubject? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ActionSearchSubject.fromJson)
+      : null;
   @override
   Object? toJson(ActionSearchSubject? object) => object?.toJson();
 }
@@ -422,7 +423,8 @@ class LenientListOfActionSearchSubject
   List<ActionSearchSubject> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ActionSearchSubject.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ActionSearchSubject.fromJson),
         ]
       : const [];
   @override
@@ -439,10 +441,8 @@ class LenientMapOfActionSearchSubject
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ActionSearchSubject.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ActionSearchSubject.fromJson),
         }
       : null;
   @override
@@ -456,7 +456,7 @@ class LenientApiV4ActionsDialogsLookupRequestBody
   @override
   ApiV4ActionsDialogsLookupRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ActionsDialogsLookupRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ActionsDialogsLookupRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ActionsDialogsLookupRequestBody? object) =>
@@ -473,7 +473,7 @@ class LenientListOfApiV4ActionsDialogsLookupRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ActionsDialogsLookupRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4ActionsDialogsLookupRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -494,9 +494,10 @@ class LenientMapOfApiV4ActionsDialogsLookupRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ActionsDialogsLookupRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ActionsDialogsLookupRequestBody.fromJson,
               ),
         }
       : null;
@@ -511,7 +512,7 @@ class LenientApiV4ActionsDialogsSubmitRequestBody
   @override
   ApiV4ActionsDialogsSubmitRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ActionsDialogsSubmitRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ActionsDialogsSubmitRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ActionsDialogsSubmitRequestBody? object) =>
@@ -528,7 +529,7 @@ class LenientListOfApiV4ActionsDialogsSubmitRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ActionsDialogsSubmitRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4ActionsDialogsSubmitRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -549,9 +550,10 @@ class LenientMapOfApiV4ActionsDialogsSubmitRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ActionsDialogsSubmitRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ActionsDialogsSubmitRequestBody.fromJson,
               ),
         }
       : null;
@@ -567,7 +569,7 @@ class LenientApiV4ChannelsChannelIdBookmarksRequestBody
   @override
   ApiV4ChannelsChannelIdBookmarksRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsChannelIdBookmarksRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ChannelsChannelIdBookmarksRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ChannelsChannelIdBookmarksRequestBody? object) =>
@@ -587,7 +589,10 @@ class LenientListOfApiV4ChannelsChannelIdBookmarksRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsChannelIdBookmarksRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4ChannelsChannelIdBookmarksRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -609,9 +614,10 @@ class LenientMapOfApiV4ChannelsChannelIdBookmarksRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsChannelIdBookmarksRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdBookmarksRequestBody.fromJson,
               ),
         }
       : null;
@@ -631,7 +637,10 @@ class LenientApiV4ChannelsChannelIdConvertToChannelRequestBody
   @override
   ApiV4ChannelsChannelIdConvertToChannelRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsChannelIdConvertToChannelRequestBody.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          ApiV4ChannelsChannelIdConvertToChannelRequestBody.fromJson,
+        )
       : null;
   @override
   Object? toJson(ApiV4ChannelsChannelIdConvertToChannelRequestBody? object) =>
@@ -652,7 +661,10 @@ class LenientListOfApiV4ChannelsChannelIdConvertToChannelRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsChannelIdConvertToChannelRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4ChannelsChannelIdConvertToChannelRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -674,9 +686,10 @@ class LenientMapOfApiV4ChannelsChannelIdConvertToChannelRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsChannelIdConvertToChannelRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdConvertToChannelRequestBody.fromJson,
               ),
         }
       : null;
@@ -693,7 +706,7 @@ class LenientApiV4ChannelsChannelIdMembersRequestBody
   @override
   ApiV4ChannelsChannelIdMembersRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsChannelIdMembersRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ChannelsChannelIdMembersRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ChannelsChannelIdMembersRequestBody? object) =>
@@ -710,7 +723,10 @@ class LenientListOfApiV4ChannelsChannelIdMembersRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsChannelIdMembersRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4ChannelsChannelIdMembersRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -732,9 +748,10 @@ class LenientMapOfApiV4ChannelsChannelIdMembersRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsChannelIdMembersRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdMembersRequestBody.fromJson,
               ),
         }
       : null;
@@ -751,7 +768,7 @@ class LenientApiV4ChannelsChannelIdMembersRequestBody2
   @override
   ApiV4ChannelsChannelIdMembersRequestBody2? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsChannelIdMembersRequestBody2.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ChannelsChannelIdMembersRequestBody2.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ChannelsChannelIdMembersRequestBody2? object) =>
@@ -771,7 +788,10 @@ class LenientListOfApiV4ChannelsChannelIdMembersRequestBody2
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsChannelIdMembersRequestBody2.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4ChannelsChannelIdMembersRequestBody2.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -793,9 +813,10 @@ class LenientMapOfApiV4ChannelsChannelIdMembersRequestBody2
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsChannelIdMembersRequestBody2.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdMembersRequestBody2.fromJson,
               ),
         }
       : null;
@@ -816,8 +837,10 @@ class LenientApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody
   ApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody? fromJson(
     Object? json,
   ) => json is Map<String, Object?>
-      ? ApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody.fromJson(
+      ? decodeOrSkip(
           json,
+          ApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody
+              .fromJson,
         )
       : null;
   @override
@@ -840,8 +863,10 @@ class LenientListOfApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody.fromJson(
+              ?decodeOrSkip(
                 e,
+                ApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody
+                    .fromJson,
               ),
         ]
       : const [];
@@ -866,11 +891,12 @@ class LenientMapOfApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody
   fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key:
-                  ApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody.fromJson(
-                    e.value! as Map<String, Object?>,
-                  ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody
+                    .fromJson,
+              ),
         }
       : null;
   @override
@@ -891,7 +917,10 @@ class LenientApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody
   ApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody? fromJson(
     Object? json,
   ) => json is Map<String, Object?>
-      ? ApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          ApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody.fromJson,
+        )
       : null;
   @override
   Object? toJson(
@@ -913,8 +942,10 @@ class LenientListOfApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody.fromJson(
+              ?decodeOrSkip(
                 e,
+                ApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody
+                    .fromJson,
               ),
         ]
       : const [];
@@ -939,11 +970,12 @@ class LenientMapOfApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody
   fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key:
-                  ApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody.fromJson(
-                    e.value! as Map<String, Object?>,
-                  ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody
+                    .fromJson,
+              ),
         }
       : null;
   @override
@@ -959,7 +991,7 @@ class LenientApiV4ChannelsChannelIdPatchRequestBody
   @override
   ApiV4ChannelsChannelIdPatchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsChannelIdPatchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ChannelsChannelIdPatchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ChannelsChannelIdPatchRequestBody? object) =>
@@ -976,7 +1008,7 @@ class LenientListOfApiV4ChannelsChannelIdPatchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsChannelIdPatchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4ChannelsChannelIdPatchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -997,9 +1029,10 @@ class LenientMapOfApiV4ChannelsChannelIdPatchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsChannelIdPatchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdPatchRequestBody.fromJson,
               ),
         }
       : null;
@@ -1015,7 +1048,7 @@ class LenientApiV4ChannelsChannelIdPrivacyRequestBody
   @override
   ApiV4ChannelsChannelIdPrivacyRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsChannelIdPrivacyRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ChannelsChannelIdPrivacyRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ChannelsChannelIdPrivacyRequestBody? object) =>
@@ -1032,7 +1065,10 @@ class LenientListOfApiV4ChannelsChannelIdPrivacyRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsChannelIdPrivacyRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4ChannelsChannelIdPrivacyRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -1054,9 +1090,10 @@ class LenientMapOfApiV4ChannelsChannelIdPrivacyRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsChannelIdPrivacyRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdPrivacyRequestBody.fromJson,
               ),
         }
       : null;
@@ -1072,7 +1109,7 @@ class LenientApiV4ChannelsChannelIdRequestBody
   @override
   ApiV4ChannelsChannelIdRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsChannelIdRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ChannelsChannelIdRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ChannelsChannelIdRequestBody? object) => object?.toJson();
@@ -1086,7 +1123,7 @@ class LenientListOfApiV4ChannelsChannelIdRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsChannelIdRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4ChannelsChannelIdRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1107,9 +1144,10 @@ class LenientMapOfApiV4ChannelsChannelIdRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsChannelIdRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdRequestBody.fromJson,
               ),
         }
       : null;
@@ -1125,7 +1163,7 @@ class LenientApiV4ChannelsMembersUserIdViewRequestBody
   @override
   ApiV4ChannelsMembersUserIdViewRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsMembersUserIdViewRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ChannelsMembersUserIdViewRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ChannelsMembersUserIdViewRequestBody? object) =>
@@ -1145,7 +1183,10 @@ class LenientListOfApiV4ChannelsMembersUserIdViewRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsMembersUserIdViewRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4ChannelsMembersUserIdViewRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -1167,9 +1208,10 @@ class LenientMapOfApiV4ChannelsMembersUserIdViewRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsMembersUserIdViewRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsMembersUserIdViewRequestBody.fromJson,
               ),
         }
       : null;
@@ -1185,7 +1227,7 @@ class LenientApiV4ChannelsRequestBody
   @override
   ApiV4ChannelsRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ChannelsRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ChannelsRequestBody? object) => object?.toJson();
@@ -1198,7 +1240,8 @@ class LenientListOfApiV4ChannelsRequestBody
   List<ApiV4ChannelsRequestBody> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ApiV4ChannelsRequestBody.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4ChannelsRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1215,10 +1258,8 @@ class LenientMapOfApiV4ChannelsRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4ChannelsRequestBody.fromJson),
         }
       : null;
   @override
@@ -1232,7 +1273,7 @@ class LenientApiV4ChannelsSearchRequestBody
   @override
   ApiV4ChannelsSearchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4ChannelsSearchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4ChannelsSearchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4ChannelsSearchRequestBody? object) => object?.toJson();
@@ -1246,7 +1287,7 @@ class LenientListOfApiV4ChannelsSearchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4ChannelsSearchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4ChannelsSearchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1264,10 +1305,8 @@ class LenientMapOfApiV4ChannelsSearchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4ChannelsSearchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4ChannelsSearchRequestBody.fromJson),
         }
       : null;
   @override
@@ -1281,7 +1320,7 @@ class LenientApiV4CommandsExecuteRequestBody
   @override
   ApiV4CommandsExecuteRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4CommandsExecuteRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4CommandsExecuteRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4CommandsExecuteRequestBody? object) => object?.toJson();
@@ -1295,7 +1334,7 @@ class LenientListOfApiV4CommandsExecuteRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4CommandsExecuteRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4CommandsExecuteRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1313,10 +1352,8 @@ class LenientMapOfApiV4CommandsExecuteRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4CommandsExecuteRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4CommandsExecuteRequestBody.fromJson),
         }
       : null;
   @override
@@ -1330,7 +1367,7 @@ class LenientApiV4CommandsRequestBody
   @override
   ApiV4CommandsRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4CommandsRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4CommandsRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4CommandsRequestBody? object) => object?.toJson();
@@ -1343,7 +1380,8 @@ class LenientListOfApiV4CommandsRequestBody
   List<ApiV4CommandsRequestBody> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ApiV4CommandsRequestBody.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4CommandsRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1360,10 +1398,8 @@ class LenientMapOfApiV4CommandsRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4CommandsRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4CommandsRequestBody.fromJson),
         }
       : null;
   @override
@@ -1378,7 +1414,10 @@ class LenientApiV4CustomProfileAttributesFieldsRequestBody
   @override
   ApiV4CustomProfileAttributesFieldsRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4CustomProfileAttributesFieldsRequestBody.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          ApiV4CustomProfileAttributesFieldsRequestBody.fromJson,
+        )
       : null;
   @override
   Object? toJson(ApiV4CustomProfileAttributesFieldsRequestBody? object) =>
@@ -1398,7 +1437,10 @@ class LenientListOfApiV4CustomProfileAttributesFieldsRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4CustomProfileAttributesFieldsRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4CustomProfileAttributesFieldsRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -1419,9 +1461,10 @@ class LenientMapOfApiV4CustomProfileAttributesFieldsRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4CustomProfileAttributesFieldsRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4CustomProfileAttributesFieldsRequestBody.fromJson,
               ),
         }
       : null;
@@ -1438,7 +1481,10 @@ class LenientApiV4CustomProfileAttributesValuesRequestBody
   @override
   ApiV4CustomProfileAttributesValuesRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4CustomProfileAttributesValuesRequestBody.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          ApiV4CustomProfileAttributesValuesRequestBody.fromJson,
+        )
       : null;
   @override
   Object? toJson(ApiV4CustomProfileAttributesValuesRequestBody? object) =>
@@ -1458,7 +1504,10 @@ class LenientListOfApiV4CustomProfileAttributesValuesRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4CustomProfileAttributesValuesRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4CustomProfileAttributesValuesRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -1479,9 +1528,10 @@ class LenientMapOfApiV4CustomProfileAttributesValuesRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4CustomProfileAttributesValuesRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4CustomProfileAttributesValuesRequestBody.fromJson,
               ),
         }
       : null;
@@ -1497,7 +1547,7 @@ class LenientApiV4EmojiSearchRequestBody
   @override
   ApiV4EmojiSearchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4EmojiSearchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4EmojiSearchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4EmojiSearchRequestBody? object) => object?.toJson();
@@ -1511,7 +1561,7 @@ class LenientListOfApiV4EmojiSearchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4EmojiSearchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4EmojiSearchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1529,10 +1579,8 @@ class LenientMapOfApiV4EmojiSearchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4EmojiSearchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4EmojiSearchRequestBody.fromJson),
         }
       : null;
   @override
@@ -1546,7 +1594,7 @@ class LenientApiV4EphemeralModeCleanupRequestBody
   @override
   ApiV4EphemeralModeCleanupRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4EphemeralModeCleanupRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4EphemeralModeCleanupRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4EphemeralModeCleanupRequestBody? object) =>
@@ -1563,7 +1611,7 @@ class LenientListOfApiV4EphemeralModeCleanupRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4EphemeralModeCleanupRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4EphemeralModeCleanupRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1584,9 +1632,10 @@ class LenientMapOfApiV4EphemeralModeCleanupRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4EphemeralModeCleanupRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4EphemeralModeCleanupRequestBody.fromJson,
               ),
         }
       : null;
@@ -1601,7 +1650,7 @@ class LenientApiV4EphemeralModePurgeRequestBody
   @override
   ApiV4EphemeralModePurgeRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4EphemeralModePurgeRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4EphemeralModePurgeRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4EphemeralModePurgeRequestBody? object) =>
@@ -1618,7 +1667,7 @@ class LenientListOfApiV4EphemeralModePurgeRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4EphemeralModePurgeRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4EphemeralModePurgeRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1639,9 +1688,10 @@ class LenientMapOfApiV4EphemeralModePurgeRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4EphemeralModePurgeRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4EphemeralModePurgeRequestBody.fromJson,
               ),
         }
       : null;
@@ -1656,7 +1706,7 @@ class LenientApiV4EphemeralModeWipeRequestBody
   @override
   ApiV4EphemeralModeWipeRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4EphemeralModeWipeRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4EphemeralModeWipeRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4EphemeralModeWipeRequestBody? object) => object?.toJson();
@@ -1670,7 +1720,7 @@ class LenientListOfApiV4EphemeralModeWipeRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4EphemeralModeWipeRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4EphemeralModeWipeRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1691,9 +1741,10 @@ class LenientMapOfApiV4EphemeralModeWipeRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4EphemeralModeWipeRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4EphemeralModeWipeRequestBody.fromJson,
               ),
         }
       : null;
@@ -1756,7 +1807,7 @@ class LenientApiV4GroupsRequestBody
   const LenientApiV4GroupsRequestBody();
   @override
   ApiV4GroupsRequestBody? fromJson(Object? json) => json is Map<String, Object?>
-      ? ApiV4GroupsRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4GroupsRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4GroupsRequestBody? object) => object?.toJson();
@@ -1769,7 +1820,8 @@ class LenientListOfApiV4GroupsRequestBody
   List<ApiV4GroupsRequestBody> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ApiV4GroupsRequestBody.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4GroupsRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1786,10 +1838,8 @@ class LenientMapOfApiV4GroupsRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4GroupsRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4GroupsRequestBody.fromJson),
         }
       : null;
   @override
@@ -1803,7 +1853,7 @@ class LenientApiV4PostsPostIdPatchRequestBody
   @override
   ApiV4PostsPostIdPatchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4PostsPostIdPatchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4PostsPostIdPatchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4PostsPostIdPatchRequestBody? object) => object?.toJson();
@@ -1817,7 +1867,7 @@ class LenientListOfApiV4PostsPostIdPatchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4PostsPostIdPatchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4PostsPostIdPatchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1835,9 +1885,10 @@ class LenientMapOfApiV4PostsPostIdPatchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4PostsPostIdPatchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4PostsPostIdPatchRequestBody.fromJson,
               ),
         }
       : null;
@@ -1852,7 +1903,7 @@ class LenientApiV4PostsPostIdRequestBody
   @override
   ApiV4PostsPostIdRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4PostsPostIdRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4PostsPostIdRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4PostsPostIdRequestBody? object) => object?.toJson();
@@ -1866,7 +1917,7 @@ class LenientListOfApiV4PostsPostIdRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4PostsPostIdRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4PostsPostIdRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1884,10 +1935,8 @@ class LenientMapOfApiV4PostsPostIdRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4PostsPostIdRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4PostsPostIdRequestBody.fromJson),
         }
       : null;
   @override
@@ -1900,7 +1949,7 @@ class LenientApiV4PostsRequestBody
   const LenientApiV4PostsRequestBody();
   @override
   ApiV4PostsRequestBody? fromJson(Object? json) => json is Map<String, Object?>
-      ? ApiV4PostsRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4PostsRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4PostsRequestBody? object) => object?.toJson();
@@ -1913,7 +1962,8 @@ class LenientListOfApiV4PostsRequestBody
   List<ApiV4PostsRequestBody> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ApiV4PostsRequestBody.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4PostsRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1930,10 +1980,8 @@ class LenientMapOfApiV4PostsRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4PostsRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4PostsRequestBody.fromJson),
         }
       : null;
   @override
@@ -1948,7 +1996,10 @@ class LenientApiV4PostsScheduleScheduledPostIdRequestBody
   @override
   ApiV4PostsScheduleScheduledPostIdRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4PostsScheduleScheduledPostIdRequestBody.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          ApiV4PostsScheduleScheduledPostIdRequestBody.fromJson,
+        )
       : null;
   @override
   Object? toJson(ApiV4PostsScheduleScheduledPostIdRequestBody? object) =>
@@ -1968,7 +2019,10 @@ class LenientListOfApiV4PostsScheduleScheduledPostIdRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4PostsScheduleScheduledPostIdRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4PostsScheduleScheduledPostIdRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -1990,9 +2044,10 @@ class LenientMapOfApiV4PostsScheduleScheduledPostIdRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4PostsScheduleScheduledPostIdRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4PostsScheduleScheduledPostIdRequestBody.fromJson,
               ),
         }
       : null;
@@ -2057,7 +2112,7 @@ class LenientApiV4RemoteclusterRequestBody
   @override
   ApiV4RemoteclusterRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4RemoteclusterRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4RemoteclusterRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4RemoteclusterRequestBody? object) => object?.toJson();
@@ -2071,7 +2126,7 @@ class LenientListOfApiV4RemoteclusterRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4RemoteclusterRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4RemoteclusterRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2089,10 +2144,8 @@ class LenientMapOfApiV4RemoteclusterRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4RemoteclusterRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4RemoteclusterRequestBody.fromJson),
         }
       : null;
   @override
@@ -2105,7 +2158,7 @@ class LenientApiV4TeamsRequestBody
   const LenientApiV4TeamsRequestBody();
   @override
   ApiV4TeamsRequestBody? fromJson(Object? json) => json is Map<String, Object?>
-      ? ApiV4TeamsRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4TeamsRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4TeamsRequestBody? object) => object?.toJson();
@@ -2118,7 +2171,8 @@ class LenientListOfApiV4TeamsRequestBody
   List<ApiV4TeamsRequestBody> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ApiV4TeamsRequestBody.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4TeamsRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2135,10 +2189,8 @@ class LenientMapOfApiV4TeamsRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4TeamsRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4TeamsRequestBody.fromJson),
         }
       : null;
   @override
@@ -2153,7 +2205,7 @@ class LenientApiV4TeamsTeamIdChannelsSearchRequestBody
   @override
   ApiV4TeamsTeamIdChannelsSearchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4TeamsTeamIdChannelsSearchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4TeamsTeamIdChannelsSearchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4TeamsTeamIdChannelsSearchRequestBody? object) =>
@@ -2173,7 +2225,10 @@ class LenientListOfApiV4TeamsTeamIdChannelsSearchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4TeamsTeamIdChannelsSearchRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4TeamsTeamIdChannelsSearchRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -2195,9 +2250,10 @@ class LenientMapOfApiV4TeamsTeamIdChannelsSearchRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4TeamsTeamIdChannelsSearchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4TeamsTeamIdChannelsSearchRequestBody.fromJson,
               ),
         }
       : null;
@@ -2213,7 +2269,7 @@ class LenientApiV4TeamsTeamIdFilesSearchRequestBody
   @override
   ApiV4TeamsTeamIdFilesSearchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4TeamsTeamIdFilesSearchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4TeamsTeamIdFilesSearchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4TeamsTeamIdFilesSearchRequestBody? object) =>
@@ -2230,7 +2286,7 @@ class LenientListOfApiV4TeamsTeamIdFilesSearchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4TeamsTeamIdFilesSearchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4TeamsTeamIdFilesSearchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2251,9 +2307,10 @@ class LenientMapOfApiV4TeamsTeamIdFilesSearchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4TeamsTeamIdFilesSearchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4TeamsTeamIdFilesSearchRequestBody.fromJson,
               ),
         }
       : null;
@@ -2269,7 +2326,10 @@ class LenientApiV4TeamsTeamIdInviteGuestsEmailRequestBody
   @override
   ApiV4TeamsTeamIdInviteGuestsEmailRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4TeamsTeamIdInviteGuestsEmailRequestBody.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          ApiV4TeamsTeamIdInviteGuestsEmailRequestBody.fromJson,
+        )
       : null;
   @override
   Object? toJson(ApiV4TeamsTeamIdInviteGuestsEmailRequestBody? object) =>
@@ -2289,7 +2349,10 @@ class LenientListOfApiV4TeamsTeamIdInviteGuestsEmailRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4TeamsTeamIdInviteGuestsEmailRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4TeamsTeamIdInviteGuestsEmailRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -2311,9 +2374,10 @@ class LenientMapOfApiV4TeamsTeamIdInviteGuestsEmailRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4TeamsTeamIdInviteGuestsEmailRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4TeamsTeamIdInviteGuestsEmailRequestBody.fromJson,
               ),
         }
       : null;
@@ -2329,7 +2393,7 @@ class LenientApiV4TeamsTeamIdMembersRequestBody
   @override
   ApiV4TeamsTeamIdMembersRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4TeamsTeamIdMembersRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4TeamsTeamIdMembersRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4TeamsTeamIdMembersRequestBody? object) =>
@@ -2346,7 +2410,7 @@ class LenientListOfApiV4TeamsTeamIdMembersRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4TeamsTeamIdMembersRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4TeamsTeamIdMembersRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2367,9 +2431,10 @@ class LenientMapOfApiV4TeamsTeamIdMembersRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4TeamsTeamIdMembersRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4TeamsTeamIdMembersRequestBody.fromJson,
               ),
         }
       : null;
@@ -2384,7 +2449,7 @@ class LenientApiV4TeamsTeamIdPatchRequestBody
   @override
   ApiV4TeamsTeamIdPatchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4TeamsTeamIdPatchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4TeamsTeamIdPatchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4TeamsTeamIdPatchRequestBody? object) => object?.toJson();
@@ -2398,7 +2463,7 @@ class LenientListOfApiV4TeamsTeamIdPatchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4TeamsTeamIdPatchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4TeamsTeamIdPatchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2416,9 +2481,10 @@ class LenientMapOfApiV4TeamsTeamIdPatchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4TeamsTeamIdPatchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4TeamsTeamIdPatchRequestBody.fromJson,
               ),
         }
       : null;
@@ -2433,7 +2499,7 @@ class LenientApiV4TeamsTeamIdPostsSearchRequestBody
   @override
   ApiV4TeamsTeamIdPostsSearchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4TeamsTeamIdPostsSearchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4TeamsTeamIdPostsSearchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4TeamsTeamIdPostsSearchRequestBody? object) =>
@@ -2450,7 +2516,7 @@ class LenientListOfApiV4TeamsTeamIdPostsSearchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4TeamsTeamIdPostsSearchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4TeamsTeamIdPostsSearchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2471,9 +2537,10 @@ class LenientMapOfApiV4TeamsTeamIdPostsSearchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4TeamsTeamIdPostsSearchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4TeamsTeamIdPostsSearchRequestBody.fromJson,
               ),
         }
       : null;
@@ -2488,7 +2555,7 @@ class LenientApiV4TeamsTeamIdRequestBody
   @override
   ApiV4TeamsTeamIdRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4TeamsTeamIdRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4TeamsTeamIdRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4TeamsTeamIdRequestBody? object) => object?.toJson();
@@ -2502,7 +2569,7 @@ class LenientListOfApiV4TeamsTeamIdRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4TeamsTeamIdRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4TeamsTeamIdRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2520,10 +2587,8 @@ class LenientMapOfApiV4TeamsTeamIdRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4TeamsTeamIdRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4TeamsTeamIdRequestBody.fromJson),
         }
       : null;
   @override
@@ -2537,7 +2602,7 @@ class LenientApiV4UsersLoginRequestBody
   @override
   ApiV4UsersLoginRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersLoginRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersLoginRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersLoginRequestBody? object) => object?.toJson();
@@ -2551,7 +2616,7 @@ class LenientListOfApiV4UsersLoginRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersLoginRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4UsersLoginRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2569,10 +2634,8 @@ class LenientMapOfApiV4UsersLoginRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersLoginRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4UsersLoginRequestBody.fromJson),
         }
       : null;
   @override
@@ -2587,7 +2650,7 @@ class LenientApiV4UsersLoginSsoCodeExchangeRequestBody
   @override
   ApiV4UsersLoginSsoCodeExchangeRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersLoginSsoCodeExchangeRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersLoginSsoCodeExchangeRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersLoginSsoCodeExchangeRequestBody? object) =>
@@ -2607,7 +2670,10 @@ class LenientListOfApiV4UsersLoginSsoCodeExchangeRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersLoginSsoCodeExchangeRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4UsersLoginSsoCodeExchangeRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -2629,9 +2695,10 @@ class LenientMapOfApiV4UsersLoginSsoCodeExchangeRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersLoginSsoCodeExchangeRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersLoginSsoCodeExchangeRequestBody.fromJson,
               ),
         }
       : null;
@@ -2647,7 +2714,7 @@ class LenientApiV4UsersLoginTypeRequestBody
   @override
   ApiV4UsersLoginTypeRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersLoginTypeRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersLoginTypeRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersLoginTypeRequestBody? object) => object?.toJson();
@@ -2661,7 +2728,7 @@ class LenientListOfApiV4UsersLoginTypeRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersLoginTypeRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4UsersLoginTypeRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2679,10 +2746,8 @@ class LenientMapOfApiV4UsersLoginTypeRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersLoginTypeRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4UsersLoginTypeRequestBody.fromJson),
         }
       : null;
   @override
@@ -2696,7 +2761,7 @@ class LenientApiV4UsersPasswordResetSendRequestBody
   @override
   ApiV4UsersPasswordResetSendRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersPasswordResetSendRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersPasswordResetSendRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersPasswordResetSendRequestBody? object) =>
@@ -2713,7 +2778,7 @@ class LenientListOfApiV4UsersPasswordResetSendRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersPasswordResetSendRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4UsersPasswordResetSendRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2734,9 +2799,10 @@ class LenientMapOfApiV4UsersPasswordResetSendRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersPasswordResetSendRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersPasswordResetSendRequestBody.fromJson,
               ),
         }
       : null;
@@ -2750,7 +2816,7 @@ class LenientApiV4UsersRequestBody
   const LenientApiV4UsersRequestBody();
   @override
   ApiV4UsersRequestBody? fromJson(Object? json) => json is Map<String, Object?>
-      ? ApiV4UsersRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersRequestBody? object) => object?.toJson();
@@ -2763,7 +2829,8 @@ class LenientListOfApiV4UsersRequestBody
   List<ApiV4UsersRequestBody> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ApiV4UsersRequestBody.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4UsersRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2780,10 +2847,8 @@ class LenientMapOfApiV4UsersRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4UsersRequestBody.fromJson),
         }
       : null;
   @override
@@ -2797,7 +2862,7 @@ class LenientApiV4UsersSearchRequestBody
   @override
   ApiV4UsersSearchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersSearchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersSearchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersSearchRequestBody? object) => object?.toJson();
@@ -2811,7 +2876,7 @@ class LenientListOfApiV4UsersSearchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersSearchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4UsersSearchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2829,10 +2894,8 @@ class LenientMapOfApiV4UsersSearchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersSearchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4UsersSearchRequestBody.fromJson),
         }
       : null;
   @override
@@ -2846,7 +2909,7 @@ class LenientApiV4UsersSessionsDeviceRequestBody
   @override
   ApiV4UsersSessionsDeviceRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersSessionsDeviceRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersSessionsDeviceRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersSessionsDeviceRequestBody? object) =>
@@ -2863,7 +2926,7 @@ class LenientListOfApiV4UsersSessionsDeviceRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersSessionsDeviceRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4UsersSessionsDeviceRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2884,9 +2947,10 @@ class LenientMapOfApiV4UsersSessionsDeviceRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersSessionsDeviceRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersSessionsDeviceRequestBody.fromJson,
               ),
         }
       : null;
@@ -2905,7 +2969,10 @@ class LenientApiV4UsersUserIdCustomProfileAttributesRequestBody
   @override
   ApiV4UsersUserIdCustomProfileAttributesRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersUserIdCustomProfileAttributesRequestBody.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          ApiV4UsersUserIdCustomProfileAttributesRequestBody.fromJson,
+        )
       : null;
   @override
   Object? toJson(ApiV4UsersUserIdCustomProfileAttributesRequestBody? object) =>
@@ -2926,7 +2993,10 @@ class LenientListOfApiV4UsersUserIdCustomProfileAttributesRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersUserIdCustomProfileAttributesRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4UsersUserIdCustomProfileAttributesRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -2948,11 +3018,11 @@ class LenientMapOfApiV4UsersUserIdCustomProfileAttributesRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key:
-                  ApiV4UsersUserIdCustomProfileAttributesRequestBody.fromJson(
-                    e.value! as Map<String, Object?>,
-                  ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersUserIdCustomProfileAttributesRequestBody.fromJson,
+              ),
         }
       : null;
   @override
@@ -2967,7 +3037,7 @@ class LenientApiV4UsersUserIdPasswordRequestBody
   @override
   ApiV4UsersUserIdPasswordRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersUserIdPasswordRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersUserIdPasswordRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersUserIdPasswordRequestBody? object) =>
@@ -2984,7 +3054,7 @@ class LenientListOfApiV4UsersUserIdPasswordRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersUserIdPasswordRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4UsersUserIdPasswordRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -3005,9 +3075,10 @@ class LenientMapOfApiV4UsersUserIdPasswordRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersUserIdPasswordRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersUserIdPasswordRequestBody.fromJson,
               ),
         }
       : null;
@@ -3022,7 +3093,7 @@ class LenientApiV4UsersUserIdPatchRequestBody
   @override
   ApiV4UsersUserIdPatchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersUserIdPatchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersUserIdPatchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersUserIdPatchRequestBody? object) => object?.toJson();
@@ -3036,7 +3107,7 @@ class LenientListOfApiV4UsersUserIdPatchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersUserIdPatchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4UsersUserIdPatchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -3054,9 +3125,10 @@ class LenientMapOfApiV4UsersUserIdPatchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersUserIdPatchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersUserIdPatchRequestBody.fromJson,
               ),
         }
       : null;
@@ -3075,7 +3147,10 @@ class LenientApiV4UsersUserIdPostsPostIdSetUnreadRequestBody
   @override
   ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody.fromJson,
+        )
       : null;
   @override
   Object? toJson(ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody? object) =>
@@ -3096,7 +3171,10 @@ class LenientListOfApiV4UsersUserIdPostsPostIdSetUnreadRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -3118,9 +3196,10 @@ class LenientMapOfApiV4UsersUserIdPostsPostIdSetUnreadRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody.fromJson,
               ),
         }
       : null;
@@ -3136,7 +3215,7 @@ class LenientApiV4UsersUserIdRequestBody
   @override
   ApiV4UsersUserIdRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersUserIdRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersUserIdRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersUserIdRequestBody? object) => object?.toJson();
@@ -3150,7 +3229,7 @@ class LenientListOfApiV4UsersUserIdRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersUserIdRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4UsersUserIdRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -3168,10 +3247,8 @@ class LenientMapOfApiV4UsersUserIdRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersUserIdRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4UsersUserIdRequestBody.fromJson),
         }
       : null;
   @override
@@ -3189,7 +3266,10 @@ class LenientApiV4UsersUserIdStatusCustomRecentDeleteRequestBody
   @override
   ApiV4UsersUserIdStatusCustomRecentDeleteRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersUserIdStatusCustomRecentDeleteRequestBody.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          ApiV4UsersUserIdStatusCustomRecentDeleteRequestBody.fromJson,
+        )
       : null;
   @override
   Object? toJson(ApiV4UsersUserIdStatusCustomRecentDeleteRequestBody? object) =>
@@ -3210,7 +3290,10 @@ class LenientListOfApiV4UsersUserIdStatusCustomRecentDeleteRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersUserIdStatusCustomRecentDeleteRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4UsersUserIdStatusCustomRecentDeleteRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -3232,11 +3315,11 @@ class LenientMapOfApiV4UsersUserIdStatusCustomRecentDeleteRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key:
-                  ApiV4UsersUserIdStatusCustomRecentDeleteRequestBody.fromJson(
-                    e.value! as Map<String, Object?>,
-                  ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersUserIdStatusCustomRecentDeleteRequestBody.fromJson,
+              ),
         }
       : null;
   @override
@@ -3252,7 +3335,7 @@ class LenientApiV4UsersUserIdStatusCustomRequestBody
   @override
   ApiV4UsersUserIdStatusCustomRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersUserIdStatusCustomRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersUserIdStatusCustomRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersUserIdStatusCustomRequestBody? object) =>
@@ -3269,7 +3352,10 @@ class LenientListOfApiV4UsersUserIdStatusCustomRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersUserIdStatusCustomRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4UsersUserIdStatusCustomRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -3291,9 +3377,10 @@ class LenientMapOfApiV4UsersUserIdStatusCustomRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersUserIdStatusCustomRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersUserIdStatusCustomRequestBody.fromJson,
               ),
         }
       : null;
@@ -3309,7 +3396,7 @@ class LenientApiV4UsersUserIdStatusRequestBody
   @override
   ApiV4UsersUserIdStatusRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersUserIdStatusRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersUserIdStatusRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersUserIdStatusRequestBody? object) => object?.toJson();
@@ -3323,7 +3410,7 @@ class LenientListOfApiV4UsersUserIdStatusRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersUserIdStatusRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4UsersUserIdStatusRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -3344,9 +3431,10 @@ class LenientMapOfApiV4UsersUserIdStatusRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersUserIdStatusRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersUserIdStatusRequestBody.fromJson,
               ),
         }
       : null;
@@ -3362,7 +3450,7 @@ class LenientApiV4UsersUserIdTermsOfServiceRequestBody
   @override
   ApiV4UsersUserIdTermsOfServiceRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4UsersUserIdTermsOfServiceRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4UsersUserIdTermsOfServiceRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4UsersUserIdTermsOfServiceRequestBody? object) =>
@@ -3382,7 +3470,10 @@ class LenientListOfApiV4UsersUserIdTermsOfServiceRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4UsersUserIdTermsOfServiceRequestBody.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                ApiV4UsersUserIdTermsOfServiceRequestBody.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -3404,9 +3495,10 @@ class LenientMapOfApiV4UsersUserIdTermsOfServiceRequestBody
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4UsersUserIdTermsOfServiceRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersUserIdTermsOfServiceRequestBody.fromJson,
               ),
         }
       : null;
@@ -3420,7 +3512,7 @@ class LenientAttrs implements JsonConverter<Attrs?, Object?> {
   const LenientAttrs();
   @override
   Attrs? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Attrs.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, Attrs.fromJson) : null;
   @override
   Object? toJson(Attrs? object) => object?.toJson();
 }
@@ -3431,7 +3523,7 @@ class LenientListOfAttrs implements JsonConverter<List<Attrs>, Object?> {
   List<Attrs> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Attrs.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Attrs.fromJson),
         ]
       : const [];
   @override
@@ -3444,8 +3536,8 @@ class LenientMapOfAttrs implements JsonConverter<Map<String, Attrs>?, Object?> {
   Map<String, Attrs>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Attrs.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Attrs.fromJson),
         }
       : null;
   @override
@@ -3458,7 +3550,7 @@ class LenientAutocompleteSuggestion
   const LenientAutocompleteSuggestion();
   @override
   AutocompleteSuggestion? fromJson(Object? json) => json is Map<String, Object?>
-      ? AutocompleteSuggestion.fromJson(json)
+      ? decodeOrSkip(json, AutocompleteSuggestion.fromJson)
       : null;
   @override
   Object? toJson(AutocompleteSuggestion? object) => object?.toJson();
@@ -3471,7 +3563,8 @@ class LenientListOfAutocompleteSuggestion
   List<AutocompleteSuggestion> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) AutocompleteSuggestion.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, AutocompleteSuggestion.fromJson),
         ]
       : const [];
   @override
@@ -3488,10 +3581,8 @@ class LenientMapOfAutocompleteSuggestion
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: AutocompleteSuggestion.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, AutocompleteSuggestion.fromJson),
         }
       : null;
   @override
@@ -3502,8 +3593,9 @@ class LenientMapOfAutocompleteSuggestion
 class LenientChannel implements JsonConverter<Channel?, Object?> {
   const LenientChannel();
   @override
-  Channel? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Channel.fromJson(json) : null;
+  Channel? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Channel.fromJson)
+      : null;
   @override
   Object? toJson(Channel? object) => object?.toJson();
 }
@@ -3514,7 +3606,7 @@ class LenientListOfChannel implements JsonConverter<List<Channel>, Object?> {
   List<Channel> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Channel.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Channel.fromJson),
         ]
       : const [];
   @override
@@ -3528,8 +3620,8 @@ class LenientMapOfChannel
   Map<String, Channel>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Channel.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Channel.fromJson),
         }
       : null;
   @override
@@ -3540,8 +3632,9 @@ class LenientMapOfChannel
 class LenientChannelBanner implements JsonConverter<ChannelBanner?, Object?> {
   const LenientChannelBanner();
   @override
-  ChannelBanner? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ChannelBanner.fromJson(json) : null;
+  ChannelBanner? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ChannelBanner.fromJson)
+      : null;
   @override
   Object? toJson(ChannelBanner? object) => object?.toJson();
 }
@@ -3553,7 +3646,8 @@ class LenientListOfChannelBanner
   List<ChannelBanner> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ChannelBanner.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ChannelBanner.fromJson),
         ]
       : const [];
   @override
@@ -3570,8 +3664,8 @@ class LenientMapOfChannelBanner
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ChannelBanner.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ChannelBanner.fromJson),
         }
       : null;
   @override
@@ -3583,8 +3677,9 @@ class LenientChannelBookmark
     implements JsonConverter<ChannelBookmark?, Object?> {
   const LenientChannelBookmark();
   @override
-  ChannelBookmark? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ChannelBookmark.fromJson(json) : null;
+  ChannelBookmark? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ChannelBookmark.fromJson)
+      : null;
   @override
   Object? toJson(ChannelBookmark? object) => object?.toJson();
 }
@@ -3596,7 +3691,8 @@ class LenientListOfChannelBookmark
   List<ChannelBookmark> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ChannelBookmark.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ChannelBookmark.fromJson),
         ]
       : const [];
   @override
@@ -3613,8 +3709,8 @@ class LenientMapOfChannelBookmark
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ChannelBookmark.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ChannelBookmark.fromJson),
         }
       : null;
   @override
@@ -3628,7 +3724,7 @@ class LenientChannelBookmarkWithFileInfo
   @override
   ChannelBookmarkWithFileInfo? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ChannelBookmarkWithFileInfo.fromJson(json)
+      ? decodeOrSkip(json, ChannelBookmarkWithFileInfo.fromJson)
       : null;
   @override
   Object? toJson(ChannelBookmarkWithFileInfo? object) => object?.toJson();
@@ -3642,7 +3738,7 @@ class LenientListOfChannelBookmarkWithFileInfo
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ChannelBookmarkWithFileInfo.fromJson(e),
+              ?decodeOrSkip(e, ChannelBookmarkWithFileInfo.fromJson),
         ]
       : const [];
   @override
@@ -3660,10 +3756,8 @@ class LenientMapOfChannelBookmarkWithFileInfo
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ChannelBookmarkWithFileInfo.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ChannelBookmarkWithFileInfo.fromJson),
         }
       : null;
   @override
@@ -3674,8 +3768,9 @@ class LenientMapOfChannelBookmarkWithFileInfo
 class LenientChannelMember implements JsonConverter<ChannelMember?, Object?> {
   const LenientChannelMember();
   @override
-  ChannelMember? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ChannelMember.fromJson(json) : null;
+  ChannelMember? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ChannelMember.fromJson)
+      : null;
   @override
   Object? toJson(ChannelMember? object) => object?.toJson();
 }
@@ -3687,7 +3782,8 @@ class LenientListOfChannelMember
   List<ChannelMember> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ChannelMember.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ChannelMember.fromJson),
         ]
       : const [];
   @override
@@ -3704,8 +3800,8 @@ class LenientMapOfChannelMember
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ChannelMember.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ChannelMember.fromJson),
         }
       : null;
   @override
@@ -3719,7 +3815,7 @@ class LenientChannelMemberWithTeamData
   @override
   ChannelMemberWithTeamData? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ChannelMemberWithTeamData.fromJson(json)
+      ? decodeOrSkip(json, ChannelMemberWithTeamData.fromJson)
       : null;
   @override
   Object? toJson(ChannelMemberWithTeamData? object) => object?.toJson();
@@ -3733,7 +3829,7 @@ class LenientListOfChannelMemberWithTeamData
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ChannelMemberWithTeamData.fromJson(e),
+              ?decodeOrSkip(e, ChannelMemberWithTeamData.fromJson),
         ]
       : const [];
   @override
@@ -3750,10 +3846,8 @@ class LenientMapOfChannelMemberWithTeamData
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ChannelMemberWithTeamData.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ChannelMemberWithTeamData.fromJson),
         }
       : null;
   @override
@@ -3765,8 +3859,9 @@ class LenientChannelNotifyProps
     implements JsonConverter<ChannelNotifyProps?, Object?> {
   const LenientChannelNotifyProps();
   @override
-  ChannelNotifyProps? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ChannelNotifyProps.fromJson(json) : null;
+  ChannelNotifyProps? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ChannelNotifyProps.fromJson)
+      : null;
   @override
   Object? toJson(ChannelNotifyProps? object) => object?.toJson();
 }
@@ -3778,7 +3873,8 @@ class LenientListOfChannelNotifyProps
   List<ChannelNotifyProps> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ChannelNotifyProps.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ChannelNotifyProps.fromJson),
         ]
       : const [];
   @override
@@ -3795,10 +3891,8 @@ class LenientMapOfChannelNotifyProps
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ChannelNotifyProps.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ChannelNotifyProps.fromJson),
         }
       : null;
   @override
@@ -3809,8 +3903,9 @@ class LenientMapOfChannelNotifyProps
 class LenientChannelStats implements JsonConverter<ChannelStats?, Object?> {
   const LenientChannelStats();
   @override
-  ChannelStats? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ChannelStats.fromJson(json) : null;
+  ChannelStats? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ChannelStats.fromJson)
+      : null;
   @override
   Object? toJson(ChannelStats? object) => object?.toJson();
 }
@@ -3822,7 +3917,8 @@ class LenientListOfChannelStats
   List<ChannelStats> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ChannelStats.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ChannelStats.fromJson),
         ]
       : const [];
   @override
@@ -3839,8 +3935,8 @@ class LenientMapOfChannelStats
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ChannelStats.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ChannelStats.fromJson),
         }
       : null;
   @override
@@ -3852,8 +3948,9 @@ class LenientChannelUnreadAt
     implements JsonConverter<ChannelUnreadAt?, Object?> {
   const LenientChannelUnreadAt();
   @override
-  ChannelUnreadAt? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ChannelUnreadAt.fromJson(json) : null;
+  ChannelUnreadAt? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ChannelUnreadAt.fromJson)
+      : null;
   @override
   Object? toJson(ChannelUnreadAt? object) => object?.toJson();
 }
@@ -3865,7 +3962,8 @@ class LenientListOfChannelUnreadAt
   List<ChannelUnreadAt> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ChannelUnreadAt.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ChannelUnreadAt.fromJson),
         ]
       : const [];
   @override
@@ -3882,8 +3980,8 @@ class LenientMapOfChannelUnreadAt
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ChannelUnreadAt.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ChannelUnreadAt.fromJson),
         }
       : null;
   @override
@@ -3895,8 +3993,9 @@ class LenientChannelWithTeamData
     implements JsonConverter<ChannelWithTeamData?, Object?> {
   const LenientChannelWithTeamData();
   @override
-  ChannelWithTeamData? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ChannelWithTeamData.fromJson(json) : null;
+  ChannelWithTeamData? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ChannelWithTeamData.fromJson)
+      : null;
   @override
   Object? toJson(ChannelWithTeamData? object) => object?.toJson();
 }
@@ -3908,7 +4007,8 @@ class LenientListOfChannelWithTeamData
   List<ChannelWithTeamData> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ChannelWithTeamData.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ChannelWithTeamData.fromJson),
         ]
       : const [];
   @override
@@ -3925,10 +4025,8 @@ class LenientMapOfChannelWithTeamData
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ChannelWithTeamData.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ChannelWithTeamData.fromJson),
         }
       : null;
   @override
@@ -3939,8 +4037,9 @@ class LenientMapOfChannelWithTeamData
 class LenientCommand implements JsonConverter<Command?, Object?> {
   const LenientCommand();
   @override
-  Command? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Command.fromJson(json) : null;
+  Command? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Command.fromJson)
+      : null;
   @override
   Object? toJson(Command? object) => object?.toJson();
 }
@@ -3951,7 +4050,7 @@ class LenientListOfCommand implements JsonConverter<List<Command>, Object?> {
   List<Command> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Command.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Command.fromJson),
         ]
       : const [];
   @override
@@ -3965,8 +4064,8 @@ class LenientMapOfCommand
   Map<String, Command>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Command.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Command.fromJson),
         }
       : null;
   @override
@@ -3978,8 +4077,9 @@ class LenientCommandResponse
     implements JsonConverter<CommandResponse?, Object?> {
   const LenientCommandResponse();
   @override
-  CommandResponse? fromJson(Object? json) =>
-      json is Map<String, Object?> ? CommandResponse.fromJson(json) : null;
+  CommandResponse? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, CommandResponse.fromJson)
+      : null;
   @override
   Object? toJson(CommandResponse? object) => object?.toJson();
 }
@@ -3991,7 +4091,8 @@ class LenientListOfCommandResponse
   List<CommandResponse> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) CommandResponse.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, CommandResponse.fromJson),
         ]
       : const [];
   @override
@@ -4008,8 +4109,8 @@ class LenientMapOfCommandResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: CommandResponse.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, CommandResponse.fromJson),
         }
       : null;
   @override
@@ -4023,7 +4124,7 @@ class LenientDataRetentionPolicyForChannel
   @override
   DataRetentionPolicyForChannel? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? DataRetentionPolicyForChannel.fromJson(json)
+      ? decodeOrSkip(json, DataRetentionPolicyForChannel.fromJson)
       : null;
   @override
   Object? toJson(DataRetentionPolicyForChannel? object) => object?.toJson();
@@ -4037,7 +4138,7 @@ class LenientListOfDataRetentionPolicyForChannel
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              DataRetentionPolicyForChannel.fromJson(e),
+              ?decodeOrSkip(e, DataRetentionPolicyForChannel.fromJson),
         ]
       : const [];
   @override
@@ -4055,10 +4156,8 @@ class LenientMapOfDataRetentionPolicyForChannel
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: DataRetentionPolicyForChannel.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, DataRetentionPolicyForChannel.fromJson),
         }
       : null;
   @override
@@ -4072,7 +4171,7 @@ class LenientDataRetentionPolicyForTeam
   @override
   DataRetentionPolicyForTeam? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? DataRetentionPolicyForTeam.fromJson(json)
+      ? decodeOrSkip(json, DataRetentionPolicyForTeam.fromJson)
       : null;
   @override
   Object? toJson(DataRetentionPolicyForTeam? object) => object?.toJson();
@@ -4086,7 +4185,7 @@ class LenientListOfDataRetentionPolicyForTeam
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              DataRetentionPolicyForTeam.fromJson(e),
+              ?decodeOrSkip(e, DataRetentionPolicyForTeam.fromJson),
         ]
       : const [];
   @override
@@ -4104,10 +4203,8 @@ class LenientMapOfDataRetentionPolicyForTeam
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: DataRetentionPolicyForTeam.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, DataRetentionPolicyForTeam.fromJson),
         }
       : null;
   @override
@@ -4119,7 +4216,7 @@ class LenientEmbeds implements JsonConverter<Embeds?, Object?> {
   const LenientEmbeds();
   @override
   Embeds? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Embeds.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, Embeds.fromJson) : null;
   @override
   Object? toJson(Embeds? object) => object?.toJson();
 }
@@ -4130,7 +4227,7 @@ class LenientListOfEmbeds implements JsonConverter<List<Embeds>, Object?> {
   List<Embeds> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Embeds.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Embeds.fromJson),
         ]
       : const [];
   @override
@@ -4144,8 +4241,8 @@ class LenientMapOfEmbeds
   Map<String, Embeds>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Embeds.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Embeds.fromJson),
         }
       : null;
   @override
@@ -4157,7 +4254,7 @@ class LenientEmoji implements JsonConverter<Emoji?, Object?> {
   const LenientEmoji();
   @override
   Emoji? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Emoji.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, Emoji.fromJson) : null;
   @override
   Object? toJson(Emoji? object) => object?.toJson();
 }
@@ -4168,7 +4265,7 @@ class LenientListOfEmoji implements JsonConverter<List<Emoji>, Object?> {
   List<Emoji> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Emoji.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Emoji.fromJson),
         ]
       : const [];
   @override
@@ -4181,8 +4278,8 @@ class LenientMapOfEmoji implements JsonConverter<Map<String, Emoji>?, Object?> {
   Map<String, Emoji>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Emoji.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Emoji.fromJson),
         }
       : null;
   @override
@@ -4193,8 +4290,9 @@ class LenientMapOfEmoji implements JsonConverter<Map<String, Emoji>?, Object?> {
 class LenientFileInfo implements JsonConverter<FileInfo?, Object?> {
   const LenientFileInfo();
   @override
-  FileInfo? fromJson(Object? json) =>
-      json is Map<String, Object?> ? FileInfo.fromJson(json) : null;
+  FileInfo? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, FileInfo.fromJson)
+      : null;
   @override
   Object? toJson(FileInfo? object) => object?.toJson();
 }
@@ -4205,7 +4303,7 @@ class LenientListOfFileInfo implements JsonConverter<List<FileInfo>, Object?> {
   List<FileInfo> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) FileInfo.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, FileInfo.fromJson),
         ]
       : const [];
   @override
@@ -4219,8 +4317,8 @@ class LenientMapOfFileInfo
   Map<String, FileInfo>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: FileInfo.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, FileInfo.fromJson),
         }
       : null;
   @override
@@ -4231,8 +4329,9 @@ class LenientMapOfFileInfo
 class LenientFileInfoList implements JsonConverter<FileInfoList?, Object?> {
   const LenientFileInfoList();
   @override
-  FileInfoList? fromJson(Object? json) =>
-      json is Map<String, Object?> ? FileInfoList.fromJson(json) : null;
+  FileInfoList? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, FileInfoList.fromJson)
+      : null;
   @override
   Object? toJson(FileInfoList? object) => object?.toJson();
 }
@@ -4244,7 +4343,8 @@ class LenientListOfFileInfoList
   List<FileInfoList> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) FileInfoList.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, FileInfoList.fromJson),
         ]
       : const [];
   @override
@@ -4261,8 +4361,8 @@ class LenientMapOfFileInfoList
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: FileInfoList.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, FileInfoList.fromJson),
         }
       : null;
   @override
@@ -4276,7 +4376,7 @@ class LenientGetApiV4FilesFileIdLinkResponse
   @override
   GetApiV4FilesFileIdLinkResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? GetApiV4FilesFileIdLinkResponse.fromJson(json)
+      ? decodeOrSkip(json, GetApiV4FilesFileIdLinkResponse.fromJson)
       : null;
   @override
   Object? toJson(GetApiV4FilesFileIdLinkResponse? object) => object?.toJson();
@@ -4290,7 +4390,7 @@ class LenientListOfGetApiV4FilesFileIdLinkResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              GetApiV4FilesFileIdLinkResponse.fromJson(e),
+              ?decodeOrSkip(e, GetApiV4FilesFileIdLinkResponse.fromJson),
         ]
       : const [];
   @override
@@ -4308,10 +4408,8 @@ class LenientMapOfGetApiV4FilesFileIdLinkResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: GetApiV4FilesFileIdLinkResponse.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, GetApiV4FilesFileIdLinkResponse.fromJson),
         }
       : null;
   @override
@@ -4325,7 +4423,7 @@ class LenientGetApiV4LicenseLoadMetricResponse
   @override
   GetApiV4LicenseLoadMetricResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? GetApiV4LicenseLoadMetricResponse.fromJson(json)
+      ? decodeOrSkip(json, GetApiV4LicenseLoadMetricResponse.fromJson)
       : null;
   @override
   Object? toJson(GetApiV4LicenseLoadMetricResponse? object) => object?.toJson();
@@ -4339,7 +4437,7 @@ class LenientListOfGetApiV4LicenseLoadMetricResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              GetApiV4LicenseLoadMetricResponse.fromJson(e),
+              ?decodeOrSkip(e, GetApiV4LicenseLoadMetricResponse.fromJson),
         ]
       : const [];
   @override
@@ -4360,9 +4458,10 @@ class LenientMapOfGetApiV4LicenseLoadMetricResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: GetApiV4LicenseLoadMetricResponse.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                GetApiV4LicenseLoadMetricResponse.fromJson,
               ),
         }
       : null;
@@ -4381,7 +4480,10 @@ class LenientGetApiV4UsersSessionsAttributesManifestResponse
   @override
   GetApiV4UsersSessionsAttributesManifestResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? GetApiV4UsersSessionsAttributesManifestResponse.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          GetApiV4UsersSessionsAttributesManifestResponse.fromJson,
+        )
       : null;
   @override
   Object? toJson(GetApiV4UsersSessionsAttributesManifestResponse? object) =>
@@ -4402,7 +4504,10 @@ class LenientListOfGetApiV4UsersSessionsAttributesManifestResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              GetApiV4UsersSessionsAttributesManifestResponse.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                GetApiV4UsersSessionsAttributesManifestResponse.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -4424,9 +4529,10 @@ class LenientMapOfGetApiV4UsersSessionsAttributesManifestResponse
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: GetApiV4UsersSessionsAttributesManifestResponse.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                GetApiV4UsersSessionsAttributesManifestResponse.fromJson,
               ),
         }
       : null;
@@ -4442,7 +4548,7 @@ class LenientGlobalDataRetentionPolicy
   @override
   GlobalDataRetentionPolicy? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? GlobalDataRetentionPolicy.fromJson(json)
+      ? decodeOrSkip(json, GlobalDataRetentionPolicy.fromJson)
       : null;
   @override
   Object? toJson(GlobalDataRetentionPolicy? object) => object?.toJson();
@@ -4456,7 +4562,7 @@ class LenientListOfGlobalDataRetentionPolicy
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              GlobalDataRetentionPolicy.fromJson(e),
+              ?decodeOrSkip(e, GlobalDataRetentionPolicy.fromJson),
         ]
       : const [];
   @override
@@ -4473,10 +4579,8 @@ class LenientMapOfGlobalDataRetentionPolicy
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: GlobalDataRetentionPolicy.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, GlobalDataRetentionPolicy.fromJson),
         }
       : null;
   @override
@@ -4488,7 +4592,7 @@ class LenientGroup implements JsonConverter<Group?, Object?> {
   const LenientGroup();
   @override
   Group? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Group.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, Group.fromJson) : null;
   @override
   Object? toJson(Group? object) => object?.toJson();
 }
@@ -4499,7 +4603,7 @@ class LenientListOfGroup implements JsonConverter<List<Group>, Object?> {
   List<Group> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Group.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Group.fromJson),
         ]
       : const [];
   @override
@@ -4512,8 +4616,8 @@ class LenientMapOfGroup implements JsonConverter<Map<String, Group>?, Object?> {
   Map<String, Group>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Group.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Group.fromJson),
         }
       : null;
   @override
@@ -4524,8 +4628,9 @@ class LenientMapOfGroup implements JsonConverter<Map<String, Group>?, Object?> {
 class LenientKnownUsers implements JsonConverter<KnownUsers?, Object?> {
   const LenientKnownUsers();
   @override
-  KnownUsers? fromJson(Object? json) =>
-      json is Map<String, Object?> ? KnownUsers.fromJson(json) : null;
+  KnownUsers? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, KnownUsers.fromJson)
+      : null;
   @override
   Object? toJson(KnownUsers? object) => object?.toJson();
 }
@@ -4537,7 +4642,8 @@ class LenientListOfKnownUsers
   List<KnownUsers> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) KnownUsers.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, KnownUsers.fromJson),
         ]
       : const [];
   @override
@@ -4554,8 +4660,8 @@ class LenientMapOfKnownUsers
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: KnownUsers.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, KnownUsers.fromJson),
         }
       : null;
   @override
@@ -4567,8 +4673,9 @@ class LenientMessageAttachment
     implements JsonConverter<MessageAttachment?, Object?> {
   const LenientMessageAttachment();
   @override
-  MessageAttachment? fromJson(Object? json) =>
-      json is Map<String, Object?> ? MessageAttachment.fromJson(json) : null;
+  MessageAttachment? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, MessageAttachment.fromJson)
+      : null;
   @override
   Object? toJson(MessageAttachment? object) => object?.toJson();
 }
@@ -4580,7 +4687,8 @@ class LenientListOfMessageAttachment
   List<MessageAttachment> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) MessageAttachment.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, MessageAttachment.fromJson),
         ]
       : const [];
   @override
@@ -4597,10 +4705,8 @@ class LenientMapOfMessageAttachment
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: MessageAttachment.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, MessageAttachment.fromJson),
         }
       : null;
   @override
@@ -4613,7 +4719,7 @@ class LenientMessageAttachmentField
   const LenientMessageAttachmentField();
   @override
   MessageAttachmentField? fromJson(Object? json) => json is Map<String, Object?>
-      ? MessageAttachmentField.fromJson(json)
+      ? decodeOrSkip(json, MessageAttachmentField.fromJson)
       : null;
   @override
   Object? toJson(MessageAttachmentField? object) => object?.toJson();
@@ -4626,7 +4732,8 @@ class LenientListOfMessageAttachmentField
   List<MessageAttachmentField> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) MessageAttachmentField.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, MessageAttachmentField.fromJson),
         ]
       : const [];
   @override
@@ -4643,10 +4750,8 @@ class LenientMapOfMessageAttachmentField
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: MessageAttachmentField.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, MessageAttachmentField.fromJson),
         }
       : null;
   @override
@@ -4657,8 +4762,9 @@ class LenientMapOfMessageAttachmentField
 class LenientMetadata implements JsonConverter<Metadata?, Object?> {
   const LenientMetadata();
   @override
-  Metadata? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Metadata.fromJson(json) : null;
+  Metadata? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Metadata.fromJson)
+      : null;
   @override
   Object? toJson(Metadata? object) => object?.toJson();
 }
@@ -4669,7 +4775,7 @@ class LenientListOfMetadata implements JsonConverter<List<Metadata>, Object?> {
   List<Metadata> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Metadata.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Metadata.fromJson),
         ]
       : const [];
   @override
@@ -4683,8 +4789,8 @@ class LenientMapOfMetadata
   Map<String, Metadata>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Metadata.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Metadata.fromJson),
         }
       : null;
   @override
@@ -4695,8 +4801,9 @@ class LenientMapOfMetadata
 class LenientOptions implements JsonConverter<Options?, Object?> {
   const LenientOptions();
   @override
-  Options? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Options.fromJson(json) : null;
+  Options? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Options.fromJson)
+      : null;
   @override
   Object? toJson(Options? object) => object?.toJson();
 }
@@ -4707,7 +4814,7 @@ class LenientListOfOptions implements JsonConverter<List<Options>, Object?> {
   List<Options> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Options.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Options.fromJson),
         ]
       : const [];
   @override
@@ -4721,8 +4828,8 @@ class LenientMapOfOptions
   Map<String, Options>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Options.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Options.fromJson),
         }
       : null;
   @override
@@ -4733,8 +4840,9 @@ class LenientMapOfOptions
 class LenientOptions2 implements JsonConverter<Options2?, Object?> {
   const LenientOptions2();
   @override
-  Options2? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Options2.fromJson(json) : null;
+  Options2? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Options2.fromJson)
+      : null;
   @override
   Object? toJson(Options2? object) => object?.toJson();
 }
@@ -4745,7 +4853,7 @@ class LenientListOfOptions2 implements JsonConverter<List<Options2>, Object?> {
   List<Options2> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Options2.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Options2.fromJson),
         ]
       : const [];
   @override
@@ -4759,8 +4867,8 @@ class LenientMapOfOptions2
   Map<String, Options2>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Options2.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Options2.fromJson),
         }
       : null;
   @override
@@ -4774,7 +4882,7 @@ class LenientOrderedSidebarCategories
   @override
   OrderedSidebarCategories? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? OrderedSidebarCategories.fromJson(json)
+      ? decodeOrSkip(json, OrderedSidebarCategories.fromJson)
       : null;
   @override
   Object? toJson(OrderedSidebarCategories? object) => object?.toJson();
@@ -4787,7 +4895,8 @@ class LenientListOfOrderedSidebarCategories
   List<OrderedSidebarCategories> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) OrderedSidebarCategories.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, OrderedSidebarCategories.fromJson),
         ]
       : const [];
   @override
@@ -4804,10 +4913,8 @@ class LenientMapOfOrderedSidebarCategories
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: OrderedSidebarCategories.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, OrderedSidebarCategories.fromJson),
         }
       : null;
   @override
@@ -4825,7 +4932,10 @@ class LenientPatchApiV4CustomProfileAttributesValuesResponse
   @override
   PatchApiV4CustomProfileAttributesValuesResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PatchApiV4CustomProfileAttributesValuesResponse.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          PatchApiV4CustomProfileAttributesValuesResponse.fromJson,
+        )
       : null;
   @override
   Object? toJson(PatchApiV4CustomProfileAttributesValuesResponse? object) =>
@@ -4846,7 +4956,10 @@ class LenientListOfPatchApiV4CustomProfileAttributesValuesResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PatchApiV4CustomProfileAttributesValuesResponse.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                PatchApiV4CustomProfileAttributesValuesResponse.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -4868,9 +4981,10 @@ class LenientMapOfPatchApiV4CustomProfileAttributesValuesResponse
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PatchApiV4CustomProfileAttributesValuesResponse.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PatchApiV4CustomProfileAttributesValuesResponse.fromJson,
               ),
         }
       : null;
@@ -4891,7 +5005,10 @@ class LenientPatchApiV4UsersUserIdCustomProfileAttributesResponse
   PatchApiV4UsersUserIdCustomProfileAttributesResponse? fromJson(
     Object? json,
   ) => json is Map<String, Object?>
-      ? PatchApiV4UsersUserIdCustomProfileAttributesResponse.fromJson(json)
+      ? decodeOrSkip(
+          json,
+          PatchApiV4UsersUserIdCustomProfileAttributesResponse.fromJson,
+        )
       : null;
   @override
   Object? toJson(
@@ -4913,7 +5030,10 @@ class LenientListOfPatchApiV4UsersUserIdCustomProfileAttributesResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PatchApiV4UsersUserIdCustomProfileAttributesResponse.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                PatchApiV4UsersUserIdCustomProfileAttributesResponse.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -4935,11 +5055,11 @@ class LenientMapOfPatchApiV4UsersUserIdCustomProfileAttributesResponse
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key:
-                  PatchApiV4UsersUserIdCustomProfileAttributesResponse.fromJson(
-                    e.value! as Map<String, Object?>,
-                  ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PatchApiV4UsersUserIdCustomProfileAttributesResponse.fromJson,
+              ),
         }
       : null;
   @override
@@ -4952,8 +5072,9 @@ class LenientPluginManifestWebapp
     implements JsonConverter<PluginManifestWebapp?, Object?> {
   const LenientPluginManifestWebapp();
   @override
-  PluginManifestWebapp? fromJson(Object? json) =>
-      json is Map<String, Object?> ? PluginManifestWebapp.fromJson(json) : null;
+  PluginManifestWebapp? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, PluginManifestWebapp.fromJson)
+      : null;
   @override
   Object? toJson(PluginManifestWebapp? object) => object?.toJson();
 }
@@ -4965,7 +5086,8 @@ class LenientListOfPluginManifestWebapp
   List<PluginManifestWebapp> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) PluginManifestWebapp.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, PluginManifestWebapp.fromJson),
         ]
       : const [];
   @override
@@ -4982,10 +5104,8 @@ class LenientMapOfPluginManifestWebapp
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PluginManifestWebapp.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PluginManifestWebapp.fromJson),
         }
       : null;
   @override
@@ -4997,7 +5117,7 @@ class LenientPost implements JsonConverter<Post?, Object?> {
   const LenientPost();
   @override
   Post? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Post.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, Post.fromJson) : null;
   @override
   Object? toJson(Post? object) => object?.toJson();
 }
@@ -5008,7 +5128,7 @@ class LenientListOfPost implements JsonConverter<List<Post>, Object?> {
   List<Post> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Post.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Post.fromJson),
         ]
       : const [];
   @override
@@ -5021,8 +5141,8 @@ class LenientMapOfPost implements JsonConverter<Map<String, Post>?, Object?> {
   Map<String, Post>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Post.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Post.fromJson),
         }
       : null;
   @override
@@ -5034,8 +5154,9 @@ class LenientPostAcknowledgement
     implements JsonConverter<PostAcknowledgement?, Object?> {
   const LenientPostAcknowledgement();
   @override
-  PostAcknowledgement? fromJson(Object? json) =>
-      json is Map<String, Object?> ? PostAcknowledgement.fromJson(json) : null;
+  PostAcknowledgement? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, PostAcknowledgement.fromJson)
+      : null;
   @override
   Object? toJson(PostAcknowledgement? object) => object?.toJson();
 }
@@ -5047,7 +5168,8 @@ class LenientListOfPostAcknowledgement
   List<PostAcknowledgement> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) PostAcknowledgement.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, PostAcknowledgement.fromJson),
         ]
       : const [];
   @override
@@ -5064,10 +5186,8 @@ class LenientMapOfPostAcknowledgement
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostAcknowledgement.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostAcknowledgement.fromJson),
         }
       : null;
   @override
@@ -5081,7 +5201,7 @@ class LenientPostApiV4ActionsDialogsLookupResponse
   @override
   PostApiV4ActionsDialogsLookupResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PostApiV4ActionsDialogsLookupResponse.fromJson(json)
+      ? decodeOrSkip(json, PostApiV4ActionsDialogsLookupResponse.fromJson)
       : null;
   @override
   Object? toJson(PostApiV4ActionsDialogsLookupResponse? object) =>
@@ -5098,7 +5218,7 @@ class LenientListOfPostApiV4ActionsDialogsLookupResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PostApiV4ActionsDialogsLookupResponse.fromJson(e),
+              ?decodeOrSkip(e, PostApiV4ActionsDialogsLookupResponse.fromJson),
         ]
       : const [];
   @override
@@ -5119,9 +5239,10 @@ class LenientMapOfPostApiV4ActionsDialogsLookupResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostApiV4ActionsDialogsLookupResponse.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PostApiV4ActionsDialogsLookupResponse.fromJson,
               ),
         }
       : null;
@@ -5136,7 +5257,7 @@ class LenientPostApiV4ActionsDialogsSubmitResponse
   @override
   PostApiV4ActionsDialogsSubmitResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PostApiV4ActionsDialogsSubmitResponse.fromJson(json)
+      ? decodeOrSkip(json, PostApiV4ActionsDialogsSubmitResponse.fromJson)
       : null;
   @override
   Object? toJson(PostApiV4ActionsDialogsSubmitResponse? object) =>
@@ -5153,7 +5274,7 @@ class LenientListOfPostApiV4ActionsDialogsSubmitResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PostApiV4ActionsDialogsSubmitResponse.fromJson(e),
+              ?decodeOrSkip(e, PostApiV4ActionsDialogsSubmitResponse.fromJson),
         ]
       : const [];
   @override
@@ -5174,9 +5295,10 @@ class LenientMapOfPostApiV4ActionsDialogsSubmitResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostApiV4ActionsDialogsSubmitResponse.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PostApiV4ActionsDialogsSubmitResponse.fromJson,
               ),
         }
       : null;
@@ -5192,7 +5314,7 @@ class LenientPostApiV4ChannelsMembersUserIdViewResponse
   @override
   PostApiV4ChannelsMembersUserIdViewResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PostApiV4ChannelsMembersUserIdViewResponse.fromJson(json)
+      ? decodeOrSkip(json, PostApiV4ChannelsMembersUserIdViewResponse.fromJson)
       : null;
   @override
   Object? toJson(PostApiV4ChannelsMembersUserIdViewResponse? object) =>
@@ -5212,7 +5334,10 @@ class LenientListOfPostApiV4ChannelsMembersUserIdViewResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PostApiV4ChannelsMembersUserIdViewResponse.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                PostApiV4ChannelsMembersUserIdViewResponse.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -5234,9 +5359,10 @@ class LenientMapOfPostApiV4ChannelsMembersUserIdViewResponse
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostApiV4ChannelsMembersUserIdViewResponse.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PostApiV4ChannelsMembersUserIdViewResponse.fromJson,
               ),
         }
       : null;
@@ -5252,7 +5378,7 @@ class LenientPostApiV4ChannelsSearchResponse
   @override
   PostApiV4ChannelsSearchResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PostApiV4ChannelsSearchResponse.fromJson(json)
+      ? decodeOrSkip(json, PostApiV4ChannelsSearchResponse.fromJson)
       : null;
   @override
   Object? toJson(PostApiV4ChannelsSearchResponse? object) => object?.toJson();
@@ -5266,7 +5392,7 @@ class LenientListOfPostApiV4ChannelsSearchResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PostApiV4ChannelsSearchResponse.fromJson(e),
+              ?decodeOrSkip(e, PostApiV4ChannelsSearchResponse.fromJson),
         ]
       : const [];
   @override
@@ -5284,10 +5410,8 @@ class LenientMapOfPostApiV4ChannelsSearchResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostApiV4ChannelsSearchResponse.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostApiV4ChannelsSearchResponse.fromJson),
         }
       : null;
   @override
@@ -5301,7 +5425,7 @@ class LenientPostApiV4RemoteclusterResponse
   @override
   PostApiV4RemoteclusterResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PostApiV4RemoteclusterResponse.fromJson(json)
+      ? decodeOrSkip(json, PostApiV4RemoteclusterResponse.fromJson)
       : null;
   @override
   Object? toJson(PostApiV4RemoteclusterResponse? object) => object?.toJson();
@@ -5315,7 +5439,7 @@ class LenientListOfPostApiV4RemoteclusterResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PostApiV4RemoteclusterResponse.fromJson(e),
+              ?decodeOrSkip(e, PostApiV4RemoteclusterResponse.fromJson),
         ]
       : const [];
   @override
@@ -5333,10 +5457,8 @@ class LenientMapOfPostApiV4RemoteclusterResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostApiV4RemoteclusterResponse.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostApiV4RemoteclusterResponse.fromJson),
         }
       : null;
   @override
@@ -5350,7 +5472,7 @@ class LenientPostApiV4UsersGroupChannelsResponse
   @override
   PostApiV4UsersGroupChannelsResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PostApiV4UsersGroupChannelsResponse.fromJson(json)
+      ? decodeOrSkip(json, PostApiV4UsersGroupChannelsResponse.fromJson)
       : null;
   @override
   Object? toJson(PostApiV4UsersGroupChannelsResponse? object) =>
@@ -5367,7 +5489,7 @@ class LenientListOfPostApiV4UsersGroupChannelsResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PostApiV4UsersGroupChannelsResponse.fromJson(e),
+              ?decodeOrSkip(e, PostApiV4UsersGroupChannelsResponse.fromJson),
         ]
       : const [];
   @override
@@ -5388,9 +5510,10 @@ class LenientMapOfPostApiV4UsersGroupChannelsResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostApiV4UsersGroupChannelsResponse.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PostApiV4UsersGroupChannelsResponse.fromJson,
               ),
         }
       : null;
@@ -5406,7 +5529,7 @@ class LenientPostApiV4UsersLoginSsoCodeExchangeResponse
   @override
   PostApiV4UsersLoginSsoCodeExchangeResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PostApiV4UsersLoginSsoCodeExchangeResponse.fromJson(json)
+      ? decodeOrSkip(json, PostApiV4UsersLoginSsoCodeExchangeResponse.fromJson)
       : null;
   @override
   Object? toJson(PostApiV4UsersLoginSsoCodeExchangeResponse? object) =>
@@ -5426,7 +5549,10 @@ class LenientListOfPostApiV4UsersLoginSsoCodeExchangeResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PostApiV4UsersLoginSsoCodeExchangeResponse.fromJson(e),
+              ?decodeOrSkip(
+                e,
+                PostApiV4UsersLoginSsoCodeExchangeResponse.fromJson,
+              ),
         ]
       : const [];
   @override
@@ -5448,9 +5574,10 @@ class LenientMapOfPostApiV4UsersLoginSsoCodeExchangeResponse
   ) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostApiV4UsersLoginSsoCodeExchangeResponse.fromJson(
-                e.value! as Map<String, Object?>,
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PostApiV4UsersLoginSsoCodeExchangeResponse.fromJson,
               ),
         }
       : null;
@@ -5466,7 +5593,7 @@ class LenientPostApiV4UsersLoginTypeResponse
   @override
   PostApiV4UsersLoginTypeResponse? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PostApiV4UsersLoginTypeResponse.fromJson(json)
+      ? decodeOrSkip(json, PostApiV4UsersLoginTypeResponse.fromJson)
       : null;
   @override
   Object? toJson(PostApiV4UsersLoginTypeResponse? object) => object?.toJson();
@@ -5480,7 +5607,7 @@ class LenientListOfPostApiV4UsersLoginTypeResponse
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PostApiV4UsersLoginTypeResponse.fromJson(e),
+              ?decodeOrSkip(e, PostApiV4UsersLoginTypeResponse.fromJson),
         ]
       : const [];
   @override
@@ -5498,10 +5625,8 @@ class LenientMapOfPostApiV4UsersLoginTypeResponse
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostApiV4UsersLoginTypeResponse.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostApiV4UsersLoginTypeResponse.fromJson),
         }
       : null;
   @override
@@ -5512,8 +5637,9 @@ class LenientMapOfPostApiV4UsersLoginTypeResponse
 class LenientPostInfo implements JsonConverter<PostInfo?, Object?> {
   const LenientPostInfo();
   @override
-  PostInfo? fromJson(Object? json) =>
-      json is Map<String, Object?> ? PostInfo.fromJson(json) : null;
+  PostInfo? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, PostInfo.fromJson)
+      : null;
   @override
   Object? toJson(PostInfo? object) => object?.toJson();
 }
@@ -5524,7 +5650,7 @@ class LenientListOfPostInfo implements JsonConverter<List<PostInfo>, Object?> {
   List<PostInfo> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) PostInfo.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, PostInfo.fromJson),
         ]
       : const [];
   @override
@@ -5538,8 +5664,8 @@ class LenientMapOfPostInfo
   Map<String, PostInfo>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostInfo.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostInfo.fromJson),
         }
       : null;
   @override
@@ -5550,8 +5676,9 @@ class LenientMapOfPostInfo
 class LenientPostList implements JsonConverter<PostList?, Object?> {
   const LenientPostList();
   @override
-  PostList? fromJson(Object? json) =>
-      json is Map<String, Object?> ? PostList.fromJson(json) : null;
+  PostList? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, PostList.fromJson)
+      : null;
   @override
   Object? toJson(PostList? object) => object?.toJson();
 }
@@ -5562,7 +5689,7 @@ class LenientListOfPostList implements JsonConverter<List<PostList>, Object?> {
   List<PostList> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) PostList.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, PostList.fromJson),
         ]
       : const [];
   @override
@@ -5576,8 +5703,8 @@ class LenientMapOfPostList
   Map<String, PostList>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostList.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostList.fromJson),
         }
       : null;
   @override
@@ -5591,7 +5718,7 @@ class LenientPostListWithSearchMatches
   @override
   PostListWithSearchMatches? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? PostListWithSearchMatches.fromJson(json)
+      ? decodeOrSkip(json, PostListWithSearchMatches.fromJson)
       : null;
   @override
   Object? toJson(PostListWithSearchMatches? object) => object?.toJson();
@@ -5605,7 +5732,7 @@ class LenientListOfPostListWithSearchMatches
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              PostListWithSearchMatches.fromJson(e),
+              ?decodeOrSkip(e, PostListWithSearchMatches.fromJson),
         ]
       : const [];
   @override
@@ -5622,10 +5749,8 @@ class LenientMapOfPostListWithSearchMatches
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostListWithSearchMatches.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostListWithSearchMatches.fromJson),
         }
       : null;
   @override
@@ -5636,8 +5761,9 @@ class LenientMapOfPostListWithSearchMatches
 class LenientPostMetadata implements JsonConverter<PostMetadata?, Object?> {
   const LenientPostMetadata();
   @override
-  PostMetadata? fromJson(Object? json) =>
-      json is Map<String, Object?> ? PostMetadata.fromJson(json) : null;
+  PostMetadata? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, PostMetadata.fromJson)
+      : null;
   @override
   Object? toJson(PostMetadata? object) => object?.toJson();
 }
@@ -5649,7 +5775,8 @@ class LenientListOfPostMetadata
   List<PostMetadata> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) PostMetadata.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, PostMetadata.fromJson),
         ]
       : const [];
   @override
@@ -5666,8 +5793,8 @@ class LenientMapOfPostMetadata
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostMetadata.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostMetadata.fromJson),
         }
       : null;
   @override
@@ -5678,8 +5805,9 @@ class LenientMapOfPostMetadata
 class LenientPostPriority implements JsonConverter<PostPriority?, Object?> {
   const LenientPostPriority();
   @override
-  PostPriority? fromJson(Object? json) =>
-      json is Map<String, Object?> ? PostPriority.fromJson(json) : null;
+  PostPriority? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, PostPriority.fromJson)
+      : null;
   @override
   Object? toJson(PostPriority? object) => object?.toJson();
 }
@@ -5691,7 +5819,8 @@ class LenientListOfPostPriority
   List<PostPriority> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) PostPriority.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, PostPriority.fromJson),
         ]
       : const [];
   @override
@@ -5708,8 +5837,8 @@ class LenientMapOfPostPriority
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PostPriority.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostPriority.fromJson),
         }
       : null;
   @override
@@ -5720,8 +5849,9 @@ class LenientMapOfPostPriority
 class LenientPreference implements JsonConverter<Preference?, Object?> {
   const LenientPreference();
   @override
-  Preference? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Preference.fromJson(json) : null;
+  Preference? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Preference.fromJson)
+      : null;
   @override
   Object? toJson(Preference? object) => object?.toJson();
 }
@@ -5733,7 +5863,8 @@ class LenientListOfPreference
   List<Preference> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Preference.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, Preference.fromJson),
         ]
       : const [];
   @override
@@ -5750,8 +5881,8 @@ class LenientMapOfPreference
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Preference.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Preference.fromJson),
         }
       : null;
   @override
@@ -5762,8 +5893,9 @@ class LenientMapOfPreference
 class LenientPropertyField implements JsonConverter<PropertyField?, Object?> {
   const LenientPropertyField();
   @override
-  PropertyField? fromJson(Object? json) =>
-      json is Map<String, Object?> ? PropertyField.fromJson(json) : null;
+  PropertyField? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, PropertyField.fromJson)
+      : null;
   @override
   Object? toJson(PropertyField? object) => object?.toJson();
 }
@@ -5775,7 +5907,8 @@ class LenientListOfPropertyField
   List<PropertyField> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) PropertyField.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, PropertyField.fromJson),
         ]
       : const [];
   @override
@@ -5792,8 +5925,8 @@ class LenientMapOfPropertyField
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: PropertyField.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PropertyField.fromJson),
         }
       : null;
   @override
@@ -5804,8 +5937,9 @@ class LenientMapOfPropertyField
 class LenientReaction implements JsonConverter<Reaction?, Object?> {
   const LenientReaction();
   @override
-  Reaction? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Reaction.fromJson(json) : null;
+  Reaction? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Reaction.fromJson)
+      : null;
   @override
   Object? toJson(Reaction? object) => object?.toJson();
 }
@@ -5816,7 +5950,7 @@ class LenientListOfReaction implements JsonConverter<List<Reaction>, Object?> {
   List<Reaction> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Reaction.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Reaction.fromJson),
         ]
       : const [];
   @override
@@ -5830,8 +5964,8 @@ class LenientMapOfReaction
   Map<String, Reaction>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Reaction.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Reaction.fromJson),
         }
       : null;
   @override
@@ -5842,8 +5976,9 @@ class LenientMapOfReaction
 class LenientRemoteCluster implements JsonConverter<RemoteCluster?, Object?> {
   const LenientRemoteCluster();
   @override
-  RemoteCluster? fromJson(Object? json) =>
-      json is Map<String, Object?> ? RemoteCluster.fromJson(json) : null;
+  RemoteCluster? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, RemoteCluster.fromJson)
+      : null;
   @override
   Object? toJson(RemoteCluster? object) => object?.toJson();
 }
@@ -5855,7 +5990,8 @@ class LenientListOfRemoteCluster
   List<RemoteCluster> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) RemoteCluster.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, RemoteCluster.fromJson),
         ]
       : const [];
   @override
@@ -5872,8 +6008,8 @@ class LenientMapOfRemoteCluster
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: RemoteCluster.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, RemoteCluster.fromJson),
         }
       : null;
   @override
@@ -5885,8 +6021,9 @@ class LenientRemoteClusterInfo
     implements JsonConverter<RemoteClusterInfo?, Object?> {
   const LenientRemoteClusterInfo();
   @override
-  RemoteClusterInfo? fromJson(Object? json) =>
-      json is Map<String, Object?> ? RemoteClusterInfo.fromJson(json) : null;
+  RemoteClusterInfo? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, RemoteClusterInfo.fromJson)
+      : null;
   @override
   Object? toJson(RemoteClusterInfo? object) => object?.toJson();
 }
@@ -5898,7 +6035,8 @@ class LenientListOfRemoteClusterInfo
   List<RemoteClusterInfo> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) RemoteClusterInfo.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, RemoteClusterInfo.fromJson),
         ]
       : const [];
   @override
@@ -5915,10 +6053,8 @@ class LenientMapOfRemoteClusterInfo
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: RemoteClusterInfo.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, RemoteClusterInfo.fromJson),
         }
       : null;
   @override
@@ -5932,7 +6068,7 @@ class LenientRenderPermissionDecision
   @override
   RenderPermissionDecision? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? RenderPermissionDecision.fromJson(json)
+      ? decodeOrSkip(json, RenderPermissionDecision.fromJson)
       : null;
   @override
   Object? toJson(RenderPermissionDecision? object) => object?.toJson();
@@ -5945,7 +6081,8 @@ class LenientListOfRenderPermissionDecision
   List<RenderPermissionDecision> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) RenderPermissionDecision.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, RenderPermissionDecision.fromJson),
         ]
       : const [];
   @override
@@ -5962,10 +6099,8 @@ class LenientMapOfRenderPermissionDecision
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: RenderPermissionDecision.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, RenderPermissionDecision.fromJson),
         }
       : null;
   @override
@@ -5979,7 +6114,7 @@ class LenientRetentionPolicyForChannelList
   @override
   RetentionPolicyForChannelList? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? RetentionPolicyForChannelList.fromJson(json)
+      ? decodeOrSkip(json, RetentionPolicyForChannelList.fromJson)
       : null;
   @override
   Object? toJson(RetentionPolicyForChannelList? object) => object?.toJson();
@@ -5993,7 +6128,7 @@ class LenientListOfRetentionPolicyForChannelList
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              RetentionPolicyForChannelList.fromJson(e),
+              ?decodeOrSkip(e, RetentionPolicyForChannelList.fromJson),
         ]
       : const [];
   @override
@@ -6011,10 +6146,8 @@ class LenientMapOfRetentionPolicyForChannelList
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: RetentionPolicyForChannelList.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, RetentionPolicyForChannelList.fromJson),
         }
       : null;
   @override
@@ -6028,7 +6161,7 @@ class LenientRetentionPolicyForTeamList
   @override
   RetentionPolicyForTeamList? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? RetentionPolicyForTeamList.fromJson(json)
+      ? decodeOrSkip(json, RetentionPolicyForTeamList.fromJson)
       : null;
   @override
   Object? toJson(RetentionPolicyForTeamList? object) => object?.toJson();
@@ -6042,7 +6175,7 @@ class LenientListOfRetentionPolicyForTeamList
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              RetentionPolicyForTeamList.fromJson(e),
+              ?decodeOrSkip(e, RetentionPolicyForTeamList.fromJson),
         ]
       : const [];
   @override
@@ -6060,10 +6193,8 @@ class LenientMapOfRetentionPolicyForTeamList
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: RetentionPolicyForTeamList.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, RetentionPolicyForTeamList.fromJson),
         }
       : null;
   @override
@@ -6075,7 +6206,7 @@ class LenientRole implements JsonConverter<Role?, Object?> {
   const LenientRole();
   @override
   Role? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Role.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, Role.fromJson) : null;
   @override
   Object? toJson(Role? object) => object?.toJson();
 }
@@ -6086,7 +6217,7 @@ class LenientListOfRole implements JsonConverter<List<Role>, Object?> {
   List<Role> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Role.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Role.fromJson),
         ]
       : const [];
   @override
@@ -6099,8 +6230,8 @@ class LenientMapOfRole implements JsonConverter<Map<String, Role>?, Object?> {
   Map<String, Role>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Role.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Role.fromJson),
         }
       : null;
   @override
@@ -6111,8 +6242,9 @@ class LenientMapOfRole implements JsonConverter<Map<String, Role>?, Object?> {
 class LenientScheduledPost implements JsonConverter<ScheduledPost?, Object?> {
   const LenientScheduledPost();
   @override
-  ScheduledPost? fromJson(Object? json) =>
-      json is Map<String, Object?> ? ScheduledPost.fromJson(json) : null;
+  ScheduledPost? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, ScheduledPost.fromJson)
+      : null;
   @override
   Object? toJson(ScheduledPost? object) => object?.toJson();
 }
@@ -6124,7 +6256,8 @@ class LenientListOfScheduledPost
   List<ScheduledPost> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ScheduledPost.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ScheduledPost.fromJson),
         ]
       : const [];
   @override
@@ -6141,8 +6274,8 @@ class LenientMapOfScheduledPost
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ScheduledPost.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ScheduledPost.fromJson),
         }
       : null;
   @override
@@ -6153,8 +6286,9 @@ class LenientMapOfScheduledPost
 class LenientSession implements JsonConverter<Session?, Object?> {
   const LenientSession();
   @override
-  Session? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Session.fromJson(json) : null;
+  Session? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Session.fromJson)
+      : null;
   @override
   Object? toJson(Session? object) => object?.toJson();
 }
@@ -6165,7 +6299,7 @@ class LenientListOfSession implements JsonConverter<List<Session>, Object?> {
   List<Session> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Session.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Session.fromJson),
         ]
       : const [];
   @override
@@ -6179,8 +6313,8 @@ class LenientMapOfSession
   Map<String, Session>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Session.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Session.fromJson),
         }
       : null;
   @override
@@ -6191,8 +6325,9 @@ class LenientMapOfSession
 class LenientSharedChannel implements JsonConverter<SharedChannel?, Object?> {
   const LenientSharedChannel();
   @override
-  SharedChannel? fromJson(Object? json) =>
-      json is Map<String, Object?> ? SharedChannel.fromJson(json) : null;
+  SharedChannel? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, SharedChannel.fromJson)
+      : null;
   @override
   Object? toJson(SharedChannel? object) => object?.toJson();
 }
@@ -6204,7 +6339,8 @@ class LenientListOfSharedChannel
   List<SharedChannel> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) SharedChannel.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, SharedChannel.fromJson),
         ]
       : const [];
   @override
@@ -6221,8 +6357,8 @@ class LenientMapOfSharedChannel
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: SharedChannel.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, SharedChannel.fromJson),
         }
       : null;
   @override
@@ -6234,8 +6370,9 @@ class LenientSidebarCategory
     implements JsonConverter<SidebarCategory?, Object?> {
   const LenientSidebarCategory();
   @override
-  SidebarCategory? fromJson(Object? json) =>
-      json is Map<String, Object?> ? SidebarCategory.fromJson(json) : null;
+  SidebarCategory? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, SidebarCategory.fromJson)
+      : null;
   @override
   Object? toJson(SidebarCategory? object) => object?.toJson();
 }
@@ -6247,7 +6384,8 @@ class LenientListOfSidebarCategory
   List<SidebarCategory> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) SidebarCategory.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, SidebarCategory.fromJson),
         ]
       : const [];
   @override
@@ -6264,8 +6402,8 @@ class LenientMapOfSidebarCategory
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: SidebarCategory.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, SidebarCategory.fromJson),
         }
       : null;
   @override
@@ -6279,7 +6417,7 @@ class LenientSidebarCategoryWithChannels
   @override
   SidebarCategoryWithChannels? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? SidebarCategoryWithChannels.fromJson(json)
+      ? decodeOrSkip(json, SidebarCategoryWithChannels.fromJson)
       : null;
   @override
   Object? toJson(SidebarCategoryWithChannels? object) => object?.toJson();
@@ -6293,7 +6431,7 @@ class LenientListOfSidebarCategoryWithChannels
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              SidebarCategoryWithChannels.fromJson(e),
+              ?decodeOrSkip(e, SidebarCategoryWithChannels.fromJson),
         ]
       : const [];
   @override
@@ -6311,10 +6449,8 @@ class LenientMapOfSidebarCategoryWithChannels
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: SidebarCategoryWithChannels.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, SidebarCategoryWithChannels.fromJson),
         }
       : null;
   @override
@@ -6326,7 +6462,7 @@ class LenientStatus implements JsonConverter<Status?, Object?> {
   const LenientStatus();
   @override
   Status? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Status.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, Status.fromJson) : null;
   @override
   Object? toJson(Status? object) => object?.toJson();
 }
@@ -6337,7 +6473,7 @@ class LenientListOfStatus implements JsonConverter<List<Status>, Object?> {
   List<Status> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Status.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Status.fromJson),
         ]
       : const [];
   @override
@@ -6351,8 +6487,8 @@ class LenientMapOfStatus
   Map<String, Status>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Status.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Status.fromJson),
         }
       : null;
   @override
@@ -6363,8 +6499,9 @@ class LenientMapOfStatus
 class LenientStatusOk implements JsonConverter<StatusOk?, Object?> {
   const LenientStatusOk();
   @override
-  StatusOk? fromJson(Object? json) =>
-      json is Map<String, Object?> ? StatusOk.fromJson(json) : null;
+  StatusOk? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, StatusOk.fromJson)
+      : null;
   @override
   Object? toJson(StatusOk? object) => object?.toJson();
 }
@@ -6375,7 +6512,7 @@ class LenientListOfStatusOk implements JsonConverter<List<StatusOk>, Object?> {
   List<StatusOk> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) StatusOk.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, StatusOk.fromJson),
         ]
       : const [];
   @override
@@ -6389,8 +6526,8 @@ class LenientMapOfStatusOk
   Map<String, StatusOk>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: StatusOk.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, StatusOk.fromJson),
         }
       : null;
   @override
@@ -6402,7 +6539,7 @@ class LenientTeam implements JsonConverter<Team?, Object?> {
   const LenientTeam();
   @override
   Team? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Team.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, Team.fromJson) : null;
   @override
   Object? toJson(Team? object) => object?.toJson();
 }
@@ -6413,7 +6550,7 @@ class LenientListOfTeam implements JsonConverter<List<Team>, Object?> {
   List<Team> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Team.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Team.fromJson),
         ]
       : const [];
   @override
@@ -6426,8 +6563,8 @@ class LenientMapOfTeam implements JsonConverter<Map<String, Team>?, Object?> {
   Map<String, Team>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Team.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Team.fromJson),
         }
       : null;
   @override
@@ -6438,8 +6575,9 @@ class LenientMapOfTeam implements JsonConverter<Map<String, Team>?, Object?> {
 class LenientTeamMember implements JsonConverter<TeamMember?, Object?> {
   const LenientTeamMember();
   @override
-  TeamMember? fromJson(Object? json) =>
-      json is Map<String, Object?> ? TeamMember.fromJson(json) : null;
+  TeamMember? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, TeamMember.fromJson)
+      : null;
   @override
   Object? toJson(TeamMember? object) => object?.toJson();
 }
@@ -6451,7 +6589,8 @@ class LenientListOfTeamMember
   List<TeamMember> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) TeamMember.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, TeamMember.fromJson),
         ]
       : const [];
   @override
@@ -6468,8 +6607,8 @@ class LenientMapOfTeamMember
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: TeamMember.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, TeamMember.fromJson),
         }
       : null;
   @override
@@ -6480,8 +6619,9 @@ class LenientMapOfTeamMember
 class LenientTeamStats implements JsonConverter<TeamStats?, Object?> {
   const LenientTeamStats();
   @override
-  TeamStats? fromJson(Object? json) =>
-      json is Map<String, Object?> ? TeamStats.fromJson(json) : null;
+  TeamStats? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, TeamStats.fromJson)
+      : null;
   @override
   Object? toJson(TeamStats? object) => object?.toJson();
 }
@@ -6493,7 +6633,7 @@ class LenientListOfTeamStats
   List<TeamStats> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) TeamStats.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, TeamStats.fromJson),
         ]
       : const [];
   @override
@@ -6509,8 +6649,8 @@ class LenientMapOfTeamStats
   Map<String, TeamStats>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: TeamStats.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, TeamStats.fromJson),
         }
       : null;
   @override
@@ -6521,8 +6661,9 @@ class LenientMapOfTeamStats
 class LenientTeamUnread implements JsonConverter<TeamUnread?, Object?> {
   const LenientTeamUnread();
   @override
-  TeamUnread? fromJson(Object? json) =>
-      json is Map<String, Object?> ? TeamUnread.fromJson(json) : null;
+  TeamUnread? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, TeamUnread.fromJson)
+      : null;
   @override
   Object? toJson(TeamUnread? object) => object?.toJson();
 }
@@ -6534,7 +6675,8 @@ class LenientListOfTeamUnread
   List<TeamUnread> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) TeamUnread.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, TeamUnread.fromJson),
         ]
       : const [];
   @override
@@ -6551,8 +6693,8 @@ class LenientMapOfTeamUnread
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: TeamUnread.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, TeamUnread.fromJson),
         }
       : null;
   @override
@@ -6563,8 +6705,9 @@ class LenientMapOfTeamUnread
 class LenientTermsOfService implements JsonConverter<TermsOfService?, Object?> {
   const LenientTermsOfService();
   @override
-  TermsOfService? fromJson(Object? json) =>
-      json is Map<String, Object?> ? TermsOfService.fromJson(json) : null;
+  TermsOfService? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, TermsOfService.fromJson)
+      : null;
   @override
   Object? toJson(TermsOfService? object) => object?.toJson();
 }
@@ -6576,7 +6719,8 @@ class LenientListOfTermsOfService
   List<TermsOfService> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) TermsOfService.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, TermsOfService.fromJson),
         ]
       : const [];
   @override
@@ -6593,8 +6737,8 @@ class LenientMapOfTermsOfService
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: TermsOfService.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, TermsOfService.fromJson),
         }
       : null;
   @override
@@ -6605,8 +6749,9 @@ class LenientMapOfTermsOfService
 class LenientTimezone implements JsonConverter<Timezone?, Object?> {
   const LenientTimezone();
   @override
-  Timezone? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Timezone.fromJson(json) : null;
+  Timezone? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Timezone.fromJson)
+      : null;
   @override
   Object? toJson(Timezone? object) => object?.toJson();
 }
@@ -6617,7 +6762,7 @@ class LenientListOfTimezone implements JsonConverter<List<Timezone>, Object?> {
   List<Timezone> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Timezone.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Timezone.fromJson),
         ]
       : const [];
   @override
@@ -6631,8 +6776,8 @@ class LenientMapOfTimezone
   Map<String, Timezone>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Timezone.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Timezone.fromJson),
         }
       : null;
   @override
@@ -6644,7 +6789,7 @@ class LenientUser implements JsonConverter<User?, Object?> {
   const LenientUser();
   @override
   User? fromJson(Object? json) =>
-      json is Map<String, Object?> ? User.fromJson(json) : null;
+      json is Map<String, Object?> ? decodeOrSkip(json, User.fromJson) : null;
   @override
   Object? toJson(User? object) => object?.toJson();
 }
@@ -6655,7 +6800,7 @@ class LenientListOfUser implements JsonConverter<List<User>, Object?> {
   List<User> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) User.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, User.fromJson),
         ]
       : const [];
   @override
@@ -6668,8 +6813,8 @@ class LenientMapOfUser implements JsonConverter<Map<String, User>?, Object?> {
   Map<String, User>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: User.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, User.fromJson),
         }
       : null;
   @override
@@ -6681,8 +6826,9 @@ class LenientUserAutocomplete
     implements JsonConverter<UserAutocomplete?, Object?> {
   const LenientUserAutocomplete();
   @override
-  UserAutocomplete? fromJson(Object? json) =>
-      json is Map<String, Object?> ? UserAutocomplete.fromJson(json) : null;
+  UserAutocomplete? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, UserAutocomplete.fromJson)
+      : null;
   @override
   Object? toJson(UserAutocomplete? object) => object?.toJson();
 }
@@ -6694,7 +6840,8 @@ class LenientListOfUserAutocomplete
   List<UserAutocomplete> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) UserAutocomplete.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, UserAutocomplete.fromJson),
         ]
       : const [];
   @override
@@ -6711,10 +6858,8 @@ class LenientMapOfUserAutocomplete
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: UserAutocomplete.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, UserAutocomplete.fromJson),
         }
       : null;
   @override
@@ -6726,8 +6871,9 @@ class LenientUserNotifyProps
     implements JsonConverter<UserNotifyProps?, Object?> {
   const LenientUserNotifyProps();
   @override
-  UserNotifyProps? fromJson(Object? json) =>
-      json is Map<String, Object?> ? UserNotifyProps.fromJson(json) : null;
+  UserNotifyProps? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, UserNotifyProps.fromJson)
+      : null;
   @override
   Object? toJson(UserNotifyProps? object) => object?.toJson();
 }
@@ -6739,7 +6885,8 @@ class LenientListOfUserNotifyProps
   List<UserNotifyProps> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) UserNotifyProps.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, UserNotifyProps.fromJson),
         ]
       : const [];
   @override
@@ -6756,8 +6903,8 @@ class LenientMapOfUserNotifyProps
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: UserNotifyProps.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, UserNotifyProps.fromJson),
         }
       : null;
   @override
@@ -6769,8 +6916,9 @@ class LenientUserTermsOfService
     implements JsonConverter<UserTermsOfService?, Object?> {
   const LenientUserTermsOfService();
   @override
-  UserTermsOfService? fromJson(Object? json) =>
-      json is Map<String, Object?> ? UserTermsOfService.fromJson(json) : null;
+  UserTermsOfService? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, UserTermsOfService.fromJson)
+      : null;
   @override
   Object? toJson(UserTermsOfService? object) => object?.toJson();
 }
@@ -6782,7 +6930,8 @@ class LenientListOfUserTermsOfService
   List<UserTermsOfService> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) UserTermsOfService.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, UserTermsOfService.fromJson),
         ]
       : const [];
   @override
@@ -6799,10 +6948,8 @@ class LenientMapOfUserTermsOfService
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: UserTermsOfService.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, UserTermsOfService.fromJson),
         }
       : null;
   @override
@@ -6813,8 +6960,9 @@ class LenientMapOfUserTermsOfService
 class LenientUserThread implements JsonConverter<UserThread?, Object?> {
   const LenientUserThread();
   @override
-  UserThread? fromJson(Object? json) =>
-      json is Map<String, Object?> ? UserThread.fromJson(json) : null;
+  UserThread? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, UserThread.fromJson)
+      : null;
   @override
   Object? toJson(UserThread? object) => object?.toJson();
 }
@@ -6826,7 +6974,8 @@ class LenientListOfUserThread
   List<UserThread> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) UserThread.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, UserThread.fromJson),
         ]
       : const [];
   @override
@@ -6843,8 +6992,8 @@ class LenientMapOfUserThread
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: UserThread.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, UserThread.fromJson),
         }
       : null;
   @override
@@ -6855,8 +7004,9 @@ class LenientMapOfUserThread
 class LenientUserThreads implements JsonConverter<UserThreads?, Object?> {
   const LenientUserThreads();
   @override
-  UserThreads? fromJson(Object? json) =>
-      json is Map<String, Object?> ? UserThreads.fromJson(json) : null;
+  UserThreads? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, UserThreads.fromJson)
+      : null;
   @override
   Object? toJson(UserThreads? object) => object?.toJson();
 }
@@ -6868,7 +7018,8 @@ class LenientListOfUserThreads
   List<UserThreads> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) UserThreads.fromJson(e),
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, UserThreads.fromJson),
         ]
       : const [];
   @override
@@ -6885,8 +7036,8 @@ class LenientMapOfUserThreads
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: UserThreads.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, UserThreads.fromJson),
         }
       : null;
   @override
@@ -6897,8 +7048,9 @@ class LenientMapOfUserThreads
 class LenientWebapp2 implements JsonConverter<Webapp2?, Object?> {
   const LenientWebapp2();
   @override
-  Webapp2? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Webapp2.fromJson(json) : null;
+  Webapp2? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, Webapp2.fromJson)
+      : null;
   @override
   Object? toJson(Webapp2? object) => object?.toJson();
 }
@@ -6909,7 +7061,7 @@ class LenientListOfWebapp2 implements JsonConverter<List<Webapp2>, Object?> {
   List<Webapp2> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) Webapp2.fromJson(e),
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Webapp2.fromJson),
         ]
       : const [];
   @override
@@ -6923,8 +7075,8 @@ class LenientMapOfWebapp2
   Map<String, Webapp2>? fromJson(Object? json) => json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Webapp2.fromJson(e.value! as Map<String, Object?>),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Webapp2.fromJson),
         }
       : null;
   @override

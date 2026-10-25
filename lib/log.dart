@@ -33,12 +33,20 @@ abstract final class Log {
     StackTrace? stack,
   ]) {
     if (!kDebugMode && level < 900) return;
+    final text = redact(message);
+    final cause = error == null ? null : redact(error.toString());
     developer.log(
-      redact(message),
+      text,
       name: area,
       level: level,
-      error: error == null ? null : redact(error.toString()),
+      error: cause,
       stackTrace: stack,
     );
+    // developer.log never reaches logcat; problems should, on one line.
+    if (level >= 900) {
+      debugPrint(
+        '$area: $text${cause == null ? '' : ' (${cause.split('\n').first})'}',
+      );
+    }
   }
 }

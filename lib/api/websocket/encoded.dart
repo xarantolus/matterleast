@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/websocket/dialog.dart';
 
 /// Many WebSocket payload fields are JSON strings that hold JSON. These
@@ -134,10 +135,14 @@ class EncodedDialog extends _Decoding<OpenDialog?> {
 class UserObject extends _Decoding<api.User?> {
   const UserObject();
   @override
-  api.User? fromJson(Object? json) =>
-      json is Map<String, Object?> ? api.User.fromJson(json) : null;
+  api.User? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, api.User.fromJson)
+      : null;
 }
 
-extension<T extends Object> on T? {
-  R? let<R>(R Function(T) f) => this == null ? null : f(this as T);
+extension on Map<String, Object?>? {
+  R? let<R extends Object>(R Function(Map<String, Object?>) decode) {
+    final json = this;
+    return json == null ? null : decodeOrSkip(json, decode);
+  }
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/log.dart';
 
 /// Pure mappings from API models to table companions. Fields the server did
 /// not send stay absent, so an upsert never erases a known value.
@@ -11,6 +12,25 @@ Value<T> _opt<T extends Object>(T? value) =>
     value == null ? const Value.absent() : Value(value);
 
 String? _json(Object? value) => value == null ? null : jsonEncode(value);
+
+String _postJson(Object? value) => jsonEncode(value, toEncodable: _encodable);
+
+// Generated enums throw on toJson for values the spec does not list (a newer
+// server's embed type, say); those are stored as null instead.
+Object? _encodable(Object? value) => switch (value) {
+  api.Type2(:final json) => json,
+  api.PostPriorityPriority(:final json) => json,
+  final api.Post v => v.toJson(),
+  final api.PostMetadata v => v.toJson(),
+  final api.Embeds v => v.toJson(),
+  final api.Emoji v => v.toJson(),
+  final api.FileInfo v => v.toJson(),
+  final api.Reaction v => v.toJson(),
+  final api.PostPriority v => v.toJson(),
+  final api.PostAcknowledgement v => v.toJson(),
+  final api.User v => v.toJson(),
+  _ => throw JsonUnsupportedObjectError(value),
+};
 
 UsersCompanion userCompanion(api.User u) => UsersCompanion(
   id: Value(u.id!),
@@ -89,43 +109,55 @@ CategoriesCompanion categoryCompanion(
   muted: _opt(c.muted),
 );
 
-PostsCompanion postCompanion(api.Post p) => PostsCompanion(
-  id: Value(p.id!),
-  channelId: Value(p.channelId!),
-  rootId: Value(p.rootId ?? ''),
-  userId: Value(p.userId ?? ''),
-  createAt: Value(p.createAt!),
-  updateAt: _opt(p.updateAt),
-  editAt: Value(p.editAt),
-  deleteAt: Value(p.deleteAt),
-  type: Value(p.type ?? ''),
-  message: Value(p.message ?? ''),
-  isPinned: Value(p.isPinned ?? false),
-  replyCount: _opt(p.replyCount),
-  lastReplyAt: _opt(p.lastReplyAt),
-  originalId: _opt(p.originalId),
-  // The server echoes it only right after creation; keeping it is what
-  // keeps the row's list key once our own post is confirmed.
-  pendingPostId: (p.pendingPostId?.isEmpty ?? true)
-      ? const Value.absent()
-      : Value(p.pendingPostId!),
-  sendState: const Value(null),
-  propsJson: Value(_json(p.props)),
-  // Some lists (followed threads) send posts without metadata; what is
-  // stored stays then.
-  metadataJson: p.metadata == null
-      ? const Value.absent()
-      : Value(_json(p.metadata!.toJson())),
-  fileCount: p.metadata == null
-      ? const Value.absent()
-      : Value(p.metadata!.files.length),
-  reactionCount: p.metadata == null
-      ? const Value.absent()
-      : Value(p.metadata!.reactions.length),
-  participantIdsJson: p.participants.isEmpty
-      ? const Value.absent()
-      : Value(jsonEncode([for (final u in p.participants) ?u.id])),
-);
+/// [postCompanion], or the post without props and metadata when those cannot
+/// be stored, so one odd post never fails the page it came in.
+PostsCompanion safePostCompanion(api.Post p) {
+  try {
+    return postCompanion(p);
+  } on Object catch (e) {
+    Log.warn('store', 'post ${p.id} stored without details: ${e.runtimeType}');
+    return postCompanion(p, details: false);
+  }
+}
+
+PostsCompanion postCompanion(api.Post p, {bool details = true}) =>
+    PostsCompanion(
+      id: Value(p.id!),
+      channelId: Value(p.channelId!),
+      rootId: Value(p.rootId ?? ''),
+      userId: Value(p.userId ?? ''),
+      createAt: Value(p.createAt!),
+      updateAt: _opt(p.updateAt),
+      editAt: Value(p.editAt),
+      deleteAt: Value(p.deleteAt),
+      type: Value(p.type ?? ''),
+      message: Value(p.message ?? ''),
+      isPinned: Value(p.isPinned ?? false),
+      replyCount: _opt(p.replyCount),
+      lastReplyAt: _opt(p.lastReplyAt),
+      originalId: _opt(p.originalId),
+      // The server echoes it only right after creation; keeping it is what
+      // keeps the row's list key once our own post is confirmed.
+      pendingPostId: (p.pendingPostId?.isEmpty ?? true)
+          ? const Value.absent()
+          : Value(p.pendingPostId!),
+      sendState: const Value(null),
+      propsJson: Value(!details || p.props == null ? null : _postJson(p.props)),
+      // Some lists (followed threads) send posts without metadata; what is
+      // stored stays then.
+      metadataJson: p.metadata == null
+          ? const Value.absent()
+          : Value(details ? _postJson(p.metadata) : null),
+      fileCount: p.metadata == null
+          ? const Value.absent()
+          : Value(p.metadata!.files.length),
+      reactionCount: p.metadata == null
+          ? const Value.absent()
+          : Value(p.metadata!.reactions.length),
+      participantIdsJson: p.participants.isEmpty
+          ? const Value.absent()
+          : Value(jsonEncode([for (final u in p.participants) ?u.id])),
+    );
 
 FilesCompanion fileCompanion(api.FileInfo f, String postId) => FilesCompanion(
   id: Value(f.id!),
