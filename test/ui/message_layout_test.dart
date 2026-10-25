@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/api/json/post_extras.dart';
+import 'package:matterleast/app/app.dart';
 import 'package:matterleast/markdown/parse_post.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/attachment_card.dart';
@@ -88,5 +90,27 @@ void main() {
     expect(attachmentColor('#0f0'), const Color(0xFF00FF00));
     expect(attachmentColor('danger'), const Color(0xFFE40303));
     expect(attachmentColor('nope'), isNull);
+  });
+
+  testWidgets('an attachment with a colour bar draws', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: MatterleastApp.lightTheme,
+        home: const Scaffold(
+          body: AttachmentCard(
+            attachment: Attachment(
+              color: 'good',
+              title: 'Pipeline passed',
+              text: 'All tests passed.',
+              fields: [AttachmentField(title: 'Branch', value: 'main')],
+            ),
+            keyPrefix: 'p',
+            imageSizes: {},
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('Pipeline passed'), findsOneWidget);
   });
 }

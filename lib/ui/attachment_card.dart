@@ -63,86 +63,92 @@ class AttachmentCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (a.pretext?.isNotEmpty ?? false) markdown('pretext', a.pretext!),
+          // A rounded border must be one colour, so the bar is a second
+          // border inside the clip.
           Container(
             margin: const EdgeInsets.only(top: Spacing.xs),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(color: bar, width: 4),
-                top: BorderSide(color: tokens.hairline),
-                right: BorderSide(color: tokens.hairline),
-                bottom: BorderSide(color: tokens.hairline),
-              ),
+            foregroundDecoration: BoxDecoration(
+              border: Border.all(color: tokens.hairline),
               borderRadius: BorderRadius.circular(4),
             ),
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: Spacing.xs,
-              children: [
-                if (a.authorName?.isNotEmpty ?? false)
-                  Text(
-                    a.authorName!,
-                    style: text.labelMedium?.copyWith(color: tokens.muted),
-                  ),
-                if (a.title?.isNotEmpty ?? false)
-                  InkWell(
-                    onTap: env == null || (a.titleLink?.isEmpty ?? true)
-                        ? null
-                        : () => env.onLink(
-                            classifyLink(a.titleLink!, env.server),
-                          ),
-                    child: Text(
-                      a.title!,
-                      style: text.titleSmall?.copyWith(
-                        color: (a.titleLink?.isNotEmpty ?? false)
-                            ? tokens.accent
-                            : tokens.text,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(left: BorderSide(color: bar, width: 4)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(Spacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: Spacing.xs,
+                  children: [
+                    if (a.authorName?.isNotEmpty ?? false)
+                      Text(
+                        a.authorName!,
+                        style: text.labelMedium?.copyWith(color: tokens.muted),
                       ),
-                    ),
-                  ),
-                if (a.text?.isNotEmpty ?? false) markdown('text', a.text!),
-                if (a.fields.isNotEmpty)
-                  _Fields(fields: a.fields, prefix: keyPrefix),
-                if (imageUrl != null && measured != null)
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final box = imageBox(
-                        measuredWidth: measured.width,
-                        measuredHeight: measured.height,
-                        maxWidth: constraints.maxWidth,
-                        maxHeight: MediaQuery.sizeOf(context).height * 0.4,
-                      );
-                      return box == null
-                          ? const SizedBox.shrink()
-                          : Align(
-                              alignment: Alignment.centerLeft,
-                              child: ImageSlot(url: imageUrl, size: box),
-                            );
-                    },
-                  ),
-                if (a.actions.isNotEmpty)
-                  Wrap(
-                    spacing: Spacing.sm,
-                    children: [
-                      for (final action in a.actions)
-                        action.type == 'select'
-                            ? OutlinedButton.icon(
-                                onPressed: null,
-                                icon: const Icon(Icons.arrow_drop_down),
-                                label: Text(action.name ?? 'Select'),
-                              )
-                            : OutlinedButton(
-                                onPressed: null,
-                                child: Text(action.name ?? ''),
+                    if (a.title?.isNotEmpty ?? false)
+                      InkWell(
+                        onTap: env == null || (a.titleLink?.isEmpty ?? true)
+                            ? null
+                            : () => env.onLink(
+                                classifyLink(a.titleLink!, env.server),
                               ),
-                    ],
-                  ),
-                if (a.footer?.isNotEmpty ?? false)
-                  Text(
-                    a.footer!,
-                    style: text.bodySmall?.copyWith(color: tokens.muted),
-                  ),
-              ],
+                        child: Text(
+                          a.title!,
+                          style: text.titleSmall?.copyWith(
+                            color: (a.titleLink?.isNotEmpty ?? false)
+                                ? tokens.accent
+                                : tokens.text,
+                          ),
+                        ),
+                      ),
+                    if (a.text?.isNotEmpty ?? false) markdown('text', a.text!),
+                    if (a.fields.isNotEmpty)
+                      _Fields(fields: a.fields, prefix: keyPrefix),
+                    if (imageUrl != null && measured != null)
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final box = imageBox(
+                            measuredWidth: measured.width,
+                            measuredHeight: measured.height,
+                            maxWidth: constraints.maxWidth,
+                            maxHeight: MediaQuery.sizeOf(context).height * 0.4,
+                          );
+                          return box == null
+                              ? const SizedBox.shrink()
+                              : Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: ImageSlot(url: imageUrl, size: box),
+                                );
+                        },
+                      ),
+                    if (a.actions.isNotEmpty)
+                      Wrap(
+                        spacing: Spacing.sm,
+                        children: [
+                          for (final action in a.actions)
+                            action.type == 'select'
+                                ? OutlinedButton.icon(
+                                    onPressed: null,
+                                    icon: const Icon(Icons.arrow_drop_down),
+                                    label: Text(action.name ?? 'Select'),
+                                  )
+                                : OutlinedButton(
+                                    onPressed: null,
+                                    child: Text(action.name ?? ''),
+                                  ),
+                        ],
+                      ),
+                    if (a.footer?.isNotEmpty ?? false)
+                      Text(
+                        a.footer!,
+                        style: text.bodySmall?.copyWith(color: tokens.muted),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

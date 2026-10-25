@@ -27,7 +27,6 @@ class ReactionsBar extends StatelessWidget {
               selected: group.mine,
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 2),
-              tooltip: ':${group.emojiName}:',
               label: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
