@@ -8,10 +8,16 @@
 #   emulator.sh stop
 #   emulator.sh fix-bars     restart SystemUI when the status bar is drawn clipped
 #   emulator.sh status
+#
+# EMU_PORT picks the instance (default 5554); every command then talks to
+# emulator-$EMU_PORT, so two agents can each drive their own device:
+#   EMU_PORT=5556 emulator.sh start
 set -uo pipefail
 
 cmd=${1:-status}
 avd=${2:-${AVD_NAME:-matterleast}}
+port=${EMU_PORT:-5554}
+export ANDROID_SERIAL="emulator-$port"
 BOOT_TIMEOUT=${BOOT_TIMEOUT:-300}
 IDLE_TIMEOUT=${IDLE_TIMEOUT:-120}
 
@@ -27,10 +33,10 @@ start)
     fi
 
     # -read-only so a second container can boot the same AVD.
-    nohup emulator -avd "$avd" -read-only \
+    nohup emulator -avd "$avd" -read-only -port "$port" \
         -no-window -no-audio -no-boot-anim -no-snapshot \
         -gpu swiftshader_indirect -netdelay none -netspeed full \
-        > /tmp/emulator.log 2>&1 &
+        > "/tmp/emulator-$port.log" 2>&1 &
 
     adb wait-for-device
     waited=0
@@ -38,11 +44,11 @@ start)
         sleep 3
         waited=$((waited + 3))
         if [ "$waited" -ge "$BOOT_TIMEOUT" ]; then
-            echo "emulator: did not boot within ${BOOT_TIMEOUT}s (see /tmp/emulator.log)" >&2
+            echo "emulator: did not boot within ${BOOT_TIMEOUT}s (see /tmp/emulator-$port.log)" >&2
             exit 1
         fi
     done
-    adb devices | grep emulator
+    adb devices | grep "$ANDROID_SERIAL"
     echo "emulator: booted in ${waited}s"
     ;;
 wait-idle)
@@ -76,7 +82,7 @@ stop)
     adb emu kill 2>/dev/null && echo "emulator: stopped" || echo "emulator: not running"
     ;;
 status)
-    adb devices | grep emulator || echo "emulator: not running"
+    adb devices | grep "$ANDROID_SERIAL" || echo "emulator: not running"
     ;;
 *)
     sed -n '2,10p' "$0"
