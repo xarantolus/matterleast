@@ -15,6 +15,7 @@ import '../models/api_v4_users_password_reset_send_request_body.dart';
 import '../models/api_v4_users_request_body.dart';
 import '../models/api_v4_users_search_request_body.dart';
 import '../models/api_v4_users_sessions_device_request_body.dart';
+import '../models/api_v4_users_user_id_password_request_body.dart';
 import '../models/api_v4_users_user_id_patch_request_body.dart';
 import '../models/api_v4_users_user_id_request_body.dart';
 import '../models/api_v4_users_user_id_terms_of_service_request_body.dart';
@@ -149,6 +150,12 @@ abstract class UsersClient {
 
   @POST('/api/v4/users/{user_id}/demote')
   Future<StatusOk> demoteUserToGuest({@Path('user_id') required String userId});
+
+  @PUT('/api/v4/users/{user_id}/password')
+  Future<StatusOk> updateUserPassword({
+    @Path('user_id') required String userId,
+    @Body() required ApiV4UsersUserIdPasswordRequestBody body,
+  });
 
   @POST('/api/v4/users/password/reset/send')
   Future<StatusOk> sendPasswordResetEmail({

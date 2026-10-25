@@ -133,6 +133,9 @@ swagger_parser:
     - {apply_to_type: "ApiV4TeamsTeamIdChannelsSearchRequestBody?", parser_name: LenientApiV4TeamsTeamIdChannelsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4TeamsTeamIdChannelsSearchRequestBody>", parser_name: LenientListOfApiV4TeamsTeamIdChannelsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4TeamsTeamIdChannelsSearchRequestBody>?", parser_name: LenientMapOfApiV4TeamsTeamIdChannelsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "ApiV4TeamsTeamIdFilesSearchRequestBody?", parser_name: LenientApiV4TeamsTeamIdFilesSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<ApiV4TeamsTeamIdFilesSearchRequestBody>", parser_name: LenientListOfApiV4TeamsTeamIdFilesSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, ApiV4TeamsTeamIdFilesSearchRequestBody>?", parser_name: LenientMapOfApiV4TeamsTeamIdFilesSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "ApiV4TeamsTeamIdInviteGuestsEmailRequestBody?", parser_name: LenientApiV4TeamsTeamIdInviteGuestsEmailRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4TeamsTeamIdInviteGuestsEmailRequestBody>", parser_name: LenientListOfApiV4TeamsTeamIdInviteGuestsEmailRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4TeamsTeamIdInviteGuestsEmailRequestBody>?", parser_name: LenientMapOfApiV4TeamsTeamIdInviteGuestsEmailRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -172,6 +175,9 @@ swagger_parser:
     - {apply_to_type: "ApiV4UsersUserIdCustomProfileAttributesRequestBody?", parser_name: LenientApiV4UsersUserIdCustomProfileAttributesRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4UsersUserIdCustomProfileAttributesRequestBody>", parser_name: LenientListOfApiV4UsersUserIdCustomProfileAttributesRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4UsersUserIdCustomProfileAttributesRequestBody>?", parser_name: LenientMapOfApiV4UsersUserIdCustomProfileAttributesRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "ApiV4UsersUserIdPasswordRequestBody?", parser_name: LenientApiV4UsersUserIdPasswordRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<ApiV4UsersUserIdPasswordRequestBody>", parser_name: LenientListOfApiV4UsersUserIdPasswordRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, ApiV4UsersUserIdPasswordRequestBody>?", parser_name: LenientMapOfApiV4UsersUserIdPasswordRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "ApiV4UsersUserIdPatchRequestBody?", parser_name: LenientApiV4UsersUserIdPatchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4UsersUserIdPatchRequestBody>", parser_name: LenientListOfApiV4UsersUserIdPatchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4UsersUserIdPatchRequestBody>?", parser_name: LenientMapOfApiV4UsersUserIdPatchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -247,6 +253,9 @@ swagger_parser:
     - {apply_to_type: "FileInfo?", parser_name: LenientFileInfo, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<FileInfo>", parser_name: LenientListOfFileInfo, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, FileInfo>?", parser_name: LenientMapOfFileInfo, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "FileInfoList?", parser_name: LenientFileInfoList, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<FileInfoList>", parser_name: LenientListOfFileInfoList, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, FileInfoList>?", parser_name: LenientMapOfFileInfoList, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "GetApiV4FilesFileIdLinkResponse?", parser_name: LenientGetApiV4FilesFileIdLinkResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<GetApiV4FilesFileIdLinkResponse>", parser_name: LenientListOfGetApiV4FilesFileIdLinkResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, GetApiV4FilesFileIdLinkResponse>?", parser_name: LenientMapOfGetApiV4FilesFileIdLinkResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -509,6 +518,7 @@ swagger_parser:
     - "/api/v4/teams/{team_id}/channels/search_autocomplete"
     - "/api/v4/teams/{team_id}/commands/autocomplete"
     - "/api/v4/teams/{team_id}/commands/autocomplete_suggestions"
+    - "/api/v4/teams/{team_id}/files/search"
     - "/api/v4/teams/{team_id}/groups"
     - "/api/v4/teams/{team_id}/invite-guests/email"
     - "/api/v4/teams/{team_id}/invite/email"
@@ -546,6 +556,7 @@ swagger_parser:
     - "/api/v4/users/{user_id}/demote"
     - "/api/v4/users/{user_id}/groups"
     - "/api/v4/users/{user_id}/image"
+    - "/api/v4/users/{user_id}/password"
     - "/api/v4/users/{user_id}/patch"
     - "/api/v4/users/{user_id}/posts/flagged"
     - "/api/v4/users/{user_id}/posts/{post_id}/ack"

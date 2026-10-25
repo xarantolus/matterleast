@@ -6,10 +6,12 @@ import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
 import '../models/api_v4_teams_request_body.dart';
+import '../models/api_v4_teams_team_id_files_search_request_body.dart';
 import '../models/api_v4_teams_team_id_invite_guests_email_request_body.dart';
 import '../models/api_v4_teams_team_id_members_request_body.dart';
 import '../models/api_v4_teams_team_id_patch_request_body.dart';
 import '../models/api_v4_teams_team_id_request_body.dart';
+import '../models/file_info_list.dart';
 import '../models/status_ok.dart';
 import '../models/team.dart';
 import '../models/team_member.dart';
@@ -125,5 +127,11 @@ abstract class TeamsClient {
     @Body() required ApiV4TeamsTeamIdInviteGuestsEmailRequestBody body,
     @Query('graceful') bool? graceful,
     @Query('guest_magic_link') bool? guestMagicLink,
+  });
+
+  @POST('/api/v4/teams/{team_id}/files/search')
+  Future<FileInfoList> searchFiles({
+    @Path('team_id') required String teamId,
+    @Body() required ApiV4TeamsTeamIdFilesSearchRequestBody body,
   });
 }

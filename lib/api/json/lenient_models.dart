@@ -37,6 +37,7 @@ import 'package:matterleast/api/generated/models/api_v4_posts_schedule_scheduled
 import 'package:matterleast/api/generated/models/api_v4_remotecluster_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_channels_search_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_teams_team_id_files_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_invite_guests_email_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_members_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_patch_request_body.dart';
@@ -50,6 +51,7 @@ import 'package:matterleast/api/generated/models/api_v4_users_request_body.dart'
 import 'package:matterleast/api/generated/models/api_v4_users_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_sessions_device_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_custom_profile_attributes_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_users_user_id_password_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_patch_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_status_custom_recent_delete_request_body.dart';
@@ -75,6 +77,7 @@ import 'package:matterleast/api/generated/models/data_retention_policy_for_team.
 import 'package:matterleast/api/generated/models/embeds.dart';
 import 'package:matterleast/api/generated/models/emoji.dart';
 import 'package:matterleast/api/generated/models/file_info.dart';
+import 'package:matterleast/api/generated/models/file_info_list.dart';
 import 'package:matterleast/api/generated/models/get_api_v4_files_file_id_link_response.dart';
 import 'package:matterleast/api/generated/models/get_api_v4_license_load_metric_response.dart';
 import 'package:matterleast/api/generated/models/get_api_v4_users_sessions_attributes_manifest_response.dart';
@@ -2103,6 +2106,61 @@ class LenientMapOfApiV4TeamsTeamIdChannelsSearchRequestBody
   ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
+class LenientApiV4TeamsTeamIdFilesSearchRequestBody
+    implements JsonConverter<ApiV4TeamsTeamIdFilesSearchRequestBody?, Object?> {
+  const LenientApiV4TeamsTeamIdFilesSearchRequestBody();
+  @override
+  ApiV4TeamsTeamIdFilesSearchRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? ApiV4TeamsTeamIdFilesSearchRequestBody.fromJson(json)
+      : null;
+  @override
+  Object? toJson(ApiV4TeamsTeamIdFilesSearchRequestBody? object) =>
+      object?.toJson();
+}
+
+class LenientListOfApiV4TeamsTeamIdFilesSearchRequestBody
+    implements
+        JsonConverter<List<ApiV4TeamsTeamIdFilesSearchRequestBody>, Object?> {
+  const LenientListOfApiV4TeamsTeamIdFilesSearchRequestBody();
+  @override
+  List<ApiV4TeamsTeamIdFilesSearchRequestBody> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ApiV4TeamsTeamIdFilesSearchRequestBody.fromJson(e),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4TeamsTeamIdFilesSearchRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4TeamsTeamIdFilesSearchRequestBody
+    implements
+        JsonConverter<
+          Map<String, ApiV4TeamsTeamIdFilesSearchRequestBody>?,
+          Object?
+        > {
+  const LenientMapOfApiV4TeamsTeamIdFilesSearchRequestBody();
+  @override
+  Map<String, ApiV4TeamsTeamIdFilesSearchRequestBody>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value is Map<String, Object?>)
+              e.key: ApiV4TeamsTeamIdFilesSearchRequestBody.fromJson(
+                e.value! as Map<String, Object?>,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, ApiV4TeamsTeamIdFilesSearchRequestBody>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
 class LenientApiV4TeamsTeamIdInviteGuestsEmailRequestBody
     implements
         JsonConverter<ApiV4TeamsTeamIdInviteGuestsEmailRequestBody?, Object?> {
@@ -2800,6 +2858,61 @@ class LenientMapOfApiV4UsersUserIdCustomProfileAttributesRequestBody
   Object? toJson(
     Map<String, ApiV4UsersUserIdCustomProfileAttributesRequestBody>? object,
   ) => object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4UsersUserIdPasswordRequestBody
+    implements JsonConverter<ApiV4UsersUserIdPasswordRequestBody?, Object?> {
+  const LenientApiV4UsersUserIdPasswordRequestBody();
+  @override
+  ApiV4UsersUserIdPasswordRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? ApiV4UsersUserIdPasswordRequestBody.fromJson(json)
+      : null;
+  @override
+  Object? toJson(ApiV4UsersUserIdPasswordRequestBody? object) =>
+      object?.toJson();
+}
+
+class LenientListOfApiV4UsersUserIdPasswordRequestBody
+    implements
+        JsonConverter<List<ApiV4UsersUserIdPasswordRequestBody>, Object?> {
+  const LenientListOfApiV4UsersUserIdPasswordRequestBody();
+  @override
+  List<ApiV4UsersUserIdPasswordRequestBody> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ApiV4UsersUserIdPasswordRequestBody.fromJson(e),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4UsersUserIdPasswordRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4UsersUserIdPasswordRequestBody
+    implements
+        JsonConverter<
+          Map<String, ApiV4UsersUserIdPasswordRequestBody>?,
+          Object?
+        > {
+  const LenientMapOfApiV4UsersUserIdPasswordRequestBody();
+  @override
+  Map<String, ApiV4UsersUserIdPasswordRequestBody>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value is Map<String, Object?>)
+              e.key: ApiV4UsersUserIdPasswordRequestBody.fromJson(
+                e.value! as Map<String, Object?>,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, ApiV4UsersUserIdPasswordRequestBody>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientApiV4UsersUserIdPatchRequestBody
@@ -3946,6 +4059,48 @@ class LenientMapOfFileInfo
       : null;
   @override
   Object? toJson(Map<String, FileInfo>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientFileInfoList implements JsonConverter<FileInfoList?, Object?> {
+  const LenientFileInfoList();
+  @override
+  FileInfoList? fromJson(Object? json) =>
+      json is Map<String, Object?> ? FileInfoList.fromJson(json) : null;
+  @override
+  Object? toJson(FileInfoList? object) => object?.toJson();
+}
+
+class LenientListOfFileInfoList
+    implements JsonConverter<List<FileInfoList>, Object?> {
+  const LenientListOfFileInfoList();
+  @override
+  List<FileInfoList> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>) FileInfoList.fromJson(e),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<FileInfoList> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfFileInfoList
+    implements JsonConverter<Map<String, FileInfoList>?, Object?> {
+  const LenientMapOfFileInfoList();
+  @override
+  Map<String, FileInfoList>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value is Map<String, Object?>)
+              e.key: FileInfoList.fromJson(e.value! as Map<String, Object?>),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, FileInfoList>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 

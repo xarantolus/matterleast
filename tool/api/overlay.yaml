@@ -186,3 +186,20 @@ actions:
       content:
         application/json:
           schema: {$ref: "#/components/schemas/PostList"}
+  # --- search (M5): the server reads the file search body as JSON ---
+  - target: "$.paths['/api/v4/teams/{team_id}/files/search'].post.requestBody.content"
+    remove: true
+  - target: "$.paths['/api/v4/teams/{team_id}/files/search'].post.requestBody"
+    update:
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [terms, is_or_search]
+            properties:
+              terms: {type: string}
+              is_or_search: {type: boolean}
+              time_zone_offset: {type: integer, default: 0}
+              include_deleted_channels: {type: boolean}
+              page: {type: integer, default: 0}
+              per_page: {type: integer, default: 60}

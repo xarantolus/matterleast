@@ -78,8 +78,9 @@ dart run tool/api/lenient_models.dart lib/api/generated/models \
     lib/api/json/lenient_models.dart "$work/lenient_parsers.yaml" >/dev/null
 
 echo "==> build_runner"
-dart run build_runner build --delete-conflicting-outputs \
-    --build-filter 'lib/api/**' 2>&1 | grep -E '^\[SEVERE\]|Built|Failed|Succeeded' || true
+# No --build-filter: it deletes every generated file outside the filter.
+dart run build_runner build --delete-conflicting-outputs 2>&1 \
+    | grep -E '^\[SEVERE\]|Built|Failed|Succeeded' || true
 dart format lib/api tool/api >/dev/null
 
 echo "==> changes"
