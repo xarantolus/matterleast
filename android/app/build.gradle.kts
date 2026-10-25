@@ -1,4 +1,3 @@
-import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
@@ -10,12 +9,19 @@ plugins {
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 // Release signing is configured only when signing material is present, so
-// debug builds work without a keystore.
-val releaseStorePath: String? =
-    keystoreProperties.getProperty("storeFile") ?: System.getenv("X_KEYSTORE_PATH")
+// debug builds work without a keystore. CI decodes the keystore to
+// X_KEYSTORE_PATH, which wins over a storeFile copied into the secret; a
+// relative storeFile is relative to android/, next to key.properties.
+val releaseStoreFile: File? =
+    System.getenv("X_KEYSTORE_PATH")?.takeIf { it.isNotEmpty() }?.let(::File)
+        ?: keystoreProperties.getProperty("storeFile")?.let(rootProject::file)
+
+fun signingProperty(name: String): String =
+    keystoreProperties.getProperty(name)
+        ?: throw GradleException("android/key.properties has no $name, so the release build cannot be signed.")
 
 android {
     namespace = "io.github.xarantolus.matterleast"
@@ -36,12 +42,12 @@ android {
     }
 
     signingConfigs {
-        if (releaseStorePath != null) {
+        if (releaseStoreFile != null) {
             create("release") {
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
-                storeFile = file(releaseStorePath)
-                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = signingProperty("keyAlias")
+                keyPassword = signingProperty("keyPassword")
+                storeFile = releaseStoreFile
+                storePassword = signingProperty("storePassword")
             }
         }
     }
@@ -54,7 +60,7 @@ android {
         }
         release {
             manifestPlaceholders["applicationLabel"] = "Matterleast"
-            signingConfig = signingConfigs.getByName(if (releaseStorePath != null) "release" else "debug")
+            signingConfig = signingConfigs.getByName(if (releaseStoreFile != null) "release" else "debug")
             isMinifyEnabled = true
             isShrinkResources = true
         }
