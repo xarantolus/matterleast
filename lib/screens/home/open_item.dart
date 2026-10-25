@@ -8,6 +8,7 @@ import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
+import 'package:matterleast/ui/conversation_route.dart';
 
 /// Opens what a preview row points at: its server and team in the rail,
 /// then the conversation at the message, or the thread.
@@ -30,7 +31,7 @@ Future<void> openInboxItem(
     unawaited(actions.open(item.channelId, teamId: item.teamId));
   }
   await navigator.push(
-    MaterialPageRoute<void>(
+    ConversationRoute<void>(
       builder: (_) => thread
           ? ThreadScreen(
               url: item.serverUrl,

@@ -11,6 +11,7 @@ import 'package:matterleast/screens/channel_list/channel_tile.dart';
 import 'package:matterleast/screens/drafts/drafts_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
+import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -117,7 +118,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     final actions = await ref.read(channelActionsProvider(widget.url).future);
     unawaited(actions.open(item.id, teamId: widget.teamId));
     await navigator.push(
-      MaterialPageRoute<void>(
+      ConversationRoute<void>(
         builder: (_) => ChannelScreen(
           url: widget.url,
           channelId: item.id,

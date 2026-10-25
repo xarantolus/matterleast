@@ -7,6 +7,7 @@ import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
+import 'package:matterleast/ui/conversation_route.dart';
 
 /// Opens a channel the user is in: its server and team in the rail, then
 /// the conversation, at [highlightPostId] when given. A reply under
@@ -31,7 +32,7 @@ Future<void> openChannel(
   final actions = await ref.read(channelActionsProvider(url).future);
   unawaited(actions.open(channelId, teamId: team));
   await navigator.push(
-    MaterialPageRoute<void>(
+    ConversationRoute<void>(
       builder: (_) => rootId != null
           ? ThreadScreen(
               url: url,

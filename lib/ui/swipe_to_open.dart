@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/conversation_route.dart';
 
 /// Lets [child] be pulled to the left; past a threshold it clicks and,
 /// once let go, calls [onOpen]. Vertical scrolling wins over small
@@ -36,10 +37,17 @@ class _SwipeToOpenState extends State<SwipeToOpen> {
   @override
   Widget build(BuildContext context) {
     final reached = _dx <= -_threshold;
-    return GestureDetector(
-      onHorizontalDragUpdate: _update,
-      onHorizontalDragEnd: _end,
-      onHorizontalDragCancel: () => setState(() => _dx = 0),
+    return RawGestureDetector(
+      gestures: {
+        OneWayDragRecognizer:
+            GestureRecognizerFactoryWithHandlers<OneWayDragRecognizer>(
+              () => OneWayDragRecognizer(rightward: false, debugOwner: this),
+              (r) => r
+                ..onUpdate = _update
+                ..onEnd = _end
+                ..onCancel = () => setState(() => _dx = 0),
+            ),
+      },
       child: Stack(
         children: [
           if (_dx < 0)
