@@ -137,31 +137,43 @@ class CodeScreen extends StatelessWidget {
       backgroundColor: tokens.codeBackground,
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(Spacing.md),
-          child: SelectionArea(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (lines > 1)
-                  SelectionContainer.disabled(
-                    child: Text(
-                      [for (var i = 1; i <= lines; i++) '$i'].join('\n'),
-                      textAlign: TextAlign.end,
-                      style: style.copyWith(color: tokens.muted),
-                    ),
-                  ),
-                if (lines > 1) const SizedBox(width: Spacing.md),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Text.rich(
-                      _coloured(context, code, language),
-                      softWrap: false,
+        // The content is at least as large as the viewport, so a drag
+        // anywhere on the screen scrolls, in both directions.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: constraints.maxWidth,
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(Spacing.md),
+                  child: SelectionArea(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (lines > 1)
+                          SelectionContainer.disabled(
+                            child: Text(
+                              [for (var i = 1; i <= lines; i++) '$i']
+                                  .join('\n'),
+                              textAlign: TextAlign.end,
+                              style: style.copyWith(color: tokens.muted),
+                            ),
+                          ),
+                        if (lines > 1) const SizedBox(width: Spacing.md),
+                        Text.rich(
+                          _coloured(context, code, language),
+                          softWrap: false,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
