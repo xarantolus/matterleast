@@ -1,0 +1,8 @@
+Matterleast
+
+The emoji table in lib/data/emoji/emoji_table.g.dart is generated from
+emoji.json in Mattermost (https://github.com/mattermost/mattermost),
+Copyright (c) 2015-present Mattermost, Inc., licensed under the Apache
+License 2.0. That data is based on emoji-data
+(https://github.com/iamcal/emoji-data), Copyright (c) 2013 Cal Henderson,
+licensed under the MIT License.
