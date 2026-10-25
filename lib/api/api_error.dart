@@ -22,7 +22,7 @@ sealed class ApiError implements Exception {
     return switch (e.type) {
       DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
-      DioExceptionType.receiveTimeout => const Timeout(),
+      DioExceptionType.receiveTimeout => const RequestTimeout(),
       DioExceptionType.cancel => const Cancelled(),
       DioExceptionType.badCertificate => const UntrustedCertificate(),
       _ when e.error is SocketException => const Unreachable(),
@@ -54,8 +54,8 @@ final class ServerError extends ApiError {
   String toString() => 'ServerError($statusCode, ${id ?? message})';
 }
 
-final class Timeout extends ApiError {
-  const Timeout();
+final class RequestTimeout extends ApiError {
+  const RequestTimeout();
 }
 
 final class Unreachable extends ApiError {

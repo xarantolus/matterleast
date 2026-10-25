@@ -1,0 +1,505 @@
+import 'dart:convert';
+
+import 'package:drift/drift.dart';
+import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/data/store/mappers.dart';
+import 'package:matterleast/domain/post_ranges.dart';
+
+/// How a page of posts was fetched, which decides how it joins the cached
+/// history (see [PostRange]).
+enum PageKind {
+  /// Newest page of a channel or thread (`page=0`).
+  page,
+
+  /// Older than an anchor post (`before=`).
+  before,
+
+  /// Newer than an anchor post (`after=`).
+  after,
+
+  /// Everything changed since a watermark (`since=`), on the newest range.
+  since,
+
+  /// The window around a permalinked post.
+  around,
+}
+
+/// Outcome of applying a page: whether a `since` answer hit the server's
+/// cap, in which case the newest range was not extended and the caller
+/// fetches a fresh first page.
+class PageOutcome {
+  const PageOutcome({required this.stored, required this.capped});
+
+  final int stored;
+  final bool capped;
+}
+
+const sinceCap = 1000;
+
+abstract final class SyncKeys {
+  static const currentUserId = 'current_user_id';
+  static const currentTeamId = 'current_team_id';
+  static const lastFullSync = 'last_full_sync';
+  static String channelsSince(String teamId) => 'channels_since:$teamId';
+}
+
+/// The only write path into a server database. Each method is one
+/// transaction, so a watcher wakes once per logical change.
+class ServerStore {
+  ServerStore(this.db);
+
+  final ServerDatabase db;
+
+  Future<void> applyMe(api.User me) => db.transaction(() async {
+    await db.into(db.users).insertOnConflictUpdate(userCompanion(me));
+    await db.setSyncText(SyncKeys.currentUserId, me.id);
+  });
+
+  Future<void> applyUsers(Iterable<api.User> users) => db.batch((b) {
+    b.insertAllOnConflictUpdate(db.users, [
+      for (final u in users)
+        if (u.id != null) userCompanion(u),
+    ]);
+  });
+
+  Future<void> applyConfig(String key, Map<String, Object?> json) => db
+      .into(db.config)
+      .insertOnConflictUpdate(
+        ConfigCompanion.insert(
+          key: key,
+          json: jsonEncode(json),
+          fetchedAt: DateTime.now().toUtc(),
+        ),
+      );
+
+  Future<void> applyTeams(
+    Iterable<api.Team> teams,
+    Iterable<api.TeamMember> members,
+  ) => db.batch((b) {
+    b.insertAllOnConflictUpdate(db.teams, [
+      for (final t in teams)
+        if (t.id != null) teamCompanion(t),
+    ]);
+    b.insertAllOnConflictUpdate(db.myTeams, [
+      for (final m in members)
+        if (m.teamId != null) myTeamCompanion(m),
+    ]);
+  });
+
+  /// Channels and memberships of one team (or the server's DMs when
+  /// [categories] is null). Local-only columns such as the posts watermark
+  /// and the collapse state survive because absent values are not written.
+  Future<void> applyChannels({
+    required Iterable<api.Channel> channels,
+    required Iterable<api.ChannelMember> members,
+    api.OrderedSidebarCategories? categories,
+  }) => db.transaction(() async {
+    await db.batch((b) {
+      b.insertAllOnConflictUpdate(db.channels, [
+        for (final c in channels)
+          if (c.id != null) channelCompanion(c),
+      ]);
+      b.insertAllOnConflictUpdate(db.myChannels, [
+        for (final m in members)
+          if (m.channelId != null) myChannelCompanion(m),
+      ]);
+    });
+    if (categories != null) await _applyCategories(categories);
+  });
+
+  Future<void> _applyCategories(api.OrderedSidebarCategories ordered) async {
+    final order = ordered.order;
+    final teamIds = ordered.categories.map((c) => c.teamId).nonNulls.toSet();
+    final ids = ordered.categories.map((c) => c.id).nonNulls.toList();
+    await db.batch((b) {
+      b.insertAllOnConflictUpdate(db.categories, [
+        for (final c in ordered.categories)
+          if (c.id != null) categoryCompanion(c, order.indexOf(c.id!)),
+      ]);
+    });
+    for (final teamId in teamIds) {
+      await (db.delete(
+        db.categories,
+      )..where((c) => c.teamId.equals(teamId) & c.id.isNotIn(ids))).go();
+    }
+    await (db.delete(
+      db.categoryChannels,
+    )..where((cc) => cc.categoryId.isIn(ids))).go();
+    await db.batch((b) {
+      b.insertAll(db.categoryChannels, [
+        for (final c in ordered.categories)
+          if (c.id != null)
+            for (final (i, channelId) in c.channelIds.indexed)
+              CategoryChannelsCompanion.insert(
+                categoryId: c.id!,
+                channelId: channelId,
+                sortOrder: Value(i),
+              ),
+      ], mode: InsertMode.insertOrIgnore);
+    });
+  }
+
+  Future<void> applyPreferences(Iterable<api.Preference> preferences) =>
+      db.batch((b) {
+        b.insertAllOnConflictUpdate(db.preferences, [
+          for (final p in preferences)
+            if (p.category != null) preferenceCompanion(p),
+        ]);
+      });
+
+  Future<void> applyCustomEmoji(Iterable<api.Emoji> emoji) => db.batch((b) {
+    b.insertAllOnConflictUpdate(db.customEmoji, [
+      for (final e in emoji)
+        if (e.id != null && e.name != null) emojiCompanion(e),
+    ]);
+  });
+
+  Future<List<PostRange>> rangesFor(String scope, String scopeId) async {
+    final rows = await (db.select(
+      db.postRanges,
+    )..where((r) => r.scope.equals(scope) & r.scopeId.equals(scopeId))).get();
+    return [
+      for (final r in rows)
+        PostRange(
+          earliest: r.earliest,
+          latest: r.latest,
+          reachesStart: r.reachesStart,
+        ),
+    ];
+  }
+
+  Future<void> _writeRanges(
+    String scope,
+    String scopeId,
+    List<PostRange> ranges,
+  ) async {
+    await (db.delete(
+      db.postRanges,
+    )..where((r) => r.scope.equals(scope) & r.scopeId.equals(scopeId))).go();
+    await db.batch((b) {
+      b.insertAll(db.postRanges, [
+        for (final r in ranges)
+          PostRangesCompanion.insert(
+            scope: scope,
+            scopeId: scopeId,
+            earliest: r.earliest,
+            latest: r.latest,
+            reachesStart: Value(r.reachesStart),
+          ),
+      ]);
+    });
+  }
+
+  /// Stores a page of channel posts and joins it to the cached history.
+  /// [anchor] is the create time of the `before`/`after` anchor post;
+  /// [requested] the page size asked for.
+  Future<PageOutcome> applyChannelPage({
+    required String channelId,
+    required api.PostList page,
+    required PageKind kind,
+    DateTime? anchor,
+    int requested = 60,
+  }) => db.transaction(() async {
+    final posts = [
+      for (final id in page.order)
+        if (page.posts?[id] case final api.Post p
+            when p.id != null && p.createAt != null && p.channelId != null)
+          p,
+    ];
+    final others = [
+      for (final e in (page.posts ?? const {}).entries)
+        if (!page.order.contains(e.key) &&
+            e.value.id != null &&
+            e.value.createAt != null &&
+            e.value.channelId != null)
+          e.value,
+    ];
+    await _upsertPosts([...posts, ...others]);
+
+    final times = posts.map((p) => p.createAt!).toList()..sort();
+    final earliest = times.isEmpty ? null : times.first;
+    final latest = times.isEmpty ? null : times.last;
+    final ranges = await rangesFor('channel', channelId);
+    var capped = false;
+    final updated = switch (kind) {
+      PageKind.page => withPage(
+        ranges,
+        earliest: earliest,
+        latest: latest,
+        reachesStart: posts.length < requested,
+      ),
+      PageKind.around => withPage(
+        ranges,
+        earliest: earliest,
+        latest: latest,
+        reachesStart: false,
+      ),
+      PageKind.before => withOlder(
+        ranges,
+        anchor: anchor!,
+        earliest: earliest,
+        reachesStart: posts.length < requested,
+      ),
+      PageKind.after => withNewer(ranges, anchor: anchor!, latest: latest),
+      PageKind.since => () {
+        if (posts.length >= sinceCap) {
+          capped = true;
+          return ranges;
+        }
+        final newest = newestRange(ranges);
+        if (newest == null) {
+          return withPage(
+            ranges,
+            earliest: earliest,
+            latest: latest,
+            reachesStart: false,
+          );
+        }
+        return withNewer(ranges, anchor: newest.latest, latest: latest);
+      }(),
+    };
+    await _writeRanges('channel', channelId, updated);
+
+    if (kind == PageKind.since) {
+      await _advanceWatermark(channelId, [...posts, ...others]);
+    }
+    return PageOutcome(stored: posts.length + others.length, capped: capped);
+  });
+
+  /// Stores a thread (root plus replies) and records its loaded range.
+  Future<void> applyThreadPage({
+    required String rootId,
+    required api.PostList page,
+  }) => db.transaction(() async {
+    final posts = [
+      for (final p in (page.posts ?? const {}).values)
+        if (p.id != null && p.createAt != null && p.channelId != null) p,
+    ];
+    await _upsertPosts(posts);
+    final replyTimes =
+        posts.where((p) => p.rootId == rootId).map((p) => p.createAt!).toList()
+          ..sort();
+    if (replyTimes.isEmpty) return;
+    final ranges = await rangesFor('thread', rootId);
+    await _writeRanges(
+      'thread',
+      rootId,
+      withPage(
+        ranges,
+        earliest: replyTimes.first,
+        latest: replyTimes.last,
+        reachesStart: false,
+      ),
+    );
+  });
+
+  Future<void> _advanceWatermark(String channelId, List<api.Post> posts) async {
+    DateTime? newest;
+    for (final p in posts) {
+      for (final t in [p.createAt, p.updateAt, p.deleteAt]) {
+        if (t != null && (newest == null || t.isAfter(newest))) newest = t;
+      }
+    }
+    if (newest == null) return;
+    final current = await (db.select(
+      db.myChannels,
+    )..where((m) => m.channelId.equals(channelId))).getSingleOrNull();
+    final before = current?.postsFetchedAt;
+    if (before != null && !newest.isAfter(before)) return;
+    await (db.update(db.myChannels)
+          ..where((m) => m.channelId.equals(channelId)))
+        .write(MyChannelsCompanion(postsFetchedAt: Value(newest)));
+  }
+
+  Future<void> _upsertPosts(List<api.Post> posts) async {
+    if (posts.isEmpty) return;
+    final pendingIds = posts
+        .map((p) => p.pendingPostId)
+        .where((id) => id != null && id.isNotEmpty)
+        .cast<String>()
+        .toList();
+    await db.batch((b) {
+      // Our own optimistic rows are keyed by pending id; the server's copy
+      // replaces them under the server id.
+      if (pendingIds.isNotEmpty) {
+        b.deleteWhere(db.posts, (p) => p.id.isIn(pendingIds));
+        b.deleteWhere(db.outbox, (o) => o.pendingPostId.isIn(pendingIds));
+      }
+      b.insertAllOnConflictUpdate(db.posts, [
+        for (final p in posts) postCompanion(p),
+      ]);
+      final withFiles = posts.where(
+        (p) => p.metadata?.files.isNotEmpty ?? false,
+      );
+      b.insertAllOnConflictUpdate(db.files, [
+        for (final p in withFiles)
+          for (final f in p.metadata!.files)
+            if (f.id != null) fileCompanion(f, p.id!),
+      ]);
+      b.deleteWhere(
+        db.reactions,
+        (r) => r.postId.isIn(posts.map((p) => p.id!).toList()),
+      );
+      b.insertAll(db.reactions, [
+        for (final p in posts)
+          for (final r in p.metadata?.reactions ?? const <api.Reaction>[])
+            if (r.postId != null && r.userId != null && r.emojiName != null)
+              reactionCompanion(r),
+      ], mode: InsertMode.insertOrIgnore);
+    });
+    final deleted = posts.where((p) => p.deleteAt != null).toList();
+    if (deleted.isNotEmpty) {
+      await (db.update(
+        db.posts,
+      )..where((p) => p.id.isIn(deleted.map((p) => p.id!).toList()))).write(
+        const PostsCompanion(
+          message: Value(''),
+          propsJson: Value(null),
+          metadataJson: Value(null),
+          fileCount: Value(0),
+          reactionCount: Value(0),
+        ),
+      );
+    }
+  }
+
+  /// A post arrived over the WebSocket (or our own send was confirmed).
+  Future<void> applyLivePost(
+    api.Post post, {
+    required bool fromSelf,
+    required bool mentionsMe,
+  }) => db.transaction(() async {
+    if (post.id == null || post.createAt == null || post.channelId == null) {
+      return;
+    }
+    final channelId = post.channelId!;
+    await _upsertPosts([post]);
+    final ranges = await rangesFor('channel', channelId);
+    await _writeRanges(
+      'channel',
+      channelId,
+      withLivePost(ranges, post.createAt!),
+    );
+    final isRoot = post.rootId == null || post.rootId!.isEmpty;
+    final channel = await (db.select(
+      db.channels,
+    )..where((c) => c.id.equals(channelId))).getSingleOrNull();
+    if (channel != null) {
+      await (db.update(
+        db.channels,
+      )..where((c) => c.id.equals(channelId))).write(
+        ChannelsCompanion(
+          totalMsgCount: Value(channel.totalMsgCount + 1),
+          totalMsgCountRoot: Value(
+            channel.totalMsgCountRoot + (isRoot ? 1 : 0),
+          ),
+          lastPostAt: Value(post.createAt),
+          lastRootPostAt: isRoot ? Value(post.createAt) : const Value.absent(),
+        ),
+      );
+    }
+    final mine = await (db.select(
+      db.myChannels,
+    )..where((m) => m.channelId.equals(channelId))).getSingleOrNull();
+    if (mine == null) return;
+    if (fromSelf) {
+      await markViewed(channelId, at: post.createAt!);
+    } else if (mentionsMe) {
+      await (db.update(
+        db.myChannels,
+      )..where((m) => m.channelId.equals(channelId))).write(
+        MyChannelsCompanion(
+          mentionCount: Value(mine.mentionCount + 1),
+          mentionCountRoot: Value(mine.mentionCountRoot + (isRoot ? 1 : 0)),
+        ),
+      );
+    }
+    if (post.rootId case final rootId? when rootId.isNotEmpty) {
+      final threadRanges = await rangesFor('thread', rootId);
+      if (threadRanges.isNotEmpty) {
+        await _writeRanges(
+          'thread',
+          rootId,
+          withLivePost(threadRanges, post.createAt!),
+        );
+      }
+    }
+  });
+
+  Future<void> applyEdit(api.Post post) async {
+    if (post.id == null || post.createAt == null || post.channelId == null) {
+      return;
+    }
+    await db.transaction(() => _upsertPosts([post]));
+  }
+
+  /// Keeps the row as a placeholder until the channel is reopened.
+  Future<void> applyDelete(String postId, {required DateTime at}) =>
+      (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
+        PostsCompanion(
+          deleteAt: Value(at),
+          message: const Value(''),
+          propsJson: const Value(null),
+          metadataJson: const Value(null),
+          fileCount: const Value(0),
+          reactionCount: const Value(0),
+        ),
+      );
+
+  Future<void> applyReaction(api.Reaction reaction, {required bool added}) =>
+      db.transaction(() async {
+        if (reaction.postId == null ||
+            reaction.userId == null ||
+            reaction.emojiName == null) {
+          return;
+        }
+        if (added) {
+          await db
+              .into(db.reactions)
+              .insert(
+                reactionCompanion(reaction),
+                mode: InsertMode.insertOrIgnore,
+              );
+        } else {
+          await (db.delete(db.reactions)..where(
+                (r) =>
+                    r.postId.equals(reaction.postId!) &
+                    r.userId.equals(reaction.userId!) &
+                    r.emojiName.equals(reaction.emojiName!),
+              ))
+              .go();
+        }
+        final count =
+            await (db.selectOnly(db.reactions)
+                  ..addColumns([db.reactions.postId.count()])
+                  ..where(db.reactions.postId.equals(reaction.postId!)))
+                .map((row) => row.read(db.reactions.postId.count())!)
+                .getSingle();
+        await (db.update(db.posts)..where((p) => p.id.equals(reaction.postId!)))
+            .write(PostsCompanion(reactionCount: Value(count)));
+      });
+
+  /// The channel counts as read up to [at]: the member counters catch up with
+  /// the channel's, which is what the server does on `view`.
+  Future<void> markViewed(String channelId, {required DateTime at}) =>
+      db.transaction(() async {
+        final channel = await (db.select(
+          db.channels,
+        )..where((c) => c.id.equals(channelId))).getSingleOrNull();
+        if (channel == null) return;
+        await (db.update(
+          db.myChannels,
+        )..where((m) => m.channelId.equals(channelId))).write(
+          MyChannelsCompanion(
+            lastViewedAt: Value(at),
+            msgCount: Value(channel.totalMsgCount),
+            msgCountRoot: Value(channel.totalMsgCountRoot),
+            mentionCount: const Value(0),
+            mentionCountRoot: const Value(0),
+            urgentMentionCount: const Value(0),
+            manuallyUnread: const Value(false),
+          ),
+        );
+      });
+}

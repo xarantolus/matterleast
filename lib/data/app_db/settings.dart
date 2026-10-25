@@ -1,0 +1,115 @@
+import 'package:matterleast/data/app_db/app_database.dart';
+
+/// One typed setting: its key, default and text encoding. Settings are
+/// declared once in [Settings] and read or written only through
+/// [SettingsStore].
+class Setting<T> {
+  const Setting(this.key, this.defaultValue, this._decode, this._encode);
+
+  final String key;
+  final T defaultValue;
+  final T Function(String raw) _decode;
+  final String Function(T value) _encode;
+
+  T read(Map<String, String> raw) {
+    final stored = raw[key];
+    if (stored == null) return defaultValue;
+    try {
+      return _decode(stored);
+    } on FormatException {
+      return defaultValue;
+    }
+  }
+
+  String encode(T value) => _encode(value);
+}
+
+abstract final class Settings {
+  static const mebibyte = 1024 * 1024;
+
+  /// Automatic image loading on metered networks.
+  static const imagesOnMobileData = Setting<bool>(
+    'imagesOnMobileData',
+    true,
+    _decodeBool,
+    _encodeBool,
+  );
+
+  static const mediaCacheBytes = Setting<int>(
+    'mediaCacheBytes',
+    250 * mebibyte,
+    int.parse,
+    _encodeInt,
+  );
+
+  static const filesCacheBytes = Setting<int>(
+    'filesCacheBytes',
+    500 * mebibyte,
+    int.parse,
+    _encodeInt,
+  );
+
+  /// Local post retention without a server policy, in days.
+  static const keepDays = Setting<int>('keepDays', 30, int.parse, _encodeInt);
+
+  /// Posts always kept per channel opened in the last [keepDays].
+  static const keepPostsPerChannel = Setting<int>(
+    'keepPostsPerChannel',
+    200,
+    int.parse,
+    _encodeInt,
+  );
+
+  static const use24HourClock = Setting<bool?>(
+    'use24HourClock',
+    null,
+    _decodeOptionalBool,
+    _encodeOptionalBool,
+  );
+
+  /// The opt-in foreground service that keeps the WebSocket alive.
+  static const stayConnected = Setting<bool>(
+    'stayConnected',
+    false,
+    _decodeBool,
+    _encodeBool,
+  );
+
+  static const all = <Setting<Object?>>[
+    imagesOnMobileData,
+    mediaCacheBytes,
+    filesCacheBytes,
+    keepDays,
+    keepPostsPerChannel,
+    use24HourClock,
+    stayConnected,
+  ];
+
+  static bool _decodeBool(String raw) => switch (raw) {
+    'true' => true,
+    'false' => false,
+    _ => throw FormatException('bool', raw),
+  };
+  static String _encodeBool(bool value) => value.toString();
+  static bool? _decodeOptionalBool(String raw) =>
+      raw == 'system' ? null : _decodeBool(raw);
+  static String _encodeOptionalBool(bool? value) =>
+      value == null ? 'system' : value.toString();
+  static String _encodeInt(int value) => value.toString();
+}
+
+/// The one place that touches the settings table.
+class SettingsStore {
+  SettingsStore(this._db);
+
+  final AppDatabase _db;
+
+  Future<T> read<T>(Setting<T> setting) async =>
+      setting.read(await _db.allSettings());
+
+  Stream<T> watch<T>(Setting<T> setting) =>
+      _db.watchSettings().map(setting.read).distinct();
+
+  Future<void> write<T>(Setting<T> setting, T value) =>
+      _db.writeSetting(setting.key, setting.encode(value));
+}
