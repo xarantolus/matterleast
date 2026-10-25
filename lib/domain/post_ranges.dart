@@ -120,14 +120,12 @@ List<PostRange> withNewer(
 }
 
 /// A post arrived live (WebSocket or our own send). It extends the newest
-/// range; a channel with no range yet starts one at that post.
+/// range; a channel known to be empty starts its history at that post. A
+/// channel never loaded stays so, since older posts may exist; its first
+/// open fetches the newest page.
 List<PostRange> withLivePost(List<PostRange> ranges, DateTime createAt) {
   final newest = newestRange(ranges);
-  if (newest == null) {
-    return [
-      PostRange(earliest: createAt, latest: createAt, reachesStart: true),
-    ];
-  }
+  if (newest == null) return ranges;
   if (newest == PostRange.empty) {
     return [
       PostRange(earliest: createAt, latest: createAt, reachesStart: true),

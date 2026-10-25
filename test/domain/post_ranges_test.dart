@@ -104,7 +104,10 @@ void main() {
 
     test('a live post in an empty channel starts its history', () {
       expect(withLivePost([PostRange.empty], t(5)), [r(5, 5, start: true)]);
-      expect(withLivePost([], t(5)), [r(5, 5, start: true)]);
+    });
+
+    test('a live post in a channel never loaded leaves it unloaded', () {
+      expect(withLivePost([], t(5)), isEmpty);
     });
 
     test('a late post inside the range is already covered', () {
