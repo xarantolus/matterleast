@@ -9,6 +9,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
+import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/server_url.dart';
 import 'package:matterleast/log.dart';
 import 'package:path/path.dart' as p;
@@ -39,14 +40,15 @@ class ServerManager {
   /// Servers being signed out on purpose; their 401s are not a notice.
   final _leaving = <String>{};
   final _sessionEnded = StreamController<ServerRow>.broadcast();
-  final _closed = StreamController<String>.broadcast();
+  final _changed = StreamController<String>.broadcast();
 
   /// A server that rejected its token outside of a sign-in. Its data is
   /// already gone when this fires.
   Stream<ServerRow> get sessionEnded => _sessionEnded.stream;
 
-  /// URLs whose session was closed; holders of a session drop it.
-  Stream<String> get closed => _closed.stream;
+  /// URLs whose session was closed or replaced by a new sign-in; holders of
+  /// a session look it up again.
+  Stream<String> get changed => _changed.stream;
 
   /// Signs out servers whose token went missing (e.g. Keystore reset), so the
   /// list never shows a server as signed in that can't be used.
@@ -57,6 +59,32 @@ class ServerManager {
         Log.warn('servers', 'No token for a signed-in server; signing out');
         await _wipe(server.url);
       }
+    }
+  }
+
+  /// Refreshes the signed-in user of every signed-in server. Also how a
+  /// server that revoked the session is noticed at launch.
+  Future<void> refreshSignedIn() async {
+    for (final server in await _db.allServers()) {
+      if (server.lastActiveAt == null) continue;
+      final session = await this.session(server.url);
+      unawaited(
+        session.runner
+            .enqueue(
+              SyncJob(
+                key: 'me',
+                run: () async => session.store.applyMe(
+                  await session.api.coalesced(
+                    'me',
+                    () => session.api.client.users.getUser(userId: 'me'),
+                  ),
+                ),
+              ),
+            )
+            .catchError((Object e) {
+              Log.warn('servers', 'Refreshing the user failed', e);
+            }),
+      );
     }
   }
 
@@ -118,6 +146,7 @@ class ServerManager {
       ),
     );
     final session = await this.session(url);
+    _changed.add(url);
     await session.store.applyMe(signedIn.me);
     await session.store.applyConfig('client_config', server.config);
     await session.store.applyConfig('license', server.license);
@@ -189,16 +218,18 @@ class ServerManager {
   }
 
   /// Closes the session and deletes everything stored for [url] except its
-  /// row, which stays as signed out.
+  /// row, which stays as signed out. The row is marked first, so nothing
+  /// that reacts to the closed session can open the database again.
   Future<void> _wipe(String url) async {
+    final row = await _db.serverByUrl(url);
+    if (row != null) {
+      await _db.upsertServer(
+        row.toCompanion(false).copyWith(lastActiveAt: const Value(null)),
+      );
+    }
     await _closeSession(url);
     await _tokens.delete(url);
-    final row = await _db.serverByUrl(url);
-    if (row == null) return;
-    await _deleteDatabaseFiles(row.dbFile);
-    await _db.upsertServer(
-      row.toCompanion(false).copyWith(lastActiveAt: const Value(null)),
-    );
+    if (row != null) await _deleteDatabaseFiles(row.dbFile);
   }
 
   Future<void> _closeSession(String url) async {
@@ -210,7 +241,7 @@ class ServerManager {
     } on Object catch (e) {
       Log.warn('servers', 'Closing a session failed', e);
     }
-    _closed.add(url);
+    _changed.add(url);
   }
 
   Future<void> _deleteDatabaseFiles(String fileName) async {
@@ -226,6 +257,6 @@ class ServerManager {
       await _closeSession(url);
     }
     await _sessionEnded.close();
-    await _closed.close();
+    await _changed.close();
   }
 }

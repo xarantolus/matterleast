@@ -75,6 +75,29 @@ void main() {
       expect(options.serverVersion, isNotEmpty);
       expect(options.diagnosticId, isNotEmpty);
       expect(options.onlySso, isNull);
+      expect(options.loginIdLabel, 'Email or username');
+      expect(options.forgotPassword, isTrue);
+      expect(options.forgotPasswordLink, isNull);
+    });
+
+    test('the login field names LDAP and the reset link follows config', () {
+      final options = loginOptionsFrom(
+        {
+          'EnableSignInWithEmail': 'true',
+          'EnableLdap': 'true',
+          'LdapLoginFieldName': 'Staff ID',
+          'ForgotPasswordLink': 'https://help.example.test/reset',
+        },
+        {'IsLicensed': 'true', 'LDAP': 'true'},
+      );
+      expect(options.loginIdLabel, 'Email or Staff ID');
+      expect(options.forgotPasswordLink, 'https://help.example.test/reset');
+      final ldapOnly = loginOptionsFrom(
+        {'EnableLdap': 'true', 'PasswordEnableForgotLink': 'true'},
+        {'IsLicensed': 'true', 'LDAP': 'true'},
+      );
+      expect(ldapOnly.loginIdLabel, 'AD/LDAP username');
+      expect(ldapOnly.forgotPassword, isFalse);
     });
 
     test('licensed providers need the licence, GitLab does not', () {

@@ -12,6 +12,14 @@ abstract class LoginOptions with _$LoginOptions {
     required bool password,
     required bool ldap,
     required String ldapFieldLabel,
+
+    /// "Email or username", with the LDAP field name when LDAP is on.
+    required String loginIdLabel,
+
+    /// Whether to offer a password reset, and the admin's own reset page if
+    /// one is configured (else the server's web page).
+    required bool forgotPassword,
+    required String? forgotPasswordLink,
     required List<SsoButton> sso,
     required bool mfaPossible,
     required bool mfaEnforced,
@@ -64,10 +72,15 @@ LoginOptions loginOptionsFrom(
   final licensed = _flag(license, 'IsLicensed');
   final ldap =
       _flag(config, 'EnableLdap') && licensed && _flag(license, 'LDAP');
-  final password =
-      _flag(config, 'EnableSignInWithEmail') ||
-      _flag(config, 'EnableSignInWithUsername') ||
-      ldap;
+  final email = _flag(config, 'EnableSignInWithEmail');
+  final username = _flag(config, 'EnableSignInWithUsername');
+  final password = email || username || ldap;
+  final ldapFieldLabel = _text(
+    config,
+    'LdapLoginFieldName',
+    'AD/LDAP username',
+  );
+  final forgotLink = _text(config, 'ForgotPasswordLink', '');
   final sso = <SsoButton>[
     if (_flag(config, 'EnableSignUpWithGitLab'))
       SsoButton(
@@ -92,7 +105,16 @@ LoginOptions loginOptionsFrom(
   return LoginOptions(
     password: password,
     ldap: ldap,
-    ldapFieldLabel: _text(config, 'LdapLoginFieldName', 'AD/LDAP username'),
+    ldapFieldLabel: ldapFieldLabel,
+    loginIdLabel: _joinWithOr([
+      if (email) 'email',
+      if (username) 'username',
+      if (ldap) ldapFieldLabel,
+    ]),
+    forgotPassword:
+        (email || username) &&
+        config['PasswordEnableForgotLink']?.toString() != 'false',
+    forgotPasswordLink: forgotLink.isEmpty ? null : forgotLink,
     sso: sso,
     mfaPossible: _flag(config, 'EnableMultifactorAuthentication'),
     mfaEnforced: _flag(config, 'EnforceMultifactorAuthentication'),
@@ -101,6 +123,14 @@ LoginOptions loginOptionsFrom(
     diagnosticId: _text(config, 'DiagnosticId', ''),
     externalBrowserForSso: _flag(config, 'MobileExternalBrowser'),
   );
+}
+
+String _joinWithOr(List<String> parts) {
+  if (parts.isEmpty) return 'Username';
+  final text = parts.length == 1
+      ? parts.single
+      : '${parts.sublist(0, parts.length - 1).join(', ')} or ${parts.last}';
+  return text[0].toUpperCase() + text.substring(1);
 }
 
 /// Oldest server we claim to work with; older ones get a warning, not a block.

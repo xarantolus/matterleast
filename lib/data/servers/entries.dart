@@ -7,6 +7,7 @@ ServerEntry serverEntryOf(ServerRow row) => ServerEntry(
   displayName: row.displayName,
   siteName: row.siteName,
   serverVersion: row.serverVersion,
+  diagnosticId: row.diagnosticId,
   lastActiveAt: row.lastActiveAt,
   ssoScheme: row.ssoScheme,
 );

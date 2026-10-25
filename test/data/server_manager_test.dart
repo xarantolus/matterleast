@@ -151,6 +151,19 @@ void main() {
     expect(dbFiles(), isEmpty);
   });
 
+  test(
+    'a session revoked while the app was closed is noticed at launch',
+    () async {
+      await addServer();
+      server.handle = (_) =>
+          error(401, 'api.context.session_expired.app_error');
+      final ended = manager.sessionEnded.first;
+      await manager.refreshSignedIn();
+      expect((await ended).url, url);
+      expect(await tokens.read(url), isNull);
+    },
+  );
+
   test('the same server under another address replaces the old row', () async {
     await addServer(probed(Uri.parse('http://old.example.test')));
     await manager.signOut('http://old.example.test', force: true);

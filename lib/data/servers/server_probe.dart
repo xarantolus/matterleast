@@ -71,7 +71,7 @@ class ServerProbe {
         license: license,
       );
     } on ApiError catch (e) {
-      throw ProbeFailure(probeProblemText(e, url.host));
+      throw ProbeFailure(probeProblemText(e, url.authority));
     } finally {
       api.close();
     }
@@ -101,13 +101,13 @@ class ServerProbe {
       }
       if (url.scheme == 'https' && base.scheme != 'https') {
         throw ProbeFailure(
-          '${url.host} redirected to a plain http:// address, so the app '
+          '${url.authority} redirected to a plain http:// address, so the app '
           "didn't connect.",
         );
       }
       return base;
     } on ApiError catch (e) {
-      throw ProbeFailure(probeProblemText(e, url.host));
+      throw ProbeFailure(probeProblemText(e, url.authority));
     } finally {
       api.close();
     }

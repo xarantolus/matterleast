@@ -42,7 +42,7 @@ class SignIn {
     String? mfaCode,
     bool ldapOnly = false,
   }) async {
-    final host = server.url.host;
+    final host = server.url.authority;
     final sentCode = mfaCode != null && mfaCode.isNotEmpty;
     final client = ServerApi(baseUrl: server.url, token: () => null);
     try {
@@ -107,7 +107,7 @@ class SignIn {
       );
       return SignedIn(token: token, me: me);
     } on ApiError catch (e) {
-      throw loginProblemFrom(e, sentMfaCode: false, host: server.url.host);
+      throw loginProblemFrom(e, sentMfaCode: false, host: server.url.authority);
     } finally {
       client.close();
     }

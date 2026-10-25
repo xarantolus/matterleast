@@ -10,6 +10,7 @@ abstract class ServerEntry with _$ServerEntry {
     required String displayName,
     required String? siteName,
     required String? serverVersion,
+    required String? diagnosticId,
     required DateTime? lastActiveAt,
     required String? ssoScheme,
   }) = _ServerEntry;

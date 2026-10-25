@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ServerEntry {
 
- String get url; String get displayName; String? get siteName; String? get serverVersion; DateTime? get lastActiveAt; String? get ssoScheme;
+ String get url; String get displayName; String? get siteName; String? get serverVersion; String? get diagnosticId; DateTime? get lastActiveAt; String? get ssoScheme;
 /// Create a copy of ServerEntry
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $ServerEntryCopyWith<ServerEntry> get copyWith => _$ServerEntryCopyWithImpl<Serv
 @override
 bool operator ==(Object other) {
   final _this = this as ServerEntry;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerEntry&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.siteName, _this.siteName) || other.siteName == _this.siteName)&&(identical(other.serverVersion, _this.serverVersion) || other.serverVersion == _this.serverVersion)&&(identical(other.lastActiveAt, _this.lastActiveAt) || other.lastActiveAt == _this.lastActiveAt)&&(identical(other.ssoScheme, _this.ssoScheme) || other.ssoScheme == _this.ssoScheme));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerEntry&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.siteName, _this.siteName) || other.siteName == _this.siteName)&&(identical(other.serverVersion, _this.serverVersion) || other.serverVersion == _this.serverVersion)&&(identical(other.diagnosticId, _this.diagnosticId) || other.diagnosticId == _this.diagnosticId)&&(identical(other.lastActiveAt, _this.lastActiveAt) || other.lastActiveAt == _this.lastActiveAt)&&(identical(other.ssoScheme, _this.ssoScheme) || other.ssoScheme == _this.ssoScheme));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ServerEntry;
-  return Object.hash(runtimeType,_this.url,_this.displayName,_this.siteName,_this.serverVersion,_this.lastActiveAt,_this.ssoScheme);
+  return Object.hash(runtimeType,_this.url,_this.displayName,_this.siteName,_this.serverVersion,_this.diagnosticId,_this.lastActiveAt,_this.ssoScheme);
 }
 
 @override
 String toString() {
   final _this = this as ServerEntry;
-  return 'ServerEntry(url: ${_this.url}, displayName: ${_this.displayName}, siteName: ${_this.siteName}, serverVersion: ${_this.serverVersion}, lastActiveAt: ${_this.lastActiveAt}, ssoScheme: ${_this.ssoScheme})';
+  return 'ServerEntry(url: ${_this.url}, displayName: ${_this.displayName}, siteName: ${_this.siteName}, serverVersion: ${_this.serverVersion}, diagnosticId: ${_this.diagnosticId}, lastActiveAt: ${_this.lastActiveAt}, ssoScheme: ${_this.ssoScheme})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $ServerEntryCopyWith<$Res>  {
   factory $ServerEntryCopyWith(ServerEntry value, $Res Function(ServerEntry) _then) = _$ServerEntryCopyWithImpl;
 @useResult
 $Res call({
- String url, String displayName, String? siteName, String? serverVersion, DateTime? lastActiveAt, String? ssoScheme
+ String url, String displayName, String? siteName, String? serverVersion, String? diagnosticId, DateTime? lastActiveAt, String? ssoScheme
 });
 
 
@@ -68,12 +68,13 @@ class _$ServerEntryCopyWithImpl<$Res>
 
 /// Create a copy of ServerEntry
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? url = null,Object? displayName = null,Object? siteName = freezed,Object? serverVersion = freezed,Object? lastActiveAt = freezed,Object? ssoScheme = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? url = null,Object? displayName = null,Object? siteName = freezed,Object? serverVersion = freezed,Object? diagnosticId = freezed,Object? lastActiveAt = freezed,Object? ssoScheme = freezed,}) {
   return _then(ServerEntry(
 url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,siteName: freezed == siteName ? _self.siteName : siteName // ignore: cast_nullable_to_non_nullable
 as String?,serverVersion: freezed == serverVersion ? _self.serverVersion : serverVersion // ignore: cast_nullable_to_non_nullable
+as String?,diagnosticId: freezed == diagnosticId ? _self.diagnosticId : diagnosticId // ignore: cast_nullable_to_non_nullable
 as String?,lastActiveAt: freezed == lastActiveAt ? _self.lastActiveAt : lastActiveAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,ssoScheme: freezed == ssoScheme ? _self.ssoScheme : ssoScheme // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -161,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String url,  String displayName,  String? siteName,  String? serverVersion,  DateTime? lastActiveAt,  String? ssoScheme)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String url,  String displayName,  String? siteName,  String? serverVersion,  String? diagnosticId,  DateTime? lastActiveAt,  String? ssoScheme)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServerEntry() when $default != null:
-return $default(_that.url,_that.displayName,_that.siteName,_that.serverVersion,_that.lastActiveAt,_that.ssoScheme);case _:
+return $default(_that.url,_that.displayName,_that.siteName,_that.serverVersion,_that.diagnosticId,_that.lastActiveAt,_that.ssoScheme);case _:
   return orElse();
 
 }
@@ -182,10 +183,10 @@ return $default(_that.url,_that.displayName,_that.siteName,_that.serverVersion,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String url,  String displayName,  String? siteName,  String? serverVersion,  DateTime? lastActiveAt,  String? ssoScheme)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String url,  String displayName,  String? siteName,  String? serverVersion,  String? diagnosticId,  DateTime? lastActiveAt,  String? ssoScheme)  $default,) {final _that = this;
 switch (_that) {
 case _ServerEntry():
-return $default(_that.url,_that.displayName,_that.siteName,_that.serverVersion,_that.lastActiveAt,_that.ssoScheme);case _:
+return $default(_that.url,_that.displayName,_that.siteName,_that.serverVersion,_that.diagnosticId,_that.lastActiveAt,_that.ssoScheme);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +203,10 @@ return $default(_that.url,_that.displayName,_that.siteName,_that.serverVersion,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String url,  String displayName,  String? siteName,  String? serverVersion,  DateTime? lastActiveAt,  String? ssoScheme)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String url,  String displayName,  String? siteName,  String? serverVersion,  String? diagnosticId,  DateTime? lastActiveAt,  String? ssoScheme)?  $default,) {final _that = this;
 switch (_that) {
 case _ServerEntry() when $default != null:
-return $default(_that.url,_that.displayName,_that.siteName,_that.serverVersion,_that.lastActiveAt,_that.ssoScheme);case _:
+return $default(_that.url,_that.displayName,_that.siteName,_that.serverVersion,_that.diagnosticId,_that.lastActiveAt,_that.ssoScheme);case _:
   return null;
 
 }
@@ -217,13 +218,14 @@ return $default(_that.url,_that.displayName,_that.siteName,_that.serverVersion,_
 
 
 class _ServerEntry extends ServerEntry {
-  const _ServerEntry({required this.url, required this.displayName, required this.siteName, required this.serverVersion, required this.lastActiveAt, required this.ssoScheme}): super._();
+  const _ServerEntry({required this.url, required this.displayName, required this.siteName, required this.serverVersion, required this.diagnosticId, required this.lastActiveAt, required this.ssoScheme}): super._();
   
 
 @override final  String url;
 @override final  String displayName;
 @override final  String? siteName;
 @override final  String? serverVersion;
+@override final  String? diagnosticId;
 @override final  DateTime? lastActiveAt;
 @override final  String? ssoScheme;
 
@@ -237,18 +239,18 @@ _$ServerEntryCopyWith<_ServerEntry> get copyWith => __$ServerEntryCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerEntry&&(identical(other.url, url) || other.url == url)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.siteName, siteName) || other.siteName == siteName)&&(identical(other.serverVersion, serverVersion) || other.serverVersion == serverVersion)&&(identical(other.lastActiveAt, lastActiveAt) || other.lastActiveAt == lastActiveAt)&&(identical(other.ssoScheme, ssoScheme) || other.ssoScheme == ssoScheme));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerEntry&&(identical(other.url, url) || other.url == url)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.siteName, siteName) || other.siteName == siteName)&&(identical(other.serverVersion, serverVersion) || other.serverVersion == serverVersion)&&(identical(other.diagnosticId, diagnosticId) || other.diagnosticId == diagnosticId)&&(identical(other.lastActiveAt, lastActiveAt) || other.lastActiveAt == lastActiveAt)&&(identical(other.ssoScheme, ssoScheme) || other.ssoScheme == ssoScheme));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,url,displayName,siteName,serverVersion,lastActiveAt,ssoScheme);
+    return Object.hash(runtimeType,url,displayName,siteName,serverVersion,diagnosticId,lastActiveAt,ssoScheme);
 }
 
 @override
 String toString() {
-    return 'ServerEntry(url: $url, displayName: $displayName, siteName: $siteName, serverVersion: $serverVersion, lastActiveAt: $lastActiveAt, ssoScheme: $ssoScheme)';
+    return 'ServerEntry(url: $url, displayName: $displayName, siteName: $siteName, serverVersion: $serverVersion, diagnosticId: $diagnosticId, lastActiveAt: $lastActiveAt, ssoScheme: $ssoScheme)';
 }
 
 
@@ -259,7 +261,7 @@ abstract mixin class _$ServerEntryCopyWith<$Res> implements $ServerEntryCopyWith
   factory _$ServerEntryCopyWith(_ServerEntry value, $Res Function(_ServerEntry) _then) = __$ServerEntryCopyWithImpl;
 @override @useResult
 $Res call({
- String url, String displayName, String? siteName, String? serverVersion, DateTime? lastActiveAt, String? ssoScheme
+ String url, String displayName, String? siteName, String? serverVersion, String? diagnosticId, DateTime? lastActiveAt, String? ssoScheme
 });
 
 
@@ -276,12 +278,13 @@ class __$ServerEntryCopyWithImpl<$Res>
 
 /// Create a copy of ServerEntry
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? url = null,Object? displayName = null,Object? siteName = freezed,Object? serverVersion = freezed,Object? lastActiveAt = freezed,Object? ssoScheme = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? url = null,Object? displayName = null,Object? siteName = freezed,Object? serverVersion = freezed,Object? diagnosticId = freezed,Object? lastActiveAt = freezed,Object? ssoScheme = freezed,}) {
   return _then(_ServerEntry(
 url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,siteName: freezed == siteName ? _self.siteName : siteName // ignore: cast_nullable_to_non_nullable
 as String?,serverVersion: freezed == serverVersion ? _self.serverVersion : serverVersion // ignore: cast_nullable_to_non_nullable
+as String?,diagnosticId: freezed == diagnosticId ? _self.diagnosticId : diagnosticId // ignore: cast_nullable_to_non_nullable
 as String?,lastActiveAt: freezed == lastActiveAt ? _self.lastActiveAt : lastActiveAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,ssoScheme: freezed == ssoScheme ? _self.ssoScheme : ssoScheme // ignore: cast_nullable_to_non_nullable
 as String?,

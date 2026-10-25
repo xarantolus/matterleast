@@ -48,10 +48,10 @@ Stream<List<ServerEntry>> servers(Ref ref) => ref
 @Riverpod(keepAlive: true)
 Future<ServerSession> serverSession(Ref ref, String url) {
   final manager = ref.watch(serverManagerProvider);
-  final closed = manager.closed
-      .where((closedUrl) => closedUrl == url)
+  final changes = manager.changed
+      .where((changedUrl) => changedUrl == url)
       .listen((_) => ref.invalidateSelf());
-  ref.onDispose(closed.cancel);
+  ref.onDispose(changes.cancel);
   return manager.session(url);
 }
 
