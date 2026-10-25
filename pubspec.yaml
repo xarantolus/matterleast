@@ -39,6 +39,15 @@ dev_dependencies:
   swagger_parser: ^1.45.0
   yaml: ^3.1.4
   drift_dev: ^2.35.2
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/icon/legacy.png
+  adaptive_icon_background: assets/icon/background.png
+  adaptive_icon_foreground: assets/icon/foreground.png
+  adaptive_icon_monochrome: assets/icon/monochrome.png
