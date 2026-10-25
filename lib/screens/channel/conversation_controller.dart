@@ -34,6 +34,7 @@ class Conversation extends _$Conversation {
   DateTime? _lastViewedAt;
   String? _me;
   var _loadingNewer = false;
+  final _openedAt = DateTime.now().toUtc();
 
   /// Messages in the first answer of a new watch, or stored by a fetch,
   /// are history, not live arrivals.
@@ -120,10 +121,11 @@ class Conversation extends _$Conversation {
     unawaited(_subscription?.cancel());
     _subscription =
         (_isThread
-                ? views.thread(rootId!, limit: _limit)
+                ? views.thread(rootId!, limit: _limit, openedAt: _openedAt)
                 : views.channel(
                     channelId,
                     limit: _limit,
+                    openedAt: _openedAt,
                     rangeAt: _rangeAt,
                     unreadAfter: _lastViewedAt,
                   ))

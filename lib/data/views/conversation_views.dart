@@ -18,26 +18,31 @@ class ConversationViews {
 
   /// The newest [limit] messages of the loaded range containing [rangeAt]
   /// (the newest range when null), and at least those after [unreadAfter],
-  /// so the new-messages line is in the window.
+  /// so the new-messages line is in the window. Messages deleted before
+  /// [openedAt] are left out; those deleted since stay as placeholders.
   Stream<ConversationWindow> channel(
     String channelId, {
     required int limit,
+    required DateTime openedAt,
     DateTime? rangeAt,
     DateTime? unreadAfter,
   }) => throttledWatch(
     _changes(),
-    () => _channel(channelId, limit, rangeAt, unreadAfter),
+    () => _channel(channelId, limit, openedAt, rangeAt, unreadAfter),
     interval: _interval,
   ).distinct();
 
   /// The thread of [rootId]: its first message and the newest [limit]
   /// stored replies of the loaded range.
-  Stream<ConversationWindow> thread(String rootId, {required int limit}) =>
-      throttledWatch(
-        _changes(),
-        () => _thread(rootId, limit),
-        interval: _interval,
-      ).distinct();
+  Stream<ConversationWindow> thread(
+    String rootId, {
+    required int limit,
+    required DateTime openedAt,
+  }) => throttledWatch(
+    _changes(),
+    () => _thread(rootId, limit, openedAt),
+    interval: _interval,
+  ).distinct();
 
   Stream<Object?> _changes() => db.tableUpdates(
     TableUpdateQuery.onAllTables([
@@ -64,6 +69,7 @@ class ConversationViews {
   Future<ConversationWindow> _channel(
     String channelId,
     int limit,
+    DateTime openedAt,
     DateTime? rangeAt,
     DateTime? unreadAfter,
   ) async {
@@ -98,7 +104,8 @@ class ConversationViews {
           range.earliest.millisecondsSinceEpoch,
           range.latest.millisecondsSinceEpoch,
         ) &
-        (crt ? p.rootId.equals('') : const Constant(true));
+        (crt ? p.rootId.equals('') : const Constant(true)) &
+        _notDeletedBefore(p, openedAt);
 
     var window = limit;
     if (unreadAfter != null) {
@@ -136,7 +143,15 @@ class ConversationViews {
     );
   }
 
-  Future<ConversationWindow> _thread(String rootId, int limit) async {
+  Expression<bool> _notDeletedBefore($PostsTable p, DateTime at) =>
+      p.deleteAt.isNull() |
+      p.deleteAt.isBiggerThanValue(at.millisecondsSinceEpoch);
+
+  Future<ConversationWindow> _thread(
+    String rootId,
+    int limit,
+    DateTime openedAt,
+  ) async {
     final root = await (db.select(
       db.posts,
     )..where((p) => p.id.equals(rootId))).getSingleOrNull();
@@ -152,6 +167,7 @@ class ConversationViews {
                 ..where(
                   (p) =>
                       p.rootId.equals(rootId) &
+                      _notDeletedBefore(p, openedAt) &
                       p.createAt.isBetweenValues(
                         range.earliest.millisecondsSinceEpoch,
                         range.latest.millisecondsSinceEpoch,
