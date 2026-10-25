@@ -8,6 +8,7 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
+import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
@@ -48,6 +49,13 @@ class ChannelScreen extends ConsumerWidget {
     };
     final typing = ref.watch(typingNamesProvider(url, channelId, '')).value;
     listenForRejectedPosts(context, ref, url, channelId);
+    listenForDialogs(
+      context,
+      ref,
+      url: url,
+      channelId: channelId,
+      teamId: window?.teamId ?? '',
+    );
     return Scaffold(
       appBar: AppBar(
         title: ConversationTitle(

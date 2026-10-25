@@ -8,6 +8,7 @@ import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
+import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/thread/thread_providers.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
@@ -43,6 +44,13 @@ class ThreadScreen extends ConsumerWidget {
     final offline = state.refreshFailure != null && !state.refreshing;
     final typing = ref.watch(typingNamesProvider(url, channelId, rootId)).value;
     listenForRejectedPosts(context, ref, url, channelId);
+    listenForDialogs(
+      context,
+      ref,
+      url: url,
+      channelId: channelId,
+      teamId: state.window?.teamId ?? '',
+    );
     final window = state.window;
     return Scaffold(
       appBar: AppBar(

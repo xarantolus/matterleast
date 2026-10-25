@@ -9,14 +9,33 @@ class DialogInbox {
   final _dialogs = StreamController<OpenDialog>.broadcast();
   String? _expected;
 
+  /// Dialogs that arrived before the answer naming their trigger: an
+  /// integration may open its dialog before it answers the command.
+  final _early = <String, (OpenDialog, DateTime)>{};
+  static const _earlyFor = Duration(seconds: 30);
+
   Stream<OpenDialog> get dialogs => _dialogs.stream;
 
   /// A command or action answered with [triggerId].
-  void expect(String triggerId) => _expected = triggerId;
+  void expect(String triggerId) {
+    final now = DateTime.now();
+    _early.removeWhere((_, e) => now.difference(e.$2) > _earlyFor);
+    final early = _early.remove(triggerId);
+    if (early != null) {
+      _expected = null;
+      if (!_dialogs.isClosed) _dialogs.add(early.$1);
+      return;
+    }
+    _expected = triggerId;
+  }
 
   void offer(OpenDialog dialog) {
     final trigger = dialog.triggerId;
-    if (trigger == null || trigger != _expected || _dialogs.isClosed) return;
+    if (trigger == null || _dialogs.isClosed) return;
+    if (trigger != _expected) {
+      _early[trigger] = (dialog, DateTime.now());
+      return;
+    }
     _expected = null;
     _dialogs.add(dialog);
   }
