@@ -30,6 +30,7 @@ class _ThreadsClient implements ThreadsClient {
     int? perPage = 60,
     bool? totalsOnly = false,
     bool? threadsOnly = false,
+    bool? unread = false,
     int? since,
   }) async {
     final _extra = <String, dynamic>{};
@@ -40,6 +41,7 @@ class _ThreadsClient implements ThreadsClient {
       r'per_page': perPage,
       r'totalsOnly': totalsOnly,
       r'threadsOnly': threadsOnly,
+      r'unread': unread,
       r'since': since,
     };
     queryParameters.removeWhere((k, v) => v == null);

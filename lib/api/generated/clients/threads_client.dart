@@ -23,6 +23,7 @@ abstract class ThreadsClient {
     @Query('per_page') int? perPage = 60,
     @Query('totalsOnly') bool? totalsOnly = false,
     @Query('threadsOnly') bool? threadsOnly = false,
+    @Query('unread') bool? unread = false,
     @Query('since') int? since,
   });
 

@@ -157,3 +157,6 @@ actions:
       unread_mentions: {type: integer, format: int64}
       is_urgent: {type: boolean}
       delete_at: {type: integer, format: int64}
+  - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/threads'].get.parameters"
+    update:
+      - {name: unread, in: query, description: "Only threads with unread replies", schema: {type: boolean, default: false}}
