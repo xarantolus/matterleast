@@ -38,6 +38,18 @@ jobs:
           flutter-version: 3.47.8
           cache: true
 
+      # Gradle installs the NDK Flutter pins when the runner image lacks it.
+      - name: Find the NDK version
+        run: |
+          version=$(grep -oP "ndkVersion = '\K[^']+" "$FLUTTER_ROOT/packages/flutter_tools/lib/src/android/gradle_utils.dart")
+          echo "NDK_VERSION=$version" >> $GITHUB_ENV
+          echo "NDK_DIR=$ANDROID_HOME/ndk/$version" >> $GITHUB_ENV
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ env.NDK_DIR }}
+          key: ndk-${{ env.NDK_VERSION }}
+
       - run: flutter pub get
 
       - name: Check that generated code is current
