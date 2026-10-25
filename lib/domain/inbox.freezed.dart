@@ -22,7 +22,8 @@ mixin _$InboxItem {
  String? get author; String get preview;/// Where the message is, for rows whose title doesn't say it, such as
 /// `#town-square` for a thread.
  String? get place; DateTime get time;/// Unread messages or new replies; 0 shows a dot when [unread].
- int get count; bool get unread; String? get postId; String? get rootId;/// Presence of the other person in a direct message.
+ int get count; bool get unread; String? get postId; String? get rootId;/// A reply under collapsed threads: it opens in its thread.
+ bool get inThread;/// Presence of the other person in a direct message.
  String? get status;
 /// Create a copy of InboxItem
 /// with the given fields replaced by the non-null parameter values.
@@ -35,20 +36,20 @@ $InboxItemCopyWith<InboxItem> get copyWith => _$InboxItemCopyWithImpl<InboxItem>
 @override
 bool operator ==(Object other) {
   final _this = this as InboxItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InboxItem&&(identical(other.serverUrl, _this.serverUrl) || other.serverUrl == _this.serverUrl)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.avatarName, _this.avatarName) || other.avatarName == _this.avatarName)&&(identical(other.avatarUserId, _this.avatarUserId) || other.avatarUserId == _this.avatarUserId)&&(identical(other.avatarPictureUpdate, _this.avatarPictureUpdate) || other.avatarPictureUpdate == _this.avatarPictureUpdate)&&(identical(other.author, _this.author) || other.author == _this.author)&&(identical(other.preview, _this.preview) || other.preview == _this.preview)&&(identical(other.place, _this.place) || other.place == _this.place)&&(identical(other.time, _this.time) || other.time == _this.time)&&(identical(other.count, _this.count) || other.count == _this.count)&&(identical(other.unread, _this.unread) || other.unread == _this.unread)&&(identical(other.postId, _this.postId) || other.postId == _this.postId)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.status, _this.status) || other.status == _this.status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InboxItem&&(identical(other.serverUrl, _this.serverUrl) || other.serverUrl == _this.serverUrl)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.avatarName, _this.avatarName) || other.avatarName == _this.avatarName)&&(identical(other.avatarUserId, _this.avatarUserId) || other.avatarUserId == _this.avatarUserId)&&(identical(other.avatarPictureUpdate, _this.avatarPictureUpdate) || other.avatarPictureUpdate == _this.avatarPictureUpdate)&&(identical(other.author, _this.author) || other.author == _this.author)&&(identical(other.preview, _this.preview) || other.preview == _this.preview)&&(identical(other.place, _this.place) || other.place == _this.place)&&(identical(other.time, _this.time) || other.time == _this.time)&&(identical(other.count, _this.count) || other.count == _this.count)&&(identical(other.unread, _this.unread) || other.unread == _this.unread)&&(identical(other.postId, _this.postId) || other.postId == _this.postId)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.inThread, _this.inThread) || other.inThread == _this.inThread)&&(identical(other.status, _this.status) || other.status == _this.status));
 }
 
 
 @override
 int get hashCode {
   final _this = this as InboxItem;
-  return Object.hash(runtimeType,_this.serverUrl,_this.kind,_this.channelId,_this.teamId,_this.title,_this.avatarName,_this.avatarUserId,_this.avatarPictureUpdate,_this.author,_this.preview,_this.place,_this.time,_this.count,_this.unread,_this.postId,_this.rootId,_this.status);
+  return Object.hash(runtimeType,_this.serverUrl,_this.kind,_this.channelId,_this.teamId,_this.title,_this.avatarName,_this.avatarUserId,_this.avatarPictureUpdate,_this.author,_this.preview,_this.place,_this.time,_this.count,_this.unread,_this.postId,_this.rootId,_this.inThread,_this.status);
 }
 
 @override
 String toString() {
   final _this = this as InboxItem;
-  return 'InboxItem(serverUrl: ${_this.serverUrl}, kind: ${_this.kind}, channelId: ${_this.channelId}, teamId: ${_this.teamId}, title: ${_this.title}, avatarName: ${_this.avatarName}, avatarUserId: ${_this.avatarUserId}, avatarPictureUpdate: ${_this.avatarPictureUpdate}, author: ${_this.author}, preview: ${_this.preview}, place: ${_this.place}, time: ${_this.time}, count: ${_this.count}, unread: ${_this.unread}, postId: ${_this.postId}, rootId: ${_this.rootId}, status: ${_this.status})';
+  return 'InboxItem(serverUrl: ${_this.serverUrl}, kind: ${_this.kind}, channelId: ${_this.channelId}, teamId: ${_this.teamId}, title: ${_this.title}, avatarName: ${_this.avatarName}, avatarUserId: ${_this.avatarUserId}, avatarPictureUpdate: ${_this.avatarPictureUpdate}, author: ${_this.author}, preview: ${_this.preview}, place: ${_this.place}, time: ${_this.time}, count: ${_this.count}, unread: ${_this.unread}, postId: ${_this.postId}, rootId: ${_this.rootId}, inThread: ${_this.inThread}, status: ${_this.status})';
 }
 
 
@@ -59,7 +60,7 @@ abstract mixin class $InboxItemCopyWith<$Res>  {
   factory $InboxItemCopyWith(InboxItem value, $Res Function(InboxItem) _then) = _$InboxItemCopyWithImpl;
 @useResult
 $Res call({
- String serverUrl, InboxKind kind, String channelId, String? teamId, String title, String avatarName, String? avatarUserId, int? avatarPictureUpdate, String? author, String preview, String? place, DateTime time, int count, bool unread, String? postId, String? rootId, String? status
+ String serverUrl, InboxKind kind, String channelId, String? teamId, String title, String avatarName, String? avatarUserId, int? avatarPictureUpdate, String? author, String preview, String? place, DateTime time, int count, bool unread, String? postId, String? rootId, bool inThread, String? status
 });
 
 
@@ -76,7 +77,7 @@ class _$InboxItemCopyWithImpl<$Res>
 
 /// Create a copy of InboxItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? serverUrl = null,Object? kind = null,Object? channelId = null,Object? teamId = freezed,Object? title = null,Object? avatarName = null,Object? avatarUserId = freezed,Object? avatarPictureUpdate = freezed,Object? author = freezed,Object? preview = null,Object? place = freezed,Object? time = null,Object? count = null,Object? unread = null,Object? postId = freezed,Object? rootId = freezed,Object? status = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? serverUrl = null,Object? kind = null,Object? channelId = null,Object? teamId = freezed,Object? title = null,Object? avatarName = null,Object? avatarUserId = freezed,Object? avatarPictureUpdate = freezed,Object? author = freezed,Object? preview = null,Object? place = freezed,Object? time = null,Object? count = null,Object? unread = null,Object? postId = freezed,Object? rootId = freezed,Object? inThread = null,Object? status = freezed,}) {
   return _then(InboxItem(
 serverUrl: null == serverUrl ? _self.serverUrl : serverUrl // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -94,7 +95,8 @@ as DateTime,count: null == count ? _self.count : count // ignore: cast_nullable_
 as int,unread: null == unread ? _self.unread : unread // ignore: cast_nullable_to_non_nullable
 as bool,postId: freezed == postId ? _self.postId : postId // ignore: cast_nullable_to_non_nullable
 as String?,rootId: freezed == rootId ? _self.rootId : rootId // ignore: cast_nullable_to_non_nullable
-as String?,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String?,inThread: null == inThread ? _self.inThread : inThread // ignore: cast_nullable_to_non_nullable
+as bool,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -180,10 +182,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverUrl,  InboxKind kind,  String channelId,  String? teamId,  String title,  String avatarName,  String? avatarUserId,  int? avatarPictureUpdate,  String? author,  String preview,  String? place,  DateTime time,  int count,  bool unread,  String? postId,  String? rootId,  String? status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverUrl,  InboxKind kind,  String channelId,  String? teamId,  String title,  String avatarName,  String? avatarUserId,  int? avatarPictureUpdate,  String? author,  String preview,  String? place,  DateTime time,  int count,  bool unread,  String? postId,  String? rootId,  bool inThread,  String? status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InboxItem() when $default != null:
-return $default(_that.serverUrl,_that.kind,_that.channelId,_that.teamId,_that.title,_that.avatarName,_that.avatarUserId,_that.avatarPictureUpdate,_that.author,_that.preview,_that.place,_that.time,_that.count,_that.unread,_that.postId,_that.rootId,_that.status);case _:
+return $default(_that.serverUrl,_that.kind,_that.channelId,_that.teamId,_that.title,_that.avatarName,_that.avatarUserId,_that.avatarPictureUpdate,_that.author,_that.preview,_that.place,_that.time,_that.count,_that.unread,_that.postId,_that.rootId,_that.inThread,_that.status);case _:
   return orElse();
 
 }
@@ -201,10 +203,10 @@ return $default(_that.serverUrl,_that.kind,_that.channelId,_that.teamId,_that.ti
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverUrl,  InboxKind kind,  String channelId,  String? teamId,  String title,  String avatarName,  String? avatarUserId,  int? avatarPictureUpdate,  String? author,  String preview,  String? place,  DateTime time,  int count,  bool unread,  String? postId,  String? rootId,  String? status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverUrl,  InboxKind kind,  String channelId,  String? teamId,  String title,  String avatarName,  String? avatarUserId,  int? avatarPictureUpdate,  String? author,  String preview,  String? place,  DateTime time,  int count,  bool unread,  String? postId,  String? rootId,  bool inThread,  String? status)  $default,) {final _that = this;
 switch (_that) {
 case _InboxItem():
-return $default(_that.serverUrl,_that.kind,_that.channelId,_that.teamId,_that.title,_that.avatarName,_that.avatarUserId,_that.avatarPictureUpdate,_that.author,_that.preview,_that.place,_that.time,_that.count,_that.unread,_that.postId,_that.rootId,_that.status);case _:
+return $default(_that.serverUrl,_that.kind,_that.channelId,_that.teamId,_that.title,_that.avatarName,_that.avatarUserId,_that.avatarPictureUpdate,_that.author,_that.preview,_that.place,_that.time,_that.count,_that.unread,_that.postId,_that.rootId,_that.inThread,_that.status);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -221,10 +223,10 @@ return $default(_that.serverUrl,_that.kind,_that.channelId,_that.teamId,_that.ti
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverUrl,  InboxKind kind,  String channelId,  String? teamId,  String title,  String avatarName,  String? avatarUserId,  int? avatarPictureUpdate,  String? author,  String preview,  String? place,  DateTime time,  int count,  bool unread,  String? postId,  String? rootId,  String? status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverUrl,  InboxKind kind,  String channelId,  String? teamId,  String title,  String avatarName,  String? avatarUserId,  int? avatarPictureUpdate,  String? author,  String preview,  String? place,  DateTime time,  int count,  bool unread,  String? postId,  String? rootId,  bool inThread,  String? status)?  $default,) {final _that = this;
 switch (_that) {
 case _InboxItem() when $default != null:
-return $default(_that.serverUrl,_that.kind,_that.channelId,_that.teamId,_that.title,_that.avatarName,_that.avatarUserId,_that.avatarPictureUpdate,_that.author,_that.preview,_that.place,_that.time,_that.count,_that.unread,_that.postId,_that.rootId,_that.status);case _:
+return $default(_that.serverUrl,_that.kind,_that.channelId,_that.teamId,_that.title,_that.avatarName,_that.avatarUserId,_that.avatarPictureUpdate,_that.author,_that.preview,_that.place,_that.time,_that.count,_that.unread,_that.postId,_that.rootId,_that.inThread,_that.status);case _:
   return null;
 
 }
@@ -236,7 +238,7 @@ return $default(_that.serverUrl,_that.kind,_that.channelId,_that.teamId,_that.ti
 
 
 class _InboxItem extends InboxItem {
-  const _InboxItem({required this.serverUrl, required this.kind, required this.channelId, required this.teamId, required this.title, required this.avatarName, this.avatarUserId, this.avatarPictureUpdate, required this.author, required this.preview, required this.place, required this.time, required this.count, required this.unread, this.postId, this.rootId, this.status}): super._();
+  const _InboxItem({required this.serverUrl, required this.kind, required this.channelId, required this.teamId, required this.title, required this.avatarName, this.avatarUserId, this.avatarPictureUpdate, required this.author, required this.preview, required this.place, required this.time, required this.count, required this.unread, this.postId, this.rootId, this.inThread = false, this.status}): super._();
   
 
 @override final  String serverUrl;
@@ -262,6 +264,8 @@ class _InboxItem extends InboxItem {
 @override final  bool unread;
 @override final  String? postId;
 @override final  String? rootId;
+/// A reply under collapsed threads: it opens in its thread.
+@override@JsonKey() final  bool inThread;
 /// Presence of the other person in a direct message.
 @override final  String? status;
 
@@ -275,18 +279,18 @@ _$InboxItemCopyWith<_InboxItem> get copyWith => __$InboxItemCopyWithImpl<_InboxI
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _InboxItem&&(identical(other.serverUrl, serverUrl) || other.serverUrl == serverUrl)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.title, title) || other.title == title)&&(identical(other.avatarName, avatarName) || other.avatarName == avatarName)&&(identical(other.avatarUserId, avatarUserId) || other.avatarUserId == avatarUserId)&&(identical(other.avatarPictureUpdate, avatarPictureUpdate) || other.avatarPictureUpdate == avatarPictureUpdate)&&(identical(other.author, author) || other.author == author)&&(identical(other.preview, preview) || other.preview == preview)&&(identical(other.place, place) || other.place == place)&&(identical(other.time, time) || other.time == time)&&(identical(other.count, count) || other.count == count)&&(identical(other.unread, unread) || other.unread == unread)&&(identical(other.postId, postId) || other.postId == postId)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.status, status) || other.status == status));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _InboxItem&&(identical(other.serverUrl, serverUrl) || other.serverUrl == serverUrl)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.title, title) || other.title == title)&&(identical(other.avatarName, avatarName) || other.avatarName == avatarName)&&(identical(other.avatarUserId, avatarUserId) || other.avatarUserId == avatarUserId)&&(identical(other.avatarPictureUpdate, avatarPictureUpdate) || other.avatarPictureUpdate == avatarPictureUpdate)&&(identical(other.author, author) || other.author == author)&&(identical(other.preview, preview) || other.preview == preview)&&(identical(other.place, place) || other.place == place)&&(identical(other.time, time) || other.time == time)&&(identical(other.count, count) || other.count == count)&&(identical(other.unread, unread) || other.unread == unread)&&(identical(other.postId, postId) || other.postId == postId)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.inThread, inThread) || other.inThread == inThread)&&(identical(other.status, status) || other.status == status));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,serverUrl,kind,channelId,teamId,title,avatarName,avatarUserId,avatarPictureUpdate,author,preview,place,time,count,unread,postId,rootId,status);
+    return Object.hash(runtimeType,serverUrl,kind,channelId,teamId,title,avatarName,avatarUserId,avatarPictureUpdate,author,preview,place,time,count,unread,postId,rootId,inThread,status);
 }
 
 @override
 String toString() {
-    return 'InboxItem(serverUrl: $serverUrl, kind: $kind, channelId: $channelId, teamId: $teamId, title: $title, avatarName: $avatarName, avatarUserId: $avatarUserId, avatarPictureUpdate: $avatarPictureUpdate, author: $author, preview: $preview, place: $place, time: $time, count: $count, unread: $unread, postId: $postId, rootId: $rootId, status: $status)';
+    return 'InboxItem(serverUrl: $serverUrl, kind: $kind, channelId: $channelId, teamId: $teamId, title: $title, avatarName: $avatarName, avatarUserId: $avatarUserId, avatarPictureUpdate: $avatarPictureUpdate, author: $author, preview: $preview, place: $place, time: $time, count: $count, unread: $unread, postId: $postId, rootId: $rootId, inThread: $inThread, status: $status)';
 }
 
 
@@ -297,7 +301,7 @@ abstract mixin class _$InboxItemCopyWith<$Res> implements $InboxItemCopyWith<$Re
   factory _$InboxItemCopyWith(_InboxItem value, $Res Function(_InboxItem) _then) = __$InboxItemCopyWithImpl;
 @override @useResult
 $Res call({
- String serverUrl, InboxKind kind, String channelId, String? teamId, String title, String avatarName, String? avatarUserId, int? avatarPictureUpdate, String? author, String preview, String? place, DateTime time, int count, bool unread, String? postId, String? rootId, String? status
+ String serverUrl, InboxKind kind, String channelId, String? teamId, String title, String avatarName, String? avatarUserId, int? avatarPictureUpdate, String? author, String preview, String? place, DateTime time, int count, bool unread, String? postId, String? rootId, bool inThread, String? status
 });
 
 
@@ -314,7 +318,7 @@ class __$InboxItemCopyWithImpl<$Res>
 
 /// Create a copy of InboxItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? serverUrl = null,Object? kind = null,Object? channelId = null,Object? teamId = freezed,Object? title = null,Object? avatarName = null,Object? avatarUserId = freezed,Object? avatarPictureUpdate = freezed,Object? author = freezed,Object? preview = null,Object? place = freezed,Object? time = null,Object? count = null,Object? unread = null,Object? postId = freezed,Object? rootId = freezed,Object? status = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? serverUrl = null,Object? kind = null,Object? channelId = null,Object? teamId = freezed,Object? title = null,Object? avatarName = null,Object? avatarUserId = freezed,Object? avatarPictureUpdate = freezed,Object? author = freezed,Object? preview = null,Object? place = freezed,Object? time = null,Object? count = null,Object? unread = null,Object? postId = freezed,Object? rootId = freezed,Object? inThread = null,Object? status = freezed,}) {
   return _then(_InboxItem(
 serverUrl: null == serverUrl ? _self.serverUrl : serverUrl // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -332,7 +336,8 @@ as DateTime,count: null == count ? _self.count : count // ignore: cast_nullable_
 as int,unread: null == unread ? _self.unread : unread // ignore: cast_nullable_to_non_nullable
 as bool,postId: freezed == postId ? _self.postId : postId // ignore: cast_nullable_to_non_nullable
 as String?,rootId: freezed == rootId ? _self.rootId : rootId // ignore: cast_nullable_to_non_nullable
-as String?,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String?,inThread: null == inThread ? _self.inThread : inThread // ignore: cast_nullable_to_non_nullable
+as bool,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

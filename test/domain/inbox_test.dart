@@ -170,6 +170,24 @@ void main() {
       },
     );
 
+    test('a reply opens in its thread only under collapsed threads', () {
+      InboxItem mentionUnder({required bool collapsed}) => buildServerInbox(
+        InboxSource(
+          serverUrl: 's1',
+          myId: 'me',
+          collapsedThreads: collapsed,
+          channels: {'town': (teamId: 't1', input: channel('town'))},
+          posts: {
+            'r': post('r', channelId: 'town', rootId: 'root'),
+            'top': post('top', channelId: 'town', minute: 1),
+          },
+          mentionIds: ['r', 'top'],
+        ),
+      ).mentions.firstWhere((m) => m.postId == 'r');
+      expect(mentionUnder(collapsed: true).inThread, isTrue);
+      expect(mentionUnder(collapsed: false).inThread, isFalse);
+    });
+
     test('muted conversations count only with mentions', () {
       final inbox = buildServerInbox(
         InboxSource(

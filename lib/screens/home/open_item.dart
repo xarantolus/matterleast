@@ -20,21 +20,24 @@ Future<void> openInboxItem(
   ref
       .read(railSelectionProvider.notifier)
       .select(RailTarget(url: item.serverUrl, teamId: item.teamId));
-  if (item.kind != InboxKind.thread) {
+  final rootId = item.rootId;
+  final thread =
+      rootId != null && (item.kind == InboxKind.thread || item.inThread);
+  if (!thread) {
     final actions = await ref.read(
       channelActionsProvider(item.serverUrl).future,
     );
     unawaited(actions.open(item.channelId, teamId: item.teamId));
   }
-  final rootId = item.rootId;
   await navigator.push(
     MaterialPageRoute<void>(
-      builder: (_) => item.kind == InboxKind.thread && rootId != null
+      builder: (_) => thread
           ? ThreadScreen(
               url: item.serverUrl,
               channelId: item.channelId,
               rootId: rootId,
               channelName: item.place ?? item.title,
+              highlightPostId: item.postId,
             )
           : ChannelScreen(
               url: item.serverUrl,

@@ -43,6 +43,9 @@ abstract class InboxItem with _$InboxItem {
     String? postId,
     String? rootId,
 
+    /// A reply under collapsed threads: it opens in its thread.
+    @Default(false) bool inThread,
+
     /// Presence of the other person in a direct message.
     String? status,
   }) = _InboxItem;
@@ -195,6 +198,7 @@ ServerInbox buildServerInbox(InboxSource s) {
       unread: unread,
       postId: post.id,
       rootId: post.rootId.isEmpty ? null : post.rootId,
+      inThread: s.collapsedThreads && post.rootId.isNotEmpty,
     );
   }
 
