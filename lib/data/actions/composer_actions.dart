@@ -8,6 +8,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/autocomplete.dart';
+import 'package:matterleast/domain/commands.dart';
 import 'package:matterleast/domain/outbox.dart';
 
 /// What the user writes: sending posts through the outbox, drafts,
@@ -131,6 +132,79 @@ class ComposerActions {
     teamId: teamId,
     rootId: rootId,
   );
+
+  /// Runs a slash command. A reply only the user sees shows as an ephemeral
+  /// message; one for everyone arrives as an ordinary post. Server errors
+  /// are thrown as [ApiError]s, whose message says what went wrong.
+  Future<CommandOutcome> executeCommand(
+    String channelId, {
+    required String teamId,
+    String rootId = '',
+    required String text,
+  }) async {
+    final response = await session.api.call(
+      () => session.api.client.commands.executeCommand(
+        body: api.ApiV4CommandsExecuteRequestBody(
+          channelId: channelId,
+          command: normalizeCommand(text),
+          teamId: teamId.isEmpty ? null : teamId,
+          rootId: rootId.isEmpty ? null : rootId,
+          parentId: rootId.isEmpty ? null : rootId,
+        ),
+      ),
+    );
+    if (response.triggerId case final trigger? when trigger.isNotEmpty) {
+      session.dialogTriggerId = trigger;
+    }
+    final reply = response.text ?? '';
+    if (response.responseType == 'ephemeral' &&
+        (reply.isNotEmpty || response.attachments.isNotEmpty)) {
+      final me = await _db.syncText(SyncKeys.currentUserId);
+      final at = _uniqueNow();
+      await _store.applyEphemeralPost(
+        api.Post.fromJson({
+          'id': '$localEphemeralPrefix${at.millisecondsSinceEpoch}',
+          'channel_id': response.channelId?.isNotEmpty ?? false
+              ? response.channelId
+              : channelId,
+          'root_id': rootId,
+          'user_id': me ?? '',
+          'create_at': at.millisecondsSinceEpoch,
+          'type': ephemeralType,
+          'message': reply,
+          'props': {
+            ...?response.props,
+            if (response.attachments.isNotEmpty)
+              'attachments': [for (final a in response.attachments) a.toJson()],
+          },
+        }),
+      );
+    }
+    if (response.gotoLocation case final location? when location.isNotEmpty) {
+      return CommandGoto(location);
+    }
+    return const CommandDone();
+  }
+
+  /// Hides an ephemeral message.
+  Future<void> dismissEphemeral(String postId) =>
+      _store.dismissEphemeral(postId);
+}
+
+/// What the screen does after a slash command ran.
+sealed class CommandOutcome {
+  const CommandOutcome();
+}
+
+final class CommandDone extends CommandOutcome {
+  const CommandDone();
+}
+
+/// The command asks to open [location]: a link on this server (a channel,
+/// a permalink) or anywhere else.
+final class CommandGoto extends CommandOutcome {
+  const CommandGoto(this.location);
+  final String location;
 }
 
 final _emojiCode = RegExp(r':([a-z0-9_+-]+):');

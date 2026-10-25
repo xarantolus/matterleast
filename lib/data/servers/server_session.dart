@@ -56,6 +56,10 @@ class ServerSession {
   );
   late final OutboxSender outbox;
 
+  /// The trigger of this device's last slash command or message action; a
+  /// dialog the server opens is shown only when it answers that trigger.
+  String? dialogTriggerId;
+
   /// A socket that connects again means the server is reachable again.
   void _onSocketState() {
     if (connection.state.value == SocketState.connected) {
@@ -91,7 +95,9 @@ class ServerSession {
       ),
       token: () => tokens.cached(key),
     );
-    unawaited(session.outbox.start());
+    unawaited(
+      session.store.removeEphemeralPosts().whenComplete(session.outbox.start),
+    );
     return session;
   }
 

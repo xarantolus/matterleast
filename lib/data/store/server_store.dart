@@ -1243,6 +1243,62 @@ class ServerStore {
         .write(PostsCompanion(pendingPostId: Value(pendingPostId)));
   });
 
+  /// A message only this user sees (a command's reply, a bot's hint). The
+  /// server keeps no copy, so it is a local row of type `system_ephemeral`:
+  /// no unread count, no fetch watermark, shown until dismissed or until
+  /// the server is opened again (see [removeEphemeralPosts]).
+  ///
+  /// A command's reply arrives twice when the socket is up, from the
+  /// command's answer (made here, id prefixed [localEphemeralPrefix]) and
+  /// as `ephemeral_message`; the same text in the same place within a
+  /// minute is one message, and the server's copy takes over the local
+  /// one's list key.
+  Future<void> applyEphemeralPost(api.Post post) => db.transaction(() async {
+    if (post.id == null || post.createAt == null || post.channelId == null) {
+      return;
+    }
+    final rootId = post.rootId ?? '';
+    final window = const Duration(minutes: 1).inMilliseconds;
+    final at = post.createAt!.millisecondsSinceEpoch;
+    final twin =
+        await (db.select(db.posts)
+              ..where(
+                (p) =>
+                    p.channelId.equals(post.channelId!) &
+                    p.rootId.equals(rootId) &
+                    p.type.equals(ephemeralType) &
+                    p.message.equals(post.message ?? '') &
+                    p.createAt.isBetweenValues(at - window, at + window) &
+                    p.id.equals(post.id!).not(),
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    final local = post.id!.startsWith(localEphemeralPrefix);
+    if (twin != null && local) return;
+    if (twin != null && twin.id.startsWith(localEphemeralPrefix)) {
+      await (db.delete(db.posts)..where((p) => p.id.equals(twin.id))).go();
+    }
+    await _upsertPosts([post]);
+    await (db.update(db.posts)..where((p) => p.id.equals(post.id!))).write(
+      PostsCompanion(
+        type: const Value(ephemeralType),
+        pendingPostId: twin != null && twin.id.startsWith(localEphemeralPrefix)
+            ? Value(twin.pendingPostId.isEmpty ? twin.id : twin.pendingPostId)
+            : const Value.absent(),
+      ),
+    );
+    await _showLocalPost(post.channelId!, rootId, post.createAt!);
+  });
+
+  /// Ephemeral messages last one run of the app, as nothing can bring them
+  /// back after a refresh either.
+  Future<void> removeEphemeralPosts() =>
+      (db.delete(db.posts)..where((p) => p.type.equals(ephemeralType))).go();
+
+  Future<void> dismissEphemeral(String postId) => (db.delete(
+    db.posts,
+  )..where((p) => p.id.equals(postId) & p.type.equals(ephemeralType))).go();
+
   static const _recentEmojiKey = 'recent_emoji';
 
   /// Emoji the user picked lately, most recent first.
@@ -1272,6 +1328,11 @@ class ServerStore {
           ))
           .go();
 }
+
+const ephemeralType = 'system_ephemeral';
+
+/// Ids of ephemeral messages made here from a command's answer.
+const localEphemeralPrefix = 'local-ephemeral:';
 
 /// `posts.send_state` of our own unsent posts.
 abstract final class SendStates {
