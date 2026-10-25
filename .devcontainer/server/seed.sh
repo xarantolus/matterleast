@@ -311,6 +311,29 @@ post alice "$DM_AB" "Noodles?" "$(jq -n --arg r "$DMROOT" "{root_id:\$r}")" >/de
 post bob "$DM_AB" "Noodles it is." "$(jq -n --arg r "$DMROOT" "{root_id:\$r}")" >/dev/null
 echo "seed: extras"
 
+# Media: five images (one larger than the server's 1920 px preview), an
+# animated GIF, a video when the Android SDK's sample clip is there, and an
+# archive no viewer opens.
+MEDIA=$(channel "$LIGHTHOUSE" media Media O "Pictures, clips and files" "")
+channel_add "$MEDIA" alice bob carol
+for c in 1864ab 2b8a3e e67700 c2255c 5f3dc4; do node make-png.js "$TMP/shot-$c.png" "$c" 320; done
+node make-png.js "$TMP/poster.png" 0b7285 2400
+IMAGES=$(upload carol "/files?channel_id=$MEDIA" -F "files=@$TMP/poster.png" \
+    $(for c in 1864ab 2b8a3e e67700 c2255c; do echo "-F files=@$TMP/shot-$c.png"; done) | jq -c '[.file_infos[].id]')
+post carol "$MEDIA" "Five pictures from the harbour walk" "$(jq -n --argjson f "$IMAGES" '{file_ids:$f}')" >/dev/null
+node make-gif.js "$TMP/blink.gif" e8590c 1971c2 96
+GIF=$(upload bob "/files?channel_id=$MEDIA" -F "files=@$TMP/blink.gif" | jq -c '[.file_infos[].id]')
+post bob "$MEDIA" "The beacon blinks again" "$(jq -n --argjson f "$GIF" '{file_ids:$f}')" >/dev/null
+CLIP="${ANDROID_HOME:-}/emulator/resources/default.mp4"
+if [ -f "$CLIP" ]; then
+    VIDEO=$(upload alice "/files?channel_id=$MEDIA" -F "files=@$CLIP;filename=harbour-clip.mp4;type=video/mp4" | jq -c '[.file_infos[].id]')
+    post alice "$MEDIA" "A short clip" "$(jq -n --argjson f "$VIDEO" '{file_ids:$f}')" >/dev/null
+fi
+head -c 20000 /dev/urandom >"$TMP/logs.zip"
+ZIP=$(upload bob "/files?channel_id=$MEDIA" -F "files=@$TMP/logs.zip;type=application/zip" -F "files=@$TMP/checklist.txt" | jq -c '[.file_infos[].id]')
+post bob "$MEDIA" "Logs and the checklist again" "$(jq -n --argjson f "$ZIP" '{file_ids:$f}')" >/dev/null
+echo "seed: media"
+
 cat <<EOF
 
 seed: done. Server: $URL (emulator: http://10.0.2.2:8065)

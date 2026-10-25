@@ -24,10 +24,12 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
+# clang + libc6-dev: native-asset build hooks (pdfrx's PDFium gate) compile
+# a host library for `flutter test`.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
-        openjdk-17-jdk-headless \
+        openjdk-17-jdk-headless clang libc6-dev \
         git curl wget unzip zip xz-utils ca-certificates file \
         libglu1-mesa openssh-client less procps nano
 
