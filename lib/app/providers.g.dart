@@ -50,6 +50,91 @@ final class AppDatabaseProvider
 
 String _$appDatabaseHash() => r'365ef3f215d780c29a21b6328f0b547a8363c6a6';
 
+@ProviderFor(settingsStore)
+final settingsStoreProvider = SettingsStoreProvider._();
+
+final class SettingsStoreProvider
+    extends $FunctionalProvider<SettingsStore, SettingsStore, SettingsStore>
+    with $Provider<SettingsStore> {
+  SettingsStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'settingsStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$settingsStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<SettingsStore> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SettingsStore create(Ref ref) {
+    return settingsStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SettingsStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SettingsStore>(value),
+    );
+  }
+}
+
+String _$settingsStoreHash() => r'03752f8d2b575da19bd6c088058cb24c46c6fa19';
+
+/// The rail item shown when the app was last used, read once at launch.
+
+@ProviderFor(savedRailTarget)
+final savedRailTargetProvider = SavedRailTargetProvider._();
+
+/// The rail item shown when the app was last used, read once at launch.
+
+final class SavedRailTargetProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<RailTarget?>,
+          RailTarget?,
+          FutureOr<RailTarget?>
+        >
+    with $FutureModifier<RailTarget?>, $FutureProvider<RailTarget?> {
+  /// The rail item shown when the app was last used, read once at launch.
+  SavedRailTargetProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'savedRailTargetProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$savedRailTargetHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<RailTarget?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<RailTarget?> create(Ref ref) {
+    return savedRailTarget(ref);
+  }
+}
+
+String _$savedRailTargetHash() => r'c26301a9a7afcec0e711f081f5ed181429a71a31';
+
 @ProviderFor(tokenStore)
 final tokenStoreProvider = TokenStoreProvider._();
 

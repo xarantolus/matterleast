@@ -285,6 +285,7 @@ as int,
 
 }
 
+
 /// @nodoc
 mixin _$RailTarget {
 
@@ -295,6 +296,8 @@ mixin _$RailTarget {
 @pragma('vm:prefer-inline')
 $RailTargetCopyWith<RailTarget> get copyWith => _$RailTargetCopyWithImpl<RailTarget>(this as RailTarget, _$identity);
 
+  /// Serializes this RailTarget to a JSON map.
+  Map<String, dynamic> toJson();
 
 
 @override
@@ -303,7 +306,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is RailTarget&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as RailTarget;
@@ -483,11 +486,11 @@ return $default(_that.url,_that.teamId);case _:
 }
 
 /// @nodoc
-
+@JsonSerializable()
 
 class _RailTarget implements RailTarget {
   const _RailTarget({required this.url, this.teamId});
-  
+  factory _RailTarget.fromJson(Map<String, dynamic> json) => _$RailTargetFromJson(json);
 
 @override final  String url;
 @override final  String? teamId;
@@ -498,14 +501,17 @@ class _RailTarget implements RailTarget {
 @pragma('vm:prefer-inline')
 _$RailTargetCopyWith<_RailTarget> get copyWith => __$RailTargetCopyWithImpl<_RailTarget>(this, _$identity);
 
-
+@override
+Map<String, dynamic> toJson() {
+  return _$RailTargetToJson(this, );
+}
 
 @override
 bool operator ==(Object other) {
     return identical(this, other) || (other.runtimeType == runtimeType&&other is _RailTarget&&(identical(other.url, url) || other.url == url)&&(identical(other.teamId, teamId) || other.teamId == teamId));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
     return Object.hash(runtimeType,url,teamId);

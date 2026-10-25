@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:matterleast/data/app_db/app_database.dart';
+import 'package:matterleast/domain/rail.dart';
 
 /// One typed setting: its key, default and text encoding. Settings are
 /// declared once in [Settings] and read or written only through
@@ -75,6 +78,14 @@ abstract final class Settings {
     _encodeBool,
   );
 
+  /// What the rail showed last, reopened at launch; null is Home.
+  static const lastRailTarget = Setting<RailTarget?>(
+    'lastRailTarget',
+    null,
+    _decodeRailTarget,
+    _encodeRailTarget,
+  );
+
   static const all = <Setting<Object?>>[
     imagesOnMobileData,
     mediaCacheBytes,
@@ -83,6 +94,7 @@ abstract final class Settings {
     keepPostsPerChannel,
     use24HourClock,
     stayConnected,
+    lastRailTarget,
   ];
 
   static bool _decodeBool(String raw) => switch (raw) {
@@ -96,6 +108,17 @@ abstract final class Settings {
   static String _encodeOptionalBool(bool? value) =>
       value == null ? 'system' : value.toString();
   static String _encodeInt(int value) => value.toString();
+  static RailTarget? _decodeRailTarget(String raw) {
+    if (raw.isEmpty) return null;
+    try {
+      return RailTarget.fromJson(jsonDecode(raw) as Map<String, Object?>);
+    } on Object {
+      throw FormatException('rail target', raw);
+    }
+  }
+
+  static String _encodeRailTarget(RailTarget? value) =>
+      value == null ? '' : jsonEncode(value.toJson());
 }
 
 /// The one place that touches the settings table.

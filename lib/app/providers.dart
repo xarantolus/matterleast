@@ -1,10 +1,12 @@
 import 'package:matterleast/data/app_db/app_database.dart';
+import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/servers/entries.dart';
 import 'package:matterleast/data/servers/server_manager.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
+import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -17,6 +19,15 @@ AppDatabase appDatabase(Ref ref) {
   ref.onDispose(db.close);
   return db;
 }
+
+@Riverpod(keepAlive: true)
+SettingsStore settingsStore(Ref ref) =>
+    SettingsStore(ref.watch(appDatabaseProvider));
+
+/// The rail item shown when the app was last used, read once at launch.
+@Riverpod(keepAlive: true)
+Future<RailTarget?> savedRailTarget(Ref ref) =>
+    ref.watch(settingsStoreProvider).read(Settings.lastRailTarget);
 
 @Riverpod(keepAlive: true)
 TokenStore tokenStore(Ref ref) => TokenStore();

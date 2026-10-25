@@ -8,15 +8,18 @@ part of 'rail_selection.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The team (or server) picked in the rail; null is Home.
+/// The team (or server) picked in the rail; null is Home. It starts where
+/// the user left it, which the launch gate has read before the rail shows.
 
 @ProviderFor(RailSelection)
 final railSelectionProvider = RailSelectionProvider._();
 
-/// The team (or server) picked in the rail; null is Home.
+/// The team (or server) picked in the rail; null is Home. It starts where
+/// the user left it, which the launch gate has read before the rail shows.
 final class RailSelectionProvider
     extends $NotifierProvider<RailSelection, RailTarget?> {
-  /// The team (or server) picked in the rail; null is Home.
+  /// The team (or server) picked in the rail; null is Home. It starts where
+  /// the user left it, which the launch gate has read before the rail shows.
   RailSelectionProvider._()
     : super(
         from: null,
@@ -44,9 +47,10 @@ final class RailSelectionProvider
   }
 }
 
-String _$railSelectionHash() => r'7af18cec5ae838e3c3d2b95fbf884cd996c8728d';
+String _$railSelectionHash() => r'21cdee26124778df9768bbffe6b1e81a7561074b';
 
-/// The team (or server) picked in the rail; null is Home.
+/// The team (or server) picked in the rail; null is Home. It starts where
+/// the user left it, which the launch gate has read before the rail shows.
 
 abstract class _$RailSelection extends $Notifier<RailTarget?> {
   RailTarget? build();

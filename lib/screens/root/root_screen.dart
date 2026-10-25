@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/channel_list/channel_list_pane.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
@@ -33,7 +34,7 @@ class RootScreen extends ConsumerWidget {
       );
     }
     final teams = ref.watch(railTeamsProvider(server.url)).value ?? const [];
-    final teamId = target?.teamId ?? teams.firstOrNull?.id;
+    final teamId = shownTeam(target, teams);
     final team = teams.where((t) => t.id == teamId).firstOrNull;
     final status = ref.watch(syncStatusProvider(server.url)).value;
     final list = teamId == null

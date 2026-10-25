@@ -79,7 +79,8 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       if (next case AsyncData(:final value)) _showSignedOut(value);
     });
     final servers = ref.watch(serversProvider).value;
-    if (servers == null) return const Scaffold();
+    final saved = ref.watch(savedRailTargetProvider);
+    if (servers == null || saved.isLoading) return const Scaffold();
     final signedIn = [
       for (final s in servers)
         if (s.signedIn) s,

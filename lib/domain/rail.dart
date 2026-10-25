@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'rail.freezed.dart';
+part 'rail.g.dart';
 
 /// A team icon in the rail, with its badge.
 @freezed
@@ -18,6 +19,20 @@ abstract class RailTeam with _$RailTeam {
 @freezed
 abstract class RailTarget with _$RailTarget {
   const factory RailTarget({required String url, String? teamId}) = _RailTarget;
+
+  factory RailTarget.fromJson(Map<String, Object?> json) =>
+      _$RailTargetFromJson(json);
+}
+
+/// The team whose channels show for [target]: the one picked while the
+/// server still has it, else the server's first. While the server's teams
+/// are not stored yet the picked one stands.
+String? shownTeam(RailTarget? target, List<RailTeam> teams) {
+  if (target == null) return null;
+  if (teams.isEmpty || teams.any((t) => t.id == target.teamId)) {
+    return target.teamId ?? teams.firstOrNull?.id;
+  }
+  return teams.first.id;
 }
 
 /// Per team: mention and unread totals over its channels once they were
