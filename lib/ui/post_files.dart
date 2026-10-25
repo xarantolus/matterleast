@@ -346,25 +346,7 @@ class FileCard extends ConsumerWidget {
                       .read(fileTransfersProvider(url).notifier)
                       .cancel(file.id),
                 )
-              : PopupMenuButton<_FileAction>(
-                  tooltip: 'More',
-                  onSelected: (action) =>
-                      _runFileAction(context, ref, url, file, action),
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(
-                      value: _FileAction.save,
-                      child: Text('Save to Downloads'),
-                    ),
-                    PopupMenuItem(
-                      value: _FileAction.share,
-                      child: Text('Share'),
-                    ),
-                    PopupMenuItem(
-                      value: _FileAction.openWith,
-                      child: Text('Open with…'),
-                    ),
-                  ],
-                ),
+              : FileActionsMenu(url: url, file: file),
           onTap: running
               ? null
               : () => _runFileAction(context, ref, url, file, _FileAction.view),
@@ -420,7 +402,7 @@ Future<void> _runFileAction(
   if (local == null) return;
   switch (action) {
     case _FileAction.view when file.kind == FileKind.pdf:
-      unawaited(navigator.push(pdfRoute(local, file.name)));
+      unawaited(navigator.push(pdfRoute(local, url: url, file: file)));
     case _FileAction.view
         when file.kind == FileKind.text && file.size <= _textViewerLimit:
       final text = await local.readAsString().catchError((_) => '');
@@ -434,6 +416,7 @@ Future<void> _runFileAction(
               code: code,
               language: languageOfExtension(file.extension),
               title: file.name,
+              actions: [FileActionsMenu(url: url, file: file)],
             ),
           ),
         ),
@@ -468,6 +451,39 @@ Future<void> runMediaAction(
 });
 
 enum MediaAction { save, share, openWith }
+
+/// The three-dot menu every file viewer and card carries.
+class FileActionsMenu extends ConsumerWidget {
+  const FileActionsMenu({
+    required this.url,
+    required this.file,
+    this.color,
+    super.key,
+  });
+
+  final String url;
+  final PostFile file;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) =>
+      PopupMenuButton<MediaAction>(
+        tooltip: 'More',
+        iconColor: color,
+        onSelected: (action) => runMediaAction(context, ref, url, file, action),
+        itemBuilder: (_) => [
+          PopupMenuItem(
+            value: MediaAction.save,
+            child: Text('Save to ${_folderOf(file)}'),
+          ),
+          const PopupMenuItem(value: MediaAction.share, child: Text('Share')),
+          const PopupMenuItem(
+            value: MediaAction.openWith,
+            child: Text('Open with…'),
+          ),
+        ],
+      );
+}
 
 String _folderOf(PostFile file) => switch (file.kind) {
   FileKind.image || FileKind.gif => 'Pictures',

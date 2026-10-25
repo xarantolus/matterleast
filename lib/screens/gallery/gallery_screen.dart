@@ -166,8 +166,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   position: widget.files.length > 1
                       ? '${_index + 1} of ${widget.files.length}'
                       : null,
-                  onAction: (action) =>
-                      runMediaAction(context, ref, widget.url, file, action),
+                  menu: FileActionsMenu(
+                    url: widget.url,
+                    file: file,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -200,22 +203,22 @@ String _when(BuildContext context, DateTime at) {
 
 const _barHeight = 64.0;
 
-/// The author and time on top, the actions at the bottom, over a scrim
-/// only as dark as the white text needs.
+/// The author, time and menu on top, over a scrim only as dark as the white
+/// text needs.
 class _Bars extends StatelessWidget {
   const _Bars({
     required this.visible,
     required this.title,
     required this.subtitle,
     required this.position,
-    required this.onAction,
+    required this.menu,
   });
 
   final bool visible;
   final String title;
   final String subtitle;
   final String? position;
-  final ValueChanged<MediaAction> onAction;
+  final Widget menu;
 
   @override
   Widget build(BuildContext context) {
@@ -258,33 +261,8 @@ class _Bars extends StatelessWidget {
                         ],
                       ),
                     ),
+                    menu,
                   ],
-                ),
-              ),
-            ),
-            const Spacer(),
-            ColoredBox(
-              color: scrim,
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      for (final (action, icon, label) in const [
-                        (MediaAction.share, Icons.share_outlined, 'Share'),
-                        (MediaAction.save, Icons.download_outlined, 'Save'),
-                        (MediaAction.openWith, Icons.open_in_new, 'Open with'),
-                      ])
-                        IconButton(
-                          tooltip: label,
-                          color: Colors.white,
-                          icon: Icon(icon),
-                          onPressed: () => onAction(action),
-                        ),
-                    ],
-                  ),
                 ),
               ),
             ),

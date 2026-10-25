@@ -99,11 +99,15 @@ class CodeScreen extends StatelessWidget {
     required this.code,
     required this.language,
     this.title,
+    this.actions = const [],
     super.key,
   });
 
   final String code;
   final String language;
+
+  /// Extra app bar actions, such as a file's menu.
+  final List<Widget> actions;
 
   /// Shown instead of the language, such as a file's name.
   final String? title;
@@ -127,6 +131,7 @@ class CodeScreen extends StatelessWidget {
                   .showSnackBar(const SnackBar(content: Text('Code copied')));
             },
           ),
+          ...actions,
         ],
       ),
       backgroundColor: tokens.codeBackground,
