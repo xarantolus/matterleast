@@ -87,6 +87,23 @@ DateTime? customStatusExpiry(String duration, DateTime now) {
   };
 }
 
+/// How long do not disturb lasts.
+enum DndLength { untilChanged, thirtyMinutes, oneHour, twoHours, tomorrow }
+
+/// Pure: when do not disturb set at [now] ends, in local time; null when
+/// it lasts until the user changes it. "Tomorrow" ends at 9:00 the next
+/// day, as on the web.
+DateTime? dndEnd(DndLength length, DateTime now) {
+  final local = now.toLocal();
+  return switch (length) {
+    DndLength.untilChanged => null,
+    DndLength.thirtyMinutes => local.add(const Duration(minutes: 30)),
+    DndLength.oneHour => local.add(const Duration(hours: 1)),
+    DndLength.twoHours => local.add(const Duration(hours: 2)),
+    DndLength.tomorrow => DateTime(local.year, local.month, local.day + 1, 9),
+  };
+}
+
 /// Someone as their profile shows them.
 @freezed
 abstract class UserProfile with _$UserProfile {

@@ -93,6 +93,14 @@ void main() {
     });
   });
 
+  test('do not disturb ends after its length, or tomorrow at nine', () {
+    final evening = DateTime(2026, 5, 4, 22, 40);
+    expect(dndEnd(DndLength.untilChanged, evening), isNull);
+    expect(dndEnd(DndLength.oneHour, evening), DateTime(2026, 5, 4, 23, 40));
+    expect(dndEnd(DndLength.twoHours, evening), DateTime(2026, 5, 5, 0, 40));
+    expect(dndEnd(DndLength.tomorrow, evening), DateTime(2026, 5, 5, 9));
+  });
+
   test('the timezone is the manual one only when automatic is off', () {
     expect(
       timezoneName(

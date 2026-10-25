@@ -142,10 +142,16 @@ class UserProfileSheet extends ConsumerWidget {
 
 /// A custom status as one line: its emoji, text and when it clears.
 class CustomStatusLine extends StatelessWidget {
-  const CustomStatusLine({required this.status, this.style, super.key});
+  const CustomStatusLine({
+    required this.status,
+    this.style,
+    this.textAlign = TextAlign.center,
+    super.key,
+  });
 
   final CustomStatus status;
   final TextStyle? style;
+  final TextAlign textAlign;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +176,7 @@ class CustomStatusLine extends StatelessWidget {
         ],
       ),
       style: style,
-      textAlign: TextAlign.center,
+      textAlign: textAlign,
     );
   }
 

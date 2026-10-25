@@ -4,10 +4,16 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/settings/settings_page.dart';
+import 'package:matterleast/screens/you/custom_status_screen.dart';
+import 'package:matterleast/screens/you/edit_profile_screen.dart';
+import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/screens/you/status_sheet.dart';
+import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -104,51 +110,139 @@ class _Profile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final me = ref.watch(currentUserProvider(server.url)).value;
+    final profile = me == null
+        ? null
+        : ref.watch(userProfileProvider(server.url, me.id)).value;
+    final name = profile?.name ?? me?.displayName ?? '';
+    final status = profile?.status ?? me?.status;
+    final custom = profile?.customStatus;
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(Spacing.lg, 0, Spacing.lg, Spacing.lg),
-      child: Row(
-        children: [
-          Stack(
+    void push(Widget screen) =>
+        Navigator.of(context)
+            .push(MaterialPageRoute<void>(builder: (_) => screen));
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.lg,
+            0,
+            Spacing.lg,
+            Spacing.md,
+          ),
+          child: Row(
             children: [
-              if (me == null)
-                const InitialsBadge(name: '', size: 64, round: true)
-              else
-                UserAvatar(
-                  serverUrl: server.url,
-                  userId: me.id,
-                  name: me.displayName,
-                  lastPictureUpdate: me.lastPictureUpdate,
-                  size: 64,
+              Stack(
+                children: [
+                  if (me == null)
+                    const InitialsBadge(name: '', size: 64, round: true)
+                  else
+                    UserAvatar(
+                      serverUrl: server.url,
+                      userId: me.id,
+                      name: name,
+                      lastPictureUpdate: me.lastPictureUpdate,
+                      size: 64,
+                    ),
+                  PositionedDirectional(
+                    end: 0,
+                    bottom: 0,
+                    child: PresenceDot(status: status, size: 18),
+                  ),
+                ],
+              ),
+              const SizedBox(width: Spacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: text.titleLarge),
+                    Text(
+                      [
+                        if (me != null) '@${me.username}',
+                        server.displayName,
+                      ].join(' · '),
+                      style: text.bodyMedium?.copyWith(color: tokens.muted),
+                    ),
+                  ],
                 ),
-              PositionedDirectional(
-                end: 0,
-                bottom: 0,
-                child: PresenceDot(status: me?.status, size: 18),
               ),
             ],
           ),
-          const SizedBox(width: Spacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(me?.displayName ?? '', style: text.titleLarge),
-                Text(
-                  [
-                    if (me != null) '@${me.username}',
-                    server.displayName,
-                  ].join(' · '),
-                  style: text.bodyMedium?.copyWith(color: tokens.muted),
-                ),
-                const SizedBox(height: Spacing.xs),
-                Text(presenceLabel(me?.status), style: text.bodyMedium),
-              ],
+        ),
+        if (me != null) ...[
+          ListTile(
+            leading: SizedBox(
+              width: 40,
+              child: Center(child: PresenceDot(status: status, size: 16)),
+            ),
+            title: Text(presenceLabel(status)),
+            subtitle: const Text('Tap to change'),
+            onTap: () => showStatusSheet(
+              context,
+              ref,
+              url: server.url,
+              current: status ?? 'offline',
             ),
           ),
+          ListTile(
+            leading: SizedBox(
+              width: 40,
+              child: Center(
+                child: custom == null
+                    ? const Icon(Icons.add_reaction_outlined)
+                    : Text(
+                        emojiText(custom.emoji),
+                        style: const TextStyle(fontSize: 22),
+                      ),
+              ),
+            ),
+            title: custom == null
+                ? const Text('Set a custom status')
+                : CustomStatusLine(
+                    status: custom.copyWith(emoji: ''),
+                    textAlign: TextAlign.start,
+                  ),
+            trailing: custom == null
+                ? null
+                : IconButton(
+                    tooltip: 'Clear custom status',
+                    icon: const Icon(Icons.close),
+                    onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      try {
+                        final actions = await ref.read(
+                          profileActionsProvider(server.url).future,
+                        );
+                        await actions.setCustomStatus(null);
+                      } on Object catch (e) {
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Couldn't clear your status. "
+                              '${requestProblemText(e, Uri.parse(server.url).host)}',
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+            onTap: () =>
+                push(CustomStatusScreen(url: server.url, current: custom)),
+          ),
+          if (profile != null)
+            ListTile(
+              leading: const SizedBox(
+                width: 40,
+                child: Icon(Icons.manage_accounts_outlined),
+              ),
+              title: const Text('Edit profile'),
+              subtitle: const Text('Picture, names, username and password'),
+              onTap: () =>
+                  push(EditProfileScreen(url: server.url, profile: profile)),
+            ),
         ],
-      ),
+      ],
     );
   }
 }
