@@ -36,6 +36,17 @@
                     android:host="*"
                     android:pathPattern="/..*" />
             </intent-filter>
+            <!-- Text and files shared from other apps. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
             <!-- Links are read by app_links and checked against the signed-in
                  servers, not routed by Flutter's own deep linking. -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />

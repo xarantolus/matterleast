@@ -8,6 +8,8 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/root_screen.dart';
+import 'package:matterleast/screens/share/share_screen.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 /// Picks the first screen from the server list on disk: the root with the
 /// rail when any server is signed in, else Add server. Also tells the user
@@ -22,6 +24,7 @@ class LaunchGate extends ConsumerStatefulWidget {
 class _LaunchGateState extends ConsumerState<LaunchGate> {
   late final AppLifecycleListener _lifecycle;
   StreamSubscription<Uri>? _links;
+  StreamSubscription<List<SharedMediaFile>>? _shares;
 
   @override
   void initState() {
@@ -35,6 +38,26 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       _links = AppLinks().uriLinkStream.listen(
         (uri) => unawaited(openIncomingLink(navigator, ref, uri)),
       );
+      final shares = ReceiveSharingIntent.instance;
+      void open(List<SharedMediaFile> media) {
+        final shared = sharedContentOf(media);
+        if (shared == null || !navigator.mounted) return;
+        unawaited(
+          navigator.push(
+            MaterialPageRoute<void>(
+              builder: (_) => ShareScreen(shared: shared),
+            ),
+          ),
+        );
+      }
+
+      _shares = shares.getMediaStream().listen(open);
+      unawaited(
+        shares.getInitialMedia().then((media) {
+          open(media);
+          return shares.reset();
+        }),
+      );
     });
     _lifecycle = AppLifecycleListener(
       onShow: () => unawaited(manager.setForeground(true)),
@@ -45,6 +68,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   @override
   void dispose() {
     unawaited(_links?.cancel());
+    unawaited(_shares?.cancel());
     _lifecycle.dispose();
     super.dispose();
   }

@@ -25,7 +25,8 @@ fun signingProperty(name: String): String =
 
 android {
     namespace = "io.github.xarantolus.matterleast"
-    compileSdk = flutter.compileSdkVersion
+    // receive_sharing_intent 1.9 compiles against Android 37.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
