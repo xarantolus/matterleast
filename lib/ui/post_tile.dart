@@ -1,4 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/system_message.dart';
@@ -447,13 +449,13 @@ class _Participants extends StatelessWidget {
 }
 
 /// "Today", "Yesterday" or the date, between days.
-class DaySeparatorTile extends StatelessWidget {
+class DaySeparatorTile extends ConsumerWidget {
   const DaySeparatorTile({required this.day, super.key});
 
   final DateTime day;
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context, WidgetRef ref) => Padding(
     padding: const EdgeInsets.symmetric(
       horizontal: Spacing.lg,
       vertical: Spacing.sm,
@@ -464,7 +466,7 @@ class DaySeparatorTile extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
           child: Text(
-            dayLabel(day, DateTime.now()).toUpperCase(),
+            dayLabel(day, ref.watch(todayProvider)).toUpperCase(),
             style: context.tokens.smallCaps,
           ),
         ),
