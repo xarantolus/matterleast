@@ -29,11 +29,13 @@ import 'package:matterleast/api/generated/models/api_v4_emoji_search_request_bod
 import 'package:matterleast/api/generated/models/api_v4_ephemeral_mode_cleanup_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_ephemeral_mode_purge_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_ephemeral_mode_wipe_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_files_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_groups_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_posts_post_id_patch_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_posts_post_id_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_posts_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_posts_schedule_scheduled_post_id_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_posts_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_remotecluster_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_channels_search_request_body.dart';
@@ -1700,6 +1702,55 @@ class LenientMapOfApiV4EphemeralModeWipeRequestBody
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
+class LenientApiV4FilesSearchRequestBody
+    implements JsonConverter<ApiV4FilesSearchRequestBody?, Object?> {
+  const LenientApiV4FilesSearchRequestBody();
+  @override
+  ApiV4FilesSearchRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? ApiV4FilesSearchRequestBody.fromJson(json)
+      : null;
+  @override
+  Object? toJson(ApiV4FilesSearchRequestBody? object) => object?.toJson();
+}
+
+class LenientListOfApiV4FilesSearchRequestBody
+    implements JsonConverter<List<ApiV4FilesSearchRequestBody>, Object?> {
+  const LenientListOfApiV4FilesSearchRequestBody();
+  @override
+  List<ApiV4FilesSearchRequestBody> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ApiV4FilesSearchRequestBody.fromJson(e),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4FilesSearchRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4FilesSearchRequestBody
+    implements
+        JsonConverter<Map<String, ApiV4FilesSearchRequestBody>?, Object?> {
+  const LenientMapOfApiV4FilesSearchRequestBody();
+  @override
+  Map<String, ApiV4FilesSearchRequestBody>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value is Map<String, Object?>)
+              e.key: ApiV4FilesSearchRequestBody.fromJson(
+                e.value! as Map<String, Object?>,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, ApiV4FilesSearchRequestBody>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
 class LenientApiV4GroupsRequestBody
     implements JsonConverter<ApiV4GroupsRequestBody?, Object?> {
   const LenientApiV4GroupsRequestBody();
@@ -1949,6 +2000,55 @@ class LenientMapOfApiV4PostsScheduleScheduledPostIdRequestBody
   Object? toJson(
     Map<String, ApiV4PostsScheduleScheduledPostIdRequestBody>? object,
   ) => object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4PostsSearchRequestBody
+    implements JsonConverter<ApiV4PostsSearchRequestBody?, Object?> {
+  const LenientApiV4PostsSearchRequestBody();
+  @override
+  ApiV4PostsSearchRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? ApiV4PostsSearchRequestBody.fromJson(json)
+      : null;
+  @override
+  Object? toJson(ApiV4PostsSearchRequestBody? object) => object?.toJson();
+}
+
+class LenientListOfApiV4PostsSearchRequestBody
+    implements JsonConverter<List<ApiV4PostsSearchRequestBody>, Object?> {
+  const LenientListOfApiV4PostsSearchRequestBody();
+  @override
+  List<ApiV4PostsSearchRequestBody> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ApiV4PostsSearchRequestBody.fromJson(e),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4PostsSearchRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4PostsSearchRequestBody
+    implements
+        JsonConverter<Map<String, ApiV4PostsSearchRequestBody>?, Object?> {
+  const LenientMapOfApiV4PostsSearchRequestBody();
+  @override
+  Map<String, ApiV4PostsSearchRequestBody>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value is Map<String, Object?>)
+              e.key: ApiV4PostsSearchRequestBody.fromJson(
+                e.value! as Map<String, Object?>,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, ApiV4PostsSearchRequestBody>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientApiV4RemoteclusterRequestBody

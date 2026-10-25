@@ -5,7 +5,9 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
+import '../models/api_v4_files_search_request_body.dart';
 import '../models/file_info.dart';
+import '../models/file_info_list.dart';
 import '../models/get_api_v4_files_file_id_link_response.dart';
 
 part 'files_client.g.dart';
@@ -21,4 +23,9 @@ abstract class FilesClient {
 
   @GET('/api/v4/files/{file_id}/info')
   Future<FileInfo> getFileInfo({@Path('file_id') required String fileId});
+
+  @POST('/api/v4/files/search')
+  Future<FileInfoList> searchFilesAllTeams({
+    @Body() required ApiV4FilesSearchRequestBody body,
+  });
 }

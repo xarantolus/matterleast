@@ -109,6 +109,9 @@ swagger_parser:
     - {apply_to_type: "ApiV4EphemeralModeWipeRequestBody?", parser_name: LenientApiV4EphemeralModeWipeRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4EphemeralModeWipeRequestBody>", parser_name: LenientListOfApiV4EphemeralModeWipeRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4EphemeralModeWipeRequestBody>?", parser_name: LenientMapOfApiV4EphemeralModeWipeRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "ApiV4FilesSearchRequestBody?", parser_name: LenientApiV4FilesSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<ApiV4FilesSearchRequestBody>", parser_name: LenientListOfApiV4FilesSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, ApiV4FilesSearchRequestBody>?", parser_name: LenientMapOfApiV4FilesSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "ApiV4GroupsRequestBody?", parser_name: LenientApiV4GroupsRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4GroupsRequestBody>", parser_name: LenientListOfApiV4GroupsRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4GroupsRequestBody>?", parser_name: LenientMapOfApiV4GroupsRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -124,6 +127,9 @@ swagger_parser:
     - {apply_to_type: "ApiV4PostsScheduleScheduledPostIdRequestBody?", parser_name: LenientApiV4PostsScheduleScheduledPostIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4PostsScheduleScheduledPostIdRequestBody>", parser_name: LenientListOfApiV4PostsScheduleScheduledPostIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4PostsScheduleScheduledPostIdRequestBody>?", parser_name: LenientMapOfApiV4PostsScheduleScheduledPostIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "ApiV4PostsSearchRequestBody?", parser_name: LenientApiV4PostsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<ApiV4PostsSearchRequestBody>", parser_name: LenientListOfApiV4PostsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, ApiV4PostsSearchRequestBody>?", parser_name: LenientMapOfApiV4PostsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "ApiV4RemoteclusterRequestBody?", parser_name: LenientApiV4RemoteclusterRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4RemoteclusterRequestBody>", parser_name: LenientListOfApiV4RemoteclusterRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4RemoteclusterRequestBody>?", parser_name: LenientMapOfApiV4RemoteclusterRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -480,6 +486,7 @@ swagger_parser:
     - "/api/v4/ephemeral_mode/cleanup"
     - "/api/v4/ephemeral_mode/purge"
     - "/api/v4/ephemeral_mode/wipe"
+    - "/api/v4/files/search"
     - "/api/v4/files/{file_id}/info"
     - "/api/v4/files/{file_id}/link"
     - "/api/v4/groups"
@@ -490,6 +497,7 @@ swagger_parser:
     - "/api/v4/posts"
     - "/api/v4/posts/schedule/{scheduled_post_id}"
     - "/api/v4/posts/scheduled/team/{team_id}"
+    - "/api/v4/posts/search"
     - "/api/v4/posts/{post_id}"
     - "/api/v4/posts/{post_id}/actions/{action_id}"
     - "/api/v4/posts/{post_id}/burn"

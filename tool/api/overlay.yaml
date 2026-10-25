@@ -203,6 +203,22 @@ actions:
               include_deleted_channels: {type: boolean}
               page: {type: integer, default: 0}
               per_page: {type: integer, default: 60}
+  - target: "$.paths['/api/v4/files/search'].post.requestBody.content"
+    remove: true
+  - target: "$.paths['/api/v4/files/search'].post.requestBody"
+    update:
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [terms, is_or_search]
+            properties:
+              terms: {type: string}
+              is_or_search: {type: boolean}
+              time_zone_offset: {type: integer, default: 0}
+              include_deleted_channels: {type: boolean}
+              page: {type: integer, default: 0}
+              per_page: {type: integer, default: 60}
   # --- channel management (M5): fields the server sends and accepts (model/channel_member.go, channel_stats.go) ---
   - target: "$.components.schemas.ChannelNotifyProps.properties"
     update:

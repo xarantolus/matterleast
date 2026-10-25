@@ -8,6 +8,7 @@ import 'package:retrofit/retrofit.dart';
 import '../models/api_v4_posts_post_id_patch_request_body.dart';
 import '../models/api_v4_posts_post_id_request_body.dart';
 import '../models/api_v4_posts_request_body.dart';
+import '../models/api_v4_posts_search_request_body.dart';
 import '../models/api_v4_teams_team_id_posts_search_request_body.dart';
 import '../models/api_v4_users_user_id_posts_post_id_set_unread_request_body.dart';
 import '../models/channel_unread_at.dart';
@@ -30,6 +31,11 @@ abstract class PostsClient {
     @Body() required ApiV4PostsRequestBody body,
     @Query('set_online') bool? setOnline,
     @Query('silent') bool? silent,
+  });
+
+  @POST('/api/v4/posts/search')
+  Future<PostListWithSearchMatches> searchPostsInAllTeams({
+    @Body() required ApiV4PostsSearchRequestBody body,
   });
 
   @GET('/api/v4/posts/{post_id}')
