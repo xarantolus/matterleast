@@ -22,11 +22,15 @@ class ChannelListPane extends ConsumerWidget {
     required this.teamId,
     required this.serverLabel,
     required this.state,
+    this.onFind,
     super.key,
   });
 
   final String url;
   final String teamId;
+
+  /// Opens the search view.
+  final VoidCallback? onFind;
 
   /// Which server the team is on, shown above the list.
   final String serverLabel;
@@ -53,6 +57,7 @@ class ChannelListPane extends ConsumerWidget {
       teamId: teamId,
       label: [serverLabel, ?notice].join(' · '),
       list: list,
+      onFind: onFind,
     ),
   };
 }
@@ -63,6 +68,7 @@ class _ChannelListView extends ConsumerStatefulWidget {
     required this.teamId,
     required this.label,
     required this.list,
+    this.onFind,
     super.key,
   });
 
@@ -70,6 +76,7 @@ class _ChannelListView extends ConsumerStatefulWidget {
   final String teamId;
   final String label;
   final ChannelList list;
+  final VoidCallback? onFind;
 
   @override
   ConsumerState<_ChannelListView> createState() => _ChannelListViewState();
@@ -128,14 +135,16 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(child: PaneLabel(widget.label)),
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
               Spacing.md,
               Spacing.xs,
               Spacing.md,
               Spacing.xs,
             ),
-            sliver: SliverToBoxAdapter(child: _FindChannels()),
+            sliver: SliverToBoxAdapter(
+              child: _FindChannels(onTap: widget.onFind),
+            ),
           ),
           if (list.unreadThreads case final unread?)
             SliverToBoxAdapter(
@@ -228,16 +237,28 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
   }
 }
 
-/// Opens the quick switcher once it exists; shown now so the layout holds.
+/// Looks like a search field; tapping it opens the search view.
 class _FindChannels extends StatelessWidget {
-  const _FindChannels();
+  const _FindChannels({required this.onTap});
+
+  final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => const SearchBar(
-    enabled: false,
-    hintText: 'Find channels',
-    leading: Icon(Icons.search),
-    elevation: WidgetStatePropertyAll(0),
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: 'Find channels',
+    child: GestureDetector(
+      onTap: onTap,
+      child: const AbsorbPointer(
+        child: ExcludeSemantics(
+          child: SearchBar(
+            hintText: 'Find channels',
+            leading: Icon(Icons.search),
+            elevation: WidgetStatePropertyAll(0),
+          ),
+        ),
+      ),
+    ),
   );
 }
 

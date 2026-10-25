@@ -6,6 +6,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/data/views/switch_views.dart';
 import 'package:matterleast/log.dart';
 
 /// What the user does to channels in the list. Each action talks to the
@@ -157,6 +158,73 @@ class ChannelActions {
       ),
     );
     await session.store.removeChannel(channelId);
+  }
+
+  /// The direct message with [userId], created on the server when there is
+  /// none yet; returns its channel id.
+  Future<String> directChannel(String userId) async {
+    final known = await directChannelWith(_db, userId);
+    if (known != null) return known;
+    final me = await _myId();
+    final channel = await session.api.call(
+      () => _client.channels.createDirectChannel(body: {me, userId}.toList()),
+    );
+    await _storeJoined(channel);
+    return channel.id!;
+  }
+
+  /// A group message with [userIds] and the user; the server returns the
+  /// existing one for the same people.
+  Future<String> groupChannel(List<String> userIds) async {
+    final me = await _myId();
+    final channel = await session.api.call(
+      () =>
+          _client.channels.createGroupChannel(body: {me, ...userIds}.toList()),
+    );
+    await _storeJoined(channel);
+    return channel.id!;
+  }
+
+  /// Joins a public channel.
+  Future<void> join(String channelId) async {
+    final me = await _myId();
+    await session.api.call(
+      () => _client.channels.addChannelMember(
+        channelId: channelId,
+        body: api.ApiV4ChannelsChannelIdMembersRequestBody(userId: me),
+      ),
+    );
+    await _storeJoined(
+      await session.api.call(
+        () => _client.channels.getChannel(channelId: channelId),
+      ),
+    );
+  }
+
+  Future<String> _myId() async {
+    final me = await _db.syncText(SyncKeys.currentUserId);
+    if (me == null) throw StateError('No signed-in user');
+    return me;
+  }
+
+  /// Stores a channel the user is now in, with their membership, and
+  /// refreshes the team's categories behind it so it lands in the list.
+  Future<void> _storeJoined(api.Channel channel) async {
+    final member = await session.api.call(
+      () => _client.channels.getChannelMember(
+        channelId: channel.id!,
+        userId: 'me',
+      ),
+    );
+    await session.store.applyChannels(channels: [channel], members: [member]);
+    final team = (channel.teamId?.isNotEmpty ?? false)
+        ? channel.teamId
+        : await _db.syncText(SyncKeys.currentTeamId);
+    if (team != null) {
+      unawaited(
+        session.connection.entry.refreshTeam(team).catchError((Object _) {}),
+      );
+    }
   }
 
   Future<void> setCollapsed(String categoryId, {required bool collapsed}) =>

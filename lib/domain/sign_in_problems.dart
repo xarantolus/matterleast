@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:matterleast/api/api_error.dart';
 
 const notMattermostText =
@@ -29,6 +31,13 @@ String connectionProblemText(ApiError error, String host) => switch (error) {
     message == null || message.isEmpty
         ? '$host answered with an error ($statusCode). Try again later.'
         : '$host said: $message',
+};
+
+/// Words for any failed request to [host], including our own timeouts.
+String requestProblemText(Object error, String host) => switch (error) {
+  ApiError() => connectionProblemText(error, host),
+  TimeoutException() => connectionProblemText(const RequestTimeout(), host),
+  _ => 'Something went wrong talking to $host. Try again.',
 };
 
 /// Words for a failed server check; any HTTP error means the address is not

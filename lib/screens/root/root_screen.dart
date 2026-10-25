@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
@@ -9,27 +10,61 @@ import 'package:matterleast/screens/home/home_pane.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/root/team_rail.dart';
+import 'package:matterleast/screens/search/quick_search.dart';
+import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 /// The rail of teams beside Home or the picked team's channel list.
-class RootScreen extends ConsumerWidget {
+class RootScreen extends ConsumerStatefulWidget {
   const RootScreen({required this.servers, super.key});
 
   /// Signed-in servers, in rail order; never empty.
   final List<ServerEntry> servers;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RootScreen> createState() => _RootScreenState();
+}
+
+class _RootScreenState extends ConsumerState<RootScreen> {
+  final _search = SearchController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _openSearch() {
+    if (!_search.isOpen) _search.openView();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final servers = widget.servers;
     final target = ref.watch(railSelectionProvider);
     final server = servers.where((s) => s.url == target?.url).firstOrNull;
     if (server == null) {
+      final recent = servers.reduce(
+        (a, b) =>
+            (b.lastActiveAt?.isAfter(a.lastActiveAt ?? DateTime(0)) ?? false)
+            ? b
+            : a,
+      );
+      final team = ref.watch(currentTeamProvider(recent.url)).value;
       return _RootLayout(
         servers: servers,
         title: 'Home',
+        onSearch: _openSearch,
         refreshing: servers.any(
           (s) => ref.watch(syncStatusProvider(s.url)).value is SyncRefreshing,
         ),
-        actions: const [_SearchButton()],
+        actions: [
+          QuickSearchAnchor(
+            controller: _search,
+            servers: servers,
+            target: team == null ? null : (url: recent.url, teamId: team),
+          ),
+        ],
         pane: HomePane(servers: servers),
       );
     }
@@ -50,8 +85,16 @@ class RootScreen extends ConsumerWidget {
       servers: servers,
       teamId: teamId,
       title: team?.displayName ?? server.displayName,
+      onSearch: _openSearch,
       refreshing: status is SyncRefreshing,
-      actions: const [_SearchButton(), _NewMenu()],
+      actions: [
+        QuickSearchAnchor(
+          controller: _search,
+          servers: servers,
+          target: teamId == null ? null : (url: server.url, teamId: teamId),
+        ),
+        const _NewMenu(),
+      ],
       pane: teamId == null && state is! ChannelListFailed
           ? const Center(child: CircularProgressIndicator())
           : ChannelListPane(
@@ -59,6 +102,7 @@ class RootScreen extends ConsumerWidget {
               teamId: teamId ?? '',
               serverLabel: {server.displayName, server.address}.join(' · '),
               state: state,
+              onFind: _openSearch,
             ),
     );
   }
@@ -69,6 +113,7 @@ class _RootLayout extends ConsumerWidget {
     required this.servers,
     required this.title,
     required this.pane,
+    required this.onSearch,
     this.teamId,
     this.refreshing = false,
     this.actions = const [],
@@ -77,12 +122,20 @@ class _RootLayout extends ConsumerWidget {
   final List<ServerEntry> servers;
   final String title;
   final Widget pane;
+  final VoidCallback onSearch;
   final String? teamId;
   final bool refreshing;
   final List<Widget> actions;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
+  Widget build(BuildContext context, WidgetRef ref) => CallbackShortcuts(
+    bindings: {
+      const SingleActivator(LogicalKeyboardKey.keyK, control: true): onSearch,
+    },
+    child: Focus(autofocus: true, child: _scaffold(ref)),
+  );
+
+  Widget _scaffold(WidgetRef ref) => Scaffold(
     appBar: AppBar(
       title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: actions,
@@ -102,18 +155,6 @@ class _RootLayout extends ConsumerWidget {
         ],
       ),
     ),
-  );
-}
-
-/// Opens the quick switcher once it exists; shown now so the bar holds.
-class _SearchButton extends StatelessWidget {
-  const _SearchButton();
-
-  @override
-  Widget build(BuildContext context) => const IconButton(
-    tooltip: 'Search',
-    onPressed: null,
-    icon: Icon(Icons.search),
   );
 }
 

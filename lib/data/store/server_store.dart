@@ -918,6 +918,61 @@ class ServerStore {
     }
   });
 
+  /// Posts a search found, with the channels and people needed to show
+  /// them. They stay outside any channel's loaded history.
+  Future<void> applySearchResults(
+    Iterable<api.Post> posts, {
+    Iterable<api.Channel> channels = const [],
+    Iterable<api.User> users = const [],
+  }) => db.transaction(() async {
+    await _upsertPosts([
+      for (final p in posts)
+        if (p.id != null && p.createAt != null && p.channelId != null) p,
+    ]);
+    await db.batch((b) {
+      // Channels the user is not in are kept only as far as their names.
+      b.insertAll(db.channels, [
+        for (final c in channels)
+          if (c.id != null) channelCompanion(c),
+      ], mode: InsertMode.insertOrIgnore);
+      b.insertAllOnConflictUpdate(db.users, [
+        for (final u in users)
+          if (u.id != null) userCompanion(u),
+      ]);
+    });
+  });
+
+  /// Remembers a search in [teamId], newest first, keeping [keep] of them.
+  Future<void> addRecentSearch(
+    String teamId,
+    String term, {
+    required DateTime at,
+    int keep = 20,
+  }) => db.transaction(() async {
+    await db
+        .into(db.searchHistory)
+        .insertOnConflictUpdate(
+          SearchHistoryCompanion.insert(
+            teamId: teamId,
+            term: term,
+            createdAt: at,
+          ),
+        );
+    final old =
+        await (db.select(db.searchHistory)
+              ..where((s) => s.teamId.equals(teamId))
+              ..orderBy([(s) => OrderingTerm.desc(s.createdAt)])
+              ..limit(1000, offset: keep))
+            .get();
+    for (final row in old) {
+      await removeRecentSearch(teamId, row.term);
+    }
+  });
+
+  Future<void> removeRecentSearch(String teamId, String term) => (db.delete(
+    db.searchHistory,
+  )..where((s) => s.teamId.equals(teamId) & s.term.equals(term))).go();
+
   Future<void> applyEdit(api.Post post) async {
     if (post.id == null || post.createAt == null || post.channelId == null) {
       return;
