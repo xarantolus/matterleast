@@ -95,6 +95,8 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final recent =
+        ref.watch(recentCustomStatusesProvider(widget.url)).value ?? const [];
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
       appBar: AppBar(
@@ -175,26 +177,49 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
             ),
           ),
           const SizedBox(height: Spacing.md),
-          const PaneLabel('Suggestions'),
-          for (final s in _suggestions)
-            ListTile(
-              leading: SizedBox(
-                width: 40,
-                child: Center(
-                  child: Text(
-                    emojiText(s.emoji),
-                    style: const TextStyle(fontSize: 24),
+          if (recent.isNotEmpty) ...[
+            const PaneLabel('Recent'),
+            for (final s in recent)
+              ListTile(
+                leading: SizedBox(
+                  width: 40,
+                  child: Center(
+                    child: Text(
+                      emojiText(s.emoji),
+                      style: const TextStyle(fontSize: 24),
+                    ),
                   ),
                 ),
+                title: Text(s.text),
+                subtitle: Text(durationLabel(s.duration)),
+                onTap: () => setState(() {
+                  _emoji = s.emoji;
+                  _text.text = s.text;
+                  _duration = s.duration;
+                }),
               ),
-              title: Text(s.text),
-              subtitle: Text(durationLabel(s.duration)),
-              onTap: () => setState(() {
-                _emoji = s.emoji;
-                _text.text = s.text;
-                _duration = s.duration;
-              }),
-            ),
+          ],
+          const PaneLabel('Suggestions'),
+          for (final s in _suggestions)
+            if (!recent.any((r) => r.emoji == s.emoji && r.text == s.text))
+              ListTile(
+                leading: SizedBox(
+                  width: 40,
+                  child: Center(
+                    child: Text(
+                      emojiText(s.emoji),
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  ),
+                ),
+                title: Text(s.text),
+                subtitle: Text(durationLabel(s.duration)),
+                onTap: () => setState(() {
+                  _emoji = s.emoji;
+                  _text.text = s.text;
+                  _duration = s.duration;
+                }),
+              ),
         ],
       ),
     );

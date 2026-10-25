@@ -159,6 +159,93 @@ final class UserProfileFamily extends $Family
   String toString() => r'userProfileProvider';
 }
 
+/// The custom statuses the user set lately on [url], newest first.
+
+@ProviderFor(recentCustomStatuses)
+final recentCustomStatusesProvider = RecentCustomStatusesFamily._();
+
+/// The custom statuses the user set lately on [url], newest first.
+
+final class RecentCustomStatusesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<CustomStatus>>,
+          List<CustomStatus>,
+          Stream<List<CustomStatus>>
+        >
+    with
+        $FutureModifier<List<CustomStatus>>,
+        $StreamProvider<List<CustomStatus>> {
+  /// The custom statuses the user set lately on [url], newest first.
+  RecentCustomStatusesProvider._({
+    required RecentCustomStatusesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'recentCustomStatusesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$recentCustomStatusesHash();
+
+  @override
+  String toString() {
+    return r'recentCustomStatusesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<CustomStatus>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<CustomStatus>> create(Ref ref) {
+    final argument = this.argument as String;
+    return recentCustomStatuses(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RecentCustomStatusesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$recentCustomStatusesHash() =>
+    r'ce54b8fba191f9cd8daf71b2c2d0cc09eba52d83';
+
+/// The custom statuses the user set lately on [url], newest first.
+
+final class RecentCustomStatusesFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<CustomStatus>>, String> {
+  RecentCustomStatusesFamily._()
+    : super(
+        retry: null,
+        name: r'recentCustomStatusesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The custom statuses the user set lately on [url], newest first.
+
+  RecentCustomStatusesProvider call(String url) =>
+      RecentCustomStatusesProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'recentCustomStatusesProvider';
+}
+
 /// Fetched when a profile opens, so it shows fresh details.
 
 @ProviderFor(profileRefresh)

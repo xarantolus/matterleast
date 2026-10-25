@@ -120,4 +120,20 @@ void main() {
     );
     expect(timezoneName(useAutomatic: 'true', automatic: ''), isNull);
   });
+
+  test('recent custom statuses are listed newest first, odd entries left '
+      'out', () {
+    final json = jsonEncode([
+      {'emoji': 'sailboat', 'text': 'At sea', 'duration': 'today'},
+      {'emoji': 'coffee', 'text': 'Brewing', 'duration': ''},
+      {'emoji': '', 'text': ''},
+      'not a status',
+    ]);
+    expect(recentCustomStatuses(json).map((s) => s.text), [
+      'At sea',
+      'Brewing',
+    ]);
+    expect(recentCustomStatuses(null), isEmpty);
+    expect(recentCustomStatuses('{oops'), isEmpty);
+  });
 }

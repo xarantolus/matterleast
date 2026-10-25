@@ -17,6 +17,13 @@ Stream<UserProfile?> userProfile(Ref ref, String url, String userId) async* {
   yield* ProfileViews(session.db).profile(userId);
 }
 
+/// The custom statuses the user set lately on [url], newest first.
+@riverpod
+Stream<List<CustomStatus>> recentCustomStatuses(Ref ref, String url) async* {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  yield* ProfileViews(session.db).recentStatuses();
+}
+
 /// Fetched when a profile opens, so it shows fresh details.
 @Riverpod(retry: noRetry)
 Future<void> profileRefresh(Ref ref, String url, String userId) async {

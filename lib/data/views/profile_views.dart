@@ -5,6 +5,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/user_profile.dart';
 
 /// People's profiles from one server database.
@@ -27,6 +28,15 @@ class ProfileViews {
     () => _profile(userId),
     interval: const Duration(milliseconds: 300),
   ).distinct();
+
+  Stream<List<CustomStatus>> recentStatuses() =>
+      (db.select(db.preferences)..where(
+            (p) =>
+                p.category.equals(Prefs.recentCustomStatuses.$1) &
+                p.name.equals(Prefs.recentCustomStatuses.$2),
+          ))
+          .watchSingleOrNull()
+          .map((p) => recentCustomStatuses(p?.value));
 
   Future<UserProfile?> _profile(String userId) async {
     final u = await (db.select(

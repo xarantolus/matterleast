@@ -57,6 +57,26 @@ CustomStatus? customStatusOf(Map<String, Object?>? props, DateTime now) {
   return status;
 }
 
+/// Pure: the custom statuses the user set lately, newest first, from the
+/// `recent_custom_statuses` preference the server keeps up to date.
+List<CustomStatus> recentCustomStatuses(String? json) {
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(json ?? '');
+  } on FormatException {
+    return const [];
+  }
+  if (decoded is! List<Object?>) return const [];
+  return [
+    for (final item in decoded)
+      if (item is Map<String, Object?>)
+        CustomStatus.fromJson({
+          for (final e in item.entries)
+            if (e.value is String) e.key: e.value,
+        }),
+  ].where((s) => s.emoji.isNotEmpty || s.text.isNotEmpty).toList();
+}
+
 /// Pure: the IANA zone a user's timezone settings stand for, or null.
 String? timezoneName({
   String? useAutomatic,

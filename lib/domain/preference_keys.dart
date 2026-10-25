@@ -15,4 +15,8 @@ abstract final class Prefs {
   static const nameFormat = ('display_settings', 'name_format');
   static const flaggedPost = 'flagged_post';
   static const skinTone = ('emoji', 'emoji_skintone');
+  static const recentCustomStatuses = (
+    'custom_status',
+    'recent_custom_statuses',
+  );
 }
