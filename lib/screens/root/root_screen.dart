@@ -33,13 +33,33 @@ class _RootScreenState extends ConsumerState<RootScreen> {
   final _search = SearchController();
 
   @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_onKey);
+  }
+
+  @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
     _search.dispose();
     super.dispose();
   }
 
   void _openSearch() {
     if (!_search.isOpen) _search.openView();
+  }
+
+  /// Ctrl+K opens the search view while the root is on top, wherever the
+  /// focus happens to be, as a key binding on a focused widget would not.
+  bool _onKey(KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.keyK ||
+        !HardwareKeyboard.instance.isControlPressed ||
+        !(ModalRoute.of(context)?.isCurrent ?? false)) {
+      return false;
+    }
+    _openSearch();
+    return true;
   }
 
   @override
@@ -58,7 +78,6 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       return _RootLayout(
         servers: servers,
         title: 'Home',
-        onSearch: _openSearch,
         refreshing: servers.any(
           (s) => ref.watch(syncStatusProvider(s.url)).value is SyncRefreshing,
         ),
@@ -89,7 +108,6 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       servers: servers,
       teamId: teamId,
       title: team?.displayName ?? server.displayName,
-      onSearch: _openSearch,
       refreshing: status is SyncRefreshing,
       actions: [
         QuickSearchAnchor(
@@ -117,7 +135,6 @@ class _RootLayout extends ConsumerWidget {
     required this.servers,
     required this.title,
     required this.pane,
-    required this.onSearch,
     this.teamId,
     this.refreshing = false,
     this.actions = const [],
@@ -126,20 +143,12 @@ class _RootLayout extends ConsumerWidget {
   final List<ServerEntry> servers;
   final String title;
   final Widget pane;
-  final VoidCallback onSearch;
   final String? teamId;
   final bool refreshing;
   final List<Widget> actions;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => CallbackShortcuts(
-    bindings: {
-      const SingleActivator(LogicalKeyboardKey.keyK, control: true): onSearch,
-    },
-    child: Focus(autofocus: true, child: _scaffold(ref)),
-  );
-
-  Widget _scaffold(WidgetRef ref) => Scaffold(
+  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
     appBar: AppBar(
       title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: actions,
