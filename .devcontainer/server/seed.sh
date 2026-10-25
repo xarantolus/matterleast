@@ -334,6 +334,24 @@ ZIP=$(upload bob "/files?channel_id=$MEDIA" -F "files=@$TMP/logs.zip;type=applic
 post bob "$MEDIA" "Logs and the checklist again" "$(jq -n --argjson f "$ZIP" '{file_ids:$f}')" >/dev/null
 echo "seed: media"
 
+# Links that open inside the app: an old message not loaded yet, a reply
+# in a long thread, a message in a channel alice has not joined, a deleted
+# message, a channel, a direct message and an outside page.
+OLDLINE=$(api admin GET "/channels/$FIREHOSE/posts?page=600&per_page=1" | jq -r '.order[0]')
+REPLY=$(api alice GET "/posts/$ROOT/thread" | jq -r --arg r "$ROOT" '[.posts[] | select(.id != $r)] | sort_by(.create_at) | .[3].id')
+MIC=$(api admin GET "/channels/$OPENMIC/posts?per_page=1" | jq -r '.order[0]')
+GONE=$(post carol "$MEDIA" "This message will be deleted")
+api carol DELETE "/posts/$GONE" >/dev/null
+post carol "$MEDIA" "Links to try:
+- [an old firehose line](/lighthouse/pl/$OLDLINE)
+- [a reply in the sync thread](/lighthouse/pl/$REPLY)
+- [the open mic welcome](/lighthouse/pl/$MIC)
+- [a deleted message](/lighthouse/pl/$GONE)
+- [the open mic channel](/lighthouse/channels/open-mic)
+- [a message to dave](/lighthouse/messages/@dave)
+- [an outside page](https://example.com/)" >/dev/null
+echo "seed: links"
+
 cat <<EOF
 
 seed: done. Server: $URL (emulator: http://10.0.2.2:8065)
