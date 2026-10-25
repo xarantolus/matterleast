@@ -4,7 +4,9 @@ import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/mappers.dart';
+import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/post_ranges.dart';
+import 'package:matterleast/domain/preference_keys.dart';
 
 /// How a page of posts was fetched, which decides how it joins the cached
 /// history (see [PostRange]).
@@ -37,6 +39,11 @@ class PageOutcome {
 
 const sinceCap = 1000;
 
+abstract final class PostListNames {
+  static const mentions = 'mentions';
+  static const saved = 'saved';
+}
+
 /// The only write path into a server database. Each method is one
 /// transaction, so a watcher wakes once per logical change.
 class ServerStore {
@@ -47,6 +54,17 @@ class ServerStore {
   Future<void> applyMe(api.User me) => db.transaction(() async {
     await db.into(db.users).insertOnConflictUpdate(userCompanion(me));
     await db.setSyncText(SyncKeys.currentUserId, me.id);
+    if (me.username case final username? when username.isNotEmpty) {
+      await db.setSyncText(
+        SyncKeys.mentionTerms,
+        mentionTerms(
+          username: username,
+          firstName: me.firstName ?? '',
+          mentionKeys: me.notifyProps?.mentionKeys,
+          firstNameKey: me.notifyProps?.firstName,
+        ),
+      );
+    }
   });
 
   Future<void> applyUsers(Iterable<api.User> users) => db.batch((b) {
@@ -459,6 +477,89 @@ class ServerStore {
     CategoriesCompanion(collapsed: Value(collapsed)),
   );
 
+  /// Replaces the id list [list] (`mentions`, `saved`) with [page]'s order
+  /// and stores its posts. They stay outside any channel range, so they
+  /// never show up as channel history.
+  Future<void> applyPostList(
+    String list,
+    api.PostList page, {
+    required DateTime fetchedAt,
+  }) => db.transaction(() async {
+    final posts = [
+      for (final p in (page.posts ?? const <String, api.Post>{}).values)
+        if (p.id != null && p.createAt != null && p.channelId != null) p,
+    ];
+    await _upsertPosts(posts);
+    final stored = {for (final p in posts) p.id!};
+    await (db.delete(db.postLists)..where((l) => l.list.equals(list))).go();
+    await db.batch((b) {
+      b.insertAll(db.postLists, [
+        for (final (rank, id) in page.order.where(stored.contains).indexed)
+          PostListsCompanion.insert(list: list, postId: id, rank: rank),
+      ], mode: InsertMode.insertOrIgnore);
+    });
+    await db.setSyncInt(
+      SyncKeys.listFetchedAt(list),
+      fetchedAt.millisecondsSinceEpoch,
+    );
+  });
+
+  /// Puts a stored post at the top of [list].
+  Future<void> _prependToList(String list, String postId) async {
+    final top = db.postLists.rank.min();
+    final current =
+        await (db.selectOnly(db.postLists)
+              ..addColumns([top])
+              ..where(db.postLists.list.equals(list)))
+            .map((row) => row.read(top))
+            .getSingle();
+    await db
+        .into(db.postLists)
+        .insert(
+          PostListsCompanion.insert(
+            list: list,
+            postId: postId,
+            rank: (current ?? 0) - 1,
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+  }
+
+  /// Messages saved or unsaved elsewhere, from `flagged_post` preferences.
+  /// Returns the ids of newly saved posts that are not stored yet, which
+  /// need the saved list fetched again.
+  Future<List<String>> applySavedChanges(
+    Iterable<api.Preference> preferences, {
+    required bool deleted,
+  }) => db.transaction(() async {
+    final missing = <String>[];
+    for (final p in preferences) {
+      if (p.category != Prefs.flaggedPost || p.name == null) continue;
+      final postId = p.name!;
+      if (deleted || p.value != 'true') {
+        await (db.delete(db.postLists)..where(
+              (l) =>
+                  l.list.equals(PostListNames.saved) & l.postId.equals(postId),
+            ))
+            .go();
+        continue;
+      }
+      final known = await (db.select(
+        db.posts,
+      )..where((row) => row.id.equals(postId))).getSingleOrNull();
+      if (known == null) {
+        missing.add(postId);
+      } else {
+        await _prependToList(PostListNames.saved, postId);
+      }
+    }
+    return missing;
+  });
+
+  /// Remembers the channel opened last in [teamId].
+  Future<void> setLastChannel(String teamId, String channelId) =>
+      db.setSyncText(SyncKeys.lastChannel(teamId), channelId);
+
   Future<void> setCurrentTeam(String teamId) =>
       db.setSyncText(SyncKeys.currentTeamId, teamId);
 
@@ -685,6 +786,9 @@ class ServerStore {
       db.posts,
     )..where((p) => p.id.equals(post.id!))).getSingleOrNull();
     await _upsertPosts([post]);
+    if (mentionsMe && !fromSelf) {
+      await _prependToList(PostListNames.mentions, post.id!);
+    }
     // A replayed event (after a resumed connection) is already counted.
     if (known != null) return;
     final ranges = await rangesFor('channel', channelId);

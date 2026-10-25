@@ -6,6 +6,7 @@ import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
 import 'package:matterleast/data/sync/event_applier.dart';
+import 'package:matterleast/data/sync/inbox_sync.dart';
 import 'package:matterleast/data/sync/presence.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 
@@ -22,11 +23,13 @@ class ServerConnection {
     Duration pingInterval = const Duration(seconds: 30),
   }) {
     entry = EntrySync(server: server, store: store, runner: runner);
+    inbox = InboxSync(server: server, store: store, runner: runner);
     events = EventApplier(
       server: server,
       store: store,
       runner: runner,
       entry: entry,
+      inbox: inbox,
     );
     presence = PresencePoller(server: server, store: store, runner: runner);
     socket = ServerSocket(
@@ -46,6 +49,7 @@ class ServerConnection {
   final ServerStore store;
   final SyncRunner runner;
   late final EntrySync entry;
+  late final InboxSync inbox;
   late final EventApplier events;
   late final PresencePoller presence;
   late final ServerSocket socket;
@@ -77,7 +81,14 @@ class ServerConnection {
     _stopTimer = Timer(backgroundGrace, () => unawaited(_stop()));
   }
 
-  void _sync() => unawaited(entry.run().catchError((Object _) {}));
+  /// Events may have been missed: the entry data first, then Home's lists,
+  /// which only a fresh fetch brings up to date.
+  void _sync() => unawaited(
+    entry
+        .run()
+        .then((_) => inbox.refresh(force: true))
+        .catchError((Object _) {}),
+  );
 
   Future<void> _stop() async {
     _active = false;

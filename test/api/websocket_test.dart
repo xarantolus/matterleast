@@ -13,6 +13,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
 import 'package:matterleast/data/sync/event_applier.dart';
+import 'package:matterleast/data/sync/inbox_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 
 import '../support/fake_socket_server.dart';
@@ -247,6 +248,7 @@ void main() {
         store: store,
         runner: runner,
         entry: EntrySync(server: http, store: store, runner: runner),
+        inbox: InboxSync(server: http, store: store, runner: runner),
       );
       await store.applyMe(api.User.fromJson({'id': 'me', 'username': 'alice'}));
       await store.applyChannels(
@@ -317,6 +319,11 @@ void main() {
       await next;
       expect(await counts(), (unread: 1, mentions: 1));
       expect((await db.select(db.posts).getSingle()).message, '@alice look');
+      expect(
+        [for (final row in await db.select(db.postLists).get()) row.postId],
+        ['p9'],
+        reason: 'a live mention goes to the top of the mentions',
+      );
 
       next = applied.stream.first;
       server.event('channel_viewed', 2, {'channel_id': 'c1'});

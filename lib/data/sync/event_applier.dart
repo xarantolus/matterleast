@@ -6,6 +6,7 @@ import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
+import 'package:matterleast/data/sync/inbox_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/teams.dart';
 
@@ -18,6 +19,7 @@ class EventApplier {
     required this.store,
     required this.runner,
     required this.entry,
+    required this.inbox,
     DateTime Function()? clock,
   }) : _clock = clock ?? (() => DateTime.now().toUtc());
 
@@ -25,6 +27,7 @@ class EventApplier {
   final ServerStore store;
   final SyncRunner runner;
   final EntrySync entry;
+  final InboxSync inbox;
   final DateTime Function() _clock;
 
   ServerDatabase get _db => store.db;
@@ -91,10 +94,17 @@ class EventApplier {
         await store.applyUsers([user]);
       case StatusChangedEvent(:final userId?, :final status?):
         await store.applyStatuses({userId: status});
-      case PreferencesEvent(deleted: true):
-        await store.deletePreferences(event.all);
-      case PreferencesEvent():
-        await store.applyPreferences(event.all);
+      case PreferencesEvent(:final deleted):
+        if (deleted) {
+          await store.deletePreferences(event.all);
+        } else {
+          await store.applyPreferences(event.all);
+        }
+        final missing = await store.applySavedChanges(
+          event.all,
+          deleted: deleted,
+        );
+        if (missing.isNotEmpty) _later(inbox.refreshSaved());
       case ThreadUpdatedEvent(:final thread?):
         await store.applyThreads(event.broadcast?.teamId ?? '', [thread]);
       case ThreadReadEvent():
