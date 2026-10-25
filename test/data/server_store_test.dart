@@ -367,4 +367,81 @@ void main() {
       expect(newestRange(ranges), ranges.single);
     });
   });
+
+  group('entry and team changes', () {
+    Future<void> seed() => store.applyChannels(
+      channels: fixtureList('channels').map(api.Channel.fromJson),
+      members: fixtureList('channel_members').map(api.ChannelMember.fromJson),
+      categories: api.OrderedSidebarCategories.fromJson(
+        fixtureMap('categories'),
+      ),
+    );
+
+    test('leaving a team keeps the direct messages', () async {
+      await seed();
+      final teamId =
+          fixtureList('channels')
+                  .map((c) => c['team_id'])
+                  .firstWhere((id) => id != '')!
+              as String;
+      await store.removeTeam(teamId);
+      final left = await db.select(db.channels).get();
+      expect(left, isNotEmpty);
+      expect(left.every((c) => c.teamId.isEmpty), isTrue);
+      expect(await db.select(db.categories).get(), isEmpty);
+      expect((await db.select(db.myChannels).get()).length, left.length);
+    });
+
+    test('a category change elsewhere keeps its place and collapse', () async {
+      await seed();
+      final projects = (await db.select(db.categories).get()).firstWhere(
+        (c) => c.displayName == 'Projects',
+      );
+      await store.setCategoryCollapsed(projects.id, collapsed: true);
+      await store.applyCategoryUpdates([
+        api.SidebarCategoryWithChannels.fromJson({
+          'id': projects.id,
+          'team_id': projects.teamId,
+          'type': 'custom',
+          'display_name': 'Projects',
+          'sort_order': 999,
+          'channel_ids': ['only-one'],
+        }),
+      ]);
+      final after = await (db.select(
+        db.categories,
+      )..where((c) => c.id.equals(projects.id))).getSingle();
+      expect(after.sortOrder, projects.sortOrder);
+      expect(after.collapsed, isTrue);
+      final links = await (db.select(
+        db.categoryChannels,
+      )..where((cc) => cc.categoryId.equals(projects.id))).get();
+      expect(links.map((l) => l.channelId), ['only-one']);
+    });
+
+    test('unread threads replace the unread set of their team', () async {
+      api.UserThread thread(String id, int unread) => api.UserThread.fromJson({
+        'id': id,
+        'reply_count': 3,
+        'unread_replies': unread,
+        'post': {'id': id, 'channel_id': 'c1', 'create_at': 1, 'user_id': 'u'},
+      });
+      await store.applyThreads('t1', [thread('a', 2), thread('b', 1)]);
+      await store.applyThreads('t1', [thread('b', 4)], allUnread: true);
+      final rows = {
+        for (final t in await db.select(db.threads).get())
+          t.rootId: t.unreadReplies,
+      };
+      expect(rows, {'a': 0, 'b': 4});
+    });
+
+    test('presence updates stored users only', () async {
+      await store.applyUsers([
+        api.User.fromJson({'id': 'u1', 'username': 'bob'}),
+      ]);
+      await store.applyStatuses({'u1': 'away', 'u9': 'online'});
+      final users = await db.select(db.users).get();
+      expect(users.single.status, 'away');
+    });
+  });
 }

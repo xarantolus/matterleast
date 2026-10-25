@@ -25,6 +25,8 @@ class ServerApi {
       sendTimeout: const Duration(seconds: 30),
       followRedirects: false,
       responseType: ResponseType.json,
+      // Dio only implies JSON for maps; id lists would go out as toString().
+      contentType: Headers.jsonContentType,
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
         'X-Mattermost-Preauth-Secret': ?preAuthSecret,
@@ -75,6 +77,29 @@ class ServerApi {
       throw error is ApiError ? error : ApiError.from(e);
     }
   }
+
+  /// GETs a JSON object the spec leaves untyped (client config, licence);
+  /// null when the answer is not an object.
+  Future<Map<String, Object?>?> getJsonObject(
+    String path, {
+    Map<String, Object?>? query,
+  }) async {
+    final response = await call(
+      () => dio.get<Object?>(path, queryParameters: query),
+    );
+    final body = response.data;
+    return body is Map<String, Object?> ? body : null;
+  }
+
+  Future<Map<String, Object?>?> clientConfig() => coalesced(
+    'config',
+    () => getJsonObject('/api/v4/config/client', query: {'format': 'old'}),
+  );
+
+  Future<Map<String, Object?>?> clientLicense() => coalesced(
+    'license',
+    () => getJsonObject('/api/v4/license/client', query: {'format': 'old'}),
+  );
 
   /// Like [call], but callers asking for the same [key] while a request is
   /// running share its result instead of starting another.

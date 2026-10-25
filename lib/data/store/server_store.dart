@@ -148,6 +148,320 @@ class ServerStore {
     ]);
   });
 
+  /// The first part of an entry sync: config, licence, preferences, the
+  /// user and their teams. Teams the user is no longer in go, with
+  /// everything in them.
+  Future<void> applyEntry({
+    required Map<String, Object?>? config,
+    required Map<String, Object?>? license,
+    required List<api.Preference> preferences,
+    required api.User me,
+    required List<api.Team> teams,
+    required List<api.TeamMember> members,
+  }) => db.transaction(() async {
+    if (config != null) await applyConfig('client_config', config);
+    if (license != null) await applyConfig('license', license);
+    await db.delete(db.preferences).go();
+    await applyPreferences(preferences);
+    await applyMe(me);
+    final joined = {
+      for (final m in members)
+        if (m.teamId != null && m.deleteAt == null) m.teamId!,
+    };
+    for (final mine in await db.select(db.myTeams).get()) {
+      if (!joined.contains(mine.teamId)) await removeTeam(mine.teamId);
+    }
+    await applyTeams(
+      teams.where((t) => joined.contains(t.id)),
+      members.where((m) => joined.contains(m.teamId)),
+    );
+  });
+
+  /// Channels, memberships and categories of one team as the server listed
+  /// them, which includes the user's direct and group messages. Channels no
+  /// longer listed are gone (left elsewhere); archived ones stay, since the
+  /// server only lists those archived after [since].
+  Future<void> applyTeamChannels({
+    required String teamId,
+    required List<api.Channel> channels,
+    required List<api.ChannelMember> members,
+    required api.OrderedSidebarCategories categories,
+    required DateTime syncedAt,
+  }) => db.transaction(() async {
+    final memberOf = {for (final m in members) ?m.channelId};
+    final listed = [
+      for (final c in channels)
+        if (memberOf.contains(c.id)) c,
+    ];
+    final listedIds = [for (final c in listed) c.id!];
+    final stale =
+        await (db.select(db.channels)..where(
+              (c) =>
+                  (c.teamId.equals(teamId) | c.teamId.equals('')) &
+                  c.deleteAt.isNull() &
+                  c.id.isNotIn(listedIds),
+            ))
+            .get();
+    for (final channel in stale) {
+      await removeChannel(channel.id);
+    }
+    await applyChannels(
+      channels: listed,
+      members: members.where((m) => listedIds.contains(m.channelId)),
+      categories: categories,
+    );
+    await db.setSyncInt(
+      SyncKeys.channelsSince(teamId),
+      syncedAt.millisecondsSinceEpoch,
+    );
+  });
+
+  Future<void> applyTeamUnreads(Iterable<api.TeamUnread> unreads) =>
+      db.batch((b) {
+        for (final u in unreads) {
+          if (u.teamId == null) continue;
+          b.update(
+            db.myTeams,
+            MyTeamsCompanion(
+              msgCount: Value(u.msgCount ?? 0),
+              mentionCount: Value(u.mentionCount ?? 0),
+              msgCountRoot: Value(u.msgCountRoot ?? 0),
+              mentionCountRoot: Value(u.mentionCountRoot ?? 0),
+            ),
+            where: (t) => t.teamId.equals(u.teamId!),
+          );
+        }
+      });
+
+  Future<Set<String>> roleNames() async => {
+    for (final r in await db.select(db.roles).get()) r.name,
+  };
+
+  Future<void> applyRoles(Iterable<api.Role> roles) => db.batch((b) {
+    b.insertAllOnConflictUpdate(db.roles, [
+      for (final r in roles)
+        if (r.name != null) roleCompanion(r),
+    ]);
+  });
+
+  /// Presence by user id; users not stored yet are skipped.
+  Future<void> applyStatuses(Map<String, String> statusByUser) => db.batch((b) {
+    for (final MapEntry(key: userId, value: status) in statusByUser.entries) {
+      b.update(
+        db.users,
+        UsersCompanion(status: Value(status)),
+        where: (u) => u.id.equals(userId) & u.status.equals(status).not(),
+      );
+    }
+  });
+
+  Future<void> applyChannel(api.Channel channel) async {
+    if (channel.id == null) return;
+    await db
+        .into(db.channels)
+        .insertOnConflictUpdate(channelCompanion(channel));
+  }
+
+  Future<void> applyChannelMember(api.ChannelMember member) async {
+    if (member.channelId == null) return;
+    await db
+        .into(db.myChannels)
+        .insertOnConflictUpdate(myChannelCompanion(member));
+  }
+
+  /// Archives the channel, or restores it when [at] is null.
+  Future<void> applyChannelArchived(String channelId, DateTime? at) =>
+      (db.update(db.channels)..where((c) => c.id.equals(channelId))).write(
+        ChannelsCompanion(deleteAt: Value(at)),
+      );
+
+  /// The user left the channel or was removed from it.
+  Future<void> removeChannel(String channelId) => db.transaction(() async {
+    await (db.delete(db.channels)..where((c) => c.id.equals(channelId))).go();
+    await (db.delete(
+      db.myChannels,
+    )..where((m) => m.channelId.equals(channelId))).go();
+    await (db.delete(
+      db.categoryChannels,
+    )..where((cc) => cc.channelId.equals(channelId))).go();
+  });
+
+  /// The user left the team, or it was archived.
+  Future<void> removeTeam(String teamId) => db.transaction(() async {
+    final channels = await (db.select(
+      db.channels,
+    )..where((c) => c.teamId.equals(teamId))).get();
+    for (final c in channels) {
+      await removeChannel(c.id);
+    }
+    final categoryIds = [
+      for (final c in await (db.select(
+        db.categories,
+      )..where((c) => c.teamId.equals(teamId))).get())
+        c.id,
+    ];
+    await (db.delete(
+      db.categoryChannels,
+    )..where((cc) => cc.categoryId.isIn(categoryIds))).go();
+    await (db.delete(
+      db.categories,
+    )..where((c) => c.teamId.equals(teamId))).go();
+    await (db.delete(
+      db.threadTeams,
+    )..where((t) => t.teamId.equals(teamId))).go();
+    await (db.delete(db.myTeams)..where((t) => t.teamId.equals(teamId))).go();
+    await (db.delete(db.teams)..where((t) => t.id.equals(teamId))).go();
+    await (db.delete(
+      db.syncState,
+    )..where((s) => s.key.equals(SyncKeys.channelsSince(teamId)))).go();
+  });
+
+  /// Channels read elsewhere (another device or tab).
+  Future<void> applyChannelsViewed(Map<String, DateTime> viewedAt) =>
+      db.transaction(() async {
+        for (final MapEntry(key: channelId, value: at) in viewedAt.entries) {
+          await markViewed(channelId, at: at);
+        }
+      });
+
+  /// Categories changed elsewhere; their order among the others and the
+  /// local collapse state stay.
+  Future<void> applyCategoryUpdates(
+    Iterable<api.SidebarCategoryWithChannels> categories,
+  ) => db.transaction(() async {
+    final updated = [
+      for (final c in categories)
+        if (c.id != null) c,
+    ];
+    if (updated.isEmpty) return;
+    final ids = [for (final c in updated) c.id!];
+    await db.batch((b) {
+      for (final c in updated) {
+        b.insert(
+          db.categories,
+          categoryCompanion(c, 0),
+          onConflict: DoUpdate(
+            (_) => categoryCompanion(
+              c,
+              0,
+            ).copyWith(sortOrder: const Value.absent()),
+          ),
+        );
+      }
+      b.deleteWhere(db.categoryChannels, (cc) => cc.categoryId.isIn(ids));
+      b.insertAll(db.categoryChannels, [
+        for (final c in updated)
+          for (final (i, channelId) in c.channelIds.indexed)
+            CategoryChannelsCompanion.insert(
+              categoryId: c.id!,
+              channelId: channelId,
+              sortOrder: Value(i),
+            ),
+      ], mode: InsertMode.insertOrIgnore);
+    });
+  });
+
+  Future<void> deletePreferences(Iterable<api.Preference> preferences) =>
+      db.batch((b) {
+        for (final p in preferences) {
+          if (p.category == null) continue;
+          b.deleteWhere(
+            db.preferences,
+            (row) =>
+                row.category.equals(p.category!) &
+                row.name.equals(p.name ?? ''),
+          );
+        }
+      });
+
+  /// Followed threads of a team. With [allUnread], [threads] are all its
+  /// unread threads, so any other stored thread of the team counts as read.
+  Future<void> applyThreads(
+    String teamId,
+    Iterable<api.UserThread> threads, {
+    bool allUnread = false,
+  }) => db.transaction(() async {
+    final usable = [
+      for (final t in threads)
+        if (t.id != null && t.post?.channelId != null) t,
+    ];
+    if (allUnread) {
+      final teamThreads = db.selectOnly(db.threadTeams)
+        ..addColumns([db.threadTeams.rootId])
+        ..where(db.threadTeams.teamId.equals(teamId));
+      await (db.update(db.threads)..where(
+            (t) =>
+                t.rootId.isInQuery(teamThreads) &
+                t.rootId.isNotIn([for (final t in usable) t.id!]),
+          ))
+          .write(
+            const ThreadsCompanion(
+              unreadReplies: Value(0),
+              unreadMentions: Value(0),
+            ),
+          );
+    }
+    await _upsertPosts([for (final t in usable) t.post!]);
+    await db.batch((b) {
+      b.insertAllOnConflictUpdate(db.threads, [
+        for (final t in usable) threadCompanion(t, t.post!.channelId!),
+      ]);
+      b.insertAll(db.threadTeams, [
+        for (final t in usable)
+          ThreadTeamsCompanion.insert(teamId: teamId, rootId: t.id!),
+      ], mode: InsertMode.insertOrIgnore);
+    });
+  });
+
+  /// A thread was read elsewhere; a null [threadId] means all of the team's.
+  Future<void> applyThreadRead({
+    required String teamId,
+    String? threadId,
+    DateTime? lastViewedAt,
+    int unreadReplies = 0,
+    int unreadMentions = 0,
+  }) {
+    final update = db.update(db.threads);
+    if (threadId != null) {
+      update.where((t) => t.rootId.equals(threadId));
+    } else {
+      final teamThreads = db.selectOnly(db.threadTeams)
+        ..addColumns([db.threadTeams.rootId])
+        ..where(db.threadTeams.teamId.equals(teamId));
+      update.where((t) => t.rootId.isInQuery(teamThreads));
+    }
+    return update.write(
+      ThreadsCompanion(
+        lastViewedAt: lastViewedAt == null
+            ? const Value.absent()
+            : Value(lastViewedAt),
+        unreadReplies: Value(unreadReplies),
+        unreadMentions: Value(unreadMentions),
+      ),
+    );
+  }
+
+  Future<void> applyThreadFollow(
+    String threadId, {
+    required bool following,
+    int? replyCount,
+  }) => (db.update(db.threads)..where((t) => t.rootId.equals(threadId))).write(
+    ThreadsCompanion(
+      isFollowing: Value(following),
+      replyCount: replyCount == null ? const Value.absent() : Value(replyCount),
+    ),
+  );
+
+  Future<void> setCategoryCollapsed(
+    String categoryId, {
+    required bool collapsed,
+  }) => (db.update(db.categories)..where((c) => c.id.equals(categoryId))).write(
+    CategoriesCompanion(collapsed: Value(collapsed)),
+  );
+
+  Future<void> setCurrentTeam(String teamId) =>
+      db.setSyncText(SyncKeys.currentTeamId, teamId);
+
   Future<List<PostRange>> rangesFor(String scope, String scopeId) async {
     final rows = await (db.select(
       db.postRanges,

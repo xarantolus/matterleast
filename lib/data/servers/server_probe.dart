@@ -58,8 +58,11 @@ class ServerProbe {
     final url = await _ping(typedUrl);
     final api = _api(url);
     try {
-      final config = await _getMap(api, '/api/v4/config/client');
-      final license = await _getMap(api, '/api/v4/license/client');
+      final config = await api.clientConfig();
+      final license = await api.clientLicense();
+      if (config == null || license == null) {
+        throw const ProbeFailure(notMattermostText);
+      }
       final options = loginOptionsFrom(config, license);
       if (options.diagnosticId.isEmpty) {
         throw const ProbeFailure(notMattermostText);
@@ -111,17 +114,6 @@ class ServerProbe {
     } finally {
       api.close();
     }
-  }
-
-  Future<Map<String, Object?>> _getMap(ServerApi api, String path) async {
-    final response = await api.call(
-      () => api.dio.get<Object?>(path, queryParameters: {'format': 'old'}),
-    );
-    final body = response.data;
-    if (body is! Map<String, Object?>) {
-      throw const ProbeFailure(notMattermostText);
-    }
-    return body;
   }
 }
 

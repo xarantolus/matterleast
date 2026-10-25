@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:matterleast/data/db/millis.dart';
@@ -73,6 +75,22 @@ class ServerDatabase extends _$ServerDatabase {
       ),
     ]);
     return query.watchSingleOrNull().map((row) => row?.readTable(users));
+  }
+
+  Future<String?> preference(String category, String name) async =>
+      (await (select(preferences)..where(
+                (p) => p.category.equals(category) & p.name.equals(name),
+              ))
+              .getSingleOrNull())
+          ?.value;
+
+  /// A stored config snapshot (`client_config`, `license`).
+  Future<Map<String, Object?>> configJson(String key) async {
+    final row = await (select(
+      config,
+    )..where((c) => c.key.equals(key))).getSingleOrNull();
+    final decoded = row == null ? null : jsonDecode(row.json);
+    return decoded is Map<String, Object?> ? decoded : const {};
   }
 
   Future<String?> syncText(String key) async => (await (select(

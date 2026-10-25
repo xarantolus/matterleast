@@ -140,6 +140,26 @@ PreferencesCompanion preferenceCompanion(api.Preference p) =>
       value: Value(p.value ?? ''),
     );
 
+RolesCompanion roleCompanion(api.Role r) => RolesCompanion(
+  name: Value(r.name!),
+  permissionsJson: Value(jsonEncode(r.permissions)),
+);
+
+ThreadsCompanion threadCompanion(api.UserThread t, String channelId) =>
+    ThreadsCompanion(
+      rootId: Value(t.id!),
+      channelId: Value(channelId),
+      lastReplyAt: _opt(t.lastReplyAt),
+      lastViewedAt: _opt(t.lastViewedAt),
+      replyCount: _opt(t.replyCount),
+      unreadReplies: Value(t.unreadReplies ?? 0),
+      unreadMentions: Value(t.unreadMentions ?? 0),
+      isFollowing: const Value(true),
+      participantIdsJson: Value(
+        jsonEncode([for (final u in t.participants) ?u.id]),
+      ),
+    );
+
 CustomEmojiCompanion emojiCompanion(api.Emoji e) => CustomEmojiCompanion(
   id: Value(e.id!),
   name: Value(e.name!),

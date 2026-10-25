@@ -75,9 +75,11 @@ class FakeServer {
   Future<void> close() => _server.close(force: true);
 }
 
+Object? fixture(String name) =>
+    jsonDecode(File('test/fixtures/api/$name.json').readAsStringSync());
+
 Map<String, Object?> fixtureMap(String name) =>
-    jsonDecode(File('test/fixtures/api/$name.json').readAsStringSync())!
-        as Map<String, Object?>;
+    fixture(name)! as Map<String, Object?>;
 
 /// Answers the three calls of a server check like the local test server.
 Reply? mattermostProbe(SeenRequest request, {String prefix = ''}) =>
