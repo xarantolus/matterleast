@@ -106,9 +106,11 @@ class ServerManager {
     if (row == null || row.lastActiveAt == null) {
       throw StateError('Not signed in to this server');
     }
+    final path = p.join(await _dataDirectory(), row.dbFile);
     final session = ServerSession.open(
       url: Uri.parse(url),
-      db: _openDatabase(p.join(await _dataDirectory(), row.dbFile)),
+      db: _openDatabase(path),
+      dbPath: path,
       tokens: _tokens,
     );
     _subscriptions[url] = session.api.sessionEnded.listen(

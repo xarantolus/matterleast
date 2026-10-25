@@ -57,7 +57,7 @@ class RootScreen extends ConsumerWidget {
           : ChannelListPane(
               url: server.url,
               teamId: teamId ?? '',
-              serverLabel: '${server.displayName} · ${server.address}',
+              serverLabel: {server.displayName, server.address}.join(' · '),
               state: state,
             ),
     );

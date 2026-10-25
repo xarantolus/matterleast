@@ -540,3 +540,41 @@ final class SessionEndedProvider
 }
 
 String _$sessionEndedHash() => r'd80df2fcddfad88635aedca5adc964c6914b95a8';
+
+/// The app's version as people read it, such as `0.1.0 (1)`.
+
+@ProviderFor(appVersion)
+final appVersionProvider = AppVersionProvider._();
+
+/// The app's version as people read it, such as `0.1.0 (1)`.
+
+final class AppVersionProvider
+    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
+    with $FutureModifier<String>, $FutureProvider<String> {
+  /// The app's version as people read it, such as `0.1.0 (1)`.
+  AppVersionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appVersionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appVersionHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String> create(Ref ref) {
+    return appVersion(ref);
+  }
+}
+
+String _$appVersionHash() => r'ff1eb5d2af994c051622516f93f238f401bb6abc';

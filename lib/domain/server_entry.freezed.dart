@@ -297,7 +297,8 @@ as String?,
 /// @nodoc
 mixin _$Me {
 
- String get id; String get username; String get firstName; String get lastName; String get nickname;
+ String get id; String get username; String get firstName; String get lastName; String get nickname;/// `online`, `away`, `dnd` or `offline`.
+ String get status;
 /// Create a copy of Me
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -309,20 +310,20 @@ $MeCopyWith<Me> get copyWith => _$MeCopyWithImpl<Me>(this as Me, _$identity);
 @override
 bool operator ==(Object other) {
   final _this = this as Me;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Me&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.firstName, _this.firstName) || other.firstName == _this.firstName)&&(identical(other.lastName, _this.lastName) || other.lastName == _this.lastName)&&(identical(other.nickname, _this.nickname) || other.nickname == _this.nickname));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Me&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.firstName, _this.firstName) || other.firstName == _this.firstName)&&(identical(other.lastName, _this.lastName) || other.lastName == _this.lastName)&&(identical(other.nickname, _this.nickname) || other.nickname == _this.nickname)&&(identical(other.status, _this.status) || other.status == _this.status));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Me;
-  return Object.hash(runtimeType,_this.id,_this.username,_this.firstName,_this.lastName,_this.nickname);
+  return Object.hash(runtimeType,_this.id,_this.username,_this.firstName,_this.lastName,_this.nickname,_this.status);
 }
 
 @override
 String toString() {
   final _this = this as Me;
-  return 'Me(id: ${_this.id}, username: ${_this.username}, firstName: ${_this.firstName}, lastName: ${_this.lastName}, nickname: ${_this.nickname})';
+  return 'Me(id: ${_this.id}, username: ${_this.username}, firstName: ${_this.firstName}, lastName: ${_this.lastName}, nickname: ${_this.nickname}, status: ${_this.status})';
 }
 
 
@@ -333,7 +334,7 @@ abstract mixin class $MeCopyWith<$Res>  {
   factory $MeCopyWith(Me value, $Res Function(Me) _then) = _$MeCopyWithImpl;
 @useResult
 $Res call({
- String id, String username, String firstName, String lastName, String nickname
+ String id, String username, String firstName, String lastName, String nickname, String status
 });
 
 
@@ -350,13 +351,14 @@ class _$MeCopyWithImpl<$Res>
 
 /// Create a copy of Me
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? username = null,Object? firstName = null,Object? lastName = null,Object? nickname = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? username = null,Object? firstName = null,Object? lastName = null,Object? nickname = null,Object? status = null,}) {
   return _then(Me(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,firstName: null == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
 as String,lastName: null == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
 as String,nickname: null == nickname ? _self.nickname : nickname // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -442,10 +444,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String username,  String firstName,  String lastName,  String nickname)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String username,  String firstName,  String lastName,  String nickname,  String status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Me() when $default != null:
-return $default(_that.id,_that.username,_that.firstName,_that.lastName,_that.nickname);case _:
+return $default(_that.id,_that.username,_that.firstName,_that.lastName,_that.nickname,_that.status);case _:
   return orElse();
 
 }
@@ -463,10 +465,10 @@ return $default(_that.id,_that.username,_that.firstName,_that.lastName,_that.nic
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String username,  String firstName,  String lastName,  String nickname)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String username,  String firstName,  String lastName,  String nickname,  String status)  $default,) {final _that = this;
 switch (_that) {
 case _Me():
-return $default(_that.id,_that.username,_that.firstName,_that.lastName,_that.nickname);case _:
+return $default(_that.id,_that.username,_that.firstName,_that.lastName,_that.nickname,_that.status);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -483,10 +485,10 @@ return $default(_that.id,_that.username,_that.firstName,_that.lastName,_that.nic
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String username,  String firstName,  String lastName,  String nickname)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String username,  String firstName,  String lastName,  String nickname,  String status)?  $default,) {final _that = this;
 switch (_that) {
 case _Me() when $default != null:
-return $default(_that.id,_that.username,_that.firstName,_that.lastName,_that.nickname);case _:
+return $default(_that.id,_that.username,_that.firstName,_that.lastName,_that.nickname,_that.status);case _:
   return null;
 
 }
@@ -498,7 +500,7 @@ return $default(_that.id,_that.username,_that.firstName,_that.lastName,_that.nic
 
 
 class _Me extends Me {
-  const _Me({required this.id, required this.username, required this.firstName, required this.lastName, required this.nickname}): super._();
+  const _Me({required this.id, required this.username, required this.firstName, required this.lastName, required this.nickname, required this.status}): super._();
   
 
 @override final  String id;
@@ -506,6 +508,8 @@ class _Me extends Me {
 @override final  String firstName;
 @override final  String lastName;
 @override final  String nickname;
+/// `online`, `away`, `dnd` or `offline`.
+@override final  String status;
 
 /// Create a copy of Me
 /// with the given fields replaced by the non-null parameter values.
@@ -517,18 +521,18 @@ _$MeCopyWith<_Me> get copyWith => __$MeCopyWithImpl<_Me>(this, _$identity);
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Me&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.nickname, nickname) || other.nickname == nickname));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Me&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.status, status) || other.status == status));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,username,firstName,lastName,nickname);
+    return Object.hash(runtimeType,id,username,firstName,lastName,nickname,status);
 }
 
 @override
 String toString() {
-    return 'Me(id: $id, username: $username, firstName: $firstName, lastName: $lastName, nickname: $nickname)';
+    return 'Me(id: $id, username: $username, firstName: $firstName, lastName: $lastName, nickname: $nickname, status: $status)';
 }
 
 
@@ -539,7 +543,7 @@ abstract mixin class _$MeCopyWith<$Res> implements $MeCopyWith<$Res> {
   factory _$MeCopyWith(_Me value, $Res Function(_Me) _then) = __$MeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String username, String firstName, String lastName, String nickname
+ String id, String username, String firstName, String lastName, String nickname, String status
 });
 
 
@@ -556,13 +560,14 @@ class __$MeCopyWithImpl<$Res>
 
 /// Create a copy of Me
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? username = null,Object? firstName = null,Object? lastName = null,Object? nickname = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? username = null,Object? firstName = null,Object? lastName = null,Object? nickname = null,Object? status = null,}) {
   return _then(_Me(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,firstName: null == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
 as String,lastName: null == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
 as String,nickname: null == nickname ? _self.nickname : nickname // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

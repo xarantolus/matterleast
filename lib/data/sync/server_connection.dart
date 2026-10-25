@@ -37,10 +37,10 @@ class ServerConnection {
       token: token,
       pingInterval: pingInterval,
       onEvent: (event) => unawaited(events.add(event)),
-      onResync: _sync,
+      onResync: refreshAll,
       onClosed: (failCount) {
         // REST may work where the socket doesn't; try once per outage.
-        if (failCount == 1) _sync();
+        if (failCount == 1) refreshAll();
       },
     );
   }
@@ -83,7 +83,7 @@ class ServerConnection {
 
   /// Events may have been missed: the entry data first, then Home's lists,
   /// which only a fresh fetch brings up to date.
-  void _sync() => unawaited(
+  void refreshAll() => unawaited(
     entry
         .run()
         .then((_) => inbox.refresh(force: true))

@@ -18,4 +18,5 @@ Me meOf(UserRow row) => Me(
   firstName: row.firstName,
   lastName: row.lastName,
   nickname: row.nickname,
+  status: row.status,
 );

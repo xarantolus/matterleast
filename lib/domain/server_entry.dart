@@ -32,6 +32,9 @@ abstract class Me with _$Me {
     required String firstName,
     required String lastName,
     required String nickname,
+
+    /// `online`, `away`, `dnd` or `offline`.
+    required String status,
   }) = _Me;
 
   const Me._();

@@ -16,6 +16,7 @@ class ServerSession {
     required this.api,
     required this.db,
     required this.runner,
+    required this.dbPath,
     required String? Function() token,
   }) : store = ServerStore(db) {
     connection = ServerConnection(
@@ -32,6 +33,9 @@ class ServerSession {
   final ServerDatabase db;
   final ServerStore store;
   final SyncRunner runner;
+
+  /// The database file, for its size on the status page.
+  final String dbPath;
   late final ServerConnection connection;
 
   /// Opens the session without waiting for the Keystore, so stored data
@@ -39,6 +43,7 @@ class ServerSession {
   static ServerSession open({
     required Uri url,
     required ServerDatabase db,
+    required String dbPath,
     required TokenStore tokens,
   }) {
     final key = url.toString();
@@ -48,6 +53,7 @@ class ServerSession {
       api: ServerApi(baseUrl: url, token: () => tokens.read(key)),
       db: db,
       runner: SyncRunner(),
+      dbPath: dbPath,
       token: () => tokens.cached(key),
     );
   }

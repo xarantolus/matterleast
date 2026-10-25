@@ -8,6 +8,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -77,3 +78,10 @@ Stream<Me?> currentUser(Ref ref, String url) async* {
 @riverpod
 Stream<ServerEntry> sessionEnded(Ref ref) =>
     ref.watch(serverManagerProvider).sessionEnded.map(serverEntryOf);
+
+/// The app's version as people read it, such as `0.1.0 (1)`.
+@Riverpod(keepAlive: true)
+Future<String> appVersion(Ref ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return '${info.version} (${info.buildNumber})';
+}

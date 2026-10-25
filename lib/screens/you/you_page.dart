@@ -1,27 +1,81 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
+import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
+import 'package:matterleast/screens/settings/settings_page.dart';
 import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
-/// The user's own page: for now the servers, with sign in, sign out and
-/// remove.
+/// The user's own page: who they are on the server picked in the rail,
+/// their saved messages, settings, about, and the servers with sign in,
+/// sign out and remove.
 class YouPage extends ConsumerWidget {
   const YouPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final servers = ref.watch(serversProvider).value ?? const <ServerEntry>[];
+    final signedIn = [
+      for (final s in servers)
+        if (s.signedIn) s,
+    ];
+    final picked = ref.watch(railSelectionProvider)?.url;
+    final current =
+        signedIn.where((s) => s.url == picked).firstOrNull ??
+        (signedIn.isEmpty
+            ? null
+            : signedIn.reduce(
+                (a, b) => b.lastActiveAt!.isAfter(a.lastActiveAt!) ? b : a,
+              ));
+    final version = ref.watch(appVersionProvider).value;
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
       appBar: AppBar(title: const Text('You')),
       body: ListView(
         padding: EdgeInsets.only(top: Spacing.lg, bottom: bottom + Spacing.lg),
         children: [
+          if (current != null) _Profile(server: current),
+          ListTile(
+            leading: const SizedBox(
+              width: 40,
+              child: Icon(Icons.bookmark_outline),
+            ),
+            title: const Text('Saved messages'),
+            onTap: () {
+              ref.read(railSelectionProvider.notifier).select(null);
+              ref
+                  .read(homeFilterSelectionProvider.notifier)
+                  .select(InboxFilter.saved);
+              Navigator.of(context).pop();
+            },
+          ),
+          ListTile(
+            leading: const SizedBox(
+              width: 40,
+              child: Icon(Icons.settings_outlined),
+            ),
+            title: const Text('Settings'),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+            ),
+          ),
+          ListTile(
+            leading: const SizedBox(width: 40, child: Icon(Icons.info_outline)),
+            title: const Text('About Matterleast'),
+            subtitle: version == null ? null : Text('Version $version'),
+            onTap: () => showLicensePage(
+              context: context,
+              applicationName: 'Matterleast',
+              applicationVersion: version,
+            ),
+          ),
+          const SizedBox(height: Spacing.lg),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
             child: Text('SERVERS', style: context.tokens.smallCaps),
@@ -33,6 +87,54 @@ class YouPage extends ConsumerWidget {
             title: const Text('Add a server'),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => const AddServerScreen()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Profile extends ConsumerWidget {
+  const _Profile({required this.server});
+
+  final ServerEntry server;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final me = ref.watch(currentUserProvider(server.url)).value;
+    final text = Theme.of(context).textTheme;
+    final tokens = context.tokens;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Spacing.lg, 0, Spacing.lg, Spacing.lg),
+      child: Row(
+        children: [
+          Stack(
+            children: [
+              InitialsBadge(name: me?.displayName ?? '', size: 64, round: true),
+              PositionedDirectional(
+                end: 0,
+                bottom: 0,
+                child: PresenceDot(status: me?.status, size: 18),
+              ),
+            ],
+          ),
+          const SizedBox(width: Spacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(me?.displayName ?? '', style: text.titleLarge),
+                Text(
+                  [
+                    if (me != null) '@${me.username}',
+                    server.displayName,
+                  ].join(' · '),
+                  style: text.bodyMedium?.copyWith(color: tokens.muted),
+                ),
+                const SizedBox(height: Spacing.xs),
+                Text(presenceLabel(me?.status), style: text.bodyMedium),
+              ],
             ),
           ),
         ],
