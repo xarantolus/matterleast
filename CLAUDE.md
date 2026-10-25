@@ -41,6 +41,20 @@ notes, and they win over this summary.
 - Long or costly work is stoppable, visible and resumable.
 - No host-, server-, organisation- or machine-specific values in committed
   files, including tests, fixtures and seed data. Test data is invented.
+- Never build for one server. Every optional capability is switched on by
+  what the server reports (version, client config and feature flags,
+  licence, permissions, plugin manifests) and leaves no trace when absent;
+  a 501, 403 or 404 from an optional endpoint turns the feature off rather
+  than showing an error.
+- One bad element never fails a page: decode lists per element and skip
+  what doesn't parse, store unknown enum values as unknown, and log the
+  id and type of what was skipped.
+- Errors keep what the server said. Show the server's message when there is
+  one; "offline" or "check the connection" only when no answer arrived.
+  One mapper from failure to user-facing text.
+- Third-party plugins that touch outside input (shares, intents, files)
+  get their native code read before use; sanitise names and paths
+  ourselves.
 - Security matters: tokens and credentials only in encrypted platform
   storage, TLS verified (no trust-all), no secrets or message content in
   logs, deep links and intents validated, and nothing sensitive in
@@ -53,6 +67,15 @@ notes, and they win over this summary.
 - Small single-purpose classes; decisions in pure, testable functions;
   widgets only render state.
 - No `BuildContext` after an `await`; cancel timers and subscriptions.
+- Rebuild only what changed. No `setState` in a list's parent on scroll or
+  visibility changes; keep callbacks, delegates and inherited values stable
+  so unchanged rows don't rebuild; reuse unchanged view-model objects when
+  a stream emits; parse and format once per value, never in `build` per
+  frame; decode images at the size they are shown.
+- Times: relative labels by calendar date in the local time zone
+  ("Yesterday" is the previous local date, not 24 hours ago), all through
+  one shared set of pure functions, tested across DST changes, midnight
+  and the year boundary.
 - `flutter analyze` stays at zero. Never silence a lint.
 - Delete what's unused, including mock data and experiments.
 
@@ -76,11 +99,18 @@ notes, and they win over this summary.
   wide screens.
 - Loading keeps content on screen with a slim progress bar. Errors say what
   happened and what to do. Empty states say how to fill them.
+- Never move content under the reader. Reserve space for everything that
+  arrives late (images, previews, emoji, reactions). When a visible row
+  grows, what the reader is looking at stays in place and content below
+  moves; only a reader at the newest message stays pinned to the bottom.
+- Never show "no results" while a first load is running, and never spin
+  forever: a failed first load shows the cause and Retry.
 
 ## Git and gate
 
 - Intermediate commits within a batch of work need no checks. The full gate
-  (`dart run build_runner build` when models changed, `dart format .`,
+  (`dart run build_runner build`, always, since CI fails on stale generated
+  code; never with `--build-filter`; then `dart format .`,
   `flutter analyze`, `dart analyze`, `flutter test`,
   `flutter build apk --debug`) runs once, close to the finish, before the
   batch is pushed. Velocity matters.
