@@ -56,9 +56,8 @@ jobs:
 
       - name: Extract env variables
         run: |
-          sudo wget -q "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64" -O "/usr/bin/yq"
-          sudo chmod +x /usr/bin/yq
-          echo "APP_VERSION=$(yq eval .version pubspec.yaml | cut -d+ -f1)" >> $GITHUB_ENV
+          # "version: 1.2.3+4" -> 1.2.3
+          echo "APP_VERSION=$(grep -m1 '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> $GITHUB_ENV
           # Artifact names cannot contain a slash, branch names can.
           echo "SAFE_REF=${GITHUB_REF_NAME//\//-}" >> $GITHUB_ENV
 
