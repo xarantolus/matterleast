@@ -27,6 +27,7 @@ import '../models/post_api_v4_channels_members_user_id_view_response.dart';
 import '../models/post_api_v4_channels_search_response.dart';
 import '../models/post_list.dart';
 import '../models/sidebar_category.dart';
+import '../models/sidebar_category_with_channels.dart';
 import '../models/status_ok.dart';
 import '../models/team.dart';
 
@@ -270,10 +271,11 @@ abstract class ChannelsClient {
   });
 
   @PUT('/api/v4/users/{user_id}/teams/{team_id}/channels/categories')
-  Future<SidebarCategory> updateSidebarCategoriesForTeamForUser({
+  Future<List<SidebarCategoryWithChannels>>
+  updateSidebarCategoriesForTeamForUser({
     @Path('team_id') required String teamId,
     @Path('user_id') required String userId,
-    @Body() required List<SidebarCategory> body,
+    @Body() required List<SidebarCategoryWithChannels> body,
   });
 
   @GET('/api/v4/users/{user_id}/teams/{team_id}/channels/categories/order')

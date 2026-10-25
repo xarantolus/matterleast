@@ -1231,16 +1231,17 @@ class _ChannelsClient implements ChannelsClient {
   }
 
   @override
-  Future<SidebarCategory> updateSidebarCategoriesForTeamForUser({
+  Future<List<SidebarCategoryWithChannels>>
+  updateSidebarCategoriesForTeamForUser({
     required String teamId,
     required String userId,
-    required List<SidebarCategory> body,
+    required List<SidebarCategoryWithChannels> body,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = body.map((e) => e.toJson()).toList();
-    final _options = _setStreamType<SidebarCategory>(
+    final _options = _setStreamType<List<SidebarCategoryWithChannels>>(
       Options(method: 'PUT', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -1250,10 +1251,15 @@ class _ChannelsClient implements ChannelsClient {
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
-    final _result = await _dio.fetch<Map<String, Object?>>(_options);
-    late SidebarCategory _value;
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<SidebarCategoryWithChannels> _value;
     try {
-      _value = SidebarCategory.fromJson(_result.data!);
+      _value = _result.data!
+          .map(
+            (dynamic i) =>
+                SidebarCategoryWithChannels.fromJson(i as Map<String, dynamic>),
+          )
+          .toList();
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

@@ -160,3 +160,17 @@ actions:
   - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/threads'].get.parameters"
     update:
       - {name: unread, in: query, description: "Only threads with unread replies", schema: {type: boolean, default: false}}
+  - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/channels/categories'].put.requestBody.content"
+    remove: true
+  - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/channels/categories'].put.requestBody"
+    update:
+      content:
+        application/json:
+          schema: {type: array, items: {$ref: "#/components/schemas/SidebarCategoryWithChannels"}}
+  - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/channels/categories'].put.responses['200'].content"
+    remove: true
+  - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/channels/categories'].put.responses['200']"
+    update:
+      content:
+        application/json:
+          schema: {type: array, items: {$ref: "#/components/schemas/SidebarCategoryWithChannels"}}
