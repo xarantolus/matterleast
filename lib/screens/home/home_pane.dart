@@ -98,20 +98,10 @@ class _HomePaneState extends ConsumerState<HomePane> {
         slivers: [
           if (state case HomeReady(:final notice?))
             SliverToBoxAdapter(child: PaneLabel(notice)),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              Spacing.md,
-              Spacing.sm,
-              Spacing.md,
-              Spacing.sm,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: _FilterChips(
-                selected: filter,
-                onSelected: ref
-                    .read(homeFilterSelectionProvider.notifier)
-                    .select,
-              ),
+          SliverToBoxAdapter(
+            child: _FilterChips(
+              selected: filter,
+              onSelected: ref.read(homeFilterSelectionProvider.notifier).select,
             ),
           ),
           ...switch (state) {
@@ -179,22 +169,28 @@ class _FilterChips extends StatelessWidget {
   final ValueChanged<InboxFilter> onSelected;
 
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: Spacing.sm,
-    runSpacing: Spacing.xs,
-    children: [
-      for (final filter in InboxFilter.values)
-        ChoiceChip(
-          label: Text(switch (filter) {
-            InboxFilter.unread => 'Unread',
-            InboxFilter.mentions => 'Mentions',
-            InboxFilter.threads => 'Threads',
-            InboxFilter.saved => 'Saved',
-          }),
-          selected: filter == selected,
-          onSelected: (_) => onSelected(filter),
-        ),
-    ],
+  Widget build(BuildContext context) => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.symmetric(
+      horizontal: Spacing.md,
+      vertical: Spacing.sm,
+    ),
+    child: Row(
+      spacing: Spacing.sm,
+      children: [
+        for (final filter in InboxFilter.values)
+          ChoiceChip(
+            label: Text(switch (filter) {
+              InboxFilter.unread => 'Unread',
+              InboxFilter.mentions => 'Mentions',
+              InboxFilter.threads => 'Threads',
+              InboxFilter.saved => 'Saved',
+            }),
+            selected: filter == selected,
+            onSelected: (_) => onSelected(filter),
+          ),
+      ],
+    ),
   );
 }
 
