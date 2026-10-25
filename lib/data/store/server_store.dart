@@ -803,7 +803,10 @@ class ServerStore {
       ]);
       b.deleteWhere(
         db.reactions,
-        (r) => r.postId.isIn(posts.map((p) => p.id!).toList()),
+        (r) => r.postId.isIn([
+          for (final p in posts)
+            if (p.metadata != null) p.id!,
+        ]),
       );
       b.insertAll(db.reactions, [
         for (final p in posts)

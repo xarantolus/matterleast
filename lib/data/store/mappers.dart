@@ -107,9 +107,17 @@ PostsCompanion postCompanion(api.Post p) => PostsCompanion(
   pendingPostId: _opt(p.pendingPostId),
   sendState: const Value(null),
   propsJson: Value(_json(p.props)),
-  metadataJson: Value(_json(p.metadata?.toJson())),
-  fileCount: Value(p.metadata?.files.length ?? p.fileIds.length),
-  reactionCount: Value(p.metadata?.reactions.length ?? 0),
+  // Some lists (followed threads) send posts without metadata; what is
+  // stored stays then.
+  metadataJson: p.metadata == null
+      ? const Value.absent()
+      : Value(_json(p.metadata!.toJson())),
+  fileCount: p.metadata == null
+      ? const Value.absent()
+      : Value(p.metadata!.files.length),
+  reactionCount: p.metadata == null
+      ? const Value.absent()
+      : Value(p.metadata!.reactions.length),
   participantIdsJson: p.participants.isEmpty
       ? const Value.absent()
       : Value(jsonEncode([for (final u in p.participants) ?u.id])),

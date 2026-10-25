@@ -145,6 +145,38 @@ void main() {
       expect(rows.any((p) => p.fileCount > 0), isTrue);
     });
 
+    test('a followed thread without metadata keeps reactions', () async {
+      final page = api.PostList.fromJson(fixtureMap('posts_page'));
+      final channelId = page.posts!.values.first.channelId!;
+      await store.applyChannelPage(
+        channelId: channelId,
+        page: page,
+        kind: PageKind.page,
+      );
+      final reacted = (await (db.select(
+        db.posts,
+      )..where((p) => p.reactionCount.isBiggerThanValue(0))).get()).first;
+      final json = page.posts![reacted.id]!.toJson()..remove('metadata');
+      await store.applyThreads('t1', [
+        api.UserThread.fromJson({
+          'id': reacted.id,
+          'reply_count': 2,
+          'post': json,
+        }),
+      ]);
+      final after = await (db.select(
+        db.posts,
+      )..where((p) => p.id.equals(reacted.id))).getSingle();
+      expect(after.reactionCount, reacted.reactionCount);
+      expect(after.metadataJson, reacted.metadataJson);
+      expect(
+        await (db.select(
+          db.reactions,
+        )..where((r) => r.postId.equals(reacted.id))).get(),
+        hasLength(reacted.reactionCount),
+      );
+    });
+
     test('older history grows the range down and fuses', () async {
       await store.applyChannelPage(
         channelId: 'c1',
