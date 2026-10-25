@@ -31,9 +31,14 @@ sealed class ApiError implements Exception {
       DioExceptionType.cancel => const Cancelled(),
       DioExceptionType.badCertificate => const UntrustedCertificate(),
       _ when e.error is SocketException => const Unreachable(),
-      _ when e.error is FormatException || e.error is TypeError =>
-        UnexpectedFailure.of(e.error!),
-      _ => Unreachable(detail: e.error?.toString()),
+      DioExceptionType.connectionError => Unreachable(
+        detail: e.error?.runtimeType.toString(),
+      ),
+      // Lost connections surface as these rather than socket errors.
+      _ when e.error is HttpException || e.error is TlsException => Unreachable(
+        detail: e.error?.runtimeType.toString(),
+      ),
+      _ => UnexpectedFailure.of(e.error ?? e),
     };
   }
 }

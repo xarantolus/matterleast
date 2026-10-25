@@ -40,7 +40,7 @@ String connectionProblemText(ApiError error, String host) => switch (error) {
 String staleDataNotice(ApiError error) => switch (error) {
   Unreachable() || RequestTimeout() => 'Offline · showing saved data',
   ServerError(:final statusCode) => "Couldn't update: server error $statusCode",
-  UnexpectedFailure() => "Couldn't update: unreadable answer",
+  UnexpectedFailure() => "Couldn't read the server's reply",
   UntrustedCertificate() => "Couldn't update: untrusted certificate",
   Cancelled() => "Couldn't update: stopped",
 };

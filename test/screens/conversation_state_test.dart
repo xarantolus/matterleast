@@ -144,8 +144,7 @@ void main() {
       const RequestTimeout(): 'Offline · showing saved data',
       const ServerError(statusCode: 500): "Couldn't update: server error 500",
       const ServerError(statusCode: 403): "Couldn't update: server error 403",
-      const UnexpectedFailure('TypeError'):
-          "Couldn't update: unreadable answer",
+      const UnexpectedFailure('TypeError'): "Couldn't read the server's reply",
       const UntrustedCertificate(): "Couldn't update: untrusted certificate",
     };
     for (final MapEntry(key: cause, value: text) in table.entries) {

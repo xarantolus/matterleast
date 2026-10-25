@@ -1,13 +1,12 @@
-import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
-import 'package:riverpod/riverpod.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
