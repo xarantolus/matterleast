@@ -78,6 +78,13 @@ jobs:
 
       - run: dart format --output=none --set-exit-if-changed .
 
+      # Entries are keyed by content, so an older cache is safe to reuse.
+      - uses: actions/cache@v6
+        with:
+          path: ~/.dartServer
+          key: dart-analyzer-${{ hashFiles('pubspec.lock') }}-${{ github.sha }}
+          restore-keys: dart-analyzer-${{ hashFiles('pubspec.lock') }}-
+
       - run: flutter analyze
 
       # The analyzer plugins (riverpod_lint) only run through dart analyze.
