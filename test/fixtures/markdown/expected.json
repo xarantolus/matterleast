@@ -1,0 +1,1743 @@
+{
+ "plain": [
+  {
+   "p": [
+    [
+     "t",
+     "Just a sentence.",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "emphasis": [
+  {
+   "p": [
+    [
+     "t",
+     "Some ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "italic",
+     2,
+     null
+    ],
+    [
+     "t",
+     ", ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "also italic",
+     2,
+     null
+    ],
+    [
+     "t",
+     ", ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "bold",
+     1,
+     null
+    ],
+    [
+     "t",
+     ", ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "bold too",
+     1,
+     null
+    ],
+    [
+     "t",
+     " and ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "both",
+     3,
+     null
+    ],
+    [
+     "t",
+     ".",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "strike": [
+  {
+   "p": [
+    [
+     "t",
+     "This is ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "gone",
+     4,
+     null
+    ],
+    [
+     "t",
+     " but ",
+     0,
+     null
+    ],
+    [
+     "channel",
+     "not"
+    ],
+    [
+     "t",
+     " this~ and ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "three",
+     4,
+     null
+    ],
+    [
+     "t",
+     ".",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "strike_vs_channel": [
+  {
+   "p": [
+    [
+     "t",
+     "Ask in ",
+     0,
+     null
+    ],
+    [
+     "channel",
+     "town-square"
+    ],
+    [
+     "t",
+     " or ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "cross it out",
+     4,
+     null
+    ],
+    [
+     "t",
+     " now.",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "inline_code": [
+  {
+   "p": [
+    [
+     "t",
+     "Run ",
+     0,
+     null
+    ],
+    [
+     "code",
+     "flutter test",
+     0,
+     null
+    ],
+    [
+     "t",
+     " and ",
+     0,
+     null
+    ],
+    [
+     "code",
+     "a*b*c",
+     0,
+     null
+    ],
+    [
+     "t",
+     " stays literal.",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "fenced_code": [
+  {
+   "p": [
+    [
+     "t",
+     "Before",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "code": "dart",
+   "text": "void main() {\n  print('hi');\n}"
+  },
+  {
+   "p": [
+    [
+     "t",
+     "After",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "indented_code": [
+  {
+   "p": [
+    [
+     "t",
+     "Text",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "code": "",
+   "text": "indented code\nsecond line"
+  },
+  {
+   "p": [
+    [
+     "t",
+     "more",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "fence_no_lang": [
+  {
+   "code": "",
+   "text": "plain fence"
+  }
+ ],
+ "headings": [
+  {
+   "h": 1,
+   "c": [
+    [
+     "t",
+     "One",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "h": 2,
+   "c": [
+    [
+     "t",
+     "Two",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "h": 3,
+   "c": [
+    [
+     "t",
+     "Three",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "h": 4,
+   "c": [
+    [
+     "t",
+     "Four",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "h": 5,
+   "c": [
+    [
+     "t",
+     "Five",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "h": 6,
+   "c": [
+    [
+     "t",
+     "Six",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "setext": [
+  {
+   "h": 1,
+   "c": [
+    [
+     "t",
+     "Big title",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "h": 2,
+   "c": [
+    [
+     "t",
+     "Smaller",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "quote": [
+  {
+   "quote": [
+    {
+     "p": [
+      [
+       "t",
+       "quoted line with ",
+       0,
+       null
+      ],
+      [
+       "mention",
+       "bob"
+      ],
+      [
+       "t",
+       "\nsecond line",
+       0,
+       null
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "p": [
+    [
+     "t",
+     "after",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "nested_quote": [
+  {
+   "quote": [
+    {
+     "p": [
+      [
+       "t",
+       "outer",
+       0,
+       null
+      ]
+     ]
+    },
+    {
+     "quote": [
+      {
+       "p": [
+        [
+         "t",
+         "inner",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "bullets": [
+  {
+   "list": "ul",
+   "start": 1,
+   "items": [
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "one",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "two",
+         0,
+         null
+        ]
+       ]
+      },
+      {
+       "list": "ul",
+       "start": 1,
+       "items": [
+        {
+         "checked": null,
+         "blocks": [
+          {
+           "p": [
+            [
+             "t",
+             "nested",
+             0,
+             null
+            ]
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "three",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "ordered": [
+  {
+   "list": "ol",
+   "start": 3,
+   "items": [
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "three",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "four",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "five",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "loose_list": [
+  {
+   "list": "ul",
+   "start": 1,
+   "items": [
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "first",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "second paragraph item",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "tasks": [
+  {
+   "list": "ul",
+   "start": 1,
+   "items": [
+    {
+     "checked": false,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "buy rope",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "checked": true,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "check the lamp",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "[X] capital stays text",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "plain item",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "table": [
+  {
+   "table": [
+    [
+     [
+      [
+       "t",
+       "Name",
+       0,
+       null
+      ]
+     ],
+     [
+      [
+       "t",
+       "Count",
+       0,
+       null
+      ]
+     ],
+     [
+      [
+       "t",
+       "Note",
+       0,
+       null
+      ]
+     ]
+    ],
+    [
+     [
+      [
+       "t",
+       "rope",
+       0,
+       null
+      ]
+     ],
+     [
+      [
+       "t",
+       "3",
+       0,
+       null
+      ]
+     ],
+     [
+      [
+       "t",
+       "new",
+       2,
+       null
+      ]
+     ]
+    ],
+    [
+     [
+      [
+       "t",
+       "lamp",
+       0,
+       null
+      ]
+     ],
+     [
+      [
+       "t",
+       "12",
+       0,
+       null
+      ]
+     ],
+     [
+      [
+       "code",
+       "oil",
+       0,
+       null
+      ]
+     ]
+    ]
+   ]
+  }
+ ],
+ "table_mismatch": [
+  {
+   "p": [
+    [
+     "t",
+     "| a | b |\n|---|\n| c | d |",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "hr": [
+  {
+   "p": [
+    [
+     "t",
+     "above",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "hr": true
+  },
+  {
+   "p": [
+    [
+     "t",
+     "below",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "hr": true
+  }
+ ],
+ "link": [
+  {
+   "p": [
+    [
+     "t",
+     "See ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "the docs",
+     0,
+     "https://docs.example.test/guide"
+    ],
+    [
+     "t",
+     " for more.",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "autolink_angle": [
+  {
+   "p": [
+    [
+     "t",
+     "Open ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "https://example.test/path",
+     0,
+     "https://example.test/path"
+    ],
+    [
+     "t",
+     " or mail ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "crew@example.test",
+     0,
+     "mailto:crew@example.test"
+    ],
+    [
+     "t",
+     ".",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "bare_url": [
+  {
+   "p": [
+    [
+     "t",
+     "Visit ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "https://example.test/jobs/4711",
+     0,
+     "https://example.test/jobs/4711"
+    ],
+    [
+     "t",
+     " today.",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "bare_url_punct": [
+  {
+   "p": [
+    [
+     "t",
+     "Is it ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "https://example.test/a",
+     0,
+     "https://example.test/a"
+    ],
+    [
+     "t",
+     "? Yes, ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "https://example.test/b",
+     0,
+     "https://example.test/b"
+    ],
+    [
+     "t",
+     ". And (",
+     0,
+     null
+    ],
+    [
+     "t",
+     "https://example.test/c",
+     0,
+     "https://example.test/c"
+    ],
+    [
+     "t",
+     ").",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "bare_www": [
+  {
+   "p": [
+    [
+     "t",
+     "Try ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "www.example.test",
+     0,
+     "http://www.example.test"
+    ],
+    [
+     "t",
+     " and example.test/path too.",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "bare_url_in_word": [
+  {
+   "p": [
+    [
+     "t",
+     "abchttps://example.test/x",
+     0,
+     "abchttps://example.test/x"
+    ],
+    [
+     "t",
+     " stays text",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "bare_url_parens": [
+  {
+   "p": [
+    [
+     "t",
+     "Wiki ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "https://example.test/wiki/Lamp_(device)",
+     0,
+     "https://example.test/wiki/Lamp_(device)"
+    ],
+    [
+     "t",
+     " here",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "bare_email": [
+  {
+   "p": [
+    [
+     "t",
+     "Write to ",
+     0,
+     null
+    ],
+    [
+     "t",
+     "keeper@example.test",
+     0,
+     "mailto:keeper@example.test"
+    ],
+    [
+     "t",
+     ", please.",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "mention": [
+  {
+   "p": [
+    [
+     "t",
+     "Hey ",
+     0,
+     null
+    ],
+    [
+     "mention",
+     "alice"
+    ],
+    [
+     "t",
+     ", ping ",
+     0,
+     null
+    ],
+    [
+     "mention",
+     "bob."
+    ],
+    [
+     "t",
+     " and ",
+     0,
+     null
+    ],
+    [
+     "mention",
+     "carol_"
+    ],
+    [
+     "t",
+     " too",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "mention_in_word": [
+  {
+   "p": [
+    [
+     "t",
+     "mail me at name@alice no",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "special_mentions": [
+  {
+   "p": [
+    [
+     "mention",
+     "here"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "mention",
+     "channel"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "mention",
+     "all"
+    ],
+    [
+     "t",
+     " listen",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "mention_in_link": [
+  {
+   "p": [
+    [
+     "t",
+     "@alice profile",
+     0,
+     "https://example.test/alice"
+    ]
+   ]
+  }
+ ],
+ "channel": [
+  {
+   "p": [
+    [
+     "t",
+     "Move to ",
+     0,
+     null
+    ],
+    [
+     "channel",
+     "off-topic"
+    ],
+    [
+     "t",
+     ", not ",
+     0,
+     null
+    ],
+    [
+     "channel",
+     "design_"
+    ],
+    [
+     "t",
+     ".",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "emoji": [
+  {
+   "p": [
+    [
+     "t",
+     "Nice ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "tada"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "+1"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "custom_one"
+    ],
+    [
+     "t",
+     " and ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "white_check_mark"
+    ]
+   ]
+  }
+ ],
+ "emoji_adjacent": [
+  {
+   "p": [
+    [
+     "t",
+     "word:tada",
+     0,
+     "word:tada"
+    ],
+    [
+     "t",
+     ": no, but (",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "tada"
+    ],
+    [
+     "t",
+     ") yes and :tada:s no",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "emoticons": [
+  {
+   "p": [
+    [
+     "emoji",
+     "slightly_smiling_face"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "wink"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "smile"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "stuck_out_tongue"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "slightly_frowning_face"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "confused"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "heart"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "broken_heart"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "mask"
+    ]
+   ]
+  }
+ ],
+ "emoticon_mid_word": [
+  {
+   "p": [
+    [
+     "t",
+     "a:)b and ",
+     0,
+     null
+    ],
+    [
+     "emoji",
+     "stuck_out_tongue_closed_eyes"
+    ]
+   ]
+  }
+ ],
+ "hashtags": [
+  {
+   "p": [
+    [
+     "hashtag",
+     "release"
+    ],
+    [
+     "t",
+     " ",
+     0,
+     null
+    ],
+    [
+     "hashtag",
+     "v1-2"
+    ],
+    [
+     "t",
+     " #ab #3d ",
+     0,
+     null
+    ],
+    [
+     "hashtag",
+     "Ünïcode"
+    ],
+    [
+     "t",
+     " and a#notag",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "hashtag_trailing": [
+  {
+   "p": [
+    [
+     "t",
+     "Tagged ",
+     0,
+     null
+    ],
+    [
+     "hashtag",
+     "release-notes"
+    ],
+    [
+     "t",
+     ". Also ",
+     0,
+     null
+    ],
+    [
+     "hashtag",
+     "end"
+    ],
+    [
+     "t",
+     "_",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "latex_inline": [
+  {
+   "p": [
+    [
+     "t",
+     "Inline ",
+     0,
+     null
+    ],
+    [
+     "math",
+     "E = mc^2"
+    ],
+    [
+     "t",
+     " and price $5 and $6 dollars.",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "latex_block": [
+  {
+   "code": "latex",
+   "text": "\\int_0^1 x^2 \\, dx = \\frac{1}{3}"
+  }
+ ],
+ "image": [
+  {
+   "p": [
+    [
+     "img",
+     "https://example.test/lh.png",
+     null,
+     null
+    ]
+   ]
+  }
+ ],
+ "image_sized": [
+  {
+   "p": [
+    [
+     "img",
+     "https://example.test/a.png",
+     50,
+     76
+    ],
+    [
+     "t",
+     " and ",
+     0,
+     null
+    ],
+    [
+     "img",
+     "https://example.test/b.png",
+     40,
+     null
+    ]
+   ]
+  }
+ ],
+ "linked_image": [
+  {
+   "p": [
+    [
+     "img",
+     "https://example.test/badge.svg",
+     null,
+     null
+    ]
+   ]
+  }
+ ],
+ "html_inline": [
+  {
+   "p": [
+    [
+     "t",
+     "Keep <b>tags</b> and <span class=\"x\">spans</span> literal.",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "html_block": [
+  {
+   "p": [
+    [
+     "t",
+     "<div>\nblock html\n</div>",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "escapes": [
+  {
+   "p": [
+    [
+     "t",
+     "Not *emphasis* and @nobody and 1. item",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "entities": [
+  {
+   "p": [
+    [
+     "t",
+     "Fish & chips © 2026 #",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "hard_break": [
+  {
+   "p": [
+    [
+     "t",
+     "line one",
+     0,
+     null
+    ],
+    [
+     "br"
+    ],
+    [
+     "t",
+     "line two",
+     0,
+     null
+    ],
+    [
+     "br"
+    ],
+    [
+     "t",
+     "line three",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "soft_break": [
+  {
+   "p": [
+    [
+     "t",
+     "line one\nline two",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "ci_bot": [
+  {
+   "p": [
+    [
+     "t",
+     "Build #42 failed",
+     1,
+     null
+    ],
+    [
+     "t",
+     " on ",
+     0,
+     null
+    ],
+    [
+     "code",
+     "main",
+     0,
+     null
+    ]
+   ]
+  },
+  {
+   "table": [
+    [
+     [
+      [
+       "t",
+       "Job",
+       0,
+       null
+      ]
+     ],
+     [
+      [
+       "t",
+       "Result",
+       0,
+       null
+      ]
+     ]
+    ],
+    [
+     [
+      [
+       "t",
+       "test",
+       0,
+       null
+      ]
+     ],
+     [
+      [
+       "emoji",
+       "x"
+      ]
+     ]
+    ],
+    [
+     [
+      [
+       "t",
+       "lint",
+       0,
+       null
+      ]
+     ],
+     [
+      [
+       "emoji",
+       "white_check_mark"
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "p": [
+    [
+     "t",
+     "Open run",
+     0,
+     "https://ci.example.test/runs/42"
+    ]
+   ]
+  }
+ ],
+ "mixed_rtl": [
+  {
+   "p": [
+    [
+     "t",
+     "שלום ",
+     0,
+     null
+    ],
+    [
+     "mention",
+     "alice"
+    ],
+    [
+     "t",
+     " — مرحبا ",
+     0,
+     null
+    ],
+    [
+     "hashtag",
+     "عربي"
+    ],
+    [
+     "t",
+     " and done",
+     0,
+     null
+    ]
+   ]
+  }
+ ],
+ "nested_emphasis_link": [
+  {
+   "p": [
+    [
+     "t",
+     "bold ",
+     1,
+     null
+    ],
+    [
+     "t",
+     "link ",
+     1,
+     "https://example.test"
+    ],
+    [
+     "t",
+     "em",
+     3,
+     "https://example.test"
+    ],
+    [
+     "t",
+     " end",
+     1,
+     null
+    ]
+   ]
+  }
+ ],
+ "long_code_line": [
+  {
+   "code": "",
+   "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }
+ ],
+ "list_with_code": [
+  {
+   "list": "ol",
+   "start": 1,
+   "items": [
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "step",
+         0,
+         null
+        ]
+       ]
+      },
+      {
+       "code": "sh",
+       "text": "make"
+      }
+     ]
+    },
+    {
+     "checked": null,
+     "blocks": [
+      {
+       "p": [
+        [
+         "t",
+         "done",
+         0,
+         null
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

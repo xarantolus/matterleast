@@ -1,0 +1,218 @@
+[
+ {
+  "name": "plain",
+  "text": "Just a sentence."
+ },
+ {
+  "name": "emphasis",
+  "text": "Some *italic*, _also italic_, **bold**, __bold too__ and ***both***."
+ },
+ {
+  "name": "strike",
+  "text": "This is ~~gone~~ but ~not this~ and ~~~three~~~."
+ },
+ {
+  "name": "strike_vs_channel",
+  "text": "Ask in ~town-square or ~~cross it out~~ now."
+ },
+ {
+  "name": "inline_code",
+  "text": "Run `flutter test` and `a*b*c` stays literal."
+ },
+ {
+  "name": "fenced_code",
+  "text": "Before\n\n```dart\nvoid main() {\n  print('hi');\n}\n```\n\nAfter"
+ },
+ {
+  "name": "indented_code",
+  "text": "Text\n\n    indented code\n    second line\n\nmore"
+ },
+ {
+  "name": "fence_no_lang",
+  "text": "```\nplain fence\n```"
+ },
+ {
+  "name": "headings",
+  "text": "# One\n## Two\n### Three\n#### Four\n##### Five\n###### Six"
+ },
+ {
+  "name": "setext",
+  "text": "Big title\n===\n\nSmaller\n---"
+ },
+ {
+  "name": "quote",
+  "text": "> quoted line with @bob\n> second line\n\nafter"
+ },
+ {
+  "name": "nested_quote",
+  "text": "> outer\n>> inner"
+ },
+ {
+  "name": "bullets",
+  "text": "- one\n- two\n  - nested\n- three"
+ },
+ {
+  "name": "ordered",
+  "text": "3. three\n4. four\n5. five"
+ },
+ {
+  "name": "loose_list",
+  "text": "- first\n\n- second paragraph item"
+ },
+ {
+  "name": "tasks",
+  "text": "- [ ] buy rope\n- [x] check the lamp\n- [X] capital stays text\n- plain item"
+ },
+ {
+  "name": "table",
+  "text": "| Name | Count | Note |\n|:-----|------:|:----:|\n| rope | 3 | *new* |\n| lamp | 12 | `oil` |"
+ },
+ {
+  "name": "table_mismatch",
+  "text": "| a | b |\n|---|\n| c | d |"
+ },
+ {
+  "name": "hr",
+  "text": "above\n\n---\n\nbelow\n\n***"
+ },
+ {
+  "name": "link",
+  "text": "See [the docs](https://docs.example.test/guide \"Guide\") for more."
+ },
+ {
+  "name": "autolink_angle",
+  "text": "Open <https://example.test/path> or mail <crew@example.test>."
+ },
+ {
+  "name": "bare_url",
+  "text": "Visit https://example.test/jobs/4711 today."
+ },
+ {
+  "name": "bare_url_punct",
+  "text": "Is it https://example.test/a? Yes, https://example.test/b. And (https://example.test/c)."
+ },
+ {
+  "name": "bare_www",
+  "text": "Try www.example.test and example.test/path too."
+ },
+ {
+  "name": "bare_url_in_word",
+  "text": "abchttps://example.test/x stays text"
+ },
+ {
+  "name": "bare_url_parens",
+  "text": "Wiki https://example.test/wiki/Lamp_(device) here"
+ },
+ {
+  "name": "bare_email",
+  "text": "Write to keeper@example.test, please."
+ },
+ {
+  "name": "mention",
+  "text": "Hey @alice, ping @bob. and @carol_ too"
+ },
+ {
+  "name": "mention_in_word",
+  "text": "mail me at name@alice no"
+ },
+ {
+  "name": "special_mentions",
+  "text": "@here @channel @all listen"
+ },
+ {
+  "name": "mention_in_link",
+  "text": "[@alice profile](https://example.test/alice)"
+ },
+ {
+  "name": "channel",
+  "text": "Move to ~off-topic, not ~design_."
+ },
+ {
+  "name": "emoji",
+  "text": "Nice :tada: :+1: :custom_one: and :white_check_mark:"
+ },
+ {
+  "name": "emoji_adjacent",
+  "text": "word:tada: no, but (:tada:) yes and :tada:s no"
+ },
+ {
+  "name": "emoticons",
+  "text": ":) ;) :D :p :( :/ <3 </3 :-x"
+ },
+ {
+  "name": "emoticon_mid_word",
+  "text": "a:)b and x-d"
+ },
+ {
+  "name": "hashtags",
+  "text": "#release #v1-2 #ab #3d #Ünïcode and a#notag"
+ },
+ {
+  "name": "hashtag_trailing",
+  "text": "Tagged #release-notes. Also #end_"
+ },
+ {
+  "name": "latex_inline",
+  "text": "Inline $E = mc^2$ and price $5 and $6 dollars."
+ },
+ {
+  "name": "latex_block",
+  "text": "```latex\n\\int_0^1 x^2 \\, dx = \\frac{1}{3}\n```"
+ },
+ {
+  "name": "image",
+  "text": "![lighthouse](https://example.test/lh.png)"
+ },
+ {
+  "name": "image_sized",
+  "text": "![tiny](https://example.test/a.png =50x76) and ![w](https://example.test/b.png =40)"
+ },
+ {
+  "name": "linked_image",
+  "text": "[![badge](https://example.test/badge.svg)](https://example.test/ci)"
+ },
+ {
+  "name": "html_inline",
+  "text": "Keep <b>tags</b> and <span class=\"x\">spans</span> literal."
+ },
+ {
+  "name": "html_block",
+  "text": "<div>\nblock html\n</div>"
+ },
+ {
+  "name": "escapes",
+  "text": "Not \\*emphasis\\* and \\@nobody and 1\\. item"
+ },
+ {
+  "name": "entities",
+  "text": "Fish &amp; chips &copy; 2026 &#35;"
+ },
+ {
+  "name": "hard_break",
+  "text": "line one  \nline two\\\nline three"
+ },
+ {
+  "name": "soft_break",
+  "text": "line one\nline two"
+ },
+ {
+  "name": "ci_bot",
+  "text": "**Build #42 failed** on `main`\n\n| Job | Result |\n|---|---|\n| test | :x: |\n| lint | :white_check_mark: |\n\n[Open run](https://ci.example.test/runs/42)"
+ },
+ {
+  "name": "mixed_rtl",
+  "text": "שלום @alice — مرحبا #عربي and done"
+ },
+ {
+  "name": "nested_emphasis_link",
+  "text": "**bold [link *em*](https://example.test) end**"
+ },
+ {
+  "name": "long_code_line",
+  "text": "```\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n```"
+ },
+ {
+  "name": "list_with_code",
+  "text": "1. step\n\n   ```sh\n   make\n   ```\n2. done"
+ }
+]
