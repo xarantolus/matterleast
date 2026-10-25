@@ -15,9 +15,8 @@ emulator). See [`.devcontainer/README.md`](.devcontainer/README.md).
 
 ## Release signing
 
-CI builds a signed release APK on every push and fails without the signing
-secrets, so a green run is always a real release build. Debug builds need no
-keystore.
+CI builds a release APK signed with the upload key on every push, so a green
+run is always a real release build. Debug builds need no keystore.
 
 Create the upload keystore once and keep it (and its passwords) outside the
 repo; an app update must be signed with the same key:
