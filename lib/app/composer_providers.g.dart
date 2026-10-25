@@ -8,12 +8,16 @@ part of 'composer_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Kept while the app runs, like the session it wraps.
+/// Kept while the app runs, like the session it wraps, so a draft save
+/// outlives the screen that started it. Waiting drafts are written when the
+/// app is hidden.
 
 @ProviderFor(composerActions)
 final composerActionsProvider = ComposerActionsFamily._();
 
-/// Kept while the app runs, like the session it wraps.
+/// Kept while the app runs, like the session it wraps, so a draft save
+/// outlives the screen that started it. Waiting drafts are written when the
+/// app is hidden.
 
 final class ComposerActionsProvider
     extends
@@ -23,7 +27,9 @@ final class ComposerActionsProvider
           FutureOr<ComposerActions>
         >
     with $FutureModifier<ComposerActions>, $FutureProvider<ComposerActions> {
-  /// Kept while the app runs, like the session it wraps.
+  /// Kept while the app runs, like the session it wraps, so a draft save
+  /// outlives the screen that started it. Waiting drafts are written when the
+  /// app is hidden.
   ComposerActionsProvider._({
     required ComposerActionsFamily super.from,
     required String super.argument,
@@ -68,9 +74,11 @@ final class ComposerActionsProvider
   }
 }
 
-String _$composerActionsHash() => r'b74481a3701d8b111439742bf9a92a73c7a0cf0a';
+String _$composerActionsHash() => r'ce5e21d5eaef594af23a5802a2fb651044228c57';
 
-/// Kept while the app runs, like the session it wraps.
+/// Kept while the app runs, like the session it wraps, so a draft save
+/// outlives the screen that started it. Waiting drafts are written when the
+/// app is hidden.
 
 final class ComposerActionsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ComposerActions>, String> {
@@ -83,7 +91,9 @@ final class ComposerActionsFamily extends $Family
         isAutoDispose: false,
       );
 
-  /// Kept while the app runs, like the session it wraps.
+  /// Kept while the app runs, like the session it wraps, so a draft save
+  /// outlives the screen that started it. Waiting drafts are written when the
+  /// app is hidden.
 
   ComposerActionsProvider call(String url) =>
       ComposerActionsProvider._(argument: url, from: this);
