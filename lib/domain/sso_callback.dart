@@ -30,16 +30,17 @@ sealed class SsoResult with _$SsoResult {
 }
 
 /// Reads the session token out of `<scheme>://callback?MMAUTHTOKEN=…&srv=…`.
-/// The `srv` parameter must name the server the login started for, so a
-/// redirect planted by another site cannot hand us its token.
+/// Servers from 12.0 name themselves in `srv` (their configured site URL), so
+/// a redirect planted by another site cannot hand us its token; older servers
+/// send nothing and are accepted like the official app does. The scheme is
+/// ignored because the site URL may be configured as http behind a proxy.
 SsoResult parseSsoCallback(Uri callback, {required Uri server}) {
   final srv = callback.queryParameters['srv'];
-  if (srv == null || srv.isEmpty) {
-    return const SsoResult.rejected('The server did not say who it is.');
-  }
-  final claimed = Uri.tryParse(srv);
-  if (claimed == null || !_sameServer(claimed, server)) {
-    return const SsoResult.rejected('The redirect came from another server.');
+  if (srv != null && srv.isNotEmpty) {
+    final claimed = Uri.tryParse(srv);
+    if (claimed == null || !_sameServer(claimed, server)) {
+      return const SsoResult.rejected('The redirect came from another server.');
+    }
   }
   final token = callback.queryParameters['MMAUTHTOKEN'];
   if (token == null || token.isEmpty) {
@@ -49,10 +50,11 @@ SsoResult parseSsoCallback(Uri callback, {required Uri server}) {
 }
 
 bool _sameServer(Uri a, Uri b) =>
-    a.scheme.toLowerCase() == b.scheme.toLowerCase() &&
     a.host.toLowerCase() == b.host.toLowerCase() &&
-    a.port == b.port &&
+    _port(a) == _port(b) &&
     _trimSlash(a.path) == _trimSlash(b.path);
+
+int _port(Uri u) => u.hasPort ? u.port : 443;
 
 String _trimSlash(String path) =>
     path.endsWith('/') ? path.substring(0, path.length - 1) : path;

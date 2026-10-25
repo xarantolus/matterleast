@@ -172,7 +172,33 @@ void main() {
       expect(result, const SsoResult.token('abc'));
     });
 
-    test('rejects another server, a missing srv and a missing token', () {
+    test('accepts a missing srv (older servers) and an http site URL', () {
+      expect(
+        parseSsoCallback(
+          Uri.parse('mmauth://callback?MMAUTHTOKEN=abc'),
+          server: server,
+        ),
+        const SsoResult.token('abc'),
+      );
+      expect(
+        parseSsoCallback(
+          Uri.parse('mmauth://callback?MMAUTHTOKEN=abc&srv='),
+          server: server,
+        ),
+        const SsoResult.token('abc'),
+      );
+      expect(
+        parseSsoCallback(
+          Uri.parse(
+            'mmauth://callback?MMAUTHTOKEN=abc&srv=http%3A%2F%2Fchat.example.test%2F',
+          ),
+          server: Uri.parse('https://chat.example.test'),
+        ),
+        const SsoResult.token('abc'),
+      );
+    });
+
+    test('rejects another server and a missing token', () {
       expect(
         parseSsoCallback(
           Uri.parse('mmauth://callback?MMAUTHTOKEN=abc&srv=https://evil.test'),
@@ -182,7 +208,9 @@ void main() {
       );
       expect(
         parseSsoCallback(
-          Uri.parse('mmauth://callback?MMAUTHTOKEN=abc'),
+          Uri.parse(
+            'mmauth://callback?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8066',
+          ),
           server: server,
         ),
         isA<SsoRejected>(),
