@@ -15,6 +15,7 @@ class FakeSocketServer {
 
   /// Answer `ping` actions with a pong, as the server does.
   var answerPings = true;
+  var _closing = false;
 
   static Future<FakeSocketServer> start() async {
     final fake = FakeSocketServer._(
@@ -49,7 +50,7 @@ class FakeSocketServer {
     socket.listen((message) {
       final json = jsonDecode(message as String) as Map<String, Object?>;
       _actions.add(json);
-      if (json['action'] == 'ping' && answerPings && socket.closeCode == null) {
+      if (json['action'] == 'ping' && answerPings && !_closing) {
         socket.add(
           jsonEncode({
             'status': 'OK',
@@ -73,6 +74,7 @@ class FakeSocketServer {
   }) => send({'event': name, 'data': data, 'broadcast': broadcast, 'seq': seq});
 
   Future<void> close() async {
+    _closing = true;
     for (final c in connections) {
       await c.socket.close();
     }
