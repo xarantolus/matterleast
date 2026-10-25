@@ -1,0 +1,182 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'emoji_providers.dart';
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// A server's known custom emoji, name → id.
+
+@ProviderFor(customEmoji)
+final customEmojiProvider = CustomEmojiFamily._();
+
+/// A server's known custom emoji, name → id.
+
+final class CustomEmojiProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, String>>,
+          Map<String, String>,
+          Stream<Map<String, String>>
+        >
+    with
+        $FutureModifier<Map<String, String>>,
+        $StreamProvider<Map<String, String>> {
+  /// A server's known custom emoji, name → id.
+  CustomEmojiProvider._({
+    required CustomEmojiFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'customEmojiProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customEmojiHash();
+
+  @override
+  String toString() {
+    return r'customEmojiProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<String, String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<String, String>> create(Ref ref) {
+    final argument = this.argument as String;
+    return customEmoji(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomEmojiProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customEmojiHash() => r'673bce04c2625f20e8842786c8e0314e96bc1ceb';
+
+/// A server's known custom emoji, name → id.
+
+final class CustomEmojiFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Map<String, String>>, String> {
+  CustomEmojiFamily._()
+    : super(
+        retry: null,
+        name: r'customEmojiProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A server's known custom emoji, name → id.
+
+  CustomEmojiProvider call(String url) =>
+      CustomEmojiProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'customEmojiProvider';
+}
+
+/// Where to report custom emoji names the map above doesn't have yet.
+
+@ProviderFor(customEmojiResolver)
+final customEmojiResolverProvider = CustomEmojiResolverFamily._();
+
+/// Where to report custom emoji names the map above doesn't have yet.
+
+final class CustomEmojiResolverProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<CustomEmojiResolver>,
+          CustomEmojiResolver,
+          FutureOr<CustomEmojiResolver>
+        >
+    with
+        $FutureModifier<CustomEmojiResolver>,
+        $FutureProvider<CustomEmojiResolver> {
+  /// Where to report custom emoji names the map above doesn't have yet.
+  CustomEmojiResolverProvider._({
+    required CustomEmojiResolverFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'customEmojiResolverProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customEmojiResolverHash();
+
+  @override
+  String toString() {
+    return r'customEmojiResolverProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<CustomEmojiResolver> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<CustomEmojiResolver> create(Ref ref) {
+    final argument = this.argument as String;
+    return customEmojiResolver(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomEmojiResolverProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customEmojiResolverHash() =>
+    r'28d575676f8f24ca4e3c78547096069fe6e400b4';
+
+/// Where to report custom emoji names the map above doesn't have yet.
+
+final class CustomEmojiResolverFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<CustomEmojiResolver>, String> {
+  CustomEmojiResolverFamily._()
+    : super(
+        retry: null,
+        name: r'customEmojiResolverProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Where to report custom emoji names the map above doesn't have yet.
+
+  CustomEmojiResolverProvider call(String url) =>
+      CustomEmojiResolverProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'customEmojiResolverProvider';
+}

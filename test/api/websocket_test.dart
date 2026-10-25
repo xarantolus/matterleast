@@ -290,6 +290,38 @@ void main() {
       );
     }
 
+    test('a new custom emoji is stored as it is announced', () async {
+      final applied = StreamController<void>.broadcast();
+      socket = ServerSocket(
+        serverUrl: server.url,
+        token: () => 't',
+        onEvent: (e) => applier.add(e).then((_) => applied.add(null)),
+        onResync: () {},
+      );
+      final connected = server.nextConnection();
+      socket.start();
+      await connected;
+
+      var next = applied.stream.first;
+      server.event('hello', 0, {'connection_id': 'x'});
+      await next;
+      next = applied.stream.first;
+      server.event('emoji_added', 1, {
+        'emoji': jsonEncode({
+          'id': 'e1',
+          'creator_id': 'bob',
+          'name': 'partyblob',
+          'create_at': 5000,
+          'update_at': 5000,
+          'delete_at': 0,
+        }),
+      });
+      await next;
+      final row = await db.select(db.customEmoji).getSingle();
+      expect((row.id, row.name), ('e1', 'partyblob'));
+      await applied.close();
+    });
+
     test('a post from someone else counts, viewing elsewhere clears', () async {
       final applied = StreamController<void>.broadcast();
       socket = ServerSocket(

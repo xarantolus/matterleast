@@ -4,10 +4,13 @@ import 'dart:io';
 
 /// A request the fake server received, with its body read and decoded.
 class SeenRequest {
-  SeenRequest(this.raw, this.body);
+  SeenRequest(this.raw, this.body, [this.json]);
 
   final HttpRequest raw;
   final Map<String, Object?> body;
+
+  /// The decoded body whatever its shape, such as a list of names.
+  final Object? json;
 
   String get method => raw.method;
   String get path => raw.uri.path;
@@ -55,6 +58,7 @@ class FakeServer {
     final request = SeenRequest(
       raw,
       decoded is Map<String, Object?> ? decoded : const {},
+      decoded,
     );
     seen.add(request);
     final reply = await handle(request);

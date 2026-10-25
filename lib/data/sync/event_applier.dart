@@ -58,6 +58,8 @@ class EventApplier {
         await store.applyDelete(post.id!, at: post.deleteAt ?? _clock());
       case ReactionEvent(:final reaction?, :final added):
         await store.applyReaction(reaction, added: added);
+      case EmojiAddedEvent(:final emoji?):
+        await store.applyCustomEmoji([emoji]);
       case ChannelViewedEvent(:final channelId?) when channelId.isNotEmpty:
         await store.markViewed(channelId, at: _clock());
       case ChannelViewedEvent(:final channelTimes):

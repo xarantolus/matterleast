@@ -69,6 +69,12 @@ class EncodedReaction extends _Decoding<api.Reaction?> {
       _object(json).let(api.Reaction.fromJson);
 }
 
+class EncodedEmoji extends _Decoding<api.Emoji?> {
+  const EncodedEmoji();
+  @override
+  api.Emoji? fromJson(Object? json) => _object(json).let(api.Emoji.fromJson);
+}
+
 class EncodedThread extends _Decoding<api.UserThread?> {
   const EncodedThread();
   @override

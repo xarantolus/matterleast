@@ -46,6 +46,9 @@ PostDeletedEvent _$PostDeletedEventFromJson(Map<String, dynamic> json) =>
 ReactionEvent _$ReactionEventFromJson(Map<String, dynamic> json) =>
     ReactionEvent(reaction: const EncodedReaction().fromJson(json['reaction']));
 
+EmojiAddedEvent _$EmojiAddedEventFromJson(Map<String, dynamic> json) =>
+    EmojiAddedEvent(emoji: const EncodedEmoji().fromJson(json['emoji']));
+
 ChannelViewedEvent _$ChannelViewedEventFromJson(Map<String, dynamic> json) =>
     ChannelViewedEvent(
       channelId: const LenientString().fromJson(json['channel_id']),

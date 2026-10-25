@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:matterleast/api/server_api.dart';
+import 'package:matterleast/data/emoji/custom_emoji.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -40,6 +41,7 @@ class ServerSession {
   final String dbPath;
   final ServerImageCaches images;
   late final ServerConnection connection;
+  late final emoji = CustomEmojiResolver(server: api, store: store);
 
   /// Opens the session without waiting for the Keystore, so stored data
   /// paints first; requests wait for the token instead.
@@ -71,6 +73,7 @@ class ServerSession {
 
   Future<void> close() async {
     await connection.close();
+    emoji.close();
     await images.close();
     runner.close();
     api.close();

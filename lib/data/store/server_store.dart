@@ -159,12 +159,27 @@ class ServerStore {
         ]);
       });
 
-  Future<void> applyCustomEmoji(Iterable<api.Emoji> emoji) => db.batch((b) {
-    b.insertAllOnConflictUpdate(db.customEmoji, [
+  Future<void> applyCustomEmoji(Iterable<api.Emoji> emoji) =>
+      db.batch((b) => _upsertEmoji(b, emoji));
+
+  void _upsertEmoji(Batch b, Iterable<api.Emoji> emoji) {
+    final usable = [
       for (final e in emoji)
-        if (e.id != null && e.name != null) emojiCompanion(e),
+        if (e.id != null && e.name != null && e.deleteAt == null) e,
+    ];
+    if (usable.isEmpty) return;
+    // A name freed by a deleted emoji can come back under a new id; the
+    // old row would otherwise clash with the unique name.
+    b.deleteWhere(
+      db.customEmoji,
+      (row) =>
+          row.name.isIn([for (final e in usable) e.name!]) &
+          row.id.isNotIn([for (final e in usable) e.id!]),
+    );
+    b.insertAllOnConflictUpdate(db.customEmoji, [
+      for (final e in usable) emojiCompanion(e),
     ]);
-  });
+  }
 
   /// The first part of an entry sync: config, licence, preferences, the
   /// user and their teams. Teams the user is no longer in go, with
@@ -801,6 +816,7 @@ class ServerStore {
           for (final f in p.metadata!.files)
             if (f.id != null) fileCompanion(f, p.id!),
       ]);
+      _upsertEmoji(b, [for (final p in posts) ...?p.metadata?.emojis]);
       b.deleteWhere(
         db.reactions,
         (r) => r.postId.isIn([

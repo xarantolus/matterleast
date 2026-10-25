@@ -119,6 +119,17 @@ final class ReactionEvent extends ServerEvent {
   final bool added;
 }
 
+/// `emoji_added`: someone created a custom emoji.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class EmojiAddedEvent extends ServerEvent {
+  const EmojiAddedEvent({this.emoji});
+  factory EmojiAddedEvent.fromJson(Map<String, Object?> json) =>
+      _$EmojiAddedEventFromJson(json);
+
+  @EncodedEmoji()
+  final api.Emoji? emoji;
+}
+
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
 final class ChannelViewedEvent extends ServerEvent {
   const ChannelViewedEvent({this.channelId, this.channelTimes = const {}});
@@ -370,6 +381,7 @@ ServerEvent decodeEvent(SocketFrame frame) {
       reaction: ReactionEvent.fromJson(json).reaction,
       added: false,
     ),
+    'emoji_added' => EmojiAddedEvent.fromJson(json),
     'channel_viewed' ||
     'multiple_channels_viewed' => ChannelViewedEvent.fromJson(json),
     'channel_updated' => ChannelUpdatedEvent.fromJson(json),
