@@ -127,7 +127,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       keepScrollOffset: false,
       initialScrollOffset: known ? -initial.offset : 0,
     );
-    _scheduleReport();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _settle());
   }
 
   @override
@@ -273,6 +273,24 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       _pendingCentre = null;
     });
     _setPixels(-offset);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _settle());
+  }
+
+  /// After a jump: back into range if the anchor was placed past the
+  /// content (the end of that correction re-anchors), else re-anchor now
+  /// so the reader counts as at the bottom when they are.
+  void _settle() {
+    if (!mounted || !_scroll.hasClients) return;
+    final p = _scroll.position;
+    if (!p.hasContentDimensions) return;
+    final inRange = p.pixels.clamp(p.minScrollExtent, p.maxScrollExtent);
+    if (inRange != p.pixels) {
+      p.jumpTo(inRange);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _settle());
+      return;
+    }
+    _reanchor();
+    _scheduleReport();
   }
 
   void _jumpToFraction(Object key, double fraction) {

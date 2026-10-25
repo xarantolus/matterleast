@@ -7,6 +7,7 @@ import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/thread/thread_screen.dart';
 
 /// Opens what a preview row points at: its server and team in the rail,
 /// then the conversation at the message, or the thread.
@@ -25,14 +26,22 @@ Future<void> openInboxItem(
     );
     unawaited(actions.open(item.channelId, teamId: item.teamId));
   }
+  final rootId = item.rootId;
   await navigator.push(
     MaterialPageRoute<void>(
-      builder: (_) => ChannelScreen(
-        title: item.place ?? item.title,
-        channelId: item.channelId,
-        highlightPostId: item.kind == InboxKind.thread ? null : item.postId,
-        rootId: item.kind == InboxKind.thread ? item.rootId : null,
-      ),
+      builder: (_) => item.kind == InboxKind.thread && rootId != null
+          ? ThreadScreen(
+              url: item.serverUrl,
+              channelId: item.channelId,
+              rootId: rootId,
+              channelName: item.place ?? item.title,
+            )
+          : ChannelScreen(
+              url: item.serverUrl,
+              channelId: item.channelId,
+              title: item.place ?? item.title,
+              highlightPostId: item.postId,
+            ),
     ),
   );
 }

@@ -111,7 +111,11 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     unawaited(actions.open(item.id, teamId: widget.teamId));
     await navigator.push(
       MaterialPageRoute<void>(
-        builder: (_) => ChannelScreen(title: item.title, channelId: item.id),
+        builder: (_) => ChannelScreen(
+          url: widget.url,
+          channelId: item.id,
+          title: item.title,
+        ),
       ),
     );
   }

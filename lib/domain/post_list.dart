@@ -1,0 +1,173 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'post_list.freezed.dart';
+
+/// One message as a conversation shows it.
+@freezed
+abstract class PostItem with _$PostItem {
+  const factory PostItem({
+    required String id,
+
+    /// Our own unsent post keeps this key when the server id arrives.
+    required String key,
+    required String userId,
+    required String authorName,
+    required DateTime createAt,
+    required String message,
+    @Default('') String type,
+    @Default('') String rootId,
+    DateTime? editAt,
+    @Default(false) bool deleted,
+
+    /// `pending` or `failed` while our own post is unsent.
+    String? sendState,
+    @Default(0) int replyCount,
+
+    /// Names of the people who replied, newest first, when known.
+    @Default(<String>[]) List<String> participants,
+  }) = _PostItem;
+
+  const PostItem._();
+
+  bool get isSystem => type.startsWith('system_');
+  bool get edited => editAt != null && !deleted;
+  bool get isReply => rootId.isNotEmpty;
+}
+
+/// The stored part of a channel or thread that a conversation shows: the
+/// newest [PostItem]s of the loaded range it is anchored in.
+@freezed
+abstract class ConversationWindow with _$ConversationWindow {
+  const factory ConversationWindow({
+    /// Newest first; replies only, for a thread.
+    required List<PostItem> posts,
+
+    /// Some history is stored, possibly none (an empty channel).
+    required bool loaded,
+
+    /// The oldest message of the conversation is in [posts].
+    @Default(false) bool reachesStart,
+
+    /// Older stored messages exist beyond [posts].
+    @Default(false) bool moreStored,
+
+    /// Newer messages are stored apart from these, after a gap.
+    @Default(false) bool newerApart,
+
+    /// The thread's first message.
+    PostItem? root,
+    @Default('') String channelName,
+    @Default('') String teamId,
+    int? memberCount,
+  }) = _ConversationWindow;
+}
+
+/// A row of a conversation list. [key] stays the same for the same row
+/// across updates, so the list keeps its place and state.
+@freezed
+sealed class ListRow with _$ListRow {
+  const factory ListRow.post(
+    PostItem post, {
+
+    /// Same author shortly after their previous message: no avatar or name.
+    @Default(false) bool compact,
+  }) = MessageRow;
+
+  const factory ListRow.day(DateTime day) = DaySeparator;
+
+  /// Before the first message that arrived since the reader was last here.
+  const factory ListRow.newMessages({required int count}) = NewMessagesLine;
+
+  const ListRow._();
+
+  Object get key => switch (this) {
+    MessageRow(:final post) => post.key,
+    DaySeparator(:final day) =>
+      'day:${day.year}-${_two(day.month)}-${_two(day.day)}',
+    NewMessagesLine() => newMessagesKey,
+  };
+}
+
+const newMessagesKey = 'new-line';
+
+String _two(int n) => n.toString().padLeft(2, '0');
+
+const _groupWindow = Duration(minutes: 5);
+
+/// The rows for [posts] (newest first), newest first: date separators,
+/// grouping of consecutive messages, and the new-messages line before the
+/// first message from someone else after [lastViewedAt].
+List<ListRow> buildRows(
+  List<PostItem> posts, {
+  required DateTime? lastViewedAt,
+  required String? myUserId,
+}) {
+  final rows = <ListRow>[];
+  PostItem? previous;
+  DateTime? previousDay;
+  var lineAt = -1;
+  for (final post in posts.reversed) {
+    final local = post.createAt.toLocal();
+    final day = DateTime(local.year, local.month, local.day);
+    var startsGroup = previous == null;
+    if (day != previousDay) {
+      rows.add(ListRow.day(day));
+      previousDay = day;
+      startsGroup = true;
+    }
+    if (lineAt < 0 &&
+        lastViewedAt != null &&
+        post.createAt.isAfter(lastViewedAt) &&
+        post.userId != myUserId &&
+        !post.deleted) {
+      lineAt = rows.length;
+      rows.add(const ListRow.newMessages(count: 0));
+      startsGroup = true;
+    }
+    final compact =
+        !startsGroup &&
+        previous != null &&
+        previous.userId == post.userId &&
+        !previous.isSystem &&
+        !post.isSystem &&
+        post.createAt.difference(previous.createAt) < _groupWindow;
+    rows.add(ListRow.post(post, compact: compact));
+    previous = post;
+  }
+  if (lineAt >= 0) {
+    rows[lineAt] = ListRow.newMessages(
+      count: rows.skip(lineAt).whereType<MessageRow>().length,
+    );
+  }
+  return rows.reversed.toList();
+}
+
+const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const _months = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+/// "Today", "Yesterday", "Mon 20 Oct", or with the year when it isn't this
+/// one. [day] and [now] are local times.
+String dayLabel(DateTime day, DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+  final date = DateTime(day.year, day.month, day.day);
+  if (date == today) return 'Today';
+  if (date == DateTime(today.year, today.month, today.day - 1)) {
+    return 'Yesterday';
+  }
+  final label =
+      '${_weekdays[date.weekday - 1]} ${date.day} ${_months[date.month - 1]}';
+  return date.year == today.year ? label : '$label ${date.year}';
+}

@@ -21,13 +21,12 @@ class ChannelActions {
   ServerDatabase get _db => session.db;
   api.MattermostClient get _client => session.api.client;
 
-  /// The user opened a channel: it is read, and remembered as the team's
-  /// last one.
+  /// The user opened a channel: it is remembered as the team's last one.
+  /// The channel screen marks it read once it has noted what was unread.
   Future<void> open(String channelId, {String? teamId}) async {
     if (teamId != null && teamId.isNotEmpty) {
       await session.store.setLastChannel(teamId, channelId);
     }
-    await view(channelId);
   }
 
   /// Marks the channel read here at once and tells the server, which also
