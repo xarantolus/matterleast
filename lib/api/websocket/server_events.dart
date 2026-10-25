@@ -1,6 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/json/lenient.dart';
+import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/api/websocket/encoded.dart';
 
 part 'server_events.g.dart';
@@ -354,6 +355,42 @@ final class ThreadFollowEvent extends ServerEvent {
   final int? replyCount;
 }
 
+/// A message only this user sees, such as a command's reply.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class EphemeralMessageEvent extends ServerEvent {
+  const EphemeralMessageEvent({this.post});
+  factory EphemeralMessageEvent.fromJson(Map<String, Object?> json) =>
+      _$EphemeralMessageEventFromJson(json);
+
+  @EncodedPost()
+  final api.Post? post;
+}
+
+/// An integration asks this user to fill in a dialog.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class OpenDialogEvent extends ServerEvent {
+  const OpenDialogEvent({this.dialog});
+  factory OpenDialogEvent.fromJson(Map<String, Object?> json) =>
+      _$OpenDialogEventFromJson(json);
+
+  @EncodedDialog()
+  final OpenDialog? dialog;
+}
+
+/// Someone is writing in a channel, or in a thread when [parentId] is set.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class TypingEvent extends ServerEvent {
+  const TypingEvent({this.userId, this.parentId, this.broadcast});
+  factory TypingEvent.fromJson(Map<String, Object?> json) =>
+      _$TypingEventFromJson(json);
+
+  @LenientString()
+  final String? userId;
+  @LenientString()
+  final String? parentId;
+  final Broadcast? broadcast;
+}
+
 /// `config_changed` and `license_changed`; the snapshot replaces the stored
 /// one under [key].
 final class ConfigEvent extends ServerEvent {
@@ -382,6 +419,9 @@ ServerEvent decodeEvent(SocketFrame frame) {
       added: false,
     ),
     'emoji_added' => EmojiAddedEvent.fromJson(json),
+    'ephemeral_message' => EphemeralMessageEvent.fromJson(json),
+    'open_dialog' => OpenDialogEvent.fromJson(json),
+    'typing' => TypingEvent.fromJson(json),
     'channel_viewed' ||
     'multiple_channels_viewed' => ChannelViewedEvent.fromJson(json),
     'channel_updated' => ChannelUpdatedEvent.fromJson(json),

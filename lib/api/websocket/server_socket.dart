@@ -125,6 +125,14 @@ class ServerSocket {
     });
   }
 
+  /// Tells the channel (or the thread [parentId]) that the user is writing.
+  /// Returns false when not connected.
+  bool sendTyping(String channelId, String parentId) {
+    if (_state.value != SocketState.connected) return false;
+    _send('user_typing', {'channel_id': channelId, 'parent_id': parentId});
+    return true;
+  }
+
   void _send(String action, [Map<String, Object?>? data]) {
     _channel?.sink.add(
       jsonEncode({'action': action, 'seq': _actionSeq++, 'data': ?data}),

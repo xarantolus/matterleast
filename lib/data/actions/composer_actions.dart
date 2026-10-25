@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/data/actions/drafts.dart';
 import 'package:matterleast/data/actions/suggestions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
@@ -9,7 +10,9 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/commands.dart';
+import 'package:matterleast/domain/dialog_rules.dart';
 import 'package:matterleast/domain/outbox.dart';
+import 'package:matterleast/domain/typing.dart';
 
 /// What the user writes: sending posts through the outbox, drafts,
 /// suggestions, slash commands and changes to existing posts. Writes go
@@ -154,7 +157,7 @@ class ComposerActions {
       ),
     );
     if (response.triggerId case final trigger? when trigger.isNotEmpty) {
-      session.dialogTriggerId = trigger;
+      session.connection.dialogs.expect(trigger);
     }
     final reply = response.text ?? '';
     if (response.responseType == 'ephemeral' &&
@@ -189,6 +192,93 @@ class ComposerActions {
   /// Hides an ephemeral message.
   Future<void> dismissEphemeral(String postId) =>
       _store.dismissEphemeral(postId);
+
+  final _typingSent = <(String, String), DateTime>{};
+
+  /// The user changed the text: the channel (or thread) hears they are
+  /// writing, at most once per the server's interval. Sent over the socket,
+  /// as the official app does.
+  Future<void> userTyping(String channelId, {String rootId = ''}) async {
+    final config = await _db.configJson('client_config');
+    final channel = await (_db.select(
+      _db.channels,
+    )..where((c) => c.id.equals(channelId))).getSingleOrNull();
+    final key = (channelId, rootId);
+    final now = _clock();
+    final interval = int.tryParse(
+      '${config['TimeBetweenUserTypingUpdatesMilliseconds'] ?? ''}',
+    );
+    final send = shouldSendTyping(
+      now: now,
+      lastSent: _typingSent[key],
+      interval: Duration(milliseconds: interval ?? 5000),
+      enabled: config['EnableUserTypingMessages'] != 'false',
+      memberCount: channel?.memberCount,
+      maxNotificationsPerChannel: int.tryParse(
+        '${config['MaxNotificationsPerChannel'] ?? ''}',
+      ),
+    );
+    if (send && session.connection.socket.sendTyping(channelId, rootId)) {
+      _typingSent[key] = now;
+    }
+  }
+
+  /// Sends a dialog's answers, or tells the integration it was cancelled
+  /// when it asked to know. Fields are checked here first; the
+  /// integration's own complaints come back the same way.
+  Future<DialogOutcome> submitDialog(
+    OpenDialog dialog, {
+    required String channelId,
+    String teamId = '',
+    Map<String, Object?> values = const {},
+    bool cancelled = false,
+  }) async {
+    if (cancelled && !(dialog.dialog.notifyOnCancel ?? false)) {
+      return const DialogSubmitted();
+    }
+    if (!cancelled) {
+      final errors = dialogErrors(dialog.dialog, values);
+      if (errors.isNotEmpty) return DialogRejected(fieldErrors: errors);
+    }
+    final answer = await session.api.call(
+      () => session.api.client.integrationActions.submitInteractiveDialog(
+        body: api.ApiV4ActionsDialogsSubmitRequestBody(
+          url: dialog.url ?? '',
+          channelId: channelId,
+          teamId: teamId.isEmpty ? null : teamId,
+          callbackId: dialog.dialog.callbackId,
+          state: dialog.dialog.state,
+          cancelled: cancelled,
+          submission: cancelled
+              ? const {}
+              : dialogSubmission(dialog.dialog, values),
+        ),
+      ),
+    );
+    final fieldErrors = answer.errors ?? const <String, String>{};
+    final error = answer.error ?? '';
+    if (fieldErrors.isEmpty && error.isEmpty) return const DialogSubmitted();
+    return DialogRejected(
+      error: error.isEmpty ? null : error,
+      fieldErrors: fieldErrors,
+    );
+  }
+}
+
+sealed class DialogOutcome {
+  const DialogOutcome();
+}
+
+final class DialogSubmitted extends DialogOutcome {
+  const DialogSubmitted();
+}
+
+/// The dialog stays open showing [error] and the [fieldErrors] by element
+/// name.
+final class DialogRejected extends DialogOutcome {
+  const DialogRejected({this.error, this.fieldErrors = const {}});
+  final String? error;
+  final Map<String, String> fieldErrors;
 }
 
 /// What the screen does after a slash command ran.

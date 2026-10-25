@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -131,8 +132,12 @@ void main() {
 
   test('a dialog trigger is remembered for the dialog that follows', () async {
     reply = ok({'trigger_id': 'trig1'});
+    final shown = session.connection.dialogs.dialogs.first;
     await actions.executeCommand(channelId, teamId: teamId, text: '/form');
-    expect(session.dialogTriggerId, 'trig1');
+    session.connection.dialogs
+      ..offer(const OpenDialog(triggerId: 'other'))
+      ..offer(const OpenDialog(triggerId: 'trig1', url: 'u'));
+    expect((await shown).url, 'u');
   });
 
   test('a failing command throws the server message', () async {

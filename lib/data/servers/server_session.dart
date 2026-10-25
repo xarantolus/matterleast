@@ -56,10 +56,6 @@ class ServerSession {
   );
   late final OutboxSender outbox;
 
-  /// The trigger of this device's last slash command or message action; a
-  /// dialog the server opens is shown only when it answers that trigger.
-  String? dialogTriggerId;
-
   /// A socket that connects again means the server is reachable again.
   void _onSocketState() {
     if (connection.state.value == SocketState.connected) {

@@ -153,3 +153,18 @@ ThreadFollowEvent _$ThreadFollowEventFromJson(Map<String, dynamic> json) =>
       state: const LenientBool().fromJson(json['state']),
       replyCount: const LenientInt().fromJson(json['reply_count']),
     );
+
+EphemeralMessageEvent _$EphemeralMessageEventFromJson(
+  Map<String, dynamic> json,
+) => EphemeralMessageEvent(post: const EncodedPost().fromJson(json['post']));
+
+OpenDialogEvent _$OpenDialogEventFromJson(Map<String, dynamic> json) =>
+    OpenDialogEvent(dialog: const EncodedDialog().fromJson(json['dialog']));
+
+TypingEvent _$TypingEventFromJson(Map<String, dynamic> json) => TypingEvent(
+  userId: const LenientString().fromJson(json['user_id']),
+  parentId: const LenientString().fromJson(json['parent_id']),
+  broadcast: json['broadcast'] == null
+      ? null
+      : Broadcast.fromJson(json['broadcast'] as Map<String, dynamic>),
+);

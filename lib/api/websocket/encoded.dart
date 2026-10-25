@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/websocket/dialog.dart';
 
 /// Many WebSocket payload fields are JSON strings that hold JSON. These
 /// converters decode them a second time; anything malformed becomes null
@@ -122,6 +123,12 @@ class TimesById extends _Decoding<Map<String, DateTime>> {
         if (value is int && value > 0)
           key: DateTime.fromMillisecondsSinceEpoch(value, isUtc: true),
   };
+}
+
+class EncodedDialog extends _Decoding<OpenDialog?> {
+  const EncodedDialog();
+  @override
+  OpenDialog? fromJson(Object? json) => _object(json).let(OpenDialog.fromJson);
 }
 
 class UserObject extends _Decoding<api.User?> {

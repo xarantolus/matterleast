@@ -97,6 +97,7 @@ Future<ServerSession> testSession(
 /// Closes what [testSession] opened, leaving the image caches untouched.
 Future<void> closeTestSession(ServerSession session) async {
   await session.outbox.close();
+  await session.connection.close();
   session.runner.close();
   session.api.close();
   await session.db.close();

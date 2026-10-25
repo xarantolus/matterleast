@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
+import 'package:matterleast/data/live/dialogs.dart';
+import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
 import 'package:matterleast/data/sync/event_applier.dart';
@@ -30,6 +32,8 @@ class ServerConnection {
       runner: runner,
       entry: entry,
       inbox: inbox,
+      typing: typing,
+      dialogs: dialogs,
     );
     presence = PresencePoller(server: server, store: store, runner: runner);
     socket = ServerSocket(
@@ -51,6 +55,8 @@ class ServerConnection {
   late final EntrySync entry;
   late final InboxSync inbox;
   late final EventApplier events;
+  final typing = TypingTracker();
+  final dialogs = DialogInbox();
   late final PresencePoller presence;
   late final ServerSocket socket;
 
@@ -101,5 +107,7 @@ class ServerConnection {
     _stopTimer?.cancel();
     await _stop();
     await socket.dispose();
+    typing.close();
+    dialogs.close();
   }
 }

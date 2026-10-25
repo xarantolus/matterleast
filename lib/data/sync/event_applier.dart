@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
+import 'package:matterleast/data/live/dialogs.dart';
+import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
@@ -20,14 +22,20 @@ class EventApplier {
     required this.runner,
     required this.entry,
     required this.inbox,
+    TypingTracker? typing,
+    DialogInbox? dialogs,
     DateTime Function()? clock,
-  }) : _clock = clock ?? (() => DateTime.now().toUtc());
+  }) : typing = typing ?? TypingTracker(),
+       dialogs = dialogs ?? DialogInbox(),
+       _clock = clock ?? (() => DateTime.now().toUtc());
 
   final ServerApi server;
   final ServerStore store;
   final SyncRunner runner;
   final EntrySync entry;
   final InboxSync inbox;
+  final TypingTracker typing;
+  final DialogInbox dialogs;
   final DateTime Function() _clock;
 
   ServerDatabase get _db => store.db;
@@ -47,11 +55,24 @@ class EventApplier {
           await _refreshChannel(post.channelId!);
           return;
         }
+        if (post.userId case final userId?) {
+          typing.stopped(post.channelId!, post.rootId ?? '', userId);
+        }
         await store.applyLivePost(
           post,
           fromSelf: post.userId == me && !_isAutomatic(post),
           mentionsMe: me != null && mentions.contains(me),
         );
+      case EphemeralMessageEvent(:final post?)
+          when post.channelId != null && await _knownChannel(post.channelId!):
+        await store.applyEphemeralPost(post);
+      case OpenDialogEvent(:final dialog?):
+        dialogs.offer(dialog);
+      case TypingEvent(:final userId?, :final broadcast?)
+          when userId != me && (broadcast.channelId?.isNotEmpty ?? false):
+        typing.expiry = await _typingExpiry();
+        typing.typing(broadcast.channelId!, event.parentId ?? '', userId);
+        await _missingUser(userId);
       case PostEditedEvent(:final post?):
         await store.applyEdit(post);
       case PostDeletedEvent(:final post?) when post.id != null:
@@ -128,6 +149,37 @@ class EventApplier {
       default:
         return;
     }
+  }
+
+  Future<Duration> _typingExpiry() async {
+    final config = await _db.configJson('client_config');
+    final ms = int.tryParse(
+      '${config['TimeBetweenUserTypingUpdatesMilliseconds'] ?? ''}',
+    );
+    return ms == null || ms <= 0
+        ? TypingTracker.defaultExpiry
+        : Duration(milliseconds: ms);
+  }
+
+  /// Someone not stored yet is typing: fetch them so they can be named.
+  Future<void> _missingUser(String userId) async {
+    final known = await (_db.select(
+      _db.users,
+    )..where((u) => u.id.equals(userId))).getSingleOrNull();
+    if (known != null) return;
+    _later(
+      runner.enqueue(
+        SyncJob(
+          key: 'user:$userId',
+          visible: false,
+          run: () async => store.applyUsers(
+            await server.call(
+              () => server.client.users.getUsersByIds(body: [userId]),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// System messages and webhook posts don't count as the user reading.
