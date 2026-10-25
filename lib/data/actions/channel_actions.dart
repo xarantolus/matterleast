@@ -197,13 +197,28 @@ class ChannelActions {
     return channel.id!;
   }
 
+  /// Joins an open team, and stores it with its channels.
+  Future<void> joinTeam(String teamId) async {
+    final me = await _myId();
+    await session.api.call(
+      () => _client.teams.addTeamMember(
+        teamId: teamId,
+        body: api.ApiV4TeamsTeamIdMembersRequestBody(
+          teamId: teamId,
+          userId: me,
+        ),
+      ),
+    );
+    await session.connection.entry.joinedTeam(teamId);
+  }
+
   /// Joins a public channel.
   Future<void> join(String channelId) async {
     final me = await _myId();
     await session.api.call(
       () => _client.channels.addChannelMember(
         channelId: channelId,
-        body: api.ApiV4ChannelsChannelIdMembersRequestBody(userId: me),
+        body: _OneMember(me),
       ),
     );
     await _storeJoined(
@@ -274,3 +289,12 @@ api.ChannelNotifyProps completeNotifyProps(
   emailThreads: current.emailThreads ?? 'all',
   channelAutoFollowThreads: current.channelAutoFollowThreads ?? 'off',
 );
+
+/// Adds one user. The server takes any `user_ids` key, even an empty list,
+/// as a request to add several and then answers `null`.
+class _OneMember extends api.ApiV4ChannelsChannelIdMembersRequestBody {
+  _OneMember(String userId) : super(userId: userId);
+
+  @override
+  Map<String, Object?> toJson() => super.toJson()..remove('user_ids');
+}

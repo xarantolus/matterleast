@@ -50,6 +50,27 @@ class EntrySync {
     SyncJob(key: 'team:$teamId', priority: priority, run: () => _team(teamId)),
   );
 
+  /// Stores a team the user just joined, then its channels.
+  Future<void> joinedTeam(String teamId) => runner.enqueue(
+    SyncJob(
+      key: 'join:$teamId',
+      run: () async {
+        final team = server.call(() => _client.teams.getTeam(teamId: teamId));
+        final member = server.call(
+          () => _client.teams.getTeamMember(teamId: teamId, userId: 'me'),
+        );
+        await Future.wait<Object?>([team, member]);
+        await store.applyTeams([await team], [await member]);
+        unawaited(
+          refreshTeam(
+            teamId,
+            priority: SyncPriority.p1,
+          ).catchError((Object _) {}),
+        );
+      },
+    ),
+  );
+
   Future<void> _entry() async {
     final started = _clock();
     final config = server.clientConfig();

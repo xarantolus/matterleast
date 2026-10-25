@@ -10,13 +10,13 @@ import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
+import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/ui/custom_emoji_image.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 part 'message_environment.g.dart';
 
@@ -134,43 +134,8 @@ class MessageEnvironment extends ConsumerWidget {
     LinkTarget target,
   ) async {
     switch (target) {
-      case ExternalLink(:final uri):
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      case ChannelLink(:final name):
-        await _openChannel(context, ref, name);
-      case PermalinkLink(:final postId):
-        final messenger = ScaffoldMessenger.of(context);
-        final navigator = Navigator.of(context);
-        final links = await ref.read(messageLinksProvider(url).future);
-        String? channelId;
-        try {
-          channelId = await links.channelOfPost(postId);
-        } on Object {
-          channelId = null;
-        }
-        if (channelId == null) {
-          messenger.showSnackBar(
-            const SnackBar(
-              content: Text(
-                "That message can't be opened. It may be in a "
-                "channel you're not in, or deleted.",
-              ),
-            ),
-          );
-          return;
-        }
-        unawaited(
-          navigator.push(
-            MaterialPageRoute<void>(
-              builder: (_) => ChannelScreen(
-                url: url,
-                channelId: channelId!,
-                title: '',
-                highlightPostId: postId,
-              ),
-            ),
-          ),
-        );
+      case UriLink(:final uri):
+        await openLinkFromMessage(Navigator.of(context), ref, uri);
       case NoLink():
         return;
     }

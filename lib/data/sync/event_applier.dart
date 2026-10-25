@@ -107,7 +107,7 @@ class EventApplier {
         _later(entry.refreshTeam(broadcast.teamId!, priority: SyncPriority.p1));
       case TeamEvent(kind: TeamChange.joined, :final teamId?)
           when event.userId == me:
-        _later(_joinTeam(teamId));
+        _later(entry.joinedTeam(teamId));
       case TeamEvent(kind: TeamChange.left || TeamChange.deleted)
           when event.id != null && (event.userId == null || event.userId == me):
         await store.removeTeam(event.id!);
@@ -238,21 +238,4 @@ class EventApplier {
       ),
     );
   }
-
-  Future<void> _joinTeam(String teamId) => runner.enqueue(
-    SyncJob(
-      key: 'join:$teamId',
-      run: () async {
-        final team = server.call(
-          () => server.client.teams.getTeam(teamId: teamId),
-        );
-        final member = server.call(
-          () => server.client.teams.getTeamMember(teamId: teamId, userId: 'me'),
-        );
-        await Future.wait<Object?>([team, member]);
-        await store.applyTeams([await team], [await member]);
-        _later(entry.refreshTeam(teamId, priority: SyncPriority.p1));
-      },
-    ),
-  );
 }
