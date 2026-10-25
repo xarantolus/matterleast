@@ -134,3 +134,26 @@ actions:
       muted: {type: boolean}
       collapsed: {type: boolean}
       sort_order: {type: integer}
+  # --- entry sync and channel list (M2) ---
+  - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/channels/categories'].get.responses['200'].content"
+    remove: true
+  - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/channels/categories'].get.responses['200']"
+    update:
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/OrderedSidebarCategories"}
+  - target: "$.paths['/api/v4/users/{user_id}/teams/unread'].get.parameters[?(@.name == 'exclude_team')].required"
+    remove: true
+  - target: "$.components.schemas.TeamUnread.properties"
+    update:
+      msg_count_root: {type: integer, format: int64}
+      mention_count_root: {type: integer, format: int64}
+      thread_count: {type: integer, format: int64}
+      thread_mention_count: {type: integer, format: int64}
+      thread_urgent_mention_count: {type: integer, format: int64}
+  - target: "$.components.schemas.UserThread.properties"
+    update:
+      unread_replies: {type: integer, format: int64}
+      unread_mentions: {type: integer, format: int64}
+      is_urgent: {type: boolean}
+      delete_at: {type: integer, format: int64}

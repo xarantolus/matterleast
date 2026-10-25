@@ -76,6 +76,9 @@ swagger_parser:
     - {apply_to_type: "ApiV4ChannelsChannelIdRequestBody?", parser_name: LenientApiV4ChannelsChannelIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4ChannelsChannelIdRequestBody>", parser_name: LenientListOfApiV4ChannelsChannelIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4ChannelsChannelIdRequestBody>?", parser_name: LenientMapOfApiV4ChannelsChannelIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "ApiV4ChannelsMembersUserIdViewRequestBody?", parser_name: LenientApiV4ChannelsMembersUserIdViewRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<ApiV4ChannelsMembersUserIdViewRequestBody>", parser_name: LenientListOfApiV4ChannelsMembersUserIdViewRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, ApiV4ChannelsMembersUserIdViewRequestBody>?", parser_name: LenientMapOfApiV4ChannelsMembersUserIdViewRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "ApiV4ChannelsRequestBody?", parser_name: LenientApiV4ChannelsRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4ChannelsRequestBody>", parser_name: LenientListOfApiV4ChannelsRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4ChannelsRequestBody>?", parser_name: LenientMapOfApiV4ChannelsRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -295,6 +298,9 @@ swagger_parser:
     - {apply_to_type: "PostApiV4ActionsDialogsLookupResponse?", parser_name: LenientPostApiV4ActionsDialogsLookupResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<PostApiV4ActionsDialogsLookupResponse>", parser_name: LenientListOfPostApiV4ActionsDialogsLookupResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, PostApiV4ActionsDialogsLookupResponse>?", parser_name: LenientMapOfPostApiV4ActionsDialogsLookupResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "PostApiV4ChannelsMembersUserIdViewResponse?", parser_name: LenientPostApiV4ChannelsMembersUserIdViewResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<PostApiV4ChannelsMembersUserIdViewResponse>", parser_name: LenientListOfPostApiV4ChannelsMembersUserIdViewResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, PostApiV4ChannelsMembersUserIdViewResponse>?", parser_name: LenientMapOfPostApiV4ChannelsMembersUserIdViewResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "PostApiV4ChannelsSearchResponse?", parser_name: LenientPostApiV4ChannelsSearchResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<PostApiV4ChannelsSearchResponse>", parser_name: LenientListOfPostApiV4ChannelsSearchResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, PostApiV4ChannelsSearchResponse>?", parser_name: LenientMapOfPostApiV4ChannelsSearchResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -382,6 +388,9 @@ swagger_parser:
     - {apply_to_type: "TeamStats?", parser_name: LenientTeamStats, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<TeamStats>", parser_name: LenientListOfTeamStats, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, TeamStats>?", parser_name: LenientMapOfTeamStats, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "TeamUnread?", parser_name: LenientTeamUnread, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<TeamUnread>", parser_name: LenientListOfTeamUnread, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, TeamUnread>?", parser_name: LenientMapOfTeamUnread, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "TermsOfService?", parser_name: LenientTermsOfService, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<TermsOfService>", parser_name: LenientListOfTermsOfService, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, TermsOfService>?", parser_name: LenientMapOfTermsOfService, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -416,6 +425,7 @@ swagger_parser:
     - "/api/v4/channels"
     - "/api/v4/channels/direct"
     - "/api/v4/channels/group"
+    - "/api/v4/channels/members/{user_id}/view"
     - "/api/v4/channels/search"
     - "/api/v4/channels/{channel_id}"
     - "/api/v4/channels/{channel_id}/access_control/attributes"
@@ -542,6 +552,7 @@ swagger_parser:
     - "/api/v4/users/{user_id}/status/custom/recent/delete"
     - "/api/v4/users/{user_id}/teams"
     - "/api/v4/users/{user_id}/teams/members"
+    - "/api/v4/users/{user_id}/teams/unread"
     - "/api/v4/users/{user_id}/teams/{team_id}/channels"
     - "/api/v4/users/{user_id}/teams/{team_id}/channels/categories"
     - "/api/v4/users/{user_id}/teams/{team_id}/channels/categories/order"

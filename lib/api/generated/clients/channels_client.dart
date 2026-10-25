@@ -13,6 +13,7 @@ import '../models/api_v4_channels_channel_id_members_user_id_scheme_roles_reques
 import '../models/api_v4_channels_channel_id_patch_request_body.dart';
 import '../models/api_v4_channels_channel_id_privacy_request_body.dart';
 import '../models/api_v4_channels_channel_id_request_body.dart';
+import '../models/api_v4_channels_members_user_id_view_request_body.dart';
 import '../models/api_v4_channels_request_body.dart';
 import '../models/api_v4_channels_search_request_body.dart';
 import '../models/api_v4_teams_team_id_channels_search_request_body.dart';
@@ -22,6 +23,7 @@ import '../models/channel_member.dart';
 import '../models/channel_notify_props.dart';
 import '../models/channel_stats.dart';
 import '../models/ordered_sidebar_categories.dart';
+import '../models/post_api_v4_channels_members_user_id_view_response.dart';
 import '../models/post_api_v4_channels_search_response.dart';
 import '../models/post_list.dart';
 import '../models/sidebar_category.dart';
@@ -221,6 +223,12 @@ abstract class ChannelsClient {
     required ApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody body,
   });
 
+  @POST('/api/v4/channels/members/{user_id}/view')
+  Future<PostApiV4ChannelsMembersUserIdViewResponse> viewChannel({
+    @Path('user_id') required String userId,
+    @Body() required ApiV4ChannelsMembersUserIdViewRequestBody body,
+  });
+
   @GET('/api/v4/users/{user_id}/teams/{team_id}/channels/members')
   Future<List<ChannelMember>> getChannelMembersForUser({
     @Path('user_id') required String userId,
@@ -249,7 +257,7 @@ abstract class ChannelsClient {
   });
 
   @GET('/api/v4/users/{user_id}/teams/{team_id}/channels/categories')
-  Future<List<OrderedSidebarCategories>> getSidebarCategoriesForTeamForUser({
+  Future<OrderedSidebarCategories> getSidebarCategoriesForTeamForUser({
     @Path('team_id') required String teamId,
     @Path('user_id') required String userId,
   });

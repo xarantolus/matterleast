@@ -14,6 +14,7 @@ import '../models/status_ok.dart';
 import '../models/team.dart';
 import '../models/team_member.dart';
 import '../models/team_stats.dart';
+import '../models/team_unread.dart';
 
 part 'teams_client.g.dart';
 
@@ -103,6 +104,13 @@ abstract class TeamsClient {
 
   @GET('/api/v4/teams/{team_id}/stats')
   Future<TeamStats> getTeamStats({@Path('team_id') required String teamId});
+
+  @GET('/api/v4/users/{user_id}/teams/unread')
+  Future<List<TeamUnread>> getTeamsUnreadForUser({
+    @Path('user_id') required String userId,
+    @Query('include_collapsed_threads') bool? includeCollapsedThreads = false,
+    @Query('exclude_team') String? excludeTeam,
+  });
 
   @POST('/api/v4/teams/{team_id}/invite/email')
   Future<StatusOk> inviteUsersToTeam({

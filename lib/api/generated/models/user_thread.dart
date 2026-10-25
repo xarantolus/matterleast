@@ -20,6 +20,10 @@ class UserThread {
     this.lastReplyAt,
     this.lastViewedAt,
     this.post,
+    this.unreadReplies,
+    this.unreadMentions,
+    this.isUrgent,
+    this.deleteAt,
   });
 
   factory UserThread.fromJson(Map<String, Object?> json) =>
@@ -44,6 +48,18 @@ class UserThread {
   final List<User> participants;
   @LenientPost()
   final Post? post;
+  @LenientInt()
+  @JsonKey(name: 'unread_replies')
+  final int? unreadReplies;
+  @LenientInt()
+  @JsonKey(name: 'unread_mentions')
+  final int? unreadMentions;
+  @LenientBool()
+  @JsonKey(name: 'is_urgent')
+  final bool? isUrgent;
+  @MillisDateTime()
+  @JsonKey(name: 'delete_at')
+  final DateTime? deleteAt;
 
   Map<String, Object?> toJson() => _$UserThreadToJson(this);
 }

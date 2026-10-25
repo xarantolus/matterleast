@@ -1004,6 +1004,39 @@ class _ChannelsClient implements ChannelsClient {
   }
 
   @override
+  Future<PostApiV4ChannelsMembersUserIdViewResponse> viewChannel({
+    required String userId,
+    required ApiV4ChannelsMembersUserIdViewRequestBody body,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(body.toJson());
+    final _options = _setStreamType<PostApiV4ChannelsMembersUserIdViewResponse>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/channels/members/${userId}/view',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late PostApiV4ChannelsMembersUserIdViewResponse _value;
+    try {
+      _value = PostApiV4ChannelsMembersUserIdViewResponse.fromJson(
+        _result.data!,
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<List<ChannelMember>> getChannelMembersForUser({
     required String userId,
     required String teamId,
@@ -1136,7 +1169,7 @@ class _ChannelsClient implements ChannelsClient {
   }
 
   @override
-  Future<List<OrderedSidebarCategories>> getSidebarCategoriesForTeamForUser({
+  Future<OrderedSidebarCategories> getSidebarCategoriesForTeamForUser({
     required String teamId,
     required String userId,
   }) async {
@@ -1144,7 +1177,7 @@ class _ChannelsClient implements ChannelsClient {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<OrderedSidebarCategories>>(
+    final _options = _setStreamType<OrderedSidebarCategories>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -1154,15 +1187,10 @@ class _ChannelsClient implements ChannelsClient {
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
-    final _result = await _dio.fetch<List<dynamic>>(_options);
-    late List<OrderedSidebarCategories> _value;
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late OrderedSidebarCategories _value;
     try {
-      _value = _result.data!
-          .map(
-            (dynamic i) =>
-                OrderedSidebarCategories.fromJson(i as Map<String, dynamic>),
-          )
-          .toList();
+      _value = OrderedSidebarCategories.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
