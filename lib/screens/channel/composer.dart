@@ -269,6 +269,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                           icon: const Icon(Icons.mood),
                         ),
                         hintText: widget.hint,
+                        hintMaxLines: 1,
                         filled: true,
                         isDense: true,
                         border: OutlineInputBorder(
