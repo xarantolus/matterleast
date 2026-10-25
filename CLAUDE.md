@@ -79,9 +79,10 @@ notes, and they win over this summary.
 
 ## Git and gate
 
-- Before each commit: `dart run build_runner build` (when models changed),
-  `dart format .`, `flutter analyze`, `flutter test`,
-  `flutter build apk --debug`.
+- Between commits of one batch of work: `dart run build_runner build` (when
+  models changed), `flutter analyze` and the tests you touched. The full gate
+  (`dart format .`, `flutter analyze`, `dart analyze`, `flutter test`,
+  `flutter build apk --debug`) runs once, before the batch is pushed.
 - Commit after every feature or fix, so history shows when each change
   landed and a regression can be bisected. Push after committing.
 - Watch CI after pushing but don't block on it; come back to it, and fix it
