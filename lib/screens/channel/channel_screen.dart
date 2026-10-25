@@ -9,6 +9,7 @@ import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
+import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
@@ -58,10 +59,18 @@ class ChannelScreen extends ConsumerWidget {
     );
     return Scaffold(
       appBar: AppBar(
-        title: ConversationTitle(
-          title: name,
-          subtitle:
-              typingText(typing ?? const []) ?? conversationSubtitle(state),
+        title: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => ChannelInfoScreen(url: url, channelId: channelId),
+            ),
+          ),
+          child: ConversationTitle(
+            title: name,
+            subtitle:
+                typingText(typing ?? const []) ?? conversationSubtitle(state),
+          ),
         ),
         bottom: ProgressSlot(
           active: state.refreshing && state.window?.posts.isNotEmpty == true,
