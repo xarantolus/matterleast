@@ -10,6 +10,7 @@ import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/channel_list/channel_tile.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// One team's channels by category, with Threads and Drafts on top.
@@ -17,12 +18,16 @@ class ChannelListPane extends ConsumerWidget {
   const ChannelListPane({
     required this.url,
     required this.teamId,
+    required this.serverLabel,
     required this.state,
     super.key,
   });
 
   final String url;
   final String teamId;
+
+  /// Which server the team is on, shown above the list.
+  final String serverLabel;
   final ChannelListState state;
 
   @override
@@ -40,10 +45,11 @@ class ChannelListPane extends ConsumerWidget {
         child: const Text('Retry'),
       ),
     ),
-    ChannelListReady(:final list) => _ChannelListView(
+    ChannelListReady(:final list, :final notice) => _ChannelListView(
       key: ValueKey('$url/$teamId'),
       url: url,
       teamId: teamId,
+      label: [serverLabel, ?notice].join(' · '),
       list: list,
     ),
   };
@@ -53,12 +59,14 @@ class _ChannelListView extends ConsumerStatefulWidget {
   const _ChannelListView({
     required this.url,
     required this.teamId,
+    required this.label,
     required this.list,
     super.key,
   });
 
   final String url;
   final String teamId;
+  final String label;
   final ChannelList list;
 
   @override
@@ -111,10 +119,11 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
       onNotification: _onScroll,
       child: CustomScrollView(
         slivers: [
+          SliverToBoxAdapter(child: PaneLabel(widget.label)),
           const SliverPadding(
             padding: EdgeInsets.fromLTRB(
               Spacing.md,
-              Spacing.md,
+              Spacing.xs,
               Spacing.md,
               Spacing.xs,
             ),

@@ -24,7 +24,8 @@ class RootScreen extends ConsumerWidget {
     if (server == null) {
       return _RootLayout(
         servers: servers,
-        title: const Text('Home'),
+        title: 'Home',
+        actions: const [_SearchButton()],
         pane: const EmptyState(
           icon: Icons.done_all,
           title: "You're all caught up",
@@ -47,24 +48,18 @@ class RootScreen extends ConsumerWidget {
       serverName: server.displayName,
       host: Uri.parse(server.url).host,
     );
-    final notice = switch (state) {
-      ChannelListReady(:final notice?) => notice,
-      _ => server.displayName,
-    };
     return _RootLayout(
       servers: servers,
       teamId: teamId,
-      title: _TwoLineTitle(
-        title: team?.displayName ?? server.displayName,
-        subtitle: notice,
-      ),
+      title: team?.displayName ?? server.displayName,
       refreshing: status is SyncRefreshing,
-      actions: const [_NewMenu()],
+      actions: const [_SearchButton(), _NewMenu()],
       pane: teamId == null && state is! ChannelListFailed
           ? const Center(child: CircularProgressIndicator())
           : ChannelListPane(
               url: server.url,
               teamId: teamId ?? '',
+              serverLabel: '${server.displayName} · ${server.address}',
               state: state,
             ),
     );
@@ -82,7 +77,7 @@ class _RootLayout extends ConsumerWidget {
   });
 
   final List<ServerEntry> servers;
-  final Widget title;
+  final String title;
   final Widget pane;
   final String? teamId;
   final bool refreshing;
@@ -91,7 +86,7 @@ class _RootLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => Scaffold(
     appBar: AppBar(
-      title: title,
+      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: actions,
       bottom: ProgressSlot(active: refreshing),
     ),
@@ -112,29 +107,16 @@ class _RootLayout extends ConsumerWidget {
   );
 }
 
-class _TwoLineTitle extends StatelessWidget {
-  const _TwoLineTitle({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
+/// Opens the quick switcher once it exists; shown now so the bar holds.
+class _SearchButton extends StatelessWidget {
+  const _SearchButton();
 
   @override
-  Widget build(BuildContext context) {
-    final style = DefaultTextStyle.of(context).style;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        Text(
-          subtitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: style.copyWith(fontSize: 13, fontWeight: FontWeight.w400),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => const IconButton(
+    tooltip: 'Search',
+    onPressed: null,
+    icon: Icon(Icons.search),
+  );
 }
 
 /// Starting points for new conversations; they arrive with channel
