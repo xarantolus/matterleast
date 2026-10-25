@@ -127,3 +127,7 @@ String canonicalName(String nameOrAlias) =>
 /// The emoji name for a text emoticon such as `:)`, as Mattermost's emoji
 /// data lists them.
 String? nameForEmoticon(String text) => emoticonNames[text];
+
+/// Every short name and alias of the system emoji, without skin tones.
+Iterable<String> systemEmojiNames() =>
+    _table.byName.keys.where((name) => !_toneSuffix.hasMatch(name));

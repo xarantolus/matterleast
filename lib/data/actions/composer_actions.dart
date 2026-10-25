@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/drafts.dart';
+import 'package:matterleast/data/actions/suggestions.dart';
+import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/outbox.dart';
 
 /// What the user writes: sending posts through the outbox, drafts,
@@ -22,6 +25,11 @@ class ComposerActions {
 
   DateTime? _lastQueuedAt;
   late final _drafts = DraftSaver(_store, clock: _clock);
+  late final _suggestions = SuggestionSource(
+    server: session.api,
+    store: _store,
+    clock: _clock,
+  );
 
   /// Queues a post and returns its pending id. It shows in the conversation
   /// at once (dimmed while unsent) and the conversation's draft is cleared.
@@ -49,7 +57,26 @@ class ComposerActions {
       priority: rootId.isEmpty ? priority : null,
     );
     unawaited(session.outbox.kick());
+    await _rememberEmoji(message);
     return pendingPostId;
+  }
+
+  /// Emoji written as `:name:` count as recently used, as in the official
+  /// app.
+  Future<void> _rememberEmoji(String message) async {
+    final names = [for (final m in _emojiCode.allMatches(message)) m[1]!];
+    if (names.isEmpty) return;
+    final custom = {
+      for (final e in await (_db.select(
+        _db.customEmoji,
+      )..where((e) => e.name.isIn(names))).get())
+        e.name,
+    };
+    final used = [
+      for (final name in names)
+        if (isKnownEmoji(name) || custom.contains(name)) name,
+    ];
+    if (used.isNotEmpty) await _store.addRecentEmoji(used);
   }
 
   /// Two posts queued in the same millisecond would share a pending id.
@@ -87,4 +114,23 @@ class ComposerActions {
   Future<void> flushDrafts() => _drafts.flush();
 
   Future<void> dispose() => _drafts.dispose();
+
+  /// Suggestions for the word at [cursor] (`@`, `~`, `:`, `/`): what is
+  /// stored first, then merged with the server's answer. Empty when the
+  /// cursor isn't in such a word.
+  Stream<List<Suggestion>> suggestions({
+    required String channelId,
+    required String teamId,
+    String rootId = '',
+    required String text,
+    required int cursor,
+  }) => _suggestions.suggest(
+    text: text,
+    cursor: cursor,
+    channelId: channelId,
+    teamId: teamId,
+    rootId: rootId,
+  );
 }
+
+final _emojiCode = RegExp(r':([a-z0-9_+-]+):');

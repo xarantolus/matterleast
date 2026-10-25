@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/mappers.dart';
+import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/outbox.dart';
 import 'package:matterleast/domain/post_ranges.dart';
@@ -1241,6 +1242,20 @@ class ServerStore {
           ..where((p) => p.id.equals(post.id!) & p.pendingPostId.equals('')))
         .write(PostsCompanion(pendingPostId: Value(pendingPostId)));
   });
+
+  static const _recentEmojiKey = 'recent_emoji';
+
+  /// Emoji the user picked lately, most recent first.
+  Future<List<String>> recentEmoji() async {
+    final stored = await db.syncText(_recentEmojiKey);
+    return stored == null || stored.isEmpty ? const [] : stored.split(',');
+  }
+
+  Future<void> addRecentEmoji(Iterable<String> names) async {
+    // Emoji names never contain commas.
+    final updated = withRecentEmoji(await recentEmoji(), names);
+    await db.setSyncText(_recentEmojiKey, updated.join(','));
+  }
 
   Future<DraftRow?> draft(String channelId, String rootId) =>
       (db.select(db.drafts)..where(
