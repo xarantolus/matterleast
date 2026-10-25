@@ -22,6 +22,10 @@ abstract class PostItem with _$PostItem {
     /// `pending` or `failed` while our own post is unsent.
     String? sendState,
     @Default(0) int replyCount,
+    DateTime? lastReplyAt,
+
+    /// Replies in a followed thread the reader hasn't seen.
+    @Default(0) int unreadReplies,
 
     /// Names of the people who replied, newest first, when known.
     @Default(<String>[]) List<String> participants,

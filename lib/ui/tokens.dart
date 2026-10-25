@@ -23,6 +23,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     required this.accent,
     required this.accentWash,
     required this.codeBackground,
+    required this.panel,
     required this.unread,
     required this.online,
     required this.away,
@@ -37,6 +38,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color accent;
   final Color accentWash;
   final Color codeBackground;
+
+  /// Tonal fill of a tappable bar or card sitting on the page.
+  final Color panel;
 
   /// Dot and bold text of an unread channel.
   final Color unread;
@@ -55,6 +59,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     accent: Color(0xFF00695C),
     accentWash: Color(0xFFD9F1EC),
     codeBackground: Color(0xFFEDF1EF),
+    panel: Color(0xFFE3E9E6),
     unread: Color(0xFF191C1B),
     online: Color(0xFF2E7D32),
     away: Color(0xFFB26A00),
@@ -70,6 +75,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     accent: Color(0xFF5FD3C4),
     accentWash: Color(0xFF17332F),
     codeBackground: Color(0xFF1D201F),
+    panel: Color(0xFF262B29),
     unread: Color(0xFFE6EAE8),
     online: Color(0xFF66BB6A),
     away: Color(0xFFFFB74D),
@@ -83,6 +89,8 @@ class AppTokens extends ThemeExtension<AppTokens> {
     'accent on page': (accent, page),
     'accent on wash': (accent, accentWash),
     'text on code': (text, codeBackground),
+    'accent on panel': (accent, panel),
+    'muted on panel': (muted, panel),
     'page on muted (muted mention count)': (page, muted),
   };
 
@@ -104,6 +112,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     Color? accent,
     Color? accentWash,
     Color? codeBackground,
+    Color? panel,
     Color? unread,
     Color? online,
     Color? away,
@@ -118,6 +127,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
       accent: accent ?? this.accent,
       accentWash: accentWash ?? this.accentWash,
       codeBackground: codeBackground ?? this.codeBackground,
+      panel: panel ?? this.panel,
       unread: unread ?? this.unread,
       online: online ?? this.online,
       away: away ?? this.away,
@@ -137,6 +147,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
       accent: Color.lerp(accent, other.accent, t)!,
       accentWash: Color.lerp(accentWash, other.accentWash, t)!,
       codeBackground: Color.lerp(codeBackground, other.codeBackground, t)!,
+      panel: Color.lerp(panel, other.panel, t)!,
       unread: Color.lerp(unread, other.unread, t)!,
       online: Color.lerp(online, other.online, t)!,
       away: Color.lerp(away, other.away, t)!,

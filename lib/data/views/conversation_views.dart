@@ -52,6 +52,7 @@ class ConversationViews {
       db.channels,
       db.preferences,
       db.config,
+      db.threads,
     ]),
   );
 
@@ -210,6 +211,16 @@ class ConversationViews {
         ),
     };
     final format = await db.nameFormat();
+    final roots = [
+      for (final p in posts)
+        if (p.replyCount > 0) p.id,
+    ];
+    final unread = {
+      for (final t in await (db.select(
+        db.threads,
+      )..where((t) => t.rootId.isIn(roots))).get())
+        t.rootId: t.unreadReplies,
+    };
     String nameOf(String id) =>
         people[id] == null ? 'Someone' : personName(people[id]!, format);
     return [
@@ -227,6 +238,8 @@ class ConversationViews {
           deleted: p.deleteAt != null,
           sendState: p.sendState,
           replyCount: p.replyCount,
+          lastReplyAt: p.lastReplyAt,
+          unreadReplies: unread[p.id] ?? 0,
           participants: [
             for (final id in participants[p.id]!)
               if (people.containsKey(id)) nameOf(id),

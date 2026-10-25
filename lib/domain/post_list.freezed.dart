@@ -17,7 +17,8 @@ mixin _$PostItem {
 
  String get id;/// Our own unsent post keeps this key when the server id arrives.
  String get key; String get userId; String get authorName; DateTime get createAt; String get message; String get type; String get rootId; DateTime? get editAt; bool get deleted;/// `pending` or `failed` while our own post is unsent.
- String? get sendState; int get replyCount;/// Names of the people who replied, newest first, when known.
+ String? get sendState; int get replyCount; DateTime? get lastReplyAt;/// Replies in a followed thread the reader hasn't seen.
+ int get unreadReplies;/// Names of the people who replied, newest first, when known.
  List<String> get participants;
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
@@ -30,20 +31,20 @@ $PostItemCopyWith<PostItem> get copyWith => _$PostItemCopyWithImpl<PostItem>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as PostItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.message, _this.message) || other.message == _this.message)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.editAt, _this.editAt) || other.editAt == _this.editAt)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted)&&(identical(other.sendState, _this.sendState) || other.sendState == _this.sendState)&&(identical(other.replyCount, _this.replyCount) || other.replyCount == _this.replyCount)&&const DeepCollectionEquality().equals(other.participants, _this.participants));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.message, _this.message) || other.message == _this.message)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.editAt, _this.editAt) || other.editAt == _this.editAt)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted)&&(identical(other.sendState, _this.sendState) || other.sendState == _this.sendState)&&(identical(other.replyCount, _this.replyCount) || other.replyCount == _this.replyCount)&&(identical(other.lastReplyAt, _this.lastReplyAt) || other.lastReplyAt == _this.lastReplyAt)&&(identical(other.unreadReplies, _this.unreadReplies) || other.unreadReplies == _this.unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _this.participants));
 }
 
 
 @override
 int get hashCode {
   final _this = this as PostItem;
-  return Object.hash(runtimeType,_this.id,_this.key,_this.userId,_this.authorName,_this.createAt,_this.message,_this.type,_this.rootId,_this.editAt,_this.deleted,_this.sendState,_this.replyCount,const DeepCollectionEquality().hash(_this.participants));
+  return Object.hash(runtimeType,_this.id,_this.key,_this.userId,_this.authorName,_this.createAt,_this.message,_this.type,_this.rootId,_this.editAt,_this.deleted,_this.sendState,_this.replyCount,_this.lastReplyAt,_this.unreadReplies,const DeepCollectionEquality().hash(_this.participants));
 }
 
 @override
 String toString() {
   final _this = this as PostItem;
-  return 'PostItem(id: ${_this.id}, key: ${_this.key}, userId: ${_this.userId}, authorName: ${_this.authorName}, createAt: ${_this.createAt}, message: ${_this.message}, type: ${_this.type}, rootId: ${_this.rootId}, editAt: ${_this.editAt}, deleted: ${_this.deleted}, sendState: ${_this.sendState}, replyCount: ${_this.replyCount}, participants: ${_this.participants})';
+  return 'PostItem(id: ${_this.id}, key: ${_this.key}, userId: ${_this.userId}, authorName: ${_this.authorName}, createAt: ${_this.createAt}, message: ${_this.message}, type: ${_this.type}, rootId: ${_this.rootId}, editAt: ${_this.editAt}, deleted: ${_this.deleted}, sendState: ${_this.sendState}, replyCount: ${_this.replyCount}, lastReplyAt: ${_this.lastReplyAt}, unreadReplies: ${_this.unreadReplies}, participants: ${_this.participants})';
 }
 
 
@@ -54,7 +55,7 @@ abstract mixin class $PostItemCopyWith<$Res>  {
   factory $PostItemCopyWith(PostItem value, $Res Function(PostItem) _then) = _$PostItemCopyWithImpl;
 @useResult
 $Res call({
- String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, List<String> participants
+ String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants
 });
 
 
@@ -71,7 +72,7 @@ class _$PostItemCopyWithImpl<$Res>
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? participants = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,}) {
   return _then(PostItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -85,6 +86,8 @@ as String,editAt: freezed == editAt ? _self.editAt : editAt // ignore: cast_null
 as DateTime?,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable
 as bool,sendState: freezed == sendState ? _self.sendState : sendState // ignore: cast_nullable_to_non_nullable
 as String?,replyCount: null == replyCount ? _self.replyCount : replyCount // ignore: cast_nullable_to_non_nullable
+as int,lastReplyAt: freezed == lastReplyAt ? _self.lastReplyAt : lastReplyAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,unreadReplies: null == unreadReplies ? _self.unreadReplies : unreadReplies // ignore: cast_nullable_to_non_nullable
 as int,participants: null == participants ? _self.participants : participants // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));
@@ -171,10 +174,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  List<String> participants)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PostItem() when $default != null:
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.participants);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants);case _:
   return orElse();
 
 }
@@ -192,10 +195,10 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  List<String> participants)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants)  $default,) {final _that = this;
 switch (_that) {
 case _PostItem():
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.participants);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -212,10 +215,10 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  List<String> participants)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants)?  $default,) {final _that = this;
 switch (_that) {
 case _PostItem() when $default != null:
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.participants);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants);case _:
   return null;
 
 }
@@ -227,7 +230,7 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 
 
 class _PostItem extends PostItem {
-  const _PostItem({required this.id, required this.key, required this.userId, required this.authorName, required this.createAt, required this.message, this.type = '', this.rootId = '', this.editAt, this.deleted = false, this.sendState, this.replyCount = 0,  List<String> participants = const <String>[]}): _participants = participants,super._();
+  const _PostItem({required this.id, required this.key, required this.userId, required this.authorName, required this.createAt, required this.message, this.type = '', this.rootId = '', this.editAt, this.deleted = false, this.sendState, this.replyCount = 0, this.lastReplyAt, this.unreadReplies = 0,  List<String> participants = const <String>[]}): _participants = participants,super._();
   
 
 @override final  String id;
@@ -244,6 +247,9 @@ class _PostItem extends PostItem {
 /// `pending` or `failed` while our own post is unsent.
 @override final  String? sendState;
 @override@JsonKey() final  int replyCount;
+@override final  DateTime? lastReplyAt;
+/// Replies in a followed thread the reader hasn't seen.
+@override@JsonKey() final  int unreadReplies;
 /// Names of the people who replied, newest first, when known.
  final  List<String> _participants;
 /// Names of the people who replied, newest first, when known.
@@ -264,18 +270,18 @@ _$PostItemCopyWith<_PostItem> get copyWith => __$PostItemCopyWithImpl<_PostItem>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostItem&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.message, message) || other.message == message)&&(identical(other.type, type) || other.type == type)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.editAt, editAt) || other.editAt == editAt)&&(identical(other.deleted, deleted) || other.deleted == deleted)&&(identical(other.sendState, sendState) || other.sendState == sendState)&&(identical(other.replyCount, replyCount) || other.replyCount == replyCount)&&const DeepCollectionEquality().equals(other.participants, _participants));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostItem&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.message, message) || other.message == message)&&(identical(other.type, type) || other.type == type)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.editAt, editAt) || other.editAt == editAt)&&(identical(other.deleted, deleted) || other.deleted == deleted)&&(identical(other.sendState, sendState) || other.sendState == sendState)&&(identical(other.replyCount, replyCount) || other.replyCount == replyCount)&&(identical(other.lastReplyAt, lastReplyAt) || other.lastReplyAt == lastReplyAt)&&(identical(other.unreadReplies, unreadReplies) || other.unreadReplies == unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _participants));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,key,userId,authorName,createAt,message,type,rootId,editAt,deleted,sendState,replyCount,const DeepCollectionEquality().hash(_participants));
+    return Object.hash(runtimeType,id,key,userId,authorName,createAt,message,type,rootId,editAt,deleted,sendState,replyCount,lastReplyAt,unreadReplies,const DeepCollectionEquality().hash(_participants));
 }
 
 @override
 String toString() {
-    return 'PostItem(id: $id, key: $key, userId: $userId, authorName: $authorName, createAt: $createAt, message: $message, type: $type, rootId: $rootId, editAt: $editAt, deleted: $deleted, sendState: $sendState, replyCount: $replyCount, participants: $participants)';
+    return 'PostItem(id: $id, key: $key, userId: $userId, authorName: $authorName, createAt: $createAt, message: $message, type: $type, rootId: $rootId, editAt: $editAt, deleted: $deleted, sendState: $sendState, replyCount: $replyCount, lastReplyAt: $lastReplyAt, unreadReplies: $unreadReplies, participants: $participants)';
 }
 
 
@@ -286,7 +292,7 @@ abstract mixin class _$PostItemCopyWith<$Res> implements $PostItemCopyWith<$Res>
   factory _$PostItemCopyWith(_PostItem value, $Res Function(_PostItem) _then) = __$PostItemCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, List<String> participants
+ String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants
 });
 
 
@@ -303,7 +309,7 @@ class __$PostItemCopyWithImpl<$Res>
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? participants = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,}) {
   return _then(_PostItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -317,6 +323,8 @@ as String,editAt: freezed == editAt ? _self.editAt : editAt // ignore: cast_null
 as DateTime?,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable
 as bool,sendState: freezed == sendState ? _self.sendState : sendState // ignore: cast_nullable_to_non_nullable
 as String?,replyCount: null == replyCount ? _self.replyCount : replyCount // ignore: cast_nullable_to_non_nullable
+as int,lastReplyAt: freezed == lastReplyAt ? _self.lastReplyAt : lastReplyAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,unreadReplies: null == unreadReplies ? _self.unreadReplies : unreadReplies // ignore: cast_nullable_to_non_nullable
 as int,participants: null == participants ? _self._participants : participants // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));

@@ -49,7 +49,7 @@ class PostTile extends StatelessWidget {
           ),
         PostText(post: post),
         if (onOpenThread != null && !post.isReply && post.replyCount > 0)
-          _RepliesButton(post: post, onPressed: onOpenThread!),
+          _ThreadBar(post: post, onPressed: onOpenThread!),
       ],
     );
     return Opacity(
@@ -149,34 +149,109 @@ class _SystemLine extends StatelessWidget {
   }
 }
 
-class _RepliesButton extends StatelessWidget {
-  const _RepliesButton({required this.post, required this.onPressed});
+class _ThreadBar extends StatelessWidget {
+  const _ThreadBar({required this.post, required this.onPressed});
 
   final PostItem post;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final people = post.participants.take(3).toList();
+    final tokens = context.tokens;
+    final text = Theme.of(context).textTheme;
     final count = post.replyCount;
+    final unread = post.unreadReplies;
+    final lastReply = post.lastReplyAt;
     return Padding(
-      padding: const EdgeInsets.only(top: Spacing.xs),
-      child: TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-          visualDensity: VisualDensity.compact,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final name in people)
-              Padding(
-                padding: const EdgeInsets.only(right: 2),
-                child: InitialsBadge(name: name, size: 22, round: true),
+      padding: const EdgeInsets.only(top: Spacing.sm, bottom: Spacing.xs),
+      child: Material(
+        color: tokens.panel,
+        borderRadius: BorderRadius.circular(8),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sm,
+                vertical: Spacing.xs,
               ),
-            if (people.isNotEmpty) const SizedBox(width: Spacing.xs),
-            Text(count == 1 ? '1 reply' : '$count replies'),
+              child: Row(
+                children: [
+                  _Participants(names: post.participants.take(3).toList()),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: count == 1 ? '1 reply' : '$count replies',
+                            style: TextStyle(
+                              color: tokens.accent,
+                              fontWeight: unread > 0
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                          if (lastReply != null)
+                            TextSpan(
+                              text: '  Last reply ${_time(context, lastReply)}',
+                              style: TextStyle(color: tokens.muted),
+                            ),
+                        ],
+                      ),
+                      style: text.bodyMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (unread > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(left: Spacing.sm),
+                      child: Badge.count(count: unread),
+                    ),
+                  Icon(Icons.chevron_right, color: tokens.muted),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Up to three people who replied, overlapping like a stack of cards.
+class _Participants extends StatelessWidget {
+  const _Participants({required this.names});
+
+  final List<String> names;
+
+  static const _size = 24.0;
+  static const _step = 16.0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (names.isEmpty) return const SizedBox.shrink();
+    final page = context.tokens.panel;
+    return Padding(
+      padding: const EdgeInsets.only(right: Spacing.sm),
+      child: SizedBox(
+        width: _size + _step * (names.length - 1),
+        height: _size,
+        child: Stack(
+          children: [
+            for (final (i, name) in names.indexed)
+              Positioned(
+                left: i * _step,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: page, width: 1.5),
+                  ),
+                  child: InitialsBadge(name: name, size: _size, round: true),
+                ),
+              ),
           ],
         ),
       ),
