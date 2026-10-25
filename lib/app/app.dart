@@ -14,6 +14,7 @@ class MatterleastApp extends StatelessWidget {
       title: 'Matterleast',
       theme: lightTheme,
       darkTheme: darkTheme,
+      debugShowCheckedModeBanner: false,
       home: const _NoServersYet(),
     );
   }
