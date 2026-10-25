@@ -185,7 +185,7 @@ class _Blocks extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      width: 24,
+                      width: MediaQuery.textScalerOf(context).scale(24),
                       child: switch (item.checked) {
                         final bool done => Icon(
                           done
