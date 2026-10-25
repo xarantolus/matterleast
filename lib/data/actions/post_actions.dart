@@ -199,8 +199,12 @@ class PostActions {
     await _store.applyMarkedUnread(await member);
   }
 
-  Future<void> followThread(String teamId, String rootId) =>
-      _setFollowing(teamId, rootId, following: true);
+  /// With [channelId], a thread not stored yet is stored as followed.
+  Future<void> followThread(
+    String teamId,
+    String rootId, {
+    String? channelId,
+  }) => _setFollowing(teamId, rootId, following: true, channelId: channelId);
 
   Future<void> unfollowThread(String teamId, String rootId) =>
       _setFollowing(teamId, rootId, following: false);
@@ -209,8 +213,13 @@ class PostActions {
     String teamId,
     String rootId, {
     required bool following,
+    String? channelId,
   }) => _optimistic(
-    () => _store.applyThreadFollow(rootId, following: following),
+    () => _store.applyThreadFollow(
+      rootId,
+      following: following,
+      channelId: channelId,
+    ),
     () => _call(
       () => following
           ? _client.threads.startFollowingThread(

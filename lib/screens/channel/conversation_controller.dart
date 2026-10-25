@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show BooleanExpressionOperators;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -199,18 +200,16 @@ class Conversation extends _$Conversation {
     );
   }
 
-  /// Follows or stops following the open thread. Throws [ApiError] when
-  /// the server refuses.
+  /// Follows or stops following the open thread; shows at once and
+  /// is undone when the server refuses, which throws [ApiError].
   Future<void> setFollowing({required bool following}) async {
     if (_actions == null || !_isThread) return;
     final team = await _threadTeam();
     if (team == null) return;
-    await _actions!.setThreadFollowing(
-      team,
-      channelId,
-      rootId!,
-      following: following,
-    );
+    final posts = await ref.read(postActionsProvider(url).future);
+    await (following
+        ? posts.followThread(team, rootId!, channelId: channelId)
+        : posts.unfollowThread(team, rootId!));
   }
 
   Future<String> _channelTeam(ServerDatabase db) async =>
