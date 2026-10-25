@@ -35,6 +35,20 @@ sealed class ServerLink with _$ServerLink {
 
 final _postId = RegExp(r'^[a-z0-9]{26}$');
 
+/// Pure: what a link handed to the app from outside opens. Besides web
+/// links, `matterleast://<host>[:port]/<path>` stands for the same path on
+/// a server at that host, over https or http. Null for anything that is not
+/// on one of [knownServers].
+ServerLink? parseIncomingLink(Uri uri, Iterable<Uri> knownServers) {
+  if (uri.scheme != 'matterleast') return parseServerLink(uri, knownServers);
+  if (uri.host.isEmpty || uri.host == 'callback') return null;
+  for (final scheme in const ['https', 'http']) {
+    final link = parseServerLink(uri.replace(scheme: scheme), knownServers);
+    if (link != null) return link;
+  }
+  return null;
+}
+
 /// Pure: what [uri] opens when it points into one of [knownServers]; null
 /// for anything else, which belongs in the browser. A server below a
 /// sub-path wins over one at the root of the same host.

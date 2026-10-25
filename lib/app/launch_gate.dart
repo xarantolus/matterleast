@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
@@ -19,6 +21,7 @@ class LaunchGate extends ConsumerStatefulWidget {
 
 class _LaunchGateState extends ConsumerState<LaunchGate> {
   late final AppLifecycleListener _lifecycle;
+  StreamSubscription<Uri>? _links;
 
   @override
   void initState() {
@@ -27,6 +30,11 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     // After the first frame, so the token read never delays painting.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(manager.checkTokens().then((_) => manager.setForeground(true)));
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      _links = AppLinks().uriLinkStream.listen(
+        (uri) => unawaited(openIncomingLink(navigator, ref, uri)),
+      );
     });
     _lifecycle = AppLifecycleListener(
       onShow: () => unawaited(manager.setForeground(true)),
@@ -36,6 +44,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
 
   @override
   void dispose() {
+    unawaited(_links?.cancel());
     _lifecycle.dispose();
     super.dispose();
   }

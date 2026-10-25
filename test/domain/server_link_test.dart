@@ -56,6 +56,27 @@ void main() {
     expect(parse('mailto:crew@chat.example.test'), isNull);
   });
 
+  test('an app link opens the same path on a known server', () {
+    final local = Uri.parse('http://10.0.2.2:8065');
+    ServerLink? incoming(String url) =>
+        parseIncomingLink(Uri.parse(url), [...known, local]);
+    expect(
+      incoming('matterleast://chat.example.test/crew/pl/$id'),
+      ServerLink.post(server: chat, team: 'crew', postId: id),
+    );
+    expect(
+      incoming('matterleast://10.0.2.2:8065/crew/channels/boats'),
+      ServerLink.channel(server: local, team: 'crew', name: 'boats'),
+    );
+    expect(
+      incoming('https://chat.example.test/crew/pl/$id'),
+      ServerLink.post(server: chat, team: 'crew', postId: id),
+    );
+    expect(incoming('matterleast://other.example.test/crew/pl/$id'), isNull);
+    expect(incoming('matterleast://callback?MMAUTHTOKEN=x'), isNull);
+    expect(incoming('mmauth://callback?MMAUTHTOKEN=x'), isNull);
+  });
+
   test('a reply opens its thread only under collapsed threads', () {
     expect(threadToOpen(rootId: 'r', collapsedThreads: true), 'r');
     expect(threadToOpen(rootId: 'r', collapsedThreads: false), isNull);

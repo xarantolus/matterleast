@@ -25,6 +25,20 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- matterleast://<server host>/<team>/...; the path keeps the
+                 SSO callback (matterleast://callback) out of this filter. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="matterleast"
+                    android:host="*"
+                    android:pathPattern="/..*" />
+            </intent-filter>
+            <!-- Links are read by app_links and checked against the signed-in
+                 servers, not routed by Flutter's own deep linking. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
         </activity>
         <!-- Receives the SSO redirect (mmauth://callback) from the Auth Tab. -->
         <activity
