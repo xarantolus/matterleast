@@ -5,10 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/app/shortcuts.dart';
+import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
+import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_screen.dart';
+import 'package:matterleast/screens/search/search_providers.dart';
+import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/share/share_screen.dart';
+import 'package:quick_actions/quick_actions.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 /// Picks the first screen from the server list on disk: the root with the
@@ -25,6 +31,54 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   late final AppLifecycleListener _lifecycle;
   StreamSubscription<Uri>? _links;
   StreamSubscription<List<SharedMediaFile>>? _shares;
+  final _quickActions = const QuickActions();
+  String? _shortcutsShown;
+  ProviderSubscription<AsyncValue<List<SwitchItem>>>? _shortcutSource;
+
+  void _followShortcuts(String? url) {
+    _shortcutSource?.close();
+    _shortcutSource = null;
+    if (url == null) {
+      _showShortcuts(const []);
+      return;
+    }
+    _shortcutSource = ref.listenManual(switchItemsProvider(url), (_, next) {
+      if (next case AsyncData(:final value)) _showShortcuts(value);
+    }, fireImmediately: true);
+  }
+
+  Future<void> _openShortcut(NavigatorState navigator, String type) async {
+    final target = parseShortcutType(type);
+    if (target == null) return;
+    final servers = await ref.read(serversProvider.future);
+    if (!servers.any((s) => s.signedIn && s.url == target.url)) return;
+    final items = await ref.read(switchItemsProvider(target.url).future);
+    final channel = items.where((i) => i.id == target.channelId).firstOrNull;
+    if (channel == null || !navigator.mounted) return;
+    navigator.popUntil((route) => route.isFirst);
+    await openChannel(
+      navigator,
+      ref,
+      url: target.url,
+      channelId: channel.id,
+      title: channel.title,
+      teamId: channel.teamId,
+    );
+  }
+
+  void _showShortcuts(List<SwitchItem> items) {
+    final recent = recentConversations(items);
+    final key = [for (final i in recent) '${shortcutType(i)}\t${i.title}']
+        .join('\n');
+    if (key == _shortcutsShown) return;
+    _shortcutsShown = key;
+    unawaited(
+      _quickActions.setShortcutItems([
+        for (final item in recent)
+          ShortcutItem(type: shortcutType(item), localizedTitle: item.title),
+      ]),
+    );
+  }
 
   @override
   void initState() {
@@ -51,6 +105,11 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         );
       }
 
+      unawaited(
+        _quickActions.initialize(
+          (type) => unawaited(_openShortcut(navigator, type)),
+        ),
+      );
       _shares = shares.getMediaStream().listen(open);
       unawaited(
         shares.getInitialMedia().then((media) {
@@ -59,6 +118,11 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         }),
       );
     });
+    ref.listenManual(
+      settingsServerProvider.select((s) => s?.url),
+      (_, url) => _followShortcuts(url),
+      fireImmediately: true,
+    );
     _lifecycle = AppLifecycleListener(
       onShow: () => unawaited(manager.setForeground(true)),
       onHide: () => unawaited(manager.setForeground(false)),
@@ -69,6 +133,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   void dispose() {
     unawaited(_links?.cancel());
     unawaited(_shares?.cancel());
+    _shortcutSource?.close();
     _lifecycle.dispose();
     super.dispose();
   }

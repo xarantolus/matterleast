@@ -35,6 +35,7 @@ dependencies:
   path: ^1.9.1
   path_provider: ^2.1.6
   pdfrx: ^2.10.1
+  quick_actions: ^1.1.1
   re_highlight: 0.0.3
   receive_sharing_intent: ^1.9.0
   retrofit: ^4.10.0
