@@ -42,6 +42,7 @@ void main() {
       db: db,
       tokens: tokens,
       dataDirectory: () async => dir.path,
+      cacheDirectory: () async => p.join(dir.path, 'cache'),
       openDatabase: (path) => ServerDatabase(NativeDatabase(File(path))),
       clock: () => DateTime.utc(2026, 10, 25, 12),
     );
@@ -126,6 +127,20 @@ void main() {
       expect(dbFiles(), isEmpty);
     },
   );
+
+  test('signing out deletes the server\'s cached images', () async {
+    await addServer();
+    final row = (await db.serverByUrl(url))!;
+    final images = Directory(
+      p.join(dir.path, 'cache', p.basenameWithoutExtension(row.dbFile)),
+    );
+    final avatar = File(p.join(images.path, 'identity', 'files', 'a.png'))
+      ..createSync(recursive: true);
+    expect(avatar.existsSync(), isTrue);
+
+    expect(await manager.signOut(url), isTrue);
+    expect(images.existsSync(), isFalse);
+  });
 
   test('removing a server forgets it', () async {
     await addServer();

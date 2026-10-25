@@ -23,6 +23,8 @@ class ServerManager {
     required this._db,
     required this._tokens,
     required this._dataDirectory,
+    required this._cacheDirectory,
+    this._mediaBudget = _defaultMediaBudget,
     this._openDatabase = ServerDatabase.open,
     this._clock = DateTime.now,
   });
@@ -30,8 +32,12 @@ class ServerManager {
   final AppDatabase _db;
   final TokenStore _tokens;
   final Future<String> Function() _dataDirectory;
+  final Future<String> Function() _cacheDirectory;
+  final Future<int> Function() _mediaBudget;
   final OpenServerDatabase _openDatabase;
   final DateTime Function() _clock;
+
+  static Future<int> _defaultMediaBudget() async => 250 * 1024 * 1024;
 
   final _sessions = <String, Future<ServerSession>>{};
   final _subscriptions = <String, StreamSubscription<void>>{};
@@ -111,6 +117,8 @@ class ServerManager {
       url: Uri.parse(url),
       db: _openDatabase(path),
       dbPath: path,
+      imagesDirectory: await _imagesDirectory(row.dbFile),
+      mediaBudget: _mediaBudget,
       tokens: _tokens,
     );
     _subscriptions[url] = session.api.sessionEnded.listen(
@@ -238,8 +246,17 @@ class ServerManager {
     }
     await _closeSession(url);
     await _tokens.delete(url);
-    if (row != null) await _deleteDatabaseFiles(row.dbFile);
+    if (row != null) {
+      await _deleteDatabaseFiles(row.dbFile);
+      final images = Directory(await _imagesDirectory(row.dbFile));
+      if (images.existsSync()) await images.delete(recursive: true);
+    }
   }
+
+  /// Image caches sit next to nothing else, in a folder named like the
+  /// server's database file.
+  Future<String> _imagesDirectory(String dbFile) async =>
+      p.join(await _cacheDirectory(), p.basenameWithoutExtension(dbFile));
 
   Future<void> _closeSession(String url) async {
     final pending = _sessions.remove(url);

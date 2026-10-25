@@ -9,6 +9,7 @@ import 'package:matterleast/data/servers/sign_in.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -39,6 +40,10 @@ ServerManager serverManager(Ref ref) {
     db: ref.watch(appDatabaseProvider),
     tokens: ref.watch(tokenStoreProvider),
     dataDirectory: () async => (await getApplicationSupportDirectory()).path,
+    cacheDirectory: () async =>
+        p.join((await getApplicationCacheDirectory()).path, 'images'),
+    mediaBudget: () =>
+        ref.read(settingsStoreProvider).read(Settings.mediaCacheBytes),
   );
   ref.onDispose(manager.dispose);
   return manager;

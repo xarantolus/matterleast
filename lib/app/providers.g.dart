@@ -215,7 +215,7 @@ final class ServerManagerProvider
   }
 }
 
-String _$serverManagerHash() => r'954be51d61e41f10e3f4488d36941100fe753c97';
+String _$serverManagerHash() => r'7c1ba452fe9f383806705e5277165bbdd12dddf5';
 
 @ProviderFor(serverProbe)
 final serverProbeProvider = ServerProbeProvider._();
