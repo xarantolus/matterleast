@@ -63,6 +63,18 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteServer(String url) =>
       (delete(servers)..where((s) => s.url.equals(url))).go();
 
+  /// `brand` or `server`.
+  Stream<String> watchThemeMode(String url) =>
+      (select(servers)..where((s) => s.url.equals(url)))
+          .watchSingleOrNull()
+          .map((row) => row?.themeMode ?? 'brand')
+          .distinct();
+
+  Future<void> setThemeMode(String url, String mode) =>
+      (update(servers)..where((s) => s.url.equals(url))).write(
+        ServersCompanion(themeMode: Value(mode)),
+      );
+
   Future<Map<String, String>> allSettings() async => {
     for (final row in await select(settingEntries).get()) row.key: row.value,
   };

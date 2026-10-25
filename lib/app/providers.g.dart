@@ -578,3 +578,41 @@ final class AppVersionProvider
 }
 
 String _$appVersionHash() => r'ff1eb5d2af994c051622516f93f238f401bb6abc';
+
+/// The clock the user picked; null follows the phone.
+
+@ProviderFor(use24HourClock)
+final use24HourClockProvider = Use24HourClockProvider._();
+
+/// The clock the user picked; null follows the phone.
+
+final class Use24HourClockProvider
+    extends $FunctionalProvider<AsyncValue<bool?>, bool?, Stream<bool?>>
+    with $FutureModifier<bool?>, $StreamProvider<bool?> {
+  /// The clock the user picked; null follows the phone.
+  Use24HourClockProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'use24HourClockProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$use24HourClockHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool?> create(Ref ref) {
+    return use24HourClock(ref);
+  }
+}
+
+String _$use24HourClockHash() => r'd0e8794540e17a29e7e55ed38f0e58708ec67672';

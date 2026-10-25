@@ -118,10 +118,12 @@ class EventApplier {
       case StatusChangedEvent(:final userId?, :final status?):
         await store.applyStatuses({userId: status});
       case PreferencesEvent(:final deleted):
-        if (deleted) {
-          await store.deletePreferences(event.all);
-        } else {
-          await store.applyPreferences(event.all);
+        final threadsFlipped = await store.applyPreferencesCheckingThreads(
+          event.all,
+          deleted: deleted,
+        );
+        if (threadsFlipped) {
+          _later(entry.run().then((_) => inbox.refresh(force: true)));
         }
         final missing = await store.applySavedChanges(
           event.all,

@@ -176,6 +176,36 @@ class ServerStore {
         ]);
       });
 
+  /// Applies preferences, and when that turns collapsed reply threads on
+  /// or off, drops the history and threads stored the other way, as the
+  /// official app does; unsent posts stay. True when the caller has to
+  /// fetch again.
+  Future<bool> applyPreferencesCheckingThreads(
+    Iterable<api.Preference> preferences, {
+    bool deleted = false,
+  }) => db.transaction(() async {
+    final before = await db.collapsedThreads();
+    if (deleted) {
+      await deletePreferences(preferences);
+    } else {
+      await applyPreferences(preferences);
+    }
+    if (await db.collapsedThreads() == before) return false;
+    await (db.delete(db.posts)..where((p) => p.sendState.isNull())).go();
+    for (final table in <TableInfo<Table, Object?>>[
+      db.postRanges,
+      db.threads,
+      db.threadTeams,
+      db.threadSync,
+    ]) {
+      await db.delete(table).go();
+    }
+    await db
+        .update(db.myChannels)
+        .write(const MyChannelsCompanion(postsFetchedAt: Value(null)));
+    return true;
+  });
+
   Future<void> applyCustomEmoji(Iterable<api.Emoji> emoji) =>
       db.batch((b) => _upsertEmoji(b, emoji));
 
