@@ -79,10 +79,11 @@ notes, and they win over this summary.
 
 ## Git and gate
 
-- Between commits of one batch of work: `dart run build_runner build` (when
-  models changed), `flutter analyze` and the tests you touched. The full gate
-  (`dart format .`, `flutter analyze`, `dart analyze`, `flutter test`,
-  `flutter build apk --debug`) runs once, before the batch is pushed.
+- Intermediate commits within a batch of work need no checks. The full gate
+  (`dart run build_runner build` when models changed, `dart format .`,
+  `flutter analyze`, `dart analyze`, `flutter test`,
+  `flutter build apk --debug`) runs once, close to the finish, before the
+  batch is pushed. Velocity matters.
 - Commit after every feature or fix, so history shows when each change
   landed and a regression can be bisected. Push after committing.
 - Watch CI after pushing but don't block on it; come back to it, and fix it
