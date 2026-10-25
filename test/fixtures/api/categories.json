@@ -1,0 +1,71 @@
+{
+  "categories": [
+    {
+      "id": "favorites_mhkm3wzstby7ixmftzjn8pscha_4aw9gh6hbfy5byx4e66ejs3oyy",
+      "user_id": "mhkm3wzstby7ixmftzjn8pscha",
+      "team_id": "4aw9gh6hbfy5byx4e66ejs3oyy",
+      "sort_order": 0,
+      "sorting": "",
+      "type": "favorites",
+      "display_name": "Favorites",
+      "muted": false,
+      "collapsed": false,
+      "channel_ids": [
+        "rkth4k3s9tbjmradj7j1g6hq1c"
+      ]
+    },
+    {
+      "id": "skkqgk6g7f85znum9d15s9jynr",
+      "user_id": "mhkm3wzstby7ixmftzjn8pscha",
+      "team_id": "4aw9gh6hbfy5byx4e66ejs3oyy",
+      "sort_order": 10,
+      "sorting": "",
+      "type": "custom",
+      "display_name": "Projects",
+      "muted": false,
+      "collapsed": false,
+      "channel_ids": [
+        "3kkmxn47utg3mx4a68izyje8ww",
+        "met7ywe8ofr6ir3p4r4atdsm1r"
+      ]
+    },
+    {
+      "id": "channels_mhkm3wzstby7ixmftzjn8pscha_4aw9gh6hbfy5byx4e66ejs3oyy",
+      "user_id": "mhkm3wzstby7ixmftzjn8pscha",
+      "team_id": "4aw9gh6hbfy5byx4e66ejs3oyy",
+      "sort_order": 20,
+      "sorting": "",
+      "type": "channels",
+      "display_name": "Channels",
+      "muted": false,
+      "collapsed": false,
+      "channel_ids": [
+        "k4dkcit98f8dzjre14kwgcb88h",
+        "un8q1mca6jgomqrj67zji5up7h",
+        "ujif5hg8hibdmjiafwrkof4xsh"
+      ]
+    },
+    {
+      "id": "direct_messages_mhkm3wzstby7ixmftzjn8pscha_4aw9gh6hbfy5byx4e66ejs3oyy",
+      "user_id": "mhkm3wzstby7ixmftzjn8pscha",
+      "team_id": "4aw9gh6hbfy5byx4e66ejs3oyy",
+      "sort_order": 30,
+      "sorting": "recent",
+      "type": "direct_messages",
+      "display_name": "Direct Messages",
+      "muted": false,
+      "collapsed": false,
+      "channel_ids": [
+        "6yh85yi5q7rjpewrojomz3bosh",
+        "9a4or1dqdiddze476caisswjdy",
+        "mooetgpmwfnofqyqg6h7k1zqew"
+      ]
+    }
+  ],
+  "order": [
+    "favorites_mhkm3wzstby7ixmftzjn8pscha_4aw9gh6hbfy5byx4e66ejs3oyy",
+    "skkqgk6g7f85znum9d15s9jynr",
+    "channels_mhkm3wzstby7ixmftzjn8pscha_4aw9gh6hbfy5byx4e66ejs3oyy",
+    "direct_messages_mhkm3wzstby7ixmftzjn8pscha_4aw9gh6hbfy5byx4e66ejs3oyy"
+  ]
+}

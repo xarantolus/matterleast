@@ -1,0 +1,26 @@
+{
+  "order": [
+    "ufympittijyfzptpif7eog88xh"
+  ],
+  "file_infos": {
+    "ufympittijyfzptpif7eog88xh": {
+      "id": "ufympittijyfzptpif7eog88xh",
+      "user_id": "etxffrwm9fbgida4ikqo4p4u8y",
+      "post_id": "qikrt1cyd7bc389o1fn9pghtqe",
+      "channel_id": "rkth4k3s9tbjmradj7j1g6hq1c",
+      "create_at": 1792912082523,
+      "update_at": 1792912082523,
+      "delete_at": 0,
+      "name": "checklist.txt",
+      "extension": "txt",
+      "size": 38,
+      "mime_type": "text/plain; charset=utf-8",
+      "mini_preview": null,
+      "remote_id": "",
+      "archived": false
+    }
+  },
+  "next_file_info_id": "",
+  "prev_file_info_id": "",
+  "first_inaccessible_file_time": 0
+}

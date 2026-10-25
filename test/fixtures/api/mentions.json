@@ -1,0 +1,241 @@
+{
+  "order": [
+    "4ifezbt3npgxfx1c7911yyq7oo",
+    "ztsz41xnftne9dn5kzi447au5c",
+    "zeyo7b11578z98ieghxi6yzhkc",
+    "ebjo8jrrzfympe4d3p3rhsotgh",
+    "fuotk45e4pgbtc9w9zcq4zgigy",
+    "g3h6qh5ifj8ujyn1f71sygxrwy",
+    "s96dzteqwp8xpfi1wgc15q6ezo",
+    "66ik6n4ca3fdddggyxnzuf5bfe"
+  ],
+  "posts": {
+    "4ifezbt3npgxfx1c7911yyq7oo": {
+      "id": "4ifezbt3npgxfx1c7911yyq7oo",
+      "create_at": 1792912084908,
+      "update_at": 1792912084908,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "g13aadcbdpbqzc9jqtiatadqkw",
+      "channel_id": "9a4or1dqdiddze476caisswjdy",
+      "root_id": "",
+      "original_id": "",
+      "message": "Hey Alice, got a minute?",
+      "type": "",
+      "props": {},
+      "hashtags": "",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {}
+    },
+    "66ik6n4ca3fdddggyxnzuf5bfe": {
+      "id": "66ik6n4ca3fdddggyxnzuf5bfe",
+      "create_at": 1792912082098,
+      "update_at": 1792912082098,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "mhkm3wzstby7ixmftzjn8pscha",
+      "channel_id": "rkth4k3s9tbjmradj7j1g6hq1c",
+      "root_id": "",
+      "original_id": "",
+      "message": "# Release 1.2 notes\n\n## What changed\n- Faster channel switching\n- **Bold**, *italic*, ~~struck~~, `inline code` and a [link](https://example.test/notes)\n- Bare URL: https://example.test/changelog\n- Nested list\n  1. first\n  2. second\n\n## Checklist\n- [x] migrations\n- [ ] docs\n- [ ] announce in ~design\n\n> Ship it only when the checklist is done. — @bob\n\n| Area | Owner | Status |\n| --- | --- | --- |\n| API | @alice | done |\n| UI | @carol | in review |\n| Infra | @dave | blocked |\n\n```dart\nFuture<void> main() async {\n  final client = Client(baseUrl: Uri.parse('https://example.test'));\n  print(await client.ping());\n}\n```\n\nInline math $E = mc^2$ and a block:\n\n```latex\n\\int_0^1 x^2 \\, dx = \\frac{1}{3}\n```\n\nTags #release #v1-2 and emoji :tada: :anchor-party: :lighthouse:",
+      "type": "",
+      "props": {
+        "channel_mentions": {
+          "design": {
+            "display_name": "Design",
+            "team_name": "lighthouse"
+          }
+        }
+      },
+      "hashtags": "#release #v1-2",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {
+        "embeds": [
+          {
+            "type": "link",
+            "url": "https://example.test/changelog"
+          }
+        ],
+        "emojis": [
+          {
+            "id": "5nyyuoe3gi8e5y7w5e11k3d6da",
+            "create_at": 1792912081912,
+            "update_at": 1792912081912,
+            "delete_at": 0,
+            "creator_id": "iooixtoosf8zuqfk6dzdbms4ye",
+            "name": "anchor-party"
+          },
+          {
+            "id": "wpohirgo4igubka9qe94imjr1e",
+            "create_at": 1792912081897,
+            "update_at": 1792912081897,
+            "delete_at": 0,
+            "creator_id": "iooixtoosf8zuqfk6dzdbms4ye",
+            "name": "lighthouse"
+          }
+        ]
+      }
+    },
+    "ebjo8jrrzfympe4d3p3rhsotgh": {
+      "id": "ebjo8jrrzfympe4d3p3rhsotgh",
+      "create_at": 1792912084735,
+      "update_at": 1792912084735,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "g13aadcbdpbqzc9jqtiatadqkw",
+      "channel_id": "met7ywe8ofr6ir3p4r4atdsm1r",
+      "root_id": "",
+      "original_id": "",
+      "message": "@alice can you swap Wednesday?",
+      "type": "",
+      "props": {},
+      "hashtags": "",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {}
+    },
+    "fuotk45e4pgbtc9w9zcq4zgigy": {
+      "id": "fuotk45e4pgbtc9w9zcq4zgigy",
+      "create_at": 1792912084696,
+      "update_at": 1792912084717,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": true,
+      "user_id": "g13aadcbdpbqzc9jqtiatadqkw",
+      "channel_id": "met7ywe8ofr6ir3p4r4atdsm1r",
+      "root_id": "",
+      "original_id": "",
+      "message": "On-call rotation: Mon alice · Tue bob · Wed alice · Thu bob · Fri alice",
+      "type": "",
+      "props": {},
+      "hashtags": "",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {}
+    },
+    "g3h6qh5ifj8ujyn1f71sygxrwy": {
+      "id": "g3h6qh5ifj8ujyn1f71sygxrwy",
+      "create_at": 1792912084657,
+      "update_at": 1792912084657,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "g13aadcbdpbqzc9jqtiatadqkw",
+      "channel_id": "rkth4k3s9tbjmradj7j1g6hq1c",
+      "root_id": "",
+      "original_id": "",
+      "message": "@alice summary of the thread is in the last reply",
+      "type": "",
+      "props": {},
+      "hashtags": "",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {}
+    },
+    "s96dzteqwp8xpfi1wgc15q6ezo": {
+      "id": "s96dzteqwp8xpfi1wgc15q6ezo",
+      "create_at": 1792912082215,
+      "update_at": 1792912082215,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "kequh3oab3f5jdiu6ozaxyeanh",
+      "channel_id": "rkth4k3s9tbjmradj7j1g6hq1c",
+      "root_id": "",
+      "original_id": "",
+      "message": "@alice the infra job failed again, see https://example.test/jobs/4711",
+      "type": "",
+      "props": {},
+      "hashtags": "",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {
+        "embeds": [
+          {
+            "type": "link",
+            "url": "https://example.test/jobs/4711"
+          }
+        ]
+      }
+    },
+    "zeyo7b11578z98ieghxi6yzhkc": {
+      "id": "zeyo7b11578z98ieghxi6yzhkc",
+      "create_at": 1792912084794,
+      "update_at": 1792912084794,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "g13aadcbdpbqzc9jqtiatadqkw",
+      "channel_id": "3kkmxn47utg3mx4a68izyje8ww",
+      "root_id": "",
+      "original_id": "",
+      "message": "@alice the new icon set is ready for review",
+      "type": "",
+      "props": {},
+      "hashtags": "",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {}
+    },
+    "ztsz41xnftne9dn5kzi447au5c": {
+      "id": "ztsz41xnftne9dn5kzi447au5c",
+      "create_at": 1792912084889,
+      "update_at": 1792912084889,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "mxfkdi8nkfdsmrf3grqupsde3y",
+      "channel_id": "un8q1mca6jgomqrj67zji5up7h",
+      "root_id": "",
+      "original_id": "",
+      "message": "@alice this one is about you :smile:",
+      "type": "",
+      "props": {},
+      "hashtags": "",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {}
+    }
+  },
+  "next_post_id": "",
+  "prev_post_id": "",
+  "first_inaccessible_post_time": 0,
+  "matches": null
+}

@@ -1,0 +1,121 @@
+{
+  "order": [
+    "btmshcf9sbgd8nc8n6fb84sgqc",
+    "66ik6n4ca3fdddggyxnzuf5bfe",
+    "p6t4yg4fitbu5n8owdjaurjyyy"
+  ],
+  "posts": {
+    "66ik6n4ca3fdddggyxnzuf5bfe": {
+      "id": "66ik6n4ca3fdddggyxnzuf5bfe",
+      "create_at": 1792912082098,
+      "update_at": 1792912082098,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "mhkm3wzstby7ixmftzjn8pscha",
+      "channel_id": "rkth4k3s9tbjmradj7j1g6hq1c",
+      "root_id": "",
+      "original_id": "",
+      "message": "# Release 1.2 notes\n\n## What changed\n- Faster channel switching\n- **Bold**, *italic*, ~~struck~~, `inline code` and a [link](https://example.test/notes)\n- Bare URL: https://example.test/changelog\n- Nested list\n  1. first\n  2. second\n\n## Checklist\n- [x] migrations\n- [ ] docs\n- [ ] announce in ~design\n\n> Ship it only when the checklist is done. — @bob\n\n| Area | Owner | Status |\n| --- | --- | --- |\n| API | @alice | done |\n| UI | @carol | in review |\n| Infra | @dave | blocked |\n\n```dart\nFuture<void> main() async {\n  final client = Client(baseUrl: Uri.parse('https://example.test'));\n  print(await client.ping());\n}\n```\n\nInline math $E = mc^2$ and a block:\n\n```latex\n\\int_0^1 x^2 \\, dx = \\frac{1}{3}\n```\n\nTags #release #v1-2 and emoji :tada: :anchor-party: :lighthouse:",
+      "type": "",
+      "props": {
+        "channel_mentions": {
+          "design": {
+            "display_name": "Design",
+            "team_name": "lighthouse"
+          }
+        }
+      },
+      "hashtags": "#release #v1-2",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {
+        "embeds": [
+          {
+            "type": "link",
+            "url": "https://example.test/changelog"
+          }
+        ],
+        "emojis": [
+          {
+            "id": "5nyyuoe3gi8e5y7w5e11k3d6da",
+            "create_at": 1792912081912,
+            "update_at": 1792912081912,
+            "delete_at": 0,
+            "creator_id": "iooixtoosf8zuqfk6dzdbms4ye",
+            "name": "anchor-party"
+          },
+          {
+            "id": "wpohirgo4igubka9qe94imjr1e",
+            "create_at": 1792912081897,
+            "update_at": 1792912081897,
+            "delete_at": 0,
+            "creator_id": "iooixtoosf8zuqfk6dzdbms4ye",
+            "name": "lighthouse"
+          }
+        ]
+      }
+    },
+    "btmshcf9sbgd8nc8n6fb84sgqc": {
+      "id": "btmshcf9sbgd8nc8n6fb84sgqc",
+      "create_at": 1792912084989,
+      "update_at": 1792912084989,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "g13aadcbdpbqzc9jqtiatadqkw",
+      "channel_id": "9a4or1dqdiddze476caisswjdy",
+      "root_id": "",
+      "original_id": "",
+      "message": "The release notes need a second pair of eyes.",
+      "type": "",
+      "props": {},
+      "hashtags": "",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {}
+    },
+    "p6t4yg4fitbu5n8owdjaurjyyy": {
+      "id": "p6t4yg4fitbu5n8owdjaurjyyy",
+      "create_at": 1792912081997,
+      "update_at": 1792912081997,
+      "edit_at": 0,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "iooixtoosf8zuqfk6dzdbms4ye",
+      "channel_id": "ujif5hg8hibdmjiafwrkof4xsh",
+      "root_id": "",
+      "original_id": "",
+      "message": "@channel Reminder: the release branch freezes on Friday. Open questions go to ~engineering.",
+      "type": "",
+      "props": {
+        "channel_mentions": {
+          "engineering": {
+            "display_name": "Engineering",
+            "team_name": "lighthouse"
+          }
+        }
+      },
+      "hashtags": "",
+      "file_ids": [],
+      "pending_post_id": "",
+      "remote_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {}
+    }
+  },
+  "next_post_id": "",
+  "prev_post_id": "",
+  "first_inaccessible_post_time": 0,
+  "matches": null
+}

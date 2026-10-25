@@ -1,0 +1,51 @@
+// coverage:ignore-file
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, unused_import, invalid_annotation_target, unnecessary_import
+
+import 'package:json_annotation/json_annotation.dart';
+
+import 'package:matterleast/api/json/lenient.dart';
+part 'api_v4_channels_request_body.g.dart';
+
+@JsonSerializable()
+class ApiV4ChannelsRequestBody {
+  const ApiV4ChannelsRequestBody({
+    required this.teamId,
+    required this.name,
+    required this.displayName,
+    required this.type,
+    this.purpose,
+    this.header,
+    this.managedCategoryName,
+    this.defaultCategoryName,
+  });
+
+  factory ApiV4ChannelsRequestBody.fromJson(Map<String, Object?> json) =>
+      _$ApiV4ChannelsRequestBodyFromJson(json);
+
+  @JsonKey(name: 'team_id')
+  final String teamId;
+
+  final String name;
+
+  @JsonKey(name: 'display_name')
+  final String displayName;
+
+  @LenientString()
+  final String? purpose;
+
+  @LenientString()
+  final String? header;
+
+  final String type;
+
+  @LenientString()
+  @JsonKey(name: 'managed_category_name')
+  final String? managedCategoryName;
+
+  @LenientString()
+  @JsonKey(name: 'default_category_name')
+  final String? defaultCategoryName;
+
+  Map<String, Object?> toJson() => _$ApiV4ChannelsRequestBodyToJson(this);
+}

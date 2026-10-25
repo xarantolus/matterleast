@@ -1,0 +1,149 @@
+[
+  {
+    "id": "mhkm3wzstby7ixmftzjn8pscha",
+    "create_at": 1792912076891,
+    "update_at": 1792919629447,
+    "delete_at": 0,
+    "username": "alice",
+    "auth_data": "",
+    "auth_service": "",
+    "email": "alice@example.test",
+    "nickname": "",
+    "first_name": "Alice",
+    "last_name": "Archer",
+    "position": "Backend",
+    "roles": "system_user",
+    "last_picture_update": 1792912077552,
+    "locale": "en",
+    "timezone": {
+      "automaticTimezone": "",
+      "manualTimezone": "",
+      "useAutomaticTimezone": "true"
+    },
+    "remote_id": "",
+    "disable_welcome_email": false
+  },
+  {
+    "id": "iooixtoosf8zuqfk6dzdbms4ye",
+    "create_at": 1792912076174,
+    "update_at": 1792912080353,
+    "delete_at": 0,
+    "username": "admin",
+    "auth_data": "",
+    "auth_service": "",
+    "email": "admin@example.test",
+    "nickname": "",
+    "first_name": "Ada",
+    "last_name": "Admin",
+    "position": "Keeper of the server",
+    "roles": "system_admin system_user",
+    "last_picture_update": 1792912076873,
+    "locale": "en",
+    "timezone": {
+      "automaticTimezone": "",
+      "manualTimezone": "",
+      "useAutomaticTimezone": "true"
+    },
+    "remote_id": "",
+    "disable_welcome_email": false
+  },
+  {
+    "id": "g13aadcbdpbqzc9jqtiatadqkw",
+    "create_at": 1792912077610,
+    "update_at": 1792912080780,
+    "delete_at": 0,
+    "username": "bob",
+    "auth_data": "",
+    "auth_service": "",
+    "email": "bob@example.test",
+    "nickname": "",
+    "first_name": "Bob",
+    "last_name": "Brook",
+    "position": "Design",
+    "roles": "system_user",
+    "last_picture_update": 1792912078273,
+    "locale": "en",
+    "timezone": {
+      "automaticTimezone": "",
+      "manualTimezone": "",
+      "useAutomaticTimezone": "true"
+    },
+    "remote_id": "",
+    "disable_welcome_email": false
+  },
+  {
+    "id": "etxffrwm9fbgida4ikqo4p4u8y",
+    "create_at": 1792912078293,
+    "update_at": 1792912080555,
+    "delete_at": 0,
+    "username": "carol",
+    "auth_data": "",
+    "auth_service": "",
+    "email": "carol@example.test",
+    "nickname": "",
+    "first_name": "Carol",
+    "last_name": "Cheng",
+    "position": "Mobile",
+    "roles": "system_user",
+    "last_picture_update": 1792912078935,
+    "locale": "en",
+    "timezone": {
+      "automaticTimezone": "",
+      "manualTimezone": "",
+      "useAutomaticTimezone": "true"
+    },
+    "remote_id": "",
+    "disable_welcome_email": false
+  },
+  {
+    "id": "kequh3oab3f5jdiu6ozaxyeanh",
+    "create_at": 1792912078951,
+    "update_at": 1792912091090,
+    "delete_at": 0,
+    "username": "dave",
+    "auth_data": "",
+    "auth_service": "",
+    "email": "dave@example.test",
+    "nickname": "",
+    "first_name": "Dave",
+    "last_name": "Duarte",
+    "position": "Ops",
+    "roles": "system_user",
+    "props": {
+      "customStatus": "{\"emoji\":\"palm_tree\",\"text\":\"On holiday until Monday\",\"duration\":\"\",\"expires_at\":\"0001-01-01T00:00:00Z\"}"
+    },
+    "last_picture_update": 1792912079596,
+    "locale": "en",
+    "timezone": {
+      "automaticTimezone": "",
+      "manualTimezone": "",
+      "useAutomaticTimezone": "true"
+    },
+    "remote_id": "",
+    "disable_welcome_email": false
+  },
+  {
+    "id": "mxfkdi8nkfdsmrf3grqupsde3y",
+    "create_at": 1792912079613,
+    "update_at": 1792912080670,
+    "delete_at": 0,
+    "username": "erin",
+    "auth_data": "",
+    "auth_service": "",
+    "email": "erin@example.test",
+    "nickname": "",
+    "first_name": "Erin",
+    "last_name": "Eide",
+    "position": "Support",
+    "roles": "system_user",
+    "last_picture_update": 1792912080252,
+    "locale": "en",
+    "timezone": {
+      "automaticTimezone": "",
+      "manualTimezone": "",
+      "useAutomaticTimezone": "true"
+    },
+    "remote_id": "",
+    "disable_welcome_email": false
+  }
+]

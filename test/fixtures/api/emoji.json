@@ -1,0 +1,18 @@
+[
+  {
+    "id": "5nyyuoe3gi8e5y7w5e11k3d6da",
+    "create_at": 1792912081912,
+    "update_at": 1792912081912,
+    "delete_at": 0,
+    "creator_id": "iooixtoosf8zuqfk6dzdbms4ye",
+    "name": "anchor-party"
+  },
+  {
+    "id": "wpohirgo4igubka9qe94imjr1e",
+    "create_at": 1792912081897,
+    "update_at": 1792912081897,
+    "delete_at": 0,
+    "creator_id": "iooixtoosf8zuqfk6dzdbms4ye",
+    "name": "lighthouse"
+  }
+]
