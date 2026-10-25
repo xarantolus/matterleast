@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 
 /// The long-press sheet of a channel row.
@@ -57,6 +60,22 @@ class _ChannelActionsSheet extends ConsumerWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Channel info'),
+            onTap: () {
+              final navigator = Navigator.of(context);
+              navigator.pop();
+              unawaited(
+                navigator.push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        ChannelInfoScreen(url: url, channelId: item.id),
+                  ),
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.mark_chat_read_outlined),

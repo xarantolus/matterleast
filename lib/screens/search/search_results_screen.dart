@@ -12,6 +12,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/progress_slot.dart';
@@ -436,7 +437,7 @@ class _MessageResults extends ConsumerWidget {
           : null,
     );
     return switch (view) {
-      SearchLoading() => const _Scrollable(
+      SearchLoading() => const FillScrollable(
         child: Center(child: CircularProgressIndicator()),
       ),
       SearchEmpty() => _NoResults(query: query),
@@ -528,7 +529,7 @@ class _FileResults extends ConsumerWidget {
     );
     final bottom = MediaQuery.paddingOf(context).bottom;
     return switch (view) {
-      SearchLoading() => const _Scrollable(
+      SearchLoading() => const FillScrollable(
         child: Center(child: CircularProgressIndicator()),
       ),
       SearchEmpty() => _NoResults(query: query),
@@ -631,28 +632,13 @@ IconData fileIcon(String mimeType, String extension) {
   return Icons.description_outlined;
 }
 
-/// Keeps pull to refresh working when the content is not a list.
-class _Scrollable extends StatelessWidget {
-  const _Scrollable({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      child: SizedBox(height: constraints.maxHeight, child: child),
-    ),
-  );
-}
-
 class _NoResults extends StatelessWidget {
   const _NoResults({required this.query});
 
   final String query;
 
   @override
-  Widget build(BuildContext context) => _Scrollable(
+  Widget build(BuildContext context) => FillScrollable(
     child: EmptyState(
       icon: Icons.search_off,
       title: query.isEmpty ? 'No results' : 'No results for "$query"',
@@ -670,7 +656,7 @@ class _Failed extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => _Scrollable(
+  Widget build(BuildContext context) => FillScrollable(
     child: EmptyState(
       icon: Icons.cloud_off,
       title: "Couldn't search",

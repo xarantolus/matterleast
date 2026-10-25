@@ -25,6 +25,7 @@ class PresencePoller {
   static const maxIds = 200;
 
   Timer? _timer;
+  final _shown = <String, int>{};
 
   ServerDatabase get _db => store.db;
 
@@ -37,6 +38,29 @@ class PresencePoller {
   void stop() {
     _timer?.cancel();
     _timer = null;
+  }
+
+  /// Also polls [ids], such as the people a list shows, until the returned
+  /// function is called.
+  void Function() show(Iterable<String> ids) {
+    final added = ids.toSet();
+    var fresh = false;
+    for (final id in added) {
+      final count = (_shown[id] ?? 0) + 1;
+      _shown[id] = count;
+      if (count == 1) fresh = true;
+    }
+    if (fresh && _timer != null) _poll();
+    return () {
+      for (final id in added) {
+        final count = (_shown[id] ?? 1) - 1;
+        if (count <= 0) {
+          _shown.remove(id);
+        } else {
+          _shown[id] = count;
+        }
+      }
+    };
   }
 
   void _poll() => unawaited(
@@ -74,7 +98,11 @@ class PresencePoller {
     final direct = await (_db.select(
       _db.channels,
     )..where((c) => c.type.equals('D'))).get();
-    final ids = {me, for (final c in direct) ?directPartnerId(c.name, me)};
+    final ids = {
+      me,
+      for (final c in direct) ?directPartnerId(c.name, me),
+      ..._shown.keys,
+    };
     return ids.take(maxIds).toList();
   }
 }

@@ -24,6 +24,13 @@ abstract final class SyncKeys {
   /// When a post list (`mentions`, `saved`, `threads`) was last fetched.
   static String listFetchedAt(String list) => 'list_fetched_at:$list';
 
+  /// The signed-in user's system roles, space-separated as the server sends
+  /// them.
+  static const currentUserRoles = 'current_user_roles';
+
+  /// The signed-in user's account notification settings, as JSON.
+  static const accountNotifyProps = 'account_notify_props';
+
   /// The channel the user last opened in a team.
   static String lastChannel(String teamId) => 'last_channel:$teamId';
 }

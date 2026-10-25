@@ -56,6 +56,15 @@ class ServerStore {
   Future<void> applyMe(api.User me) => db.transaction(() async {
     await db.into(db.users).insertOnConflictUpdate(userCompanion(me));
     await db.setSyncText(SyncKeys.currentUserId, me.id);
+    if (me.roles case final roles?) {
+      await db.setSyncText(SyncKeys.currentUserRoles, roles);
+    }
+    if (me.notifyProps case final props?) {
+      await db.setSyncText(
+        SyncKeys.accountNotifyProps,
+        jsonEncode(props.toJson()),
+      );
+    }
     if (me.username case final username? when username.isNotEmpty) {
       await db.setSyncText(
         SyncKeys.mentionTerms,
@@ -68,6 +77,12 @@ class ServerStore {
       );
     }
   });
+
+  /// A user's props as JSON, such as their custom status changed here.
+  Future<void> applyUserProps(String userId, String? json) =>
+      (db.update(db.users)..where((u) => u.id.equals(userId))).write(
+        UsersCompanion(propsJson: Value(json)),
+      );
 
   Future<void> applyUsers(Iterable<api.User> users) => db.batch((b) {
     b.insertAllOnConflictUpdate(db.users, [

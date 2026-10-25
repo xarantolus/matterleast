@@ -289,3 +289,6 @@ actions:
   # --- presence (M5): the DND end is in seconds (app/status.go SetStatusDoNotDisturbTimed) ---
   - target: "$.paths['/api/v4/users/{user_id}/status'].put.requestBody.content['application/json'].schema.properties.dnd_end_time"
     update: {x-unix-seconds: true}
+  # --- channel management (M5): with user_ids present (even empty) the server answers a list, not the member ---
+  - target: "$.paths['/api/v4/channels/{channel_id}/members'].post.requestBody.content['application/json'].schema.properties.user_ids"
+    remove: true

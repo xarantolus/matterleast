@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/screens/channel_info/browse_channels_screen.dart';
+import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
@@ -54,8 +56,40 @@ class QuickSearchAnchor extends ConsumerWidget {
       target: target,
       onOpen: (item) => _open(context, ref, item),
       onSearch: (text) => _searchMessages(context, text),
+      startActions: [
+        if (target case final target?) ...[
+          ListTile(
+            leading: const SizedBox(
+              width: 40,
+              child: Icon(Icons.travel_explore),
+            ),
+            title: const Text('Browse channels'),
+            onTap: () => _push(
+              context,
+              BrowseChannelsScreen(url: target.url, teamId: target.teamId),
+            ),
+          ),
+          ListTile(
+            leading: const SizedBox(
+              width: 40,
+              child: Icon(Icons.edit_outlined),
+            ),
+            title: const Text('New message'),
+            onTap: () => _push(
+              context,
+              newMessageScreen(url: target.url, teamId: target.teamId),
+            ),
+          ),
+        ],
+      ],
     ),
   );
+
+  void _push(BuildContext context, Widget screen) {
+    final navigator = Navigator.of(context);
+    controller.closeView('');
+    unawaited(navigator.push(MaterialPageRoute<void>(builder: (_) => screen)));
+  }
 
   void _searchMessages(BuildContext context, String text) {
     final target = this.target;
@@ -320,12 +354,16 @@ class SwitchTile extends StatelessWidget {
     required this.item,
     required this.onTap,
     this.serverName,
+    this.trailing,
     super.key,
   });
 
   final SwitchItem item;
   final VoidCallback onTap;
   final String? serverName;
+
+  /// Replaces the unread badge, such as a checkbox in a picker.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -354,11 +392,13 @@ class SwitchTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(color: tokens.muted),
             ),
-      trailing: item.mentions > 0
-          ? Badge.count(count: item.mentions)
-          : strong
-          ? Badge(smallSize: 10, backgroundColor: tokens.unread)
-          : null,
+      trailing:
+          trailing ??
+          (item.mentions > 0
+              ? Badge.count(count: item.mentions)
+              : strong
+              ? Badge(smallSize: 10, backgroundColor: tokens.unread)
+              : null),
     );
   }
 

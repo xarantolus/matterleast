@@ -228,6 +228,125 @@ class ChannelActions {
     );
   }
 
+  /// Creates a channel in [teamId] and returns its id.
+  Future<String> create({
+    required String teamId,
+    required String displayName,
+    required String name,
+    required bool private,
+    String purpose = '',
+    String header = '',
+  }) async {
+    final channel = await session.api.call(
+      () => _client.channels.createChannel(
+        body: api.ApiV4ChannelsRequestBody(
+          teamId: teamId,
+          name: name,
+          displayName: displayName,
+          purpose: purpose,
+          header: header,
+          type: private ? 'P' : 'O',
+        ),
+      ),
+    );
+    await _storeJoined(channel);
+    return channel.id!;
+  }
+
+  /// Changes a channel's name, purpose or header; null leaves one as is.
+  Future<void> patch(
+    String channelId, {
+    String? displayName,
+    String? purpose,
+    String? header,
+  }) async {
+    final channel = await session.api.call(
+      () => _client.channels.patchChannel(
+        channelId: channelId,
+        body: api.ApiV4ChannelsChannelIdPatchRequestBody(
+          displayName: displayName,
+          purpose: purpose,
+          header: header,
+        ),
+      ),
+    );
+    await session.store.applyChannel(channel);
+  }
+
+  Future<void> archive(String channelId) async {
+    await session.api.call(
+      () => _client.channels.deleteChannel(channelId: channelId),
+    );
+    await session.store.applyChannelArchived(channelId, _clock());
+  }
+
+  /// Adds people one request each, as the official app does; the first
+  /// failure is thrown once all have finished.
+  Future<void> addMembers(String channelId, List<String> userIds) async {
+    try {
+      await Future.wait([
+        for (final userId in userIds)
+          session.api.call(
+            () => _client.channels.addChannelMember(
+              channelId: channelId,
+              body: api.ApiV4ChannelsChannelIdMembersRequestBody(
+                userId: userId,
+              ),
+            ),
+          ),
+      ]);
+    } finally {
+      await refreshStats(channelId);
+    }
+  }
+
+  /// The channel's member, pinned and file counts; the member count is
+  /// stored.
+  Future<api.ChannelStats> refreshStats(String channelId) =>
+      session.api.coalesced('stats:$channelId', () async {
+        final stats = await session.api.call(
+          () => _client.channels.getChannelStats(channelId: channelId),
+        );
+        if (stats.memberCount case final count?) {
+          await session.store.applyChannelStats(channelId, count);
+        }
+        return stats;
+      });
+
+  /// The channel's pinned messages, stored as the list
+  /// `pinned:<channel>`.
+  Future<void> refreshPinned(String channelId) =>
+      session.api.coalesced('pinned:$channelId', () async {
+        final page = await session.api.call(
+          () => _client.channels.getPinnedPosts(channelId: channelId),
+        );
+        final authors = {
+          for (final p in (page.posts ?? const <String, api.Post>{}).values)
+            ?p.userId,
+        };
+        final known = {
+          for (final u in await (_db.select(
+            _db.users,
+          )..where((u) => u.id.isIn(authors))).get())
+            u.id,
+        };
+        final missing = authors.difference(known).toList();
+        if (missing.isNotEmpty) {
+          await session.store.applyUsers(
+            await session.api.call(
+              () => _client.users.getUsersByIds(body: missing),
+            ),
+          );
+        }
+        await session.store.applyPostList(
+          pinnedList(channelId),
+          page,
+          fetchedAt: _clock(),
+        );
+      });
+
+  static String pinnedList(String channelId) => 'pinned:$channelId';
+
   Future<String> _myId() async {
     final me = await _db.syncText(SyncKeys.currentUserId);
     if (me == null) throw StateError('No signed-in user');

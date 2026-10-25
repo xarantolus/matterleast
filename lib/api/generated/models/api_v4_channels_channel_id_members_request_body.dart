@@ -10,7 +10,6 @@ part 'api_v4_channels_channel_id_members_request_body.g.dart';
 @JsonSerializable()
 class ApiV4ChannelsChannelIdMembersRequestBody {
   const ApiV4ChannelsChannelIdMembersRequestBody({
-    this.userIds = const [],
     this.userId,
     this.postRootId,
   });
@@ -22,10 +21,6 @@ class ApiV4ChannelsChannelIdMembersRequestBody {
   @LenientString()
   @JsonKey(name: 'user_id')
   final String? userId;
-
-  @LenientStringList()
-  @JsonKey(name: 'user_ids')
-  final List<String> userIds;
 
   @LenientString()
   @JsonKey(name: 'post_root_id')

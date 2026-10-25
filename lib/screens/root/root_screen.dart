@@ -4,6 +4,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/screens/channel_info/browse_channels_screen.dart';
+import 'package:matterleast/screens/channel_info/channel_providers.dart';
+import 'package:matterleast/screens/channel_info/edit_channel_screen.dart';
+import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/channel_list/channel_list_pane.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/home/home_pane.dart';
@@ -93,7 +97,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           servers: servers,
           target: teamId == null ? null : (url: server.url, teamId: teamId),
         ),
-        const _NewMenu(),
+        if (teamId != null) _NewMenu(url: server.url, teamId: teamId),
       ],
       pane: teamId == null && state is! ChannelListFailed
           ? const Center(child: CircularProgressIndicator())
@@ -158,32 +162,46 @@ class _RootLayout extends ConsumerWidget {
   );
 }
 
-/// Starting points for new conversations; they arrive with channel
-/// management.
-class _NewMenu extends StatelessWidget {
-  const _NewMenu();
+/// Starting points for new channels and conversations in the shown team.
+class _NewMenu extends ConsumerWidget {
+  const _NewMenu({required this.url, required this.teamId});
+
+  final String url;
+  final String teamId;
 
   @override
-  Widget build(BuildContext context) => MenuAnchor(
-    menuChildren: const [
-      MenuItemButton(
-        leadingIcon: Icon(Icons.travel_explore),
-        child: Text('Browse channels'),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rights = ref.watch(teamRightsProvider(url, teamId)).value;
+    void open(Widget screen) =>
+        Navigator.of(context)
+            .push(MaterialPageRoute<void>(builder: (_) => screen));
+    return MenuAnchor(
+      menuChildren: [
+        if (rights?.join ?? true)
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.travel_explore),
+            onPressed: () =>
+                open(BrowseChannelsScreen(url: url, teamId: teamId)),
+            child: const Text('Browse channels'),
+          ),
+        if ((rights?.public ?? true) || (rights?.private ?? true))
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.add_circle_outline),
+            onPressed: () => open(EditChannelScreen(url: url, teamId: teamId)),
+            child: const Text('Create channel'),
+          ),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.edit_outlined),
+          onPressed: () => open(newMessageScreen(url: url, teamId: teamId)),
+          child: const Text('New message'),
+        ),
+      ],
+      builder: (context, controller, _) => IconButton(
+        tooltip: 'New',
+        icon: const Icon(Icons.add),
+        onPressed: () =>
+            controller.isOpen ? controller.close() : controller.open(),
       ),
-      MenuItemButton(
-        leadingIcon: Icon(Icons.add_circle_outline),
-        child: Text('Create channel'),
-      ),
-      MenuItemButton(
-        leadingIcon: Icon(Icons.edit_outlined),
-        child: Text('New message'),
-      ),
-    ],
-    builder: (context, controller, _) => IconButton(
-      tooltip: 'New',
-      icon: const Icon(Icons.add),
-      onPressed: () =>
-          controller.isOpen ? controller.close() : controller.open(),
-    ),
-  );
+    );
+  }
 }
