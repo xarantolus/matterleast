@@ -69,3 +69,4 @@ setup-specific-guide.md
 !.devcontainer/*.sh
 !.devcontainer/server/*.sh
 !tool/*.sh
+node_modules/

@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "Dev-only: writes the expected parse trees for test/fixtures/markdown from Mattermost's commonmark fork.",
+  "type": "module",
+  "dependencies": {
+    "@mattermost/commonmark": "0.31.2-0"
+  }
+}
