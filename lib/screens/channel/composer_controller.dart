@@ -316,6 +316,22 @@ class ComposerDraft extends _$ComposerDraft {
     );
   }
 
+  /// Puts [insert] at the cursor, e.g. an emoji from the picker.
+  void insert(String insert) {
+    final value = state.text;
+    final selection = value.selection.isValid
+        ? value.selection
+        : TextSelection.collapsed(offset: value.text.length);
+    changed(
+      TextEditingValue(
+        text: value.text.replaceRange(selection.start, selection.end, insert),
+        selection: TextSelection.collapsed(
+          offset: selection.start + insert.length,
+        ),
+      ),
+    );
+  }
+
   void startEditing(PostItem post) {
     _draftWhileEditing ??= state.text;
     state = ComposerValue(

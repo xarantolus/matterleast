@@ -67,7 +67,7 @@ final class ComposerDraftProvider
   }
 }
 
-String _$composerDraftHash() => r'b37453c9bdd0183f64d98c46c0d41698ff25d965';
+String _$composerDraftHash() => r'57387a58e28913216f5f0589c9bc977ea1f23b3b';
 
 /// The composer of one conversation. Lives as long as the conversation is
 /// on screen, so rebuilds and the drawer keep what was typed; the draft

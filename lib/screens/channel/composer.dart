@@ -13,11 +13,13 @@ import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
+import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/ui/custom_emoji_image.dart';
+import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -261,6 +263,11 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                       keyboardType: TextInputType.multiline,
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
+                        suffixIcon: IconButton(
+                          tooltip: 'Emoji',
+                          onPressed: _pickEmoji,
+                          icon: const Icon(Icons.mood),
+                        ),
                         hintText: widget.hint,
                         filled: true,
                         isDense: true,
@@ -296,6 +303,15 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickEmoji() async {
+    final draft = ref.read(_provider.notifier);
+    final name = await showEmojiPicker(context, widget.url);
+    if (name == null) return;
+    final unicode = unicodeForName(name);
+    draft.insert(unicode ?? ':$name: ');
+    _focus.requestFocus();
   }
 
   Future<void> _pickPriority(bool acknowledgements) async {
