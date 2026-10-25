@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
@@ -32,10 +33,19 @@ class ChannelScreen extends ConsumerWidget {
       highlightPostId: highlightPostId,
     );
     final state = ref.watch(conversation);
+    final window = state.window;
+    final name = switch (window) {
+      ConversationWindow(:final channelName, :final channelType)
+          when channelName.isNotEmpty &&
+              channelType != 'D' &&
+              channelType != 'G' =>
+        channelName,
+      _ => title,
+    };
     return Scaffold(
       appBar: AppBar(
         title: ConversationTitle(
-          title: title,
+          title: name,
           subtitle: conversationSubtitle(state),
         ),
         bottom: ProgressSlot(
@@ -47,14 +57,14 @@ class ChannelScreen extends ConsumerWidget {
         child: ConversationView(
           url: url,
           conversation: conversation,
-          startText: 'This is the start of $title.',
+          startText: 'This is the start of $name.',
           onOpenThread: (post) => Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => ThreadScreen(
                 url: url,
                 channelId: channelId,
                 rootId: post.id,
-                channelName: title,
+                channelName: name,
               ),
             ),
           ),

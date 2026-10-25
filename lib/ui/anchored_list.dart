@@ -140,11 +140,16 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     if (identical(old.rows, widget.rows)) return;
     final oldIndex = _indexOf;
     final oldNewest = old.rows.isEmpty ? null : old.keyOf(old.rows.first);
-    final wasPinned = _anchor == oldNewest && _isPinned();
+    final idle =
+        !_scroll.hasClients || !_scroll.position.isScrollingNotifier.value;
+    final wasPinned = idle && _isPinned();
     _indexRows();
     if (wasPinned || _anchor == null) {
-      // New rows enter at the bottom: the newest row becomes the anchor and
-      // the offset stays, so the list lifts.
+      // New rows enter at the bottom: the newest row becomes the anchor at
+      // the bottom edge, so the list lifts.
+      if (_anchor != oldNewest && _scroll.hasClients) {
+        _scroll.position.correctPixels(0);
+      }
       _anchor = _newestKey;
     } else if (!_indexOf.containsKey(_anchor)) {
       _anchor = _survivor(old.rows, old.keyOf, oldIndex);
@@ -187,7 +192,10 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
   bool _isPinned() {
     if (!_scroll.hasClients) return true;
     final p = _scroll.position;
-    return p.pixels - p.minScrollExtent <= pinTolerance;
+    // With the newest row anchored the bottom is offset 0, whatever extent
+    // the emptied newer side still reports.
+    final bottom = _anchorIndex == 0 ? 0.0 : p.minScrollExtent;
+    return p.pixels - bottom <= pinTolerance;
   }
 
   int get _anchorIndex => _indexOf[_anchor] ?? 0;
@@ -340,12 +348,22 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
         }
       });
     }
-    _report();
+    // Notifications can come in the middle of a layout, when rows can't be
+    // measured yet.
+    _scheduleReport();
     return false;
   }
 
-  void _scheduleReport() =>
-      WidgetsBinding.instance.addPostFrameCallback((_) => _report());
+  var _reportScheduled = false;
+
+  void _scheduleReport() {
+    if (_reportScheduled) return;
+    _reportScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _reportScheduled = false;
+      _report();
+    });
+  }
 
   void _report() {
     if (!mounted || !_scroll.hasClients) return;
@@ -368,7 +386,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       oldest = oldest == null ? index : math.max(oldest, index);
     }
     final view = AnchoredListView(
-      pinned: _anchorIndex == 0 && _isPinned(),
+      pinned: _isPinned(),
       nearOlderEnd: p.maxScrollExtent - p.pixels < p.viewportDimension * 1.5,
       newestVisible: newest,
       oldestVisible: oldest,

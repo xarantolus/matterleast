@@ -57,6 +57,10 @@ abstract class ConversationWindow with _$ConversationWindow {
     /// The thread's first message.
     PostItem? root,
     @Default('') String channelName,
+
+    /// `O`, `P`, `D` or `G`; direct and group messages are named after
+    /// people, not by [channelName].
+    @Default('') String channelType,
     @Default('') String teamId,
     int? memberCount,
   }) = _ConversationWindow;

@@ -77,6 +77,7 @@ class ConversationViews {
         : rangeContaining(ranges, rangeAt) ?? newest;
     final header = (
       channelName: channel?.displayName ?? '',
+      channelType: channel?.type ?? '',
       teamId: channel?.teamId ?? '',
       memberCount: channel?.memberCount,
     );
@@ -85,6 +86,7 @@ class ConversationViews {
         posts: const [],
         loaded: false,
         channelName: header.channelName,
+        channelType: header.channelType,
         teamId: header.teamId,
         memberCount: header.memberCount,
       );
@@ -128,6 +130,7 @@ class ConversationViews {
       moreStored: rows.length > window,
       newerApart: newest != null && newest.latest.isAfter(range.latest),
       channelName: header.channelName,
+      channelType: header.channelType,
       teamId: header.teamId,
       memberCount: header.memberCount,
     );

@@ -334,7 +334,9 @@ mixin _$ConversationWindow {
  bool get reachesStart;/// Older stored messages exist beyond [posts].
  bool get moreStored;/// Newer messages are stored apart from these, after a gap.
  bool get newerApart;/// The thread's first message.
- PostItem? get root; String get channelName; String get teamId; int? get memberCount;
+ PostItem? get root; String get channelName;/// `O`, `P`, `D` or `G`; direct and group messages are named after
+/// people, not by [channelName].
+ String get channelType; String get teamId; int? get memberCount;
 /// Create a copy of ConversationWindow
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -346,20 +348,20 @@ $ConversationWindowCopyWith<ConversationWindow> get copyWith => _$ConversationWi
 @override
 bool operator ==(Object other) {
   final _this = this as ConversationWindow;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationWindow&&const DeepCollectionEquality().equals(other.posts, _this.posts)&&(identical(other.loaded, _this.loaded) || other.loaded == _this.loaded)&&(identical(other.reachesStart, _this.reachesStart) || other.reachesStart == _this.reachesStart)&&(identical(other.moreStored, _this.moreStored) || other.moreStored == _this.moreStored)&&(identical(other.newerApart, _this.newerApart) || other.newerApart == _this.newerApart)&&(identical(other.root, _this.root) || other.root == _this.root)&&(identical(other.channelName, _this.channelName) || other.channelName == _this.channelName)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationWindow&&const DeepCollectionEquality().equals(other.posts, _this.posts)&&(identical(other.loaded, _this.loaded) || other.loaded == _this.loaded)&&(identical(other.reachesStart, _this.reachesStart) || other.reachesStart == _this.reachesStart)&&(identical(other.moreStored, _this.moreStored) || other.moreStored == _this.moreStored)&&(identical(other.newerApart, _this.newerApart) || other.newerApart == _this.newerApart)&&(identical(other.root, _this.root) || other.root == _this.root)&&(identical(other.channelName, _this.channelName) || other.channelName == _this.channelName)&&(identical(other.channelType, _this.channelType) || other.channelType == _this.channelType)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ConversationWindow;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.posts),_this.loaded,_this.reachesStart,_this.moreStored,_this.newerApart,_this.root,_this.channelName,_this.teamId,_this.memberCount);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.posts),_this.loaded,_this.reachesStart,_this.moreStored,_this.newerApart,_this.root,_this.channelName,_this.channelType,_this.teamId,_this.memberCount);
 }
 
 @override
 String toString() {
   final _this = this as ConversationWindow;
-  return 'ConversationWindow(posts: ${_this.posts}, loaded: ${_this.loaded}, reachesStart: ${_this.reachesStart}, moreStored: ${_this.moreStored}, newerApart: ${_this.newerApart}, root: ${_this.root}, channelName: ${_this.channelName}, teamId: ${_this.teamId}, memberCount: ${_this.memberCount})';
+  return 'ConversationWindow(posts: ${_this.posts}, loaded: ${_this.loaded}, reachesStart: ${_this.reachesStart}, moreStored: ${_this.moreStored}, newerApart: ${_this.newerApart}, root: ${_this.root}, channelName: ${_this.channelName}, channelType: ${_this.channelType}, teamId: ${_this.teamId}, memberCount: ${_this.memberCount})';
 }
 
 
@@ -370,7 +372,7 @@ abstract mixin class $ConversationWindowCopyWith<$Res>  {
   factory $ConversationWindowCopyWith(ConversationWindow value, $Res Function(ConversationWindow) _then) = _$ConversationWindowCopyWithImpl;
 @useResult
 $Res call({
- List<PostItem> posts, bool loaded, bool reachesStart, bool moreStored, bool newerApart, PostItem? root, String channelName, String teamId, int? memberCount
+ List<PostItem> posts, bool loaded, bool reachesStart, bool moreStored, bool newerApart, PostItem? root, String channelName, String channelType, String teamId, int? memberCount
 });
 
 
@@ -387,7 +389,7 @@ class _$ConversationWindowCopyWithImpl<$Res>
 
 /// Create a copy of ConversationWindow
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? posts = null,Object? loaded = null,Object? reachesStart = null,Object? moreStored = null,Object? newerApart = null,Object? root = freezed,Object? channelName = null,Object? teamId = null,Object? memberCount = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? posts = null,Object? loaded = null,Object? reachesStart = null,Object? moreStored = null,Object? newerApart = null,Object? root = freezed,Object? channelName = null,Object? channelType = null,Object? teamId = null,Object? memberCount = freezed,}) {
   return _then(ConversationWindow(
 posts: null == posts ? _self.posts : posts // ignore: cast_nullable_to_non_nullable
 as List<PostItem>,loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
@@ -396,6 +398,7 @@ as bool,moreStored: null == moreStored ? _self.moreStored : moreStored // ignore
 as bool,newerApart: null == newerApart ? _self.newerApart : newerApart // ignore: cast_nullable_to_non_nullable
 as bool,root: freezed == root ? _self.root : root // ignore: cast_nullable_to_non_nullable
 as PostItem?,channelName: null == channelName ? _self.channelName : channelName // ignore: cast_nullable_to_non_nullable
+as String,channelType: null == channelType ? _self.channelType : channelType // ignore: cast_nullable_to_non_nullable
 as String,teamId: null == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String,memberCount: freezed == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int?,
@@ -495,10 +498,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String teamId,  int? memberCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String channelType,  String teamId,  int? memberCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ConversationWindow() when $default != null:
-return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.teamId,_that.memberCount);case _:
+return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.channelType,_that.teamId,_that.memberCount);case _:
   return orElse();
 
 }
@@ -516,10 +519,10 @@ return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String teamId,  int? memberCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String channelType,  String teamId,  int? memberCount)  $default,) {final _that = this;
 switch (_that) {
 case _ConversationWindow():
-return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.teamId,_that.memberCount);case _:
+return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.channelType,_that.teamId,_that.memberCount);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -536,10 +539,10 @@ return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String teamId,  int? memberCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String channelType,  String teamId,  int? memberCount)?  $default,) {final _that = this;
 switch (_that) {
 case _ConversationWindow() when $default != null:
-return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.teamId,_that.memberCount);case _:
+return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.channelType,_that.teamId,_that.memberCount);case _:
   return null;
 
 }
@@ -551,7 +554,7 @@ return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_th
 
 
 class _ConversationWindow implements ConversationWindow {
-  const _ConversationWindow({required  List<PostItem> posts, required this.loaded, this.reachesStart = false, this.moreStored = false, this.newerApart = false, this.root, this.channelName = '', this.teamId = '', this.memberCount}): _posts = posts;
+  const _ConversationWindow({required  List<PostItem> posts, required this.loaded, this.reachesStart = false, this.moreStored = false, this.newerApart = false, this.root, this.channelName = '', this.channelType = '', this.teamId = '', this.memberCount}): _posts = posts;
   
 
 /// Newest first; replies only, for a thread.
@@ -574,6 +577,9 @@ class _ConversationWindow implements ConversationWindow {
 /// The thread's first message.
 @override final  PostItem? root;
 @override@JsonKey() final  String channelName;
+/// `O`, `P`, `D` or `G`; direct and group messages are named after
+/// people, not by [channelName].
+@override@JsonKey() final  String channelType;
 @override@JsonKey() final  String teamId;
 @override final  int? memberCount;
 
@@ -587,18 +593,18 @@ _$ConversationWindowCopyWith<_ConversationWindow> get copyWith => __$Conversatio
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConversationWindow&&const DeepCollectionEquality().equals(other.posts, _posts)&&(identical(other.loaded, loaded) || other.loaded == loaded)&&(identical(other.reachesStart, reachesStart) || other.reachesStart == reachesStart)&&(identical(other.moreStored, moreStored) || other.moreStored == moreStored)&&(identical(other.newerApart, newerApart) || other.newerApart == newerApart)&&(identical(other.root, root) || other.root == root)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConversationWindow&&const DeepCollectionEquality().equals(other.posts, _posts)&&(identical(other.loaded, loaded) || other.loaded == loaded)&&(identical(other.reachesStart, reachesStart) || other.reachesStart == reachesStart)&&(identical(other.moreStored, moreStored) || other.moreStored == moreStored)&&(identical(other.newerApart, newerApart) || other.newerApart == newerApart)&&(identical(other.root, root) || other.root == root)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.channelType, channelType) || other.channelType == channelType)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_posts),loaded,reachesStart,moreStored,newerApart,root,channelName,teamId,memberCount);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_posts),loaded,reachesStart,moreStored,newerApart,root,channelName,channelType,teamId,memberCount);
 }
 
 @override
 String toString() {
-    return 'ConversationWindow(posts: $posts, loaded: $loaded, reachesStart: $reachesStart, moreStored: $moreStored, newerApart: $newerApart, root: $root, channelName: $channelName, teamId: $teamId, memberCount: $memberCount)';
+    return 'ConversationWindow(posts: $posts, loaded: $loaded, reachesStart: $reachesStart, moreStored: $moreStored, newerApart: $newerApart, root: $root, channelName: $channelName, channelType: $channelType, teamId: $teamId, memberCount: $memberCount)';
 }
 
 
@@ -609,7 +615,7 @@ abstract mixin class _$ConversationWindowCopyWith<$Res> implements $Conversation
   factory _$ConversationWindowCopyWith(_ConversationWindow value, $Res Function(_ConversationWindow) _then) = __$ConversationWindowCopyWithImpl;
 @override @useResult
 $Res call({
- List<PostItem> posts, bool loaded, bool reachesStart, bool moreStored, bool newerApart, PostItem? root, String channelName, String teamId, int? memberCount
+ List<PostItem> posts, bool loaded, bool reachesStart, bool moreStored, bool newerApart, PostItem? root, String channelName, String channelType, String teamId, int? memberCount
 });
 
 
@@ -626,7 +632,7 @@ class __$ConversationWindowCopyWithImpl<$Res>
 
 /// Create a copy of ConversationWindow
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? posts = null,Object? loaded = null,Object? reachesStart = null,Object? moreStored = null,Object? newerApart = null,Object? root = freezed,Object? channelName = null,Object? teamId = null,Object? memberCount = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? posts = null,Object? loaded = null,Object? reachesStart = null,Object? moreStored = null,Object? newerApart = null,Object? root = freezed,Object? channelName = null,Object? channelType = null,Object? teamId = null,Object? memberCount = freezed,}) {
   return _then(_ConversationWindow(
 posts: null == posts ? _self._posts : posts // ignore: cast_nullable_to_non_nullable
 as List<PostItem>,loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
@@ -635,6 +641,7 @@ as bool,moreStored: null == moreStored ? _self.moreStored : moreStored // ignore
 as bool,newerApart: null == newerApart ? _self.newerApart : newerApart // ignore: cast_nullable_to_non_nullable
 as bool,root: freezed == root ? _self.root : root // ignore: cast_nullable_to_non_nullable
 as PostItem?,channelName: null == channelName ? _self.channelName : channelName // ignore: cast_nullable_to_non_nullable
+as String,channelType: null == channelType ? _self.channelType : channelType // ignore: cast_nullable_to_non_nullable
 as String,teamId: null == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String,memberCount: freezed == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int?,
