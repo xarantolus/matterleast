@@ -19,4 +19,5 @@ Me meOf(UserRow row) => Me(
   lastName: row.lastName,
   nickname: row.nickname,
   status: row.status,
+  lastPictureUpdate: row.lastPictureUpdate,
 );

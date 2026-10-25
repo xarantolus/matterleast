@@ -135,10 +135,11 @@ class InboxViews {
         if (c.input.type == 'D')
           for (final id in c.input.name.split('__')) id,
     };
+    final users = await (db.select(
+      db.users,
+    )..where((u) => u.id.isIn(peopleIds))).get();
     final people = {
-      for (final u in await (db.select(
-        db.users,
-      )..where((u) => u.id.isIn(peopleIds))).get())
+      for (final u in users)
         u.id: (
           username: u.username,
           firstName: u.firstName,
@@ -147,6 +148,7 @@ class InboxViews {
           status: u.status,
         ),
     };
+    final pictureUpdates = {for (final u in users) u.id: ?u.lastPictureUpdate};
     final teams = {
       for (final t in await db.select(db.teams).get()) t.id: t.displayName,
     };
@@ -163,6 +165,7 @@ class InboxViews {
       channels: channels,
       teams: teams,
       people: people,
+      pictureUpdates: pictureUpdates,
       posts: posts,
       latestPosts: latestPosts,
       mentionIds: mentionIds,

@@ -24,6 +24,10 @@ abstract class InboxItem with _$InboxItem {
     /// Whose initials the avatar shows.
     required String avatarName,
 
+    /// Whose picture the avatar shows, and its version; null for groups.
+    String? avatarUserId,
+    int? avatarPictureUpdate,
+
     /// Who wrote the previewed message; null when the title already says.
     required String? author,
     required String preview,
@@ -99,6 +103,7 @@ class InboxSource {
     this.currentTeamId,
     this.teams = const {},
     this.people = const {},
+    this.pictureUpdates = const {},
     this.posts = const {},
     this.latestPosts = const {},
     this.mentionIds = const [],
@@ -121,6 +126,9 @@ class InboxSource {
 
   /// By user id.
   final Map<String, PersonInput> people;
+
+  /// `last_picture_update` by user id.
+  final Map<String, int> pictureUpdates;
 
   /// Posts of the mention and saved lists and thread roots, by id.
   final Map<String, InboxPost> posts;
@@ -177,6 +185,8 @@ ServerInbox buildServerInbox(InboxSource s) {
       teamId: teamOf(post.channelId),
       title: title,
       avatarName: author,
+      avatarUserId: post.userId,
+      avatarPictureUpdate: s.pictureUpdates[post.userId],
       author: author,
       preview: post.deleted ? '(message deleted)' : previewText(post.message),
       place: null,
@@ -228,6 +238,8 @@ ServerInbox buildServerInbox(InboxSource s) {
         teamId: s.currentTeamId,
         title: name.title,
         avatarName: name.title,
+        avatarUserId: name.userId,
+        avatarPictureUpdate: s.pictureUpdates[name.userId],
         author: current && c.type == 'G' ? nameOf(latest.userId) : null,
         preview: current
             ? previewText(latest.message)
@@ -279,6 +291,8 @@ ServerInbox buildServerInbox(InboxSource s) {
                 : t.teamId,
             title: author,
             avatarName: author,
+            avatarUserId: root.userId,
+            avatarPictureUpdate: s.pictureUpdates[root.userId],
             author: null,
             preview: root.deleted
                 ? '(message deleted)'

@@ -2,17 +2,20 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/user_avatar.dart';
 
 /// A dense channel row: type icon or avatar, name (bold with a dot when
 /// unread), and the draft, muted and mention markers.
 class ChannelTile extends StatelessWidget {
   const ChannelTile({
+    required this.serverUrl,
     required this.item,
     required this.onTap,
     required this.onLongPress,
     super.key,
   });
 
+  final String serverUrl;
   final ChannelItem item;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
@@ -29,7 +32,7 @@ class ChannelTile extends StatelessWidget {
         right: Spacing.md,
       ),
       minLeadingWidth: 28,
-      leading: _ChannelIcon(item: item, color: color),
+      leading: _ChannelIcon(serverUrl: serverUrl, item: item, color: color),
       title: Text(
         item.title,
         maxLines: 1,
@@ -95,8 +98,13 @@ class _Markers extends StatelessWidget {
 }
 
 class _ChannelIcon extends StatelessWidget {
-  const _ChannelIcon({required this.item, required this.color});
+  const _ChannelIcon({
+    required this.serverUrl,
+    required this.item,
+    required this.color,
+  });
 
+  final String serverUrl;
   final ChannelItem item;
   final Color color;
 
@@ -129,19 +137,12 @@ class _ChannelIcon extends StatelessWidget {
         ),
         ChannelKind.direct => Stack(
           children: [
-            CircleAvatar(
-              radius: 14,
-              backgroundColor: tokens.accentWash,
-              child: Text(
-                avatarInitials(item.title),
-                // Fixed-size avatar; the name is next to it.
-                textScaler: TextScaler.noScaling,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: tokens.accent,
-                ),
-              ),
+            UserAvatar(
+              serverUrl: serverUrl,
+              userId: item.userId ?? '',
+              name: avatarName(item.title),
+              lastPictureUpdate: item.pictureUpdate,
+              size: 28,
             ),
             PositionedDirectional(
               end: 0,

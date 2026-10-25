@@ -25,6 +25,37 @@ InboxPost post(
 void main() {
   final people = {'me': person('alice'), 'bob': person('bob')};
 
+  test('rows show the picture of the author or the other person', () {
+    final inbox = buildServerInbox(
+      InboxSource(
+        serverUrl: 's1',
+        myId: 'me',
+        people: {...people, 'carol': person('carol')},
+        pictureUpdates: {'bob': 11, 'carol': 22},
+        channels: {
+          'dm': (
+            teamId: '',
+            input: channel('dm', type: 'D', name: 'bob__me', read: 8),
+          ),
+          'gm': (
+            teamId: '',
+            input: channel('gm', type: 'G', displayName: 'alice, bob', read: 8),
+          ),
+          'town': (teamId: 't1', input: channel('town')),
+        },
+        posts: {'m': post('m', channelId: 'town', userId: 'carol')},
+        mentionIds: ['m'],
+      ),
+    );
+    final byChannel = {for (final i in inbox.unread) i.channelId: i};
+    expect(byChannel['dm']!.avatarUserId, 'bob');
+    expect(byChannel['dm']!.avatarPictureUpdate, 11);
+    expect(byChannel['gm']!.avatarUserId, isNull);
+    final mention = inbox.mentions.single;
+    expect(mention.avatarUserId, 'carol');
+    expect(mention.avatarPictureUpdate, 22);
+  });
+
   group('unread', () {
     test('unread direct messages, new mentions and threads, newest first', () {
       final inbox = buildServerInbox(

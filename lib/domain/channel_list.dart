@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/teams.dart';
 
 part 'channel_list.freezed.dart';
@@ -26,6 +25,10 @@ abstract class ChannelItem with _$ChannelItem {
 
     /// Other members of a group message.
     int? others,
+
+    /// The other person of a direct message and their picture's version.
+    String? userId,
+    int? pictureUpdate,
   }) = _ChannelItem;
 }
 
@@ -106,6 +109,7 @@ class ChannelListSource {
     required this.channelIdsByCategory,
     required this.channels,
     this.people = const {},
+    this.pictureUpdates = const {},
     this.hiddenDirect = const {},
     this.hiddenGroups = const {},
     this.draftChannels = const {},
@@ -130,6 +134,9 @@ class ChannelListSource {
 
   /// By user id.
   final Map<String, PersonInput> people;
+
+  /// `last_picture_update` by user id.
+  final Map<String, int> pictureUpdates;
 
   /// Partner ids of direct messages and ids of group messages the user
   /// closed.
@@ -245,13 +252,15 @@ ChannelItem _item(ChannelListSource source, ChannelInput c, bool favorite) {
     hasDraft: source.draftChannels.contains(c.id),
     status: name.status,
     others: name.others,
+    userId: name.userId,
+    pictureUpdate: source.pictureUpdates[name.userId],
   );
 }
 
 /// The name a channel goes by in lists: the other person of a direct
 /// message (with their presence), the others of a group message, else the
 /// channel's display name.
-({String title, String? status, int? others}) conversationName(
+({String title, String? status, int? others, String? userId}) conversationName(
   ChannelInput c, {
   required String myId,
   required Map<String, PersonInput> people,
@@ -260,8 +269,10 @@ ChannelItem _item(ChannelListSource source, ChannelInput c, bool favorite) {
   var title = c.displayName;
   String? status;
   int? others;
+  String? userId;
   if (c.type == 'D') {
     final partnerId = directPartnerId(c.name, myId);
+    userId = partnerId;
     final partner = people[partnerId];
     if (partner != null) {
       title = personName(partner, nameFormat);
@@ -286,6 +297,7 @@ ChannelItem _item(ChannelListSource source, ChannelInput c, bool favorite) {
     title: title.isEmpty ? c.name : title,
     status: status,
     others: others,
+    userId: userId,
   );
 }
 
@@ -413,6 +425,5 @@ List<CategorySection> keepOrder(
   ];
 }
 
-/// Initials for a direct message avatar.
-String avatarInitials(String title) =>
-    initialsOf(title.replaceAll(' (you)', ''));
+/// Whose initials a direct message avatar shows.
+String avatarName(String title) => title.replaceAll(' (you)', '');

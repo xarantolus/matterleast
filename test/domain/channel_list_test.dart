@@ -67,6 +67,7 @@ ChannelList build(
   List<CategoryInput>? categories,
   Map<String, List<String>>? members,
   Map<String, PersonInput> people = const {},
+  Map<String, int> pictureUpdates = const {},
   Set<String> hiddenDirect = const {},
   Set<String> hiddenGroups = const {},
   bool crt = false,
@@ -84,6 +85,7 @@ ChannelList build(
           },
       channels: {for (final c in channels) c.id: c},
       people: people,
+      pictureUpdates: pictureUpdates,
       hiddenDirect: hiddenDirect,
       hiddenGroups: hiddenGroups,
       collapsedThreads: crt,
@@ -97,6 +99,21 @@ List<String> titles(ChannelList list, [int section = 0]) => [
 
 void main() {
   group('rows', () {
+    test('a direct message shows the other person\'s current picture', () {
+      final list = build(
+        [
+          channel('d1', type: 'D', name: 'me__bob'),
+          channel('g1', type: 'G', displayName: 'alice, bob, carol'),
+        ],
+        people: {'me': person('alice'), 'bob': person('bob')},
+        pictureUpdates: {'bob': 1700000000000},
+      );
+      final rows = {for (final r in list.sections.single.rows) r.id: r};
+      expect(rows['d1']!.userId, 'bob');
+      expect(rows['d1']!.pictureUpdate, 1700000000000);
+      expect(rows['g1']!.userId, isNull, reason: 'groups keep their count');
+    });
+
     test('unread is the counter difference; muted only shows mentions', () {
       final list = build([
         channel('quiet'),

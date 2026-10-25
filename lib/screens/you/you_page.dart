@@ -11,6 +11,7 @@ import 'package:matterleast/screens/settings/settings_page.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/user_avatar.dart';
 
 /// The user's own page: who they are on the server picked in the rail,
 /// their saved messages, settings, about, and the servers with sign in,
@@ -111,7 +112,16 @@ class _Profile extends ConsumerWidget {
         children: [
           Stack(
             children: [
-              InitialsBadge(name: me?.displayName ?? '', size: 64, round: true),
+              if (me == null)
+                const InitialsBadge(name: '', size: 64, round: true)
+              else
+                UserAvatar(
+                  serverUrl: server.url,
+                  userId: me.id,
+                  name: me.displayName,
+                  lastPictureUpdate: me.lastPictureUpdate,
+                  size: 64,
+                ),
               PositionedDirectional(
                 end: 0,
                 bottom: 0,

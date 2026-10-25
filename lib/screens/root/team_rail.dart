@@ -9,6 +9,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/you_page.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/user_avatar.dart';
 
 /// Home, then one icon per team grouped by server, then Add server and the
 /// user's avatar.
@@ -183,12 +184,20 @@ class _YouButton extends ConsumerWidget {
       onPressed: () =>
           Navigator.of(context)
               .push(MaterialPageRoute<void>(builder: (_) => const YouPage())),
-      icon: InitialsBadge(
-        name: me?.displayName ?? '',
-        icon: me == null ? Icons.person_outline : null,
-        size: 36,
-        round: true,
-      ),
+      icon: me == null
+          ? const InitialsBadge(
+              name: '',
+              icon: Icons.person_outline,
+              size: 36,
+              round: true,
+            )
+          : UserAvatar(
+              serverUrl: url,
+              userId: me.id,
+              name: me.displayName,
+              lastPictureUpdate: me.lastPictureUpdate,
+              size: 36,
+            ),
     );
   }
 }

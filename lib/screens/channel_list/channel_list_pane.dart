@@ -207,6 +207,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                     final item = section.rows[i];
                     return ChannelTile(
                       key: ValueKey(item.id),
+                      serverUrl: widget.url,
                       item: item,
                       onTap: () => _open(item),
                       onLongPress: () => showChannelActions(

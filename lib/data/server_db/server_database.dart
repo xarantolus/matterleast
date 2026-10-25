@@ -107,10 +107,16 @@ class ServerDatabase extends _$ServerDatabase {
           ?.value;
 
   /// A stored config snapshot (`client_config`, `license`).
-  Future<Map<String, Object?>> configJson(String key) async {
-    final row = await (select(
-      config,
-    )..where((c) => c.key.equals(key))).getSingleOrNull();
+  Future<Map<String, Object?>> configJson(String key) async =>
+      _configOf(await _config(key).getSingleOrNull());
+
+  Stream<Map<String, Object?>> watchConfigJson(String key) =>
+      _config(key).watchSingleOrNull().map(_configOf);
+
+  SimpleSelectStatement<$ConfigTable, ConfigRow> _config(String key) =>
+      select(config)..where((c) => c.key.equals(key));
+
+  static Map<String, Object?> _configOf(ConfigRow? row) {
     final decoded = row == null ? null : jsonDecode(row.json);
     return decoded is Map<String, Object?> ? decoded : const {};
   }

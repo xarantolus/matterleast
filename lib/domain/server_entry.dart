@@ -35,6 +35,7 @@ abstract class Me with _$Me {
 
     /// `online`, `away`, `dnd` or `offline`.
     required String status,
+    int? lastPictureUpdate,
   }) = _Me;
 
   const Me._();

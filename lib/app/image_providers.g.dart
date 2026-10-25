@@ -93,3 +93,210 @@ final class ServerImageCachesFamily extends $Family
   @override
   String toString() => r'serverImageCachesProvider';
 }
+
+/// Whether the server proxies images from other hosts, from its stored
+/// client config.
+
+@ProviderFor(imageProxy)
+final imageProxyProvider = ImageProxyFamily._();
+
+/// Whether the server proxies images from other hosts, from its stored
+/// client config.
+
+final class ImageProxyProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  /// Whether the server proxies images from other hosts, from its stored
+  /// client config.
+  ImageProxyProvider._({
+    required ImageProxyFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'imageProxyProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$imageProxyHash();
+
+  @override
+  String toString() {
+    return r'imageProxyProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return imageProxy(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ImageProxyProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$imageProxyHash() => r'21a1ce5e3e2ddad33054b5884d448c71ba2217fa';
+
+/// Whether the server proxies images from other hosts, from its stored
+/// client config.
+
+final class ImageProxyFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<bool>, String> {
+  ImageProxyFamily._()
+    : super(
+        retry: null,
+        name: r'imageProxyProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether the server proxies images from other hosts, from its stored
+  /// client config.
+
+  ImageProxyProvider call(String url) =>
+      ImageProxyProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'imageProxyProvider';
+}
+
+@ProviderFor(connection)
+final connectionProvider = ConnectionProvider._();
+
+final class ConnectionProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<ConnectivityResult>>,
+          List<ConnectivityResult>,
+          Stream<List<ConnectivityResult>>
+        >
+    with
+        $FutureModifier<List<ConnectivityResult>>,
+        $StreamProvider<List<ConnectivityResult>> {
+  ConnectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'connectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$connectionHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<ConnectivityResult>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<ConnectivityResult>> create(Ref ref) {
+    return connection(ref);
+  }
+}
+
+String _$connectionHash() => r'98f6f9b8ae72fe796602b6bbfca611a75812ca26';
+
+@ProviderFor(imagesOnMobileData)
+final imagesOnMobileDataProvider = ImagesOnMobileDataProvider._();
+
+final class ImagesOnMobileDataProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  ImagesOnMobileDataProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'imagesOnMobileDataProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$imagesOnMobileDataHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return imagesOnMobileData(ref);
+  }
+}
+
+String _$imagesOnMobileDataHash() =>
+    r'214327f9a38d21642922a9732b739709f3f0f0db';
+
+/// Whether message images load without a tap; null until the connection
+/// and the setting are known.
+
+@ProviderFor(autoLoadImages)
+final autoLoadImagesProvider = AutoLoadImagesProvider._();
+
+/// Whether message images load without a tap; null until the connection
+/// and the setting are known.
+
+final class AutoLoadImagesProvider
+    extends $FunctionalProvider<bool?, bool?, bool?>
+    with $Provider<bool?> {
+  /// Whether message images load without a tap; null until the connection
+  /// and the setting are known.
+  AutoLoadImagesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'autoLoadImagesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$autoLoadImagesHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool? create(Ref ref) {
+    return autoLoadImages(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool?>(value),
+    );
+  }
+}
+
+String _$autoLoadImagesHash() => r'6299ed5c457a9ee870b71341519b750d34cecc8b';

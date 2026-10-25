@@ -3,6 +3,7 @@ import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/user_avatar.dart';
 
 /// One message preview: who, where, one line of the message, when, and how
 /// much is new.
@@ -30,7 +31,15 @@ class MessagePreviewTile extends StatelessWidget {
       onTap: onTap,
       leading: Stack(
         children: [
-          InitialsBadge(name: item.avatarName, round: true),
+          if (item.avatarUserId case final userId?)
+            UserAvatar(
+              serverUrl: item.serverUrl,
+              userId: userId,
+              name: item.avatarName,
+              lastPictureUpdate: item.avatarPictureUpdate,
+            )
+          else
+            InitialsBadge(name: item.avatarName, round: true),
           if (item.kind == InboxKind.direct)
             PositionedDirectional(
               end: 0,

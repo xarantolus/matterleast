@@ -164,10 +164,11 @@ class RootViews {
       for (final c in channels.values)
         if (c.type == 'D') ?directPartnerId(c.name, myId),
     };
+    final users = await (db.select(
+      db.users,
+    )..where((u) => u.id.isIn(partnerIds))).get();
     final people = {
-      for (final u in await (db.select(
-        db.users,
-      )..where((u) => u.id.isIn(partnerIds))).get())
+      for (final u in users)
         u.id: (
           username: u.username,
           firstName: u.firstName,
@@ -176,6 +177,7 @@ class RootViews {
           status: u.status,
         ),
     };
+    final pictureUpdates = {for (final u in users) u.id: ?u.lastPictureUpdate};
     final hidden =
         await (db.select(db.preferences)..where(
               (p) =>
@@ -233,6 +235,7 @@ class RootViews {
         },
         channels: channels,
         people: people,
+        pictureUpdates: pictureUpdates,
         hiddenDirect: {
           for (final p in hidden)
             if (p.category == Prefs.directChannelShow) p.name,
