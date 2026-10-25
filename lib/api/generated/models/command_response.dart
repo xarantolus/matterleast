@@ -17,30 +17,45 @@ class CommandResponse {
     this.responseType,
     this.text,
     this.username,
+    this.channelId,
     this.iconUrl,
+    this.type,
+    this.props,
     this.gotoLocation,
+    this.triggerId,
+    this.skipSlackParsing,
   });
 
   factory CommandResponse.fromJson(Map<String, Object?> json) =>
       _$CommandResponseFromJson(json);
 
   @LenientString()
-  @JsonKey(name: 'ResponseType')
+  @JsonKey(name: 'response_type')
   final String? responseType;
   @LenientString()
-  @JsonKey(name: 'Text')
   final String? text;
   @LenientString()
-  @JsonKey(name: 'Username')
   final String? username;
   @LenientString()
-  @JsonKey(name: 'IconURL')
+  @JsonKey(name: 'channel_id')
+  final String? channelId;
+  @LenientString()
+  @JsonKey(name: 'icon_url')
   final String? iconUrl;
   @LenientString()
-  @JsonKey(name: 'GotoLocation')
+  final String? type;
+  @JsonMap()
+  final Map<String, Object?>? props;
+  @LenientString()
+  @JsonKey(name: 'goto_location')
   final String? gotoLocation;
+  @LenientString()
+  @JsonKey(name: 'trigger_id')
+  final String? triggerId;
+  @LenientBool()
+  @JsonKey(name: 'skip_slack_parsing')
+  final bool? skipSlackParsing;
   @LenientListOfMessageAttachment()
-  @JsonKey(name: 'Attachments')
   final List<MessageAttachment> attachments;
 
   Map<String, Object?> toJson() => _$CommandResponseToJson(this);

@@ -8,7 +8,7 @@ import 'package:retrofit/retrofit.dart';
 import '../models/api_v4_actions_dialogs_lookup_request_body.dart';
 import '../models/api_v4_actions_dialogs_submit_request_body.dart';
 import '../models/post_api_v4_actions_dialogs_lookup_response.dart';
-import '../models/status_ok.dart';
+import '../models/post_api_v4_actions_dialogs_submit_response.dart';
 
 part 'integration_actions_client.g.dart';
 
@@ -18,7 +18,7 @@ abstract class IntegrationActionsClient {
       _IntegrationActionsClient;
 
   @POST('/api/v4/actions/dialogs/submit')
-  Future<StatusOk> submitInteractiveDialog({
+  Future<PostApiV4ActionsDialogsSubmitResponse> submitInteractiveDialog({
     @Body() required ApiV4ActionsDialogsSubmitRequestBody body,
   });
 

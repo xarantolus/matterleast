@@ -21,7 +21,7 @@ class _IntegrationActionsClient implements IntegrationActionsClient {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<StatusOk> submitInteractiveDialog({
+  Future<PostApiV4ActionsDialogsSubmitResponse> submitInteractiveDialog({
     required ApiV4ActionsDialogsSubmitRequestBody body,
   }) async {
     final _extra = <String, dynamic>{};
@@ -29,7 +29,7 @@ class _IntegrationActionsClient implements IntegrationActionsClient {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(body.toJson());
-    final _options = _setStreamType<StatusOk>(
+    final _options = _setStreamType<PostApiV4ActionsDialogsSubmitResponse>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -40,9 +40,9 @@ class _IntegrationActionsClient implements IntegrationActionsClient {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, Object?>>(_options);
-    late StatusOk _value;
+    late PostApiV4ActionsDialogsSubmitResponse _value;
     try {
-      _value = StatusOk.fromJson(_result.data!);
+      _value = PostApiV4ActionsDialogsSubmitResponse.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

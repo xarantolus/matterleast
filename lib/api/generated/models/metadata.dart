@@ -4,7 +4,7 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
-import 'priority.dart';
+import 'post_priority.dart';
 
 import 'package:matterleast/api/json/lenient_models.dart';
 part 'metadata.g.dart';
@@ -16,8 +16,8 @@ class Metadata {
   factory Metadata.fromJson(Map<String, Object?> json) =>
       _$MetadataFromJson(json);
 
-  @LenientPriority()
-  final Priority? priority;
+  @LenientPostPriority()
+  final PostPriority? priority;
 
   Map<String, Object?> toJson() => _$MetadataToJson(this);
 }

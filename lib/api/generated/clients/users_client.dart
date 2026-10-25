@@ -102,8 +102,8 @@ abstract class UsersClient {
   Future<UserAutocomplete> autocompleteUsers({
     @Query('name') required String name,
     @Query('limit') int? limit = 100,
-    @Query('team_id') String? teamId,
-    @Query('channel_id') String? channelId,
+    @Query('in_team') String? inTeam,
+    @Query('in_channel') String? inChannel,
   });
 
   @GET('/api/v4/users/known')

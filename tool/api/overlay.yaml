@@ -216,3 +216,73 @@ actions:
       guest_count: {type: integer, format: int64}
       pinnedpost_count: {type: integer, format: int64}
       files_count: {type: integer, format: int64}
+  # --- composer and writing (M4), checked against server/public/model and api4 ---
+  - target: "$.paths['/api/v4/posts'].post.requestBody.content['application/json'].schema.properties.metadata.properties.priority"
+    remove: true
+  - target: "$.paths['/api/v4/posts'].post.requestBody.content['application/json'].schema.properties.metadata.properties"
+    update:
+      priority: {$ref: "#/components/schemas/PostPriority"}
+  - target: "$.paths['/api/v4/posts'].post.requestBody.content['application/json'].schema.properties"
+    update:
+      pending_post_id: {type: string, description: "Client id that the created post and its posted event echo back"}
+  - target: "$.paths['/api/v4/commands/execute'].post.requestBody.content['application/json'].schema.properties"
+    update:
+      team_id: {type: string}
+      root_id: {type: string}
+      parent_id: {type: string}
+  - target: "$.components.schemas.CommandResponse.properties"
+    remove: true
+  - target: "$.components.schemas.CommandResponse"
+    update:
+      properties:
+        response_type: {type: string, description: "in_channel or ephemeral"}
+        text: {type: string}
+        username: {type: string}
+        channel_id: {type: string}
+        icon_url: {type: string}
+        type: {type: string}
+        props: {type: object}
+        goto_location: {type: string}
+        trigger_id: {type: string}
+        skip_slack_parsing: {type: boolean}
+        attachments: {type: array, items: {$ref: "#/components/schemas/MessageAttachment"}}
+  - target: "$.paths['/api/v4/emoji/autocomplete'].get.responses['200'].content"
+    remove: true
+  - target: "$.paths['/api/v4/emoji/autocomplete'].get.responses['200']"
+    update:
+      content:
+        application/json:
+          schema: {type: array, items: {$ref: "#/components/schemas/Emoji"}}
+  - target: "$.paths['/api/v4/users/autocomplete'].get.parameters"
+    remove: true
+  - target: "$.paths['/api/v4/users/autocomplete'].get"
+    update:
+      parameters:
+        - {name: in_team, in: query, description: Team ID, schema: {type: string}}
+        - {name: in_channel, in: query, description: Channel ID, schema: {type: string}}
+        - {name: name, in: query, required: true, schema: {type: string}}
+        - {name: limit, in: query, schema: {type: integer, default: 100}}
+  - target: "$.paths['/api/v4/teams/{team_id}/commands/autocomplete_suggestions'].get.parameters"
+    update:
+      - {name: channel_id, in: query, schema: {type: string}}
+      - {name: root_id, in: query, schema: {type: string}}
+  - target: "$.paths['/api/v4/users/{user_id}/posts/{post_id}/set_unread'].post"
+    update:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                collapsed_threads_supported: {type: boolean}
+  - target: "$.paths['/api/v4/actions/dialogs/submit'].post.responses['200'].content"
+    remove: true
+  - target: "$.paths['/api/v4/actions/dialogs/submit'].post.responses['200']"
+    update:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: {type: string}
+              errors: {type: object, additionalProperties: {type: string}}

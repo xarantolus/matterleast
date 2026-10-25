@@ -46,5 +46,5 @@ abstract class EmojiClient {
   });
 
   @GET('/api/v4/emoji/autocomplete')
-  Future<Emoji> autocompleteEmoji({@Query('name') required String name});
+  Future<List<Emoji>> autocompleteEmoji({@Query('name') required String name});
 }

@@ -37,6 +37,8 @@ abstract class CommandsClient {
   Future<List<AutocompleteSuggestion>> listCommandAutocompleteSuggestions({
     @Path('team_id') required String teamId,
     @Query('user_input') required String userInput,
+    @Query('channel_id') String? channelId,
+    @Query('root_id') String? rootId,
   });
 
   @POST('/api/v4/commands/execute')

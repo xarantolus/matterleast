@@ -37,6 +37,22 @@ abstract class ThreadsClient {
     @Path('timestamp') required String timestamp,
   });
 
+  @PUT('/api/v4/users/{user_id}/teams/{team_id}/threads/{thread_id}/following')
+  Future<void> startFollowingThread({
+    @Path('user_id') required String userId,
+    @Path('team_id') required String teamId,
+    @Path('thread_id') required String threadId,
+  });
+
+  @DELETE(
+    '/api/v4/users/{user_id}/teams/{team_id}/threads/{thread_id}/following',
+  )
+  Future<void> stopFollowingThread({
+    @Path('user_id') required String userId,
+    @Path('team_id') required String teamId,
+    @Path('thread_id') required String threadId,
+  });
+
   @GET('/api/v4/users/{user_id}/teams/{team_id}/threads/{thread_id}')
   Future<void> getUserThread({
     @Path('user_id') required String userId,

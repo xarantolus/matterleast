@@ -121,9 +121,16 @@ class _CommandsClient implements CommandsClient {
   Future<List<AutocompleteSuggestion>> listCommandAutocompleteSuggestions({
     required String teamId,
     required String userInput,
+    String? channelId,
+    String? rootId,
   }) async {
     final _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{r'user_input': userInput};
+    final queryParameters = <String, dynamic>{
+      r'user_input': userInput,
+      r'channel_id': channelId,
+      r'root_id': rootId,
+    };
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<List<AutocompleteSuggestion>>(

@@ -53,6 +53,7 @@ import 'package:matterleast/api/generated/models/api_v4_users_sessions_device_re
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_custom_profile_attributes_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_password_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_patch_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_users_user_id_posts_post_id_set_unread_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_status_custom_recent_delete_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_status_custom_request_body.dart';
@@ -96,6 +97,7 @@ import 'package:matterleast/api/generated/models/plugin_manifest_webapp.dart';
 import 'package:matterleast/api/generated/models/post.dart';
 import 'package:matterleast/api/generated/models/post_acknowledgement.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_actions_dialogs_lookup_response.dart';
+import 'package:matterleast/api/generated/models/post_api_v4_actions_dialogs_submit_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_channels_members_user_id_view_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_channels_search_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_remotecluster_response.dart';
@@ -108,7 +110,6 @@ import 'package:matterleast/api/generated/models/post_list_with_search_matches.d
 import 'package:matterleast/api/generated/models/post_metadata.dart';
 import 'package:matterleast/api/generated/models/post_priority.dart';
 import 'package:matterleast/api/generated/models/preference.dart';
-import 'package:matterleast/api/generated/models/priority.dart';
 import 'package:matterleast/api/generated/models/property_field.dart';
 import 'package:matterleast/api/generated/models/reaction.dart';
 import 'package:matterleast/api/generated/models/remote_cluster.dart';
@@ -2964,6 +2965,71 @@ class LenientMapOfApiV4UsersUserIdPatchRequestBody
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
+class LenientApiV4UsersUserIdPostsPostIdSetUnreadRequestBody
+    implements
+        JsonConverter<
+          ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody?,
+          Object?
+        > {
+  const LenientApiV4UsersUserIdPostsPostIdSetUnreadRequestBody();
+  @override
+  ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody.fromJson(json)
+      : null;
+  @override
+  Object? toJson(ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody? object) =>
+      object?.toJson();
+}
+
+class LenientListOfApiV4UsersUserIdPostsPostIdSetUnreadRequestBody
+    implements
+        JsonConverter<
+          List<ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody>,
+          Object?
+        > {
+  const LenientListOfApiV4UsersUserIdPostsPostIdSetUnreadRequestBody();
+  @override
+  List<ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody> fromJson(
+    Object? json,
+  ) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody.fromJson(e),
+        ]
+      : const [];
+  @override
+  Object? toJson(
+    List<ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody> object,
+  ) => [for (final e in object) e.toJson()];
+}
+
+class LenientMapOfApiV4UsersUserIdPostsPostIdSetUnreadRequestBody
+    implements
+        JsonConverter<
+          Map<String, ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody>?,
+          Object?
+        > {
+  const LenientMapOfApiV4UsersUserIdPostsPostIdSetUnreadRequestBody();
+  @override
+  Map<String, ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody>? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value is Map<String, Object?>)
+              e.key: ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody.fromJson(
+                e.value! as Map<String, Object?>,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody>? object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
 class LenientApiV4UsersUserIdRequestBody
     implements JsonConverter<ApiV4UsersUserIdRequestBody?, Object?> {
   const LenientApiV4UsersUserIdRequestBody();
@@ -4964,6 +5030,61 @@ class LenientMapOfPostApiV4ActionsDialogsLookupResponse
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
+class LenientPostApiV4ActionsDialogsSubmitResponse
+    implements JsonConverter<PostApiV4ActionsDialogsSubmitResponse?, Object?> {
+  const LenientPostApiV4ActionsDialogsSubmitResponse();
+  @override
+  PostApiV4ActionsDialogsSubmitResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? PostApiV4ActionsDialogsSubmitResponse.fromJson(json)
+      : null;
+  @override
+  Object? toJson(PostApiV4ActionsDialogsSubmitResponse? object) =>
+      object?.toJson();
+}
+
+class LenientListOfPostApiV4ActionsDialogsSubmitResponse
+    implements
+        JsonConverter<List<PostApiV4ActionsDialogsSubmitResponse>, Object?> {
+  const LenientListOfPostApiV4ActionsDialogsSubmitResponse();
+  @override
+  List<PostApiV4ActionsDialogsSubmitResponse> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              PostApiV4ActionsDialogsSubmitResponse.fromJson(e),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<PostApiV4ActionsDialogsSubmitResponse> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfPostApiV4ActionsDialogsSubmitResponse
+    implements
+        JsonConverter<
+          Map<String, PostApiV4ActionsDialogsSubmitResponse>?,
+          Object?
+        > {
+  const LenientMapOfPostApiV4ActionsDialogsSubmitResponse();
+  @override
+  Map<String, PostApiV4ActionsDialogsSubmitResponse>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value is Map<String, Object?>)
+              e.key: PostApiV4ActionsDialogsSubmitResponse.fromJson(
+                e.value! as Map<String, Object?>,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, PostApiV4ActionsDialogsSubmitResponse>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
 class LenientPostApiV4ChannelsMembersUserIdViewResponse
     implements
         JsonConverter<PostApiV4ChannelsMembersUserIdViewResponse?, Object?> {
@@ -5535,44 +5656,6 @@ class LenientMapOfPreference
       : null;
   @override
   Object? toJson(Map<String, Preference>? object) =>
-      object?.map((k, v) => MapEntry(k, v.toJson()));
-}
-
-class LenientPriority implements JsonConverter<Priority?, Object?> {
-  const LenientPriority();
-  @override
-  Priority? fromJson(Object? json) =>
-      json is Map<String, Object?> ? Priority.fromJson(json) : null;
-  @override
-  Object? toJson(Priority? object) => object?.toJson();
-}
-
-class LenientListOfPriority implements JsonConverter<List<Priority>, Object?> {
-  const LenientListOfPriority();
-  @override
-  List<Priority> fromJson(Object? json) => json is List
-      ? [
-          for (final e in json)
-            if (e is Map<String, Object?>) Priority.fromJson(e),
-        ]
-      : const [];
-  @override
-  Object? toJson(List<Priority> object) => [for (final e in object) e.toJson()];
-}
-
-class LenientMapOfPriority
-    implements JsonConverter<Map<String, Priority>?, Object?> {
-  const LenientMapOfPriority();
-  @override
-  Map<String, Priority>? fromJson(Object? json) => json is Map<String, Object?>
-      ? {
-          for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: Priority.fromJson(e.value! as Map<String, Object?>),
-        }
-      : null;
-  @override
-  Object? toJson(Map<String, Priority>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 

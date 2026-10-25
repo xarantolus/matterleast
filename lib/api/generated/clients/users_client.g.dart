@@ -352,15 +352,15 @@ class _UsersClient implements UsersClient {
   Future<UserAutocomplete> autocompleteUsers({
     required String name,
     int? limit = 100,
-    String? teamId,
-    String? channelId,
+    String? inTeam,
+    String? inChannel,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'name': name,
       r'limit': limit,
-      r'team_id': teamId,
-      r'channel_id': channelId,
+      r'in_team': inTeam,
+      r'in_channel': inChannel,
     };
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};

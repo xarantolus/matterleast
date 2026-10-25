@@ -7,8 +7,8 @@ part of 'metadata.dart';
 // **************************************************************************
 
 Metadata _$MetadataFromJson(Map<String, dynamic> json) =>
-    Metadata(priority: const LenientPriority().fromJson(json['priority']));
+    Metadata(priority: const LenientPostPriority().fromJson(json['priority']));
 
 Map<String, dynamic> _$MetadataToJson(Metadata instance) => <String, dynamic>{
-  'priority': const LenientPriority().toJson(instance.priority),
+  'priority': const LenientPostPriority().toJson(instance.priority),
 };

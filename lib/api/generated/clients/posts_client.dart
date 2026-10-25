@@ -9,6 +9,7 @@ import '../models/api_v4_posts_post_id_patch_request_body.dart';
 import '../models/api_v4_posts_post_id_request_body.dart';
 import '../models/api_v4_posts_request_body.dart';
 import '../models/api_v4_teams_team_id_posts_search_request_body.dart';
+import '../models/api_v4_users_user_id_posts_post_id_set_unread_request_body.dart';
 import '../models/channel_unread_at.dart';
 import '../models/file_info.dart';
 import '../models/post.dart';
@@ -50,6 +51,7 @@ abstract class PostsClient {
   Future<ChannelUnreadAt> setPostUnread({
     @Path('user_id') required String userId,
     @Path('post_id') required String postId,
+    @Body() ApiV4UsersUserIdPostsPostIdSetUnreadRequestBody? body,
   });
 
   @PUT('/api/v4/posts/{post_id}/patch')
