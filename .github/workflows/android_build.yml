@@ -21,12 +21,14 @@ jobs:
     runs-on: ubuntu-26.04
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Check out the code
+        uses: actions/checkout@v7
         with:
           # Tags and history, for the release notes.
           fetch-depth: 0
 
-      - uses: actions/setup-java@v6
+      - name: Set up Java and the Gradle cache
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -37,13 +39,15 @@ jobs:
       - name: Enable the Gradle build cache
         run: mkdir -p ~/.gradle && echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
 
-      - uses: actions/cache@v6
+      - name: Restore the Gradle build cache
+        uses: actions/cache@v6
         with:
           path: ~/.gradle/caches/build-cache-1
           key: gradle-build-cache-${{ github.sha }}
           restore-keys: gradle-build-cache-
 
-      - uses: subosito/flutter-action@v2
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: 3.47.8
@@ -56,24 +60,28 @@ jobs:
           echo "NDK_VERSION=$version" >> $GITHUB_ENV
           echo "NDK_DIR=$ANDROID_HOME/ndk/$version" >> $GITHUB_ENV
 
-      - uses: actions/cache@v6
+      - name: Restore the NDK
+        uses: actions/cache@v6
         with:
           path: ${{ env.NDK_DIR }}
           key: ndk-${{ env.NDK_VERSION }}
 
       # The native build hooks (PDFium, SQLite) download and compile
       # libraries; they rerun by themselves when their inputs differ.
-      - uses: actions/cache@v6
+      - name: Restore the native build hook outputs
+        uses: actions/cache@v6
         with:
           path: .dart_tool/hooks_runner
           key: build-hooks-${{ hashFiles('pubspec.lock') }}
           restore-keys: build-hooks-
 
-      - run: flutter pub get
+      - name: Get packages
+        run: flutter pub get
 
       # Compiling the build script takes half of the build_runner run; it
       # recompiles by itself when its inputs differ.
-      - uses: actions/cache@v6
+      - name: Restore the build_runner script
+        uses: actions/cache@v6
         with:
           path: .dart_tool/build/entrypoint
           key: build-runner-${{ hashFiles('pubspec.lock') }}
@@ -84,30 +92,35 @@ jobs:
           dart run build_runner build --delete-conflicting-outputs
           git diff --exit-code --stat
 
-      - run: dart format --output=none --set-exit-if-changed .
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
 
       # Entries are keyed by content, so an older cache is safe to reuse.
-      - uses: actions/cache@v6
+      - name: Restore the analyzer cache
+        uses: actions/cache@v6
         with:
           path: ~/.dartServer
           key: dart-analyzer-${{ hashFiles('pubspec.lock') }}-${{ github.sha }}
           restore-keys: dart-analyzer-${{ hashFiles('pubspec.lock') }}-
 
-      - run: flutter analyze
+      - name: Analyze with flutter analyze
+        run: flutter analyze
 
       # The analyzer plugins (riverpod_lint) only run through dart analyze.
-      - run: dart analyze
+      - name: Analyze with dart analyze
+        run: dart analyze
 
-      - run: flutter test
+      - name: Run tests
+        run: flutter test
 
-      - name: Extract env variables
+      - name: Read the version
         run: |
           # "version: 1.2.3+4" -> 1.2.3
           echo "APP_VERSION=$(grep -m1 '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> $GITHUB_ENV
           # Artifact names cannot contain a slash, branch names can.
           echo "SAFE_REF=${GITHUB_REF_NAME//\//-}" >> $GITHUB_ENV
 
-      - name: Set up signing config
+      - name: Set up signing
         env:
           SIGNING_KEYSTORE_CONTENT: ${{ secrets.SIGNING_KEYSTORE_CONTENT }}
           SIGNING_PROPERTIES_CONTENT: ${{ secrets.SIGNING_PROPERTIES_CONTENT }}
@@ -116,7 +129,7 @@ jobs:
           echo "X_KEYSTORE_PATH=$(pwd)/upload-keystore.jks" >> $GITHUB_ENV
           echo "$SIGNING_PROPERTIES_CONTENT" > android/key.properties
 
-      - name: Build signed APK
+      - name: Build the release APK
         run: flutter build apk --release
         env:
           X_KEYSTORE_PATH: ${{ env.X_KEYSTORE_PATH }}
@@ -124,7 +137,7 @@ jobs:
       - name: Show APK hashes
         run: find build/app/outputs -type f -name "*.apk" | xargs -L1 sha256sum
 
-      - name: Upload APK artifact
+      - name: Upload the APK
         uses: actions/upload-artifact@v7
         with:
           name: matterleast-apk-${{ env.APP_VERSION }}-${{ env.SAFE_REF }}-${{ github.sha }}
@@ -145,7 +158,7 @@ jobs:
           git log --no-merges --format='- %s' ${previous:+"$previous"..HEAD} > release-notes.md
           echo "release=true" >> "$GITHUB_OUTPUT"
 
-      - name: Upload release
+      - name: Publish the release
         if: steps.notes.outputs.release == 'true'
         uses: softprops/action-gh-release@v3
         with:
