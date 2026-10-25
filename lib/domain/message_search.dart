@@ -22,7 +22,82 @@ abstract class SearchScope with _$SearchScope {
     DateTime? on,
     DateTime? before,
     DateTime? after,
+
+    /// Files only: `ext:` for each of its extensions.
+    FileKind? fileKind,
   }) = _SearchScope;
+}
+
+/// The file types the Files results can be narrowed to, with the
+/// extensions the official app searches for each.
+enum FileKind {
+  documents('Documents', ['doc', 'docx', 'odt', 'pdf', 'txt', 'rtf']),
+  spreadsheets('Spreadsheets', ['xls', 'xlsx', 'csv', 'ods']),
+  presentations('Presentations', ['ppt', 'pptx', 'odp']),
+  code('Code', [
+    'c',
+    'cc',
+    'cpp',
+    'cs',
+    'css',
+    'dart',
+    'diff',
+    'go',
+    'h',
+    'hpp',
+    'html',
+    'java',
+    'js',
+    'json',
+    'jsx',
+    'kt',
+    'kts',
+    'lua',
+    'md',
+    'php',
+    'pl',
+    'py',
+    'rb',
+    'rs',
+    'scala',
+    'scss',
+    'sh',
+    'sql',
+    'swift',
+    'ts',
+    'xml',
+    'yaml',
+  ]),
+  images('Images', [
+    'jpg',
+    'jpeg',
+    'gif',
+    'bmp',
+    'png',
+    'tiff',
+    'tif',
+    'svg',
+    'psd',
+    'xcf',
+  ]),
+  audio('Audio', ['mp3', 'wav', 'wma', 'm4a', 'flac', 'aac', 'ogg']),
+  videos('Videos', [
+    'mp4',
+    'avi',
+    'webm',
+    'mkv',
+    'wmv',
+    'mpg',
+    'mov',
+    'flv',
+    'ogm',
+    'mpeg',
+  ]);
+
+  const FileKind(this.label, this.extensions);
+
+  final String label;
+  final List<String> extensions;
 }
 
 /// One file found by a search.
@@ -51,6 +126,13 @@ String searchTerms(String query, SearchScope scope) => [
   if (scope.on case final day?) 'on:${dayTerm(day)}',
   if (scope.before case final day?) 'before:${dayTerm(day)}',
   if (scope.after case final day?) 'after:${dayTerm(day)}',
+].where((part) => part.isNotEmpty).join(' ');
+
+/// Pure: the terms sent to the server's file search, which also narrow by
+/// [SearchScope.fileKind].
+String fileSearchTerms(String query, SearchScope scope) => [
+  searchTerms(query, scope),
+  for (final ext in scope.fileKind?.extensions ?? const <String>[]) 'ext:$ext',
 ].where((part) => part.isNotEmpty).join(' ');
 
 /// A calendar day as the server's date modifiers write it.

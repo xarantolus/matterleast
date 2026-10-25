@@ -173,6 +173,9 @@ class SearchViews {
     for (final word in words) {
       query.where(db.files.name.lower().like('%${_escape(word)}%'));
     }
+    if (scope.fileKind case final kind?) {
+      query.where(db.files.extension.lower().isIn(kind.extensions));
+    }
     _narrow(
       scope,
       channelOf: (where) => query.where(where(db.posts.channelId)),

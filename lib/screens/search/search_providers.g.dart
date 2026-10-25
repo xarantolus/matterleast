@@ -709,7 +709,7 @@ final class ServerFileResultsProvider
   }
 }
 
-String _$serverFileResultsHash() => r'db9a0c32ac219db7c49d473ccdf8323f42feed3f';
+String _$serverFileResultsHash() => r'702a7bf1f5d616e029e24059bca8ab79530bf8d9';
 
 final class ServerFileResultsFamily extends $Family
     with

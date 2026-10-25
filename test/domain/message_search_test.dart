@@ -25,6 +25,16 @@ void main() {
       );
     });
 
+    test('a file type narrows file searches by extension only', () {
+      final scope = team.copyWith(fileKind: FileKind.spreadsheets);
+      expect(
+        fileSearchTerms('rota', scope),
+        'rota ext:xls ext:xlsx ext:csv ext:ods',
+      );
+      expect(searchTerms('rota', scope), 'rota');
+      expect(fileSearchTerms('rota', team), 'rota');
+    });
+
     test('only filters when no words were typed', () {
       expect(
         searchTerms('', team.copyWith(on: DateTime(2026, 1, 5))),

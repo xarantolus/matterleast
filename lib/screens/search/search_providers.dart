@@ -95,7 +95,7 @@ Future<List<FileHit>> serverFileResults(
   String query,
 ) async {
   final search = await ref.watch(messageSearchProvider(url).future);
-  return search.files(scope.teamId, searchTerms(query, scope));
+  return search.files(scope.teamId, fileSearchTerms(query, scope));
 }
 
 /// Message previews of the posts [ids] (comma-separated), in that order.

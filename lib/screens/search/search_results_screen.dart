@@ -175,6 +175,12 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
               scope: _scope,
               onChanged: (scope) => setState(() => _scope = scope),
             ),
+            if (_tab == _Tab.files)
+              _FileKindChips(
+                selected: _scope.fileKind,
+                onSelected: (kind) =>
+                    setState(() => _scope = _scope.copyWith(fileKind: kind)),
+              ),
             Expanded(
               child: !_hasTerms
                   ? const EmptyState(
@@ -208,6 +214,36 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       ),
     );
   }
+}
+
+/// Narrows file results to one kind of file.
+class _FileKindChips extends StatelessWidget {
+  const _FileKindChips({required this.selected, required this.onSelected});
+
+  final FileKind? selected;
+  final ValueChanged<FileKind?> onSelected;
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.fromLTRB(Spacing.md, 0, Spacing.md, Spacing.sm),
+    child: Row(
+      spacing: Spacing.sm,
+      children: [
+        ChoiceChip(
+          label: const Text('All types'),
+          selected: selected == null,
+          onSelected: (_) => onSelected(null),
+        ),
+        for (final kind in FileKind.values)
+          ChoiceChip(
+            label: Text(kind.label),
+            selected: kind == selected,
+            onSelected: (_) => onSelected(kind),
+          ),
+      ],
+    ),
+  );
 }
 
 class _ScopeChips extends ConsumerWidget {

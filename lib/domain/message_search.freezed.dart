@@ -18,7 +18,8 @@ mixin _$SearchScope {
  String get teamId;/// `in:` takes the channel's name (or `@username` for a direct
 /// message); [channelLabel] is what the chip says.
  String? get channelId; String? get channelName; String? get channelLabel;/// `from:` takes the username.
- String? get userId; String? get username; String? get userLabel; DateTime? get on; DateTime? get before; DateTime? get after;
+ String? get userId; String? get username; String? get userLabel; DateTime? get on; DateTime? get before; DateTime? get after;/// Files only: `ext:` for each of its extensions.
+ FileKind? get fileKind;
 /// Create a copy of SearchScope
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +31,20 @@ $SearchScopeCopyWith<SearchScope> get copyWith => _$SearchScopeCopyWithImpl<Sear
 @override
 bool operator ==(Object other) {
   final _this = this as SearchScope;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SearchScope&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.channelName, _this.channelName) || other.channelName == _this.channelName)&&(identical(other.channelLabel, _this.channelLabel) || other.channelLabel == _this.channelLabel)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.userLabel, _this.userLabel) || other.userLabel == _this.userLabel)&&(identical(other.on, _this.on) || other.on == _this.on)&&(identical(other.before, _this.before) || other.before == _this.before)&&(identical(other.after, _this.after) || other.after == _this.after));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SearchScope&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.channelName, _this.channelName) || other.channelName == _this.channelName)&&(identical(other.channelLabel, _this.channelLabel) || other.channelLabel == _this.channelLabel)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.userLabel, _this.userLabel) || other.userLabel == _this.userLabel)&&(identical(other.on, _this.on) || other.on == _this.on)&&(identical(other.before, _this.before) || other.before == _this.before)&&(identical(other.after, _this.after) || other.after == _this.after)&&(identical(other.fileKind, _this.fileKind) || other.fileKind == _this.fileKind));
 }
 
 
 @override
 int get hashCode {
   final _this = this as SearchScope;
-  return Object.hash(runtimeType,_this.teamId,_this.channelId,_this.channelName,_this.channelLabel,_this.userId,_this.username,_this.userLabel,_this.on,_this.before,_this.after);
+  return Object.hash(runtimeType,_this.teamId,_this.channelId,_this.channelName,_this.channelLabel,_this.userId,_this.username,_this.userLabel,_this.on,_this.before,_this.after,_this.fileKind);
 }
 
 @override
 String toString() {
   final _this = this as SearchScope;
-  return 'SearchScope(teamId: ${_this.teamId}, channelId: ${_this.channelId}, channelName: ${_this.channelName}, channelLabel: ${_this.channelLabel}, userId: ${_this.userId}, username: ${_this.username}, userLabel: ${_this.userLabel}, on: ${_this.on}, before: ${_this.before}, after: ${_this.after})';
+  return 'SearchScope(teamId: ${_this.teamId}, channelId: ${_this.channelId}, channelName: ${_this.channelName}, channelLabel: ${_this.channelLabel}, userId: ${_this.userId}, username: ${_this.username}, userLabel: ${_this.userLabel}, on: ${_this.on}, before: ${_this.before}, after: ${_this.after}, fileKind: ${_this.fileKind})';
 }
 
 
@@ -54,7 +55,7 @@ abstract mixin class $SearchScopeCopyWith<$Res>  {
   factory $SearchScopeCopyWith(SearchScope value, $Res Function(SearchScope) _then) = _$SearchScopeCopyWithImpl;
 @useResult
 $Res call({
- String teamId, String? channelId, String? channelName, String? channelLabel, String? userId, String? username, String? userLabel, DateTime? on, DateTime? before, DateTime? after
+ String teamId, String? channelId, String? channelName, String? channelLabel, String? userId, String? username, String? userLabel, DateTime? on, DateTime? before, DateTime? after, FileKind? fileKind
 });
 
 
@@ -71,7 +72,7 @@ class _$SearchScopeCopyWithImpl<$Res>
 
 /// Create a copy of SearchScope
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? teamId = null,Object? channelId = freezed,Object? channelName = freezed,Object? channelLabel = freezed,Object? userId = freezed,Object? username = freezed,Object? userLabel = freezed,Object? on = freezed,Object? before = freezed,Object? after = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? teamId = null,Object? channelId = freezed,Object? channelName = freezed,Object? channelLabel = freezed,Object? userId = freezed,Object? username = freezed,Object? userLabel = freezed,Object? on = freezed,Object? before = freezed,Object? after = freezed,Object? fileKind = freezed,}) {
   return _then(SearchScope(
 teamId: null == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String,channelId: freezed == channelId ? _self.channelId : channelId // ignore: cast_nullable_to_non_nullable
@@ -83,7 +84,8 @@ as String?,userLabel: freezed == userLabel ? _self.userLabel : userLabel // igno
 as String?,on: freezed == on ? _self.on : on // ignore: cast_nullable_to_non_nullable
 as DateTime?,before: freezed == before ? _self.before : before // ignore: cast_nullable_to_non_nullable
 as DateTime?,after: freezed == after ? _self.after : after // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,fileKind: freezed == fileKind ? _self.fileKind : fileKind // ignore: cast_nullable_to_non_nullable
+as FileKind?,
   ));
 }
 
@@ -168,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String teamId,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String teamId,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after,  FileKind? fileKind)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SearchScope() when $default != null:
-return $default(_that.teamId,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after);case _:
+return $default(_that.teamId,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after,_that.fileKind);case _:
   return orElse();
 
 }
@@ -189,10 +191,10 @@ return $default(_that.teamId,_that.channelId,_that.channelName,_that.channelLabe
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String teamId,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String teamId,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after,  FileKind? fileKind)  $default,) {final _that = this;
 switch (_that) {
 case _SearchScope():
-return $default(_that.teamId,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after);case _:
+return $default(_that.teamId,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after,_that.fileKind);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +211,10 @@ return $default(_that.teamId,_that.channelId,_that.channelName,_that.channelLabe
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String teamId,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String teamId,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after,  FileKind? fileKind)?  $default,) {final _that = this;
 switch (_that) {
 case _SearchScope() when $default != null:
-return $default(_that.teamId,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after);case _:
+return $default(_that.teamId,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after,_that.fileKind);case _:
   return null;
 
 }
@@ -224,7 +226,7 @@ return $default(_that.teamId,_that.channelId,_that.channelName,_that.channelLabe
 
 
 class _SearchScope implements SearchScope {
-  const _SearchScope({required this.teamId, this.channelId, this.channelName, this.channelLabel, this.userId, this.username, this.userLabel, this.on, this.before, this.after});
+  const _SearchScope({required this.teamId, this.channelId, this.channelName, this.channelLabel, this.userId, this.username, this.userLabel, this.on, this.before, this.after, this.fileKind});
   
 
 @override final  String teamId;
@@ -240,6 +242,8 @@ class _SearchScope implements SearchScope {
 @override final  DateTime? on;
 @override final  DateTime? before;
 @override final  DateTime? after;
+/// Files only: `ext:` for each of its extensions.
+@override final  FileKind? fileKind;
 
 /// Create a copy of SearchScope
 /// with the given fields replaced by the non-null parameter values.
@@ -251,18 +255,18 @@ _$SearchScopeCopyWith<_SearchScope> get copyWith => __$SearchScopeCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SearchScope&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.channelLabel, channelLabel) || other.channelLabel == channelLabel)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.username, username) || other.username == username)&&(identical(other.userLabel, userLabel) || other.userLabel == userLabel)&&(identical(other.on, on) || other.on == on)&&(identical(other.before, before) || other.before == before)&&(identical(other.after, after) || other.after == after));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SearchScope&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.channelLabel, channelLabel) || other.channelLabel == channelLabel)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.username, username) || other.username == username)&&(identical(other.userLabel, userLabel) || other.userLabel == userLabel)&&(identical(other.on, on) || other.on == on)&&(identical(other.before, before) || other.before == before)&&(identical(other.after, after) || other.after == after)&&(identical(other.fileKind, fileKind) || other.fileKind == fileKind));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,teamId,channelId,channelName,channelLabel,userId,username,userLabel,on,before,after);
+    return Object.hash(runtimeType,teamId,channelId,channelName,channelLabel,userId,username,userLabel,on,before,after,fileKind);
 }
 
 @override
 String toString() {
-    return 'SearchScope(teamId: $teamId, channelId: $channelId, channelName: $channelName, channelLabel: $channelLabel, userId: $userId, username: $username, userLabel: $userLabel, on: $on, before: $before, after: $after)';
+    return 'SearchScope(teamId: $teamId, channelId: $channelId, channelName: $channelName, channelLabel: $channelLabel, userId: $userId, username: $username, userLabel: $userLabel, on: $on, before: $before, after: $after, fileKind: $fileKind)';
 }
 
 
@@ -273,7 +277,7 @@ abstract mixin class _$SearchScopeCopyWith<$Res> implements $SearchScopeCopyWith
   factory _$SearchScopeCopyWith(_SearchScope value, $Res Function(_SearchScope) _then) = __$SearchScopeCopyWithImpl;
 @override @useResult
 $Res call({
- String teamId, String? channelId, String? channelName, String? channelLabel, String? userId, String? username, String? userLabel, DateTime? on, DateTime? before, DateTime? after
+ String teamId, String? channelId, String? channelName, String? channelLabel, String? userId, String? username, String? userLabel, DateTime? on, DateTime? before, DateTime? after, FileKind? fileKind
 });
 
 
@@ -290,7 +294,7 @@ class __$SearchScopeCopyWithImpl<$Res>
 
 /// Create a copy of SearchScope
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? teamId = null,Object? channelId = freezed,Object? channelName = freezed,Object? channelLabel = freezed,Object? userId = freezed,Object? username = freezed,Object? userLabel = freezed,Object? on = freezed,Object? before = freezed,Object? after = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? teamId = null,Object? channelId = freezed,Object? channelName = freezed,Object? channelLabel = freezed,Object? userId = freezed,Object? username = freezed,Object? userLabel = freezed,Object? on = freezed,Object? before = freezed,Object? after = freezed,Object? fileKind = freezed,}) {
   return _then(_SearchScope(
 teamId: null == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String,channelId: freezed == channelId ? _self.channelId : channelId // ignore: cast_nullable_to_non_nullable
@@ -302,7 +306,8 @@ as String?,userLabel: freezed == userLabel ? _self.userLabel : userLabel // igno
 as String?,on: freezed == on ? _self.on : on // ignore: cast_nullable_to_non_nullable
 as DateTime?,before: freezed == before ? _self.before : before // ignore: cast_nullable_to_non_nullable
 as DateTime?,after: freezed == after ? _self.after : after // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,fileKind: freezed == fileKind ? _self.fileKind : fileKind // ignore: cast_nullable_to_non_nullable
+as FileKind?,
   ));
 }
 
