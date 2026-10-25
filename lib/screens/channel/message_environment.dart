@@ -1,0 +1,206 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/actions/message_links.dart';
+import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/markdown/links.dart';
+import 'package:matterleast/markdown/post_doc.dart';
+import 'package:matterleast/screens/channel/channel_screen.dart';
+import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/ui/markdown/post_environment.dart';
+import 'package:matterleast/ui/tokens.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+part 'message_environment.g.dart';
+
+@riverpod
+Future<MessageLinks> messageLinks(Ref ref, String url) async =>
+    MessageLinks(await ref.watch(serverSessionProvider(url).future));
+
+@riverpod
+Stream<ParseOptions> parseOptions(Ref ref, String url) async* {
+  final links = await ref.watch(messageLinksProvider(url).future);
+  yield* links.parseOptions();
+}
+
+/// Gives the message bodies below it the server's parse options and what
+/// taps on mentions, channel links and links do.
+class MessageEnvironment extends ConsumerWidget {
+  const MessageEnvironment({
+    required this.url,
+    required this.teamId,
+    required this.child,
+    super.key,
+  });
+
+  final String url;
+  final String teamId;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final options =
+        ref.watch(parseOptionsProvider(url)).value ?? const ParseOptions();
+    final me = ref.watch(currentUserProvider(url)).value;
+    return PostEnvironment(
+      server: Uri.parse(url),
+      options: options,
+      myUsername: me?.username ?? '',
+      onMention: (name) => _showPerson(context, ref, name),
+      onChannel: (name) => _openChannel(context, ref, name),
+      onLink: (target) => _openLink(context, ref, target),
+      child: child,
+    );
+  }
+
+  Future<void> _showPerson(
+    BuildContext context,
+    WidgetRef ref,
+    String typed,
+  ) async {
+    final links = await ref.read(messageLinksProvider(url).future);
+    final user = await links.userMentioned(typed);
+    if (!context.mounted) return;
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (sheet) => _PersonSheet(user: user, typed: typed),
+      ),
+    );
+  }
+
+  Future<void> _openChannel(
+    BuildContext context,
+    WidgetRef ref,
+    String name,
+  ) async {
+    final links = await ref.read(messageLinksProvider(url).future);
+    final channel = await links.channelNamed(name, teamId: teamId);
+    if (!context.mounted) return;
+    if (channel == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("~$name isn't a channel you're in.")),
+      );
+      return;
+    }
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ChannelScreen(
+            url: url,
+            channelId: channel.id,
+            title: channel.displayName,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openLink(
+    BuildContext context,
+    WidgetRef ref,
+    LinkTarget target,
+  ) async {
+    switch (target) {
+      case ExternalLink(:final uri):
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      case ChannelLink(:final name):
+        await _openChannel(context, ref, name);
+      case PermalinkLink(:final postId):
+        final messenger = ScaffoldMessenger.of(context);
+        final navigator = Navigator.of(context);
+        final links = await ref.read(messageLinksProvider(url).future);
+        String? channelId;
+        try {
+          channelId = await links.channelOfPost(postId);
+        } on Object {
+          channelId = null;
+        }
+        if (channelId == null) {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text(
+                "That message can't be opened. It may be in a "
+                "channel you're not in, or deleted.",
+              ),
+            ),
+          );
+          return;
+        }
+        unawaited(
+          navigator.push(
+            MaterialPageRoute<void>(
+              builder: (_) => ChannelScreen(
+                url: url,
+                channelId: channelId!,
+                title: '',
+                highlightPostId: postId,
+              ),
+            ),
+          ),
+        );
+      case NoLink():
+        return;
+    }
+  }
+}
+
+class _PersonSheet extends StatelessWidget {
+  const _PersonSheet({required this.user, required this.typed});
+
+  final UserRow? user;
+  final String typed;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = this.user;
+    final text = Theme.of(context).textTheme;
+    final name = user == null
+        ? '@$typed'
+        : personName((
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            nickname: user.nickname,
+            status: user.status,
+          ), 'full_name');
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.lg,
+          0,
+          Spacing.lg,
+          Spacing.xl,
+        ),
+        child: Row(
+          children: [
+            InitialsBadge(name: name, size: 56, round: true),
+            const SizedBox(width: Spacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: text.titleLarge),
+                  Text(
+                    user == null
+                        ? 'Not someone this app knows yet'
+                        : '@${user.username}'
+                              '${user.position.isEmpty ? '' : ' · ${user.position}'}',
+                    style: text.bodyMedium?.copyWith(
+                      color: context.tokens.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

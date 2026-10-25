@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/domain/post_details.dart';
+import 'package:matterleast/domain/system_message.dart';
 
 part 'post_list.freezed.dart';
 
@@ -29,13 +31,70 @@ abstract class PostItem with _$PostItem {
 
     /// Names of the people who replied, newest first, when known.
     @Default(<String>[]) List<String> participants,
+    @Default('') String authorUsername,
+    @Default(false) bool authorIsBot,
+    int? authorPictureAt,
+
+    /// The post's props and metadata as the server sent them; decoded when
+    /// the row is drawn.
+    String? propsJson,
+    String? metadataJson,
+    @Default(<ReactionGroup>[]) List<ReactionGroup> reactions,
   }) = _PostItem;
 
   const PostItem._();
 
-  bool get isSystem => type.startsWith('system_');
+  bool get isSystem => type.startsWith('system_') && !isEphemeral;
   bool get edited => editAt != null && !deleted;
   bool get isReply => rootId.isNotEmpty;
+  bool get isEphemeral => type == 'system_ephemeral';
+}
+
+/// The decoded props and metadata of [post].
+PostDetails detailsOf(PostItem post) =>
+    detailsFor(post.id, post.propsJson, post.metadataJson);
+
+/// Everyone who reacted to a post with one emoji.
+@freezed
+abstract class ReactionGroup with _$ReactionGroup {
+  const factory ReactionGroup({
+    required String emojiName,
+
+    /// The people, first to react first.
+    required List<String> names,
+
+    /// The current user is among them.
+    required bool mine,
+  }) = _ReactionGroup;
+
+  const ReactionGroup._();
+
+  int get count => names.length;
+}
+
+/// Pure: [reactions] of one post grouped by emoji, in the order each emoji
+/// was first used.
+List<ReactionGroup> groupReactions(
+  List<({String userId, String emojiName, DateTime? at})> reactions, {
+  required String? myUserId,
+  required String Function(String userId) nameOf,
+}) {
+  final sorted = [...reactions]
+    ..sort((a, b) {
+      final x = a.at?.millisecondsSinceEpoch ?? 0;
+      final y = b.at?.millisecondsSinceEpoch ?? 0;
+      return x.compareTo(y);
+    });
+  final groups = <String, List<String>>{};
+  final mine = <String>{};
+  for (final r in sorted) {
+    groups.putIfAbsent(r.emojiName, () => []).add(nameOf(r.userId));
+    if (r.userId == myUserId) mine.add(r.emojiName);
+  }
+  return [
+    for (final MapEntry(:key, :value) in groups.entries)
+      ReactionGroup(emojiName: key, names: value, mine: mine.contains(key)),
+  ];
 }
 
 /// The stored part of a channel or thread that a conversation shows: the
@@ -79,6 +138,10 @@ sealed class ListRow with _$ListRow {
 
     /// Same author shortly after their previous message: no avatar or name.
     @Default(false) bool compact,
+
+    /// Later membership messages of the same kind, told together with
+    /// [post] in one line.
+    @Default(<PostItem>[]) List<PostItem> combined,
   }) = MessageRow;
 
   const factory ListRow.day(DateTime day) = DaySeparator;
@@ -132,12 +195,29 @@ List<ListRow> buildRows(
       rows.add(const ListRow.newMessages(count: 0));
       startsGroup = true;
     }
+    final activity = Activity.of(post.type);
+    if (activity != null && !startsGroup && rows.last is MessageRow) {
+      final last = rows.last as MessageRow;
+      final entry = activityEntry(activity, detailsOf(post).props);
+      final lastEntry = activityEntry(activity, detailsOf(last.post).props);
+      if (last.post.type == post.type &&
+          !last.post.deleted &&
+          !post.deleted &&
+          entry.actor == lastEntry.actor) {
+        rows[rows.length - 1] = last.copyWith(
+          combined: [...last.combined, post],
+        );
+        previous = post;
+        continue;
+      }
+    }
     final compact =
         !startsGroup &&
         previous != null &&
         previous.userId == post.userId &&
         !previous.isSystem &&
         !post.isSystem &&
+        detailsOf(post).priority == null &&
         post.createAt.difference(previous.createAt) < _groupWindow;
     rows.add(ListRow.post(post, compact: compact));
     previous = post;

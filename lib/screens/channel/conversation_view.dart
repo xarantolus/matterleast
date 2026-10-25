@@ -6,6 +6,7 @@ import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
+import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/post_tile.dart';
@@ -174,33 +175,39 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     final scrolledUp = view != null && !view.pinned;
     return Stack(
       children: [
-        AnchoredList<ListRow>(
-          key: ValueKey(state.generation),
-          rows: rows,
-          keyOf: (row) => row.key,
-          controller: _list,
-          initialAnchor: _openAt(state, height),
-          onViewChanged: _onView,
-          olderEdge: _OlderEdge(
-            state: state,
-            startText: widget.startText,
-            onRetry: _controller.retryOlder,
-          ),
-          itemBuilder: (context, row) => switch (row) {
-            MessageRow(:final post, :final compact) => AppearOnce(
-              animate: _justArrived(state.arrived[row.key], now),
-              child: PostTile(
-                post: post,
-                compact: compact,
-                highlighted: _highlighted == row.key,
-                onOpenThread: widget.onOpenThread == null
-                    ? null
-                    : () => widget.onOpenThread!(post),
-              ),
+        MessageEnvironment(
+          url: widget.url,
+          teamId: state.window?.teamId ?? '',
+          child: AnchoredList<ListRow>(
+            key: ValueKey(state.generation),
+            rows: rows,
+            keyOf: (row) => row.key,
+            controller: _list,
+            initialAnchor: _openAt(state, height),
+            onViewChanged: _onView,
+            olderEdge: _OlderEdge(
+              state: state,
+              startText: widget.startText,
+              onRetry: _controller.retryOlder,
             ),
-            DaySeparator(:final day) => DaySeparatorTile(day: day),
-            NewMessagesLine() => const NewMessagesTile(),
-          },
+            itemBuilder: (context, row) => switch (row) {
+              MessageRow(:final post, :final compact, :final combined) =>
+                AppearOnce(
+                  animate: _justArrived(state.arrived[row.key], now),
+                  child: PostTile(
+                    post: post,
+                    compact: compact,
+                    combined: combined,
+                    highlighted: _highlighted == row.key,
+                    onOpenThread: widget.onOpenThread == null
+                        ? null
+                        : () => widget.onOpenThread!(post),
+                  ),
+                ),
+              DaySeparator(:final day) => DaySeparatorTile(day: day),
+              NewMessagesLine() => const NewMessagesTile(),
+            },
+          ),
         ),
         if (lineAbove)
           Positioned(

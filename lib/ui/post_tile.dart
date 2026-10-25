@@ -1,17 +1,24 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/system_message.dart';
+import 'package:matterleast/ui/attachment_card.dart';
 import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/ui/link_preview_card.dart';
+import 'package:matterleast/ui/markdown/post_body.dart';
+import 'package:matterleast/ui/reactions_bar.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _avatarSize = 36.0;
 const _gutter = _avatarSize + Spacing.md;
 
-/// One message: avatar, name and time, then the text. A [compact] message
-/// continues the one above it from the same person.
+/// One message: avatar, name and time, then the text and what comes with
+/// it. A [compact] message continues the one above it from the same person.
 class PostTile extends StatelessWidget {
   const PostTile({
     required this.post,
     this.compact = false,
+    this.combined = const [],
     this.highlighted = false,
     this.onOpenThread,
     super.key,
@@ -19,35 +26,62 @@ class PostTile extends StatelessWidget {
 
   final PostItem post;
   final bool compact;
+
+  /// Later membership messages told in the same line as [post].
+  final List<PostItem> combined;
   final bool highlighted;
 
-  /// Shows the "N replies" button on a first message of a thread.
+  /// Shows the replies bar under the first message of a thread.
   final VoidCallback? onOpenThread;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
-    if (post.isSystem && !post.deleted) return _SystemLine(post: post);
+    if (post.isSystem && !post.deleted) {
+      return _SystemLine(post: post, combined: combined);
+    }
+    final details = detailsOf(post);
+    final webhook = details.fromWebhook;
+    final override = details.props.overrideUsername;
+    final name = webhook && (override?.isNotEmpty ?? false)
+        ? override!
+        : post.authorName;
+    final bot = post.authorIsBot || webhook || details.props.fromBot == 'true';
     final body = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (!compact)
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: post.authorName,
-                  style: text.titleSmall?.copyWith(color: tokens.text),
-                ),
-                TextSpan(
-                  text: '  ${_time(context, post.createAt)}',
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: Spacing.sm,
+            children: [
+              Text(name, style: text.titleSmall?.copyWith(color: tokens.text)),
+              if (bot) const _Tag('BOT'),
+              Text(
+                _time(context, post.createAt),
+                style: text.bodySmall?.copyWith(color: tokens.muted),
+              ),
+              if (details.priority case final priority?)
+                _PriorityLabel(priority: priority),
+              if (post.isEphemeral)
+                Text(
+                  '(Only visible to you)',
                   style: text.bodySmall?.copyWith(color: tokens.muted),
                 ),
-              ],
-            ),
+            ],
           ),
-        PostText(post: post),
+        PostText(post: post, details: details),
+        for (final (i, attachment) in details.props.attachments.indexed)
+          AttachmentCard(
+            attachment: attachment,
+            keyPrefix: '${post.id}:${post.editAt?.millisecondsSinceEpoch}:$i',
+            imageSizes: details.imageSizes,
+          ),
+        if (details.preview case final preview?)
+          LinkPreviewCard(preview: preview),
+        if (post.reactions.isNotEmpty && !post.deleted)
+          ReactionsBar(reactions: post.reactions),
         if (onOpenThread != null && !post.isReply && post.replyCount > 0)
           _ThreadBar(post: post, onPressed: onOpenThread!),
       ],
@@ -69,11 +103,7 @@ class PostTile extends StatelessWidget {
             if (compact)
               const SizedBox(width: _gutter)
             else ...[
-              InitialsBadge(
-                name: post.authorName,
-                size: _avatarSize,
-                round: true,
-              ),
+              InitialsBadge(name: name, size: _avatarSize, round: true),
               const SizedBox(width: Spacing.md),
             ],
             Expanded(child: body),
@@ -84,11 +114,80 @@ class PostTile extends StatelessWidget {
   }
 }
 
-/// The message text. Plain for now; formatted text replaces it.
+/// A small label beside the author's name, such as BOT.
+class _Tag extends StatelessWidget {
+  const _Tag(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      decoration: BoxDecoration(
+        color: tokens.panel,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall
+            ?.copyWith(color: tokens.muted, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
+class _PriorityLabel extends StatelessWidget {
+  const _PriorityLabel({required this.priority});
+
+  final PostPriorityLabel priority;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final (label, icon, background, foreground) = switch (priority) {
+      PostPriorityLabel.urgent => (
+        'URGENT',
+        Icons.error_outline,
+        scheme.error,
+        scheme.onError,
+      ),
+      PostPriorityLabel.important => (
+        'IMPORTANT',
+        Icons.info_outline,
+        scheme.primary,
+        scheme.onPrimary,
+      ),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: foreground),
+          const SizedBox(width: 2),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: foreground, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The message text, formatted.
 class PostText extends StatelessWidget {
-  const PostText({required this.post, super.key});
+  const PostText({required this.post, required this.details, super.key});
 
   final PostItem post;
+  final PostDetails details;
 
   @override
   Widget build(BuildContext context) {
@@ -103,18 +202,22 @@ class PostText extends StatelessWidget {
         ),
       );
     }
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(text: post.message),
-          if (post.edited)
-            TextSpan(
-              text: ' (edited)',
+    if (post.message.isEmpty) {
+      return post.edited
+          ? Text(
+              '(edited)',
               style: style?.copyWith(color: tokens.muted, fontSize: 12),
-            ),
-        ],
-      ),
-      style: style?.copyWith(color: tokens.text),
+            )
+          : const SizedBox.shrink();
+    }
+    return PostBody(
+      postId: post.id,
+      message: post.message,
+      editAt: post.editAt,
+      edited: post.edited,
+      imageSizes: details.imageSizes,
+      channelNames: details.props.channelMentions,
+      unsafeLinks: details.unsafeLinks,
     );
   }
 }
@@ -126,13 +229,21 @@ String _time(BuildContext context, DateTime at) =>
     );
 
 class _SystemLine extends StatelessWidget {
-  const _SystemLine({required this.post});
+  const _SystemLine({required this.post, required this.combined});
 
   final PostItem post;
+  final List<PostItem> combined;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final activity = Activity.of(post.type);
+    final line = activity != null
+        ? activityText(activity, [
+            for (final p in [post, ...combined])
+              activityEntry(activity, detailsOf(p).props),
+          ])
+        : systemMessageText(post.type, detailsOf(post).props, post.message);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         Spacing.lg + _gutter,
@@ -141,7 +252,7 @@ class _SystemLine extends StatelessWidget {
         Spacing.xs,
       ),
       child: Text(
-        '${post.message}  ${_time(context, post.createAt)}',
+        '$line  ${_time(context, post.createAt)}',
         style: Theme.of(context).textTheme.bodySmall
             ?.copyWith(color: tokens.muted),
       ),

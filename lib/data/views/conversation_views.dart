@@ -53,6 +53,7 @@ class ConversationViews {
       db.preferences,
       db.config,
       db.threads,
+      db.reactions,
     ]),
   );
 
@@ -208,9 +209,47 @@ class ConversationViews {
           lastName: u.lastName,
           nickname: u.nickname,
           status: u.status,
+          isBot: u.isBot,
+          pictureAt: u.lastPictureUpdate,
         ),
     };
     final format = await db.nameFormat();
+    final me = await db.syncText(SyncKeys.currentUserId);
+    final reacted = [
+      for (final p in posts)
+        if (p.reactionCount > 0) p.id,
+    ];
+    final reactionRows = reacted.isEmpty
+        ? const <ReactionRow>[]
+        : await (db.select(
+            db.reactions,
+          )..where((r) => r.postId.isIn(reacted))).get();
+    final reactors = {for (final r in reactionRows) r.userId}
+      ..removeAll(people.keys);
+    if (reactors.isNotEmpty) {
+      for (final u in await (db.select(
+        db.users,
+      )..where((u) => u.id.isIn(reactors))).get()) {
+        people[u.id] = (
+          username: u.username,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          nickname: u.nickname,
+          status: u.status,
+          isBot: u.isBot,
+          pictureAt: u.lastPictureUpdate,
+        );
+      }
+    }
+    final reactionsByPost =
+        <String, List<({String userId, String emojiName, DateTime? at})>>{};
+    for (final r in reactionRows) {
+      reactionsByPost.putIfAbsent(r.postId, () => []).add((
+        userId: r.userId,
+        emojiName: r.emojiName,
+        at: r.createAt,
+      ));
+    }
     final roots = [
       for (final p in posts)
         if (p.replyCount > 0) p.id,
@@ -221,8 +260,18 @@ class ConversationViews {
       )..where((t) => t.rootId.isIn(roots))).get())
         t.rootId: t.unreadReplies,
     };
-    String nameOf(String id) =>
-        people[id] == null ? 'Someone' : personName(people[id]!, format);
+    String nameOf(String id) {
+      final person = people[id];
+      if (person == null) return 'Someone';
+      return personName((
+        username: person.username,
+        firstName: person.firstName,
+        lastName: person.lastName,
+        nickname: person.nickname,
+        status: person.status,
+      ), format);
+    }
+
     return [
       for (final p in posts)
         PostItem(
@@ -239,6 +288,16 @@ class ConversationViews {
           sendState: p.sendState,
           replyCount: p.replyCount,
           lastReplyAt: p.lastReplyAt,
+          authorUsername: people[p.userId]?.username ?? '',
+          authorIsBot: people[p.userId]?.isBot ?? false,
+          authorPictureAt: people[p.userId]?.pictureAt,
+          propsJson: p.propsJson,
+          metadataJson: p.metadataJson,
+          reactions: groupReactions(
+            reactionsByPost[p.id] ?? const [],
+            myUserId: me,
+            nameOf: nameOf,
+          ),
           unreadReplies: unread[p.id] ?? 0,
           participants: [
             for (final id in participants[p.id]!)

@@ -19,7 +19,9 @@ mixin _$PostItem {
  String get key; String get userId; String get authorName; DateTime get createAt; String get message; String get type; String get rootId; DateTime? get editAt; bool get deleted;/// `pending` or `failed` while our own post is unsent.
  String? get sendState; int get replyCount; DateTime? get lastReplyAt;/// Replies in a followed thread the reader hasn't seen.
  int get unreadReplies;/// Names of the people who replied, newest first, when known.
- List<String> get participants;
+ List<String> get participants; String get authorUsername; bool get authorIsBot; int? get authorPictureAt;/// The post's props and metadata as the server sent them; decoded when
+/// the row is drawn.
+ String? get propsJson; String? get metadataJson; List<ReactionGroup> get reactions;
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -31,20 +33,20 @@ $PostItemCopyWith<PostItem> get copyWith => _$PostItemCopyWithImpl<PostItem>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as PostItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.message, _this.message) || other.message == _this.message)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.editAt, _this.editAt) || other.editAt == _this.editAt)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted)&&(identical(other.sendState, _this.sendState) || other.sendState == _this.sendState)&&(identical(other.replyCount, _this.replyCount) || other.replyCount == _this.replyCount)&&(identical(other.lastReplyAt, _this.lastReplyAt) || other.lastReplyAt == _this.lastReplyAt)&&(identical(other.unreadReplies, _this.unreadReplies) || other.unreadReplies == _this.unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _this.participants));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.message, _this.message) || other.message == _this.message)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.editAt, _this.editAt) || other.editAt == _this.editAt)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted)&&(identical(other.sendState, _this.sendState) || other.sendState == _this.sendState)&&(identical(other.replyCount, _this.replyCount) || other.replyCount == _this.replyCount)&&(identical(other.lastReplyAt, _this.lastReplyAt) || other.lastReplyAt == _this.lastReplyAt)&&(identical(other.unreadReplies, _this.unreadReplies) || other.unreadReplies == _this.unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _this.participants)&&(identical(other.authorUsername, _this.authorUsername) || other.authorUsername == _this.authorUsername)&&(identical(other.authorIsBot, _this.authorIsBot) || other.authorIsBot == _this.authorIsBot)&&(identical(other.authorPictureAt, _this.authorPictureAt) || other.authorPictureAt == _this.authorPictureAt)&&(identical(other.propsJson, _this.propsJson) || other.propsJson == _this.propsJson)&&(identical(other.metadataJson, _this.metadataJson) || other.metadataJson == _this.metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _this.reactions));
 }
 
 
 @override
 int get hashCode {
   final _this = this as PostItem;
-  return Object.hash(runtimeType,_this.id,_this.key,_this.userId,_this.authorName,_this.createAt,_this.message,_this.type,_this.rootId,_this.editAt,_this.deleted,_this.sendState,_this.replyCount,_this.lastReplyAt,_this.unreadReplies,const DeepCollectionEquality().hash(_this.participants));
+  return Object.hashAll([runtimeType,_this.id,_this.key,_this.userId,_this.authorName,_this.createAt,_this.message,_this.type,_this.rootId,_this.editAt,_this.deleted,_this.sendState,_this.replyCount,_this.lastReplyAt,_this.unreadReplies,const DeepCollectionEquality().hash(_this.participants),_this.authorUsername,_this.authorIsBot,_this.authorPictureAt,_this.propsJson,_this.metadataJson,const DeepCollectionEquality().hash(_this.reactions)]);
 }
 
 @override
 String toString() {
   final _this = this as PostItem;
-  return 'PostItem(id: ${_this.id}, key: ${_this.key}, userId: ${_this.userId}, authorName: ${_this.authorName}, createAt: ${_this.createAt}, message: ${_this.message}, type: ${_this.type}, rootId: ${_this.rootId}, editAt: ${_this.editAt}, deleted: ${_this.deleted}, sendState: ${_this.sendState}, replyCount: ${_this.replyCount}, lastReplyAt: ${_this.lastReplyAt}, unreadReplies: ${_this.unreadReplies}, participants: ${_this.participants})';
+  return 'PostItem(id: ${_this.id}, key: ${_this.key}, userId: ${_this.userId}, authorName: ${_this.authorName}, createAt: ${_this.createAt}, message: ${_this.message}, type: ${_this.type}, rootId: ${_this.rootId}, editAt: ${_this.editAt}, deleted: ${_this.deleted}, sendState: ${_this.sendState}, replyCount: ${_this.replyCount}, lastReplyAt: ${_this.lastReplyAt}, unreadReplies: ${_this.unreadReplies}, participants: ${_this.participants}, authorUsername: ${_this.authorUsername}, authorIsBot: ${_this.authorIsBot}, authorPictureAt: ${_this.authorPictureAt}, propsJson: ${_this.propsJson}, metadataJson: ${_this.metadataJson}, reactions: ${_this.reactions})';
 }
 
 
@@ -55,7 +57,7 @@ abstract mixin class $PostItemCopyWith<$Res>  {
   factory $PostItemCopyWith(PostItem value, $Res Function(PostItem) _then) = _$PostItemCopyWithImpl;
 @useResult
 $Res call({
- String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants
+ String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants, String authorUsername, bool authorIsBot, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions
 });
 
 
@@ -72,7 +74,7 @@ class _$PostItemCopyWithImpl<$Res>
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,}) {
   return _then(PostItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -89,7 +91,13 @@ as String?,replyCount: null == replyCount ? _self.replyCount : replyCount // ign
 as int,lastReplyAt: freezed == lastReplyAt ? _self.lastReplyAt : lastReplyAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,unreadReplies: null == unreadReplies ? _self.unreadReplies : unreadReplies // ignore: cast_nullable_to_non_nullable
 as int,participants: null == participants ? _self.participants : participants // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,authorUsername: null == authorUsername ? _self.authorUsername : authorUsername // ignore: cast_nullable_to_non_nullable
+as String,authorIsBot: null == authorIsBot ? _self.authorIsBot : authorIsBot // ignore: cast_nullable_to_non_nullable
+as bool,authorPictureAt: freezed == authorPictureAt ? _self.authorPictureAt : authorPictureAt // ignore: cast_nullable_to_non_nullable
+as int?,propsJson: freezed == propsJson ? _self.propsJson : propsJson // ignore: cast_nullable_to_non_nullable
+as String?,metadataJson: freezed == metadataJson ? _self.metadataJson : metadataJson // ignore: cast_nullable_to_non_nullable
+as String?,reactions: null == reactions ? _self.reactions : reactions // ignore: cast_nullable_to_non_nullable
+as List<ReactionGroup>,
   ));
 }
 
@@ -174,10 +182,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants,  String authorUsername,  bool authorIsBot,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PostItem() when $default != null:
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions);case _:
   return orElse();
 
 }
@@ -195,10 +203,10 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants,  String authorUsername,  bool authorIsBot,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions)  $default,) {final _that = this;
 switch (_that) {
 case _PostItem():
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -215,10 +223,10 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants,  String authorUsername,  bool authorIsBot,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions)?  $default,) {final _that = this;
 switch (_that) {
 case _PostItem() when $default != null:
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions);case _:
   return null;
 
 }
@@ -230,7 +238,7 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 
 
 class _PostItem extends PostItem {
-  const _PostItem({required this.id, required this.key, required this.userId, required this.authorName, required this.createAt, required this.message, this.type = '', this.rootId = '', this.editAt, this.deleted = false, this.sendState, this.replyCount = 0, this.lastReplyAt, this.unreadReplies = 0,  List<String> participants = const <String>[]}): _participants = participants,super._();
+  const _PostItem({required this.id, required this.key, required this.userId, required this.authorName, required this.createAt, required this.message, this.type = '', this.rootId = '', this.editAt, this.deleted = false, this.sendState, this.replyCount = 0, this.lastReplyAt, this.unreadReplies = 0,  List<String> participants = const <String>[], this.authorUsername = '', this.authorIsBot = false, this.authorPictureAt, this.propsJson, this.metadataJson,  List<ReactionGroup> reactions = const <ReactionGroup>[]}): _participants = participants,_reactions = reactions,super._();
   
 
 @override final  String id;
@@ -259,6 +267,20 @@ class _PostItem extends PostItem {
   return EqualUnmodifiableListView(_participants);
 }
 
+@override@JsonKey() final  String authorUsername;
+@override@JsonKey() final  bool authorIsBot;
+@override final  int? authorPictureAt;
+/// The post's props and metadata as the server sent them; decoded when
+/// the row is drawn.
+@override final  String? propsJson;
+@override final  String? metadataJson;
+ final  List<ReactionGroup> _reactions;
+@override@JsonKey() List<ReactionGroup> get reactions {
+  if (_reactions is EqualUnmodifiableListView) return _reactions;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_reactions);
+}
+
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
@@ -270,18 +292,18 @@ _$PostItemCopyWith<_PostItem> get copyWith => __$PostItemCopyWithImpl<_PostItem>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostItem&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.message, message) || other.message == message)&&(identical(other.type, type) || other.type == type)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.editAt, editAt) || other.editAt == editAt)&&(identical(other.deleted, deleted) || other.deleted == deleted)&&(identical(other.sendState, sendState) || other.sendState == sendState)&&(identical(other.replyCount, replyCount) || other.replyCount == replyCount)&&(identical(other.lastReplyAt, lastReplyAt) || other.lastReplyAt == lastReplyAt)&&(identical(other.unreadReplies, unreadReplies) || other.unreadReplies == unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _participants));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostItem&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.message, message) || other.message == message)&&(identical(other.type, type) || other.type == type)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.editAt, editAt) || other.editAt == editAt)&&(identical(other.deleted, deleted) || other.deleted == deleted)&&(identical(other.sendState, sendState) || other.sendState == sendState)&&(identical(other.replyCount, replyCount) || other.replyCount == replyCount)&&(identical(other.lastReplyAt, lastReplyAt) || other.lastReplyAt == lastReplyAt)&&(identical(other.unreadReplies, unreadReplies) || other.unreadReplies == unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _participants)&&(identical(other.authorUsername, authorUsername) || other.authorUsername == authorUsername)&&(identical(other.authorIsBot, authorIsBot) || other.authorIsBot == authorIsBot)&&(identical(other.authorPictureAt, authorPictureAt) || other.authorPictureAt == authorPictureAt)&&(identical(other.propsJson, propsJson) || other.propsJson == propsJson)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _reactions));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,key,userId,authorName,createAt,message,type,rootId,editAt,deleted,sendState,replyCount,lastReplyAt,unreadReplies,const DeepCollectionEquality().hash(_participants));
+    return Object.hashAll([runtimeType,id,key,userId,authorName,createAt,message,type,rootId,editAt,deleted,sendState,replyCount,lastReplyAt,unreadReplies,const DeepCollectionEquality().hash(_participants),authorUsername,authorIsBot,authorPictureAt,propsJson,metadataJson,const DeepCollectionEquality().hash(_reactions)]);
 }
 
 @override
 String toString() {
-    return 'PostItem(id: $id, key: $key, userId: $userId, authorName: $authorName, createAt: $createAt, message: $message, type: $type, rootId: $rootId, editAt: $editAt, deleted: $deleted, sendState: $sendState, replyCount: $replyCount, lastReplyAt: $lastReplyAt, unreadReplies: $unreadReplies, participants: $participants)';
+    return 'PostItem(id: $id, key: $key, userId: $userId, authorName: $authorName, createAt: $createAt, message: $message, type: $type, rootId: $rootId, editAt: $editAt, deleted: $deleted, sendState: $sendState, replyCount: $replyCount, lastReplyAt: $lastReplyAt, unreadReplies: $unreadReplies, participants: $participants, authorUsername: $authorUsername, authorIsBot: $authorIsBot, authorPictureAt: $authorPictureAt, propsJson: $propsJson, metadataJson: $metadataJson, reactions: $reactions)';
 }
 
 
@@ -292,7 +314,7 @@ abstract mixin class _$PostItemCopyWith<$Res> implements $PostItemCopyWith<$Res>
   factory _$PostItemCopyWith(_PostItem value, $Res Function(_PostItem) _then) = __$PostItemCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants
+ String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants, String authorUsername, bool authorIsBot, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions
 });
 
 
@@ -309,7 +331,7 @@ class __$PostItemCopyWithImpl<$Res>
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,}) {
   return _then(_PostItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -326,7 +348,294 @@ as String?,replyCount: null == replyCount ? _self.replyCount : replyCount // ign
 as int,lastReplyAt: freezed == lastReplyAt ? _self.lastReplyAt : lastReplyAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,unreadReplies: null == unreadReplies ? _self.unreadReplies : unreadReplies // ignore: cast_nullable_to_non_nullable
 as int,participants: null == participants ? _self._participants : participants // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,authorUsername: null == authorUsername ? _self.authorUsername : authorUsername // ignore: cast_nullable_to_non_nullable
+as String,authorIsBot: null == authorIsBot ? _self.authorIsBot : authorIsBot // ignore: cast_nullable_to_non_nullable
+as bool,authorPictureAt: freezed == authorPictureAt ? _self.authorPictureAt : authorPictureAt // ignore: cast_nullable_to_non_nullable
+as int?,propsJson: freezed == propsJson ? _self.propsJson : propsJson // ignore: cast_nullable_to_non_nullable
+as String?,metadataJson: freezed == metadataJson ? _self.metadataJson : metadataJson // ignore: cast_nullable_to_non_nullable
+as String?,reactions: null == reactions ? _self._reactions : reactions // ignore: cast_nullable_to_non_nullable
+as List<ReactionGroup>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$ReactionGroup {
+
+ String get emojiName;/// The people, first to react first.
+ List<String> get names;/// The current user is among them.
+ bool get mine;
+/// Create a copy of ReactionGroup
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ReactionGroupCopyWith<ReactionGroup> get copyWith => _$ReactionGroupCopyWithImpl<ReactionGroup>(this as ReactionGroup, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as ReactionGroup;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReactionGroup&&(identical(other.emojiName, _this.emojiName) || other.emojiName == _this.emojiName)&&const DeepCollectionEquality().equals(other.names, _this.names)&&(identical(other.mine, _this.mine) || other.mine == _this.mine));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as ReactionGroup;
+  return Object.hash(runtimeType,_this.emojiName,const DeepCollectionEquality().hash(_this.names),_this.mine);
+}
+
+@override
+String toString() {
+  final _this = this as ReactionGroup;
+  return 'ReactionGroup(emojiName: ${_this.emojiName}, names: ${_this.names}, mine: ${_this.mine})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ReactionGroupCopyWith<$Res>  {
+  factory $ReactionGroupCopyWith(ReactionGroup value, $Res Function(ReactionGroup) _then) = _$ReactionGroupCopyWithImpl;
+@useResult
+$Res call({
+ String emojiName, List<String> names, bool mine
+});
+
+
+
+
+}
+/// @nodoc
+class _$ReactionGroupCopyWithImpl<$Res>
+    implements $ReactionGroupCopyWith<$Res> {
+  _$ReactionGroupCopyWithImpl(this._self, this._then);
+
+  final ReactionGroup _self;
+  final $Res Function(ReactionGroup) _then;
+
+/// Create a copy of ReactionGroup
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? emojiName = null,Object? names = null,Object? mine = null,}) {
+  return _then(ReactionGroup(
+emojiName: null == emojiName ? _self.emojiName : emojiName // ignore: cast_nullable_to_non_nullable
+as String,names: null == names ? _self.names : names // ignore: cast_nullable_to_non_nullable
+as List<String>,mine: null == mine ? _self.mine : mine // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ReactionGroup].
+extension ReactionGroupPatterns on ReactionGroup {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ReactionGroup value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ReactionGroup() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ReactionGroup value)  $default,){
+final _that = this;
+switch (_that) {
+case _ReactionGroup():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ReactionGroup value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ReactionGroup() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String emojiName,  List<String> names,  bool mine)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ReactionGroup() when $default != null:
+return $default(_that.emojiName,_that.names,_that.mine);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String emojiName,  List<String> names,  bool mine)  $default,) {final _that = this;
+switch (_that) {
+case _ReactionGroup():
+return $default(_that.emojiName,_that.names,_that.mine);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String emojiName,  List<String> names,  bool mine)?  $default,) {final _that = this;
+switch (_that) {
+case _ReactionGroup() when $default != null:
+return $default(_that.emojiName,_that.names,_that.mine);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _ReactionGroup extends ReactionGroup {
+  const _ReactionGroup({required this.emojiName, required  List<String> names, required this.mine}): _names = names,super._();
+  
+
+@override final  String emojiName;
+/// The people, first to react first.
+ final  List<String> _names;
+/// The people, first to react first.
+@override List<String> get names {
+  if (_names is EqualUnmodifiableListView) return _names;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_names);
+}
+
+/// The current user is among them.
+@override final  bool mine;
+
+/// Create a copy of ReactionGroup
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ReactionGroupCopyWith<_ReactionGroup> get copyWith => __$ReactionGroupCopyWithImpl<_ReactionGroup>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReactionGroup&&(identical(other.emojiName, emojiName) || other.emojiName == emojiName)&&const DeepCollectionEquality().equals(other.names, _names)&&(identical(other.mine, mine) || other.mine == mine));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,emojiName,const DeepCollectionEquality().hash(_names),mine);
+}
+
+@override
+String toString() {
+    return 'ReactionGroup(emojiName: $emojiName, names: $names, mine: $mine)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ReactionGroupCopyWith<$Res> implements $ReactionGroupCopyWith<$Res> {
+  factory _$ReactionGroupCopyWith(_ReactionGroup value, $Res Function(_ReactionGroup) _then) = __$ReactionGroupCopyWithImpl;
+@override @useResult
+$Res call({
+ String emojiName, List<String> names, bool mine
+});
+
+
+
+
+}
+/// @nodoc
+class __$ReactionGroupCopyWithImpl<$Res>
+    implements _$ReactionGroupCopyWith<$Res> {
+  __$ReactionGroupCopyWithImpl(this._self, this._then);
+
+  final _ReactionGroup _self;
+  final $Res Function(_ReactionGroup) _then;
+
+/// Create a copy of ReactionGroup
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? emojiName = null,Object? names = null,Object? mine = null,}) {
+  return _then(_ReactionGroup(
+emojiName: null == emojiName ? _self.emojiName : emojiName // ignore: cast_nullable_to_non_nullable
+as String,names: null == names ? _self._names : names // ignore: cast_nullable_to_non_nullable
+as List<String>,mine: null == mine ? _self.mine : mine // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -782,10 +1091,10 @@ return newMessages(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( PostItem post,  bool compact)?  post,TResult Function( DateTime day)?  day,TResult Function( int count)?  newMessages,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( PostItem post,  bool compact,  List<PostItem> combined)?  post,TResult Function( DateTime day)?  day,TResult Function( int count)?  newMessages,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case MessageRow() when post != null:
-return post(_that.post,_that.compact);case DaySeparator() when day != null:
+return post(_that.post,_that.compact,_that.combined);case DaySeparator() when day != null:
 return day(_that.day);case NewMessagesLine() when newMessages != null:
 return newMessages(_that.count);case _:
   return orElse();
@@ -805,10 +1114,10 @@ return newMessages(_that.count);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( PostItem post,  bool compact)  post,required TResult Function( DateTime day)  day,required TResult Function( int count)  newMessages,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( PostItem post,  bool compact,  List<PostItem> combined)  post,required TResult Function( DateTime day)  day,required TResult Function( int count)  newMessages,}) {final _that = this;
 switch (_that) {
 case MessageRow():
-return post(_that.post,_that.compact);case DaySeparator():
+return post(_that.post,_that.compact,_that.combined);case DaySeparator():
 return day(_that.day);case NewMessagesLine():
 return newMessages(_that.count);}
 }
@@ -824,10 +1133,10 @@ return newMessages(_that.count);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( PostItem post,  bool compact)?  post,TResult? Function( DateTime day)?  day,TResult? Function( int count)?  newMessages,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( PostItem post,  bool compact,  List<PostItem> combined)?  post,TResult? Function( DateTime day)?  day,TResult? Function( int count)?  newMessages,}) {final _that = this;
 switch (_that) {
 case MessageRow() when post != null:
-return post(_that.post,_that.compact);case DaySeparator() when day != null:
+return post(_that.post,_that.compact,_that.combined);case DaySeparator() when day != null:
 return day(_that.day);case NewMessagesLine() when newMessages != null:
 return newMessages(_that.count);case _:
   return null;
@@ -841,12 +1150,23 @@ return newMessages(_that.count);case _:
 
 
 class MessageRow extends ListRow {
-  const MessageRow(this.post, {this.compact = false}): super._();
+  const MessageRow(this.post, {this.compact = false,  List<PostItem> combined = const <PostItem>[]}): _combined = combined,super._();
   
 
  final  PostItem post;
 /// Same author shortly after their previous message: no avatar or name.
 @JsonKey() final  bool compact;
+/// Later membership messages of the same kind, told together with
+/// [post] in one line.
+ final  List<PostItem> _combined;
+/// Later membership messages of the same kind, told together with
+/// [post] in one line.
+@JsonKey() List<PostItem> get combined {
+  if (_combined is EqualUnmodifiableListView) return _combined;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_combined);
+}
+
 
 /// Create a copy of ListRow
 /// with the given fields replaced by the non-null parameter values.
@@ -858,18 +1178,18 @@ $MessageRowCopyWith<MessageRow> get copyWith => _$MessageRowCopyWithImpl<Message
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is MessageRow&&(identical(other.post, post) || other.post == post)&&(identical(other.compact, compact) || other.compact == compact));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is MessageRow&&(identical(other.post, post) || other.post == post)&&(identical(other.compact, compact) || other.compact == compact)&&const DeepCollectionEquality().equals(other.combined, _combined));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,post,compact);
+    return Object.hash(runtimeType,post,compact,const DeepCollectionEquality().hash(_combined));
 }
 
 @override
 String toString() {
-    return 'ListRow.post(post: $post, compact: $compact)';
+    return 'ListRow.post(post: $post, compact: $compact, combined: $combined)';
 }
 
 
@@ -880,7 +1200,7 @@ abstract mixin class $MessageRowCopyWith<$Res> implements $ListRowCopyWith<$Res>
   factory $MessageRowCopyWith(MessageRow value, $Res Function(MessageRow) _then) = _$MessageRowCopyWithImpl;
 @useResult
 $Res call({
- PostItem post, bool compact
+ PostItem post, bool compact, List<PostItem> combined
 });
 
 
@@ -897,11 +1217,12 @@ class _$MessageRowCopyWithImpl<$Res>
 
 /// Create a copy of ListRow
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? post = null,Object? compact = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? post = null,Object? compact = null,Object? combined = null,}) {
   return _then(MessageRow(
 null == post ? _self.post : post // ignore: cast_nullable_to_non_nullable
 as PostItem,compact: null == compact ? _self.compact : compact // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,combined: null == combined ? _self._combined : combined // ignore: cast_nullable_to_non_nullable
+as List<PostItem>,
   ));
 }
 

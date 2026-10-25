@@ -1,0 +1,120 @@
+import 'dart:convert';
+
+import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/post_extras.dart';
+
+/// What a post row shows beyond its text, decoded from the stored props and
+/// metadata JSON once per version.
+class PostDetails {
+  const PostDetails({
+    this.props = const PostProps(),
+    this.imageSizes = const {},
+    this.preview,
+    this.priority,
+    this.customEmoji = const {},
+  });
+
+  /// Pure: decodes [propsJson] and [metadataJson]; anything malformed is
+  /// left out.
+  factory PostDetails.decode(String? propsJson, String? metadataJson) {
+    final props = _object(propsJson);
+    final metadata = _object(metadataJson);
+    final meta = metadata == null ? null : api.PostMetadata.fromJson(metadata);
+    final sizes = <String, ImageSize>{
+      for (final MapEntry(:key, :value) in (meta?.images ?? const {}).entries)
+        if (value is Map<String, Object?>) key: ImageSize.fromJson(value),
+    };
+    LinkPreview? preview;
+    final first = meta?.embeds.firstOrNull;
+    if (first != null && first.type?.json == 'opengraph') {
+      final og = OpenGraph.fromJson(first.data ?? const {});
+      final image = og.images.firstOrNull;
+      final imageUrl = image?.secureUrl?.isNotEmpty ?? false
+          ? image!.secureUrl
+          : image?.url;
+      if ((og.title?.isNotEmpty ?? false) ||
+          (og.description?.isNotEmpty ?? false)) {
+        preview = LinkPreview(
+          url: og.url ?? first.url ?? '',
+          title: og.title ?? '',
+          siteName: og.siteName ?? '',
+          description: og.description ?? '',
+          imageUrl: imageUrl,
+          imageSize: imageUrl == null
+              ? null
+              : sizes[imageUrl] ??
+                    ImageSize(width: image?.width, height: image?.height),
+        );
+      }
+    }
+    return PostDetails(
+      props: props == null ? const PostProps() : PostProps.fromJson(props),
+      imageSizes: sizes,
+      preview: preview,
+      priority: switch (meta?.priority?.priority?.json) {
+        'urgent' => PostPriorityLabel.urgent,
+        'important' => PostPriorityLabel.important,
+        _ => null,
+      },
+      customEmoji: {
+        for (final e in meta?.emojis ?? const <api.Emoji>[])
+          if (e.name != null && e.id != null) e.name!: e.id!,
+      },
+    );
+  }
+
+  final PostProps props;
+  final Map<String, ImageSize> imageSizes;
+  final LinkPreview? preview;
+  final PostPriorityLabel? priority;
+
+  /// Custom emoji the post uses, name → id.
+  final Map<String, String> customEmoji;
+
+  bool get fromWebhook => props.fromWebhook == 'true';
+  bool get unsafeLinks => props.unsafeLinks == 'true';
+}
+
+enum PostPriorityLabel { urgent, important }
+
+/// An OpenGraph preview the server attached to a post.
+class LinkPreview {
+  const LinkPreview({
+    required this.url,
+    required this.title,
+    required this.siteName,
+    required this.description,
+    this.imageUrl,
+    this.imageSize,
+  });
+
+  final String url;
+  final String title;
+  final String siteName;
+  final String description;
+  final String? imageUrl;
+  final ImageSize? imageSize;
+}
+
+Map<String, Object?>? _object(String? json) {
+  if (json == null || json.isEmpty) return null;
+  try {
+    final decoded = jsonDecode(json);
+    return decoded is Map<String, Object?> ? decoded : null;
+  } on FormatException {
+    return null;
+  }
+}
+
+final _details = <(String, String?, String?), PostDetails>{};
+
+/// [PostDetails.decode], kept for the most recently drawn posts.
+PostDetails detailsFor(String postId, String? propsJson, String? metadataJson) {
+  final key = (postId, propsJson, metadataJson);
+  final hit = _details.remove(key);
+  if (hit != null) return _details[key] = hit;
+  final details = PostDetails.decode(propsJson, metadataJson);
+  _details[key] = details;
+  if (_details.length > 1000) _details.remove(_details.keys.first);
+  return details;
+}

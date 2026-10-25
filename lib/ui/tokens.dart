@@ -89,6 +89,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     'accent on page': (accent, page),
     'accent on wash': (accent, accentWash),
     'text on code': (text, codeBackground),
+    'muted on code': (muted, codeBackground),
     'accent on panel': (accent, panel),
     'muted on panel': (muted, panel),
     'page on muted (muted mention count)': (page, muted),
