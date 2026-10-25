@@ -7,6 +7,8 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/views/switch_views.dart';
+import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/log.dart';
 
 /// What the user does to channels in the list. Each action talks to the
@@ -116,6 +118,33 @@ class ChannelActions {
       ),
     );
     await session.store.applyCategoryUpdates(updated);
+  }
+
+  /// Hides a direct or group message from the list without leaving it, as
+  /// the official app does; the next message brings it back.
+  Future<void> closeConversation(String channelId) async {
+    final me = await _db.syncText(SyncKeys.currentUserId) ?? '';
+    final channel = await (_db.select(
+      _db.channels,
+    )..where((c) => c.id.equals(channelId))).getSingle();
+    final preference = channel.type == 'D'
+        ? api.Preference(
+            userId: me,
+            category: Prefs.directChannelShow,
+            name: directPartnerId(channel.name, me),
+            value: 'false',
+          )
+        : api.Preference(
+            userId: me,
+            category: Prefs.groupChannelShow,
+            name: channelId,
+            value: 'false',
+          );
+    await session.api.call(
+      () =>
+          _client.preferences.updatePreferences(userId: me, body: [preference]),
+    );
+    await session.store.applyPreferences([preference]);
   }
 
   /// Muted channels only count mentions as unread.

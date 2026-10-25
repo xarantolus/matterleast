@@ -110,6 +110,19 @@ class _ChannelActionsSheet extends ConsumerWidget {
               (actions) => actions.setMuted(item.id, muted: !item.muted),
             ),
           ),
+          if (conversation)
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: Text(
+                item.kind == ChannelKind.direct
+                    ? 'Close direct message'
+                    : 'Close group message',
+              ),
+              onTap: () => run(
+                "Couldn't close ${item.title}.",
+                (actions) => actions.closeConversation(item.id),
+              ),
+            ),
           if (!conversation)
             ListTile(
               leading: const Icon(Icons.logout),
