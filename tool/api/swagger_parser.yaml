@@ -142,6 +142,9 @@ swagger_parser:
     - {apply_to_type: "ApiV4TeamsTeamIdPatchRequestBody?", parser_name: LenientApiV4TeamsTeamIdPatchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4TeamsTeamIdPatchRequestBody>", parser_name: LenientListOfApiV4TeamsTeamIdPatchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4TeamsTeamIdPatchRequestBody>?", parser_name: LenientMapOfApiV4TeamsTeamIdPatchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "ApiV4TeamsTeamIdPostsSearchRequestBody?", parser_name: LenientApiV4TeamsTeamIdPostsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<ApiV4TeamsTeamIdPostsSearchRequestBody>", parser_name: LenientListOfApiV4TeamsTeamIdPostsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, ApiV4TeamsTeamIdPostsSearchRequestBody>?", parser_name: LenientMapOfApiV4TeamsTeamIdPostsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "ApiV4TeamsTeamIdRequestBody?", parser_name: LenientApiV4TeamsTeamIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4TeamsTeamIdRequestBody>", parser_name: LenientListOfApiV4TeamsTeamIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4TeamsTeamIdRequestBody>?", parser_name: LenientMapOfApiV4TeamsTeamIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -322,6 +325,9 @@ swagger_parser:
     - {apply_to_type: "PostList?", parser_name: LenientPostList, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<PostList>", parser_name: LenientListOfPostList, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, PostList>?", parser_name: LenientMapOfPostList, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "PostListWithSearchMatches?", parser_name: LenientPostListWithSearchMatches, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<PostListWithSearchMatches>", parser_name: LenientListOfPostListWithSearchMatches, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, PostListWithSearchMatches>?", parser_name: LenientMapOfPostListWithSearchMatches, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "PostMetadata?", parser_name: LenientPostMetadata, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<PostMetadata>", parser_name: LenientListOfPostMetadata, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, PostMetadata>?", parser_name: LenientMapOfPostMetadata, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -511,6 +517,7 @@ swagger_parser:
     - "/api/v4/teams/{team_id}/members/ids"
     - "/api/v4/teams/{team_id}/members/{user_id}"
     - "/api/v4/teams/{team_id}/patch"
+    - "/api/v4/teams/{team_id}/posts/search"
     - "/api/v4/teams/{team_id}/stats"
     - "/api/v4/terms_of_service"
     - "/api/v4/users"

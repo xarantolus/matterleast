@@ -8,12 +8,14 @@ import 'package:retrofit/retrofit.dart';
 import '../models/api_v4_posts_post_id_patch_request_body.dart';
 import '../models/api_v4_posts_post_id_request_body.dart';
 import '../models/api_v4_posts_request_body.dart';
+import '../models/api_v4_teams_team_id_posts_search_request_body.dart';
 import '../models/channel_unread_at.dart';
 import '../models/file_info.dart';
 import '../models/post.dart';
 import '../models/post_acknowledgement.dart';
 import '../models/post_info.dart';
 import '../models/post_list.dart';
+import '../models/post_list_with_search_matches.dart';
 import '../models/status_ok.dart';
 
 part 'posts_client.g.dart';
@@ -71,7 +73,7 @@ abstract class PostsClient {
   });
 
   @GET('/api/v4/users/{user_id}/posts/flagged')
-  Future<List<PostList>> getFlaggedPostsForUser({
+  Future<PostList> getFlaggedPostsForUser({
     @Path('user_id') required String userId,
     @Query('page') int? page = 0,
     @Query('per_page') int? perPage = 60,
@@ -98,6 +100,12 @@ abstract class PostsClient {
     @Query('page') int? page = 0,
     @Query('per_page') int? perPage = 60,
     @Query('include_deleted') bool? includeDeleted = false,
+  });
+
+  @POST('/api/v4/teams/{team_id}/posts/search')
+  Future<PostListWithSearchMatches> searchPosts({
+    @Path('team_id') required String teamId,
+    @Body() required ApiV4TeamsTeamIdPostsSearchRequestBody body,
   });
 
   @POST('/api/v4/posts/{post_id}/pin')

@@ -90,6 +90,7 @@
 - "/api/v4/teams/{team_id}/members/ids"
 - "/api/v4/teams/{team_id}/members/{user_id}"
 - "/api/v4/teams/{team_id}/patch"
+- "/api/v4/teams/{team_id}/posts/search"
 - "/api/v4/teams/{team_id}/stats"
 - "/api/v4/terms_of_service"
 - "/api/v4/users"

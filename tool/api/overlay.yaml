@@ -174,3 +174,11 @@ actions:
       content:
         application/json:
           schema: {type: array, items: {$ref: "#/components/schemas/SidebarCategoryWithChannels"}}
+  # --- Home inbox (M2) ---
+  - target: "$.paths['/api/v4/users/{user_id}/posts/flagged'].get.responses['200'].content"
+    remove: true
+  - target: "$.paths['/api/v4/users/{user_id}/posts/flagged'].get.responses['200']"
+    update:
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/PostList"}

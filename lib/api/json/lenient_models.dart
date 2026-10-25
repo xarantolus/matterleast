@@ -40,6 +40,7 @@ import 'package:matterleast/api/generated/models/api_v4_teams_team_id_channels_s
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_invite_guests_email_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_members_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_patch_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_teams_team_id_posts_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_login_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_login_sso_code_exchange_request_body.dart';
@@ -100,6 +101,7 @@ import 'package:matterleast/api/generated/models/post_api_v4_users_login_sso_cod
 import 'package:matterleast/api/generated/models/post_api_v4_users_login_type_response.dart';
 import 'package:matterleast/api/generated/models/post_info.dart';
 import 'package:matterleast/api/generated/models/post_list.dart';
+import 'package:matterleast/api/generated/models/post_list_with_search_matches.dart';
 import 'package:matterleast/api/generated/models/post_metadata.dart';
 import 'package:matterleast/api/generated/models/post_priority.dart';
 import 'package:matterleast/api/generated/models/preference.dart';
@@ -2263,6 +2265,61 @@ class LenientMapOfApiV4TeamsTeamIdPatchRequestBody
       : null;
   @override
   Object? toJson(Map<String, ApiV4TeamsTeamIdPatchRequestBody>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4TeamsTeamIdPostsSearchRequestBody
+    implements JsonConverter<ApiV4TeamsTeamIdPostsSearchRequestBody?, Object?> {
+  const LenientApiV4TeamsTeamIdPostsSearchRequestBody();
+  @override
+  ApiV4TeamsTeamIdPostsSearchRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? ApiV4TeamsTeamIdPostsSearchRequestBody.fromJson(json)
+      : null;
+  @override
+  Object? toJson(ApiV4TeamsTeamIdPostsSearchRequestBody? object) =>
+      object?.toJson();
+}
+
+class LenientListOfApiV4TeamsTeamIdPostsSearchRequestBody
+    implements
+        JsonConverter<List<ApiV4TeamsTeamIdPostsSearchRequestBody>, Object?> {
+  const LenientListOfApiV4TeamsTeamIdPostsSearchRequestBody();
+  @override
+  List<ApiV4TeamsTeamIdPostsSearchRequestBody> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ApiV4TeamsTeamIdPostsSearchRequestBody.fromJson(e),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4TeamsTeamIdPostsSearchRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4TeamsTeamIdPostsSearchRequestBody
+    implements
+        JsonConverter<
+          Map<String, ApiV4TeamsTeamIdPostsSearchRequestBody>?,
+          Object?
+        > {
+  const LenientMapOfApiV4TeamsTeamIdPostsSearchRequestBody();
+  @override
+  Map<String, ApiV4TeamsTeamIdPostsSearchRequestBody>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value is Map<String, Object?>)
+              e.key: ApiV4TeamsTeamIdPostsSearchRequestBody.fromJson(
+                e.value! as Map<String, Object?>,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, ApiV4TeamsTeamIdPostsSearchRequestBody>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
@@ -5149,6 +5206,54 @@ class LenientMapOfPostList
       : null;
   @override
   Object? toJson(Map<String, PostList>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientPostListWithSearchMatches
+    implements JsonConverter<PostListWithSearchMatches?, Object?> {
+  const LenientPostListWithSearchMatches();
+  @override
+  PostListWithSearchMatches? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? PostListWithSearchMatches.fromJson(json)
+      : null;
+  @override
+  Object? toJson(PostListWithSearchMatches? object) => object?.toJson();
+}
+
+class LenientListOfPostListWithSearchMatches
+    implements JsonConverter<List<PostListWithSearchMatches>, Object?> {
+  const LenientListOfPostListWithSearchMatches();
+  @override
+  List<PostListWithSearchMatches> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              PostListWithSearchMatches.fromJson(e),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<PostListWithSearchMatches> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfPostListWithSearchMatches
+    implements JsonConverter<Map<String, PostListWithSearchMatches>?, Object?> {
+  const LenientMapOfPostListWithSearchMatches();
+  @override
+  Map<String, PostListWithSearchMatches>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value is Map<String, Object?>)
+              e.key: PostListWithSearchMatches.fromJson(
+                e.value! as Map<String, Object?>,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, PostListWithSearchMatches>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 

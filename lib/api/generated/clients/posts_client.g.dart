@@ -258,7 +258,7 @@ class _PostsClient implements PostsClient {
   }
 
   @override
-  Future<List<PostList>> getFlaggedPostsForUser({
+  Future<PostList> getFlaggedPostsForUser({
     required String userId,
     int? page = 0,
     int? perPage = 60,
@@ -275,7 +275,7 @@ class _PostsClient implements PostsClient {
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<PostList>>(
+    final _options = _setStreamType<PostList>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -285,12 +285,10 @@ class _PostsClient implements PostsClient {
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
-    final _result = await _dio.fetch<List<dynamic>>(_options);
-    late List<PostList> _value;
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late PostList _value;
     try {
-      _value = _result.data!
-          .map((dynamic i) => PostList.fromJson(i as Map<String, dynamic>))
-          .toList();
+      _value = PostList.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
@@ -398,6 +396,37 @@ class _PostsClient implements PostsClient {
     late PostList _value;
     try {
       _value = PostList.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<PostListWithSearchMatches> searchPosts({
+    required String teamId,
+    required ApiV4TeamsTeamIdPostsSearchRequestBody body,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(body.toJson());
+    final _options = _setStreamType<PostListWithSearchMatches>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/teams/${teamId}/posts/search',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late PostListWithSearchMatches _value;
+    try {
+      _value = PostListWithSearchMatches.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
