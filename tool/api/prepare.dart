@@ -76,7 +76,9 @@ void _walk(Object? node, {required bool stripRequired}) {
         );
         _allOfUnwrapped++;
       } else if ((type == 'integer' || type == 'number') &&
-          _isTimestamp(entry.key)) {
+          _isTimestamp(entry.key) &&
+          // Marked in the overlay: a time in seconds stays a number.
+          property['x-unix-seconds'] != true) {
         properties[entry.key] = {
           'type': 'string',
           'format': 'date-time',

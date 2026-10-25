@@ -11,7 +11,7 @@ ApiV4UsersUserIdStatusRequestBody _$ApiV4UsersUserIdStatusRequestBodyFromJson(
 ) => ApiV4UsersUserIdStatusRequestBody(
   userId: json['user_id'] as String,
   status: json['status'] as String,
-  dndEndTime: const MillisDateTime().fromJson(json['dnd_end_time']),
+  dndEndTime: const LenientInt().fromJson(json['dnd_end_time']),
 );
 
 Map<String, dynamic> _$ApiV4UsersUserIdStatusRequestBodyToJson(
@@ -19,5 +19,5 @@ Map<String, dynamic> _$ApiV4UsersUserIdStatusRequestBodyToJson(
 ) => <String, dynamic>{
   'user_id': instance.userId,
   'status': instance.status,
-  'dnd_end_time': const MillisDateTime().toJson(instance.dndEndTime),
+  'dnd_end_time': const LenientInt().toJson(instance.dndEndTime),
 };

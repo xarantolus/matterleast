@@ -91,7 +91,7 @@ actions:
       scheme_guest: {type: boolean}
   - target: "$.components.schemas.Status.properties"
     update:
-      dnd_end_time: {type: integer, format: int64}
+      dnd_end_time: {type: integer, format: int64, description: "Epoch seconds", x-unix-seconds: true}
       active_channel: {type: string}
   # --- shapes the Dart generator cannot express ---
   - target: "$.paths['/api/v4/custom_profile_attributes/fields'].post.requestBody.content['application/json'].schema.properties.attrs.properties.access_mode"
@@ -286,3 +286,6 @@ actions:
             properties:
               error: {type: string}
               errors: {type: object, additionalProperties: {type: string}}
+  # --- presence (M5): the DND end is in seconds (app/status.go SetStatusDoNotDisturbTimed) ---
+  - target: "$.paths['/api/v4/users/{user_id}/status'].put.requestBody.content['application/json'].schema.properties.dnd_end_time"
+    update: {x-unix-seconds: true}

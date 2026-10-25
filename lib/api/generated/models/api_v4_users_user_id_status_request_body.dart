@@ -24,9 +24,9 @@ class ApiV4UsersUserIdStatusRequestBody {
 
   final String status;
 
-  @MillisDateTime()
+  @LenientInt()
   @JsonKey(name: 'dnd_end_time')
-  final DateTime? dndEndTime;
+  final int? dndEndTime;
 
   Map<String, Object?> toJson() =>
       _$ApiV4UsersUserIdStatusRequestBodyToJson(this);

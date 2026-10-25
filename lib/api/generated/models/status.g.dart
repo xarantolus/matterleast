@@ -11,7 +11,7 @@ Status _$StatusFromJson(Map<String, dynamic> json) => Status(
   status: const LenientString().fromJson(json['status']),
   manual: const LenientBool().fromJson(json['manual']),
   lastActivityAt: const MillisDateTime().fromJson(json['last_activity_at']),
-  dndEndTime: const MillisDateTime().fromJson(json['dnd_end_time']),
+  dndEndTime: const LenientInt().fromJson(json['dnd_end_time']),
   activeChannel: const LenientString().fromJson(json['active_channel']),
 );
 
@@ -20,6 +20,6 @@ Map<String, dynamic> _$StatusToJson(Status instance) => <String, dynamic>{
   'status': const LenientString().toJson(instance.status),
   'manual': const LenientBool().toJson(instance.manual),
   'last_activity_at': const MillisDateTime().toJson(instance.lastActivityAt),
-  'dnd_end_time': const MillisDateTime().toJson(instance.dndEndTime),
+  'dnd_end_time': const LenientInt().toJson(instance.dndEndTime),
   'active_channel': const LenientString().toJson(instance.activeChannel),
 };
