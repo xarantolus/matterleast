@@ -228,13 +228,14 @@ class NewMessagesTile extends StatelessWidget {
         children: [
           Expanded(child: Divider(color: color)),
           Padding(
-            padding: const EdgeInsets.only(left: Spacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
             child: Text(
               'New messages',
               style: Theme.of(context).textTheme.labelMedium
                   ?.copyWith(color: color),
             ),
           ),
+          Expanded(child: Divider(color: color)),
         ],
       ),
     );
