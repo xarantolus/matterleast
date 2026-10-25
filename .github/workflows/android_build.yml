@@ -61,6 +61,14 @@ jobs:
           path: ${{ env.NDK_DIR }}
           key: ndk-${{ env.NDK_VERSION }}
 
+      # The native build hooks (PDFium, SQLite) download and compile
+      # libraries; they rerun by themselves when their inputs differ.
+      - uses: actions/cache@v6
+        with:
+          path: .dart_tool/hooks_runner
+          key: build-hooks-${{ hashFiles('pubspec.lock') }}
+          restore-keys: build-hooks-
+
       - run: flutter pub get
 
       # Compiling the build script takes half of the build_runner run; it
