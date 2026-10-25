@@ -5,6 +5,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/mappers.dart';
 import 'package:matterleast/domain/inbox.dart';
+import 'package:matterleast/domain/outbox.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 
@@ -1053,4 +1054,212 @@ class ServerStore {
           ),
         );
       });
+
+  /// Our own new post: an ordinary post row keyed by its pending id, so the
+  /// list shows it at once, plus its delivery state in `outbox`. The
+  /// conversation's draft goes in the same transaction.
+  Future<void> queuePost({
+    required String pendingPostId,
+    required String channelId,
+    required String rootId,
+    required String userId,
+    required String message,
+    required DateTime createAt,
+    List<api.FileInfo> files = const [],
+    api.PostPriority? priority,
+  }) => db.transaction(() async {
+    final metadata = files.isEmpty && priority == null
+        ? null
+        : api.PostMetadata(files: files, priority: priority);
+    await db
+        .into(db.posts)
+        .insert(
+          PostsCompanion.insert(
+            id: pendingPostId,
+            channelId: channelId,
+            rootId: Value(rootId),
+            userId: userId,
+            createAt: createAt,
+            updateAt: Value(createAt),
+            message: Value(message),
+            pendingPostId: Value(pendingPostId),
+            sendState: const Value(SendStates.pending),
+            metadataJson: Value(
+              metadata == null ? null : jsonEncode(metadata.toJson()),
+            ),
+            fileCount: Value(files.length),
+          ),
+        );
+    await db.batch((b) {
+      b.insertAllOnConflictUpdate(db.files, [
+        for (final f in files)
+          if (f.id != null) fileCompanion(f, pendingPostId),
+      ]);
+    });
+    await db
+        .into(db.outbox)
+        .insert(
+          OutboxCompanion.insert(
+            pendingPostId: pendingPostId,
+            channelId: channelId,
+            rootId: Value(rootId),
+            queuedAt: createAt,
+          ),
+        );
+    await deleteDraft(channelId, rootId);
+    await _showLocalPost(channelId, rootId, createAt);
+  });
+
+  /// Makes a post that only exists here (unsent or ephemeral) part of the
+  /// loaded history, like a live post. The fetch watermark is pinned first:
+  /// the next refresh must still ask from the newest post the server gave
+  /// us, not from this one's time.
+  Future<void> _showLocalPost(
+    String channelId,
+    String rootId,
+    DateTime at,
+  ) async {
+    final ranges = await rangesFor('channel', channelId);
+    final newest = newestRange(ranges);
+    if (newest != null && newest != PostRange.empty) {
+      await (db.update(db.myChannels)..where(
+            (m) => m.channelId.equals(channelId) & m.postsFetchedAt.isNull(),
+          ))
+          .write(MyChannelsCompanion(postsFetchedAt: Value(newest.latest)));
+    }
+    await _writeRanges('channel', channelId, withLivePost(ranges, at));
+    if (rootId.isEmpty) return;
+    final threadRanges = await rangesFor('thread', rootId);
+    if (threadRanges.isNotEmpty) {
+      await _writeRanges('thread', rootId, withLivePost(threadRanges, at));
+    }
+  }
+
+  Future<List<OutboxRow>> outboxRows() => db.select(db.outbox).get();
+
+  /// Posts that were being sent when the app stopped go back in the line.
+  Future<void> resetSending() =>
+      (db.update(db.outbox)..where((o) => o.state.equals(OutboxStates.sending)))
+          .write(const OutboxCompanion(state: Value(OutboxStates.queued)));
+
+  /// The connection is back: waiting posts go now instead of after their
+  /// backoff.
+  Future<void> sendWaitingNow() =>
+      (db.update(db.outbox)..where((o) => o.state.equals(OutboxStates.queued)))
+          .write(const OutboxCompanion(nextAttemptAt: Value(null)));
+
+  Future<void> markSending(String pendingPostId) =>
+      (db.update(db.outbox)
+            ..where((o) => o.pendingPostId.equals(pendingPostId)))
+          .write(const OutboxCompanion(state: Value(OutboxStates.sending)));
+
+  Future<void> markSendRetry(
+    String pendingPostId, {
+    required int attempts,
+    required DateTime nextAttemptAt,
+    String? error,
+  }) =>
+      (db.update(
+        db.outbox,
+      )..where((o) => o.pendingPostId.equals(pendingPostId))).write(
+        OutboxCompanion(
+          state: const Value(OutboxStates.queued),
+          attempts: Value(attempts),
+          nextAttemptAt: Value(nextAttemptAt),
+          lastError: Value(error),
+        ),
+      );
+
+  /// The post stays, shown as not sent, until the user retries or deletes
+  /// it.
+  Future<void> markSendFailed(
+    String pendingPostId, {
+    required int attempts,
+    String? error,
+  }) => db.transaction(() async {
+    await (db.update(
+      db.outbox,
+    )..where((o) => o.pendingPostId.equals(pendingPostId))).write(
+      OutboxCompanion(
+        state: const Value(OutboxStates.failed),
+        attempts: Value(attempts),
+        nextAttemptAt: const Value(null),
+        lastError: Value(error),
+      ),
+    );
+    await (db.update(db.posts)..where((p) => p.id.equals(pendingPostId))).write(
+      const PostsCompanion(sendState: Value(SendStates.failed)),
+    );
+  });
+
+  /// Puts a failed post back in the line; returns false when it is gone.
+  Future<bool> requeuePost(String pendingPostId) => db.transaction(() async {
+    final updated =
+        await (db.update(
+          db.outbox,
+        )..where((o) => o.pendingPostId.equals(pendingPostId))).write(
+          const OutboxCompanion(
+            state: Value(OutboxStates.queued),
+            attempts: Value(0),
+            nextAttemptAt: Value(null),
+            lastError: Value(null),
+          ),
+        );
+    if (updated == 0) return false;
+    await (db.update(db.posts)..where((p) => p.id.equals(pendingPostId))).write(
+      const PostsCompanion(sendState: Value(SendStates.pending)),
+    );
+    return true;
+  });
+
+  /// Removes an unsent post and its delivery state.
+  Future<void> discardPost(String pendingPostId) => db.transaction(() async {
+    await (db.delete(
+      db.outbox,
+    )..where((o) => o.pendingPostId.equals(pendingPostId))).go();
+    await (db.delete(
+      db.posts,
+    )..where((p) => p.id.equals(pendingPostId) & p.sendState.isNotNull())).go();
+    await (db.delete(
+      db.files,
+    )..where((f) => f.postId.equals(pendingPostId))).go();
+  });
+
+  /// The server created our post: its row replaces the pending one under the
+  /// same list key, whether or not the `posted` event got here first.
+  Future<void> applySent(
+    String pendingPostId,
+    api.Post post,
+  ) => db.transaction(() async {
+    if (post.id == null) return;
+    await (db.delete(
+      db.outbox,
+    )..where((o) => o.pendingPostId.equals(pendingPostId))).go();
+    await (db.delete(db.posts)..where((p) => p.id.equals(pendingPostId))).go();
+    await applyLivePost(post, fromSelf: true, mentionsMe: false);
+    await (db.update(db.posts)
+          ..where((p) => p.id.equals(post.id!) & p.pendingPostId.equals('')))
+        .write(PostsCompanion(pendingPostId: Value(pendingPostId)));
+  });
+
+  Future<DraftRow?> draft(String channelId, String rootId) =>
+      (db.select(db.drafts)..where(
+            (d) => d.channelId.equals(channelId) & d.rootId.equals(rootId),
+          ))
+          .getSingleOrNull();
+
+  Future<void> saveDraft(DraftsCompanion draft) =>
+      db.into(db.drafts).insertOnConflictUpdate(draft);
+
+  Future<void> deleteDraft(String channelId, String rootId) =>
+      (db.delete(db.drafts)..where(
+            (d) => d.channelId.equals(channelId) & d.rootId.equals(rootId),
+          ))
+          .go();
+}
+
+/// `posts.send_state` of our own unsent posts.
+abstract final class SendStates {
+  static const pending = 'pending';
+  static const failed = 'failed';
 }

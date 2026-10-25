@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:matterleast/api/server_api.dart';
+import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
+import 'package:matterleast/data/outbox/outbox_sender.dart';
 import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
@@ -31,6 +33,8 @@ class ServerSession {
       runner: runner,
       token: token,
     );
+    outbox = OutboxSender(server: api, store: store);
+    connection.state.addListener(_onSocketState);
   }
 
   final Uri url;
@@ -50,6 +54,14 @@ class ServerSession {
     partialDirectory: p.join(images.directory, 'partial'),
     maxBytes: () async => maxFileSize(await db.configJson('client_config')),
   );
+  late final OutboxSender outbox;
+
+  /// A socket that connects again means the server is reachable again.
+  void _onSocketState() {
+    if (connection.state.value == SocketState.connected) {
+      unawaited(outbox.wake());
+    }
+  }
 
   /// Opens the session without waiting for the Keystore, so stored data
   /// paints first; requests wait for the token instead.
@@ -65,7 +77,7 @@ class ServerSession {
     final key = url.toString();
     unawaited(tokens.read(key));
     final api = ServerApi(baseUrl: url, token: () => tokens.read(key));
-    return ServerSession(
+    final session = ServerSession(
       url: url,
       api: api,
       db: db,
@@ -79,9 +91,13 @@ class ServerSession {
       ),
       token: () => tokens.cached(key),
     );
+    unawaited(session.outbox.start());
+    return session;
   }
 
   Future<void> close() async {
+    connection.state.removeListener(_onSocketState);
+    await outbox.close();
     await connection.close();
     emoji.close();
     await images.close();

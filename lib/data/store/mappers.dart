@@ -104,7 +104,11 @@ PostsCompanion postCompanion(api.Post p) => PostsCompanion(
   replyCount: _opt(p.replyCount),
   lastReplyAt: _opt(p.lastReplyAt),
   originalId: _opt(p.originalId),
-  pendingPostId: _opt(p.pendingPostId),
+  // The server echoes it only right after creation; keeping it is what
+  // keeps the row's list key once our own post is confirmed.
+  pendingPostId: (p.pendingPostId?.isEmpty ?? true)
+      ? const Value.absent()
+      : Value(p.pendingPostId!),
   sendState: const Value(null),
   propsJson: Value(_json(p.props)),
   // Some lists (followed threads) send posts without metadata; what is
