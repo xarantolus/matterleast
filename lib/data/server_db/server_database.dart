@@ -4,6 +4,8 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:matterleast/data/db/millis.dart';
 import 'package:matterleast/data/server_db/tables.dart';
+import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/teams.dart';
 import 'package:path/path.dart' as p;
 
 part 'server_database.g.dart';
@@ -14,6 +16,15 @@ abstract final class SyncKeys {
   static const currentTeamId = 'current_team_id';
   static const lastFullSync = 'last_full_sync';
   static String channelsSince(String teamId) => 'channels_since:$teamId';
+
+  /// The search terms that find the user's mentions, kept with the user.
+  static const mentionTerms = 'mention_terms';
+
+  /// When a post list (`mentions`, `saved`, `threads`) was last fetched.
+  static String listFetchedAt(String list) => 'list_fetched_at:$list';
+
+  /// The channel the user last opened in a team.
+  static String lastChannel(String teamId) => 'last_channel:$teamId';
 }
 
 /// Everything cached for one server. One file per server, so logging out is
@@ -91,6 +102,25 @@ class ServerDatabase extends _$ServerDatabase {
     )..where((c) => c.key.equals(key))).getSingleOrNull();
     final decoded = row == null ? null : jsonDecode(row.json);
     return decoded is Map<String, Object?> ? decoded : const {};
+  }
+
+  /// Whether replies are counted per thread for this user on this server.
+  Future<bool> collapsedThreads() async {
+    final config = await configJson('client_config');
+    return collapsedThreadsOn(
+      config['CollapsedThreads'] as String?,
+      await preference(Prefs.collapsedThreads.$1, Prefs.collapsedThreads.$2),
+    );
+  }
+
+  /// How people are named: the server's setting when locked, else the
+  /// user's preference.
+  Future<String?> nameFormat() async {
+    final config = await configJson('client_config');
+    final serverFormat = config['TeammateNameDisplay'] as String?;
+    if (config['LockTeammateNameDisplay'] == 'true') return serverFormat;
+    return await preference(Prefs.nameFormat.$1, Prefs.nameFormat.$2) ??
+        serverFormat;
   }
 
   Future<String?> syncText(String key) async => (await (select(

@@ -1,10 +1,8 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
-import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/data/views/channel_input.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/rail.dart';
@@ -55,19 +53,11 @@ class RootViews {
     interval: const Duration(milliseconds: 300),
   ).distinct();
 
-  Future<bool> _collapsedThreads() async {
-    final config = await db.configJson('client_config');
-    return collapsedThreadsOn(
-      config['CollapsedThreads'] as String?,
-      await db.preference(Prefs.collapsedThreads.$1, Prefs.collapsedThreads.$2),
-    );
-  }
-
   Future<List<RailTeam>> _railTeams() async {
     final teams = await db.select(db.teams).join([
       innerJoin(db.myTeams, db.myTeams.teamId.equalsExp(db.teams.id)),
     ]).get();
-    final crt = await _collapsedThreads();
+    final crt = await db.collapsedThreads();
     final channels = await _myChannels((c) => c.teamId.equals('').not());
     final synced = {
       for (final s in await (db.select(
@@ -94,11 +84,14 @@ class RootViews {
           );
           final badge = teamBadge(
             channelsSynced: synced.contains(team.id),
-            channelMentions: own.fold(
-              0,
-              (sum, c) =>
-                  sum + (crt ? c.input.mentionCountRoot : c.input.mentionCount),
-            ),
+            channelMentions: own
+                .where((c) => !c.input.muted)
+                .fold(
+                  0,
+                  (sum, c) =>
+                      sum +
+                      (crt ? c.input.mentionCountRoot : c.input.mentionCount),
+                ),
             anyChannelUnread: own.any(
               (c) => !c.input.muted && _unreadCount(c.input, crt) > 0,
             ),
@@ -135,37 +128,12 @@ class RootViews {
       for (final row in rows)
         (
           teamId: row.readTable(db.channels).teamId,
-          input: _channelInput(
+          input: channelInputOf(
             row.readTable(db.channels),
             row.readTable(db.myChannels),
           ),
         ),
     ];
-  }
-
-  ChannelInput _channelInput(ChannelRow c, MyChannelRow m) => (
-    id: c.id,
-    type: c.type,
-    name: c.name,
-    displayName: c.displayName,
-    archived: c.deleteAt != null,
-    createAt: c.createAt,
-    lastPostAt: c.lastPostAt,
-    lastRootPostAt: c.lastRootPostAt,
-    totalMsgCount: c.totalMsgCount,
-    totalMsgCountRoot: c.totalMsgCountRoot,
-    msgCount: m.msgCount,
-    msgCountRoot: m.msgCountRoot,
-    mentionCount: m.mentionCount,
-    mentionCountRoot: m.mentionCountRoot,
-    muted: _muted(m.notifyPropsJson),
-  );
-
-  bool _muted(String? notifyPropsJson) {
-    if (notifyPropsJson == null) return false;
-    final decoded = jsonDecode(notifyPropsJson);
-    if (decoded is! Map<String, Object?>) return false;
-    return api.ChannelNotifyProps.fromJson(decoded).markUnread == 'mention';
   }
 
   Future<ChannelList> _channelList(String teamId) async {
@@ -225,14 +193,23 @@ class RootViews {
                   (d.message.equals('').not() | d.filesJson.equals('[]').not()),
             ))
             .get();
-    final crt = await _collapsedThreads();
+    final crt = await db.collapsedThreads();
     final unreadThreads = crt ? await _unreadThreads(teamId) : 0;
-    final config = await db.configJson('client_config');
-    final lockedFormat = config['LockTeammateNameDisplay'] == 'true';
-    final nameFormat = lockedFormat
-        ? config['TeammateNameDisplay'] as String?
-        : await db.preference('display_settings', 'name_format') ??
-              config['TeammateNameDisplay'] as String?;
+    final viewTimes = <String, DateTime>{};
+    for (final p
+        in await (db.select(db.preferences)..where(
+              (p) => p.category.isIn([
+                Prefs.channelOpenTime,
+                Prefs.channelViewTime,
+              ]),
+            ))
+            .get()) {
+      final at = int.tryParse(p.value);
+      if (at == null) continue;
+      final time = DateTime.fromMillisecondsSinceEpoch(at, isUtc: true);
+      final known = viewTimes[p.name];
+      if (known == null || time.isAfter(known)) viewTimes[p.name] = time;
+    }
     return buildChannelList(
       ChannelListSource(
         myId: myId,
@@ -267,7 +244,14 @@ class RootViews {
         draftChannels: {for (final d in drafts) d.channelId},
         collapsedThreads: crt,
         unreadThreads: unreadThreads,
-        nameFormat: nameFormat,
+        nameFormat: await db.nameFormat(),
+        directLimit:
+            int.tryParse(
+              await db.preference(Prefs.directLimit.$1, Prefs.directLimit.$2) ??
+                  '',
+            ) ??
+            defaultDirectLimit,
+        viewTimes: viewTimes,
         synced: await db.syncInt(SyncKeys.channelsSince(teamId)) != null,
       ),
     );

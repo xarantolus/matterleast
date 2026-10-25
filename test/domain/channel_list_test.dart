@@ -19,6 +19,7 @@ ChannelInput channel(
   int mentionsRoot = 0,
   bool muted = false,
   int lastPost = 0,
+  int? lastViewed = 1,
 }) => (
   id: id,
   type: type,
@@ -35,6 +36,9 @@ ChannelInput channel(
   mentionCount: mentions,
   mentionCountRoot: mentionsRoot,
   muted: muted,
+  lastViewedAt: lastViewed == null
+      ? null
+      : DateTime.fromMillisecondsSinceEpoch(lastViewed, isUtc: true),
 );
 
 CategoryInput category(
@@ -322,6 +326,61 @@ void main() {
       final empty = never.copyWith(synced: true);
       final state = stateOf(empty, const SyncIdle()) as ChannelListReady;
       expect(state.list.isEmpty, isTrue);
+    });
+  });
+
+  group('auto-closing direct messages', () {
+    ({String id, bool unread, DateTime? lastViewed, bool current}) dm(
+      String id, {
+      bool unread = false,
+      int? viewed,
+      bool current = false,
+    }) => (
+      id: id,
+      unread: unread,
+      lastViewed: viewed == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(viewed, isUtc: true),
+      current: current,
+    );
+
+    test('the most recently viewed read ones fill the limit', () {
+      expect(
+        autoCloseDirect([
+          dm('old', viewed: 1),
+          dm('newer', viewed: 3),
+          dm('newest', viewed: 5),
+          dm('never'),
+        ], limit: 2),
+        {'newer', 'newest'},
+      );
+    });
+
+    test('unread and open ones always stay, even past the limit', () {
+      expect(
+        autoCloseDirect([
+          dm('u1', unread: true),
+          dm('u2', unread: true),
+          dm('open', current: true),
+          dm('read', viewed: 9),
+        ], limit: 1),
+        {'u1', 'u2', 'open'},
+      );
+    });
+
+    test('a channel list keeps 20 read conversations by default', () {
+      final dms = [
+        for (var i = 0; i < 25; i++)
+          channel('d$i', type: 'D', name: 'u${i}__me', lastViewed: i + 1),
+      ];
+      final list = build(
+        dms,
+        categories: [category('dms', type: 'direct_messages')],
+      );
+      final ids = list.sections.single.rows.map((r) => r.id).toSet();
+      expect(ids, hasLength(defaultDirectLimit));
+      expect(ids, isNot(contains('d0')));
+      expect(ids, contains('d24'));
     });
   });
 }

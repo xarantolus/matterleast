@@ -87,6 +87,7 @@ typedef ChannelInput = ({
   int mentionCount,
   int mentionCountRoot,
   bool muted,
+  DateTime? lastViewedAt,
 });
 
 typedef PersonInput = ({
@@ -113,6 +114,8 @@ class ChannelListSource {
     this.nameFormat,
     this.synced = true,
     this.currentChannelId,
+    this.directLimit = defaultDirectLimit,
+    this.viewTimes = const {},
   });
 
   final String myId;
@@ -142,7 +145,17 @@ class ChannelListSource {
 
   /// Stays visible even when archived.
   final String? currentChannelId;
+
+  /// How many read direct and group messages stay in their category (the
+  /// `limit_visible_dms_gms` preference).
+  final int directLimit;
+
+  /// When the user last opened a channel, by id, from the `channel_open_time`
+  /// and `channel_approximate_view_time` preferences.
+  final Map<String, DateTime> viewTimes;
 }
+
+const defaultDirectLimit = 20;
 
 /// Pure: the sections of a team's channel list.
 ChannelList buildChannelList(ChannelListSource source) {
@@ -162,6 +175,21 @@ ChannelList buildChannelList(ChannelListSource source) {
       final item = _item(source, channel, kind == CategoryKind.favorites);
       if (!_visible(source, channel, item)) continue;
       rows.add((item, channel, order));
+    }
+    if (kind == CategoryKind.directMessages) {
+      final visible = autoCloseDirect([
+        for (final (item, channel, _) in rows)
+          (
+            id: item.id,
+            unread: item.unread || item.mentions > 0,
+            lastViewed: _latest(
+              channel.lastViewedAt,
+              source.viewTimes[channel.id],
+            ),
+            current: item.id == source.currentChannelId,
+          ),
+      ], limit: source.directLimit);
+      rows.retainWhere((row) => visible.contains(row.$1.id));
     }
     _sort(rows, category.sorting, source.collapsedThreads);
     final items = [
@@ -200,19 +228,48 @@ ChannelItem _item(ChannelListSource source, ChannelInput c, bool favorite) {
     'P' => ChannelKind.private,
     _ => ChannelKind.public,
   };
+  final name = conversationName(
+    c,
+    myId: source.myId,
+    people: source.people,
+    nameFormat: source.nameFormat,
+  );
+  return ChannelItem(
+    id: c.id,
+    title: name.title,
+    kind: kind,
+    unread: !c.muted && unreadCount > 0,
+    mentions: crt ? c.mentionCountRoot : c.mentionCount,
+    muted: c.muted,
+    favorite: favorite,
+    hasDraft: source.draftChannels.contains(c.id),
+    status: name.status,
+    others: name.others,
+  );
+}
+
+/// The name a channel goes by in lists: the other person of a direct
+/// message (with their presence), the others of a group message, else the
+/// channel's display name.
+({String title, String? status, int? others}) conversationName(
+  ChannelInput c, {
+  required String myId,
+  required Map<String, PersonInput> people,
+  String? nameFormat,
+}) {
   var title = c.displayName;
   String? status;
   int? others;
-  if (kind == ChannelKind.direct) {
-    final partnerId = directPartnerId(c.name, source.myId);
-    final partner = source.people[partnerId];
+  if (c.type == 'D') {
+    final partnerId = directPartnerId(c.name, myId);
+    final partner = people[partnerId];
     if (partner != null) {
-      title = personName(partner, source.nameFormat);
-      if (partnerId == source.myId) title = '$title (you)';
+      title = personName(partner, nameFormat);
+      if (partnerId == myId) title = '$title (you)';
       status = partner.status;
     }
-  } else if (kind == ChannelKind.group) {
-    final me = source.people[source.myId]?.username;
+  } else if (c.type == 'G') {
+    final me = people[myId]?.username;
     final names = c.displayName
         .split(',')
         .map((n) => n.trim())
@@ -225,18 +282,40 @@ ChannelItem _item(ChannelListSource source, ChannelInput c, bool favorite) {
     title = otherNames.join(', ');
     others = otherNames.length;
   }
-  return ChannelItem(
-    id: c.id,
+  return (
     title: title.isEmpty ? c.name : title,
-    kind: kind,
-    unread: !c.muted && unreadCount > 0,
-    mentions: crt ? c.mentionCountRoot : c.mentionCount,
-    muted: c.muted,
-    favorite: favorite,
-    hasDraft: source.draftChannels.contains(c.id),
     status: status,
     others: others,
   );
+}
+
+DateTime? _latest(DateTime? a, DateTime? b) =>
+    a == null || (b != null && b.isAfter(a)) ? b : a;
+
+/// Pure: which direct and group messages stay in their category, like the
+/// official app: unread ones and the open one always, never one the user
+/// hasn't viewed, and of the rest the most recently viewed until [limit]
+/// is reached.
+Set<String> autoCloseDirect(
+  List<({String id, bool unread, DateTime? lastViewed, bool current})> rows, {
+  required int limit,
+}) {
+  final alwaysShown = rows.where((r) => r.unread || r.current).length;
+  final kept = [
+    for (final r in rows)
+      if (r.unread || r.current || r.lastViewed != null) r,
+  ];
+  int rank(({String id, bool unread, DateTime? lastViewed, bool current}) r) =>
+      r.current ? 0 : (r.unread ? 1 : 2);
+  kept.sort((a, b) {
+    final byRank = rank(a).compareTo(rank(b));
+    if (byRank != 0) return byRank;
+    final aTime = a.lastViewed?.millisecondsSinceEpoch ?? 0;
+    final bTime = b.lastViewed?.millisecondsSinceEpoch ?? 0;
+    return bTime.compareTo(aTime);
+  });
+  final count = limit > alwaysShown ? limit : alwaysShown;
+  return {for (final r in kept.take(count)) r.id};
 }
 
 bool _visible(ChannelListSource source, ChannelInput c, ChannelItem item) {
