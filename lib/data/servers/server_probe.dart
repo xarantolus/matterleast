@@ -41,11 +41,12 @@ const _pingPath = '/api/v4/system/ping';
 /// Nothing is stored and no token is sent.
 class ServerProbe {
   ServerProbe({
-    this.allowHttp = kDebugMode,
+    this.allowHttp = !kReleaseMode,
     this.timeout = const Duration(seconds: 15),
   });
 
-  /// Plain http only in debug builds, for the local test server.
+  /// Plain http only outside release builds, for the local test server
+  /// (profile builds measure against it).
   final bool allowHttp;
   final Duration timeout;
 
