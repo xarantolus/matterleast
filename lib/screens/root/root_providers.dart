@@ -41,6 +41,8 @@ Stream<SyncStatus> syncStatus(Ref ref, String url) async* {
   yield* changes.stream;
 }
 
-@riverpod
+/// Kept while the app runs, like the session it wraps, so the rail can use
+/// it.
+@Riverpod(keepAlive: true)
 Future<ChannelActions> channelActions(Ref ref, String url) async =>
     ChannelActions(await ref.watch(serverSessionProvider(url).future));

@@ -264,8 +264,14 @@ final class SyncStatusFamily extends $Family
   String toString() => r'syncStatusProvider';
 }
 
+/// Kept while the app runs, like the session it wraps, so the rail can use
+/// it.
+
 @ProviderFor(channelActions)
 final channelActionsProvider = ChannelActionsFamily._();
+
+/// Kept while the app runs, like the session it wraps, so the rail can use
+/// it.
 
 final class ChannelActionsProvider
     extends
@@ -275,13 +281,15 @@ final class ChannelActionsProvider
           FutureOr<ChannelActions>
         >
     with $FutureModifier<ChannelActions>, $FutureProvider<ChannelActions> {
+  /// Kept while the app runs, like the session it wraps, so the rail can use
+  /// it.
   ChannelActionsProvider._({
     required ChannelActionsFamily super.from,
     required String super.argument,
   }) : super(
          retry: null,
          name: r'channelActionsProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -319,7 +327,10 @@ final class ChannelActionsProvider
   }
 }
 
-String _$channelActionsHash() => r'ffc7019e5e0e6d73706c657ffbc90ed8fe49e4f3';
+String _$channelActionsHash() => r'de2a4501674ef24833b7f3d29d82eb1d32c99ca8';
+
+/// Kept while the app runs, like the session it wraps, so the rail can use
+/// it.
 
 final class ChannelActionsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ChannelActions>, String> {
@@ -329,8 +340,11 @@ final class ChannelActionsFamily extends $Family
         name: r'channelActionsProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
+
+  /// Kept while the app runs, like the session it wraps, so the rail can use
+  /// it.
 
   ChannelActionsProvider call(String url) =>
       ChannelActionsProvider._(argument: url, from: this);
