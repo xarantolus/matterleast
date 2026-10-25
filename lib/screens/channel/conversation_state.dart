@@ -3,6 +3,9 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/user_profile.dart';
+import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/presence_dot.dart';
 
 part 'conversation_state.freezed.dart';
 
@@ -80,8 +83,9 @@ ConversationBody conversationBody(ConversationState s, {required String host}) {
 }
 
 /// The quiet line under the title: why the shown messages may be stale,
-/// else the member count.
-String? conversationSubtitle(ConversationState s) {
+/// else the partner's presence and custom status for a direct message,
+/// the members' names for a group message, the member count otherwise.
+String? conversationSubtitle(ConversationState s, {UserProfile? partner}) {
   final hasData =
       (s.window?.posts.isNotEmpty ?? false) || s.window?.root != null;
   if (hasData && !s.refreshing) {
@@ -92,6 +96,21 @@ String? conversationSubtitle(ConversationState s) {
         return "Couldn't refresh · showing saved data";
       case null:
     }
+  }
+  switch (s.window?.channelType) {
+    case 'D':
+      if (partner == null) return null;
+      final presence = presenceLabel(partner.status);
+      final custom = partner.customStatus;
+      if (custom == null) return presence;
+      final words = [
+        if (custom.emoji.isNotEmpty) emojiText(custom.emoji),
+        if (custom.text.isNotEmpty) custom.text,
+      ].join(' ');
+      return '$presence · $words';
+    case 'G':
+      final names = s.window?.channelName ?? '';
+      return names.isEmpty ? null : names;
   }
   final count = s.window?.memberCount;
   if (count == null) return null;

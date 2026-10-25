@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 
 void main() {
@@ -86,6 +87,54 @@ void main() {
     expect(
       conversationSubtitle(ConversationState(window: stored, refreshing: true)),
       '4 members',
+    );
+  });
+
+  test('a direct message shows the partner, a group its members', () {
+    UserProfile partner(String status, [CustomStatus? custom]) => UserProfile(
+      id: 'u1',
+      name: 'Pat',
+      username: 'pat',
+      nickname: '',
+      firstName: '',
+      lastName: '',
+      position: '',
+      status: status,
+      customStatus: custom,
+      isBot: false,
+      isMe: false,
+    );
+    const direct = ConversationState(
+      window: ConversationWindow(
+        posts: [],
+        loaded: true,
+        channelType: 'D',
+        partnerId: 'u1',
+        memberCount: 2,
+      ),
+    );
+    expect(conversationSubtitle(direct), isNull);
+    expect(conversationSubtitle(direct, partner: partner('away')), 'Away');
+    expect(
+      conversationSubtitle(
+        direct,
+        partner: partner('dnd', const CustomStatus(text: 'In a meeting')),
+      ),
+      'Do not disturb · In a meeting',
+    );
+    expect(
+      conversationSubtitle(
+        const ConversationState(
+          window: ConversationWindow(
+            posts: [],
+            loaded: true,
+            channelType: 'G',
+            channelName: 'pat, sam, kim',
+            memberCount: 3,
+          ),
+        ),
+      ),
+      'pat, sam, kim',
     );
   });
 }

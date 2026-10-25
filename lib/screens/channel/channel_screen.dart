@@ -11,6 +11,7 @@ import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
+import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 /// A channel's messages, opened at the new-messages line, a message asked
@@ -48,6 +49,10 @@ class ChannelScreen extends ConsumerWidget {
         channelName,
       _ => title,
     };
+    final partnerId = window?.partnerId;
+    final partner = partnerId == null
+        ? null
+        : ref.watch(userProfileProvider(url, partnerId)).value;
     final typing = ref.watch(typingNamesProvider(url, channelId, '')).value;
     listenForRejectedPosts(context, ref, url, channelId);
     listenForDialogs(
@@ -69,7 +74,8 @@ class ChannelScreen extends ConsumerWidget {
           child: ConversationTitle(
             title: name,
             subtitle:
-                typingText(typing ?? const []) ?? conversationSubtitle(state),
+                typingText(typing ?? const []) ??
+                conversationSubtitle(state, partner: partner),
           ),
         ),
         bottom: ProgressSlot(

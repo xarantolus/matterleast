@@ -125,6 +125,9 @@ abstract class ConversationWindow with _$ConversationWindow {
     /// `O`, `P`, `D` or `G`; direct and group messages are named after
     /// people, not by [channelName].
     @Default('') String channelType,
+
+    /// The other person of a direct message.
+    String? partnerId,
     @Default('') String teamId,
     int? memberCount,
 

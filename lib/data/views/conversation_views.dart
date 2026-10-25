@@ -6,6 +6,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/post_ranges.dart';
+import 'package:matterleast/domain/teams.dart';
 
 /// The reads of an open channel or thread: one batched query each, re-run
 /// at most every 100 ms while writes land, passed on only when changed.
@@ -106,6 +107,12 @@ class ConversationViews {
     final header = (
       channelName: channel?.displayName ?? '',
       channelType: channel?.type ?? '',
+      partnerId: channel?.type == 'D'
+          ? directPartnerId(
+              channel!.name,
+              await db.syncText(SyncKeys.currentUserId) ?? '',
+            )
+          : null,
       teamId: channel?.teamId ?? '',
       memberCount: channel?.memberCount,
       archived: channel?.deleteAt != null,
@@ -116,6 +123,7 @@ class ConversationViews {
         loaded: false,
         channelName: header.channelName,
         channelType: header.channelType,
+        partnerId: header.partnerId,
         teamId: header.teamId,
         memberCount: header.memberCount,
         archived: header.archived,
@@ -162,6 +170,7 @@ class ConversationViews {
       newerApart: newest != null && newest.latest.isAfter(range.latest),
       channelName: header.channelName,
       channelType: header.channelType,
+      partnerId: header.partnerId,
       teamId: header.teamId,
       memberCount: header.memberCount,
       archived: header.archived,
