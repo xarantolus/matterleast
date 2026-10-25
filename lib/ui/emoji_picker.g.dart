@@ -92,59 +92,85 @@ final class RecentEmojiFamily extends $Family
   String toString() => r'recentEmojiProvider';
 }
 
-/// The skin tone the picker applies, 0 for none; kept while the app runs.
+/// The skin tone the picker applies, 0 for none, as the user's preference
+/// on [url] has it.
 
-@ProviderFor(SkinTone)
-final skinToneProvider = SkinToneProvider._();
+@ProviderFor(skinTone)
+final skinToneProvider = SkinToneFamily._();
 
-/// The skin tone the picker applies, 0 for none; kept while the app runs.
-final class SkinToneProvider extends $NotifierProvider<SkinTone, int> {
-  /// The skin tone the picker applies, 0 for none; kept while the app runs.
-  SkinToneProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'skinToneProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+/// The skin tone the picker applies, 0 for none, as the user's preference
+/// on [url] has it.
+
+final class SkinToneProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  /// The skin tone the picker applies, 0 for none, as the user's preference
+  /// on [url] has it.
+  SkinToneProvider._({
+    required SkinToneFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'skinToneProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$skinToneHash();
 
+  @override
+  String toString() {
+    return r'skinToneProvider'
+        ''
+        '($argument)';
+  }
+
   @$internal
   @override
-  SkinTone create() => SkinTone();
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
 
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
-    );
+  @override
+  Stream<int> create(Ref ref) {
+    final argument = this.argument as String;
+    return skinTone(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SkinToneProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
   }
 }
 
-String _$skinToneHash() => r'f7c001962f6c4d7cf870355911dcd4ffa9f0d8e8';
+String _$skinToneHash() => r'1983f1c17756938cde2cbf08ccfa9c3f50290aa3';
 
-/// The skin tone the picker applies, 0 for none; kept while the app runs.
+/// The skin tone the picker applies, 0 for none, as the user's preference
+/// on [url] has it.
 
-abstract class _$SkinTone extends $Notifier<int> {
-  int build();
-  @$mustCallSuper
+final class SkinToneFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<int>, String> {
+  SkinToneFamily._()
+    : super(
+        retry: null,
+        name: r'skinToneProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The skin tone the picker applies, 0 for none, as the user's preference
+  /// on [url] has it.
+
+  SkinToneProvider call(String url) =>
+      SkinToneProvider._(argument: url, from: this);
+
   @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<int, int>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<int, int>,
-              int,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
+  String toString() => r'skinToneProvider';
 }

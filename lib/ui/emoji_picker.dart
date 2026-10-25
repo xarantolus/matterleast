@@ -1,9 +1,12 @@
+import 'package:drift/drift.dart' hide Column, Table;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/actions/settings_actions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/emoji/emoji_table.g.dart';
+import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/ui/custom_emoji_image.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -15,13 +18,19 @@ part 'emoji_picker.g.dart';
 Future<List<String>> recentEmoji(Ref ref, String url) async =>
     (await ref.watch(serverSessionProvider(url).future)).store.recentEmoji();
 
-/// The skin tone the picker applies, 0 for none; kept while the app runs.
-@Riverpod(keepAlive: true)
-class SkinTone extends _$SkinTone {
-  @override
-  int build() => 0;
-
-  void set(int tone) => state = tone;
+/// The skin tone the picker applies, 0 for none, as the user's preference
+/// on [url] has it.
+@riverpod
+Stream<int> skinTone(Ref ref, String url) async* {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  final db = session.db;
+  yield* (db.select(db.preferences)..where(
+        (p) =>
+            p.category.equals(Prefs.skinTone.$1) &
+            p.name.equals(Prefs.skinTone.$2),
+      ))
+      .watchSingleOrNull()
+      .map((p) => skinToneOf(p?.value));
 }
 
 /// Lets the user pick an emoji; completes with its name, or null.
@@ -68,11 +77,26 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
   String? _category;
   var _query = '';
 
+  Future<void> _setSkinTone(int tone) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final session = await ref.read(serverSessionProvider(widget.url).future);
+      await SettingsActions(session)
+          .savePreference(Prefs.skinTone, skinToneCode(tone));
+    } on Object {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text("Couldn't save the skin tone. Try again."),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final recent = ref.watch(recentEmojiProvider(widget.url)).value ?? [];
     final custom = ref.watch(customEmojiProvider(widget.url)).value ?? {};
-    final tone = ref.watch(skinToneProvider);
+    final tone = ref.watch(skinToneProvider(widget.url)).value ?? 0;
     final categories = [
       if (recent.isNotEmpty) _recent,
       for (final c in emojiCategories)
@@ -110,7 +134,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
               PopupMenuButton<int>(
                 tooltip: 'Skin tone',
                 initialValue: tone,
-                onSelected: ref.read(skinToneProvider.notifier).set,
+                onSelected: _setSkinTone,
                 icon: Text(
                   unicodeForName(withSkinTone('hand', tone)) ?? '✋',
                   style: const TextStyle(fontSize: 24),

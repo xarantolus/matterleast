@@ -148,4 +148,17 @@ void main() {
     expect(nameForEmoticon('<3'), 'heart');
     expect(nameForEmoticon(':nope'), isNull);
   });
+
+  test('the skin tone is read and written as the official apps store it', () {
+    expect(skinToneOf('1F3FD'), 3);
+    expect(skinToneOf('default'), 0);
+    expect(skinToneOf(null), 0);
+    expect(skinToneOf('1F600'), 0);
+    expect(skinToneCode(1), '1F3FB');
+    expect(skinToneCode(5), '1F3FF');
+    expect(skinToneCode(0), 'default');
+    for (var t = 0; t <= 5; t++) {
+      expect(skinToneOf(skinToneCode(t)), t);
+    }
+  });
 }

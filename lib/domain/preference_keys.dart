@@ -14,4 +14,5 @@ abstract final class Prefs {
   static const directLimit = ('sidebar_settings', 'limit_visible_dms_gms');
   static const nameFormat = ('display_settings', 'name_format');
   static const flaggedPost = 'flagged_post';
+  static const skinTone = ('emoji', 'emoji_skintone');
 }

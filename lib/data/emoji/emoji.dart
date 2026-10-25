@@ -9,6 +9,20 @@ const skinToneSuffixes = [
   '_dark_skin_tone',
 ];
 
+/// The `emoji_skintone` preference value for [tone], as the official apps
+/// write it.
+String skinToneCode(int tone) => tone >= 1 && tone <= skinToneSuffixes.length
+    ? (0x1F3FA + tone).toRadixString(16).toUpperCase()
+    : 'default';
+
+/// The tone a stored `emoji_skintone` [code] stands for, 0 for none.
+int skinToneOf(String? code) {
+  final value = int.tryParse(code ?? '', radix: 16);
+  if (value == null) return 0;
+  final tone = value - 0x1F3FA;
+  return tone >= 1 && tone <= skinToneSuffixes.length ? tone : 0;
+}
+
 final _toneSuffix = RegExp(
   r'(_(light|medium_light|medium|medium_dark|dark)_skin_tone)$',
 );
