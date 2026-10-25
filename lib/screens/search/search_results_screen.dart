@@ -301,7 +301,7 @@ class _ScopeChips extends ConsumerWidget {
           if (teams.length > 1)
             chip(
               icon: Icons.groups_outlined,
-              label: team?.displayName ?? 'Team',
+              label: scope.allTeams ? 'All teams' : team?.displayName ?? 'Team',
               set: false,
               onClear: () {},
               onPressed: () async {
@@ -310,6 +310,12 @@ class _ScopeChips extends ConsumerWidget {
                   title: 'Search in team',
                   hint: 'Find a team',
                   items: [
+                    SwitchItem(
+                      serverUrl: url,
+                      kind: SwitchKind.channel,
+                      id: '',
+                      title: 'All teams',
+                    ),
                     for (final t in teams)
                       SwitchItem(
                         serverUrl: url,
@@ -319,8 +325,13 @@ class _ScopeChips extends ConsumerWidget {
                       ),
                   ],
                 );
-                // Channels belong to one team, so a new team starts over.
-                if (picked != null) onChanged(SearchScope(teamId: picked.id));
+                if (picked == null) return;
+                if (picked.id.isEmpty) {
+                  onChanged(scope.copyWith(allTeams: true));
+                } else {
+                  // Channels belong to one team, so a new team starts over.
+                  onChanged(SearchScope(teamId: picked.id));
+                }
               },
             ),
           chip(
@@ -345,7 +356,8 @@ class _ScopeChips extends ConsumerWidget {
                   for (final i in items)
                     if (i.joined &&
                         i.handle != null &&
-                        (i.teamId == scope.teamId ||
+                        (scope.allTeams ||
+                            i.teamId == scope.teamId ||
                             i.kind == SwitchKind.direct ||
                             i.kind == SwitchKind.group))
                       i,

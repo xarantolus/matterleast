@@ -21,20 +21,30 @@ class MessageSearch {
 
   int get _offsetSeconds => DateTime.now().timeZoneOffset.inSeconds;
 
-  /// Ids of the posts found, newest first.
-  Future<List<String>> posts(String teamId, String terms) =>
+  /// Ids of the posts found, newest first. A null [teamId] searches every
+  /// team.
+  Future<List<String>> posts(String? teamId, String terms) =>
       session.api.coalesced('search:posts:$teamId:$terms', () async {
         final found = await session.api
             .call(
-              () => _client.posts.searchPosts(
-                teamId: teamId,
-                body: api.ApiV4TeamsTeamIdPostsSearchRequestBody(
-                  terms: terms,
-                  isOrSearch: false,
-                  timeZoneOffset: _offsetSeconds,
-                  includeDeletedChannels: true,
-                ),
-              ),
+              () => teamId == null
+                  ? _client.posts.searchPostsInAllTeams(
+                      body: api.ApiV4PostsSearchRequestBody(
+                        terms: terms,
+                        isOrSearch: false,
+                        timeZoneOffset: _offsetSeconds,
+                        includeDeletedChannels: true,
+                      ),
+                    )
+                  : _client.posts.searchPosts(
+                      teamId: teamId,
+                      body: api.ApiV4TeamsTeamIdPostsSearchRequestBody(
+                        terms: terms,
+                        isOrSearch: false,
+                        timeZoneOffset: _offsetSeconds,
+                        includeDeletedChannels: true,
+                      ),
+                    ),
             )
             .timeout(timeout);
         final posts = (found.posts ?? const <String, api.Post>{}).values;
@@ -48,19 +58,28 @@ class MessageSearch {
         return found.order;
       });
 
-  Future<List<FileHit>> files(String teamId, String terms) =>
+  Future<List<FileHit>> files(String? teamId, String terms) =>
       session.api.coalesced('search:files:$teamId:$terms', () async {
         final found = await session.api
             .call(
-              () => _client.teams.searchFiles(
-                teamId: teamId,
-                body: api.ApiV4TeamsTeamIdFilesSearchRequestBody(
-                  terms: terms,
-                  isOrSearch: false,
-                  timeZoneOffset: _offsetSeconds,
-                  includeDeletedChannels: true,
-                ),
-              ),
+              () => teamId == null
+                  ? _client.files.searchFilesAllTeams(
+                      body: api.ApiV4FilesSearchRequestBody(
+                        terms: terms,
+                        isOrSearch: false,
+                        timeZoneOffset: _offsetSeconds,
+                        includeDeletedChannels: true,
+                      ),
+                    )
+                  : _client.teams.searchFiles(
+                      teamId: teamId,
+                      body: api.ApiV4TeamsTeamIdFilesSearchRequestBody(
+                        terms: terms,
+                        isOrSearch: false,
+                        timeZoneOffset: _offsetSeconds,
+                        includeDeletedChannels: true,
+                      ),
+                    ),
             )
             .timeout(timeout);
         final infos = [

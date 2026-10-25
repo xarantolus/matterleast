@@ -70,7 +70,10 @@ Future<List<String>> serverPostResults(
   String query,
 ) async {
   final search = await ref.watch(messageSearchProvider(url).future);
-  return search.posts(scope.teamId, searchTerms(query, scope));
+  return search.posts(
+    scope.allTeams ? null : scope.teamId,
+    searchTerms(query, scope),
+  );
 }
 
 @riverpod
@@ -95,7 +98,10 @@ Future<List<FileHit>> serverFileResults(
   String query,
 ) async {
   final search = await ref.watch(messageSearchProvider(url).future);
-  return search.files(scope.teamId, fileSearchTerms(query, scope));
+  return search.files(
+    scope.allTeams ? null : scope.teamId,
+    fileSearchTerms(query, scope),
+  );
 }
 
 /// Message previews of the posts [ids] (comma-separated), in that order.

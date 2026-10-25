@@ -9,6 +9,10 @@ abstract class SearchScope with _$SearchScope {
   const factory SearchScope({
     required String teamId,
 
+    /// Searches every team the user is in; [teamId] stays the home of the
+    /// recent searches.
+    @Default(false) bool allTeams,
+
     /// `in:` takes the channel's name (or `@username` for a direct
     /// message); [channelLabel] is what the chip says.
     String? channelId,

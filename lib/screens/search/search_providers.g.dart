@@ -551,7 +551,7 @@ final class ServerPostResultsProvider
   }
 }
 
-String _$serverPostResultsHash() => r'eb2ea91dde0616a2c1fcf6f350608d41eba258d9';
+String _$serverPostResultsHash() => r'a0ec1b1a52484b17ab434d6e487e8a7349c7999d';
 
 final class ServerPostResultsFamily extends $Family
     with
@@ -709,7 +709,7 @@ final class ServerFileResultsProvider
   }
 }
 
-String _$serverFileResultsHash() => r'702a7bf1f5d616e029e24059bca8ab79530bf8d9';
+String _$serverFileResultsHash() => r'e4b4b62677728b728e4c3b6df174c0e94429e263';
 
 final class ServerFileResultsFamily extends $Family
     with

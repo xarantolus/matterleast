@@ -217,7 +217,7 @@ class SearchViews {
   }) {
     if (scope.channelId case final id?) {
       channelOf((c) => c.equals(id));
-    } else {
+    } else if (!scope.allTeams) {
       final inTeam = db.selectOnly(db.channels)
         ..addColumns([db.channels.id])
         ..where(db.channels.teamId.isIn([scope.teamId, '']));
