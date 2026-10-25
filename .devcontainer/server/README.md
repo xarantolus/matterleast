@@ -6,11 +6,12 @@ emulator reaches it at `http://10.0.2.2:8065` and nothing is exposed on the
 network. Everything on it is invented.
 
 ```sh
-.devcontainer/server/server.sh start    # create or start, seed on first start
+.devcontainer/server/server.sh start           # create or start, seed on first start
+.devcontainer/server/server.sh start --second  # also a second server on port 8067
 .devcontainer/server/server.sh status
-.devcontainer/server/server.sh logs     # or: logs db | logs commands
+.devcontainer/server/server.sh logs            # or: logs db | logs server2 | logs commands
 .devcontainer/server/server.sh stop
-.devcontainer/server/server.sh reset    # delete all data, start and seed again
+.devcontainer/server/server.sh reset           # delete all data, start and seed again
 ```
 
 ## What runs
@@ -18,12 +19,23 @@ network. Everything on it is invented.
 | Container | Image | Purpose |
 | --- | --- | --- |
 | `matterleast-db` | `postgres:17-alpine` | database, on volume `matterleast-db-data` |
-| `matterleast-server` | `mattermost/mattermost-team-edition:12.0.1` | the server; settings in `mattermost.env` |
-| `matterleast-commands` | `node:22-alpine` | answers the custom slash commands (`commands/responder.js`) |
+| `matterleast-server` | `mattermost/mattermost-team-edition:12.0.1` | the server on port 8065; settings in `mattermost.env` |
+| `matterleast-server2` | same | optional second server on port 8067 with its own database, for multi-server tests |
+| `matterleast-commands` | `node:22-alpine` | side services on port 8066: the custom slash commands and a fake GitLab for SSO (`commands/responder.js`) |
 
-All three use host networking. The image store lives on the
-`matterleast-containers` volume of the dev container, so images survive a
-container restart; `reset` only deletes the server's data volumes.
+All use host networking on the loopback. Containers and data volumes survive a
+dev-container restart, so `start` just brings them back; the image store
+lives on the `matterleast-containers` volume. `reset` deletes the data
+volumes and seeds again.
+
+## SSO
+
+GitLab login is enabled and points at the fake provider, which approves every
+login as the invented user `sso-sam`. Opening
+`http://10.0.2.2:8065/oauth/gitlab/mobile_login?redirect_to=mmauth://callback`
+in the emulator's browser ends on the server's "Authentication complete" page,
+which redirects to `mmauth://callback?MMAUTHTOKEN=…&srv=…`, the same flow a
+real provider produces.
 
 ## Seeded content (`seed.sh`)
 
@@ -34,10 +46,11 @@ Password for every user: `matterleast`.
   "Deploy Bot".
 - Teams: `lighthouse` (everyone) and `harbor` (alice, bob).
 - Channels in lighthouse: `town-square`, `off-topic` (150 filler posts),
-  `engineering` (markdown showcase, a 25-reply thread with reactions, files,
-  priority posts, an edited post), `design`, `random-links` (muted for alice),
-  `night-watch` (private, pinned post), `old-projects` (archived). DMs and a
-  group message for alice.
+  `engineering` (markdown showcase, a 25-reply thread with reactions, files
+  including a PDF, priority posts, an edited post), `design`, `random-links`
+  (muted for alice), `night-watch` (private, pinned post), `old-projects`
+  (archived), `firehose` (1,200 posts for paging), `open-mic` (public, alice
+  is not a member). DMs with a thread and a group message for alice.
 - For alice: unread channels and mentions in several channels, a half-read
   thread, a saved post, a favourite channel and a custom sidebar category.
 - Custom emoji `:lighthouse:` and `:anchor-party:`.

@@ -1,11 +1,19 @@
-// Answers the custom slash commands of the local test server:
-//   /shout <text>  replies in the channel
-//   /lunch         opens an interactive dialog, then acknowledges the submission
-// Runs on the loopback next to the server, so both sides use 127.0.0.1.
+// Side services for the local test server, all on the loopback:
+//   /shout <text>  slash command, replies in the channel
+//   /lunch         slash command, opens an interactive dialog
+//   /oauth/*       a fake GitLab that approves every login at once, so the
+//                  mobile SSO flow can be exercised without a real provider
 const http = require('http');
 
 const PORT = 8066;
 const SERVER = 'http://127.0.0.1:8065';
+const OAUTH_USER = {
+  id: 4711,
+  username: 'sso-sam',
+  login: 'sso-sam',
+  email: 'sso-sam@example.test',
+  name: 'Sam Singleton',
+};
 
 function readBody(req) {
   return new Promise((resolve) => {
@@ -55,22 +63,41 @@ async function openDialog(triggerId) {
 }
 
 http.createServer(async (req, res) => {
+  const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
   const body = parse(req, await readBody(req));
-  console.log(req.method, req.url, body.command || body.callback_id || '');
-  if (req.url === '/shout') {
+  console.log(req.method, url.pathname, body.command || body.callback_id || '');
+
+  if (url.pathname === '/shout') {
     return reply(res, 200, {
       response_type: 'in_channel',
       text: body.text ? `**Shout:** ${body.text}` : 'Nothing to shout. Try `/shout hello`.',
     });
   }
-  if (req.url === '/lunch') {
+  if (url.pathname === '/lunch') {
     await openDialog(body.trigger_id);
     return reply(res, 200, { response_type: 'ephemeral', text: 'Opening the lunch dialog…' });
   }
-  if (req.url === '/lunch/submit') {
+  if (url.pathname === '/lunch/submit') {
     const s = body.submission || {};
     if (!s.dish) return reply(res, 200, { errors: { dish: 'Tell us what to order.' } });
     return reply(res, 200, {});
   }
-  reply(res, 404, { text: 'unknown command endpoint' });
-}).listen(PORT, '127.0.0.1', () => console.log(`command responder on ${PORT}`));
+
+  // Fake GitLab: the browser lands on /oauth/authorize and is sent straight
+  // back with a code; the server then trades the code for a token and asks
+  // for the user.
+  if (url.pathname === '/oauth/authorize') {
+    const back = new URL(url.searchParams.get('redirect_uri'));
+    back.searchParams.set('code', 'fake-code');
+    back.searchParams.set('state', url.searchParams.get('state') || '');
+    res.writeHead(302, { Location: back.toString() });
+    return res.end();
+  }
+  if (url.pathname === '/oauth/token') {
+    return reply(res, 200, { access_token: 'fake-access-token', token_type: 'bearer', scope: 'read_user' });
+  }
+  if (url.pathname === '/api/v4/user') {
+    return reply(res, 200, OAUTH_USER);
+  }
+  reply(res, 404, { text: 'unknown endpoint' });
+}).listen(PORT, '127.0.0.1', () => console.log(`side services on ${PORT}`));

@@ -28,6 +28,7 @@ args=(
   # /dev/fuse for the fuse-overlayfs fallback.
   -v "${NAME}-containers":/var/lib/containers
   --cap-add SYS_ADMIN
+  --cap-add SYS_PTRACE
   --security-opt unmask=ALL
   --security-opt label=disable
   --device /dev/fuse

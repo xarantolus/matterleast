@@ -23,6 +23,7 @@
     "--network=host",
     // Podman inside the container, see run-container.sh.
     "--cap-add=SYS_ADMIN",
+    "--cap-add=SYS_PTRACE",
     "--security-opt=unmask=ALL",
     "--security-opt=label=disable",
     "--device=/dev/fuse"

@@ -291,6 +291,26 @@ api alice POST "/users/${ID[alice]}/teams/$LIGHTHOUSE/channels/categories" "$(jq
     '{user_id:$u, team_id:$t, display_name:"Projects", type:"custom", channel_ids:[$a,$b]}')" >/dev/null
 echo "seed: statuses and preferences"
 
+# A long channel for paging, a public channel alice has not joined, a PDF and
+# a thread inside a direct message.
+FIREHOSE=$(channel "$LIGHTHOUSE" firehose Firehose O "Bot chatter, 1200 messages" "")
+channel_add "$FIREHOSE" alice bob carol helper-bot
+for n in $(seq 1 1200); do
+    u=$(case $((n % 3)) in 0) echo bob;; 1) echo carol;; *) echo helper-bot;; esac)
+    post "$u" "$FIREHOSE" "Firehose line $n: $(case $((n % 5)) in 0) echo "build passed";; 1) echo "deploy queued";; 2) echo "metrics nominal";; 3) echo "cache warmed";; *) echo "heartbeat";; esac)" >/dev/null
+done
+echo "seed: 1200 firehose posts"
+OPENMIC=$(channel "$LIGHTHOUSE" open-mic "Open Mic" O "Anyone can join; alice has not" "")
+channel_add "$OPENMIC" bob dave
+post bob "$OPENMIC" "Welcome to the open mic, join if you dare." >/dev/null
+printf "%%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 144]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length 60>>stream\nBT /F1 24 Tf 24 80 Td (Crew handbook, page 1) Tj ET\nendstream\nendobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\ntrailer<</Root 1 0 R>>\n" >"$TMP/handbook.pdf"
+PDF=$(upload bob "/files?channel_id=$ENG" -F "files=@$TMP/handbook.pdf;type=application/pdf" | jq -c "[.file_infos[].id]")
+post bob "$ENG" "The crew handbook as PDF:" "$(jq -n --argjson f "$PDF" "{file_ids:\$f}")" >/dev/null
+DMROOT=$(post bob "$DM_AB" "Thread in a DM: lunch plans?")
+post alice "$DM_AB" "Noodles?" "$(jq -n --arg r "$DMROOT" "{root_id:\$r}")" >/dev/null
+post bob "$DM_AB" "Noodles it is." "$(jq -n --arg r "$DMROOT" "{root_id:\$r}")" >/dev/null
+echo "seed: extras"
+
 cat <<EOF
 
 seed: done. Server: $URL (emulator: http://10.0.2.2:8065)
