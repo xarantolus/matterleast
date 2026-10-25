@@ -203,3 +203,16 @@ actions:
               include_deleted_channels: {type: boolean}
               page: {type: integer, default: 0}
               per_page: {type: integer, default: 60}
+  # --- channel management (M5): fields the server sends and accepts (model/channel_member.go, channel_stats.go) ---
+  - target: "$.components.schemas.ChannelNotifyProps.properties"
+    update:
+      ignore_channel_mentions: {type: string}
+      desktop_threads: {type: string}
+      push_threads: {type: string}
+      email_threads: {type: string}
+      channel_auto_follow_threads: {type: string}
+  - target: "$.components.schemas.ChannelStats.properties"
+    update:
+      guest_count: {type: integer, format: int64}
+      pinnedpost_count: {type: integer, format: int64}
+      files_count: {type: integer, format: int64}

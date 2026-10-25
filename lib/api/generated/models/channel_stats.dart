@@ -9,7 +9,13 @@ part 'channel_stats.g.dart';
 
 @JsonSerializable()
 class ChannelStats {
-  const ChannelStats({this.channelId, this.memberCount});
+  const ChannelStats({
+    this.channelId,
+    this.memberCount,
+    this.guestCount,
+    this.pinnedpostCount,
+    this.filesCount,
+  });
 
   factory ChannelStats.fromJson(Map<String, Object?> json) =>
       _$ChannelStatsFromJson(json);
@@ -20,6 +26,15 @@ class ChannelStats {
   @LenientInt()
   @JsonKey(name: 'member_count')
   final int? memberCount;
+  @LenientInt()
+  @JsonKey(name: 'guest_count')
+  final int? guestCount;
+  @LenientInt()
+  @JsonKey(name: 'pinnedpost_count')
+  final int? pinnedpostCount;
+  @LenientInt()
+  @JsonKey(name: 'files_count')
+  final int? filesCount;
 
   Map<String, Object?> toJson() => _$ChannelStatsToJson(this);
 }

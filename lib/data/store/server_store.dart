@@ -302,6 +302,11 @@ class ServerStore {
         .insertOnConflictUpdate(myChannelCompanion(member));
   }
 
+  /// The user's notification settings for a channel, as JSON.
+  Future<void> applyNotifyProps(String channelId, String? json) =>
+      (db.update(db.myChannels)..where((m) => m.channelId.equals(channelId)))
+          .write(MyChannelsCompanion(notifyPropsJson: Value(json)));
+
   /// Archives the channel, or restores it when [at] is null.
   Future<void> applyChannelArchived(String channelId, DateTime? at) =>
       (db.update(db.channels)..where((c) => c.id.equals(channelId))).write(

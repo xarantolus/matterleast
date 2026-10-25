@@ -119,35 +119,47 @@ class ChannelActions {
   }
 
   /// Muted channels only count mentions as unread.
-  Future<void> setMuted(String channelId, {required bool muted}) async {
+  Future<void> setMuted(String channelId, {required bool muted}) =>
+      updateNotifyProps(channelId, markUnread: muted ? 'mention' : 'all');
+
+  /// Changes how the user is notified about a channel. The change shows at
+  /// once and is put back when the server refuses it.
+  Future<void> updateNotifyProps(
+    String channelId, {
+    String? push,
+    String? desktop,
+    String? markUnread,
+    String? ignoreChannelMentions,
+    String? pushThreads,
+  }) async {
     final mine = await (_db.select(
       _db.myChannels,
     )..where((m) => m.channelId.equals(channelId))).getSingle();
-    final stored = jsonDecode(mine.notifyPropsJson ?? '{}');
-    final props = api.ChannelNotifyProps.fromJson(
-      stored is Map<String, Object?> ? stored : const {},
-    );
-    await session.api.call(
-      () => _client.channels.updateChannelNotifyProps(
-        channelId: channelId,
-        userId: 'me',
-        // Every field is sent; missing ones would be stored as empty.
-        body: api.ChannelNotifyProps(
-          email: props.email ?? 'default',
-          push: props.push ?? 'default',
-          desktop: props.desktop ?? 'default',
-          markUnread: muted ? 'mention' : 'all',
-        ),
+    final before = mine.notifyPropsJson;
+    final stored = jsonDecode(before ?? '{}');
+    final next = completeNotifyProps(
+      api.ChannelNotifyProps.fromJson(
+        stored is Map<String, Object?> ? stored : const {},
       ),
+      push: push,
+      desktop: desktop,
+      markUnread: markUnread,
+      ignoreChannelMentions: ignoreChannelMentions,
+      pushThreads: pushThreads,
     );
-    await session.store.applyChannelMember(
+    await session.store.applyNotifyProps(channelId, jsonEncode(next.toJson()));
+    try {
       await session.api.call(
-        () => _client.channels.getChannelMember(
+        () => _client.channels.updateChannelNotifyProps(
           channelId: channelId,
           userId: 'me',
+          body: next,
         ),
-      ),
-    );
+      );
+    } on Object {
+      await session.store.applyNotifyProps(channelId, before);
+      rethrow;
+    }
   }
 
   Future<void> leave(String channelId) async {
@@ -239,3 +251,26 @@ class ChannelActions {
     );
   }
 }
+
+/// Pure: [current] with the given changes and every other field filled in.
+/// The server stores each field it is sent, so a missing one would be
+/// saved as empty; the fallbacks are the server's own defaults.
+api.ChannelNotifyProps completeNotifyProps(
+  api.ChannelNotifyProps current, {
+  String? push,
+  String? desktop,
+  String? markUnread,
+  String? ignoreChannelMentions,
+  String? pushThreads,
+}) => api.ChannelNotifyProps(
+  email: current.email ?? 'default',
+  push: push ?? current.push ?? 'default',
+  desktop: desktop ?? current.desktop ?? 'default',
+  markUnread: markUnread ?? current.markUnread ?? 'all',
+  ignoreChannelMentions:
+      ignoreChannelMentions ?? current.ignoreChannelMentions ?? 'default',
+  desktopThreads: current.desktopThreads ?? 'all',
+  pushThreads: pushThreads ?? current.pushThreads ?? 'all',
+  emailThreads: current.emailThreads ?? 'all',
+  channelAutoFollowThreads: current.channelAutoFollowThreads ?? 'off',
+);
