@@ -12,6 +12,7 @@ import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 /// A channel's messages, opened at the new-messages line, a message asked
@@ -63,6 +64,7 @@ class ChannelScreen extends ConsumerWidget {
       teamId: window?.teamId ?? '',
     );
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -82,40 +84,42 @@ class ChannelScreen extends ConsumerWidget {
           active: state.refreshing && state.window?.posts.isNotEmpty == true,
         ),
       ),
-      body: SafeArea(
-        top: false,
-        bottom: window == null,
-        child: Column(
-          children: [
-            Expanded(
-              child: ConversationView(
-                url: url,
-                conversation: conversation,
-                composer: window == null || window.archived
-                    ? null
-                    : composerDraftProvider(url, channelId, ''),
-                startText: 'This is the start of $name.',
-                onOpenThread: (post) => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => ThreadScreen(
-                      url: url,
-                      channelId: channelId,
-                      rootId: post.id,
-                      channelName: name,
+      body: ConversationPane(
+        child: SafeArea(
+          top: false,
+          bottom: window == null,
+          child: Column(
+            children: [
+              Expanded(
+                child: ConversationView(
+                  url: url,
+                  conversation: conversation,
+                  composer: window == null || window.archived
+                      ? null
+                      : composerDraftProvider(url, channelId, ''),
+                  startText: 'This is the start of $name.',
+                  onOpenThread: (post) => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ThreadScreen(
+                        url: url,
+                        channelId: channelId,
+                        rootId: post.id,
+                        channelName: name,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            if (window != null)
-              Composer(
-                url: url,
-                channelId: channelId,
-                teamId: window.teamId,
-                hint: 'Write to $name',
-                archived: window.archived,
-              ),
-          ],
+              if (window != null)
+                Composer(
+                  url: url,
+                  channelId: channelId,
+                  teamId: window.teamId,
+                  hint: 'Write to $name',
+                  archived: window.archived,
+                ),
+            ],
+          ),
         ),
       ),
     );

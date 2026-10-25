@@ -1,10 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A conversation sliding in from the right over the screen below it,
-/// which stays visible. A rightward drag anywhere on it that no inner
-/// widget claims, the system back gesture and the back button slide it
-/// away again.
+/// A conversation whose [ConversationPane] slides in from the right over
+/// the screen below it, which stays visible, while its app bar stays in
+/// place. A rightward drag anywhere on it that no inner widget claims, the
+/// system back gesture and the back button slide it away again.
 class ConversationRoute<T> extends PageRoute<T> {
   ConversationRoute({required this.builder, super.settings});
 
@@ -35,26 +35,17 @@ class ConversationRoute<T> extends PageRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => _SlideToPop(
-    route: this,
-    child: SlideTransition(
-      position:
-          (navigator!.userGestureInProgress
-                  ? animation
-                  : CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
-                      reverseCurve: Curves.easeInCubic,
-                    ))
-              .drive(Tween(begin: const Offset(1, 0), end: Offset.zero)),
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          boxShadow: [BoxShadow(blurRadius: 12, color: Color(0x33000000))],
-        ),
-        child: child,
-      ),
-    ),
-  );
+  ) => _SlideToPop(route: this, child: child);
+
+  Animation<Offset> get _slide =>
+      (navigator!.userGestureInProgress
+              ? animation!
+              : CurvedAnimation(
+                  parent: animation!,
+                  curve: Curves.easeOutCubic,
+                  reverseCurve: Curves.easeInCubic,
+                ))
+          .drive(Tween(begin: const Offset(1, 0), end: Offset.zero));
 
   void _dragStart() => navigator?.didStartUserGesture();
 
@@ -135,6 +126,36 @@ class _SlideToPopState extends State<_SlideToPop> {
             ),
       },
       child: widget.child,
+    );
+  }
+}
+
+/// The part of a conversation below its app bar, which slides in a
+/// [ConversationRoute] and is opaque everywhere else. The screen's
+/// [Scaffold] must be transparent for the screen below to show.
+class ConversationPane extends StatelessWidget {
+  const ConversationPane({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final body = ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: child,
+    );
+    final route = ModalRoute.of(context);
+    if (route is! ConversationRoute) return body;
+    return ValueListenableBuilder(
+      valueListenable: route.navigator!.userGestureInProgressNotifier,
+      builder: (context, _, child) =>
+          SlideTransition(position: route._slide, child: child),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          boxShadow: [BoxShadow(blurRadius: 12, color: Color(0x33000000))],
+        ),
+        child: body,
+      ),
     );
   }
 }

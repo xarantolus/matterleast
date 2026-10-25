@@ -10,6 +10,7 @@ import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/thread/thread_providers.dart';
+import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 /// A thread: its first message, then the replies.
@@ -53,6 +54,7 @@ class ThreadScreen extends ConsumerWidget {
     );
     final window = state.window;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: ConversationTitle(
           title: 'Thread',
@@ -77,31 +79,33 @@ class ThreadScreen extends ConsumerWidget {
           active: state.refreshing && state.window?.root != null,
         ),
       ),
-      body: SafeArea(
-        top: false,
-        bottom: window == null,
-        child: Column(
-          children: [
-            Expanded(
-              child: ConversationView(
-                url: url,
-                conversation: conversation,
-                composer: window == null || window.archived
-                    ? null
-                    : composerDraftProvider(url, channelId, rootId),
-                startText: null,
+      body: ConversationPane(
+        child: SafeArea(
+          top: false,
+          bottom: window == null,
+          child: Column(
+            children: [
+              Expanded(
+                child: ConversationView(
+                  url: url,
+                  conversation: conversation,
+                  composer: window == null || window.archived
+                      ? null
+                      : composerDraftProvider(url, channelId, rootId),
+                  startText: null,
+                ),
               ),
-            ),
-            if (window != null)
-              Composer(
-                url: url,
-                channelId: channelId,
-                rootId: rootId,
-                teamId: window.teamId,
-                hint: 'Reply…',
-                archived: window.archived,
-              ),
-          ],
+              if (window != null)
+                Composer(
+                  url: url,
+                  channelId: channelId,
+                  rootId: rootId,
+                  teamId: window.teamId,
+                  hint: 'Reply…',
+                  archived: window.archived,
+                ),
+            ],
+          ),
         ),
       ),
     );
