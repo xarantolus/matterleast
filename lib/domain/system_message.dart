@@ -1,10 +1,15 @@
 import 'package:matterleast/api/json/post_extras.dart';
 
-/// Pure: the line shown for a system message, in the wording of
-/// Mattermost's apps. Types without their own wording use the server's
+/// A username as a markdown mention, so it renders tappable.
+String _mention(String? username) =>
+    username == null ? 'Someone' : '@$username';
+
+/// Pure: the markdown shown for a system message, in the wording of
+/// Mattermost's apps. Headers and purposes stay markdown, as the official
+/// apps render them. Types without their own wording use the server's
 /// [message].
 String systemMessageText(String type, PostProps props, String message) {
-  final who = props.username ?? 'Someone';
+  final who = _mention(props.username);
   String change(String what, String? from, String? to) {
     final old = from ?? '';
     final now = to ?? '';
@@ -67,23 +72,24 @@ enum Activity {
 }
 
 /// One membership message: who it is about and who did it.
-typedef ActivityEntry = ({String subject, String? actor});
+typedef ActivityEntry = ({String? subject, String? actor});
 
 /// Pure: the subject and actor of a membership message.
 ActivityEntry activityEntry(Activity activity, PostProps props) =>
     activity.byActor
     ? (
-        subject: props.addedUsername ?? props.removedUsername ?? 'Someone',
+        subject: props.addedUsername ?? props.removedUsername,
         actor: props.username,
       )
-    : (subject: props.username ?? 'Someone', actor: null);
+    : (subject: props.username, actor: null);
 
-/// Pure: one sentence for consecutive membership messages of the same kind
-/// ("alice, bob and carol joined the channel.").
+/// Pure: one markdown sentence for consecutive membership messages of the
+/// same kind ("@alice, @bob and @carol joined the channel.").
 String activityText(Activity activity, List<ActivityEntry> entries) {
   final subjects = <String>[];
   for (final e in entries) {
-    if (!subjects.contains(e.subject)) subjects.add(e.subject);
+    final subject = _mention(e.subject);
+    if (!subjects.contains(subject)) subjects.add(subject);
   }
   final names = switch (subjects.length) {
     1 => subjects.single,
@@ -92,6 +98,6 @@ String activityText(Activity activity, List<ActivityEntry> entries) {
   };
   final actor = entries.first.actor;
   return activity.byActor && actor != null
-      ? '$names ${activity.verb} by $actor.'
+      ? '$names ${activity.verb} by ${_mention(actor)}.'
       : '$names ${activity.verb}.';
 }

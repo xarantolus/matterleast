@@ -23,7 +23,7 @@ void main() {
           const PostProps(username: 'admin', newHeader: 'Reviews on Tuesdays'),
           '',
         ),
-        'admin updated the channel header to: Reviews on Tuesdays',
+        '@admin updated the channel header to: Reviews on Tuesdays',
       );
     });
 
@@ -34,7 +34,7 @@ void main() {
           const PostProps(username: 'bob', oldPurpose: 'a', newPurpose: 'b'),
           '',
         ),
-        'bob updated the channel purpose from: a to: b',
+        '@bob updated the channel purpose from: a to: b',
       );
     });
 
@@ -45,7 +45,14 @@ void main() {
           const PostProps(username: 'bob', oldDisplayname: 'Old'),
           '',
         ),
-        'bob removed the channel display name (was: Old)',
+        '@bob removed the channel display name (was: Old)',
+      );
+    });
+
+    test('someone unknown is not written as a mention', () {
+      expect(
+        systemMessageText('system_channel_deleted', const PostProps(), ''),
+        'Someone archived the channel',
       );
     });
 
@@ -63,7 +70,7 @@ void main() {
           (subject: 'carol', actor: 'admin'),
           (subject: 'erin', actor: 'admin'),
         ]),
-        'bob, carol and erin added to the channel by admin.',
+        '@bob, @carol and @erin added to the channel by @admin.',
       );
     });
   });

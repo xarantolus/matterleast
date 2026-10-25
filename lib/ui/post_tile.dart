@@ -307,6 +307,8 @@ class _SystemLine extends StatelessWidget {
               activityEntry(activity, detailsOf(p).props),
           ])
         : systemMessageText(post.type, detailsOf(post).props, post.message);
+    final style = Theme.of(context).textTheme.bodySmall
+        ?.copyWith(color: tokens.muted);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         Spacing.lg + _gutter,
@@ -314,10 +316,21 @@ class _SystemLine extends StatelessWidget {
         Spacing.lg,
         Spacing.xs,
       ),
-      child: Text(
-        '$line  ${_time(context, post.createAt)}',
-        style: Theme.of(context).textTheme.bodySmall
-            ?.copyWith(color: tokens.muted),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: PostBody(
+              postId: '${post.id}:system:${combined.length}',
+              message: line,
+              editAt: post.editAt,
+              collapsible: false,
+              style: style,
+            ),
+          ),
+          const SizedBox(width: Spacing.sm),
+          Text(_time(context, post.createAt), style: style),
+        ],
       ),
     );
   }

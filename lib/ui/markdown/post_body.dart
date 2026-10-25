@@ -25,6 +25,7 @@ class PostBody extends StatelessWidget {
     this.channelNames = const {},
     this.unsafeLinks = false,
     this.collapsible = true,
+    this.style,
     super.key,
   });
 
@@ -39,6 +40,9 @@ class PostBody extends StatelessWidget {
   final bool unsafeLinks;
   final bool collapsible;
 
+  /// Replaces the body text style, for lines quieter than a message.
+  final TextStyle? style;
+
   @override
   Widget build(BuildContext context) {
     final env = PostEnvironment.maybeOf(context);
@@ -46,8 +50,9 @@ class PostBody extends StatelessWidget {
     if (unsafeLinks) options = options.copyWith(unsafeLinks: true);
     final doc = markdownCache.get(postId, editAt, message, options);
     final tokens = context.tokens;
-    final body = Theme.of(context).textTheme.bodyMedium!
-        .copyWith(color: tokens.text);
+    final body =
+        style ??
+        Theme.of(context).textTheme.bodyMedium!.copyWith(color: tokens.text);
     final editedSpan = edited
         ? TextSpan(
             text: ' (edited)',
