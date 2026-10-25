@@ -100,6 +100,8 @@ abstract class PostsClient {
     @Query('page') int? page = 0,
     @Query('per_page') int? perPage = 60,
     @Query('include_deleted') bool? includeDeleted = false,
+    @Query('collapsedThreads') bool? collapsedThreads = false,
+    @Query('collapsedThreadsExtended') bool? collapsedThreadsExtended = false,
   });
 
   @POST('/api/v4/teams/{team_id}/posts/search')

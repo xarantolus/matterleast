@@ -160,6 +160,10 @@ actions:
   - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/threads'].get.parameters"
     update:
       - {name: unread, in: query, description: "Only threads with unread replies", schema: {type: boolean, default: false}}
+  - target: "$.paths['/api/v4/channels/{channel_id}/posts'].get.parameters"
+    update:
+      - {name: collapsedThreads, in: query, description: "Leave replies out when collapsed reply threads are on", schema: {type: boolean, default: false}}
+      - {name: collapsedThreadsExtended, in: query, description: "Include thread participants with collapsed reply threads", schema: {type: boolean, default: false}}
   - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/channels/categories'].put.requestBody.content"
     remove: true
   - target: "$.paths['/api/v4/users/{user_id}/teams/{team_id}/channels/categories'].put.requestBody"

@@ -368,6 +368,8 @@ class _PostsClient implements PostsClient {
     int? page = 0,
     int? perPage = 60,
     bool? includeDeleted = false,
+    bool? collapsedThreads = false,
+    bool? collapsedThreadsExtended = false,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
@@ -378,6 +380,8 @@ class _PostsClient implements PostsClient {
       r'page': page,
       r'per_page': perPage,
       r'include_deleted': includeDeleted,
+      r'collapsedThreads': collapsedThreads,
+      r'collapsedThreadsExtended': collapsedThreadsExtended,
     };
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};

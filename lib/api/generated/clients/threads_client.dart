@@ -27,6 +27,16 @@ abstract class ThreadsClient {
     @Query('since') int? since,
   });
 
+  @PUT(
+    '/api/v4/users/{user_id}/teams/{team_id}/threads/{thread_id}/read/{timestamp}',
+  )
+  Future<void> updateThreadReadForUser({
+    @Path('user_id') required String userId,
+    @Path('team_id') required String teamId,
+    @Path('thread_id') required String threadId,
+    @Path('timestamp') required String timestamp,
+  });
+
   @GET('/api/v4/users/{user_id}/teams/{team_id}/threads/{thread_id}')
   Future<void> getUserThread({
     @Path('user_id') required String userId,

@@ -140,4 +140,5 @@
 - "/api/v4/users/{user_id}/teams/{team_id}/channels/members"
 - "/api/v4/users/{user_id}/teams/{team_id}/threads"
 - "/api/v4/users/{user_id}/teams/{team_id}/threads/{thread_id}"
+- "/api/v4/users/{user_id}/teams/{team_id}/threads/{thread_id}/read/{timestamp}"
 - "/api/v4/users/{user_id}/terms_of_service"
