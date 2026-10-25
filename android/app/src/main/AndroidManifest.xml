@@ -26,6 +26,19 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Receives the SSO redirect (mmauth://callback) from the Auth Tab. -->
+        <activity
+            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+            android:exported="true"
+            android:taskAffinity="">
+            <intent-filter android:label="flutter_web_auth_2">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="mmauth" android:host="callback" />
+                <data android:scheme="matterleast" android:host="callback" />
+            </intent-filter>
+        </activity>
         <!-- Used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
             android:name="flutterEmbedding"
