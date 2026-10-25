@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
+import 'package:matterleast/data/actions/post_actions.dart';
 import 'package:matterleast/data/outbox/outbox_sender.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -80,3 +81,8 @@ Stream<OpenDialog> openDialogs(Ref ref, String url) async* {
   final session = await ref.watch(serverSessionProvider(url).future);
   yield* session.connection.dialogs.dialogs;
 }
+
+/// What the message menu does to a post.
+@Riverpod(keepAlive: true)
+Future<PostActions> postActions(Ref ref, String url) async =>
+    PostActions(await ref.watch(serverSessionProvider(url).future));

@@ -1299,6 +1299,45 @@ class ServerStore {
     db.posts,
   )..where((p) => p.id.equals(postId) & p.type.equals(ephemeralType))).go();
 
+  Future<PostRow?> post(String postId) => (db.select(
+    db.posts,
+  )..where((p) => p.id.equals(postId))).getSingleOrNull();
+
+  /// The user's own edit, shown before the server confirms it; [editAt]
+  /// null puts back the text from before an edit that failed.
+  Future<void> setPostMessage(
+    String postId,
+    String message, {
+    required DateTime? editAt,
+  }) => (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
+    PostsCompanion(message: Value(message), editAt: Value(editAt)),
+  );
+
+  Future<void> setPinned(String postId, {required bool pinned}) =>
+      (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
+        PostsCompanion(isPinned: Value(pinned)),
+      );
+
+  /// The user deleted their post: it goes at once, without the placeholder
+  /// others' deletions leave.
+  Future<void> removePost(String postId) => db.transaction(() async {
+    await (db.delete(db.posts)..where((p) => p.id.equals(postId))).go();
+    await (db.delete(db.reactions)..where((r) => r.postId.equals(postId))).go();
+    await (db.delete(db.files)..where((f) => f.postId.equals(postId))).go();
+    await (db.delete(db.postLists)..where((l) => l.postId.equals(postId))).go();
+  });
+
+  /// After "Mark as unread": the server's counts, and no automatic read
+  /// until the channel is opened again.
+  Future<void> applyMarkedUnread(api.ChannelMember member) =>
+      db.transaction(() async {
+        if (member.channelId == null) return;
+        await applyChannelMember(member);
+        await (db.update(db.myChannels)
+              ..where((m) => m.channelId.equals(member.channelId!)))
+            .write(const MyChannelsCompanion(manuallyUnread: Value(true)));
+      });
+
   static const _recentEmojiKey = 'recent_emoji';
 
   /// Emoji the user picked lately, most recent first.

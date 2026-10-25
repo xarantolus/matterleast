@@ -366,3 +366,87 @@ final class OpenDialogsFamily extends $Family
   @override
   String toString() => r'openDialogsProvider';
 }
+
+/// What the message menu does to a post.
+
+@ProviderFor(postActions)
+final postActionsProvider = PostActionsFamily._();
+
+/// What the message menu does to a post.
+
+final class PostActionsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<PostActions>,
+          PostActions,
+          FutureOr<PostActions>
+        >
+    with $FutureModifier<PostActions>, $FutureProvider<PostActions> {
+  /// What the message menu does to a post.
+  PostActionsProvider._({
+    required PostActionsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'postActionsProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$postActionsHash();
+
+  @override
+  String toString() {
+    return r'postActionsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<PostActions> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<PostActions> create(Ref ref) {
+    final argument = this.argument as String;
+    return postActions(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PostActionsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$postActionsHash() => r'5fcdb6425d59d018c1526b18502091b51b148e64';
+
+/// What the message menu does to a post.
+
+final class PostActionsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<PostActions>, String> {
+  PostActionsFamily._()
+    : super(
+        retry: null,
+        name: r'postActionsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  /// What the message menu does to a post.
+
+  PostActionsProvider call(String url) =>
+      PostActionsProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'postActionsProvider';
+}
