@@ -40,6 +40,7 @@ abstract class PostItem with _$PostItem {
     String? propsJson,
     String? metadataJson,
     @Default(<ReactionGroup>[]) List<ReactionGroup> reactions,
+    @Default(false) bool pinned,
   }) = _PostItem;
 
   const PostItem._();
@@ -126,6 +127,9 @@ abstract class ConversationWindow with _$ConversationWindow {
     @Default('') String channelType,
     @Default('') String teamId,
     int? memberCount,
+
+    /// The channel is archived: it can be read but not written to.
+    @Default(false) bool archived,
   }) = _ConversationWindow;
 }
 

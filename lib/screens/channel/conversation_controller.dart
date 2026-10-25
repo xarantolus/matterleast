@@ -178,6 +178,20 @@ class Conversation extends _$Conversation {
     }
   }
 
+  /// The user marked [post] unread: the new-messages line moves above it.
+  void markedUnread(PostItem post) {
+    _lastViewedAt = post.createAt.subtract(const Duration(milliseconds: 1));
+    final window = state.window;
+    if (window == null) return;
+    state = state.copyWith(
+      rows: buildRows(
+        [...window.posts, ?window.root],
+        lastViewedAt: _lastViewedAt,
+        myUserId: _me,
+      ),
+    );
+  }
+
   Future<void> _markRead() async {
     if (!_isThread) {
       final actions = await ref.read(channelActionsProvider(url).future);

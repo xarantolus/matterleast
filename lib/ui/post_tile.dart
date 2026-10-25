@@ -24,6 +24,9 @@ class PostTile extends StatelessWidget {
     this.combined = const [],
     this.highlighted = false,
     this.onOpenThread,
+    this.onDismiss,
+    this.onToggleReaction,
+    this.onAddReaction,
     super.key,
   });
 
@@ -36,6 +39,13 @@ class PostTile extends StatelessWidget {
 
   /// Shows the replies bar under the first message of a thread.
   final VoidCallback? onOpenThread;
+
+  /// Hides an ephemeral message.
+  final VoidCallback? onDismiss;
+
+  /// Adds or removes the user's reaction with that emoji.
+  final ValueChanged<String>? onToggleReaction;
+  final VoidCallback? onAddReaction;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +82,14 @@ class PostTile extends StatelessWidget {
                   '(Only visible to you)',
                   style: text.bodySmall?.copyWith(color: tokens.muted),
                 ),
+              if (post.isEphemeral && onDismiss != null)
+                InkWell(
+                  onTap: onDismiss,
+                  child: Text(
+                    'Dismiss',
+                    style: text.bodySmall?.copyWith(color: tokens.accent),
+                  ),
+                ),
             ],
           ),
         PostText(post: post, details: details),
@@ -91,7 +109,11 @@ class PostTile extends StatelessWidget {
         if (details.preview case final preview?)
           LinkPreviewCard(preview: preview),
         if (post.reactions.isNotEmpty && !post.deleted)
-          ReactionsBar(reactions: post.reactions),
+          ReactionsBar(
+            reactions: post.reactions,
+            onToggle: onToggleReaction,
+            onAdd: onAddReaction,
+          ),
         if (onOpenThread != null && !post.isReply && post.replyCount > 0)
           _ThreadBar(post: post, onPressed: onOpenThread!),
       ],

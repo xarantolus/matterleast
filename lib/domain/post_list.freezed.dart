@@ -21,7 +21,7 @@ mixin _$PostItem {
  int get unreadReplies;/// Names of the people who replied, newest first, when known.
  List<String> get participants; String get authorUsername; bool get authorIsBot; int? get authorPictureAt;/// The post's props and metadata as the server sent them; decoded when
 /// the row is drawn.
- String? get propsJson; String? get metadataJson; List<ReactionGroup> get reactions;
+ String? get propsJson; String? get metadataJson; List<ReactionGroup> get reactions; bool get pinned;
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -33,20 +33,20 @@ $PostItemCopyWith<PostItem> get copyWith => _$PostItemCopyWithImpl<PostItem>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as PostItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.message, _this.message) || other.message == _this.message)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.editAt, _this.editAt) || other.editAt == _this.editAt)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted)&&(identical(other.sendState, _this.sendState) || other.sendState == _this.sendState)&&(identical(other.replyCount, _this.replyCount) || other.replyCount == _this.replyCount)&&(identical(other.lastReplyAt, _this.lastReplyAt) || other.lastReplyAt == _this.lastReplyAt)&&(identical(other.unreadReplies, _this.unreadReplies) || other.unreadReplies == _this.unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _this.participants)&&(identical(other.authorUsername, _this.authorUsername) || other.authorUsername == _this.authorUsername)&&(identical(other.authorIsBot, _this.authorIsBot) || other.authorIsBot == _this.authorIsBot)&&(identical(other.authorPictureAt, _this.authorPictureAt) || other.authorPictureAt == _this.authorPictureAt)&&(identical(other.propsJson, _this.propsJson) || other.propsJson == _this.propsJson)&&(identical(other.metadataJson, _this.metadataJson) || other.metadataJson == _this.metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _this.reactions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.message, _this.message) || other.message == _this.message)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.editAt, _this.editAt) || other.editAt == _this.editAt)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted)&&(identical(other.sendState, _this.sendState) || other.sendState == _this.sendState)&&(identical(other.replyCount, _this.replyCount) || other.replyCount == _this.replyCount)&&(identical(other.lastReplyAt, _this.lastReplyAt) || other.lastReplyAt == _this.lastReplyAt)&&(identical(other.unreadReplies, _this.unreadReplies) || other.unreadReplies == _this.unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _this.participants)&&(identical(other.authorUsername, _this.authorUsername) || other.authorUsername == _this.authorUsername)&&(identical(other.authorIsBot, _this.authorIsBot) || other.authorIsBot == _this.authorIsBot)&&(identical(other.authorPictureAt, _this.authorPictureAt) || other.authorPictureAt == _this.authorPictureAt)&&(identical(other.propsJson, _this.propsJson) || other.propsJson == _this.propsJson)&&(identical(other.metadataJson, _this.metadataJson) || other.metadataJson == _this.metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _this.reactions)&&(identical(other.pinned, _this.pinned) || other.pinned == _this.pinned));
 }
 
 
 @override
 int get hashCode {
   final _this = this as PostItem;
-  return Object.hashAll([runtimeType,_this.id,_this.key,_this.userId,_this.authorName,_this.createAt,_this.message,_this.type,_this.rootId,_this.editAt,_this.deleted,_this.sendState,_this.replyCount,_this.lastReplyAt,_this.unreadReplies,const DeepCollectionEquality().hash(_this.participants),_this.authorUsername,_this.authorIsBot,_this.authorPictureAt,_this.propsJson,_this.metadataJson,const DeepCollectionEquality().hash(_this.reactions)]);
+  return Object.hashAll([runtimeType,_this.id,_this.key,_this.userId,_this.authorName,_this.createAt,_this.message,_this.type,_this.rootId,_this.editAt,_this.deleted,_this.sendState,_this.replyCount,_this.lastReplyAt,_this.unreadReplies,const DeepCollectionEquality().hash(_this.participants),_this.authorUsername,_this.authorIsBot,_this.authorPictureAt,_this.propsJson,_this.metadataJson,const DeepCollectionEquality().hash(_this.reactions),_this.pinned]);
 }
 
 @override
 String toString() {
   final _this = this as PostItem;
-  return 'PostItem(id: ${_this.id}, key: ${_this.key}, userId: ${_this.userId}, authorName: ${_this.authorName}, createAt: ${_this.createAt}, message: ${_this.message}, type: ${_this.type}, rootId: ${_this.rootId}, editAt: ${_this.editAt}, deleted: ${_this.deleted}, sendState: ${_this.sendState}, replyCount: ${_this.replyCount}, lastReplyAt: ${_this.lastReplyAt}, unreadReplies: ${_this.unreadReplies}, participants: ${_this.participants}, authorUsername: ${_this.authorUsername}, authorIsBot: ${_this.authorIsBot}, authorPictureAt: ${_this.authorPictureAt}, propsJson: ${_this.propsJson}, metadataJson: ${_this.metadataJson}, reactions: ${_this.reactions})';
+  return 'PostItem(id: ${_this.id}, key: ${_this.key}, userId: ${_this.userId}, authorName: ${_this.authorName}, createAt: ${_this.createAt}, message: ${_this.message}, type: ${_this.type}, rootId: ${_this.rootId}, editAt: ${_this.editAt}, deleted: ${_this.deleted}, sendState: ${_this.sendState}, replyCount: ${_this.replyCount}, lastReplyAt: ${_this.lastReplyAt}, unreadReplies: ${_this.unreadReplies}, participants: ${_this.participants}, authorUsername: ${_this.authorUsername}, authorIsBot: ${_this.authorIsBot}, authorPictureAt: ${_this.authorPictureAt}, propsJson: ${_this.propsJson}, metadataJson: ${_this.metadataJson}, reactions: ${_this.reactions}, pinned: ${_this.pinned})';
 }
 
 
@@ -57,7 +57,7 @@ abstract mixin class $PostItemCopyWith<$Res>  {
   factory $PostItemCopyWith(PostItem value, $Res Function(PostItem) _then) = _$PostItemCopyWithImpl;
 @useResult
 $Res call({
- String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants, String authorUsername, bool authorIsBot, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions
+ String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants, String authorUsername, bool authorIsBot, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions, bool pinned
 });
 
 
@@ -74,7 +74,7 @@ class _$PostItemCopyWithImpl<$Res>
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,Object? pinned = null,}) {
   return _then(PostItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -97,7 +97,8 @@ as bool,authorPictureAt: freezed == authorPictureAt ? _self.authorPictureAt : au
 as int?,propsJson: freezed == propsJson ? _self.propsJson : propsJson // ignore: cast_nullable_to_non_nullable
 as String?,metadataJson: freezed == metadataJson ? _self.metadataJson : metadataJson // ignore: cast_nullable_to_non_nullable
 as String?,reactions: null == reactions ? _self.reactions : reactions // ignore: cast_nullable_to_non_nullable
-as List<ReactionGroup>,
+as List<ReactionGroup>,pinned: null == pinned ? _self.pinned : pinned // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -182,10 +183,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants,  String authorUsername,  bool authorIsBot,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants,  String authorUsername,  bool authorIsBot,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions,  bool pinned)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PostItem() when $default != null:
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions,_that.pinned);case _:
   return orElse();
 
 }
@@ -203,10 +204,10 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants,  String authorUsername,  bool authorIsBot,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants,  String authorUsername,  bool authorIsBot,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions,  bool pinned)  $default,) {final _that = this;
 switch (_that) {
 case _PostItem():
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions,_that.pinned);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -223,10 +224,10 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants,  String authorUsername,  bool authorIsBot,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<String> participants,  String authorUsername,  bool authorIsBot,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions,  bool pinned)?  $default,) {final _that = this;
 switch (_that) {
 case _PostItem() when $default != null:
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions,_that.pinned);case _:
   return null;
 
 }
@@ -238,7 +239,7 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 
 
 class _PostItem extends PostItem {
-  const _PostItem({required this.id, required this.key, required this.userId, required this.authorName, required this.createAt, required this.message, this.type = '', this.rootId = '', this.editAt, this.deleted = false, this.sendState, this.replyCount = 0, this.lastReplyAt, this.unreadReplies = 0,  List<String> participants = const <String>[], this.authorUsername = '', this.authorIsBot = false, this.authorPictureAt, this.propsJson, this.metadataJson,  List<ReactionGroup> reactions = const <ReactionGroup>[]}): _participants = participants,_reactions = reactions,super._();
+  const _PostItem({required this.id, required this.key, required this.userId, required this.authorName, required this.createAt, required this.message, this.type = '', this.rootId = '', this.editAt, this.deleted = false, this.sendState, this.replyCount = 0, this.lastReplyAt, this.unreadReplies = 0,  List<String> participants = const <String>[], this.authorUsername = '', this.authorIsBot = false, this.authorPictureAt, this.propsJson, this.metadataJson,  List<ReactionGroup> reactions = const <ReactionGroup>[], this.pinned = false}): _participants = participants,_reactions = reactions,super._();
   
 
 @override final  String id;
@@ -281,6 +282,7 @@ class _PostItem extends PostItem {
   return EqualUnmodifiableListView(_reactions);
 }
 
+@override@JsonKey() final  bool pinned;
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
@@ -292,18 +294,18 @@ _$PostItemCopyWith<_PostItem> get copyWith => __$PostItemCopyWithImpl<_PostItem>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostItem&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.message, message) || other.message == message)&&(identical(other.type, type) || other.type == type)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.editAt, editAt) || other.editAt == editAt)&&(identical(other.deleted, deleted) || other.deleted == deleted)&&(identical(other.sendState, sendState) || other.sendState == sendState)&&(identical(other.replyCount, replyCount) || other.replyCount == replyCount)&&(identical(other.lastReplyAt, lastReplyAt) || other.lastReplyAt == lastReplyAt)&&(identical(other.unreadReplies, unreadReplies) || other.unreadReplies == unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _participants)&&(identical(other.authorUsername, authorUsername) || other.authorUsername == authorUsername)&&(identical(other.authorIsBot, authorIsBot) || other.authorIsBot == authorIsBot)&&(identical(other.authorPictureAt, authorPictureAt) || other.authorPictureAt == authorPictureAt)&&(identical(other.propsJson, propsJson) || other.propsJson == propsJson)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _reactions));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostItem&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.message, message) || other.message == message)&&(identical(other.type, type) || other.type == type)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.editAt, editAt) || other.editAt == editAt)&&(identical(other.deleted, deleted) || other.deleted == deleted)&&(identical(other.sendState, sendState) || other.sendState == sendState)&&(identical(other.replyCount, replyCount) || other.replyCount == replyCount)&&(identical(other.lastReplyAt, lastReplyAt) || other.lastReplyAt == lastReplyAt)&&(identical(other.unreadReplies, unreadReplies) || other.unreadReplies == unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _participants)&&(identical(other.authorUsername, authorUsername) || other.authorUsername == authorUsername)&&(identical(other.authorIsBot, authorIsBot) || other.authorIsBot == authorIsBot)&&(identical(other.authorPictureAt, authorPictureAt) || other.authorPictureAt == authorPictureAt)&&(identical(other.propsJson, propsJson) || other.propsJson == propsJson)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _reactions)&&(identical(other.pinned, pinned) || other.pinned == pinned));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,key,userId,authorName,createAt,message,type,rootId,editAt,deleted,sendState,replyCount,lastReplyAt,unreadReplies,const DeepCollectionEquality().hash(_participants),authorUsername,authorIsBot,authorPictureAt,propsJson,metadataJson,const DeepCollectionEquality().hash(_reactions)]);
+    return Object.hashAll([runtimeType,id,key,userId,authorName,createAt,message,type,rootId,editAt,deleted,sendState,replyCount,lastReplyAt,unreadReplies,const DeepCollectionEquality().hash(_participants),authorUsername,authorIsBot,authorPictureAt,propsJson,metadataJson,const DeepCollectionEquality().hash(_reactions),pinned]);
 }
 
 @override
 String toString() {
-    return 'PostItem(id: $id, key: $key, userId: $userId, authorName: $authorName, createAt: $createAt, message: $message, type: $type, rootId: $rootId, editAt: $editAt, deleted: $deleted, sendState: $sendState, replyCount: $replyCount, lastReplyAt: $lastReplyAt, unreadReplies: $unreadReplies, participants: $participants, authorUsername: $authorUsername, authorIsBot: $authorIsBot, authorPictureAt: $authorPictureAt, propsJson: $propsJson, metadataJson: $metadataJson, reactions: $reactions)';
+    return 'PostItem(id: $id, key: $key, userId: $userId, authorName: $authorName, createAt: $createAt, message: $message, type: $type, rootId: $rootId, editAt: $editAt, deleted: $deleted, sendState: $sendState, replyCount: $replyCount, lastReplyAt: $lastReplyAt, unreadReplies: $unreadReplies, participants: $participants, authorUsername: $authorUsername, authorIsBot: $authorIsBot, authorPictureAt: $authorPictureAt, propsJson: $propsJson, metadataJson: $metadataJson, reactions: $reactions, pinned: $pinned)';
 }
 
 
@@ -314,7 +316,7 @@ abstract mixin class _$PostItemCopyWith<$Res> implements $PostItemCopyWith<$Res>
   factory _$PostItemCopyWith(_PostItem value, $Res Function(_PostItem) _then) = __$PostItemCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants, String authorUsername, bool authorIsBot, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions
+ String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<String> participants, String authorUsername, bool authorIsBot, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions, bool pinned
 });
 
 
@@ -331,7 +333,7 @@ class __$PostItemCopyWithImpl<$Res>
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,Object? pinned = null,}) {
   return _then(_PostItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -354,7 +356,8 @@ as bool,authorPictureAt: freezed == authorPictureAt ? _self.authorPictureAt : au
 as int?,propsJson: freezed == propsJson ? _self.propsJson : propsJson // ignore: cast_nullable_to_non_nullable
 as String?,metadataJson: freezed == metadataJson ? _self.metadataJson : metadataJson // ignore: cast_nullable_to_non_nullable
 as String?,reactions: null == reactions ? _self._reactions : reactions // ignore: cast_nullable_to_non_nullable
-as List<ReactionGroup>,
+as List<ReactionGroup>,pinned: null == pinned ? _self.pinned : pinned // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -653,7 +656,8 @@ mixin _$ConversationWindow {
  bool get newerApart;/// The thread's first message.
  PostItem? get root; String get channelName;/// `O`, `P`, `D` or `G`; direct and group messages are named after
 /// people, not by [channelName].
- String get channelType; String get teamId; int? get memberCount;
+ String get channelType; String get teamId; int? get memberCount;/// The channel is archived: it can be read but not written to.
+ bool get archived;
 /// Create a copy of ConversationWindow
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -665,20 +669,20 @@ $ConversationWindowCopyWith<ConversationWindow> get copyWith => _$ConversationWi
 @override
 bool operator ==(Object other) {
   final _this = this as ConversationWindow;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationWindow&&const DeepCollectionEquality().equals(other.posts, _this.posts)&&(identical(other.loaded, _this.loaded) || other.loaded == _this.loaded)&&(identical(other.reachesStart, _this.reachesStart) || other.reachesStart == _this.reachesStart)&&(identical(other.moreStored, _this.moreStored) || other.moreStored == _this.moreStored)&&(identical(other.newerApart, _this.newerApart) || other.newerApart == _this.newerApart)&&(identical(other.root, _this.root) || other.root == _this.root)&&(identical(other.channelName, _this.channelName) || other.channelName == _this.channelName)&&(identical(other.channelType, _this.channelType) || other.channelType == _this.channelType)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationWindow&&const DeepCollectionEquality().equals(other.posts, _this.posts)&&(identical(other.loaded, _this.loaded) || other.loaded == _this.loaded)&&(identical(other.reachesStart, _this.reachesStart) || other.reachesStart == _this.reachesStart)&&(identical(other.moreStored, _this.moreStored) || other.moreStored == _this.moreStored)&&(identical(other.newerApart, _this.newerApart) || other.newerApart == _this.newerApart)&&(identical(other.root, _this.root) || other.root == _this.root)&&(identical(other.channelName, _this.channelName) || other.channelName == _this.channelName)&&(identical(other.channelType, _this.channelType) || other.channelType == _this.channelType)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.archived, _this.archived) || other.archived == _this.archived));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ConversationWindow;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.posts),_this.loaded,_this.reachesStart,_this.moreStored,_this.newerApart,_this.root,_this.channelName,_this.channelType,_this.teamId,_this.memberCount);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.posts),_this.loaded,_this.reachesStart,_this.moreStored,_this.newerApart,_this.root,_this.channelName,_this.channelType,_this.teamId,_this.memberCount,_this.archived);
 }
 
 @override
 String toString() {
   final _this = this as ConversationWindow;
-  return 'ConversationWindow(posts: ${_this.posts}, loaded: ${_this.loaded}, reachesStart: ${_this.reachesStart}, moreStored: ${_this.moreStored}, newerApart: ${_this.newerApart}, root: ${_this.root}, channelName: ${_this.channelName}, channelType: ${_this.channelType}, teamId: ${_this.teamId}, memberCount: ${_this.memberCount})';
+  return 'ConversationWindow(posts: ${_this.posts}, loaded: ${_this.loaded}, reachesStart: ${_this.reachesStart}, moreStored: ${_this.moreStored}, newerApart: ${_this.newerApart}, root: ${_this.root}, channelName: ${_this.channelName}, channelType: ${_this.channelType}, teamId: ${_this.teamId}, memberCount: ${_this.memberCount}, archived: ${_this.archived})';
 }
 
 
@@ -689,7 +693,7 @@ abstract mixin class $ConversationWindowCopyWith<$Res>  {
   factory $ConversationWindowCopyWith(ConversationWindow value, $Res Function(ConversationWindow) _then) = _$ConversationWindowCopyWithImpl;
 @useResult
 $Res call({
- List<PostItem> posts, bool loaded, bool reachesStart, bool moreStored, bool newerApart, PostItem? root, String channelName, String channelType, String teamId, int? memberCount
+ List<PostItem> posts, bool loaded, bool reachesStart, bool moreStored, bool newerApart, PostItem? root, String channelName, String channelType, String teamId, int? memberCount, bool archived
 });
 
 
@@ -706,7 +710,7 @@ class _$ConversationWindowCopyWithImpl<$Res>
 
 /// Create a copy of ConversationWindow
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? posts = null,Object? loaded = null,Object? reachesStart = null,Object? moreStored = null,Object? newerApart = null,Object? root = freezed,Object? channelName = null,Object? channelType = null,Object? teamId = null,Object? memberCount = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? posts = null,Object? loaded = null,Object? reachesStart = null,Object? moreStored = null,Object? newerApart = null,Object? root = freezed,Object? channelName = null,Object? channelType = null,Object? teamId = null,Object? memberCount = freezed,Object? archived = null,}) {
   return _then(ConversationWindow(
 posts: null == posts ? _self.posts : posts // ignore: cast_nullable_to_non_nullable
 as List<PostItem>,loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
@@ -718,7 +722,8 @@ as PostItem?,channelName: null == channelName ? _self.channelName : channelName 
 as String,channelType: null == channelType ? _self.channelType : channelType // ignore: cast_nullable_to_non_nullable
 as String,teamId: null == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String,memberCount: freezed == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 /// Create a copy of ConversationWindow
@@ -815,10 +820,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String channelType,  String teamId,  int? memberCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String channelType,  String teamId,  int? memberCount,  bool archived)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ConversationWindow() when $default != null:
-return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.channelType,_that.teamId,_that.memberCount);case _:
+return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.channelType,_that.teamId,_that.memberCount,_that.archived);case _:
   return orElse();
 
 }
@@ -836,10 +841,10 @@ return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String channelType,  String teamId,  int? memberCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String channelType,  String teamId,  int? memberCount,  bool archived)  $default,) {final _that = this;
 switch (_that) {
 case _ConversationWindow():
-return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.channelType,_that.teamId,_that.memberCount);case _:
+return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.channelType,_that.teamId,_that.memberCount,_that.archived);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -856,10 +861,10 @@ return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String channelType,  String teamId,  int? memberCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<PostItem> posts,  bool loaded,  bool reachesStart,  bool moreStored,  bool newerApart,  PostItem? root,  String channelName,  String channelType,  String teamId,  int? memberCount,  bool archived)?  $default,) {final _that = this;
 switch (_that) {
 case _ConversationWindow() when $default != null:
-return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.channelType,_that.teamId,_that.memberCount);case _:
+return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_that.newerApart,_that.root,_that.channelName,_that.channelType,_that.teamId,_that.memberCount,_that.archived);case _:
   return null;
 
 }
@@ -871,7 +876,7 @@ return $default(_that.posts,_that.loaded,_that.reachesStart,_that.moreStored,_th
 
 
 class _ConversationWindow implements ConversationWindow {
-  const _ConversationWindow({required  List<PostItem> posts, required this.loaded, this.reachesStart = false, this.moreStored = false, this.newerApart = false, this.root, this.channelName = '', this.channelType = '', this.teamId = '', this.memberCount}): _posts = posts;
+  const _ConversationWindow({required  List<PostItem> posts, required this.loaded, this.reachesStart = false, this.moreStored = false, this.newerApart = false, this.root, this.channelName = '', this.channelType = '', this.teamId = '', this.memberCount, this.archived = false}): _posts = posts;
   
 
 /// Newest first; replies only, for a thread.
@@ -899,6 +904,8 @@ class _ConversationWindow implements ConversationWindow {
 @override@JsonKey() final  String channelType;
 @override@JsonKey() final  String teamId;
 @override final  int? memberCount;
+/// The channel is archived: it can be read but not written to.
+@override@JsonKey() final  bool archived;
 
 /// Create a copy of ConversationWindow
 /// with the given fields replaced by the non-null parameter values.
@@ -910,18 +917,18 @@ _$ConversationWindowCopyWith<_ConversationWindow> get copyWith => __$Conversatio
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConversationWindow&&const DeepCollectionEquality().equals(other.posts, _posts)&&(identical(other.loaded, loaded) || other.loaded == loaded)&&(identical(other.reachesStart, reachesStart) || other.reachesStart == reachesStart)&&(identical(other.moreStored, moreStored) || other.moreStored == moreStored)&&(identical(other.newerApart, newerApart) || other.newerApart == newerApart)&&(identical(other.root, root) || other.root == root)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.channelType, channelType) || other.channelType == channelType)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConversationWindow&&const DeepCollectionEquality().equals(other.posts, _posts)&&(identical(other.loaded, loaded) || other.loaded == loaded)&&(identical(other.reachesStart, reachesStart) || other.reachesStart == reachesStart)&&(identical(other.moreStored, moreStored) || other.moreStored == moreStored)&&(identical(other.newerApart, newerApart) || other.newerApart == newerApart)&&(identical(other.root, root) || other.root == root)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.channelType, channelType) || other.channelType == channelType)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.archived, archived) || other.archived == archived));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_posts),loaded,reachesStart,moreStored,newerApart,root,channelName,channelType,teamId,memberCount);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_posts),loaded,reachesStart,moreStored,newerApart,root,channelName,channelType,teamId,memberCount,archived);
 }
 
 @override
 String toString() {
-    return 'ConversationWindow(posts: $posts, loaded: $loaded, reachesStart: $reachesStart, moreStored: $moreStored, newerApart: $newerApart, root: $root, channelName: $channelName, channelType: $channelType, teamId: $teamId, memberCount: $memberCount)';
+    return 'ConversationWindow(posts: $posts, loaded: $loaded, reachesStart: $reachesStart, moreStored: $moreStored, newerApart: $newerApart, root: $root, channelName: $channelName, channelType: $channelType, teamId: $teamId, memberCount: $memberCount, archived: $archived)';
 }
 
 
@@ -932,7 +939,7 @@ abstract mixin class _$ConversationWindowCopyWith<$Res> implements $Conversation
   factory _$ConversationWindowCopyWith(_ConversationWindow value, $Res Function(_ConversationWindow) _then) = __$ConversationWindowCopyWithImpl;
 @override @useResult
 $Res call({
- List<PostItem> posts, bool loaded, bool reachesStart, bool moreStored, bool newerApart, PostItem? root, String channelName, String channelType, String teamId, int? memberCount
+ List<PostItem> posts, bool loaded, bool reachesStart, bool moreStored, bool newerApart, PostItem? root, String channelName, String channelType, String teamId, int? memberCount, bool archived
 });
 
 
@@ -949,7 +956,7 @@ class __$ConversationWindowCopyWithImpl<$Res>
 
 /// Create a copy of ConversationWindow
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? posts = null,Object? loaded = null,Object? reachesStart = null,Object? moreStored = null,Object? newerApart = null,Object? root = freezed,Object? channelName = null,Object? channelType = null,Object? teamId = null,Object? memberCount = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? posts = null,Object? loaded = null,Object? reachesStart = null,Object? moreStored = null,Object? newerApart = null,Object? root = freezed,Object? channelName = null,Object? channelType = null,Object? teamId = null,Object? memberCount = freezed,Object? archived = null,}) {
   return _then(_ConversationWindow(
 posts: null == posts ? _self._posts : posts // ignore: cast_nullable_to_non_nullable
 as List<PostItem>,loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
@@ -961,7 +968,8 @@ as PostItem?,channelName: null == channelName ? _self.channelName : channelName 
 as String,channelType: null == channelType ? _self.channelType : channelType // ignore: cast_nullable_to_non_nullable
 as String,teamId: null == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String,memberCount: freezed == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

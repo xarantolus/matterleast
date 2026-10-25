@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/typing.dart';
+import 'package:matterleast/screens/channel/composer.dart';
+import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
@@ -42,11 +46,14 @@ class ChannelScreen extends ConsumerWidget {
         channelName,
       _ => title,
     };
+    final typing = ref.watch(typingNamesProvider(url, channelId, '')).value;
+    listenForRejectedPosts(context, ref, url, channelId);
     return Scaffold(
       appBar: AppBar(
         title: ConversationTitle(
           title: name,
-          subtitle: conversationSubtitle(state),
+          subtitle:
+              typingText(typing ?? const []) ?? conversationSubtitle(state),
         ),
         bottom: ProgressSlot(
           active: state.refreshing && state.window?.posts.isNotEmpty == true,
@@ -54,20 +61,38 @@ class ChannelScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         top: false,
-        child: ConversationView(
-          url: url,
-          conversation: conversation,
-          startText: 'This is the start of $name.',
-          onOpenThread: (post) => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => ThreadScreen(
+        bottom: window == null,
+        child: Column(
+          children: [
+            Expanded(
+              child: ConversationView(
                 url: url,
-                channelId: channelId,
-                rootId: post.id,
-                channelName: name,
+                conversation: conversation,
+                composer: window == null || window.archived
+                    ? null
+                    : composerDraftProvider(url, channelId, ''),
+                startText: 'This is the start of $name.',
+                onOpenThread: (post) => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ThreadScreen(
+                      url: url,
+                      channelId: channelId,
+                      rootId: post.id,
+                      channelName: name,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+            if (window != null)
+              Composer(
+                url: url,
+                channelId: channelId,
+                teamId: window.teamId,
+                hint: 'Write to $name',
+                archived: window.archived,
+              ),
+          ],
         ),
       ),
     );
@@ -102,3 +127,25 @@ class ConversationTitle extends StatelessWidget {
     );
   }
 }
+
+/// Tells the user when the server refused one of their posts in
+/// [channelId] for good.
+void listenForRejectedPosts(
+  BuildContext context,
+  WidgetRef ref,
+  String url,
+  String channelId,
+) => ref.listen(rejectedPostsProvider(url), (_, next) {
+  final rejected = next.value;
+  if (rejected == null || rejected.channelId != channelId) return;
+  final reason = rejected.message;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        reason == null || reason.isEmpty
+            ? "The server didn't accept your message."
+            : "The server didn't accept your message: $reason",
+      ),
+    ),
+  );
+});

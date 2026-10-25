@@ -5,11 +5,19 @@ import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The emoji people reacted with, each with how many; the user's own are
-/// selected. Tap or long-press shows who reacted.
+/// selected. Tap toggles the user's own reaction, long-press shows who
+/// reacted.
 class ReactionsBar extends StatelessWidget {
-  const ReactionsBar({required this.reactions, super.key});
+  const ReactionsBar({
+    required this.reactions,
+    this.onToggle,
+    this.onAdd,
+    super.key,
+  });
 
   final List<ReactionGroup> reactions;
+  final ValueChanged<String>? onToggle;
+  final VoidCallback? onAdd;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -35,17 +43,20 @@ class ReactionsBar extends StatelessWidget {
                   Text('${group.count}'),
                 ],
               ),
-              onSelected: (_) => showReactions(context, reactions, group),
+              onSelected: (_) => onToggle != null
+                  ? onToggle!(group.emojiName)
+                  : showReactions(context, reactions, group),
             ),
           ),
-        // Adding reactions comes with the emoji picker.
-        const ActionChip(
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          tooltip: 'Add reaction',
-          label: Icon(Icons.add_reaction_outlined, size: 18),
-          onPressed: null,
-        ),
+        if (onAdd != null)
+          ActionChip(
+            tooltip: 'Add reaction',
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            label: const Icon(Icons.add_reaction_outlined, size: 18),
+            onPressed: onAdd,
+          ),
       ],
     ),
   );

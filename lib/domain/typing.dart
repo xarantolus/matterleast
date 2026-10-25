@@ -17,3 +17,11 @@ bool shouldSendTyping({
   }
   return lastSent == null || now.difference(lastSent) >= interval;
 }
+
+/// Pure: the line telling who is writing, or null when nobody is.
+String? typingText(List<String> names) => switch (names) {
+  [] => null,
+  [final a] => '$a is typing…',
+  [final a, final b] => '$a and $b are typing…',
+  [final a, final b, ...] => '$a, $b and ${names.length - 2} more are typing…',
+};

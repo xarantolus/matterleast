@@ -2,14 +2,20 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/message_environment.dart';
+import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/ui/anchored_list.dart';
+import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/post_tile.dart';
+import 'package:matterleast/ui/swipe_to_open.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The message list of a channel or thread with its loading states and the
@@ -20,11 +26,15 @@ class ConversationView extends ConsumerStatefulWidget {
     required this.conversation,
     required this.startText,
     this.onOpenThread,
+    this.composer,
     super.key,
   });
 
   final String url;
   final ConversationProvider conversation;
+
+  /// Where Edit puts a message; null where nothing can be written.
+  final ComposerDraftProvider? composer;
 
   /// Shown above the oldest message once nothing older exists.
   final String? startText;
@@ -194,15 +204,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
               MessageRow(:final post, :final compact, :final combined) =>
                 AppearOnce(
                   animate: _justArrived(state.arrived[row.key], now),
-                  child: PostTile(
-                    post: post,
-                    compact: compact,
-                    combined: combined,
-                    highlighted: _highlighted == row.key,
-                    onOpenThread: widget.onOpenThread == null
-                        ? null
-                        : () => widget.onOpenThread!(post),
-                  ),
+                  child: _message(state, post, compact, combined),
                 ),
               DaySeparator(:final day) => DaySeparatorTile(day: day),
               NewMessagesLine() => const NewMessagesTile(),
@@ -255,6 +257,98 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
           ),
       ],
     );
+  }
+}
+
+extension on _ConversationViewState {
+  Widget _message(
+    ConversationState state,
+    PostItem post,
+    bool compact,
+    List<PostItem> combined,
+  ) {
+    final teamId = state.window?.teamId ?? '';
+    final usable = !post.isSystem && !post.deleted;
+    final tile = PostTile(
+      post: post,
+      compact: compact,
+      combined: combined,
+      highlighted: _highlighted == post.key,
+      onOpenThread: widget.onOpenThread == null
+          ? null
+          : () => widget.onOpenThread!(post),
+      onDismiss: post.isEphemeral
+          ? () async =>
+                (await ref.read(composerActionsProvider(widget.url).future))
+                    .dismissEphemeral(post.id)
+          : null,
+      onToggleReaction: post.sendState == null
+          ? (name) => _toggleReaction(post, name)
+          : null,
+      onAddReaction: post.sendState == null ? () => _pickReaction(post) : null,
+    );
+    if (post.sendState == 'failed') {
+      return InkWell(
+        onTap: () => showFailedPostSheet(context, url: widget.url, post: post),
+        child: tile,
+      );
+    }
+    if (!usable) return tile;
+    void open() {
+      FocusManager.instance.primaryFocus?.unfocus();
+      unawaited(_menu(post, teamId));
+    }
+
+    return SwipeToOpen(
+      onOpen: open,
+      child: InkWell(onLongPress: open, child: tile),
+    );
+  }
+
+  Future<void> _menu(PostItem post, String teamId) => showMessageMenu(
+    context,
+    url: widget.url,
+    teamId: teamId,
+    post: post,
+    onReply: widget.onOpenThread == null
+        ? null
+        : () => widget.onOpenThread!(post),
+    onEdit: switch (widget.composer) {
+      final composer? => () => ref.read(composer.notifier).startEditing(post),
+      null => null,
+    },
+    onMarkedUnread: () => _controller.markedUnread(post),
+  );
+
+  Future<void> _toggleReaction(PostItem post, String name) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final actions = await ref.read(postActionsProvider(widget.url).future);
+    final mine = post.reactions.any((g) => g.emojiName == name && g.mine);
+    try {
+      if (mine) {
+        await actions.removeReaction(post.id, name);
+      } else {
+        await actions.addReaction(post.id, name);
+      }
+    } on ApiError {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Couldn't change the reaction. Check the connection and try again.",
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickReaction(PostItem post) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final actions = ref.read(postActionsProvider(widget.url).future);
+    final picked = await showEmojiPicker(context, widget.url);
+    if (picked == null) return;
+    await (await actions)
+        .addReaction(post.id, picked)
+        .catchError((Object _) {});
   }
 }
 

@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/domain/typing.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
+import 'package:matterleast/screens/channel/composer.dart';
+import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/thread/thread_providers.dart';
@@ -37,17 +41,22 @@ class ThreadScreen extends ConsumerWidget {
     final state = ref.watch(conversation);
     final following = ref.watch(threadFollowingProvider(url, rootId)).value;
     final offline = state.refreshFailure != null && !state.refreshing;
+    final typing = ref.watch(typingNamesProvider(url, channelId, rootId)).value;
+    listenForRejectedPosts(context, ref, url, channelId);
+    final window = state.window;
     return Scaffold(
       appBar: AppBar(
         title: ConversationTitle(
           title: 'Thread',
-          subtitle: [
-            if (state.window?.channelName case final name? when name.isNotEmpty)
-              name
-            else
-              channelName,
-            if (offline && state.window?.root != null) 'Offline',
-          ].join(' · '),
+          subtitle:
+              typingText(typing ?? const []) ??
+              [
+                if (window?.channelName case final name? when name.isNotEmpty)
+                  name
+                else
+                  channelName,
+                if (offline && window?.root != null) 'Offline',
+              ].join(' · '),
         ),
         actions: [
           if (following != null)
@@ -62,10 +71,29 @@ class ThreadScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         top: false,
-        child: ConversationView(
-          url: url,
-          conversation: conversation,
-          startText: null,
+        bottom: window == null,
+        child: Column(
+          children: [
+            Expanded(
+              child: ConversationView(
+                url: url,
+                conversation: conversation,
+                composer: window == null || window.archived
+                    ? null
+                    : composerDraftProvider(url, channelId, rootId),
+                startText: null,
+              ),
+            ),
+            if (window != null)
+              Composer(
+                url: url,
+                channelId: channelId,
+                rootId: rootId,
+                teamId: window.teamId,
+                hint: 'Reply…',
+                archived: window.archived,
+              ),
+          ],
         ),
       ),
     );

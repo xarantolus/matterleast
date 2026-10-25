@@ -108,6 +108,7 @@ class ConversationViews {
       channelType: channel?.type ?? '',
       teamId: channel?.teamId ?? '',
       memberCount: channel?.memberCount,
+      archived: channel?.deleteAt != null,
     );
     if (range == null) {
       return ConversationWindow(
@@ -117,6 +118,7 @@ class ConversationViews {
         channelType: header.channelType,
         teamId: header.teamId,
         memberCount: header.memberCount,
+        archived: header.archived,
       );
     }
     final crt = await db.collapsedThreads();
@@ -162,6 +164,7 @@ class ConversationViews {
       channelType: header.channelType,
       teamId: header.teamId,
       memberCount: header.memberCount,
+      archived: header.archived,
     );
   }
 
@@ -208,6 +211,7 @@ class ConversationViews {
       moreStored: rows.length > limit,
       channelName: channel?.displayName ?? '',
       teamId: channel?.teamId ?? '',
+      archived: channel?.deleteAt != null,
     );
   }
 
@@ -306,6 +310,7 @@ class ConversationViews {
           editAt: p.editAt,
           deleted: p.deleteAt != null,
           sendState: p.sendState,
+          pinned: p.isPinned,
           replyCount: p.replyCount,
           lastReplyAt: p.lastReplyAt,
           authorUsername: people[p.userId]?.username ?? '',
