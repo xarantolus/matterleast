@@ -1,0 +1,109 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/anchored_list.dart';
+
+typedef Item = ({int id, double height});
+
+void main() {
+  final controller = AnchoredListController();
+
+  Widget list(List<Item> rows) => MaterialApp(
+    home: Scaffold(
+      body: SizedBox(
+        height: 600,
+        child: AnchoredList<Item>(
+          rows: rows,
+          keyOf: (r) => r.id,
+          controller: controller,
+          itemBuilder: (_, r) =>
+              SizedBox(height: r.height, child: Text('row ${r.id}')),
+        ),
+      ),
+    ),
+  );
+
+  // Newest first, heights varied like real messages.
+  List<Item> rowsFrom(int newest, int oldest) => [
+    for (var id = newest; id >= oldest; id--)
+      (id: id, height: 40.0 + (id * 37) % 90),
+  ];
+
+  double topOf(WidgetTester tester, int id) =>
+      tester.getTopLeft(find.text('row $id')).dy;
+
+  Future<void> scrollUpAndSettle(WidgetTester tester) async {
+    await tester.drag(find.byType(Scrollable), const Offset(0, 400));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('opens at the newest row, at the bottom', (tester) async {
+    await tester.pumpWidget(list(rowsFrom(100, 1)));
+    await tester.pumpAndSettle();
+    expect(tester.getBottomLeft(find.text('row 100')).dy, closeTo(600, 0.5));
+  });
+
+  testWidgets('rows added on both sides leave a scrolled-up reader in place', (
+    tester,
+  ) async {
+    await tester.pumpWidget(list(rowsFrom(100, 1)));
+    await tester.pumpAndSettle();
+    await scrollUpAndSettle(tester);
+    final visible = [for (var id = 85; id <= 100; id++) id]
+        .where((id) => find.text('row $id').evaluate().isNotEmpty)
+        .toList();
+    expect(visible, isNotEmpty);
+    final before = {for (final id in visible) id: topOf(tester, id)};
+
+    await tester.pumpWidget(list([...rowsFrom(103, 101), ...rowsFrom(100, 1)]));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(list(rowsFrom(103, -40)));
+    await tester.pumpAndSettle();
+
+    for (final id in visible) {
+      expect(topOf(tester, id), closeTo(before[id]!, 0.01), reason: 'row $id');
+    }
+    expect(find.text('row 103'), findsNothing);
+  });
+
+  testWidgets('a row growing off screen moves nothing on screen', (
+    tester,
+  ) async {
+    final rows = rowsFrom(100, 1);
+    await tester.pumpWidget(list(rows));
+    await tester.pumpAndSettle();
+    await scrollUpAndSettle(tester);
+    final anchor = controller.position!.key as int;
+    final before = topOf(tester, anchor);
+
+    await tester.pumpWidget(
+      list([
+        for (final r in rows)
+          r.id == 100 ? (id: 100, height: r.height + 200) : r,
+      ]),
+    );
+    await tester.pumpAndSettle();
+    expect(topOf(tester, anchor), closeTo(before, 0.01));
+  });
+
+  testWidgets('a new row enters at the bottom when the reader is there', (
+    tester,
+  ) async {
+    await tester.pumpWidget(list(rowsFrom(100, 1)));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(list(rowsFrom(101, 1)));
+    await tester.pumpAndSettle();
+    expect(tester.getBottomLeft(find.text('row 101')).dy, closeTo(600, 0.5));
+    expect(controller.pinned, isTrue);
+  });
+
+  testWidgets('jumping to the bottom shows the newest row', (tester) async {
+    await tester.pumpWidget(list(rowsFrom(100, 1)));
+    await tester.pumpAndSettle();
+    await scrollUpAndSettle(tester);
+    await scrollUpAndSettle(tester);
+    expect(find.text('row 100'), findsNothing);
+    controller.jumpToBottom();
+    await tester.pumpAndSettle();
+    expect(tester.getBottomLeft(find.text('row 100')).dy, closeTo(600, 0.5));
+  });
+}
