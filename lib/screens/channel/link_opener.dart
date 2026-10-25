@@ -94,6 +94,25 @@ Future<void> _openPost(
   }
 }
 
+/// Opens `~name` of the team [teamName], offering to join an open channel
+/// the user is not in, like a channel link.
+Future<void> openChannelNamed(
+  NavigatorState navigator,
+  WidgetRef ref,
+  String url,
+  String teamName,
+  String name,
+) async {
+  try {
+    await _openChannelNamed(navigator, ref, url, teamName, name);
+  } on ApiError {
+    _say(
+      navigator,
+      "Couldn't open ~$name. Check the connection and try again.",
+    );
+  }
+}
+
 Future<void> _openChannelNamed(
   NavigatorState navigator,
   WidgetRef ref,

@@ -118,6 +118,11 @@ class MessageLinks {
   }
 
   /// A channel by its URL name, in [teamId] when there is one by that name.
+  /// The URL name of the team with [teamId], when stored.
+  Future<String?> teamName(String teamId) async => (await (_db.select(
+    _db.teams,
+  )..where((t) => t.id.equals(teamId))).getSingleOrNull())?.name;
+
   Future<ChannelRow?> channelNamed(String name, {String? teamId}) async {
     final rows = await (_db.select(
       _db.channels,

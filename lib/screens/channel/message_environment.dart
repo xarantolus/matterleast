@@ -11,6 +11,7 @@ import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/custom_emoji_image.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -106,18 +107,26 @@ class MessageEnvironment extends ConsumerWidget {
     WidgetRef ref,
     String name,
   ) async {
+    final navigator = Navigator.of(context);
     final links = await ref.read(messageLinksProvider(url).future);
     final channel = await links.channelNamed(name, teamId: teamId);
-    if (!context.mounted) return;
     if (channel == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      final team = await links.teamName(teamId);
+      if (team != null) {
+        await openChannelNamed(navigator, ref, url, team, name);
+        return;
+      }
+    }
+    if (!navigator.mounted) return;
+    if (channel == null) {
+      ScaffoldMessenger.of(navigator.context).showSnackBar(
         SnackBar(content: Text("~$name isn't a channel you're in.")),
       );
       return;
     }
     unawaited(
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
+      navigator.push(
+        ConversationRoute<void>(
           builder: (_) => ChannelScreen(
             url: url,
             channelId: channel.id,
