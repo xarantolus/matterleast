@@ -23,6 +23,7 @@ dependencies:
   retrofit: ^4.10.0
   riverpod_annotation: ^4.0.7
   sqlite3: ^3.8.0
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
