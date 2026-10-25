@@ -7,6 +7,7 @@ import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/link_preview_card.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
+import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -74,6 +75,13 @@ class PostTile extends StatelessWidget {
             ],
           ),
         PostText(post: post, details: details),
+        if (details.files.isNotEmpty && !post.deleted)
+          PostFiles(
+            files: details.files,
+            heroPrefix: 'post:${post.key}',
+            author: name,
+            sentAt: post.createAt,
+          ),
         for (final (i, attachment) in details.props.attachments.indexed)
           AttachmentCard(
             attachment: attachment,

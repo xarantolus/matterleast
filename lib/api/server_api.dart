@@ -68,6 +68,13 @@ class ServerApi {
   /// Fires when the server rejects the session token (401 outside login).
   Stream<void> get sessionEnded => _sessionEnded.stream;
 
+  /// The header that signs a request to this server, for players that
+  /// fetch on their own.
+  Future<Map<String, String>> authHeaders() async {
+    final token = await _token();
+    return {'Authorization': ?(token == null ? null : 'Bearer $token')};
+  }
+
   /// Runs [request] and turns transport failures into [ApiError]s.
   Future<T> call<T>(Future<T> Function() request) async {
     try {

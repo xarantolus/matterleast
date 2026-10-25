@@ -44,6 +44,8 @@ ServerManager serverManager(Ref ref) {
         p.join((await getApplicationCacheDirectory()).path, 'images'),
     mediaBudget: () =>
         ref.read(settingsStoreProvider).read(Settings.mediaCacheBytes),
+    filesBudget: () =>
+        ref.read(settingsStoreProvider).read(Settings.filesCacheBytes),
   );
   ref.onDispose(manager.dispose);
   return manager;

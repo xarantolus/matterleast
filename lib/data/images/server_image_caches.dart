@@ -10,25 +10,29 @@ import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:path/path.dart' as p;
 
-/// The two image caches of one server, each in its own directory under
+/// The download caches of one server, each in its own directory under
 /// [directory]. Identity images (avatars, team icons, custom emoji) have
 /// no size cap and go 60 days after they were last shown; media (message
 /// and link-preview images) keep within a byte budget, least recently
-/// shown first, and go after 30 days. Opened lazily, so a session that
-/// never shows an image never opens the cache databases.
+/// shown first, and go after 30 days; opened files the same with their own
+/// budget and 7 days. Opened lazily, so a session that never shows an
+/// image never opens the cache databases.
 class ServerImageCaches {
   ServerImageCaches({
     required this.directory,
     required this._api,
     required this._mediaBudget,
+    required this._filesBudget,
   });
 
   final String directory;
   final ServerApi _api;
   final Future<int> Function() _mediaBudget;
+  final Future<int> Function() _filesBudget;
 
   static const identityMaxIdle = Duration(days: 60);
   static const mediaMaxIdle = Duration(days: 30);
+  static const filesMaxIdle = Duration(days: 7);
 
   late final CacheManager identity = _manager(
     'identity',
@@ -41,6 +45,14 @@ class ServerImageCaches {
     maxIdle: mediaMaxIdle,
     maxBytes: 50 * 1024 * 1024,
     budget: _mediaBudget,
+  );
+
+  /// Files are written by [FileDownloads], never fetched by the manager.
+  late final CacheManager files = _manager(
+    'files',
+    maxIdle: filesMaxIdle,
+    maxBytes: 0,
+    budget: _filesBudget,
   );
 
   final _opened = <CacheManager>[];

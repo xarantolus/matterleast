@@ -18,6 +18,7 @@ class ServerImage extends ConsumerStatefulWidget {
     required this.height,
     this.fit = BoxFit.cover,
     this.semanticLabel,
+    this.placeholder,
     super.key,
   });
 
@@ -29,6 +30,9 @@ class ServerImage extends ConsumerStatefulWidget {
   final double height;
   final BoxFit fit;
   final String? semanticLabel;
+
+  /// Shown while the bytes load, instead of a tonal box.
+  final Widget? placeholder;
 
   @override
   ConsumerState<ServerImage> createState() => _ServerImageState();
@@ -61,7 +65,8 @@ class _ServerImageState extends ConsumerState<ServerImage> {
     );
     final pixels = (widget.width * MediaQuery.devicePixelRatioOf(context))
         .round();
-    final placeholder = _Box(width: widget.width, height: widget.height);
+    final placeholder =
+        widget.placeholder ?? _Box(width: widget.width, height: widget.height);
     return Image(
       image: ResizeImage(
         CachedNetworkImageProvider(url.toString(), cacheManager: caches.media),

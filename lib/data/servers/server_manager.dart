@@ -25,6 +25,7 @@ class ServerManager {
     required this._dataDirectory,
     required this._cacheDirectory,
     this._mediaBudget = _defaultMediaBudget,
+    this._filesBudget = _defaultFilesBudget,
     this._openDatabase = ServerDatabase.open,
     this._clock = DateTime.now,
   });
@@ -34,10 +35,12 @@ class ServerManager {
   final Future<String> Function() _dataDirectory;
   final Future<String> Function() _cacheDirectory;
   final Future<int> Function() _mediaBudget;
+  final Future<int> Function() _filesBudget;
   final OpenServerDatabase _openDatabase;
   final DateTime Function() _clock;
 
   static Future<int> _defaultMediaBudget() async => 250 * 1024 * 1024;
+  static Future<int> _defaultFilesBudget() async => 500 * 1024 * 1024;
 
   final _sessions = <String, Future<ServerSession>>{};
   final _subscriptions = <String, StreamSubscription<void>>{};
@@ -119,6 +122,7 @@ class ServerManager {
       dbPath: path,
       imagesDirectory: await _imagesDirectory(row.dbFile),
       mediaBudget: _mediaBudget,
+      filesBudget: _filesBudget,
       tokens: _tokens,
     );
     _subscriptions[url] = session.api.sessionEnded.listen(

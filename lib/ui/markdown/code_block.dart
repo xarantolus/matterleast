@@ -95,10 +95,18 @@ void openCode(BuildContext context, String code, String language) =>
 
 /// A whole code block: selectable, with line numbers, and a copy action.
 class CodeScreen extends StatelessWidget {
-  const CodeScreen({required this.code, required this.language, super.key});
+  const CodeScreen({
+    required this.code,
+    required this.language,
+    this.title,
+    super.key,
+  });
 
   final String code;
   final String language;
+
+  /// Shown instead of the language, such as a file's name.
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +116,7 @@ class CodeScreen extends StatelessWidget {
     final style = _codeStyle(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(label.isEmpty ? 'Code' : '$label code'),
+        title: Text(title ?? (label.isEmpty ? 'Code' : '$label code')),
         actions: [
           IconButton(
             tooltip: 'Copy code',

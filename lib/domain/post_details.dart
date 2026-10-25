@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/json/post_extras.dart';
+import 'package:matterleast/domain/post_files.dart';
 
 /// What a post row shows beyond its text, decoded from the stored props and
 /// metadata JSON once per version.
@@ -12,6 +13,7 @@ class PostDetails {
     this.preview,
     this.priority,
     this.customEmoji = const {},
+    this.files = const [],
   });
 
   /// Pure: decodes [propsJson] and [metadataJson]; anything malformed is
@@ -60,6 +62,10 @@ class PostDetails {
         for (final e in meta?.emojis ?? const <api.Emoji>[])
           if (e.name != null && e.id != null) e.name!: e.id!,
       },
+      files: [
+        for (final f in meta?.files ?? const <api.FileInfo>[])
+          if (f.id != null && f.deleteAt == null) PostFile.from(f),
+      ],
     );
   }
 
@@ -70,6 +76,9 @@ class PostDetails {
 
   /// Custom emoji the post uses, name → id.
   final Map<String, String> customEmoji;
+
+  /// Attached files, in the order the author added them.
+  final List<PostFile> files;
 
   bool get fromWebhook => props.fromWebhook == 'true';
   bool get unsafeLinks => props.unsafeLinks == 'true';

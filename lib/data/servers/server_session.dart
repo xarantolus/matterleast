@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
+import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/server_connection.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:path/path.dart' as p;
 
 /// Everything that lives per connected server: its HTTP client, database,
 /// store, sync runner and live connection. Created once per server URL and
@@ -42,6 +44,12 @@ class ServerSession {
   final ServerImageCaches images;
   late final ServerConnection connection;
   late final emoji = CustomEmojiResolver(server: api, store: store);
+  late final files = FileDownloads(
+    api: api,
+    cache: images.files,
+    partialDirectory: p.join(images.directory, 'partial'),
+    maxBytes: () async => maxFileSize(await db.configJson('client_config')),
+  );
 
   /// Opens the session without waiting for the Keystore, so stored data
   /// paints first; requests wait for the token instead.
@@ -51,6 +59,7 @@ class ServerSession {
     required String dbPath,
     required String imagesDirectory,
     required Future<int> Function() mediaBudget,
+    required Future<int> Function() filesBudget,
     required TokenStore tokens,
   }) {
     final key = url.toString();
@@ -66,6 +75,7 @@ class ServerSession {
         directory: imagesDirectory,
         api: api,
         mediaBudget: mediaBudget,
+        filesBudget: filesBudget,
       ),
       token: () => tokens.cached(key),
     );

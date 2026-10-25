@@ -7,11 +7,14 @@ environment:
   sdk: ^3.13.7
 
 dependencies:
+  background_downloader: ^9.6.4
   cached_network_image: ^4.0.5
+  chewie: ^1.17.4
   connectivity_plus: ^7.3.2
   dio: ^5.11.1
   drift: ^2.35.3
   drift_flutter: ^0.3.1
+  extended_image: ^10.1.0
   file: ^7.0.1
   flutter:
     sdk: flutter
@@ -27,11 +30,14 @@ dependencies:
   package_info_plus: ^10.2.2
   path: ^1.9.1
   path_provider: ^2.1.6
+  pdfrx: ^2.10.1
   re_highlight: 0.0.3
   retrofit: ^4.10.0
   riverpod_annotation: ^4.0.7
+  share_plus: ^13.3.1
   sqlite3: ^3.8.0
   url_launcher: ^6.3.3
+  video_player: ^2.14.1
   web_socket_channel: ^3.0.3
 
 dev_dependencies:
