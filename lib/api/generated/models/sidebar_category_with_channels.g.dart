@@ -19,6 +19,10 @@ SidebarCategoryWithChannels _$SidebarCategoryWithChannelsFromJson(
   type: json['type'] == null
       ? null
       : SidebarCategoryWithChannelsType.fromJson(json['type'] as String),
+  sorting: const LenientString().fromJson(json['sorting']),
+  muted: const LenientBool().fromJson(json['muted']),
+  collapsed: const LenientBool().fromJson(json['collapsed']),
+  sortOrder: const LenientInt().fromJson(json['sort_order']),
 );
 
 Map<String, dynamic> _$SidebarCategoryWithChannelsToJson(
@@ -30,4 +34,8 @@ Map<String, dynamic> _$SidebarCategoryWithChannelsToJson(
   'display_name': const LenientString().toJson(instance.displayName),
   'type': instance.type,
   'channel_ids': const LenientStringList().toJson(instance.channelIds),
+  'sorting': const LenientString().toJson(instance.sorting),
+  'muted': const LenientBool().toJson(instance.muted),
+  'collapsed': const LenientBool().toJson(instance.collapsed),
+  'sort_order': const LenientInt().toJson(instance.sortOrder),
 };

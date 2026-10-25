@@ -125,3 +125,12 @@ actions:
   - target: "$.components.schemas.TeamMember.properties"
     update:
       scheme_guest: {type: boolean}
+  - target: "$.components.schemas.Team.properties"
+    update:
+      last_team_icon_update: {type: integer, format: int64}
+  - target: "$.components.schemas.SidebarCategoryWithChannels.properties"
+    update:
+      sorting: {type: string}
+      muted: {type: boolean}
+      collapsed: {type: boolean}
+      sort_order: {type: integer}

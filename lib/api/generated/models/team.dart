@@ -23,6 +23,7 @@ class Team {
     this.inviteId,
     this.allowOpenInvite,
     this.policyId,
+    this.lastTeamIconUpdate,
   });
 
   factory Team.fromJson(Map<String, Object?> json) => _$TeamFromJson(json);
@@ -65,6 +66,9 @@ class Team {
   @LenientString()
   @JsonKey(name: 'policy_id')
   final String? policyId;
+  @MillisDateTime()
+  @JsonKey(name: 'last_team_icon_update')
+  final DateTime? lastTeamIconUpdate;
 
   Map<String, Object?> toJson() => _$TeamToJson(this);
 }

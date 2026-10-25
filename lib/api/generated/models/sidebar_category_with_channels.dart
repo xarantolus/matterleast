@@ -18,6 +18,10 @@ class SidebarCategoryWithChannels {
     this.teamId,
     this.displayName,
     this.type,
+    this.sorting,
+    this.muted,
+    this.collapsed,
+    this.sortOrder,
   });
 
   factory SidebarCategoryWithChannels.fromJson(Map<String, Object?> json) =>
@@ -38,6 +42,15 @@ class SidebarCategoryWithChannels {
   @LenientStringList()
   @JsonKey(name: 'channel_ids')
   final List<String> channelIds;
+  @LenientString()
+  final String? sorting;
+  @LenientBool()
+  final bool? muted;
+  @LenientBool()
+  final bool? collapsed;
+  @LenientInt()
+  @JsonKey(name: 'sort_order')
+  final int? sortOrder;
 
   Map<String, Object?> toJson() => _$SidebarCategoryWithChannelsToJson(this);
 }

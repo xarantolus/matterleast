@@ -20,6 +20,9 @@ Team _$TeamFromJson(Map<String, dynamic> json) => Team(
   inviteId: const LenientString().fromJson(json['invite_id']),
   allowOpenInvite: const LenientBool().fromJson(json['allow_open_invite']),
   policyId: const LenientString().fromJson(json['policy_id']),
+  lastTeamIconUpdate: const MillisDateTime().fromJson(
+    json['last_team_icon_update'],
+  ),
 );
 
 Map<String, dynamic> _$TeamToJson(Team instance) => <String, dynamic>{
@@ -36,4 +39,7 @@ Map<String, dynamic> _$TeamToJson(Team instance) => <String, dynamic>{
   'invite_id': const LenientString().toJson(instance.inviteId),
   'allow_open_invite': const LenientBool().toJson(instance.allowOpenInvite),
   'policy_id': const LenientString().toJson(instance.policyId),
+  'last_team_icon_update': const MillisDateTime().toJson(
+    instance.lastTeamIconUpdate,
+  ),
 };
