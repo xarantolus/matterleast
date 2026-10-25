@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:matterleast/data/db/millis.dart';
+import 'package:matterleast/data/server_db/server_database.steps.dart';
 import 'package:matterleast/data/server_db/tables.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/teams.dart';
@@ -74,7 +75,17 @@ class ServerDatabase extends _$ServerDatabase {
   );
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: stepByStep(
+      from1To2: (m, schema) async {
+        await m.addColumn(schema.channels, schema.channels.memberCount);
+        await m.addColumn(schema.posts, schema.posts.participantIdsJson);
+      },
+    ),
+  );
 
   /// The signed-in user, once [ServerStore.applyMe] has run.
   Stream<UserRow?> watchMe() {

@@ -75,6 +75,9 @@ class Channels extends Table {
   BoolColumn get groupConstrained =>
       boolean().withDefault(const Constant(false))();
 
+  /// From the channel's stats, fetched when it is opened.
+  IntColumn get memberCount => integer().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -160,6 +163,10 @@ class Posts extends Table {
   TextColumn get metadataJson => text().nullable()();
   IntColumn get fileCount => integer().withDefault(const Constant(0))();
   IntColumn get reactionCount => integer().withDefault(const Constant(0))();
+
+  /// Who replied to a root post, as a JSON list of user ids, when the
+  /// server said (collapsed reply threads).
+  TextColumn get participantIdsJson => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

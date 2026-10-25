@@ -110,6 +110,9 @@ PostsCompanion postCompanion(api.Post p) => PostsCompanion(
   metadataJson: Value(_json(p.metadata?.toJson())),
   fileCount: Value(p.metadata?.files.length ?? p.fileIds.length),
   reactionCount: Value(p.metadata?.reactions.length ?? 0),
+  participantIdsJson: p.participants.isEmpty
+      ? const Value.absent()
+      : Value(jsonEncode([for (final u in p.participants) ?u.id])),
 );
 
 FilesCompanion fileCompanion(api.FileInfo f, String postId) => FilesCompanion(

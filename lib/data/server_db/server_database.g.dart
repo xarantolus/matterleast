@@ -1997,6 +1997,17 @@ class $ChannelsTable extends Channels
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _memberCountMeta = const VerificationMeta(
+    'memberCount',
+  );
+  @override
+  late final GeneratedColumn<int> memberCount = GeneratedColumn<int>(
+    'member_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2016,6 +2027,7 @@ class $ChannelsTable extends Channels
     totalMsgCountRoot,
     shared,
     groupConstrained,
+    memberCount,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2118,6 +2130,15 @@ class $ChannelsTable extends Channels
         ),
       );
     }
+    if (data.containsKey('member_count')) {
+      context.handle(
+        _memberCountMeta,
+        memberCount.isAcceptableOrUnknown(
+          data['member_count']!,
+          _memberCountMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2205,6 +2226,10 @@ class $ChannelsTable extends Channels
         DriftSqlType.bool,
         data['${effectivePrefix}group_constrained'],
       )!,
+      memberCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}member_count'],
+      ),
     );
   }
 
@@ -2250,6 +2275,9 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
   final int totalMsgCountRoot;
   final bool shared;
   final bool groupConstrained;
+
+  /// From the channel's stats, fetched when it is opened.
+  final int? memberCount;
   const ChannelRow({
     required this.id,
     required this.teamId,
@@ -2268,6 +2296,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     required this.totalMsgCountRoot,
     required this.shared,
     required this.groupConstrained,
+    this.memberCount,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2309,6 +2338,9 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     map['total_msg_count_root'] = Variable<int>(totalMsgCountRoot);
     map['shared'] = Variable<bool>(shared);
     map['group_constrained'] = Variable<bool>(groupConstrained);
+    if (!nullToAbsent || memberCount != null) {
+      map['member_count'] = Variable<int>(memberCount);
+    }
     return map;
   }
 
@@ -2341,6 +2373,9 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
       totalMsgCountRoot: Value(totalMsgCountRoot),
       shared: Value(shared),
       groupConstrained: Value(groupConstrained),
+      memberCount: memberCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(memberCount),
     );
   }
 
@@ -2367,6 +2402,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
       totalMsgCountRoot: serializer.fromJson<int>(json['totalMsgCountRoot']),
       shared: serializer.fromJson<bool>(json['shared']),
       groupConstrained: serializer.fromJson<bool>(json['groupConstrained']),
+      memberCount: serializer.fromJson<int?>(json['memberCount']),
     );
   }
   @override
@@ -2390,6 +2426,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
       'totalMsgCountRoot': serializer.toJson<int>(totalMsgCountRoot),
       'shared': serializer.toJson<bool>(shared),
       'groupConstrained': serializer.toJson<bool>(groupConstrained),
+      'memberCount': serializer.toJson<int?>(memberCount),
     };
   }
 
@@ -2411,6 +2448,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     int? totalMsgCountRoot,
     bool? shared,
     bool? groupConstrained,
+    Value<int?> memberCount = const Value.absent(),
   }) => ChannelRow(
     id: id ?? this.id,
     teamId: teamId ?? this.teamId,
@@ -2431,6 +2469,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     totalMsgCountRoot: totalMsgCountRoot ?? this.totalMsgCountRoot,
     shared: shared ?? this.shared,
     groupConstrained: groupConstrained ?? this.groupConstrained,
+    memberCount: memberCount.present ? memberCount.value : this.memberCount,
   );
   ChannelRow copyWithCompanion(ChannelsCompanion data) {
     return ChannelRow(
@@ -2463,6 +2502,9 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
       groupConstrained: data.groupConstrained.present
           ? data.groupConstrained.value
           : this.groupConstrained,
+      memberCount: data.memberCount.present
+          ? data.memberCount.value
+          : this.memberCount,
     );
   }
 
@@ -2485,7 +2527,8 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
           ..write('totalMsgCount: $totalMsgCount, ')
           ..write('totalMsgCountRoot: $totalMsgCountRoot, ')
           ..write('shared: $shared, ')
-          ..write('groupConstrained: $groupConstrained')
+          ..write('groupConstrained: $groupConstrained, ')
+          ..write('memberCount: $memberCount')
           ..write(')'))
         .toString();
   }
@@ -2509,6 +2552,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     totalMsgCountRoot,
     shared,
     groupConstrained,
+    memberCount,
   );
   @override
   bool operator ==(Object other) =>
@@ -2530,7 +2574,8 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
           other.totalMsgCount == this.totalMsgCount &&
           other.totalMsgCountRoot == this.totalMsgCountRoot &&
           other.shared == this.shared &&
-          other.groupConstrained == this.groupConstrained);
+          other.groupConstrained == this.groupConstrained &&
+          other.memberCount == this.memberCount);
 }
 
 class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
@@ -2551,6 +2596,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
   final Value<int> totalMsgCountRoot;
   final Value<bool> shared;
   final Value<bool> groupConstrained;
+  final Value<int?> memberCount;
   final Value<int> rowid;
   const ChannelsCompanion({
     this.id = const Value.absent(),
@@ -2570,6 +2616,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     this.totalMsgCountRoot = const Value.absent(),
     this.shared = const Value.absent(),
     this.groupConstrained = const Value.absent(),
+    this.memberCount = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChannelsCompanion.insert({
@@ -2590,6 +2637,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     this.totalMsgCountRoot = const Value.absent(),
     this.shared = const Value.absent(),
     this.groupConstrained = const Value.absent(),
+    this.memberCount = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        type = Value(type),
@@ -2613,6 +2661,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     Expression<int>? totalMsgCountRoot,
     Expression<bool>? shared,
     Expression<bool>? groupConstrained,
+    Expression<int>? memberCount,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2633,6 +2682,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
       if (totalMsgCountRoot != null) 'total_msg_count_root': totalMsgCountRoot,
       if (shared != null) 'shared': shared,
       if (groupConstrained != null) 'group_constrained': groupConstrained,
+      if (memberCount != null) 'member_count': memberCount,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2655,6 +2705,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     Value<int>? totalMsgCountRoot,
     Value<bool>? shared,
     Value<bool>? groupConstrained,
+    Value<int?>? memberCount,
     Value<int>? rowid,
   }) {
     return ChannelsCompanion(
@@ -2675,6 +2726,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
       totalMsgCountRoot: totalMsgCountRoot ?? this.totalMsgCountRoot,
       shared: shared ?? this.shared,
       groupConstrained: groupConstrained ?? this.groupConstrained,
+      memberCount: memberCount ?? this.memberCount,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2743,6 +2795,9 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     if (groupConstrained.present) {
       map['group_constrained'] = Variable<bool>(groupConstrained.value);
     }
+    if (memberCount.present) {
+      map['member_count'] = Variable<int>(memberCount.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2769,6 +2824,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
           ..write('totalMsgCountRoot: $totalMsgCountRoot, ')
           ..write('shared: $shared, ')
           ..write('groupConstrained: $groupConstrained, ')
+          ..write('memberCount: $memberCount, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4522,6 +4578,17 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _participantIdsJsonMeta =
+      const VerificationMeta('participantIdsJson');
+  @override
+  late final GeneratedColumn<String> participantIdsJson =
+      GeneratedColumn<String>(
+        'participant_ids_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4544,6 +4611,7 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
     metadataJson,
     fileCount,
     reactionCount,
+    participantIdsJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4659,6 +4727,15 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
         ),
       );
     }
+    if (data.containsKey('participant_ids_json')) {
+      context.handle(
+        _participantIdsJsonMeta,
+        participantIdsJson.isAcceptableOrUnknown(
+          data['participant_ids_json']!,
+          _participantIdsJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -4758,6 +4835,10 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
         DriftSqlType.int,
         data['${effectivePrefix}reaction_count'],
       )!,
+      participantIdsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}participant_ids_json'],
+      ),
     );
   }
 
@@ -4805,6 +4886,10 @@ class PostRow extends DataClass implements Insertable<PostRow> {
   final String? metadataJson;
   final int fileCount;
   final int reactionCount;
+
+  /// Who replied to a root post, as a JSON list of user ids, when the
+  /// server said (collapsed reply threads).
+  final String? participantIdsJson;
   const PostRow({
     required this.id,
     required this.channelId,
@@ -4826,6 +4911,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     this.metadataJson,
     required this.fileCount,
     required this.reactionCount,
+    this.participantIdsJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4876,6 +4962,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     }
     map['file_count'] = Variable<int>(fileCount);
     map['reaction_count'] = Variable<int>(reactionCount);
+    if (!nullToAbsent || participantIdsJson != null) {
+      map['participant_ids_json'] = Variable<String>(participantIdsJson);
+    }
     return map;
   }
 
@@ -4915,6 +5004,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
           : Value(metadataJson),
       fileCount: Value(fileCount),
       reactionCount: Value(reactionCount),
+      participantIdsJson: participantIdsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(participantIdsJson),
     );
   }
 
@@ -4944,6 +5036,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       metadataJson: serializer.fromJson<String?>(json['metadataJson']),
       fileCount: serializer.fromJson<int>(json['fileCount']),
       reactionCount: serializer.fromJson<int>(json['reactionCount']),
+      participantIdsJson: serializer.fromJson<String?>(
+        json['participantIdsJson'],
+      ),
     );
   }
   @override
@@ -4970,6 +5065,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       'metadataJson': serializer.toJson<String?>(metadataJson),
       'fileCount': serializer.toJson<int>(fileCount),
       'reactionCount': serializer.toJson<int>(reactionCount),
+      'participantIdsJson': serializer.toJson<String?>(participantIdsJson),
     };
   }
 
@@ -4994,6 +5090,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     Value<String?> metadataJson = const Value.absent(),
     int? fileCount,
     int? reactionCount,
+    Value<String?> participantIdsJson = const Value.absent(),
   }) => PostRow(
     id: id ?? this.id,
     channelId: channelId ?? this.channelId,
@@ -5015,6 +5112,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     metadataJson: metadataJson.present ? metadataJson.value : this.metadataJson,
     fileCount: fileCount ?? this.fileCount,
     reactionCount: reactionCount ?? this.reactionCount,
+    participantIdsJson: participantIdsJson.present
+        ? participantIdsJson.value
+        : this.participantIdsJson,
   );
   PostRow copyWithCompanion(PostsCompanion data) {
     return PostRow(
@@ -5050,6 +5150,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       reactionCount: data.reactionCount.present
           ? data.reactionCount.value
           : this.reactionCount,
+      participantIdsJson: data.participantIdsJson.present
+          ? data.participantIdsJson.value
+          : this.participantIdsJson,
     );
   }
 
@@ -5075,13 +5178,14 @@ class PostRow extends DataClass implements Insertable<PostRow> {
           ..write('propsJson: $propsJson, ')
           ..write('metadataJson: $metadataJson, ')
           ..write('fileCount: $fileCount, ')
-          ..write('reactionCount: $reactionCount')
+          ..write('reactionCount: $reactionCount, ')
+          ..write('participantIdsJson: $participantIdsJson')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     channelId,
     rootId,
@@ -5102,7 +5206,8 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     metadataJson,
     fileCount,
     reactionCount,
-  );
+    participantIdsJson,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5126,7 +5231,8 @@ class PostRow extends DataClass implements Insertable<PostRow> {
           other.propsJson == this.propsJson &&
           other.metadataJson == this.metadataJson &&
           other.fileCount == this.fileCount &&
-          other.reactionCount == this.reactionCount);
+          other.reactionCount == this.reactionCount &&
+          other.participantIdsJson == this.participantIdsJson);
 }
 
 class PostsCompanion extends UpdateCompanion<PostRow> {
@@ -5150,6 +5256,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
   final Value<String?> metadataJson;
   final Value<int> fileCount;
   final Value<int> reactionCount;
+  final Value<String?> participantIdsJson;
   final Value<int> rowid;
   const PostsCompanion({
     this.id = const Value.absent(),
@@ -5172,6 +5279,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     this.metadataJson = const Value.absent(),
     this.fileCount = const Value.absent(),
     this.reactionCount = const Value.absent(),
+    this.participantIdsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PostsCompanion.insert({
@@ -5195,6 +5303,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     this.metadataJson = const Value.absent(),
     this.fileCount = const Value.absent(),
     this.reactionCount = const Value.absent(),
+    this.participantIdsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        channelId = Value(channelId),
@@ -5221,6 +5330,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     Expression<String>? metadataJson,
     Expression<int>? fileCount,
     Expression<int>? reactionCount,
+    Expression<String>? participantIdsJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5244,6 +5354,8 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
       if (metadataJson != null) 'metadata_json': metadataJson,
       if (fileCount != null) 'file_count': fileCount,
       if (reactionCount != null) 'reaction_count': reactionCount,
+      if (participantIdsJson != null)
+        'participant_ids_json': participantIdsJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5269,6 +5381,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     Value<String?>? metadataJson,
     Value<int>? fileCount,
     Value<int>? reactionCount,
+    Value<String?>? participantIdsJson,
     Value<int>? rowid,
   }) {
     return PostsCompanion(
@@ -5292,6 +5405,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
       metadataJson: metadataJson ?? this.metadataJson,
       fileCount: fileCount ?? this.fileCount,
       reactionCount: reactionCount ?? this.reactionCount,
+      participantIdsJson: participantIdsJson ?? this.participantIdsJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5369,6 +5483,9 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     if (reactionCount.present) {
       map['reaction_count'] = Variable<int>(reactionCount.value);
     }
+    if (participantIdsJson.present) {
+      map['participant_ids_json'] = Variable<String>(participantIdsJson.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5398,6 +5515,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
           ..write('metadataJson: $metadataJson, ')
           ..write('fileCount: $fileCount, ')
           ..write('reactionCount: $reactionCount, ')
+          ..write('participantIdsJson: $participantIdsJson, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -12229,6 +12347,7 @@ typedef $$ChannelsTableCreateCompanionBuilder = ChannelsCompanion Function({
   Value<int> totalMsgCountRoot,
   Value<bool> shared,
   Value<bool> groupConstrained,
+  Value<int?> memberCount,
   Value<int> rowid,
 });
 typedef $$ChannelsTableUpdateCompanionBuilder = ChannelsCompanion Function({
@@ -12249,6 +12368,7 @@ typedef $$ChannelsTableUpdateCompanionBuilder = ChannelsCompanion Function({
   Value<int> totalMsgCountRoot,
   Value<bool> shared,
   Value<bool> groupConstrained,
+  Value<int?> memberCount,
   Value<int> rowid,
 });
 
@@ -12350,6 +12470,11 @@ class $$ChannelsTableFilterComposer
     column: $table.groupConstrained,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<int> get memberCount => $composableBuilder(
+    column: $table.memberCount,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$ChannelsTableOrderingComposer
@@ -12445,6 +12570,11 @@ class $$ChannelsTableOrderingComposer
     column: $table.groupConstrained,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get memberCount => $composableBuilder(
+    column: $table.memberCount,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ChannelsTableAnnotationComposer
@@ -12520,6 +12650,11 @@ class $$ChannelsTableAnnotationComposer
     column: $table.groupConstrained,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get memberCount => $composableBuilder(
+    column: $table.memberCount,
+    builder: (column) => column,
+  );
 }
 
 class $$ChannelsTableTableManager
@@ -12570,6 +12705,7 @@ class $$ChannelsTableTableManager
                 Value<int> totalMsgCountRoot = const Value.absent(),
                 Value<bool> shared = const Value.absent(),
                 Value<bool> groupConstrained = const Value.absent(),
+                Value<int?> memberCount = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChannelsCompanion(
                 id: id,
@@ -12589,6 +12725,7 @@ class $$ChannelsTableTableManager
                 totalMsgCountRoot: totalMsgCountRoot,
                 shared: shared,
                 groupConstrained: groupConstrained,
+                memberCount: memberCount,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -12610,6 +12747,7 @@ class $$ChannelsTableTableManager
                 Value<int> totalMsgCountRoot = const Value.absent(),
                 Value<bool> shared = const Value.absent(),
                 Value<bool> groupConstrained = const Value.absent(),
+                Value<int?> memberCount = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChannelsCompanion.insert(
                 id: id,
@@ -12629,6 +12767,7 @@ class $$ChannelsTableTableManager
                 totalMsgCountRoot: totalMsgCountRoot,
                 shared: shared,
                 groupConstrained: groupConstrained,
+                memberCount: memberCount,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -13501,6 +13640,7 @@ typedef $$PostsTableCreateCompanionBuilder = PostsCompanion Function({
   Value<String?> metadataJson,
   Value<int> fileCount,
   Value<int> reactionCount,
+  Value<String?> participantIdsJson,
   Value<int> rowid,
 });
 typedef $$PostsTableUpdateCompanionBuilder = PostsCompanion Function({
@@ -13524,6 +13664,7 @@ typedef $$PostsTableUpdateCompanionBuilder = PostsCompanion Function({
   Value<String?> metadataJson,
   Value<int> fileCount,
   Value<int> reactionCount,
+  Value<String?> participantIdsJson,
   Value<int> rowid,
 });
 
@@ -13640,6 +13781,11 @@ class $$PostsTableFilterComposer
     column: $table.reactionCount,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get participantIdsJson => $composableBuilder(
+    column: $table.participantIdsJson,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$PostsTableOrderingComposer
@@ -13750,6 +13896,11 @@ class $$PostsTableOrderingComposer
     column: $table.reactionCount,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get participantIdsJson => $composableBuilder(
+    column: $table.participantIdsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PostsTableAnnotationComposer
@@ -13833,6 +13984,11 @@ class $$PostsTableAnnotationComposer
     column: $table.reactionCount,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get participantIdsJson => $composableBuilder(
+    column: $table.participantIdsJson,
+    builder: (column) => column,
+  );
 }
 
 class $$PostsTableTableManager
@@ -13883,6 +14039,7 @@ class $$PostsTableTableManager
                 Value<String?> metadataJson = const Value.absent(),
                 Value<int> fileCount = const Value.absent(),
                 Value<int> reactionCount = const Value.absent(),
+                Value<String?> participantIdsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PostsCompanion(
                 id: id,
@@ -13905,6 +14062,7 @@ class $$PostsTableTableManager
                 metadataJson: metadataJson,
                 fileCount: fileCount,
                 reactionCount: reactionCount,
+                participantIdsJson: participantIdsJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -13929,6 +14087,7 @@ class $$PostsTableTableManager
                 Value<String?> metadataJson = const Value.absent(),
                 Value<int> fileCount = const Value.absent(),
                 Value<int> reactionCount = const Value.absent(),
+                Value<String?> participantIdsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PostsCompanion.insert(
                 id: id,
@@ -13951,6 +14110,7 @@ class $$PostsTableTableManager
                 metadataJson: metadataJson,
                 fileCount: fileCount,
                 reactionCount: reactionCount,
+                participantIdsJson: participantIdsJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

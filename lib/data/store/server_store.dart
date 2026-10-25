@@ -421,6 +421,19 @@ class ServerStore {
     }
     await _upsertPosts([for (final t in usable) t.post!]);
     await db.batch((b) {
+      // A thread's post comes without its reply count; the thread has it.
+      for (final t in usable) {
+        b.update(
+          db.posts,
+          PostsCompanion(
+            replyCount: Value(t.replyCount ?? 0),
+            participantIdsJson: Value(
+              jsonEncode([for (final u in t.participants) ?u.id]),
+            ),
+          ),
+          where: (p) => p.id.equals(t.id!),
+        );
+      }
       b.insertAllOnConflictUpdate(db.threads, [
         for (final t in usable) threadCompanion(t, t.post!.channelId!),
       ]);
@@ -675,10 +688,14 @@ class ServerStore {
     return PageOutcome(stored: posts.length + others.length, capped: capped);
   });
 
-  /// Stores a thread (root plus replies) and records its loaded range.
+  /// Stores a thread (root plus replies) and records its loaded range: the
+  /// newest replies for [PageKind.page], older ones for [PageKind.before].
+  /// [reachesStart] says the oldest reply is among them.
   Future<void> applyThreadPage({
     required String rootId,
     required api.PostList page,
+    PageKind kind = PageKind.page,
+    bool reachesStart = false,
   }) => db.transaction(() async {
     final posts = [
       for (final p in (page.posts ?? const {}).values)
@@ -688,19 +705,52 @@ class ServerStore {
     final replyTimes =
         posts.where((p) => p.rootId == rootId).map((p) => p.createAt!).toList()
           ..sort();
-    if (replyTimes.isEmpty) return;
     final ranges = await rangesFor('thread', rootId);
-    await _writeRanges(
-      'thread',
-      rootId,
-      withPage(
+    final earliest = replyTimes.firstOrNull;
+    final latest = replyTimes.lastOrNull;
+    await _writeRanges('thread', rootId, switch (kind) {
+      PageKind.before when ranges.isNotEmpty => withOlder(
         ranges,
-        earliest: replyTimes.first,
-        latest: replyTimes.last,
-        reachesStart: false,
+        anchor: newestRange(ranges)!.earliest,
+        earliest: earliest,
+        reachesStart: reachesStart,
       ),
-    );
+      _ => withPage(
+        ranges,
+        earliest: earliest,
+        latest: latest,
+        reachesStart: reachesStart,
+      ),
+    });
   });
+
+  Future<void> applyChannelStats(String channelId, int memberCount) =>
+      (db.update(db.channels)..where((c) => c.id.equals(channelId))).write(
+        ChannelsCompanion(memberCount: Value(memberCount)),
+      );
+
+  /// Where the reader left a channel (`channel`) or thread (`thread`).
+  Future<void> saveViewState(
+    String scope,
+    String scopeId, {
+    required String postId,
+    required double offset,
+    required DateTime at,
+  }) => db
+      .into(db.viewStates)
+      .insertOnConflictUpdate(
+        ViewStatesCompanion.insert(
+          scope: scope,
+          scopeId: scopeId,
+          anchorPostId: postId,
+          anchorOffsetPx: Value(offset),
+          savedAt: at,
+        ),
+      );
+
+  Future<void> clearViewState(String scope, String scopeId) => (db.delete(
+    db.viewStates,
+  )..where((v) => v.scope.equals(scope) & v.scopeId.equals(scopeId))).go();
 
   Future<void> _advanceWatermark(String channelId, List<api.Post> posts) async {
     DateTime? newest;
@@ -736,6 +786,12 @@ class ServerStore {
       }
       b.insertAllOnConflictUpdate(db.posts, [
         for (final p in posts) postCompanion(p),
+      ]);
+      b.insertAllOnConflictUpdate(db.users, [
+        for (final p in posts)
+          for (final u in p.participants)
+            if (u.id != null && (u.username?.isNotEmpty ?? false))
+              userCompanion(u),
       ]);
       final withFiles = posts.where(
         (p) => p.metadata?.files.isNotEmpty ?? false,
