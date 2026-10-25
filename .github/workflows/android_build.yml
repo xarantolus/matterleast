@@ -78,18 +78,22 @@ jobs:
       - name: Get packages
         run: flutter pub get
 
-      # Compiling the build script takes half of the build_runner run; it
-      # recompiles by itself when its inputs differ.
-      - name: Restore the build_runner script
+      # build_runner compares every output with its sources and rewrites any
+      # that differ, so an older cache only saves work and never hides a
+      # stale generated file.
+      - name: Restore the build_runner cache
         uses: actions/cache@v6
         with:
-          path: .dart_tool/build/entrypoint
-          key: build-runner-${{ hashFiles('pubspec.lock') }}
-          restore-keys: build-runner-
+          path: .dart_tool/build
+          key: build-runner-${{ hashFiles('pubspec.lock', 'build.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            build-runner-${{ hashFiles('pubspec.lock', 'build.yaml') }}-
+            build-runner-
 
       - name: Check that generated code is current
         run: |
-          dart run build_runner build --delete-conflicting-outputs
+          dart run build_runner build
+          git add --intent-to-add .
           git diff --exit-code --stat
 
       - name: Check formatting
