@@ -78,6 +78,6 @@ flutter build apk --debug     # debug keystore, works out of the box
 ```
 
 `flutter build apk --release` needs signing material that is not in the repo:
-either `android/key.properties` (`storeFile`, `storePassword`, `keyAlias`,
-`keyPassword`) or the `X_KEYSTORE_PATH` environment variable, as configured in
-`android/app/build.gradle`.
+`android/key.properties` (`storePassword`, `keyAlias`, `keyPassword`) plus
+either a `storeFile` line in it or the `X_KEYSTORE_PATH` environment variable.
+See "Release signing" in the [README](../README.md).
