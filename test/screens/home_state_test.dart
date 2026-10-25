@@ -79,6 +79,15 @@ void main() {
       server('two', inbox: inbox(known: true), status: const SyncIdle()),
     ]);
     expect((two as HomeReady).notice, 'one offline · showing saved data');
+    final both = homeState(InboxFilter.saved, [
+      server(
+        'one',
+        inbox: inbox(saved: [item('p')]),
+        status: offline,
+      ),
+      server('two', inbox: inbox(known: true), status: offline),
+    ]);
+    expect((both as HomeReady).notice, 'Offline · showing saved data');
   });
 
   test('one server still loading does not hide the other one\'s rows', () {

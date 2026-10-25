@@ -59,8 +59,8 @@ HomeState homeState(InboxFilter filter, List<HomeServer> servers) {
       status.offline ? 'offline' : "couldn't refresh";
   final notice = switch (failed) {
     [] => null,
-    [final only] when servers.length == 1 =>
-      '${_capitalised(problem(only.status))} · showing saved data',
+    [final first, ...] when failed.length == servers.length =>
+      '${_capitalised(problem(first.status))} · showing saved data',
     [final only] =>
       '${only.server.name} ${problem(only.status)} · showing saved data',
     _ => 'Some servers are offline · showing saved data',
