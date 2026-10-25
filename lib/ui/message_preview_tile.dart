@@ -1,4 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
@@ -7,7 +9,7 @@ import 'package:matterleast/ui/user_avatar.dart';
 
 /// One message preview: who, where, one line of the message, when, and how
 /// much is new.
-class MessagePreviewTile extends StatelessWidget {
+class MessagePreviewTile extends ConsumerWidget {
   const MessagePreviewTile({
     required this.item,
     required this.onTap,
@@ -22,7 +24,8 @@ class MessagePreviewTile extends StatelessWidget {
   final String? serverName;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(todayProvider);
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
     final strong = item.unread ? FontWeight.w700 : FontWeight.w500;
@@ -60,7 +63,7 @@ class MessagePreviewTile extends StatelessWidget {
           ),
           const SizedBox(width: Spacing.sm),
           Text(
-            _timeLabel(context, item.time),
+            _timeLabel(context, item.time, today),
             style: text.bodySmall?.copyWith(color: tokens.muted),
           ),
         ],
@@ -90,19 +93,18 @@ class MessagePreviewTile extends StatelessWidget {
   }
 }
 
-String _timeLabel(BuildContext context, DateTime time) {
+String _timeLabel(BuildContext context, DateTime time, DateTime today) {
   final local = time.toLocal();
-  final now = DateTime.now();
   final strings = MaterialLocalizations.of(context);
-  if (local.year == now.year &&
-      local.month == now.month &&
-      local.day == now.day) {
+  if (local.year == today.year &&
+      local.month == today.month &&
+      local.day == today.day) {
     return strings.formatTimeOfDay(
       TimeOfDay.fromDateTime(local),
       alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
     );
   }
-  return local.year == now.year
+  return local.year == today.year
       ? strings.formatShortMonthDay(local)
       : strings.formatShortDate(local);
 }
