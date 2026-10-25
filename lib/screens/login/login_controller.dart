@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
 import 'package:matterleast/domain/login_options.dart';
+import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/sso_callback.dart';
 import 'package:matterleast/log.dart';
@@ -77,7 +78,7 @@ class LoginController extends _$LoginController {
             ssoScheme: target.ssoScheme,
           );
       if (ref.mounted) {
-        ref.read(railSelectionProvider.notifier).select(url);
+        ref.read(railSelectionProvider.notifier).select(RailTarget(url: url));
       }
       return true;
     } on MfaCodeNeeded {

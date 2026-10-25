@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
@@ -121,7 +122,9 @@ class _ServerTile extends ConsumerWidget {
     final navigator = Navigator.of(context);
     switch (action) {
       case null:
-        ref.read(railSelectionProvider.notifier).select(server.url);
+        ref
+            .read(railSelectionProvider.notifier)
+            .select(RailTarget(url: server.url));
         navigator.pop();
       case _ServerAction.signIn:
         await navigator.push(

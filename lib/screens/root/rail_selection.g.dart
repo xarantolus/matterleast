@@ -8,15 +8,15 @@ part of 'rail_selection.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The server picked in the rail; null is Home.
+/// The team (or server) picked in the rail; null is Home.
 
 @ProviderFor(RailSelection)
 final railSelectionProvider = RailSelectionProvider._();
 
-/// The server picked in the rail; null is Home.
+/// The team (or server) picked in the rail; null is Home.
 final class RailSelectionProvider
-    extends $NotifierProvider<RailSelection, String?> {
-  /// The server picked in the rail; null is Home.
+    extends $NotifierProvider<RailSelection, RailTarget?> {
+  /// The team (or server) picked in the rail; null is Home.
   RailSelectionProvider._()
     : super(
         from: null,
@@ -36,29 +36,29 @@ final class RailSelectionProvider
   RailSelection create() => RailSelection();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(String? value) {
+  Override overrideWithValue(RailTarget? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<String?>(value),
+      providerOverride: $SyncValueProvider<RailTarget?>(value),
     );
   }
 }
 
-String _$railSelectionHash() => r'5bfb2ca1f29e086faf6d8872573f70b18f2524b6';
+String _$railSelectionHash() => r'7af18cec5ae838e3c3d2b95fbf884cd996c8728d';
 
-/// The server picked in the rail; null is Home.
+/// The team (or server) picked in the rail; null is Home.
 
-abstract class _$RailSelection extends $Notifier<String?> {
-  String? build();
+abstract class _$RailSelection extends $Notifier<RailTarget?> {
+  RailTarget? build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<String?, String?>;
+    final ref = this.ref as $Ref<RailTarget?, RailTarget?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<String?, String?>,
-              String?,
+              AnyNotifier<RailTarget?, RailTarget?>,
+              RailTarget?,
               Object?,
               Object?
             >;

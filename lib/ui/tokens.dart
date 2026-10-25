@@ -24,6 +24,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
     required this.accentWash,
     required this.codeBackground,
     required this.unread,
+    required this.online,
+    required this.away,
+    required this.busy,
   });
 
   final Color page;
@@ -38,6 +41,11 @@ class AppTokens extends ThemeExtension<AppTokens> {
   /// Dot and bold text of an unread channel.
   final Color unread;
 
+  /// Presence dots.
+  final Color online;
+  final Color away;
+  final Color busy;
+
   static const light = AppTokens(
     page: Color(0xFFF8FAF9),
     text: Color(0xFF191C1B),
@@ -48,6 +56,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
     accentWash: Color(0xFFD9F1EC),
     codeBackground: Color(0xFFEDF1EF),
     unread: Color(0xFF191C1B),
+    online: Color(0xFF2E7D32),
+    away: Color(0xFFB26A00),
+    busy: Color(0xFFC62828),
   );
 
   static const dark = AppTokens(
@@ -60,6 +71,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
     accentWash: Color(0xFF17332F),
     codeBackground: Color(0xFF1D201F),
     unread: Color(0xFFE6EAE8),
+    online: Color(0xFF66BB6A),
+    away: Color(0xFFFFB74D),
+    busy: Color(0xFFEF5350),
   );
 
   /// Every foreground/background pair that carries small text.
@@ -69,6 +83,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     'accent on page': (accent, page),
     'accent on wash': (accent, accentWash),
     'text on code': (text, codeBackground),
+    'page on muted (muted mention count)': (page, muted),
   };
 
   TextStyle get smallCaps => TextStyle(
@@ -90,6 +105,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
     Color? accentWash,
     Color? codeBackground,
     Color? unread,
+    Color? online,
+    Color? away,
+    Color? busy,
   }) {
     return AppTokens(
       page: page ?? this.page,
@@ -101,6 +119,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
       accentWash: accentWash ?? this.accentWash,
       codeBackground: codeBackground ?? this.codeBackground,
       unread: unread ?? this.unread,
+      online: online ?? this.online,
+      away: away ?? this.away,
+      busy: busy ?? this.busy,
     );
   }
 
@@ -117,6 +138,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
       accentWash: Color.lerp(accentWash, other.accentWash, t)!,
       codeBackground: Color.lerp(codeBackground, other.codeBackground, t)!,
       unread: Color.lerp(unread, other.unread, t)!,
+      online: Color.lerp(online, other.online, t)!,
+      away: Color.lerp(away, other.away, t)!,
+      busy: Color.lerp(busy, other.busy, t)!,
     );
   }
 }

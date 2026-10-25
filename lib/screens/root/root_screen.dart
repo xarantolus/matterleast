@@ -1,15 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/server_entry.dart';
-import 'package:matterleast/screens/add_server/add_server_screen.dart';
+import 'package:matterleast/screens/channel_list/channel_list_pane.dart';
+import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
-import 'package:matterleast/screens/you/you_page.dart';
-import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/root/team_rail.dart';
+import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
-import 'package:matterleast/ui/tokens.dart';
 
-/// The rail of servers beside Home or the picked server.
+/// The rail of teams beside Home or the picked team's channel list.
 class RootScreen extends ConsumerWidget {
   const RootScreen({required this.servers, super.key});
 
@@ -18,189 +19,150 @@ class RootScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final picked = ref.watch(railSelectionProvider);
-    final selected = servers.where((s) => s.url == picked).firstOrNull;
-    final title = selected?.displayName ?? 'Home';
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        bottom: const ProgressSlot(active: false),
-      ),
-      body: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            _ServerRail(servers: servers, selected: selected),
-            const VerticalDivider(width: 1),
-            Expanded(
-              child: selected == null
-                  ? const _HomePane()
-                  : _ServerPane(server: selected),
-            ),
-          ],
+    final target = ref.watch(railSelectionProvider);
+    final server = servers.where((s) => s.url == target?.url).firstOrNull;
+    if (server == null) {
+      return _RootLayout(
+        servers: servers,
+        title: const Text('Home'),
+        pane: const EmptyState(
+          icon: Icons.done_all,
+          title: "You're all caught up",
+          body:
+              'Unread messages, mentions and threads from all your servers '
+              'will show up here.',
         ),
+      );
+    }
+    final teams = ref.watch(railTeamsProvider(server.url)).value ?? const [];
+    final teamId = target?.teamId ?? teams.firstOrNull?.id;
+    final team = teams.where((t) => t.id == teamId).firstOrNull;
+    final status = ref.watch(syncStatusProvider(server.url)).value;
+    final list = teamId == null
+        ? null
+        : ref.watch(channelListProvider(server.url, teamId)).value;
+    final state = channelListState(
+      list: list,
+      status: status,
+      serverName: server.displayName,
+      host: Uri.parse(server.url).host,
+    );
+    final notice = switch (state) {
+      ChannelListReady(:final notice?) => notice,
+      _ => server.displayName,
+    };
+    return _RootLayout(
+      servers: servers,
+      teamId: teamId,
+      title: _TwoLineTitle(
+        title: team?.displayName ?? server.displayName,
+        subtitle: notice,
       ),
+      refreshing: status is SyncRefreshing,
+      actions: const [_NewMenu()],
+      pane: teamId == null && state is! ChannelListFailed
+          ? const Center(child: CircularProgressIndicator())
+          : ChannelListPane(
+              url: server.url,
+              teamId: teamId ?? '',
+              state: state,
+            ),
     );
   }
 }
 
-class _ServerRail extends ConsumerWidget {
-  const _ServerRail({required this.servers, required this.selected});
-
-  final List<ServerEntry> servers;
-  final ServerEntry? selected;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selection = ref.read(railSelectionProvider.notifier);
-    final index = selected == null ? 0 : servers.indexOf(selected!) + 1;
-    return NavigationRail(
-      scrollable: true,
-      trailingAtBottom: true,
-      labelType: NavigationRailLabelType.none,
-      // The tiles fill when selected, which reads better than a pill
-      // behind a square.
-      useIndicator: false,
-      selectedIndex: index,
-      onDestinationSelected: (i) =>
-          selection.select(i == 0 ? null : servers[i - 1].url),
-      destinations: [
-        const NavigationRailDestination(
-          icon: Tooltip(
-            message: 'Home',
-            child: InitialsBadge(name: 'Home', icon: Icons.home_outlined),
-          ),
-          selectedIcon: InitialsBadge(
-            name: 'Home',
-            icon: Icons.home,
-            selected: true,
-          ),
-          label: Text('Home'),
-        ),
-        for (final server in servers)
-          NavigationRailDestination(
-            icon: Tooltip(
-              message: server.displayName,
-              child: InitialsBadge(name: server.displayName),
-            ),
-            selectedIcon: InitialsBadge(
-              name: server.displayName,
-              selected: true,
-            ),
-            label: Text(server.displayName),
-          ),
-      ],
-      trailing: Padding(
-        padding: const EdgeInsets.only(bottom: Spacing.md),
-        child: Column(
-          children: [
-            IconButton(
-              tooltip: 'Add a server',
-              icon: const Icon(Icons.add),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const AddServerScreen(),
-                ),
-              ),
-            ),
-            const SizedBox(height: Spacing.sm),
-            _YouButton(url: (selected ?? _mostRecent(servers)).url),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-ServerEntry _mostRecent(List<ServerEntry> servers) =>
-    servers.reduce((a, b) => b.lastActiveAt!.isAfter(a.lastActiveAt!) ? b : a);
-
-class _YouButton extends ConsumerWidget {
-  const _YouButton({required this.url});
-
-  final String url;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final me = ref.watch(currentUserProvider(url)).value;
-    return IconButton(
-      tooltip: 'You',
-      onPressed: () =>
-          Navigator.of(context)
-              .push(MaterialPageRoute<void>(builder: (_) => const YouPage())),
-      icon: InitialsBadge(
-        name: me?.displayName ?? '',
-        icon: me == null ? Icons.person_outline : null,
-        size: 36,
-        round: true,
-      ),
-    );
-  }
-}
-
-class _HomePane extends StatelessWidget {
-  const _HomePane();
-
-  @override
-  Widget build(BuildContext context) => const _EmptyState(
-    icon: Icons.done_all,
-    title: "You're all caught up",
-    body:
-        'Unread messages, mentions and threads from all your servers will '
-        'show up here.',
-  );
-}
-
-class _ServerPane extends StatelessWidget {
-  const _ServerPane({required this.server});
-
-  final ServerEntry server;
-
-  @override
-  Widget build(BuildContext context) => _EmptyState(
-    icon: Icons.forum_outlined,
-    title: server.siteName ?? server.displayName,
-    body:
-        '${server.address}\n\nChannels for this server arrive in the next '
-        'version of the app.',
-  );
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({
-    required this.icon,
+class _RootLayout extends ConsumerWidget {
+  const _RootLayout({
+    required this.servers,
     required this.title,
-    required this.body,
+    required this.pane,
+    this.teamId,
+    this.refreshing = false,
+    this.actions = const [],
   });
 
-  final IconData icon;
+  final List<ServerEntry> servers;
+  final Widget title;
+  final Widget pane;
+  final String? teamId;
+  final bool refreshing;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
+    appBar: AppBar(
+      title: title,
+      actions: actions,
+      bottom: ProgressSlot(active: refreshing),
+    ),
+    body: SafeArea(
+      top: false,
+      child: Row(
+        children: [
+          TeamRail(
+            servers: servers,
+            target: ref.watch(railSelectionProvider),
+            teamId: teamId,
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(child: pane),
+        ],
+      ),
+    ),
+  );
+}
+
+class _TwoLineTitle extends StatelessWidget {
+  const _TwoLineTitle({required this.title, required this.subtitle});
+
   final String title;
-  final String body;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(Spacing.xl),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 48, color: context.tokens.accent),
-              const SizedBox(height: Spacing.lg),
-              Text(title, style: text.titleLarge, textAlign: TextAlign.center),
-              const SizedBox(height: Spacing.sm),
-              Text(
-                body,
-                style: text.bodyMedium?.copyWith(color: context.tokens.muted),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+    final style = DefaultTextStyle.of(context).style;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        Text(
+          subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: style.copyWith(fontSize: 13, fontWeight: FontWeight.w400),
         ),
-      ),
+      ],
     );
   }
+}
+
+/// Starting points for new conversations; they arrive with channel
+/// management.
+class _NewMenu extends StatelessWidget {
+  const _NewMenu();
+
+  @override
+  Widget build(BuildContext context) => MenuAnchor(
+    menuChildren: const [
+      MenuItemButton(
+        leadingIcon: Icon(Icons.travel_explore),
+        child: Text('Browse channels'),
+      ),
+      MenuItemButton(
+        leadingIcon: Icon(Icons.add_circle_outline),
+        child: Text('Create channel'),
+      ),
+      MenuItemButton(
+        leadingIcon: Icon(Icons.edit_outlined),
+        child: Text('New message'),
+      ),
+    ],
+    builder: (context, controller, _) => IconButton(
+      tooltip: 'New',
+      icon: const Icon(Icons.add),
+      onPressed: () =>
+          controller.isOpen ? controller.close() : controller.open(),
+    ),
+  );
 }
