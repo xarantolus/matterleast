@@ -27,10 +27,22 @@ String connectionProblemText(ApiError error, String host) => switch (error) {
     "$host's certificate isn't trusted, so the app didn't connect. Check the "
         "address, or ask the server's admin about the certificate.",
   Cancelled() => 'The request was stopped.',
+  UnexpectedFailure(:final type) =>
+    "$host's answer couldn't be read ($type). Try again later.",
   ServerError(:final statusCode, :final message) =>
     message == null || message.isEmpty
         ? '$host answered with an error ($statusCode). Try again later.'
         : '$host said: $message',
+};
+
+/// The notice over saved data after a failed refresh: offline only when the
+/// server could not be reached, else what went wrong in a few words.
+String staleDataNotice(ApiError error) => switch (error) {
+  Unreachable() || RequestTimeout() => 'Offline · showing saved data',
+  ServerError(:final statusCode) => "Couldn't update: server error $statusCode",
+  UnexpectedFailure() => "Couldn't update: unreadable answer",
+  UntrustedCertificate() => "Couldn't update: untrusted certificate",
+  Cancelled() => "Couldn't update: stopped",
 };
 
 /// Words for any failed request to [host], including our own timeouts.

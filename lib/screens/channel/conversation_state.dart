@@ -89,13 +89,7 @@ String? conversationSubtitle(ConversationState s, {UserProfile? partner}) {
   final hasData =
       (s.window?.posts.isNotEmpty ?? false) || s.window?.root != null;
   if (hasData && !s.refreshing) {
-    switch (s.refreshFailure) {
-      case Unreachable() || RequestTimeout():
-        return 'Offline · showing saved data';
-      case _?:
-        return "Couldn't refresh · showing saved data";
-      case null:
-    }
+    if (s.refreshFailure case final cause?) return staleDataNotice(cause);
   }
   switch (s.window?.channelType) {
     case 'D':

@@ -47,8 +47,7 @@ ChannelListState channelListState({
     list,
     refreshing: status is SyncRefreshing,
     notice: switch (status) {
-      SyncFailed(offline: true) => 'Offline · showing saved data',
-      SyncFailed() => "Couldn't refresh · showing saved data",
+      SyncFailed(:final cause) => staleDataNotice(cause),
       _ => null,
     },
   );

@@ -335,7 +335,7 @@ void main() {
       );
       expect(
         (stateOf(stored, broken) as ChannelListReady).notice,
-        "Couldn't refresh · showing saved data",
+        "Couldn't update: server error 500",
       );
     });
 

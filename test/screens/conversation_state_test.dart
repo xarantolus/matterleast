@@ -78,7 +78,7 @@ void main() {
           refreshFailure: const ServerError(statusCode: 500),
         ),
       ),
-      "Couldn't refresh · showing saved data",
+      "Couldn't update: server error 500",
     );
     expect(
       conversationSubtitle(ConversationState(window: stored)),
@@ -136,5 +136,26 @@ void main() {
       ),
       'pat, sam, kim',
     );
+  });
+
+  test('only an unreachable server reads as offline', () {
+    final table = <ApiError, String>{
+      const Unreachable(): 'Offline · showing saved data',
+      const RequestTimeout(): 'Offline · showing saved data',
+      const ServerError(statusCode: 500): "Couldn't update: server error 500",
+      const ServerError(statusCode: 403): "Couldn't update: server error 403",
+      const UnexpectedFailure('TypeError'):
+          "Couldn't update: unreadable answer",
+      const UntrustedCertificate(): "Couldn't update: untrusted certificate",
+    };
+    for (final MapEntry(key: cause, value: text) in table.entries) {
+      expect(
+        conversationSubtitle(
+          ConversationState(window: stored, refreshFailure: cause),
+        ),
+        text,
+        reason: '$cause',
+      );
+    }
   });
 }

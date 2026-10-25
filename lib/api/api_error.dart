@@ -6,6 +6,11 @@ import 'package:dio/dio.dart';
 sealed class ApiError implements Exception {
   const ApiError();
 
+  /// [error] as an [ApiError]; anything else (an answer we could not read or
+  /// store, say) is an [UnexpectedFailure], never "offline".
+  factory ApiError.of(Object error) =>
+      error is ApiError ? error : UnexpectedFailure.of(error);
+
   /// Maps a Dio failure to one of the cases below.
   factory ApiError.from(DioException e) {
     final response = e.response;
@@ -26,6 +31,8 @@ sealed class ApiError implements Exception {
       DioExceptionType.cancel => const Cancelled(),
       DioExceptionType.badCertificate => const UntrustedCertificate(),
       _ when e.error is SocketException => const Unreachable(),
+      _ when e.error is FormatException || e.error is TypeError =>
+        UnexpectedFailure.of(e.error!),
       _ => Unreachable(detail: e.error?.toString()),
     };
   }
@@ -69,4 +76,15 @@ final class UntrustedCertificate extends ApiError {
 
 final class Cancelled extends ApiError {
   const Cancelled();
+}
+
+/// The request reached the server but its answer could not be read or
+/// stored. [type] names the error class only, never content.
+final class UnexpectedFailure extends ApiError {
+  const UnexpectedFailure(this.type);
+  UnexpectedFailure.of(Object error) : type = error.runtimeType.toString();
+  final String type;
+
+  @override
+  String toString() => 'UnexpectedFailure($type)';
 }

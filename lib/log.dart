@@ -45,7 +45,8 @@ abstract final class Log {
     // developer.log never reaches logcat; problems should, on one line.
     if (level >= 900) {
       debugPrint(
-        '$area: $text${cause == null ? '' : ' (${cause.split('\n').first})'}',
+        '$area: ${text.split('\n').first}'
+        '${cause == null ? '' : ' (${cause.split('\n').first})'}',
       );
     }
   }

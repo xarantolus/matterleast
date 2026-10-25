@@ -13,6 +13,7 @@ import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/post_ranges.dart';
+import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/anchored_list.dart';
@@ -245,9 +246,12 @@ class Conversation extends _$Conversation {
       }
       _fetched();
       if (ref.mounted) state = state.copyWith(refreshing: false);
-    } on ApiError catch (e) {
+    } on Object catch (e) {
       if (ref.mounted) {
-        state = state.copyWith(refreshing: false, refreshFailure: e);
+        state = state.copyWith(
+          refreshing: false,
+          refreshFailure: ApiError.of(e),
+        );
       }
     }
   }
@@ -340,7 +344,8 @@ class Conversation extends _$Conversation {
       _limit += _step;
       _watch();
       if (ref.mounted) state = state.copyWith(loadingOlder: false);
-    } on ApiError {
+    } on Object catch (e) {
+      Log.warn('conversation', 'older page failed: ${ApiError.of(e)}');
       if (ref.mounted) {
         state = state.copyWith(loadingOlder: false, olderFailed: true);
       }

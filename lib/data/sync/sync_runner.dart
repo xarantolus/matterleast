@@ -151,9 +151,7 @@ class SyncRunner {
       }
       queued.completer.complete();
     } on Object catch (error, stack) {
-      final cause = error is ApiError
-          ? error
-          : Unreachable(detail: error.toString());
+      final cause = ApiError.of(error);
       Log.warn('sync', 'job ${job.key} failed', error);
       if (error is! ApiError) Log.warn('sync', stack.toString());
       queued.completer.completeError(cause, stack);

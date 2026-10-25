@@ -82,6 +82,19 @@ void main() {
     runner.close();
   });
 
+  test('an answer that fails to decode is not reported as offline', () async {
+    final runner = SyncRunner();
+    await expectLater(
+      runner.enqueue(
+        SyncJob(key: 'decode', run: () async => throw TypeError()),
+      ),
+      throwsA(isA<UnexpectedFailure>()),
+    );
+    final failed = runner.status.value as SyncFailed;
+    expect(failed.offline, isFalse);
+    runner.close();
+  });
+
   test('a job that overruns its timeout fails as a timeout', () async {
     final runner = SyncRunner();
     await expectLater(
