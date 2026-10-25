@@ -19,11 +19,13 @@ class SignedIn {
 /// Opens [url] in an auth session and returns the redirect it ended on.
 typedef OpenAuthSession = Future<Uri> Function(Uri url, String scheme);
 
+// Not ephemeral: the official Android app shares the browser session too,
+// and an ephemeral Chrome Auth Tab looped on the identity provider's login.
 Future<Uri> _openAuthTab(Uri url, String scheme) async => Uri.parse(
   await FlutterWebAuth2.authenticate(
     url: url.toString(),
     callbackUrlScheme: scheme,
-    options: const FlutterWebAuth2Options(preferEphemeral: true),
+    options: const FlutterWebAuth2Options(preferEphemeral: false),
   ),
 );
 
