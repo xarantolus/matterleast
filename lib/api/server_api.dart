@@ -5,7 +5,7 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/coalesce.dart';
 import 'package:matterleast/api/generated/export.dart';
 
-typedef TokenProvider = String? Function();
+typedef TokenProvider = FutureOr<String?> Function();
 
 /// One HTTP client per server: base URL, auth header, timeouts, error mapping
 /// and coalescing of identical in-flight requests. The generated
@@ -34,10 +34,10 @@ class ServerApi {
     );
     this.dio.interceptors.add(
       InterceptorsWrapper(
-        onRequest: (options, handler) {
+        onRequest: (options, handler) async {
           // The token goes to this server only, never to other hosts that a
           // link preview or an external image might point at.
-          final token = _token();
+          final token = await _token();
           if (token != null && options.uri.origin == baseUrl.origin) {
             options.headers['Authorization'] = 'Bearer $token';
           }

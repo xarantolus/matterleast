@@ -106,7 +106,7 @@ class ServerManager {
     if (row == null || row.lastActiveAt == null) {
       throw StateError('Not signed in to this server');
     }
-    final session = await ServerSession.open(
+    final session = ServerSession.open(
       url: Uri.parse(url),
       db: _openDatabase(p.join(await _dataDirectory(), row.dbFile)),
       tokens: _tokens,

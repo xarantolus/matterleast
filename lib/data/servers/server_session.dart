@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -32,19 +34,21 @@ class ServerSession {
   final SyncRunner runner;
   late final ServerConnection connection;
 
-  static Future<ServerSession> open({
+  /// Opens the session without waiting for the Keystore, so stored data
+  /// paints first; requests wait for the token instead.
+  static ServerSession open({
     required Uri url,
     required ServerDatabase db,
     required TokenStore tokens,
-  }) async {
-    await tokens.read(url.toString());
-    String? token() => tokens.cached(url.toString());
+  }) {
+    final key = url.toString();
+    unawaited(tokens.read(key));
     return ServerSession(
       url: url,
-      api: ServerApi(baseUrl: url, token: token),
+      api: ServerApi(baseUrl: url, token: () => tokens.read(key)),
       db: db,
       runner: SyncRunner(),
-      token: token,
+      token: () => tokens.cached(key),
     );
   }
 
