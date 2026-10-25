@@ -6,8 +6,10 @@ import 'package:matterleast/ui/attachment_card.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/link_preview_card.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
+import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/user_avatar.dart';
 
 const _avatarSize = 36.0;
 const _gutter = _avatarSize + Spacing.md;
@@ -103,13 +105,44 @@ class PostTile extends StatelessWidget {
             if (compact)
               const SizedBox(width: _gutter)
             else ...[
-              InitialsBadge(name: name, size: _avatarSize, round: true),
+              _Avatar(post: post, name: name, details: details),
               const SizedBox(width: Spacing.md),
             ],
             Expanded(child: body),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({
+    required this.post,
+    required this.name,
+    required this.details,
+  });
+
+  final PostItem post;
+  final String name;
+  final PostDetails details;
+
+  @override
+  Widget build(BuildContext context) {
+    final env = PostEnvironment.maybeOf(context);
+    final icon = details.props.overrideIconUrl;
+    final webhookIcon = details.fromWebhook && (icon?.isNotEmpty ?? false);
+    // A webhook post without its own icon is not the creator's to show.
+    if (env == null || (details.fromWebhook && !webhookIcon)) {
+      return InitialsBadge(name: name, size: _avatarSize, round: true);
+    }
+    return UserAvatar(
+      serverUrl: env.server.toString(),
+      userId: post.userId,
+      name: name,
+      lastPictureUpdate: post.authorPictureAt,
+      size: _avatarSize,
+      overrideIconUrl: webhookIcon ? icon : null,
     );
   }
 }

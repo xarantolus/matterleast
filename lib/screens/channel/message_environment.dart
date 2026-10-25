@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/message_links.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -9,8 +10,10 @@ import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
+import 'package:matterleast/ui/custom_emoji_image.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
+import 'package:matterleast/ui/server_image.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -46,6 +49,8 @@ class MessageEnvironment extends ConsumerWidget {
     final options =
         ref.watch(parseOptionsProvider(url)).value ?? const ParseOptions();
     final me = ref.watch(currentUserProvider(url)).value;
+    final emoji = ref.watch(customEmojiProvider(url)).value ?? const {};
+    final resolver = ref.watch(customEmojiResolverProvider(url)).value;
     return PostEnvironment(
       server: Uri.parse(url),
       options: options,
@@ -53,6 +58,28 @@ class MessageEnvironment extends ConsumerWidget {
       onMention: (name) => _showPerson(context, ref, name),
       onChannel: (name) => _openChannel(context, ref, name),
       onLink: (target) => _openLink(context, ref, target),
+      customEmoji: (name, size) {
+        final id = emoji[name];
+        if (id == null) {
+          resolver?.want([name]);
+          return null;
+        }
+        return SizedBox.square(
+          dimension: size,
+          child: CustomEmojiImage(
+            serverUrl: url,
+            emojiId: id,
+            size: size,
+            fallback: const SizedBox.shrink(),
+          ),
+        );
+      },
+      image: (imageUrl, size) => ServerImage(
+        serverUrl: url,
+        url: imageUrl,
+        width: size.width,
+        height: size.height,
+      ),
       child: child,
     );
   }
