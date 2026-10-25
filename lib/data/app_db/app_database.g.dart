@@ -112,6 +112,17 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant('brand'),
   );
+  static const VerificationMeta _ssoSchemeMeta = const VerificationMeta(
+    'ssoScheme',
+  );
+  @override
+  late final GeneratedColumn<String> ssoScheme = GeneratedColumn<String>(
+    'sso_scheme',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     url,
@@ -124,6 +135,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     addedAt,
     lastActiveAt,
     themeMode,
+    ssoScheme,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -200,6 +212,12 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         themeMode.isAcceptableOrUnknown(data['theme_mode']!, _themeModeMeta),
       );
     }
+    if (data.containsKey('sso_scheme')) {
+      context.handle(
+        _ssoSchemeMeta,
+        ssoScheme.isAcceptableOrUnknown(data['sso_scheme']!, _ssoSchemeMeta),
+      );
+    }
     return context;
   }
 
@@ -253,6 +271,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}theme_mode'],
       )!,
+      ssoScheme: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sso_scheme'],
+      ),
     );
   }
 
@@ -284,6 +306,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   /// Null until the first successful login; the newest is the active server.
   final DateTime? lastActiveAt;
   final String themeMode;
+
+  /// Redirect scheme for SSO when the admin registered one for this app;
+  /// null uses the scheme every stock server accepts.
+  final String? ssoScheme;
   const ServerRow({
     required this.url,
     required this.displayName,
@@ -295,6 +321,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     required this.addedAt,
     this.lastActiveAt,
     required this.themeMode,
+    this.ssoScheme,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -323,6 +350,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       );
     }
     map['theme_mode'] = Variable<String>(themeMode);
+    if (!nullToAbsent || ssoScheme != null) {
+      map['sso_scheme'] = Variable<String>(ssoScheme);
+    }
     return map;
   }
 
@@ -346,6 +376,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ? const Value.absent()
           : Value(lastActiveAt),
       themeMode: Value(themeMode),
+      ssoScheme: ssoScheme == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ssoScheme),
     );
   }
 
@@ -365,6 +398,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       addedAt: serializer.fromJson<DateTime>(json['addedAt']),
       lastActiveAt: serializer.fromJson<DateTime?>(json['lastActiveAt']),
       themeMode: serializer.fromJson<String>(json['themeMode']),
+      ssoScheme: serializer.fromJson<String?>(json['ssoScheme']),
     );
   }
   @override
@@ -381,6 +415,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'addedAt': serializer.toJson<DateTime>(addedAt),
       'lastActiveAt': serializer.toJson<DateTime?>(lastActiveAt),
       'themeMode': serializer.toJson<String>(themeMode),
+      'ssoScheme': serializer.toJson<String?>(ssoScheme),
     };
   }
 
@@ -395,6 +430,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     DateTime? addedAt,
     Value<DateTime?> lastActiveAt = const Value.absent(),
     String? themeMode,
+    Value<String?> ssoScheme = const Value.absent(),
   }) => ServerRow(
     url: url ?? this.url,
     displayName: displayName ?? this.displayName,
@@ -408,6 +444,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     addedAt: addedAt ?? this.addedAt,
     lastActiveAt: lastActiveAt.present ? lastActiveAt.value : this.lastActiveAt,
     themeMode: themeMode ?? this.themeMode,
+    ssoScheme: ssoScheme.present ? ssoScheme.value : this.ssoScheme,
   );
   ServerRow copyWithCompanion(ServersCompanion data) {
     return ServerRow(
@@ -429,6 +466,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ? data.lastActiveAt.value
           : this.lastActiveAt,
       themeMode: data.themeMode.present ? data.themeMode.value : this.themeMode,
+      ssoScheme: data.ssoScheme.present ? data.ssoScheme.value : this.ssoScheme,
     );
   }
 
@@ -444,7 +482,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('sortOrder: $sortOrder, ')
           ..write('addedAt: $addedAt, ')
           ..write('lastActiveAt: $lastActiveAt, ')
-          ..write('themeMode: $themeMode')
+          ..write('themeMode: $themeMode, ')
+          ..write('ssoScheme: $ssoScheme')
           ..write(')'))
         .toString();
   }
@@ -461,6 +500,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     addedAt,
     lastActiveAt,
     themeMode,
+    ssoScheme,
   );
   @override
   bool operator ==(Object other) =>
@@ -475,7 +515,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.sortOrder == this.sortOrder &&
           other.addedAt == this.addedAt &&
           other.lastActiveAt == this.lastActiveAt &&
-          other.themeMode == this.themeMode);
+          other.themeMode == this.themeMode &&
+          other.ssoScheme == this.ssoScheme);
 }
 
 class ServersCompanion extends UpdateCompanion<ServerRow> {
@@ -489,6 +530,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<DateTime> addedAt;
   final Value<DateTime?> lastActiveAt;
   final Value<String> themeMode;
+  final Value<String?> ssoScheme;
   final Value<int> rowid;
   const ServersCompanion({
     this.url = const Value.absent(),
@@ -501,6 +543,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.addedAt = const Value.absent(),
     this.lastActiveAt = const Value.absent(),
     this.themeMode = const Value.absent(),
+    this.ssoScheme = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ServersCompanion.insert({
@@ -514,6 +557,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     required DateTime addedAt,
     this.lastActiveAt = const Value.absent(),
     this.themeMode = const Value.absent(),
+    this.ssoScheme = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : url = Value(url),
        displayName = Value(displayName),
@@ -530,6 +574,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<int>? addedAt,
     Expression<int>? lastActiveAt,
     Expression<String>? themeMode,
+    Expression<String>? ssoScheme,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -543,6 +588,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (addedAt != null) 'added_at': addedAt,
       if (lastActiveAt != null) 'last_active_at': lastActiveAt,
       if (themeMode != null) 'theme_mode': themeMode,
+      if (ssoScheme != null) 'sso_scheme': ssoScheme,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -558,6 +604,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<DateTime>? addedAt,
     Value<DateTime?>? lastActiveAt,
     Value<String>? themeMode,
+    Value<String?>? ssoScheme,
     Value<int>? rowid,
   }) {
     return ServersCompanion(
@@ -571,6 +618,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       addedAt: addedAt ?? this.addedAt,
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
       themeMode: themeMode ?? this.themeMode,
+      ssoScheme: ssoScheme ?? this.ssoScheme,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -612,6 +660,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (themeMode.present) {
       map['theme_mode'] = Variable<String>(themeMode.value);
     }
+    if (ssoScheme.present) {
+      map['sso_scheme'] = Variable<String>(ssoScheme.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -631,6 +682,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('addedAt: $addedAt, ')
           ..write('lastActiveAt: $lastActiveAt, ')
           ..write('themeMode: $themeMode, ')
+          ..write('ssoScheme: $ssoScheme, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -868,6 +920,7 @@ typedef $$ServersTableCreateCompanionBuilder = ServersCompanion Function({
   required DateTime addedAt,
   Value<DateTime?> lastActiveAt,
   Value<String> themeMode,
+  Value<String?> ssoScheme,
   Value<int> rowid,
 });
 typedef $$ServersTableUpdateCompanionBuilder = ServersCompanion Function({
@@ -881,6 +934,7 @@ typedef $$ServersTableUpdateCompanionBuilder = ServersCompanion Function({
   Value<DateTime> addedAt,
   Value<DateTime?> lastActiveAt,
   Value<String> themeMode,
+  Value<String?> ssoScheme,
   Value<int> rowid,
 });
 
@@ -944,6 +998,11 @@ class $$ServersTableFilterComposer
     column: $table.themeMode,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get ssoScheme => $composableBuilder(
+    column: $table.ssoScheme,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$ServersTableOrderingComposer
@@ -1004,6 +1063,11 @@ class $$ServersTableOrderingComposer
     column: $table.themeMode,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get ssoScheme => $composableBuilder(
+    column: $table.ssoScheme,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ServersTableAnnotationComposer
@@ -1053,6 +1117,9 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<String> get themeMode =>
       $composableBuilder(column: $table.themeMode, builder: (column) => column);
+
+  GeneratedColumn<String> get ssoScheme =>
+      $composableBuilder(column: $table.ssoScheme, builder: (column) => column);
 }
 
 class $$ServersTableTableManager
@@ -1093,6 +1160,7 @@ class $$ServersTableTableManager
                 Value<DateTime> addedAt = const Value.absent(),
                 Value<DateTime?> lastActiveAt = const Value.absent(),
                 Value<String> themeMode = const Value.absent(),
+                Value<String?> ssoScheme = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ServersCompanion(
                 url: url,
@@ -1105,6 +1173,7 @@ class $$ServersTableTableManager
                 addedAt: addedAt,
                 lastActiveAt: lastActiveAt,
                 themeMode: themeMode,
+                ssoScheme: ssoScheme,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1119,6 +1188,7 @@ class $$ServersTableTableManager
                 required DateTime addedAt,
                 Value<DateTime?> lastActiveAt = const Value.absent(),
                 Value<String> themeMode = const Value.absent(),
+                Value<String?> ssoScheme = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ServersCompanion.insert(
                 url: url,
@@ -1131,6 +1201,7 @@ class $$ServersTableTableManager
                 addedAt: addedAt,
                 lastActiveAt: lastActiveAt,
                 themeMode: themeMode,
+                ssoScheme: ssoScheme,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

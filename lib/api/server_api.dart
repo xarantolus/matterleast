@@ -15,12 +15,13 @@ class ServerApi {
     required this.baseUrl,
     required this._token,
     String? preAuthSecret,
+    Duration receiveTimeout = const Duration(seconds: 30),
     Dio? dio,
   }) : dio = dio ?? Dio() {
     this.dio.options = BaseOptions(
       baseUrl: baseUrl.toString(),
       connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 30),
+      receiveTimeout: receiveTimeout,
       sendTimeout: const Duration(seconds: 30),
       followRedirects: false,
       responseType: ResponseType.json,

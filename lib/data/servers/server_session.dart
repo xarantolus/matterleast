@@ -23,14 +23,14 @@ class ServerSession {
 
   static Future<ServerSession> open({
     required Uri url,
-    required String dbFile,
+    required ServerDatabase db,
     required TokenStore tokens,
   }) async {
     await tokens.read(url.toString());
     return ServerSession(
       url: url,
       api: ServerApi(baseUrl: url, token: () => tokens.cached(url.toString())),
-      db: ServerDatabase.open(dbFile),
+      db: db,
       runner: SyncRunner(),
     );
   }

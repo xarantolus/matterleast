@@ -37,13 +37,6 @@ class PageOutcome {
 
 const sinceCap = 1000;
 
-abstract final class SyncKeys {
-  static const currentUserId = 'current_user_id';
-  static const currentTeamId = 'current_team_id';
-  static const lastFullSync = 'last_full_sync';
-  static String channelsSince(String teamId) => 'channels_since:$teamId';
-}
-
 /// The only write path into a server database. Each method is one
 /// transaction, so a watcher wakes once per logical change.
 class ServerStore {

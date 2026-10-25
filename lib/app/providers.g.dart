@@ -1,0 +1,457 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'providers.dart';
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(appDatabase)
+final appDatabaseProvider = AppDatabaseProvider._();
+
+final class AppDatabaseProvider
+    extends $FunctionalProvider<AppDatabase, AppDatabase, AppDatabase>
+    with $Provider<AppDatabase> {
+  AppDatabaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appDatabaseProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appDatabaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppDatabase> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AppDatabase create(Ref ref) {
+    return appDatabase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppDatabase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppDatabase>(value),
+    );
+  }
+}
+
+String _$appDatabaseHash() => r'365ef3f215d780c29a21b6328f0b547a8363c6a6';
+
+@ProviderFor(tokenStore)
+final tokenStoreProvider = TokenStoreProvider._();
+
+final class TokenStoreProvider
+    extends $FunctionalProvider<TokenStore, TokenStore, TokenStore>
+    with $Provider<TokenStore> {
+  TokenStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'tokenStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$tokenStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<TokenStore> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  TokenStore create(Ref ref) {
+    return tokenStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(TokenStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TokenStore>(value),
+    );
+  }
+}
+
+String _$tokenStoreHash() => r'1a3723cb9c87a80308bd518f02c3e17b42cdd4e8';
+
+@ProviderFor(serverManager)
+final serverManagerProvider = ServerManagerProvider._();
+
+final class ServerManagerProvider
+    extends $FunctionalProvider<ServerManager, ServerManager, ServerManager>
+    with $Provider<ServerManager> {
+  ServerManagerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'serverManagerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverManagerHash();
+
+  @$internal
+  @override
+  $ProviderElement<ServerManager> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ServerManager create(Ref ref) {
+    return serverManager(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ServerManager value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ServerManager>(value),
+    );
+  }
+}
+
+String _$serverManagerHash() => r'954be51d61e41f10e3f4488d36941100fe753c97';
+
+@ProviderFor(serverProbe)
+final serverProbeProvider = ServerProbeProvider._();
+
+final class ServerProbeProvider
+    extends $FunctionalProvider<ServerProbe, ServerProbe, ServerProbe>
+    with $Provider<ServerProbe> {
+  ServerProbeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'serverProbeProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverProbeHash();
+
+  @$internal
+  @override
+  $ProviderElement<ServerProbe> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ServerProbe create(Ref ref) {
+    return serverProbe(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ServerProbe value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ServerProbe>(value),
+    );
+  }
+}
+
+String _$serverProbeHash() => r'ee7b1e15a5fbd0aeaa4c0d524f1584e448f8b41e';
+
+@ProviderFor(signIn)
+final signInProvider = SignInProvider._();
+
+final class SignInProvider extends $FunctionalProvider<SignIn, SignIn, SignIn>
+    with $Provider<SignIn> {
+  SignInProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'signInProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$signInHash();
+
+  @$internal
+  @override
+  $ProviderElement<SignIn> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SignIn create(Ref ref) {
+    return signIn(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SignIn value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SignIn>(value),
+    );
+  }
+}
+
+String _$signInHash() => r'ba29e87deb34c0edfb350e4114031a6d195b2ee5';
+
+/// Every added server, signed in or not, in rail order.
+
+@ProviderFor(servers)
+final serversProvider = ServersProvider._();
+
+/// Every added server, signed in or not, in rail order.
+
+final class ServersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<ServerEntry>>,
+          List<ServerEntry>,
+          Stream<List<ServerEntry>>
+        >
+    with
+        $FutureModifier<List<ServerEntry>>,
+        $StreamProvider<List<ServerEntry>> {
+  /// Every added server, signed in or not, in rail order.
+  ServersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'serversProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$serversHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<ServerEntry>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<ServerEntry>> create(Ref ref) {
+    return servers(ref);
+  }
+}
+
+String _$serversHash() => r'b2b2352d668cfc70d867251be59cde7c97512d11';
+
+@ProviderFor(serverSession)
+final serverSessionProvider = ServerSessionFamily._();
+
+final class ServerSessionProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ServerSession>,
+          ServerSession,
+          FutureOr<ServerSession>
+        >
+    with $FutureModifier<ServerSession>, $FutureProvider<ServerSession> {
+  ServerSessionProvider._({
+    required ServerSessionFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'serverSessionProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverSessionHash();
+
+  @override
+  String toString() {
+    return r'serverSessionProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<ServerSession> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ServerSession> create(Ref ref) {
+    final argument = this.argument as String;
+    return serverSession(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ServerSessionProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$serverSessionHash() => r'b1b2325e71e3bbd141e210a4fab342b2e36a592f';
+
+final class ServerSessionFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<ServerSession>, String> {
+  ServerSessionFamily._()
+    : super(
+        retry: null,
+        name: r'serverSessionProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  ServerSessionProvider call(String url) =>
+      ServerSessionProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'serverSessionProvider';
+}
+
+/// The signed-in user of one server, from its database.
+
+@ProviderFor(currentUser)
+final currentUserProvider = CurrentUserFamily._();
+
+/// The signed-in user of one server, from its database.
+
+final class CurrentUserProvider
+    extends $FunctionalProvider<AsyncValue<Me?>, Me?, Stream<Me?>>
+    with $FutureModifier<Me?>, $StreamProvider<Me?> {
+  /// The signed-in user of one server, from its database.
+  CurrentUserProvider._({
+    required CurrentUserFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'currentUserProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentUserHash();
+
+  @override
+  String toString() {
+    return r'currentUserProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Me?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Me?> create(Ref ref) {
+    final argument = this.argument as String;
+    return currentUser(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CurrentUserProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$currentUserHash() => r'163de35fb58e4fe727cf677ed562d7d0ee64dddb';
+
+/// The signed-in user of one server, from its database.
+
+final class CurrentUserFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Me?>, String> {
+  CurrentUserFamily._()
+    : super(
+        retry: null,
+        name: r'currentUserProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The signed-in user of one server, from its database.
+
+  CurrentUserProvider call(String url) =>
+      CurrentUserProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'currentUserProvider';
+}
+
+/// Servers that ended their session, as they happen.
+
+@ProviderFor(sessionEnded)
+final sessionEndedProvider = SessionEndedProvider._();
+
+/// Servers that ended their session, as they happen.
+
+final class SessionEndedProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ServerEntry>,
+          ServerEntry,
+          Stream<ServerEntry>
+        >
+    with $FutureModifier<ServerEntry>, $StreamProvider<ServerEntry> {
+  /// Servers that ended their session, as they happen.
+  SessionEndedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sessionEndedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sessionEndedHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<ServerEntry> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<ServerEntry> create(Ref ref) {
+    return sessionEnded(ref);
+  }
+}
+
+String _$sessionEndedHash() => r'd80df2fcddfad88635aedca5adc964c6914b95a8';

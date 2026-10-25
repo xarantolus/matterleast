@@ -21,6 +21,10 @@ class Servers extends Table {
   IntColumn get lastActiveAt => integer().map(const Millis()).nullable()();
   TextColumn get themeMode => text().withDefault(const Constant('brand'))();
 
+  /// Redirect scheme for SSO when the admin registered one for this app;
+  /// null uses the scheme every stock server accepts.
+  TextColumn get ssoScheme => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {url};
 }

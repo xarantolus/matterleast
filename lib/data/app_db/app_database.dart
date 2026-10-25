@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:matterleast/data/app_db/app_database.steps.dart';
 import 'package:matterleast/data/app_db/tables.dart';
 import 'package:matterleast/data/db/millis.dart';
 import 'package:path/path.dart' as p;
@@ -32,7 +33,15 @@ class AppDatabase extends _$AppDatabase {
   );
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: stepByStep(
+      from1To2: (m, schema) =>
+          m.addColumn(schema.servers, schema.servers.ssoScheme),
+    ),
+  );
 
   Stream<List<ServerRow>> watchServers() => (select(
     servers,
