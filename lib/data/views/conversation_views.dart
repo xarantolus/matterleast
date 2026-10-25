@@ -16,6 +16,26 @@ class ConversationViews {
 
   static const _interval = Duration(milliseconds: 100);
 
+  /// How many stored replies of [rootId] are newer than [postId]; null
+  /// when that message isn't stored.
+  Future<int?> repliesAfter(String rootId, String postId) async {
+    final target = await (db.select(
+      db.posts,
+    )..where((p) => p.id.equals(postId))).getSingleOrNull();
+    if (target == null) return null;
+    final count = db.posts.id.count();
+    return (db.selectOnly(db.posts)
+          ..addColumns([count])
+          ..where(
+            db.posts.rootId.equals(rootId) &
+                db.posts.createAt.isBiggerThanValue(
+                  target.createAt.millisecondsSinceEpoch,
+                ),
+          ))
+        .map((row) => row.read(count) ?? 0)
+        .getSingle();
+  }
+
   /// The newest [limit] messages of the loaded range containing [rangeAt]
   /// (the newest range when null), and at least those after [unreadAfter],
   /// so the new-messages line is in the window. Messages deleted before

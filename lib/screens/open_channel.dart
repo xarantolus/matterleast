@@ -38,6 +38,7 @@ Future<void> openChannel(
               channelId: channelId,
               rootId: rootId,
               channelName: title,
+              highlightPostId: highlightPostId,
             )
           : ChannelScreen(
               url: url,

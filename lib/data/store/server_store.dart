@@ -494,16 +494,33 @@ class ServerStore {
     );
   }
 
+  /// With [channelId], a thread not stored yet is added, as following one
+  /// from its screen does.
   Future<void> applyThreadFollow(
     String threadId, {
     required bool following,
     int? replyCount,
-  }) => (db.update(db.threads)..where((t) => t.rootId.equals(threadId))).write(
-    ThreadsCompanion(
+    String? channelId,
+  }) {
+    final changes = ThreadsCompanion(
       isFollowing: Value(following),
       replyCount: replyCount == null ? const Value.absent() : Value(replyCount),
-    ),
-  );
+    );
+    if (channelId == null) {
+      return (db.update(
+        db.threads,
+      )..where((t) => t.rootId.equals(threadId))).write(changes);
+    }
+    return db
+        .into(db.threads)
+        .insert(
+          changes.copyWith(
+            rootId: Value(threadId),
+            channelId: Value(channelId),
+          ),
+          onConflict: DoUpdate((_) => changes),
+        );
+  }
 
   Future<void> setCategoryCollapsed(
     String categoryId, {

@@ -183,14 +183,34 @@ class Conversation extends _$Conversation {
       await actions.view(channelId);
       return;
     }
+    final team = await _threadTeam();
+    if (team == null) return;
+    await _actions!.markThreadRead(team, rootId!).catchError((Object _) {});
+  }
+
+  /// The team a thread's read marks and following are kept in; null
+  /// without collapsed threads.
+  Future<String?> _threadTeam() async {
     final db = _session!.db;
-    final team = threadReadTeam(
+    return threadReadTeam(
       collapsedThreads: await db.collapsedThreads(),
       channelTeamId: state.window?.teamId ?? await _channelTeam(db),
       currentTeamId: await db.syncText(SyncKeys.currentTeamId),
     );
+  }
+
+  /// Follows or stops following the open thread. Throws [ApiError] when
+  /// the server refuses.
+  Future<void> setFollowing({required bool following}) async {
+    if (_actions == null || !_isThread) return;
+    final team = await _threadTeam();
     if (team == null) return;
-    await _actions!.markThreadRead(team, rootId!).catchError((Object _) {});
+    await _actions!.setThreadFollowing(
+      team,
+      channelId,
+      rootId!,
+      following: following,
+    );
   }
 
   Future<String> _channelTeam(ServerDatabase db) async =>
@@ -205,6 +225,7 @@ class Conversation extends _$Conversation {
     try {
       if (_isThread) {
         await _actions!.refreshThread(rootId!, owner: this);
+        await _showReplyAsked();
       } else {
         await _actions!.refreshChannel(channelId, owner: this);
         await _openHighlight();
@@ -234,6 +255,20 @@ class Conversation extends _$Conversation {
     if (at == null || !ref.mounted) return;
     _rangeAt = at;
     _limit = _step;
+    _moved = true;
+    _watch();
+  }
+
+  /// Moves to the reply asked for once the thread is fetched, widening the
+  /// window when it is older than the replies shown.
+  Future<void> _showReplyAsked() async {
+    final key = state.highlightKey;
+    if (key == null || state.rows.any((r) => r.key == key)) return;
+    final newer = await ConversationViews(_session!.db)
+        .repliesAfter(rootId!, key);
+    if (newer == null || !ref.mounted) return;
+    if (newer >= _limit) _limit = newer + _step;
+    // Opens again at the reply, which arrived after the first rows did.
     _moved = true;
     _watch();
   }

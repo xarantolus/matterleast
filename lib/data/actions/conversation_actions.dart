@@ -274,6 +274,33 @@ class ConversationActions {
     );
   }
 
+  /// Follows or stops following a thread on the server, then here.
+  Future<void> setThreadFollowing(
+    String teamId,
+    String channelId,
+    String rootId, {
+    required bool following,
+  }) async {
+    await _call(
+      () => following
+          ? _client.threads.startFollowingThread(
+              userId: 'me',
+              teamId: teamId,
+              threadId: rootId,
+            )
+          : _client.threads.stopFollowingThread(
+              userId: 'me',
+              teamId: teamId,
+              threadId: rootId,
+            ),
+    );
+    await _store.applyThreadFollow(
+      rootId,
+      following: following,
+      channelId: channelId,
+    );
+  }
+
   Future<DateTime?> _postsFetchedAt(String channelId) async =>
       (await (_db.select(
             _db.myChannels,
