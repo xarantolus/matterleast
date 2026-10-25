@@ -314,7 +314,7 @@ final class ServerSessionProvider
   }
 }
 
-String _$serverSessionHash() => r'b1b2325e71e3bbd141e210a4fab342b2e36a592f';
+String _$serverSessionHash() => r'fcbaeaa10d7b4b6c987069270a111a68fc702953';
 
 final class ServerSessionFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ServerSession>, String> {
