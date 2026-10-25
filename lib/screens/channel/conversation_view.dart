@@ -46,7 +46,7 @@ class ConversationView extends ConsumerStatefulWidget {
 
 class _ConversationViewState extends ConsumerState<ConversationView> {
   final _list = AnchoredListController();
-  late final Conversation _controller = ref.read(widget.conversation.notifier);
+  late final Conversation _controller;
   AnchoredListView? _view;
   ({int generation, AnchoredPosition? anchor})? _opened;
   Object? _highlighted;
@@ -58,6 +58,12 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   DateTime? _leftBottomAt;
 
   static const _arrivalAnimation = Duration(milliseconds: 250);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ref.read(widget.conversation.notifier);
+  }
 
   @override
   void dispose() {

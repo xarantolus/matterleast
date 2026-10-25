@@ -389,6 +389,7 @@ class Conversation extends _$Conversation {
 
   /// Remembers where the reader left off.
   void leave(AnchoredPosition? position) {
+    if (!ref.mounted) return;
     final session = _session;
     final window = state.window;
     if (session == null || window == null || position == null) return;

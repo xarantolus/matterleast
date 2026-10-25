@@ -1,6 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_picker_android/image_picker_android.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
@@ -147,7 +152,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final limit = ref.watch(maxPostSizeProvider(widget.url)).value ?? 16383;
     final length = value.text.text.length;
     final editing = value.editing;
-    final canSend = value.text.text.trim().isNotEmpty && length <= limit;
+    final files = value.attachments;
+    final canSend =
+        (value.text.text.trim().isNotEmpty ||
+            files.any((a) => a.info != null)) &&
+        !files.any((a) => a.uploading) &&
+        length <= limit;
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainer,
       child: SafeArea(
@@ -183,9 +193,14 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                   ],
                 ),
               ),
+            if (files.isNotEmpty && editing == null)
+              AttachmentStrip(
+                attachments: files,
+                onRemove: ref.read(_provider.notifier).detach,
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                Spacing.lg,
+                Spacing.xs,
                 Spacing.sm,
                 Spacing.xs,
                 Spacing.sm,
@@ -193,6 +208,16 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  if (editing == null)
+                    IconButton(
+                      tooltip: 'Attach',
+                      onPressed: files.length >= maxAttachments
+                          ? null
+                          : _attach,
+                      icon: const Icon(Icons.add_circle_outline),
+                    )
+                  else
+                    const SizedBox(width: Spacing.md),
                   Expanded(
                     child: TextField(
                       controller: _text,
@@ -239,6 +264,57 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     );
   }
 
+  Future<void> _attach() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final source = await showModalBottomSheet<PickSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (source, icon, label) in const [
+              (PickSource.camera, Icons.photo_camera_outlined, 'Take a photo'),
+              (
+                PickSource.media,
+                Icons.photo_library_outlined,
+                'Photos and videos',
+              ),
+              (PickSource.files, Icons.attach_file, 'Files'),
+            ])
+              ListTile(
+                leading: Icon(icon),
+                title: Text(label),
+                onTap: () => Navigator.of(sheet).pop(source),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    final room = maxAttachments - ref.read(_provider).attachments.length;
+    final picked = await pickFiles(source, room);
+    if (!mounted) return;
+    if (picked.length > room) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('A message can carry $maxAttachments files at most.'),
+        ),
+      );
+    }
+    final draft = ref.read(_provider.notifier);
+    for (final f in picked.take(room)) {
+      unawaited(
+        draft.attach(
+          open: f.file.openRead,
+          name: f.name,
+          size: f.size,
+          path: f.path,
+        ),
+      );
+    }
+  }
+
   Future<void> _send() async {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -279,8 +355,14 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         }
         return;
       }
+      final files = [for (final a in value.attachments) ?a.info];
       draft.sent();
-      await actions.send(channelId, rootId: rootId, message: message);
+      await actions.send(
+        channelId,
+        rootId: rootId,
+        message: message,
+        files: files,
+      );
     } on ApiError catch (e) {
       final text = switch (e) {
         ServerError(:final message?) when message.isNotEmpty => message,
@@ -289,6 +371,164 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       messenger.showSnackBar(SnackBar(content: Text(text)));
     }
   }
+}
+
+enum PickSource { camera, media, files }
+
+typedef PickedFile = ({XFile file, String? path, String name, int size});
+
+/// Files the user picks from the camera, the photo picker or the
+/// documents UI. The photo picker needs no media permission.
+Future<List<PickedFile>> pickFiles(PickSource source, int room) async {
+  final platform = ImagePickerPlatform.instance;
+  if (platform is ImagePickerAndroid) platform.useAndroidPhotoPicker = true;
+  Future<PickedFile> of(XFile f) async =>
+      (file: f, path: f.path, name: f.name, size: await f.length());
+  switch (source) {
+    case PickSource.camera:
+      final photo = await ImagePicker().pickImage(source: ImageSource.camera);
+      return [if (photo != null) await of(photo)];
+    case PickSource.media:
+      final media = await ImagePicker().pickMultipleMedia(
+        limit: room > 1 ? room : null,
+      );
+      return [for (final m in media) await of(m)];
+    case PickSource.files:
+      final result = await FilePicker.pickFiles();
+      return [
+        for (final f in result)
+          (
+            file: f.xFile,
+            path: null,
+            name: f.name,
+            size: await f.xFile.length(),
+          ),
+      ];
+  }
+}
+
+/// The files of the message being written, each with its progress and a
+/// way to take it off.
+class AttachmentStrip extends StatelessWidget {
+  const AttachmentStrip({
+    required this.attachments,
+    required this.onRemove,
+    super.key,
+  });
+
+  final List<Attachment> attachments;
+  final ValueChanged<String> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final text = Theme.of(context).textTheme;
+    return SizedBox(
+      height: 96,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.lg,
+          Spacing.sm,
+          Spacing.lg,
+          0,
+        ),
+        children: [
+          for (final a in attachments)
+            Padding(
+              padding: const EdgeInsets.only(right: Spacing.sm),
+              child: SizedBox(
+                width: a.isImage && a.path != null ? 88 : 180,
+                child: Card.outlined(
+                  margin: EdgeInsets.zero,
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (a.isImage && a.path != null)
+                        Image.file(
+                          File(a.path!),
+                          fit: BoxFit.cover,
+                          cacheWidth: 264,
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            Spacing.sm,
+                            Spacing.sm,
+                            Spacing.xl,
+                            Spacing.sm,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.insert_drive_file_outlined,
+                                color: tokens.muted,
+                              ),
+                              Text(
+                                a.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: text.labelMedium,
+                              ),
+                              Text(
+                                a.error ?? fileSizeText(a.size),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: text.bodySmall?.copyWith(
+                                  color: a.error != null
+                                      ? Theme.of(context).colorScheme.error
+                                      : tokens.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (a.error != null && a.isImage && a.path != null)
+                        ColoredBox(
+                          color: Theme.of(context).colorScheme.errorContainer
+                              .withValues(alpha: 0.85),
+                          child: Center(
+                            child: Icon(
+                              Icons.error_outline,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ),
+                      if (a.uploading)
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: LinearProgressIndicator(
+                            value: a.progress > 0 ? a.progress : null,
+                          ),
+                        ),
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: IconButton.filledTonal(
+                          visualDensity: VisualDensity.compact,
+                          iconSize: 16,
+                          tooltip: a.uploading ? 'Cancel upload' : 'Remove',
+                          onPressed: () => onRemove(a.clientId),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pure: a byte count in the units people read.
+String fileSizeText(int bytes) {
+  if (bytes < 1024) return '$bytes B';
+  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
+  return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
 }
 
 /// What completes the word at the cursor, newest match closest to the
