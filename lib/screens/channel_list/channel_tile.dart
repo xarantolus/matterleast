@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// A dense channel row: type icon or avatar, name (bold with a dot when
@@ -145,20 +146,7 @@ class _ChannelIcon extends StatelessWidget {
             PositionedDirectional(
               end: 0,
               bottom: 0,
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: switch (item.status) {
-                    'online' => tokens.online,
-                    'away' => tokens.away,
-                    'dnd' => tokens.busy,
-                    _ => tokens.divider,
-                  },
-                  border: Border.all(color: tokens.page, width: 1.5),
-                ),
-              ),
+              child: PresenceDot(status: item.status),
             ),
           ],
         ),

@@ -4,10 +4,10 @@ import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/channel_list/channel_list_pane.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
+import 'package:matterleast/screens/home/home_pane.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/root/team_rail.dart';
-import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 /// The rail of teams beside Home or the picked team's channel list.
@@ -25,14 +25,11 @@ class RootScreen extends ConsumerWidget {
       return _RootLayout(
         servers: servers,
         title: 'Home',
-        actions: const [_SearchButton()],
-        pane: const EmptyState(
-          icon: Icons.done_all,
-          title: "You're all caught up",
-          body:
-              'Unread messages, mentions and threads from all your servers '
-              'will show up here.',
+        refreshing: servers.any(
+          (s) => ref.watch(syncStatusProvider(s.url)).value is SyncRefreshing,
         ),
+        actions: const [_SearchButton()],
+        pane: HomePane(servers: servers),
       );
     }
     final teams = ref.watch(railTeamsProvider(server.url)).value ?? const [];

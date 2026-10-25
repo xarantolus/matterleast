@@ -8,7 +8,9 @@ import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel_list/channel_actions_sheet.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/channel_list/channel_tile.dart';
+import 'package:matterleast/screens/drafts/drafts_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -106,9 +108,11 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
   Future<void> _open(ChannelItem item) async {
     final navigator = Navigator.of(context);
     final actions = await ref.read(channelActionsProvider(widget.url).future);
-    unawaited(actions.view(item.id));
+    unawaited(actions.open(item.id, teamId: widget.teamId));
     await navigator.push(
-      MaterialPageRoute<void>(builder: (_) => ChannelScreen(title: item.title)),
+      MaterialPageRoute<void>(
+        builder: (_) => ChannelScreen(title: item.title, channelId: item.id),
+      ),
     );
   }
 
@@ -135,6 +139,15 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 icon: Icons.forum_outlined,
                 title: 'Threads',
                 count: unread,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => TeamThreadsScreen(
+                      url: widget.url,
+                      teamId: widget.teamId,
+                      teamName: list.teamName,
+                    ),
+                  ),
+                ),
               ),
             ),
           if (list.drafts > 0)
@@ -143,6 +156,11 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 icon: Icons.edit_note,
                 title: 'Drafts',
                 count: list.drafts,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => DraftsScreen(teamName: list.teamName),
+                  ),
+                ),
               ),
             ),
           if (list.isEmpty)
@@ -223,11 +241,13 @@ class _ShortcutTile extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.count,
+    required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final int count;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => ListTile(
@@ -239,6 +259,7 @@ class _ShortcutTile extends StatelessWidget {
       style: count > 0 ? const TextStyle(fontWeight: FontWeight.w700) : null,
     ),
     trailing: count > 0 ? Text('$count') : null,
+    onTap: onTap,
   );
 }
 
