@@ -32,6 +32,12 @@ class PdfScreen extends StatelessWidget {
       title: Text(file.name, maxLines: 1),
       actions: [FileActionsMenu(url: url, file: file)],
     ),
-    body: PdfViewer.file(local.path),
+    // The default physics stop a fling much sooner than a list does.
+    body: PdfViewer.file(
+      local.path,
+      params: PdfViewerParams(
+        scrollPhysics: PdfViewerParams.getScrollPhysics(context),
+      ),
+    ),
   );
 }
