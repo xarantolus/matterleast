@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
+import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -63,6 +64,7 @@ class EventApplier {
           fromSelf: post.userId == me && !_isAutomatic(post),
           mentionsMe: me != null && mentions.contains(me),
         );
+        await setConversationShown(server, store, post.channelId!, show: true);
       case EphemeralMessageEvent(:final post?)
           when post.channelId != null && await _knownChannel(post.channelId!):
         await store.applyEphemeralPost(post);

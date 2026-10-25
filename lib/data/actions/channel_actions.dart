@@ -3,8 +3,10 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/views/switch_views.dart';
 import 'package:matterleast/domain/preference_keys.dart';
@@ -27,6 +29,16 @@ class ChannelActions {
   /// The user opened a channel: it is remembered as the team's last one.
   /// The channel screen marks it read once it has noted what was unread.
   Future<void> open(String channelId, {String? teamId}) async {
+    unawaited(
+      setConversationShown(
+        session.api,
+        session.store,
+        channelId,
+        show: true,
+      ).catchError(
+        (Object e) => Log.warn('channels', 'Showing a conversation failed', e),
+      ),
+    );
     if (teamId != null && teamId.isNotEmpty) {
       await session.store.setLastChannel(teamId, channelId);
     }
@@ -122,30 +134,8 @@ class ChannelActions {
 
   /// Hides a direct or group message from the list without leaving it, as
   /// the official app does; the next message brings it back.
-  Future<void> closeConversation(String channelId) async {
-    final me = await _db.syncText(SyncKeys.currentUserId) ?? '';
-    final channel = await (_db.select(
-      _db.channels,
-    )..where((c) => c.id.equals(channelId))).getSingle();
-    final preference = channel.type == 'D'
-        ? api.Preference(
-            userId: me,
-            category: Prefs.directChannelShow,
-            name: directPartnerId(channel.name, me),
-            value: 'false',
-          )
-        : api.Preference(
-            userId: me,
-            category: Prefs.groupChannelShow,
-            name: channelId,
-            value: 'false',
-          );
-    await session.api.call(
-      () =>
-          _client.preferences.updatePreferences(userId: me, body: [preference]),
-    );
-    await session.store.applyPreferences([preference]);
-  }
+  Future<void> closeConversation(String channelId) =>
+      setConversationShown(session.api, session.store, channelId, show: false);
 
   /// Muted channels only count mentions as unread.
   Future<void> setMuted(String channelId, {required bool muted}) =>
@@ -445,4 +435,41 @@ class _OneMember extends api.ApiV4ChannelsChannelIdMembersRequestBody {
 
   @override
   Map<String, Object?> toJson() => super.toJson()..remove('user_ids');
+}
+
+/// Shows or hides a direct or group message in the channel list through the
+/// server's `*_channel_show` preference. Nothing is sent when it already is
+/// as asked, or when the channel is not a direct or group message.
+Future<void> setConversationShown(
+  ServerApi server,
+  ServerStore store,
+  String channelId, {
+  required bool show,
+}) async {
+  final db = store.db;
+  final me = await db.syncText(SyncKeys.currentUserId) ?? '';
+  final channel = await (db.select(
+    db.channels,
+  )..where((c) => c.id.equals(channelId))).getSingleOrNull();
+  final (category, name) = switch (channel?.type) {
+    'D' => (Prefs.directChannelShow, directPartnerId(channel!.name, me)),
+    'G' => (Prefs.groupChannelShow, channelId),
+    _ => (null, null),
+  };
+  if (category == null || name == null) return;
+  final stored = await db.preference(category, name);
+  if (show ? stored != 'false' : stored == 'false') return;
+  final preference = api.Preference(
+    userId: me,
+    category: category,
+    name: name,
+    value: '$show',
+  );
+  await server.call(
+    () => server.client.preferences.updatePreferences(
+      userId: me,
+      body: [preference],
+    ),
+  );
+  await store.applyPreferences([preference]);
 }
