@@ -5,6 +5,12 @@ on:
   push:
   workflow_dispatch:
 
+# A cancelled release run is safe: the next run on main still finds the
+# version untagged and releases it.
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
 # The release step creates a tag and a release.
 permissions:
   contents: write
