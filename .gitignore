@@ -68,3 +68,4 @@ setup-specific-guide.md
 !run-container.sh
 !.devcontainer/*.sh
 !.devcontainer/server/*.sh
+!tool/*.sh

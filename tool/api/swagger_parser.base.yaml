@@ -1,0 +1,24 @@
+# Base of tool/api/swagger_parser.yaml; tool/update-api.sh appends the
+# generated lenient model parsers and the include paths.
+swagger_parser:
+  schema_path: tool/api/spec.json
+  output_directory: lib/api/generated
+  name: mattermost
+  language: dart
+  json_serializer: json_serializable
+  root_client: true
+  root_client_name: MattermostClient
+  put_clients_in_folder: true
+  enums_to_json: true
+  unknown_enum_value: true
+  mark_files_as_generated: true
+  field_parsers:
+    - {apply_to_type: "String?", parser_name: LenientString, parser_absolute_path: "package:matterleast/api/json/lenient.dart"}
+    - {apply_to_type: "int?", parser_name: LenientInt, parser_absolute_path: "package:matterleast/api/json/lenient.dart"}
+    - {apply_to_type: "double?", parser_name: LenientDouble, parser_absolute_path: "package:matterleast/api/json/lenient.dart"}
+    - {apply_to_type: "num?", parser_name: LenientDouble, parser_absolute_path: "package:matterleast/api/json/lenient.dart"}
+    - {apply_to_type: "bool?", parser_name: LenientBool, parser_absolute_path: "package:matterleast/api/json/lenient.dart"}
+    - {apply_to_type: "DateTime?", parser_name: MillisDateTime, parser_absolute_path: "package:matterleast/api/json/lenient.dart"}
+    - {apply_to_type: "List<String>", parser_name: LenientStringList, parser_absolute_path: "package:matterleast/api/json/lenient.dart"}
+    - {apply_to_type: "Map<String, dynamic>?", parser_name: JsonMap, parser_absolute_path: "package:matterleast/api/json/lenient.dart"}
+    - {apply_to_type: "Map<String, dynamic>", parser_name: JsonMapOrEmpty, parser_absolute_path: "package:matterleast/api/json/lenient.dart"}

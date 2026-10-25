@@ -1,0 +1,127 @@
+overlay: 1.0.0
+info:
+  title: Matterleast fixes to the Mattermost v4 spec
+  version: 1.0.0
+actions:
+  # --- validation errors in the upstream spec ---
+  - target: "$.paths['/api/v4/channels/{channel_id}/bookmarks'].post.body"
+    remove: true
+  - target: "$.paths['/api/v4/channels/{channel_id}/bookmarks/{bookmark_id}'].patch.body"
+    remove: true
+  - target: "$.paths['/api/v4/channels/{channel_id}/bookmarks/{bookmark_id}/sort_order'].post.body"
+    remove: true
+  - target: "$.paths['/api/v4/users/{user_id}/custom_profile_attributes'].get.responses['200'].content"
+    remove: true
+  - target: "$.paths['/api/v4/users/{user_id}/custom_profile_attributes'].get.responses['200']"
+    update:
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: {type: string}
+  - target: "$.components.schemas.ContentFlaggingConfig.properties.EnableContentFlagging"
+    remove: true
+  - target: "$.components.schemas.ContentFlaggingConfig.properties"
+    update:
+      EnableContentFlagging: {type: boolean}
+      NotificationSettings: {$ref: "#/components/schemas/NotificationSettings"}
+      AdditionalSettings: {$ref: "#/components/schemas/AdditionalSettings"}
+      ReviewerSettings: {$ref: "#/components/schemas/ReviewerSettings"}
+  - target: "$.components.schemas.PluginStatus.properties.state"
+    update: {type: string}
+  - target: "$.paths['/api/v4/drafts'].post.responses['201'].content['application/json'].schema"
+    update: {type: object}
+  - target: "$.paths['/api/v4/teams/{team_id}/access_control/policy'].get.responses['200'].content['application/json'].schema.properties.policy"
+    update: {type: object}
+  - target: "$.paths['/api/v4/users/{user_id}/reset_failed_attempts'].post"
+    update:
+      parameters: [{name: user_id, in: path, required: true, schema: {type: string}}]
+  - target: "$.paths['/api/v4/remotecluster/{remote_id}/generate_invite'].post"
+    update:
+      parameters: [{name: remote_id, in: path, required: true, schema: {type: string}}]
+  - target: "$.paths['/api/v4/posts/scheduled/team/{team_id}'].get.parameters"
+    update: [{name: team_id, in: path, required: true, schema: {type: string}}]
+  - target: "$.paths['/api/v4/files/search'].post"
+    update: {operationId: SearchFilesAllTeams}
+  # --- core models: fields the server sends but the spec omits (server/public/model/*.go) ---
+  - target: "$.components.schemas.Post.properties.hashtag"
+    remove: true
+  - target: "$.components.schemas.Post.properties"
+    update:
+      hashtags: {type: string}
+      is_pinned: {type: boolean}
+      message_source: {type: string}
+      has_reactions: {type: boolean}
+      remote_id: {type: string}
+      reply_count: {type: integer, format: int64}
+      last_reply_at: {type: integer, format: int64}
+      participants: {type: array, items: {$ref: "#/components/schemas/User"}}
+      is_following: {type: boolean}
+  - target: "$.components.schemas.PostMetadata.properties"
+    update:
+      expire_at: {type: integer, format: int64}
+      recipients: {type: array, items: {type: string}}
+      redacted_file_count: {type: integer}
+  - target: "$.components.schemas.PostList.properties"
+    update:
+      first_inaccessible_post_time: {type: integer, format: int64}
+  - target: "$.components.schemas.User.properties"
+    update:
+      is_bot: {type: boolean}
+      bot_description: {type: string}
+      bot_last_icon_update: {type: integer, format: int64}
+      last_activity_at: {type: integer, format: int64}
+      position: {type: string}
+      remote_id: {type: string}
+  - target: "$.components.schemas.Channel.properties"
+    update:
+      total_msg_count_root: {type: integer, format: int64}
+      last_root_post_at: {type: integer, format: int64}
+      group_constrained: {type: boolean}
+      shared: {type: boolean}
+      scheme_id: {type: string}
+      props: {type: object, additionalProperties: true}
+  - target: "$.components.schemas.ChannelMember.properties"
+    update:
+      msg_count_root: {type: integer, format: int64}
+      mention_count_root: {type: integer, format: int64}
+      urgent_mention_count: {type: integer, format: int64}
+      scheme_user: {type: boolean}
+      scheme_admin: {type: boolean}
+      scheme_guest: {type: boolean}
+  - target: "$.components.schemas.Status.properties"
+    update:
+      dnd_end_time: {type: integer, format: int64}
+      active_channel: {type: string}
+  # --- shapes the Dart generator cannot express ---
+  - target: "$.paths['/api/v4/custom_profile_attributes/fields'].post.requestBody.content['application/json'].schema.properties.attrs.properties.access_mode"
+    update: {enum: [source_only, shared_only]}
+  - target: "$.paths['/api/v4/custom_profile_attributes/fields'].post.requestBody.content['application/json'].schema.properties.attrs.properties.access_mode.default"
+    remove: true
+  - target: "$.paths['/api/v4/custom_profile_attributes/fields/{field_id}'].patch.requestBody.content['application/json'].schema.properties.attrs.properties.access_mode"
+    update: {enum: [source_only, shared_only]}
+  - target: "$.paths['/api/v4/custom_profile_attributes/fields/{field_id}'].patch.requestBody.content['application/json'].schema.properties.attrs.properties.access_mode.default"
+    remove: true
+  - target: "$.paths['/api/v4/channels/{channel_id}/members'].put.responses['200'].content"
+    remove: true
+  - target: "$.paths['/api/v4/channels/{channel_id}/members'].put.responses['200']"
+    update:
+      content:
+        application/x-ndjson:
+          schema: {type: string}
+  # --- more fields the server sends (drift report) ---
+  - target: "$.components.schemas.FileInfo.properties"
+    update:
+      mini_preview: {type: string, format: byte, description: "16x16 JPEG, base64"}
+      archived: {type: boolean}
+      channel_id: {type: string}
+      remote_id: {type: string}
+  - target: "$.components.schemas.Reaction.properties"
+    update:
+      channel_id: {type: string}
+      update_at: {type: integer, format: int64}
+      delete_at: {type: integer, format: int64}
+      remote_id: {type: string}
+  - target: "$.components.schemas.TeamMember.properties"
+    update:
+      scheme_guest: {type: boolean}
