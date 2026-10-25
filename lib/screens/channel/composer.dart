@@ -8,6 +8,7 @@ import 'package:image_picker_android/image_picker_android.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
@@ -22,6 +23,25 @@ import 'package:matterleast/ui/user_avatar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'composer.g.dart';
+
+/// Whether messages can be marked important or urgent, and whether they
+/// can ask for acknowledgement.
+@riverpod
+Stream<({bool priority, bool acknowledgements})> postPriorityOptions(
+  Ref ref,
+  String url,
+) async* {
+  final db = (await ref.watch(serverSessionProvider(url).future)).db;
+  yield* db
+      .watchConfigJson('client_config')
+      .map(
+        (c) => (
+          priority: c['PostPriority'] == 'true',
+          acknowledgements: c['PostAcknowledgements'] == 'true',
+        ),
+      )
+      .distinct();
+}
 
 /// The longest message the server takes.
 @riverpod
@@ -153,6 +173,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final length = value.text.text.length;
     final editing = value.editing;
     final files = value.attachments;
+    final options = ref.watch(postPriorityOptionsProvider(widget.url)).value;
     final canSend =
         (value.text.text.trim().isNotEmpty ||
             files.any((a) => a.info != null)) &&
@@ -218,6 +239,19 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                     )
                   else
                     const SizedBox(width: Spacing.md),
+                  if (editing == null &&
+                      widget.rootId.isEmpty &&
+                      (options?.priority ?? false))
+                    IconButton(
+                      tooltip: 'Message priority',
+                      isSelected: value.priority != null,
+                      onPressed: () => _pickPriority(options!.acknowledgements),
+                      icon: Icon(switch (value.priority?.priority) {
+                        api.PostPriorityPriority.urgent => Icons.error,
+                        api.PostPriorityPriority.important => Icons.info,
+                        _ => Icons.flag_outlined,
+                      }),
+                    ),
                   Expanded(
                     child: TextField(
                       controller: _text,
@@ -261,6 +295,22 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _pickPriority(bool acknowledgements) async {
+    final draft = ref.read(_provider.notifier);
+    final picked = await showModalBottomSheet<api.PostPriority>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => PriorityPicker(
+        initial: ref.read(_provider).priority,
+        acknowledgements: acknowledgements,
+      ),
+    );
+    if (picked == null) return;
+    draft.setPriority(
+      picked.priority == api.PostPriorityPriority.empty ? null : picked,
     );
   }
 
@@ -362,6 +412,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         rootId: rootId,
         message: message,
         files: files,
+        priority: value.priority,
       );
     } on ApiError catch (e) {
       final text = switch (e) {
@@ -371,6 +422,88 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       messenger.showSnackBar(SnackBar(content: Text(text)));
     }
   }
+}
+
+/// Standard, important or urgent, and whether to ask for acknowledgement.
+class PriorityPicker extends StatefulWidget {
+  const PriorityPicker({
+    required this.initial,
+    required this.acknowledgements,
+    super.key,
+  });
+
+  final api.PostPriority? initial;
+  final bool acknowledgements;
+
+  @override
+  State<PriorityPicker> createState() => _PriorityPickerState();
+}
+
+class _PriorityPickerState extends State<PriorityPicker> {
+  late var _level = widget.initial?.priority ?? api.PostPriorityPriority.empty;
+  late var _ack = widget.initial?.requestedAck ?? false;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Message priority',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+        ),
+        RadioGroup<api.PostPriorityPriority>(
+          groupValue: _level,
+          onChanged: (v) => setState(() => _level = v ?? _level),
+          child: Column(
+            children: [
+              for (final (level, icon, label) in const [
+                (
+                  api.PostPriorityPriority.empty,
+                  Icons.flag_outlined,
+                  'Standard',
+                ),
+                (api.PostPriorityPriority.important, Icons.info, 'Important'),
+                (api.PostPriorityPriority.urgent, Icons.error, 'Urgent'),
+              ])
+                RadioListTile(
+                  value: level,
+                  secondary: Icon(icon),
+                  title: Text(label),
+                ),
+            ],
+          ),
+        ),
+        if (widget.acknowledgements)
+          SwitchListTile(
+            value: _ack,
+            onChanged: (v) => setState(() => _ack = v),
+            title: const Text('Request acknowledgement'),
+          ),
+        Padding(
+          padding: const EdgeInsets.all(Spacing.lg),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).pop(
+                api.PostPriority(
+                  priority: _level,
+                  requestedAck: widget.acknowledgements && _ack,
+                ),
+              ),
+              child: const Text('Apply'),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 enum PickSource { camera, media, files }

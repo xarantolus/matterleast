@@ -69,9 +69,14 @@ class ComposerValue {
     this.editing,
     this.suggestions = const [],
     this.attachments = const [],
+    this.priority,
   });
 
   final TextEditingValue text;
+
+  /// Important or urgent, with acknowledgement asked for; null for a
+  /// standard message.
+  final api.PostPriority? priority;
   final List<Attachment> attachments;
 
   /// The post being edited, in place of a new message.
@@ -141,6 +146,7 @@ class ComposerDraft extends _$ComposerDraft {
       editing: editing,
       suggestions: state.suggestions,
       attachments: state.attachments,
+      priority: state.priority,
     );
     if (typed) _suggest(value);
     if (editing != null) return;
@@ -178,6 +184,7 @@ class ComposerDraft extends _$ComposerDraft {
       editing: state.editing,
       suggestions: state.suggestions,
       attachments: attachments,
+      priority: state.priority,
     );
   }
 
@@ -287,6 +294,7 @@ class ComposerDraft extends _$ComposerDraft {
       editing: state.editing,
       suggestions: found,
       attachments: state.attachments,
+      priority: state.priority,
     );
   }
 
@@ -317,6 +325,7 @@ class ComposerDraft extends _$ComposerDraft {
       ),
       editing: post,
       attachments: state.attachments,
+      priority: state.priority,
     );
   }
 
@@ -324,12 +333,22 @@ class ComposerDraft extends _$ComposerDraft {
     state = ComposerValue(
       text: _draftWhileEditing ?? TextEditingValue.empty,
       attachments: state.attachments,
+      priority: state.priority,
     );
     _draftWhileEditing = null;
   }
 
+  void setPriority(api.PostPriority? priority) => state = ComposerValue(
+    text: state.text,
+    editing: state.editing,
+    suggestions: state.suggestions,
+    attachments: state.attachments,
+    priority: priority,
+  );
+
   /// Empties the field once its message went out.
   void sent() {
+    setPriority(null);
     _setAttachments(const []);
     changed(TextEditingValue.empty);
   }
