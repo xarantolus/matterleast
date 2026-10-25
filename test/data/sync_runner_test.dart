@@ -116,4 +116,18 @@ void main() {
     expect(ran, ['other']);
     runner.close();
   });
+
+  test('quiet jobs neither show as refreshing nor report failure', () async {
+    final runner = SyncRunner();
+    final gate = Completer<void>();
+    final quiet = runner.enqueue(
+      SyncJob(key: 'presence', visible: false, run: () => gate.future),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(runner.status.value, isA<SyncIdle>());
+    gate.completeError(const Unreachable());
+    await expectLater(quiet, throwsA(isA<Unreachable>()));
+    expect(runner.status.value, isA<SyncIdle>());
+    runner.close();
+  });
 }

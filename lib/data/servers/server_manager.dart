@@ -9,7 +9,6 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
-import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/server_url.dart';
 import 'package:matterleast/log.dart';
 import 'package:path/path.dart' as p;
@@ -62,29 +61,36 @@ class ServerManager {
     }
   }
 
-  /// Refreshes the signed-in user of every signed-in server. Also how a
-  /// server that revoked the session is noticed at launch.
-  Future<void> refreshSignedIn() async {
-    for (final server in await _db.allServers()) {
-      if (server.lastActiveAt == null) continue;
-      final session = await this.session(server.url);
-      unawaited(
-        session.runner
-            .enqueue(
-              SyncJob(
-                key: 'me',
-                run: () async => session.store.applyMe(
-                  await session.api.coalesced(
-                    'me',
-                    () => session.api.client.users.getUser(userId: 'me'),
-                  ),
-                ),
-              ),
-            )
-            .catchError((Object e) {
-              Log.warn('servers', 'Refreshing the user failed', e);
-            }),
-      );
+  var _foreground = false;
+
+  static const stagger = Duration(seconds: 5);
+
+  /// The app was shown or hidden. Signed-in servers connect while it is
+  /// shown, the most recently used first and the others 5 s apart, and go
+  /// quiet a little after it is hidden. Connecting also refreshes each
+  /// server's data, which is how a session revoked meanwhile is noticed.
+  Future<void> setForeground(bool foreground) async {
+    _foreground = foreground;
+    if (!foreground) {
+      for (final pending in _sessions.values.toList()) {
+        (await pending).connection.background();
+      }
+      return;
+    }
+    final signedIn = [
+      for (final s in await _db.allServers())
+        if (s.lastActiveAt != null) s,
+    ]..sort((a, b) => b.lastActiveAt!.compareTo(a.lastActiveAt!));
+    for (final (i, server) in signedIn.indexed) {
+      if (!_foreground) return;
+      final ServerSession session;
+      try {
+        session = await this.session(server.url);
+      } on Object catch (e) {
+        Log.warn('servers', 'Opening a server failed', e);
+        continue;
+      }
+      session.connection.foreground(delay: stagger * i);
     }
   }
 
@@ -150,6 +156,7 @@ class ServerManager {
     await session.store.applyMe(signedIn.me);
     await session.store.applyConfig('client_config', server.config);
     await session.store.applyConfig('license', server.license);
+    if (_foreground) session.connection.foreground();
   }
 
   Future<int> _nextSortOrder() async {

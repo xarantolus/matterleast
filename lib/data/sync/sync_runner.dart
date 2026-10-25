@@ -41,6 +41,7 @@ class SyncJob {
     this.priority = SyncPriority.p1,
     this.timeout = const Duration(seconds: 30),
     this.owner,
+    this.visible = true,
   });
 
   /// Jobs with the same key coalesce: a second enqueue while one is queued
@@ -53,6 +54,11 @@ class SyncJob {
   /// Screen or feature that wants the result; [SyncRunner.cancelOwner] drops
   /// its queued jobs when the screen goes away.
   final Object? owner;
+
+  /// Shows as refreshing and reports failures in [SyncRunner.status]; off
+  /// for small periodic work such as presence, so the progress bar doesn't
+  /// blink every minute.
+  final bool visible;
 }
 
 class _Queued {
@@ -139,8 +145,10 @@ class SyncRunner {
         job.timeout,
         onTimeout: () => throw const RequestTimeout(),
       );
-      _lastSuccess = _clock();
-      _failed = null;
+      if (job.visible) {
+        _lastSuccess = _clock();
+        _failed = null;
+      }
       queued.completer.complete();
     } on Object catch (error, stack) {
       final cause = error is ApiError
@@ -149,7 +157,7 @@ class SyncRunner {
       Log.warn('sync', 'job ${job.key} failed', error);
       if (error is! ApiError) Log.warn('sync', stack.toString());
       queued.completer.completeError(cause, stack);
-      _failed = cause;
+      if (job.visible) _failed = cause;
     } finally {
       _running.remove(job.key);
       _publish();
@@ -161,11 +169,10 @@ class SyncRunner {
 
   void _publish() {
     if (_closed) return;
-    if (_running.isNotEmpty || _queue.isNotEmpty) {
-      _status.value = SyncRefreshing(
-        running: _running.length,
-        queued: _queue.length,
-      );
+    final running = _running.values.where((q) => q.job.visible).length;
+    final queued = _queue.where((q) => q.job.visible).length;
+    if (running + queued > 0) {
+      _status.value = SyncRefreshing(running: running, queued: queued);
     } else if (_failed case final cause?) {
       _status.value = SyncFailed(
         cause: cause,

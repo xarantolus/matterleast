@@ -158,7 +158,7 @@ void main() {
       server.handle = (_) =>
           error(401, 'api.context.session_expired.app_error');
       final ended = manager.sessionEnded.first;
-      await manager.refreshSignedIn();
+      await manager.setForeground(true);
       expect((await ended).url, url);
       expect(await tokens.read(url), isNull);
     },

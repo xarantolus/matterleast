@@ -681,7 +681,12 @@ class ServerStore {
       return;
     }
     final channelId = post.channelId!;
+    final known = await (db.select(
+      db.posts,
+    )..where((p) => p.id.equals(post.id!))).getSingleOrNull();
     await _upsertPosts([post]);
+    // A replayed event (after a resumed connection) is already counted.
+    if (known != null) return;
     final ranges = await rangesFor('channel', channelId);
     await _writeRanges(
       'channel',

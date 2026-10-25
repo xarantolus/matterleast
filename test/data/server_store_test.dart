@@ -280,6 +280,20 @@ void main() {
       );
     });
 
+    test('a replayed post is not counted twice', () async {
+      for (var i = 0; i < 2; i++) {
+        await store.applyLivePost(
+          post('p2', createAt: 200),
+          fromSelf: false,
+          mentionsMe: true,
+        );
+      }
+      final channel = await db.select(db.channels).getSingle();
+      final mine = await db.select(db.myChannels).getSingle();
+      expect(channel.totalMsgCount - mine.msgCount, 1);
+      expect(mine.mentionCount, 1);
+    });
+
     test("someone else's post makes the channel unread", () async {
       await store.applyLivePost(
         post('p2', createAt: 200),

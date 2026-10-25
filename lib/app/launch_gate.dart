@@ -18,14 +18,26 @@ class LaunchGate extends ConsumerStatefulWidget {
 }
 
 class _LaunchGateState extends ConsumerState<LaunchGate> {
+  late final AppLifecycleListener _lifecycle;
+
   @override
   void initState() {
     super.initState();
+    final manager = ref.read(serverManagerProvider);
     // After the first frame, so the token read never delays painting.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final manager = ref.read(serverManagerProvider);
-      unawaited(manager.checkTokens().then((_) => manager.refreshSignedIn()));
+      unawaited(manager.checkTokens().then((_) => manager.setForeground(true)));
     });
+    _lifecycle = AppLifecycleListener(
+      onShow: () => unawaited(manager.setForeground(true)),
+      onHide: () => unawaited(manager.setForeground(false)),
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
   }
 
   void _showSignedOut(ServerEntry server) {
