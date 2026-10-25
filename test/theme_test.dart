@@ -29,6 +29,49 @@ void main() {
     }
   });
 
+  testWidgets('app bar icons, search included, clear 4.5:1 on the brand', (
+    tester,
+  ) async {
+    for (final theme in themes) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            appBar: AppBar(
+              leading: const BackButton(),
+              actions: [
+                SearchAnchor(
+                  builder: (_, _) => IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.search),
+                  ),
+                  suggestionsBuilder: (_, _) => const [],
+                ),
+                IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+              ],
+            ),
+          ),
+        ),
+      );
+      for (final icon in [Icons.search, Icons.add, Icons.arrow_back]) {
+        final glyph = tester.widget<RichText>(
+          find.descendant(
+            of: find.byIcon(icon),
+            matching: find.byType(RichText),
+          ),
+        );
+        expect(
+          contrast(
+            glyph.text.style!.color!,
+            theme.appBarTheme.backgroundColor!,
+          ),
+          greaterThanOrEqualTo(4.5),
+          reason: '$icon in the ${theme.brightness.name} theme',
+        );
+      }
+    }
+  });
+
   test('every small-text pair clears 4.5:1', () {
     for (final theme in themes) {
       final tokens = theme.extension<AppTokens>()!;
