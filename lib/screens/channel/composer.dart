@@ -22,8 +22,8 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
+import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/tokens.dart';
-import 'package:matterleast/ui/user_avatar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'composer.g.dart';
@@ -721,58 +721,61 @@ class SuggestionList extends ConsumerWidget {
           itemCount: suggestions.length,
           itemBuilder: (context, i) {
             final s = suggestions[i];
-            final (leading, title, subtitle) = switch (s) {
-              UserSuggestion() => (
-                UserAvatar(
-                  serverUrl: url,
-                  userId: s.id,
-                  name: s.username,
-                  size: 32,
-                ),
-                '@${s.username}',
-                [
+            Widget row(Widget leading, String title, String subtitle) =>
+                ListTile(
+                  dense: true,
+                  leading: SizedBox(width: 32, child: Center(child: leading)),
+                  title: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: subtitle.isEmpty
+                      ? null
+                      : Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: tokens.muted),
+                        ),
+                  onTap: () => onPick(s),
+                );
+            return switch (s) {
+              UserSuggestion() => PersonTile(
+                dense: true,
+                serverUrl: url,
+                userId: s.id,
+                name: [
                   '${s.firstName} ${s.lastName}'.trim(),
                   if (s.nickname.isNotEmpty) '(${s.nickname})',
-                  if (s.outOfChannel) '· not in channel',
                 ].where((p) => p.isNotEmpty).join(' '),
+                username: s.username,
+                note: s.outOfChannel ? 'not in channel' : null,
+                onTap: () => onPick(s),
               ),
-              SpecialMention() => (
+              SpecialMention() => row(
                 const Icon(Icons.campaign_outlined),
                 '@${s.handle}',
                 s.onlineOnly
                     ? 'Notifies everyone online in this channel'
                     : 'Notifies everyone in this channel',
               ),
-              ChannelSuggestion() => (
+              ChannelSuggestion() => row(
                 Icon(s.type == 'P' ? Icons.lock_outline : Icons.tag),
                 s.displayName,
                 '~${s.name}',
               ),
-              EmojiSuggestion() => (
+              EmojiSuggestion() => row(
                 EmojiGlyph(name: s.name, size: 24, serverUrl: url),
                 ':${s.name}:',
                 '',
               ),
-              CommandSuggestion() => (
+              CommandSuggestion() => row(
                 const Icon(Icons.terminal),
                 '/${s.complete}${s.hint.isEmpty ? '' : ' ${s.hint}'}',
                 s.description,
               ),
             };
-            return ListTile(
-              dense: true,
-              leading: SizedBox(width: 32, child: Center(child: leading)),
-              title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-              subtitle: subtitle.isEmpty
-                  ? null
-                  : Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: tokens.muted),
-                    ),
-              onTap: () => onPick(s),
-            );
           },
         ),
       ),

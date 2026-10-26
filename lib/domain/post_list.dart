@@ -4,6 +4,14 @@ import 'package:matterleast/domain/system_message.dart';
 
 part 'post_list.freezed.dart';
 
+/// Someone a message shows: who reacted or replied.
+typedef PostPerson = ({
+  String id,
+  String name,
+  String username,
+  int? pictureAt,
+});
+
 /// One message as a conversation shows it.
 @freezed
 abstract class PostItem with _$PostItem {
@@ -29,8 +37,8 @@ abstract class PostItem with _$PostItem {
     /// Replies in a followed thread the reader hasn't seen.
     @Default(0) int unreadReplies,
 
-    /// Names of the people who replied, newest first, when known.
-    @Default(<String>[]) List<String> participants,
+    /// The people who replied, newest first, as far as they are known.
+    @Default(<PostPerson>[]) List<PostPerson> participants,
     @Default('') String authorUsername,
     @Default(false) bool authorIsBot,
     int? authorPictureAt,
@@ -78,7 +86,7 @@ abstract class ReactionGroup with _$ReactionGroup {
     required String emojiName,
 
     /// The people, first to react first.
-    required List<String> names,
+    required List<PostPerson> people,
 
     /// The current user is among them.
     required bool mine,
@@ -86,7 +94,7 @@ abstract class ReactionGroup with _$ReactionGroup {
 
   const ReactionGroup._();
 
-  int get count => names.length;
+  int get count => people.length;
 }
 
 /// Pure: [reactions] of one post grouped by emoji, in the order each emoji
@@ -94,7 +102,7 @@ abstract class ReactionGroup with _$ReactionGroup {
 List<ReactionGroup> groupReactions(
   List<({String userId, String emojiName, DateTime? at})> reactions, {
   required String? myUserId,
-  required String Function(String userId) nameOf,
+  required PostPerson Function(String userId) personOf,
 }) {
   final sorted = [...reactions]
     ..sort((a, b) {
@@ -102,15 +110,15 @@ List<ReactionGroup> groupReactions(
       final y = b.at?.millisecondsSinceEpoch ?? 0;
       return x.compareTo(y);
     });
-  final groups = <String, List<String>>{};
+  final groups = <String, List<PostPerson>>{};
   final mine = <String>{};
   for (final r in sorted) {
-    groups.putIfAbsent(r.emojiName, () => []).add(nameOf(r.userId));
+    groups.putIfAbsent(r.emojiName, () => []).add(personOf(r.userId));
     if (r.userId == myUserId) mine.add(r.emojiName);
   }
   return [
     for (final MapEntry(:key, :value) in groups.entries)
-      ReactionGroup(emojiName: key, names: value, mine: mine.contains(key)),
+      ReactionGroup(emojiName: key, people: value, mine: mine.contains(key)),
   ];
 }
 

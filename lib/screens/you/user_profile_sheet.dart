@@ -11,6 +11,7 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
+import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -37,13 +38,25 @@ class UserProfileSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(userProfileProvider(url, userId)).value;
-    ref.watch(profileRefreshProvider(url, userId));
+    final refresh = ref.watch(profileRefreshProvider(url, userId));
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
     if (profile == null) {
-      return const SizedBox(
+      return SizedBox(
         height: 240,
-        child: Center(child: CircularProgressIndicator()),
+        child: switch (refresh) {
+          AsyncError(:final error) when !refresh.isLoading => EmptyState(
+            icon: Icons.person_off_outlined,
+            title: "Couldn't load the profile",
+            body: requestProblemText(error, Uri.parse(url).host),
+            action: FilledButton.tonal(
+              onPressed: () =>
+                  ref.invalidate(profileRefreshProvider(url, userId)),
+              child: const Text('Retry'),
+            ),
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       );
     }
     final custom = profile.customStatus;

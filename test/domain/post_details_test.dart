@@ -68,11 +68,12 @@ void main() {
           (userId: 'me', emojiName: '+1', at: DateTime(2026, 1, 1, 0, 3)),
         ],
         myUserId: 'me',
-        nameOf: (id) => id.toUpperCase(),
+        personOf: (id) =>
+            (id: id, name: id.toUpperCase(), username: id, pictureAt: null),
       );
       expect([for (final g in groups) g.emojiName], ['+1', 'tada']);
       expect(groups.first.count, 2);
-      expect(groups.first.names, ['A', 'ME']);
+      expect([for (final p in groups.first.people) p.name], ['A', 'ME']);
       expect([for (final g in groups) g.mine], [true, false]);
     });
   });

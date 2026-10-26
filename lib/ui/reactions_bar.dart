@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
+import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The emoji people reacted with, each with how many; the user's own are
@@ -116,8 +117,17 @@ void showReactions(
                               style: context.tokens.smallCaps,
                             ),
                           ),
-                          for (final name in group.names)
-                            ListTile(title: Text(name)),
+                          for (final person in group.people)
+                            if (env == null)
+                              ListTile(title: Text(person.name))
+                            else
+                              PersonTile(
+                                serverUrl: env.server.toString(),
+                                userId: person.id,
+                                name: person.name,
+                                username: person.username,
+                                pictureUpdate: person.pictureAt,
+                              ),
                         ],
                       ),
                   ],

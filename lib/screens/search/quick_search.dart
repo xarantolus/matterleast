@@ -13,6 +13,7 @@ import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/pane_label.dart';
+import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -377,6 +378,18 @@ class SwitchTile extends StatelessWidget {
       ?item.subtitle,
     ];
     final strong = (item.unread && !item.muted) || item.mentions > 0;
+    if (item.kind == SwitchKind.person && item.userId != null) {
+      return PersonTile(
+        serverUrl: item.serverUrl,
+        userId: item.userId!,
+        name: item.title,
+        username: item.handle ?? '',
+        pictureUpdate: item.pictureUpdate,
+        status: item.status,
+        trailing: trailing,
+        onTap: onTap,
+      );
+    }
     return ListTile(
       onTap: onTap,
       leading: SizedBox.square(dimension: 40, child: _leading(context)),

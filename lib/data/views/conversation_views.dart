@@ -305,6 +305,13 @@ class ConversationViews {
       ), format);
     }
 
+    PostPerson personOf(String id) => (
+      id: id,
+      name: nameOf(id),
+      username: people[id]?.username ?? '',
+      pictureAt: people[id]?.pictureAt,
+    );
+
     return [
       for (final p in posts)
         PostItem(
@@ -331,12 +338,12 @@ class ConversationViews {
           reactions: groupReactions(
             reactionsByPost[p.id] ?? const [],
             myUserId: me,
-            nameOf: nameOf,
+            personOf: personOf,
           ),
           unreadReplies: unread[p.id] ?? 0,
           participants: [
             for (final id in participants[p.id]!)
-              if (people.containsKey(id)) nameOf(id),
+              if (people.containsKey(id)) personOf(id),
           ],
         ),
     ];

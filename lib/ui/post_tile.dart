@@ -8,6 +8,7 @@ import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/attachment_card.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/link_preview_card.dart';
@@ -75,7 +76,14 @@ class PostTile extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: Spacing.sm,
             children: [
-              Text(name, style: text.titleSmall?.copyWith(color: tokens.text)),
+              _ToProfile(
+                post: post,
+                details: details,
+                child: Text(
+                  name,
+                  style: text.titleSmall?.copyWith(color: tokens.text),
+                ),
+              ),
               if (bot) const _Tag('BOT'),
               Text(
                 _time(context, post.createAt),
@@ -144,7 +152,11 @@ class PostTile extends StatelessWidget {
             if (compact)
               const SizedBox(width: _gutter)
             else ...[
-              _Avatar(post: post, name: name, details: details),
+              _ToProfile(
+                post: post,
+                details: details,
+                child: _Avatar(post: post, name: name, details: details),
+              ),
               const SizedBox(width: Spacing.md),
             ],
             Expanded(child: body),
@@ -217,6 +229,41 @@ class _Avatar extends StatelessWidget {
       lastPictureUpdate: post.authorPictureAt,
       size: _avatarSize,
       overrideIconUrl: webhookIcon ? icon : null,
+    );
+  }
+}
+
+/// Opens the author's profile on tap; a webhook's post has no author to
+/// show.
+class _ToProfile extends StatelessWidget {
+  const _ToProfile({
+    required this.post,
+    required this.details,
+    required this.child,
+  });
+
+  final PostItem post;
+  final PostDetails details;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final env = PostEnvironment.maybeOf(context);
+    if (env == null || details.fromWebhook || post.userId.isEmpty) {
+      return child;
+    }
+    return Semantics(
+      button: true,
+      label: 'Profile',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showUserProfile(
+          context,
+          url: env.server.toString(),
+          userId: post.userId,
+        ),
+        child: child,
+      ),
     );
   }
 }
@@ -407,7 +454,7 @@ class _ThreadBar extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  _Participants(names: post.participants.take(3).toList()),
+                  _Participants(people: post.participants.take(3).toList()),
                   Expanded(
                     child: Text.rich(
                       TextSpan(
@@ -452,25 +499,26 @@ class _ThreadBar extends ConsumerWidget {
 
 /// Up to three people who replied, overlapping like a stack of cards.
 class _Participants extends StatelessWidget {
-  const _Participants({required this.names});
+  const _Participants({required this.people});
 
-  final List<String> names;
+  final List<PostPerson> people;
 
   static const _size = 24.0;
   static const _step = 16.0;
 
   @override
   Widget build(BuildContext context) {
-    if (names.isEmpty) return const SizedBox.shrink();
+    if (people.isEmpty) return const SizedBox.shrink();
     final page = context.tokens.panel;
+    final server = PostEnvironment.maybeOf(context)?.server.toString();
     return Padding(
       padding: const EdgeInsets.only(right: Spacing.sm),
       child: SizedBox(
-        width: _size + _step * (names.length - 1),
+        width: _size + _step * (people.length - 1),
         height: _size,
         child: Stack(
           children: [
-            for (final (i, name) in names.indexed)
+            for (final (i, person) in people.indexed)
               Positioned(
                 left: i * _step,
                 child: DecoratedBox(
@@ -478,7 +526,19 @@ class _Participants extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: page, width: 1.5),
                   ),
-                  child: InitialsBadge(name: name, size: _size, round: true),
+                  child: server == null
+                      ? InitialsBadge(
+                          name: person.name,
+                          size: _size,
+                          round: true,
+                        )
+                      : UserAvatar(
+                          serverUrl: server,
+                          userId: person.id,
+                          name: person.name,
+                          lastPictureUpdate: person.pictureAt,
+                          size: _size,
+                        ),
                 ),
               ),
           ],
