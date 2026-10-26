@@ -4,6 +4,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/data/actions/drafts.dart';
 import 'package:matterleast/data/actions/suggestions.dart';
+import 'package:matterleast/data/dialog_clock.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -232,7 +233,11 @@ class ComposerActions {
       return const DialogSubmitted();
     }
     if (!cancelled) {
-      final errors = dialogErrors(dialog.dialog, values);
+      final errors = dialogErrors(
+        dialog.dialog,
+        values,
+        clockFor: clockForElement,
+      );
       if (errors.isNotEmpty) return DialogRejected(fieldErrors: errors);
     }
     final answer = await session.api.call(

@@ -39,7 +39,24 @@ DialogElement _$DialogElementFromJson(Map<String, dynamic> json) =>
       maxLength: const LenientInt().fromJson(json['max_length']),
       dataSource: const LenientString().fromJson(json['data_source']),
       options: json['options'] == null ? const [] : _options(json['options']),
+      datetimeConfig: _datetimeConfig(json['datetime_config']),
+      legacyMinDate: const LenientString().fromJson(json['min_date']),
+      legacyMaxDate: const LenientString().fromJson(json['max_date']),
+      legacyTimeInterval: const LenientInt().fromJson(json['time_interval']),
     );
+
+DialogDateTimeConfig _$DialogDateTimeConfigFromJson(
+  Map<String, dynamic> json,
+) => DialogDateTimeConfig(
+  minDate: const LenientString().fromJson(json['min_date']),
+  maxDate: const LenientString().fromJson(json['max_date']),
+  timeInterval: const LenientInt().fromJson(json['time_interval']),
+  locationTimezone: const LenientString().fromJson(json['location_timezone']),
+  manualTimeEntry: const LenientBool().fromJson(json['manual_time_entry']),
+  allowManualTimeEntry: const LenientBool().fromJson(
+    json['allow_manual_time_entry'],
+  ),
+);
 
 DialogOption _$DialogOptionFromJson(Map<String, dynamic> json) => DialogOption(
   text: json['text'] == null ? '' : _string(json['text']),

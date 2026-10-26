@@ -72,6 +72,12 @@ enum DialogElementType {
   select,
   bool,
   radio,
+
+  /// A calendar date, sent as `YYYY-MM-DD`.
+  date,
+
+  /// A moment, sent as UTC `YYYY-MM-DDTHH:MM:SSZ`.
+  datetime,
   unknown;
 
   static DialogElementType parse(Object? json) => values.firstWhere(
@@ -95,6 +101,10 @@ class DialogElement {
     this.maxLength,
     this.dataSource,
     this.options = const [],
+    this.datetimeConfig,
+    this.legacyMinDate,
+    this.legacyMaxDate,
+    this.legacyTimeInterval,
   });
 
   factory DialogElement.fromJson(Map<String, Object?> json) =>
@@ -131,6 +141,67 @@ class DialogElement {
   final String? dataSource;
   @JsonKey(fromJson: _options)
   final List<DialogOption> options;
+
+  @JsonKey(fromJson: _datetimeConfig)
+  final DialogDateTimeConfig? datetimeConfig;
+
+  // Servers before 12.0 sent these next to the other fields.
+  @LenientString()
+  @JsonKey(name: 'min_date')
+  final String? legacyMinDate;
+  @LenientString()
+  @JsonKey(name: 'max_date')
+  final String? legacyMaxDate;
+  @LenientInt()
+  @JsonKey(name: 'time_interval')
+  final int? legacyTimeInterval;
+
+  /// The earliest date or moment allowed: ISO, or relative like `today`,
+  /// `+2d` or `-3H`.
+  String? get minDate => datetimeConfig?.minDate ?? legacyMinDate;
+  String? get maxDate => datetimeConfig?.maxDate ?? legacyMaxDate;
+
+  /// Minutes between the times offered, 60 unless set.
+  int get timeInterval {
+    final minutes = datetimeConfig?.timeInterval ?? legacyTimeInterval ?? 0;
+    return minutes > 0 && minutes <= 1440 && 1440 % minutes == 0 ? minutes : 60;
+  }
+}
+
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+class DialogDateTimeConfig {
+  const DialogDateTimeConfig({
+    this.minDate,
+    this.maxDate,
+    this.timeInterval,
+    this.locationTimezone,
+    this.manualTimeEntry,
+    this.allowManualTimeEntry,
+  });
+
+  factory DialogDateTimeConfig.fromJson(Map<String, Object?> json) =>
+      _$DialogDateTimeConfigFromJson(json);
+
+  @LenientString()
+  final String? minDate;
+  @LenientString()
+  final String? maxDate;
+  @LenientInt()
+  final int? timeInterval;
+
+  /// IANA zone the times are shown and picked in, instead of the phone's.
+  @LenientString()
+  final String? locationTimezone;
+
+  /// Any minute may be picked, not only the [timeInterval] steps.
+  @LenientBool()
+  final bool? manualTimeEntry;
+
+  /// The name before 12.0.
+  @LenientBool()
+  final bool? allowManualTimeEntry;
+
+  bool get anyMinute => manualTimeEntry ?? allowManualTimeEntry ?? false;
 }
 
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
@@ -157,6 +228,9 @@ List<DialogElement> _elements(Object? json) => [
     for (final e in json)
       if (e is Map<String, Object?>) DialogElement.fromJson(e),
 ];
+
+DialogDateTimeConfig? _datetimeConfig(Object? json) =>
+    json is Map<String, Object?> ? DialogDateTimeConfig.fromJson(json) : null;
 
 List<DialogOption> _options(Object? json) => [
   if (json is List)

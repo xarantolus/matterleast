@@ -8,6 +8,7 @@ import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/domain/dialog_dates.dart';
 import 'package:matterleast/domain/dialog_rules.dart';
 import 'package:matterleast/domain/typing.dart';
 
@@ -92,6 +93,7 @@ void main() {
           'type': 'datetime',
           'optional': true,
         },
+        {'name': 'grid', 'type': 'checkbox_matrix', 'optional': true},
       ],
     },
   };
@@ -129,6 +131,7 @@ void main() {
         DialogElementType.text,
         DialogElementType.textarea,
         DialogElementType.bool,
+        DialogElementType.datetime,
         DialogElementType.unknown,
       ],
     );
@@ -221,13 +224,24 @@ void main() {
         {'name': 'c', 'type': 'text', 'min_length': 3},
       ],
     });
-    expect(dialogErrors(form, {'a': 'y', 'b': 'ftp://x', 'c': 'ab'}), {
-      'a': 'Pick one of the options.',
-      'b': 'Must be a valid URL.',
-      'c': 'Must be at least 3 characters.',
-    });
     expect(
-      dialogErrors(form, {'a': 'x', 'b': 'https://x.invalid', 'c': 'abc'}),
+      dialogErrors(form, {
+        'a': 'y',
+        'b': 'ftp://x',
+        'c': 'ab',
+      }, clockFor: (_) => DialogClock(now: DateTime.utc(2026, 10, 26))),
+      {
+        'a': 'Pick one of the options.',
+        'b': 'Must be a valid URL.',
+        'c': 'Must be at least 3 characters.',
+      },
+    );
+    expect(
+      dialogErrors(form, {
+        'a': 'x',
+        'b': 'https://x.invalid',
+        'c': 'abc',
+      }, clockFor: (_) => DialogClock(now: DateTime.utc(2026, 10, 26))),
       isEmpty,
     );
   });
