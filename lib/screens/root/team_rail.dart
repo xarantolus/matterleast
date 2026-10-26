@@ -157,8 +157,12 @@ class _TeamBadge extends StatelessWidget {
     );
     // The open team's counts are in its list already.
     if (selected) return icon;
+    // The button's tooltip says the count in words; a bare "1" would
+    // replace it.
     if (team.mentions > 0) {
-      return Badge.count(count: team.mentions, child: icon);
+      return ExcludeSemantics(
+        child: Badge.count(count: team.mentions, child: icon),
+      );
     }
     if (team.unread) {
       return Badge(

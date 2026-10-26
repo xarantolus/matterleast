@@ -51,7 +51,10 @@ void main() {
   ) async {
     await _show(
       tester,
-      MessagePreviewTile(item: _mention(team: 'Harbour'), onTap: () {}),
+      MessagePreviewTile(
+        item: _mention(team: 'Harbour'),
+        onTap: () {},
+      ),
     );
     expect(find.text('#Town Square · Harbour'), findsOneWidget);
     expect(find.text('wren: Lunch at noon?'), findsOneWidget);

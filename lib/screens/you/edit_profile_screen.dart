@@ -189,7 +189,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   child: SizedBox.square(
                     dimension: 112,
                     child: picture != null
-                        ? Image.file(picture, fit: BoxFit.cover)
+                        ? Image.file(
+                            picture,
+                            fit: BoxFit.cover,
+                            semanticLabel: 'New profile picture',
+                          )
                         : UserAvatar(
                             serverUrl: widget.url,
                             userId: widget.profile.id,
