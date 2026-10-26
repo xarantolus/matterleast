@@ -70,6 +70,21 @@ class NotifyProps {
 
   bool get firstName => raw['first_name'] == 'true';
 
+  /// Notification emails, where the server sends them.
+  bool get email => raw['email'] != 'false';
+
+  /// The automatic reply to direct messages is on; the server then shows
+  /// the user as out of office.
+  bool get autoReply => raw['auto_responder_active'] == 'true';
+
+  String get autoReplyMessage => switch (raw['auto_responder_message']) {
+    final message? when message.trim().isNotEmpty => message,
+    _ => defaultAutoReply,
+  };
+
+  static const defaultAutoReply =
+      'Hello, I am out of office and unable to respond to messages.';
+
   /// Extra words that count as a mention, without the username ones the
   /// server always adds.
   List<String> mentionKeys(String username) => [
@@ -93,6 +108,18 @@ class NotifyProps {
   NotifyProps withChannelWide(bool on) => withValue('channel', '$on');
 
   NotifyProps withFirstName(bool on) => withValue('first_name', '$on');
+
+  NotifyProps withEmail(bool on) => withValue('email', '$on');
+
+  /// The automatic reply switched [on], always with a message so the
+  /// server has one to send.
+  NotifyProps withAutoReply(bool on, [String? message]) => NotifyProps({
+    ...raw,
+    'auto_responder_active': '$on',
+    'auto_responder_message': (message ?? autoReplyMessage).trim().isEmpty
+        ? defaultAutoReply
+        : (message ?? autoReplyMessage).trim(),
+  });
 
   NotifyProps withMentionKeys(String username, Iterable<String> keys) {
     final kept = (raw['mention_keys'] ?? '')

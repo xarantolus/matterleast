@@ -254,4 +254,30 @@ void main() {
       isFalse,
     );
   });
+
+  test('About names the server version, with the build only when it adds '
+      'something', () {
+    expect(
+      features({'Version': '12.0.1', 'BuildNumber': '1234'}).versionLabel,
+      '12.0.1 (Build 1234)',
+    );
+    expect(
+      features({'Version': '12.0.1', 'BuildNumber': '12.0.1'}).versionLabel,
+      '12.0.1',
+    );
+    expect(features({'Version': '12.0.1'}).versionLabel, '12.0.1');
+    expect(features({}).versionLabel, isNull);
+  });
+
+  test('email and automatic reply settings show only where the server '
+      'offers them', () {
+    expect(features({}).emailNotifications, isFalse);
+    expect(features({}).automaticReplies, isFalse);
+    final on = features({
+      'SendEmailNotifications': 'true',
+      'ExperimentalEnableAutomaticReplies': 'true',
+    });
+    expect(on.emailNotifications, isTrue);
+    expect(on.automaticReplies, isTrue);
+  });
 }

@@ -20,6 +20,9 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final server = ref.watch(settingsServerProvider);
     final version = ref.watch(appVersionProvider).value;
+    final serverVersion = server == null
+        ? null
+        : ref.watch(featuresProvider(server.url)).value?.versionLabel;
     void push(Widget page) =>
         Navigator.of(context)
             .push(MaterialPageRoute<void>(builder: (_) => page));
@@ -59,6 +62,12 @@ class SettingsPage extends ConsumerWidget {
             title: const Text('Version'),
             subtitle: Text(version ?? ''),
           ),
+          if (server != null && serverVersion != null)
+            ListTile(
+              leading: const Icon(Icons.dns_outlined),
+              title: Text('${server.displayName} version'),
+              subtitle: Text(serverVersion),
+            ),
           ListTile(
             leading: const Icon(Icons.description_outlined),
             title: const Text('Licences'),

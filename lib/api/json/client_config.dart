@@ -12,6 +12,9 @@ part 'client_config.g.dart';
 class ClientConfig {
   const ClientConfig({
     this.version,
+    this.buildNumber,
+    this.sendEmailNotifications,
+    this.experimentalEnableAutomaticReplies,
     this.siteName,
     this.diagnosticId,
     this.enableSignInWithEmail,
@@ -87,6 +90,12 @@ class ClientConfig {
 
   @LenientString()
   final String? version;
+  @LenientString()
+  final String? buildNumber;
+  @LenientBool()
+  final bool? sendEmailNotifications;
+  @LenientBool()
+  final bool? experimentalEnableAutomaticReplies;
   @LenientString()
   final String? siteName;
   @LenientString()

@@ -35,6 +35,9 @@ abstract class ServerFeatures with _$ServerFeatures {
     /// Such as `12.0.1`; empty when the server didn't say.
     @Default('') String version,
 
+    /// The build the server reports; often the same as [version].
+    @Default('') String buildNumber,
+
     /// `disabled`, `default_on`, `default_off` or `always_on`.
     String? collapsedThreads,
     String? nameDisplay,
@@ -96,6 +99,12 @@ abstract class ServerFeatures with _$ServerFeatures {
     /// The default channel takes posts from admins only.
     @Default(false) bool townSquareReadOnly,
 
+    /// The server sends notification emails.
+    @Default(false) bool emailNotifications,
+
+    /// People can set an automatic reply to direct messages.
+    @Default(false) bool automaticReplies,
+
     /// Messages can be scheduled to send later.
     @Default(false) bool scheduledPosts,
 
@@ -133,6 +142,14 @@ abstract class ServerFeatures with _$ServerFeatures {
 
   /// Whether the server runs [major].[minor].[patch] or newer; false when
   /// the version is unknown.
+  /// Such as `12.0.1 (Build 1234)`, or just the version when the build
+  /// says nothing more; null when the server didn't say.
+  String? get versionLabel {
+    if (version.isEmpty) return null;
+    if (buildNumber.isEmpty || buildNumber == version) return version;
+    return '$version (Build $buildNumber)';
+  }
+
   bool atLeast(int major, int minor, [int patch = 0]) =>
       (compareVersions(version, (major, minor, patch)) ?? -1) >= 0;
 
@@ -181,6 +198,7 @@ ServerFeatures serverFeatures({
   final burnSeconds = config.burnOnReadDurationSeconds;
   return ServerFeatures(
     version: config.version?.trim() ?? '',
+    buildNumber: config.buildNumber?.trim() ?? '',
     collapsedThreads: config.collapsedThreads,
     nameDisplay: config.teammateNameDisplay,
     nameDisplayLocked:
@@ -245,6 +263,8 @@ ServerFeatures serverFeatures({
         ? Duration(seconds: editLimit)
         : null,
     confirmChannelMentions: config.enableConfirmNotificationsToChannel == true,
+    emailNotifications: config.sendEmailNotifications == true,
+    automaticReplies: config.experimentalEnableAutomaticReplies == true,
     scheduledPosts:
         licensed &&
         config.scheduledPosts == true &&

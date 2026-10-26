@@ -74,6 +74,35 @@ void main() {
     expect((await storedProps()).push, PushLevel.all);
   });
 
+  test('email off and an automatic reply with its message reach the '
+      'server, keeping the other settings', () async {
+    await actions.refreshNotifyProps();
+    final props = await storedProps();
+    expect(props.email, isTrue);
+    expect(props.autoReply, isFalse);
+    expect(props.autoReplyMessage, NotifyProps.defaultAutoReply);
+
+    await actions.saveNotifyProps(props, props.withEmail(false));
+    expect((server.seen.last.body['notify_props']! as Map)['email'], 'false');
+    final emailOff = await storedProps();
+    expect(emailOff.email, isFalse);
+    await actions.saveNotifyProps(
+      emailOff,
+      emailOff.withAutoReply(true, '  Back on Monday.  '),
+    );
+
+    final sent = server.seen.last.body['notify_props']! as Map;
+    expect(sent['auto_responder_active'], 'true');
+    expect(sent['auto_responder_message'], 'Back on Monday.');
+    expect(sent['push'], 'mention');
+    final after = await storedProps();
+    expect(after.autoReply, isTrue);
+    expect(
+      after.withAutoReply(true, '   ').autoReplyMessage,
+      NotifyProps.defaultAutoReply,
+    );
+  });
+
   test('saved mention words reach the Mentions search at once', () async {
     await actions.refreshNotifyProps();
     expect(

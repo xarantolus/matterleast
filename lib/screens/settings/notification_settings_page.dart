@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/settings/phone_notifications.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
@@ -49,6 +50,7 @@ class _NotificationSettingsPageState
     final props = ref.watch(notifySettingsProvider(_url)).value;
     final refresh = ref.watch(notifySettingsRefreshProvider(_url));
     final me = ref.watch(currentUserProvider(_url)).value;
+    final features = ref.watch(featuresProvider(_url)).value;
     final shown = props != null && !props.isEmpty;
     return Scaffold(
       appBar: AppBar(
@@ -56,7 +58,7 @@ class _NotificationSettingsPageState
         bottom: ProgressSlot(active: _saving || (shown && refresh.isLoading)),
       ),
       body: shown
-          ? _list(context, props, me?.username ?? '')
+          ? _list(context, props, me?.username ?? '', features)
           : refresh.hasError && !refresh.isLoading
           ? EmptyState(
               icon: Icons.cloud_off_outlined,
@@ -72,7 +74,12 @@ class _NotificationSettingsPageState
     );
   }
 
-  Widget _list(BuildContext context, NotifyProps props, String username) {
+  Widget _list(
+    BuildContext context,
+    NotifyProps props,
+    String username,
+    ServerFeatures? features,
+  ) {
     final keys = props.mentionKeys(username);
     final enabled = !_saving;
     return ListView(
@@ -143,7 +150,11 @@ class _NotificationSettingsPageState
           onTap: () async {
             final text = await showDialog<String>(
               context: context,
-              builder: (_) => _MentionKeysDialog(initial: keys.join(', ')),
+              builder: (_) => _TextDialog(
+                title: 'Words that mention you',
+                initial: keys.join(', '),
+                helper: 'Separate words with commas',
+              ),
             );
             if (text == null) return;
             await _save(
@@ -152,21 +163,73 @@ class _NotificationSettingsPageState
             );
           },
         ),
+        if (features?.emailNotifications ?? false) ...[
+          const SettingsHeader('Email'),
+          SwitchListTile(
+            title: const Text('Email notifications'),
+            subtitle: const Text(
+              'Mentions and direct messages while you are away or offline',
+            ),
+            value: props.email,
+            onChanged: enabled
+                ? (on) => _save(props, props.withEmail(on))
+                : null,
+          ),
+        ],
+        if (features?.automaticReplies ?? false) ...[
+          const SettingsHeader('Automatic replies'),
+          SwitchListTile(
+            title: const Text('Reply automatically'),
+            subtitle: const Text(
+              'Answers direct messages for you and sets your status to out '
+              'of office',
+            ),
+            value: props.autoReply,
+            onChanged: enabled
+                ? (on) => _save(props, props.withAutoReply(on))
+                : null,
+          ),
+          ListTile(
+            enabled: enabled,
+            title: const Text('Message'),
+            subtitle: Text(props.autoReplyMessage),
+            onTap: () async {
+              final text = await showDialog<String>(
+                context: context,
+                builder: (_) => _TextDialog(
+                  title: 'Automatic reply',
+                  initial: props.autoReplyMessage,
+                  multiline: true,
+                ),
+              );
+              if (text == null) return;
+              await _save(props, props.withAutoReply(props.autoReply, text));
+            },
+          ),
+        ],
       ],
     );
   }
 }
 
-class _MentionKeysDialog extends StatefulWidget {
-  const _MentionKeysDialog({required this.initial});
+class _TextDialog extends StatefulWidget {
+  const _TextDialog({
+    required this.title,
+    required this.initial,
+    this.helper,
+    this.multiline = false,
+  });
 
+  final String title;
   final String initial;
+  final String? helper;
+  final bool multiline;
 
   @override
-  State<_MentionKeysDialog> createState() => _MentionKeysDialogState();
+  State<_TextDialog> createState() => _TextDialogState();
 }
 
-class _MentionKeysDialogState extends State<_MentionKeysDialog> {
+class _TextDialogState extends State<_TextDialog> {
   late final _controller = TextEditingController(text: widget.initial);
 
   @override
@@ -177,15 +240,19 @@ class _MentionKeysDialogState extends State<_MentionKeysDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Words that mention you'),
+    title: Text(widget.title),
     content: TextField(
       controller: _controller,
       autofocus: true,
-      decoration: const InputDecoration(
-        helperText: 'Separate words with commas',
-        helperMaxLines: 2,
-      ),
-      onSubmitted: (text) => Navigator.of(context).pop(text),
+      minLines: widget.multiline ? 3 : 1,
+      maxLines: widget.multiline ? 6 : 1,
+      textCapitalization: widget.multiline
+          ? TextCapitalization.sentences
+          : TextCapitalization.none,
+      decoration: InputDecoration(helperText: widget.helper, helperMaxLines: 2),
+      onSubmitted: widget.multiline
+          ? null
+          : (text) => Navigator.of(context).pop(text),
     ),
     actions: [
       TextButton(

@@ -8,6 +8,13 @@ part of 'client_config.dart';
 
 ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
   version: const LenientString().fromJson(json['Version']),
+  buildNumber: const LenientString().fromJson(json['BuildNumber']),
+  sendEmailNotifications: const LenientBool().fromJson(
+    json['SendEmailNotifications'],
+  ),
+  experimentalEnableAutomaticReplies: const LenientBool().fromJson(
+    json['ExperimentalEnableAutomaticReplies'],
+  ),
   siteName: const LenientString().fromJson(json['SiteName']),
   diagnosticId: const LenientString().fromJson(json['DiagnosticId']),
   enableSignInWithEmail: const LenientBool().fromJson(
