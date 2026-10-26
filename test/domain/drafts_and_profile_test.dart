@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/drafts.dart';
+import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/profile_locks.dart';
 import 'package:matterleast/domain/server_features.dart';
 
@@ -57,7 +58,7 @@ void main() {
       channels: channels,
       myId: 'me',
       people: people,
-      nameFormat: 'full_name',
+      nameFormat: NameFormat.fullName,
     );
 
     test('newest first, named by channel or person, with a one-line '

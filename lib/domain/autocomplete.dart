@@ -1,3 +1,5 @@
+import 'package:matterleast/domain/people.dart';
+
 /// What the word at the cursor asks to complete.
 sealed class Trigger {
   const Trigger(this.start, this.prefix);
@@ -226,8 +228,8 @@ List<Suggestion> rankUsers(
   final p = prefix.toLowerCase();
   int? score(UserCandidate u) {
     if (u.username.toLowerCase().startsWith(p)) return 0;
-    final fullName = '${u.firstName} ${u.lastName}'.trim();
-    if (_startsWithWord(fullName, p) || _startsWithWord(u.nickname, p)) {
+    if (_startsWithWord(fullName(u.firstName, u.lastName), p) ||
+        _startsWithWord(u.nickname, p)) {
       return 1;
     }
     return null;

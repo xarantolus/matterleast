@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/notify_props.dart';
+import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/domain/teams.dart';
@@ -45,7 +46,7 @@ class SettingsViews {
         ),
         threadsChangeable:
             threadSetting == 'default_on' || threadSetting == 'default_off',
-        nameFormat: NameFormat.of(await db.nameFormat()),
+        nameFormat: await db.nameFormat(),
         nameFormatLocked: features.nameDisplayLocked,
       );
     }

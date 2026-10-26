@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/teams.dart';
 
 part 'channel_list.freezed.dart';
@@ -127,7 +128,7 @@ class ChannelListSource {
     this.draftChannels = const {},
     this.collapsedThreads = false,
     this.unreadThreads = 0,
-    this.nameFormat,
+    this.nameFormat = NameFormat.username,
     this.synced = true,
     this.currentChannelId,
     this.directLimit = defaultDirectLimit,
@@ -158,8 +159,7 @@ class ChannelListSource {
   final bool collapsedThreads;
   final int unreadThreads;
 
-  /// `username`, `full_name` or `nickname_full_name`.
-  final String? nameFormat;
+  final NameFormat nameFormat;
   final bool synced;
 
   /// Stays visible even when archived.
@@ -273,7 +273,7 @@ ChannelItem _item(ChannelListSource source, ChannelInput c, bool favorite) {
   ChannelInput c, {
   required String myId,
   required Map<String, PersonInput> people,
-  String? nameFormat,
+  NameFormat nameFormat = NameFormat.username,
 }) {
   var title = c.displayName;
   String? status;
@@ -379,11 +379,11 @@ void _sort(
 }
 
 /// How a person is named, by the server's or the user's name format.
-String personName(PersonInput p, String? format) {
-  final full = '${p.firstName} ${p.lastName}'.trim();
+String personName(PersonInput p, NameFormat format) {
+  final full = fullName(p.firstName, p.lastName);
   return switch (format) {
-    'nickname_full_name' when p.nickname.isNotEmpty => p.nickname,
-    'nickname_full_name' || 'full_name' when full.isNotEmpty => full,
+    NameFormat.nickname when p.nickname.isNotEmpty => p.nickname,
+    NameFormat.nickname || NameFormat.fullName when full.isNotEmpty => full,
     _ => p.username,
   };
 }

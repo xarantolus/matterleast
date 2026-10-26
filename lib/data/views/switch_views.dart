@@ -4,6 +4,7 @@ import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/views/channel_input.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 
 /// Everything one server can offer the quick switcher from its database:
@@ -138,7 +139,7 @@ List<UserRow> groupMembers(
 SwitchItem personItem(
   UserRow u,
   String serverUrl,
-  String? nameFormat, {
+  NameFormat nameFormat, {
   String? teamId,
 }) => SwitchItem(
   serverUrl: serverUrl,

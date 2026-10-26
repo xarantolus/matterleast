@@ -108,20 +108,6 @@ class NotifyProps {
   }
 }
 
-/// Teammate name display, the `display_settings/name_format` preference.
-enum NameFormat {
-  username('username', 'Username'),
-  nickname('nickname_full_name', 'Nickname, else full name'),
-  fullName('full_name', 'Full name');
-
-  const NameFormat(this.value, this.label);
-  final String value;
-  final String label;
-
-  static NameFormat of(String? value) =>
-      values.where((f) => f.value == value).firstOrNull ?? username;
-}
-
 /// Splits what the user typed into mention words.
 List<String> parseMentionKeys(String text) => [
   for (final word in text.split(RegExp('[,\\s]+')))

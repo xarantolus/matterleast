@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/preview_text.dart';
 
 part 'inbox.freezed.dart';
@@ -126,7 +127,7 @@ class InboxSource {
     this.savedIds = const [],
     this.threads = const [],
     this.collapsedThreads = false,
-    this.nameFormat,
+    this.nameFormat = NameFormat.username,
     this.known = const {},
   });
 
@@ -159,7 +160,7 @@ class InboxSource {
   /// Followed threads.
   final List<InboxThread> threads;
   final bool collapsedThreads;
-  final String? nameFormat;
+  final NameFormat nameFormat;
   final Set<InboxFilter> known;
 }
 

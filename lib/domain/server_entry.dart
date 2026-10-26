@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/domain/people.dart';
 
 part 'server_entry.freezed.dart';
 
@@ -40,9 +41,10 @@ abstract class Me with _$Me {
 
   const Me._();
 
-  String get fullName => '$firstName $lastName'.trim();
-
-  String get displayName => fullName.isNotEmpty ? fullName : username;
+  String get displayName {
+    final full = fullName(firstName, lastName);
+    return full.isNotEmpty ? full : username;
+  }
 }
 
 /// Up to two letters for an avatar or rail icon: the first letters of the

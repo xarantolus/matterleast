@@ -2,6 +2,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/notify_props.dart';
+import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 
 /// The user's account settings on one server. Each save goes to the server

@@ -1,4 +1,5 @@
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/preview_text.dart';
 
 /// A stored draft as the list reads it.
@@ -34,7 +35,7 @@ List<DraftItem> buildDraftList(
   required Map<String, ChannelInput> channels,
   required String myId,
   required Map<String, PersonInput> people,
-  String? nameFormat,
+  NameFormat nameFormat = NameFormat.username,
 }) {
   final items = <DraftItem>[];
   for (final d in drafts) {

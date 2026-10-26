@@ -5,7 +5,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme_providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/message_text_size.dart';
-import 'package:matterleast/domain/notify_props.dart';
+import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';

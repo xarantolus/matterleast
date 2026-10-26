@@ -7,6 +7,7 @@ import 'package:matterleast/data/db/millis.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.steps.dart';
 import 'package:matterleast/data/server_db/tables.dart';
+import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/teams.dart';
@@ -147,11 +148,13 @@ class ServerDatabase extends _$ServerDatabase {
 
   /// How people are named: the server's setting when locked, else the
   /// user's preference.
-  Future<String?> nameFormat() async {
+  Future<NameFormat> nameFormat() async {
     final features = await this.features();
-    if (features.nameDisplayLocked) return features.nameDisplay;
-    return await preference(Prefs.nameFormat.$1, Prefs.nameFormat.$2) ??
-        features.nameDisplay;
+    if (features.nameDisplayLocked) return NameFormat.of(features.nameDisplay);
+    return NameFormat.of(
+      await preference(Prefs.nameFormat.$1, Prefs.nameFormat.$2) ??
+          features.nameDisplay,
+    );
   }
 
   /// One preference's value as it changes; null while it isn't set.
