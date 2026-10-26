@@ -32,9 +32,8 @@ Future<Directory> _makeCertificates() async {
     'req', '-newkey', 'rsa:2048', '-nodes', '-keyout', 'leaf.key', //
     '-out', 'leaf.csr', '-subj', '/CN=127.0.0.1',
   ]);
-  File(
-    p.join(dir.path, 'san.ext'),
-  ).writeAsStringSync('subjectAltName=IP:127.0.0.1\n');
+  File(p.join(dir.path, 'san.ext'))
+      .writeAsStringSync('subjectAltName=IP:127.0.0.1\n');
   await run([
     'x509', '-req', '-in', 'leaf.csr', '-CA', 'ca.pem', '-CAkey', 'ca.key', //
     '-CAcreateserial', '-days', '30', '-out', 'leaf.pem',
@@ -143,9 +142,8 @@ void main() {
     });
 
     test('remembers the CA across restarts, only for its server', () async {
-      await TrustedAuthorities(
-        () async => store.path,
-      ).trust(url, readCa('ca.pem'));
+      await TrustedAuthorities(() async => store.path)
+          .trust(url, readCa('ca.pem'));
 
       final restarted = TrustedAuthorities(() async => store.path);
       final api = apiWith(restarted);

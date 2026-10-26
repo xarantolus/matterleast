@@ -288,6 +288,8 @@ class _ServerTile extends ConsumerWidget {
   }
 
   Future<void> _showMenu(BuildContext context, WidgetRef ref) async {
+    final address = Uri.parse(server.url);
+    final trusted = TrustedAuthorities.instance.pemFor(address) != null;
     final action = await showModalBottomSheet<_ServerAction>(
       context: context,
       showDragHandle: true,
@@ -313,19 +315,19 @@ class _ServerTile extends ConsumerWidget {
               title: const Text('Rename'),
               onTap: () => Navigator.pop(context, _ServerAction.rename),
             ),
-            if (TrustedAuthorities.instance.pemFor(Uri.parse(server.url)) ==
-                null)
-              ListTile(
-                leading: const Icon(Icons.verified_user_outlined),
-                title: const Text('Trust a certificate authority…'),
-                onTap: () => Navigator.pop(context, _ServerAction.trust),
-              )
-            else
-              ListTile(
-                leading: const Icon(Icons.remove_moderator_outlined),
-                title: const Text('Remove trusted certificate'),
-                onTap: () => Navigator.pop(context, _ServerAction.untrust),
-              ),
+            if (address.scheme == 'https')
+              trusted
+                  ? ListTile(
+                      leading: const Icon(Icons.remove_moderator_outlined),
+                      title: const Text('Remove trusted certificate'),
+                      onTap: () =>
+                          Navigator.pop(context, _ServerAction.untrust),
+                    )
+                  : ListTile(
+                      leading: const Icon(Icons.verified_user_outlined),
+                      title: const Text('Trust a certificate authority…'),
+                      onTap: () => Navigator.pop(context, _ServerAction.trust),
+                    ),
             ListTile(
               leading: const Icon(Icons.delete_outline),
               title: const Text('Remove server'),

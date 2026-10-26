@@ -23,12 +23,15 @@ class TrustedAuthorities {
   final Future<String> Function() _directory;
   final _pems = <String, String>{};
   Future<void>? _loading;
+  var _loaded = false;
   int _version = 0;
 
   /// Changes whenever a CA is added or removed, so clients can rebuild.
   int get version => _version;
 
-  Future<void> get ready => _loading ??= _load();
+  // A fresh future once loaded, so callers in other zones never wait on
+  // the zone that started the load.
+  Future<void> get ready => _loaded ? Future.value() : _loading ??= _load();
 
   String? pemFor(Uri server) => _pems[server.origin];
 
@@ -74,6 +77,8 @@ class TrustedAuthorities {
       if (_pems.isNotEmpty) _version++;
     } on Object catch (e) {
       Log.warn('tls', 'Reading trusted CAs failed', e);
+    } finally {
+      _loaded = true;
     }
   }
 
