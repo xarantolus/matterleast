@@ -13,6 +13,7 @@ import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/conversation_route.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 /// A channel's messages, opened at the new-messages line, a message asked
@@ -73,12 +74,15 @@ class ChannelScreen extends ConsumerWidget {
               builder: (_) => ChannelInfoScreen(url: url, channelId: channelId),
             ),
           ),
-          child: ConversationTitle(
-            title: name,
-            subtitle:
-                typingText(typing ?? const []) ??
-                conversationSubtitle(state, partner: partner),
-          ),
+          child: switch (typingText(typing ?? const [])) {
+            final typing? => ConversationTitle(title: name, subtitle: typing),
+            null => ConversationTitle(
+              title: name,
+              subtitle: conversationSubtitle(state, partner: partner),
+              subtitleEmoji: conversationSubtitleEmoji(state, partner: partner),
+              url: url,
+            ),
+          },
         ),
         bottom: ProgressSlot(
           active: state.refreshing && state.window?.posts.isNotEmpty == true,
@@ -128,27 +132,52 @@ class ChannelScreen extends ConsumerWidget {
 
 /// A title with a quiet line under it.
 class ConversationTitle extends StatelessWidget {
-  const ConversationTitle({required this.title, this.subtitle, super.key});
+  const ConversationTitle({
+    required this.title,
+    this.subtitle,
+    this.subtitleEmoji,
+    this.url,
+    super.key,
+  });
 
   final String title;
   final String? subtitle;
 
+  /// An emoji before the subtitle, from the server at [url].
+  final String? subtitleEmoji;
+  final String? url;
+
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
+    final style = Theme.of(context).textTheme.bodySmall
+        ?.copyWith(color: Theme.of(context).appBarTheme.foregroundColor);
+    final emoji = subtitleEmoji;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
         if (subtitle case final subtitle?)
-          Text(
-            subtitle,
+          Text.rich(
+            TextSpan(
+              children: [
+                if (emoji != null) ...[
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: EmojiGlyph(
+                      name: emoji,
+                      size: (style?.fontSize ?? 12) * 1.25,
+                      serverUrl: url,
+                    ),
+                  ),
+                  const TextSpan(text: ' '),
+                ],
+                TextSpan(text: subtitle),
+              ],
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: text.bodySmall?.copyWith(
-              color: Theme.of(context).appBarTheme.foregroundColor,
-            ),
+            style: style,
           ),
       ],
     );

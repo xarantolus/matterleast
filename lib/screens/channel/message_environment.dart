@@ -12,7 +12,7 @@ import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/ui/conversation_route.dart';
-import 'package:matterleast/ui/custom_emoji_image.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
@@ -60,20 +60,11 @@ class MessageEnvironment extends ConsumerWidget {
       onChannel: (name) => _openChannel(context, ref, name),
       onLink: (target) => _openLink(context, ref, target),
       customEmoji: (name, size) {
-        final id = emoji[name];
-        if (id == null) {
+        if (!emoji.containsKey(name)) {
           resolver?.want([name]);
           return null;
         }
-        return SizedBox.square(
-          dimension: size,
-          child: CustomEmojiImage(
-            serverUrl: url,
-            emojiId: id,
-            size: size,
-            fallback: const SizedBox.shrink(),
-          ),
-        );
+        return EmojiGlyph(name: name, size: size, serverUrl: url);
       },
       image: (imageUrl, size) => ServerImage(
         serverUrl: url,

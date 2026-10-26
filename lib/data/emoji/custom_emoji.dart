@@ -32,7 +32,8 @@ final _validName = RegExp(r'^[a-z0-9_+-]{1,64}$');
 /// know yet. Callers report such names with [want]; they are collected for
 /// a moment and asked for in batches, and what the server knows lands in
 /// `custom_emoji`, where [watchCustomEmoji] picks it up. Names the server
-/// doesn't know are not asked for again for an hour.
+/// doesn't know are not asked for again for an hour; [missing] lists them
+/// so they can be drawn as their names instead of waiting for an image.
 class CustomEmojiResolver {
   CustomEmojiResolver({
     required this.server,
@@ -55,6 +56,7 @@ class CustomEmojiResolver {
 
   /// Names not to ask for again before the time they map to.
   final _quietUntil = <String, DateTime>{};
+  final _missingChanges = StreamController<Set<String>>.broadcast();
   Timer? _timer;
   Future<void>? _running;
   var _byNamesMissing = false;
@@ -74,6 +76,19 @@ class CustomEmojiResolver {
     }
     if (_pending.isNotEmpty) _timer ??= Timer(debounce, _flush);
   }
+
+  /// Names the last lookups found no custom emoji for, or couldn't ask
+  /// about.
+  Set<String> get missing {
+    final now = _clock();
+    return {
+      for (final MapEntry(key: name, value: until) in _quietUntil.entries)
+        if (now.isBefore(until)) name,
+    };
+  }
+
+  /// [missing] each time it changes.
+  Stream<Set<String>> get missingChanges => _missingChanges.stream;
 
   /// Completes once the lookups started so far have landed; for tests and
   /// callers that need the answer before going on.
@@ -108,7 +123,10 @@ class CustomEmojiResolver {
   }
 
   Future<void> _resolve(List<String> names) async {
-    if (!(await store.db.features()).customEmoji) return;
+    if (!(await store.db.features()).customEmoji) {
+      _quiet(names, unknownFor);
+      return;
+    }
     final stored = {
       for (final row in await (store.db.select(
         store.db.customEmoji,
@@ -172,6 +190,7 @@ class CustomEmojiResolver {
     for (final n in names) {
       _quietUntil[n] = until;
     }
+    if (names.isNotEmpty && !_closed) _missingChanges.add(missing);
   }
 
   Future<List<api.Emoji>> _byNames(List<String> names) async {
@@ -211,5 +230,6 @@ class CustomEmojiResolver {
     _timer?.cancel();
     _timer = null;
     _pending.clear();
+    unawaited(_missingChanges.close());
   }
 }

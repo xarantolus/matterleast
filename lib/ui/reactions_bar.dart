@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -60,29 +60,6 @@ class ReactionsBar extends StatelessWidget {
       ],
     ),
   );
-}
-
-/// One emoji by name at [size]: the system glyph, a custom emoji image, or
-/// the name in colons.
-class EmojiGlyph extends StatelessWidget {
-  const EmojiGlyph({required this.name, required this.size, super.key});
-
-  final String name;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final unicode = unicodeForName(name);
-    if (unicode != null) {
-      return Text(
-        unicode,
-        textScaler: TextScaler.noScaling,
-        style: TextStyle(fontSize: size * 0.9, height: 1.1),
-      );
-    }
-    return PostEnvironment.maybeOf(context)?.customEmoji?.call(name, size) ??
-        Text(':$name:');
-  }
 }
 
 /// Who reacted, one tab per emoji, starting at [initial].

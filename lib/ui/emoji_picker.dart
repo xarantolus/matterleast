@@ -8,7 +8,7 @@ import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/emoji/emoji_table.g.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
-import 'package:matterleast/ui/custom_emoji_image.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -209,18 +209,11 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
                             child: Tooltip(
                               message: ':$name:',
                               child: Center(
-                                child: id != null
-                                    ? CustomEmojiImage(
-                                        serverUrl: widget.url,
-                                        emojiId: id,
-                                        size: 28,
-                                        fallback: Text(':$name:'),
-                                      )
-                                    : Text(
-                                        unicodeForName(shown) ?? ':$name:',
-                                        textScaler: TextScaler.noScaling,
-                                        style: const TextStyle(fontSize: 26),
-                                      ),
+                                child: EmojiGlyph(
+                                  name: shown,
+                                  size: 28,
+                                  serverUrl: widget.url,
+                                ),
                               ),
                             ),
                           );

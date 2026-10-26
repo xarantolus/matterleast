@@ -11,6 +11,14 @@ Stream<Map<String, String>> customEmoji(Ref ref, String url) async* {
   yield* watchCustomEmoji(session.store);
 }
 
+/// Names the server has no custom emoji for, as far as asked.
+@riverpod
+Stream<Set<String>> customEmojiMissing(Ref ref, String url) async* {
+  final resolver = await ref.watch(customEmojiResolverProvider(url).future);
+  yield resolver.missing;
+  yield* resolver.missingChanges;
+}
+
 /// Where to report custom emoji names the map above doesn't have yet.
 @riverpod
 Future<CustomEmojiResolver> customEmojiResolver(Ref ref, String url) async =>

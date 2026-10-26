@@ -10,7 +10,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/composer_providers.dart';
-import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
@@ -21,7 +20,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
-import 'package:matterleast/ui/custom_emoji_image.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -709,7 +708,6 @@ class SuggestionList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final emoji = ref.watch(customEmojiProvider(url)).value ?? const {};
     final tokens = context.tokens;
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -750,24 +748,8 @@ class SuggestionList extends ConsumerWidget {
                 s.displayName,
                 '~${s.name}',
               ),
-              EmojiSuggestion(:final unicode?) => (
-                Text(unicode, style: const TextStyle(fontSize: 24)),
-                ':${s.name}:',
-                '',
-              ),
               EmojiSuggestion() => (
-                SizedBox.square(
-                  dimension: 24,
-                  child: switch (emoji[s.name]) {
-                    final id? => CustomEmojiImage(
-                      serverUrl: url,
-                      emojiId: id,
-                      size: 24,
-                      fallback: const Icon(Icons.mood),
-                    ),
-                    null => const Icon(Icons.mood),
-                  },
-                ),
+                EmojiGlyph(name: s.name, size: 24, serverUrl: url),
                 ':${s.name}:',
                 '',
               ),

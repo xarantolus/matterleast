@@ -14,6 +14,7 @@ import 'package:matterleast/screens/you/edit_profile_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/screens/you/status_sheet.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -194,15 +195,19 @@ class _Profile extends ConsumerWidget {
                 child: Center(
                   child: custom == null
                       ? const Icon(Icons.add_reaction_outlined)
-                      : Text(
-                          emojiText(custom.emoji),
-                          style: const TextStyle(fontSize: 22),
+                      : custom.emoji.isEmpty
+                      ? const Icon(Icons.chat_bubble_outline)
+                      : EmojiGlyph(
+                          name: custom.emoji,
+                          size: 24,
+                          serverUrl: server.url,
                         ),
                 ),
               ),
               title: custom == null
                   ? const Text('Set a custom status')
                   : CustomStatusLine(
+                      url: server.url,
                       status: custom.copyWith(emoji: ''),
                       textAlign: TextAlign.start,
                     ),

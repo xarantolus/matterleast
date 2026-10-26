@@ -12,8 +12,8 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
-import 'package:matterleast/ui/reactions_bar.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -175,7 +175,7 @@ class MessageMenu extends ConsumerWidget {
                           }, "Couldn't add the reaction."),
                         );
                       },
-                      icon: EmojiGlyph(name: name, size: 28),
+                      icon: EmojiGlyph(name: name, size: 28, serverUrl: url),
                     ),
                   IconButton.filledTonal(
                     tooltip: 'More reactions',

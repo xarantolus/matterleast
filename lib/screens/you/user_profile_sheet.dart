@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/today_provider.dart';
-import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/time_zones.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
@@ -11,6 +10,7 @@ import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -85,7 +85,7 @@ class UserProfileSheet extends ConsumerWidget {
           ),
           if (custom != null) ...[
             const SizedBox(height: Spacing.md),
-            CustomStatusLine(status: custom, style: text.bodyLarge),
+            CustomStatusLine(url: url, status: custom, style: text.bodyLarge),
           ],
           const SizedBox(height: Spacing.md),
           if (profile.nickname.isNotEmpty)
@@ -145,12 +145,14 @@ class UserProfileSheet extends ConsumerWidget {
 /// A custom status as one line: its emoji, text and when it clears.
 class CustomStatusLine extends ConsumerWidget {
   const CustomStatusLine({
+    required this.url,
     required this.status,
     this.style,
     this.textAlign = TextAlign.center,
     super.key,
   });
 
+  final String url;
   final CustomStatus status;
   final TextStyle? style;
   final TextAlign textAlign;
@@ -164,8 +166,19 @@ class CustomStatusLine extends ConsumerWidget {
     return Text.rich(
       TextSpan(
         children: [
-          if (status.emoji.isNotEmpty)
-            TextSpan(text: '${emojiText(status.emoji)} '),
+          if (status.emoji.isNotEmpty) ...[
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: EmojiGlyph(
+                name: status.emoji,
+                size:
+                    (style ?? DefaultTextStyle.of(context).style).fontSize! *
+                    1.25,
+                serverUrl: url,
+              ),
+            ),
+            const TextSpan(text: ' '),
+          ],
           TextSpan(text: status.text),
           if (until != null)
             TextSpan(
@@ -179,9 +192,6 @@ class CustomStatusLine extends ConsumerWidget {
     );
   }
 }
-
-/// An emoji by its short name; a custom emoji shows as `:name:`.
-String emojiText(String name) => unicodeForName(name) ?? ':$name:';
 
 class _Detail extends StatelessWidget {
   const _Detail({required this.label, required this.value});

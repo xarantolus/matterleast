@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
-import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
+import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -130,14 +130,15 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                 prefixIcon: IconButton(
                   tooltip: 'Pick an emoji',
                   onPressed: () async {
-                    final picked = await pickStatusEmoji(context);
+                    final picked = await showEmojiPicker(context, widget.url);
                     if (picked != null) setState(() => _emoji = picked);
                   },
                   icon: _emoji.isEmpty
                       ? const Icon(Icons.add_reaction_outlined)
-                      : Text(
-                          emojiText(_emoji),
-                          style: const TextStyle(fontSize: 22),
+                      : EmojiGlyph(
+                          name: _emoji,
+                          size: 24,
+                          serverUrl: widget.url,
                         ),
                 ),
                 suffixIcon: _empty
@@ -184,9 +185,10 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                 leading: SizedBox(
                   width: 40,
                   child: Center(
-                    child: Text(
-                      emojiText(s.emoji),
-                      style: const TextStyle(fontSize: 24),
+                    child: EmojiGlyph(
+                      name: s.emoji,
+                      size: 24,
+                      serverUrl: widget.url,
                     ),
                   ),
                 ),
@@ -206,9 +208,10 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                 leading: SizedBox(
                   width: 40,
                   child: Center(
-                    child: Text(
-                      emojiText(s.emoji),
-                      style: const TextStyle(fontSize: 24),
+                    child: EmojiGlyph(
+                      name: s.emoji,
+                      size: 24,
+                      serverUrl: widget.url,
                     ),
                   ),
                 ),
@@ -221,92 +224,6 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                 }),
               ),
         ],
-      ),
-    );
-  }
-}
-
-/// A searchable grid of system emoji; the picked short name, or null.
-Future<String?> pickStatusEmoji(BuildContext context) =>
-    showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => const _EmojiSheet(),
-    );
-
-class _EmojiSheet extends StatefulWidget {
-  const _EmojiSheet();
-
-  @override
-  State<_EmojiSheet> createState() => _EmojiSheetState();
-}
-
-class _EmojiSheetState extends State<_EmojiSheet> {
-  static final _all = {
-    for (final name in systemEmojiNames()) canonicalName(name),
-  }.toList();
-  var _term = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final term = _term.trim().toLowerCase().replaceAll(':', '');
-    final names = term.isEmpty
-        ? _all
-        : {
-            for (final name in systemEmojiNames())
-              if (name.contains(term)) canonicalName(name),
-          }.toList();
-    return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.7,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.md,
-                0,
-                Spacing.md,
-                Spacing.sm,
-              ),
-              child: SearchBar(
-                hintText: 'Search emoji',
-                leading: const Icon(Icons.search),
-                elevation: const WidgetStatePropertyAll(0),
-                onChanged: (text) => setState(() => _term = text),
-              ),
-            ),
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 52,
-                ),
-                itemCount: names.length,
-                itemBuilder: (context, i) => Semantics(
-                  label: names[i].replaceAll('_', ' '),
-                  button: true,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: () => Navigator.pop(context, names[i]),
-                    child: Center(
-                      child: ExcludeSemantics(
-                        child: Text(
-                          emojiText(names[i]),
-                          style: const TextStyle(fontSize: 28),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

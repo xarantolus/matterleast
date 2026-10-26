@@ -111,6 +111,29 @@ void main() {
     expect((await stored()).keys, contains('nope'));
   });
 
+  test('names the server does not know are reported as missing', () async {
+    final reported = <Set<String>>[];
+    final subscription = resolver.missingChanges.listen(reported.add);
+    resolver.want(['partyblob', 'nope']);
+    await resolver.settled;
+    await Future<void>.delayed(Duration.zero);
+    expect(resolver.missing, {'nope'});
+    expect(reported, [
+      {'nope'},
+    ]);
+
+    now = now.add(const Duration(minutes: 61));
+    expect(resolver.missing, isEmpty, reason: 'asked again after an hour');
+    await subscription.cancel();
+  });
+
+  test('with custom emoji off every custom name is missing', () async {
+    await store.applyConfig('client_config', {'EnableCustomEmoji': 'false'});
+    resolver.want(['partyblob']);
+    await resolver.settled;
+    expect(resolver.missing, {'partyblob'});
+  });
+
   test('older servers are asked one name at a time', () async {
     server.handle = (r) => switch (r.path) {
       '/api/v4/emoji/name/partyblob' => ok(emojiJson('partyblob')),

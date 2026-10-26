@@ -4,7 +4,6 @@ import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/user_profile.dart';
-import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 
 part 'conversation_state.freezed.dart';
@@ -86,22 +85,13 @@ ConversationBody conversationBody(ConversationState s, {required String host}) {
 /// else the partner's presence and custom status for a direct message,
 /// the members' names for a group message, the member count otherwise.
 String? conversationSubtitle(ConversationState s, {UserProfile? partner}) {
-  final hasData =
-      (s.window?.posts.isNotEmpty ?? false) || s.window?.root != null;
-  if (hasData && !s.refreshing) {
-    if (s.refreshFailure case final cause?) return staleDataNotice(cause);
-  }
+  if (_staleFailure(s) case final cause?) return staleDataNotice(cause);
   switch (s.window?.channelType) {
     case 'D':
       if (partner == null) return null;
       final presence = presenceLabel(partner.status);
-      final custom = partner.customStatus;
-      if (custom == null) return presence;
-      final words = [
-        if (custom.emoji.isNotEmpty) emojiText(custom.emoji),
-        if (custom.text.isNotEmpty) custom.text,
-      ].join(' ');
-      return '$presence · $words';
+      final text = partner.customStatus?.text ?? '';
+      return text.isEmpty ? presence : '$presence · $text';
     case 'G':
       final names = s.window?.channelName ?? '';
       return names.isEmpty ? null : names;
@@ -109,4 +99,18 @@ String? conversationSubtitle(ConversationState s, {UserProfile? partner}) {
   final count = s.window?.memberCount;
   if (count == null) return null;
   return count == 1 ? '1 member' : '$count members';
+}
+
+/// The partner's custom status emoji, shown before the subtitle while it
+/// tells their status.
+String? conversationSubtitleEmoji(ConversationState s, {UserProfile? partner}) {
+  if (s.window?.channelType != 'D' || _staleFailure(s) != null) return null;
+  final emoji = partner?.customStatus?.emoji ?? '';
+  return emoji.isEmpty ? null : emoji;
+}
+
+ApiError? _staleFailure(ConversationState s) {
+  final hasData =
+      (s.window?.posts.isNotEmpty ?? false) || s.window?.root != null;
+  return hasData && !s.refreshing ? s.refreshFailure : null;
 }

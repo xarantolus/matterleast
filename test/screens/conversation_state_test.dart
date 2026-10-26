@@ -158,4 +158,51 @@ void main() {
       );
     }
   });
+
+  test("a direct message leads with the partner's status emoji", () {
+    const custom = CustomStatus(emoji: 'partyblob', text: 'Launch day');
+    const partner = UserProfile(
+      id: 'u1',
+      name: 'Pat',
+      username: 'pat',
+      nickname: '',
+      firstName: '',
+      lastName: '',
+      position: '',
+      status: 'online',
+      customStatus: custom,
+      isBot: false,
+      isMe: false,
+    );
+    ConversationState direct({ApiError? failure}) => ConversationState(
+      window: ConversationWindow(
+        posts: stored.posts,
+        loaded: true,
+        channelType: 'D',
+        partnerId: 'u1',
+        memberCount: 2,
+      ),
+      refreshFailure: failure,
+    );
+    expect(
+      conversationSubtitle(direct(), partner: partner),
+      'Online · Launch day',
+    );
+    expect(conversationSubtitleEmoji(direct(), partner: partner), 'partyblob');
+    expect(
+      conversationSubtitleEmoji(
+        direct(failure: const Unreachable()),
+        partner: partner,
+      ),
+      isNull,
+      reason: 'the notice about saved data replaces the status',
+    );
+    expect(
+      conversationSubtitleEmoji(
+        direct(),
+        partner: partner.copyWith(customStatus: null),
+      ),
+      isNull,
+    );
+  });
 }

@@ -94,6 +94,91 @@ final class CustomEmojiFamily extends $Family
   String toString() => r'customEmojiProvider';
 }
 
+/// Names the server has no custom emoji for, as far as asked.
+
+@ProviderFor(customEmojiMissing)
+final customEmojiMissingProvider = CustomEmojiMissingFamily._();
+
+/// Names the server has no custom emoji for, as far as asked.
+
+final class CustomEmojiMissingProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Set<String>>,
+          Set<String>,
+          Stream<Set<String>>
+        >
+    with $FutureModifier<Set<String>>, $StreamProvider<Set<String>> {
+  /// Names the server has no custom emoji for, as far as asked.
+  CustomEmojiMissingProvider._({
+    required CustomEmojiMissingFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'customEmojiMissingProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customEmojiMissingHash();
+
+  @override
+  String toString() {
+    return r'customEmojiMissingProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Set<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Set<String>> create(Ref ref) {
+    final argument = this.argument as String;
+    return customEmojiMissing(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomEmojiMissingProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customEmojiMissingHash() =>
+    r'36e6ae0b65a2cd64dd70e93f2af36560563c8c6c';
+
+/// Names the server has no custom emoji for, as far as asked.
+
+final class CustomEmojiMissingFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Set<String>>, String> {
+  CustomEmojiMissingFamily._()
+    : super(
+        retry: null,
+        name: r'customEmojiMissingProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Names the server has no custom emoji for, as far as asked.
+
+  CustomEmojiMissingProvider call(String url) =>
+      CustomEmojiMissingProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'customEmojiMissingProvider';
+}
+
 /// Where to report custom emoji names the map above doesn't have yet.
 
 @ProviderFor(customEmojiResolver)
