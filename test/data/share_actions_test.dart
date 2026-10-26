@@ -8,6 +8,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 void main() {
   late FakeServer server;
@@ -86,9 +87,7 @@ void main() {
       files: files,
       cancel: cancel.future,
     );
-    for (var i = 0; i < 100 && server.seen.isEmpty; i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-    }
+    await eventually(() => server.seen.isNotEmpty);
     cancel.complete();
     await expectLater(send, throwsA(isA<Cancelled>()));
     holdUpload!.complete();
