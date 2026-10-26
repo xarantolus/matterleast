@@ -89,29 +89,36 @@ class ChannelActions {
     String channelId, {
     required bool favorite,
   }) async {
-    final team = await _teamCategories(teamId);
     final channel = await (_db.select(
       _db.channels,
     )..where((c) => c.id.equals(channelId))).getSingle();
-    final current = team.categories.firstWhere(
-      (c) => team.idsOf(c).contains(channelId),
+    var team = await _teamCategories(teamId);
+    final type = favoriteTargetType(channel.type, favorite: favorite);
+    if (!team.categories.any((c) => c.type == type)) {
+      await session.connection.entry.refreshTeam(teamId);
+      team = await _teamCategories(teamId);
+    }
+    final current = team.categories
+        .where((c) => team.idsOf(c).contains(channelId))
+        .firstOrNull;
+    final move = favoriteMove(
+      categories: [for (final c in team.categories) (id: c.id, type: c.type)],
+      currentCategoryId: current?.id,
+      channelType: channel.type,
+      favorite: favorite,
     );
-    final targetType = favorite
-        ? 'favorites'
-        : (channel.type == 'D' || channel.type == 'G')
-        ? 'direct_messages'
-        : 'channels';
-    final target = team.categories.firstWhere((c) => c.type == targetType);
-    if (target.id == current.id) return;
+    if (move == null) return;
+    final target = team.byId(move.to)!;
     final updated = await session.api.call(
       () => _client.channels.updateSidebarCategoriesForTeamForUser(
         userId: 'me',
         teamId: teamId,
         body: [
-          team.body(current, [
-            for (final id in team.idsOf(current))
-              if (id != channelId) id,
-          ]),
+          if (current != null)
+            team.body(current, [
+              for (final id in team.idsOf(current))
+                if (id != channelId) id,
+            ]),
           team.body(target, [channelId, ...team.idsOf(target)]),
         ],
       ),

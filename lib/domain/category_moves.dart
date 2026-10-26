@@ -188,3 +188,29 @@ bool _same(List<String> a, List<String> b) {
   }
   return true;
 }
+
+/// The sidebar category a channel goes to when it is made a favourite or
+/// taken out of Favourites, as the official app does: Favourites, or back
+/// to Channels (Direct Messages for a conversation).
+String favoriteTargetType(String channelType, {required bool favorite}) =>
+    favorite
+    ? 'favorites'
+    : (channelType == 'D' || channelType == 'G')
+    ? 'direct_messages'
+    : 'channels';
+
+/// Pure: the categories a channel leaves ([from], null when it is in none
+/// yet) and joins ([to]) to become a favourite or stop being one. Null when
+/// it is already there, or when the team has no such category yet (before
+/// its categories synced).
+({String? from, String to})? favoriteMove({
+  required List<({String id, String type})> categories,
+  required String? currentCategoryId,
+  required String channelType,
+  required bool favorite,
+}) {
+  final type = favoriteTargetType(channelType, favorite: favorite);
+  final target = categories.where((c) => c.type == type).firstOrNull;
+  if (target == null || target.id == currentCategoryId) return null;
+  return (from: currentCategoryId, to: target.id);
+}

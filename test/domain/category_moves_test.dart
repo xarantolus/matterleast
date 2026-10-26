@@ -179,4 +179,60 @@ void main() {
       expect(result.below, isNull);
     });
   });
+
+  group('favourites', () {
+    const categories = [
+      (id: 'fav', type: 'favorites'),
+      (id: 'ch', type: 'channels'),
+      (id: 'dm', type: 'direct_messages'),
+      (id: 'mine', type: 'custom'),
+    ];
+
+    ({String? from, String to})? move(
+      String? current,
+      String type, {
+      required bool favorite,
+      List<({String id, String type})> categories = categories,
+    }) => favoriteMove(
+      categories: categories,
+      currentCategoryId: current,
+      channelType: type,
+      favorite: favorite,
+    );
+
+    test('a channel goes to Favourites and back to Channels', () {
+      expect(move('ch', 'O', favorite: true), (from: 'ch', to: 'fav'));
+      expect(move('mine', 'P', favorite: true), (from: 'mine', to: 'fav'));
+      expect(move('fav', 'O', favorite: false), (from: 'fav', to: 'ch'));
+    });
+
+    test('a conversation goes back to Direct Messages', () {
+      expect(move('fav', 'D', favorite: false), (from: 'fav', to: 'dm'));
+      expect(move('fav', 'G', favorite: false), (from: 'fav', to: 'dm'));
+    });
+
+    test('nothing moves when it is already there', () {
+      expect(move('fav', 'O', favorite: true), isNull);
+      expect(move('dm', 'D', favorite: false), isNull);
+    });
+
+    test('a channel in no category yet only joins one', () {
+      expect(move(null, 'O', favorite: true), (from: null, to: 'fav'));
+    });
+
+    test(
+      'a team without the category yet moves nothing instead of failing',
+      () {
+        expect(
+          move(
+            'ch',
+            'O',
+            favorite: true,
+            categories: [(id: 'ch', type: 'channels')],
+          ),
+          isNull,
+        );
+      },
+    );
+  });
 }
