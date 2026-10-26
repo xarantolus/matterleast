@@ -10,6 +10,7 @@ import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
 import 'package:matterleast/data/actions/profile_actions.dart';
 import 'package:matterleast/data/actions/settings_actions.dart';
+import 'package:matterleast/data/actions/team_actions.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/local_copies.dart';
@@ -86,6 +87,7 @@ class ServerSession {
   late final posts = PostActions(this);
   late final channels = ChannelActions(this);
   late final profiles = ProfileActions(this);
+  late final teams = TeamActions(this);
   late final settings = SettingsActions(this);
   late final agents = AgentActions(this);
   late final bookmarks = BookmarkActions(this);

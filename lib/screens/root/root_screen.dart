@@ -15,6 +15,7 @@ import 'package:matterleast/screens/root/pane_layout.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/root/team_rail.dart';
+import 'package:matterleast/screens/root/team_screens.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
@@ -120,6 +121,12 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           target: teamId == null ? null : (url: server.url, teamId: teamId),
         ),
         if (teamId != null) _NewMenu(url: server.url, teamId: teamId),
+        if (teamId != null)
+          TeamMenu(
+            url: server.url,
+            teamId: teamId,
+            teamName: team?.displayName ?? '',
+          ),
       ],
       pane: teamId == null && state is! ChannelListFailed
           ? status is SyncIdle && status.lastSuccess != null
@@ -191,13 +198,24 @@ class _NoTeam extends ConsumerWidget {
     icon: Icons.groups_outlined,
     title: 'Not in a team yet',
     body:
-        "You aren't a member of any team on $serverName. Open an invite "
-        'link from a team member, or join a team in the web app, then '
-        'refresh.',
-    action: FilledButton.tonal(
-      onPressed: () async =>
-          (await ref.read(serverRefreshProvider(url).future))(),
-      child: const Text('Refresh'),
+        "You aren't a member of any team on $serverName. Join an open "
+        'team, or open an invite link from a team member.',
+    action: Wrap(
+      spacing: 8,
+      alignment: WrapAlignment.center,
+      children: [
+        FilledButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => JoinTeamScreen(url: url)),
+          ),
+          child: const Text('Join a team'),
+        ),
+        FilledButton.tonal(
+          onPressed: () async =>
+              (await ref.read(serverRefreshProvider(url).future))(),
+          child: const Text('Refresh'),
+        ),
+      ],
     ),
   );
 }

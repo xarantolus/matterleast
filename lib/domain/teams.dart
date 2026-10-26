@@ -48,3 +48,25 @@ String? directPartnerId(String channelName, String myId) {
   if (ids.length != 2) return null;
   return ids[0] == myId ? ids[1] : ids[0];
 }
+
+/// A team the server lists, as the join list needs it.
+typedef JoinableTeam = ({
+  String id,
+  String displayName,
+  String description,
+  bool deleted,
+});
+
+/// Pure: the listed teams the user can join: not deleted and not one of
+/// [mine], by name.
+List<JoinableTeam> joinableTeams(
+  Iterable<JoinableTeam> listed,
+  Set<String> mine,
+) =>
+    [
+      for (final t in listed)
+        if (t.id.isNotEmpty && !t.deleted && !mine.contains(t.id)) t,
+    ]..sort(
+      (a, b) =>
+          a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+    );

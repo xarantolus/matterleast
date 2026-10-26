@@ -34,4 +34,19 @@ void main() {
     expect(directPartnerId('me__me', 'me'), 'me');
     expect(directPartnerId('town-square', 'me'), isNull);
   });
+
+  test('the join list offers open teams the user is not in, by name', () {
+    JoinableTeam team(String id, String name, {bool deleted = false}) =>
+        (id: id, displayName: name, description: '', deleted: deleted);
+    final offered = joinableTeams(
+      [
+        team('t1', 'zebra'),
+        team('t2', 'Anchor'),
+        team('t3', 'Mine'),
+        team('t4', 'Gone', deleted: true),
+      ],
+      {'t3'},
+    );
+    expect(offered.map((t) => t.displayName), ['Anchor', 'zebra']);
+  });
 }
