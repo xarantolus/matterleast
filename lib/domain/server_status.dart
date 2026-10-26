@@ -22,7 +22,7 @@ abstract class ServerStatusView with _$ServerStatusView {
 typedef StoredCounts = ({int channels, int posts, int bytes});
 
 /// Pure: the status page lines from the socket, the sync runner and what is
-/// stored. [time] formats a time of day the way the user reads it.
+/// stored. [time] names a moment the way the user reads it.
 ServerStatusView serverStatusView({
   required SocketState? socket,
   required SyncStatus? sync,
@@ -30,7 +30,7 @@ ServerStatusView serverStatusView({
   required String host,
   required String Function(DateTime) time,
 }) {
-  String since(DateTime? at) => at == null ? '' : ' · last at ${time(at)}';
+  String since(DateTime? at) => at == null ? '' : ' · ${time(at)}';
   return ServerStatusView(
     connection: switch (socket) {
       SocketState.connected => 'Connected',
@@ -45,7 +45,7 @@ ServerStatusView serverStatusView({
             ? 'Not refreshed yet'
             : 'Up to date${since(lastSuccess)}',
       SyncFailed(:final cause, :final at) =>
-        "Couldn't refresh at ${time(at)}: ${connectionProblemText(cause, host)}",
+        "Couldn't refresh · ${time(at)}: ${connectionProblemText(cause, host)}",
     },
     problem: sync is SyncFailed,
     stored: stored == null

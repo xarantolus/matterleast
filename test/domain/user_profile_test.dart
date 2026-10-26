@@ -79,12 +79,18 @@ void main() {
       );
     });
 
-    test('at midnight for today and after Sunday for this week', () {
-      expect(customStatusExpiry('today', monday), DateTime(2026, 5, 5));
-      expect(customStatusExpiry('this_week', monday), DateTime(2026, 5, 11));
+    test('at the end of today and the end of Sunday for this week', () {
+      expect(
+        customStatusExpiry('today', monday),
+        DateTime(2026, 5, 4, 23, 59, 59, 999),
+      );
+      expect(
+        customStatusExpiry('this_week', monday),
+        DateTime(2026, 5, 10, 23, 59, 59, 999),
+      );
       expect(
         customStatusExpiry('this_week', DateTime(2026, 5, 10, 9)),
-        DateTime(2026, 5, 11),
+        DateTime(2026, 5, 10, 23, 59, 59, 999),
       );
     });
 

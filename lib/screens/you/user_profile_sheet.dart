@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/time_zones.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -141,7 +143,7 @@ class UserProfileSheet extends ConsumerWidget {
 }
 
 /// A custom status as one line: its emoji, text and when it clears.
-class CustomStatusLine extends StatelessWidget {
+class CustomStatusLine extends ConsumerWidget {
   const CustomStatusLine({
     required this.status,
     this.style,
@@ -154,14 +156,11 @@ class CustomStatusLine extends StatelessWidget {
   final TextAlign textAlign;
 
   @override
-  Widget build(BuildContext context) {
-    final strings = MaterialLocalizations.of(context);
-    final expires = status.expiresAt?.toLocal();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final expires = status.expiresAt;
     final until = status.duration.isEmpty || expires == null
         ? null
-        : _isToday(expires)
-        ? 'until ${strings.formatTimeOfDay(TimeOfDay.fromDateTime(expires), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}'
-        : 'until ${strings.formatMediumDate(expires)}';
+        : 'until ${untilLabel(expires, ref.watch(todayProvider), use24: MediaQuery.alwaysUse24HourFormatOf(context))}';
     return Text.rich(
       TextSpan(
         children: [
@@ -178,11 +177,6 @@ class CustomStatusLine extends StatelessWidget {
       style: style,
       textAlign: textAlign,
     );
-  }
-
-  static bool _isToday(DateTime t) {
-    final now = DateTime.now();
-    return t.year == now.year && t.month == now.month && t.day == now.day;
   }
 }
 
@@ -240,10 +234,10 @@ class _LocalTimeState extends State<_LocalTime> {
   Widget build(BuildContext context) {
     final time = wallTimeIn(widget.zone, DateTime.now());
     if (time == null) return const SizedBox.shrink();
-    final strings = MaterialLocalizations.of(context);
-    final clock = strings.formatTimeOfDay(
-      TimeOfDay.fromDateTime(time),
-      alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
+    final clock = wallClockLabel(
+      time,
+      DateTime.now(),
+      use24: MediaQuery.alwaysUse24HourFormatOf(context),
     );
     return _Detail(
       label: 'Local time',

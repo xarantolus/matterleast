@@ -24,17 +24,14 @@ void main() {
       view(sync: const SyncRefreshing(running: 1, queued: 2)).sync,
       'Refreshing…',
     );
-    expect(
-      view(sync: SyncIdle(lastSuccess: at)).sync,
-      'Up to date · last at 9:05',
-    );
+    expect(view(sync: SyncIdle(lastSuccess: at)).sync, 'Up to date · 9:05');
     final failed = view(
       sync: SyncFailed(cause: const RequestTimeout(), at: at, lastSuccess: at),
     );
     expect(failed.problem, isTrue);
     expect(
       failed.sync,
-      startsWith("Couldn't refresh at 9:05: chat.example.test"),
+      startsWith("Couldn't refresh · 9:05: chat.example.test"),
     );
   });
 

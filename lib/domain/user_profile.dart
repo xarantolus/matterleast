@@ -88,21 +88,19 @@ String? timezoneName({
 }
 
 /// When a custom status set now with [duration] clears, in the user's local
-/// time; null for "don't clear" (an empty duration). "Today" ends at local midnight and "this
-/// week" at the end of Sunday, as in the official apps.
+/// time; null for "don't clear" (an empty duration). "Today" and "this
+/// week" end at the last moment of the day and of Sunday, the way the
+/// official apps send them, so other clients read them the same.
 DateTime? customStatusExpiry(String duration, DateTime now) {
   final local = now.toLocal();
-  final midnight = DateTime(local.year, local.month, local.day + 1);
+  DateTime endOfDay(int day) =>
+      DateTime(local.year, local.month, day, 23, 59, 59, 999);
   return switch (duration) {
     'thirty_minutes' => local.add(const Duration(minutes: 30)),
     'one_hour' => local.add(const Duration(hours: 1)),
     'four_hours' => local.add(const Duration(hours: 4)),
-    'today' => midnight,
-    'this_week' => DateTime(
-      local.year,
-      local.month,
-      local.day + (DateTime.sunday - local.weekday) + 1,
-    ),
+    'today' => endOfDay(local.day),
+    'this_week' => endOfDay(local.day + DateTime.sunday - local.weekday),
     _ => null,
   };
 }

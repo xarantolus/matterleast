@@ -7,6 +7,7 @@ import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/domain/channel_info.dart';
 import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_info/edit_channel_screen.dart';
 import 'package:matterleast/screens/channel_info/members_screen.dart';
@@ -348,7 +349,6 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
-    final strings = MaterialLocalizations.of(context);
     final partner = info.partnerId;
     return Padding(
       padding: const EdgeInsets.all(Spacing.lg),
@@ -422,7 +422,7 @@ class _Header extends StatelessWidget {
               [
                 'Created',
                 if (info.creatorName case final name?) 'by $name',
-                'on ${strings.formatMediumDate(info.createAt!.toLocal())}',
+                'on ${dateLabel(info.createAt!, DateTime.now(), alwaysYear: true)}',
               ].join(' '),
               style: text.bodySmall?.copyWith(color: tokens.muted),
             ),

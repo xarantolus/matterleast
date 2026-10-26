@@ -10,8 +10,10 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/ui/legacy_material.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -166,7 +168,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                 _Bars(
                   visible: _bars,
                   title: widget.author,
-                  subtitle: _when(context, widget.sentAt),
+                  subtitle: whenLabel(
+                    widget.sentAt,
+                    ref.watch(todayProvider),
+                    use24: MediaQuery.alwaysUse24HourFormatOf(context),
+                  ),
                   position: widget.files.length > 1
                       ? '${_index + 1} of ${widget.files.length}'
                       : null,
@@ -196,13 +202,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       setState(() => _originals.add(file.id));
     }
   }
-}
-
-String _when(BuildContext context, DateTime at) {
-  final local = at.toLocal();
-  final localizations = MaterialLocalizations.of(context);
-  return '${localizations.formatMediumDate(local)}, '
-      '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(local), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}';
 }
 
 const _barHeight = 64.0;

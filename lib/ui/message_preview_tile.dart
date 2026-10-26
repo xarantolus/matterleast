@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/inbox.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -63,7 +64,11 @@ class MessagePreviewTile extends ConsumerWidget {
           ),
           const SizedBox(width: Spacing.sm),
           Text(
-            _timeLabel(context, item.time, today),
+            shortWhen(
+              item.time,
+              today,
+              use24: MediaQuery.alwaysUse24HourFormatOf(context),
+            ),
             style: text.bodySmall?.copyWith(color: tokens.muted),
           ),
         ],
@@ -91,22 +96,6 @@ class MessagePreviewTile extends ConsumerWidget {
       trailing: _Marker(item: item),
     );
   }
-}
-
-String _timeLabel(BuildContext context, DateTime time, DateTime today) {
-  final local = time.toLocal();
-  final strings = MaterialLocalizations.of(context);
-  if (local.year == today.year &&
-      local.month == today.month &&
-      local.day == today.day) {
-    return strings.formatTimeOfDay(
-      TimeOfDay.fromDateTime(local),
-      alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-    );
-  }
-  return local.year == today.year
-      ? strings.formatShortMonthDay(local)
-      : strings.formatShortDate(local);
 }
 
 class _Marker extends StatelessWidget {

@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_status.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -40,17 +42,14 @@ class _ServerStatus extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final strings = MaterialLocalizations.of(context);
     final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
+    final today = ref.watch(todayProvider);
     final view = serverStatusView(
       socket: ref.watch(socketStateProvider(server.url)).value,
       sync: ref.watch(syncStatusProvider(server.url)).value,
       stored: ref.watch(serverStorageProvider(server.url)).value,
       host: Uri.parse(server.url).host,
-      time: (at) => strings.formatTimeOfDay(
-        TimeOfDay.fromDateTime(at.toLocal()),
-        alwaysUse24HourFormat: use24,
-      ),
+      time: (at) => whenLabel(at, today, use24: use24),
     );
     final tokens = context.tokens;
     return Column(

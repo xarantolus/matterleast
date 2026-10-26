@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_status.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
@@ -262,8 +264,7 @@ class _ScopeChips extends ConsumerWidget {
     final teams = ref.watch(railTeamsProvider(url)).value ?? const [];
     final team = teams.where((t) => t.id == scope.teamId).firstOrNull;
     final items = ref.watch(switchItemsProvider(url)).value ?? const [];
-    final strings = MaterialLocalizations.of(context);
-    String day(DateTime d) => strings.formatShortMonthDay(d);
+    String day(DateTime d) => dateLabel(d, DateTime.now());
 
     Future<DateTime?> pickDay(DateTime? current) => showDatePicker(
       context: context,
@@ -621,13 +622,13 @@ class _FileResults extends ConsumerWidget {
   }
 }
 
-class _DayHeader extends StatelessWidget {
+class _DayHeader extends ConsumerWidget {
   const _DayHeader({required this.day});
 
   final DateTime day;
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context, WidgetRef ref) => Padding(
     padding: const EdgeInsets.fromLTRB(
       Spacing.lg,
       Spacing.md,
@@ -635,7 +636,7 @@ class _DayHeader extends StatelessWidget {
       Spacing.xs,
     ),
     child: Text(
-      MaterialLocalizations.of(context).formatMediumDate(day).toUpperCase(),
+      dayLabel(day, ref.watch(todayProvider)).toUpperCase(),
       style: context.tokens.smallCaps,
     ),
   );

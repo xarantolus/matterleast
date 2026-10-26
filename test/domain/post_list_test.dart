@@ -109,22 +109,4 @@ void main() {
     final rows = rowsOf([post('a', morning)], lastViewedAt: DateTime(2026));
     expect({for (final r in rows) r.key}, {'a', 'day:2026-10-20', 'new-line'});
   });
-
-  group('day labels', () {
-    final now = DateTime(2026, 10, 25, 15);
-    test('today and yesterday by name', () {
-      expect(dayLabel(DateTime(2026, 10, 25), now), 'Today');
-      expect(dayLabel(DateTime(2026, 10, 24), now), 'Yesterday');
-    });
-    test('older days with weekday, and the year when it differs', () {
-      expect(dayLabel(DateTime(2026, 10, 20), now), 'Tue 20 Oct');
-      expect(dayLabel(DateTime(2025, 10, 20), now), 'Mon 20 Oct 2025');
-    });
-    test('yesterday across a month boundary', () {
-      expect(
-        dayLabel(DateTime(2026, 10, 31), DateTime(2026, 11, 1)),
-        'Yesterday',
-      );
-    });
-  });
 }

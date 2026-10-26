@@ -252,33 +252,3 @@ List<ListRow> buildRows(
   }
   return rows.reversed.toList();
 }
-
-const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const _months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-/// "Today", "Yesterday", "Mon 20 Oct", or with the year when it isn't this
-/// one. [day] and [now] are local times.
-String dayLabel(DateTime day, DateTime now) {
-  final today = DateTime(now.year, now.month, now.day);
-  final date = DateTime(day.year, day.month, day.day);
-  if (date == today) return 'Today';
-  if (date == DateTime(today.year, today.month, today.day - 1)) {
-    return 'Yesterday';
-  }
-  final label =
-      '${_weekdays[date.weekday - 1]} ${date.day} ${_months[date.month - 1]}';
-  return date.year == today.year ? label : '$label ${date.year}';
-}

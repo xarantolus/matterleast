@@ -7,6 +7,7 @@ import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/system_message.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/ui/attachment_card.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/link_preview_card.dart';
@@ -329,10 +330,7 @@ class PostText extends StatelessWidget {
 }
 
 String _time(BuildContext context, DateTime at) =>
-    MaterialLocalizations.of(context).formatTimeOfDay(
-      TimeOfDay.fromDateTime(at.toLocal()),
-      alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-    );
+    timeLabel(at, use24: MediaQuery.alwaysUse24HourFormatOf(context));
 
 class _SystemLine extends StatelessWidget {
   const _SystemLine({required this.post, required this.combined});
@@ -379,14 +377,14 @@ class _SystemLine extends StatelessWidget {
   }
 }
 
-class _ThreadBar extends StatelessWidget {
+class _ThreadBar extends ConsumerWidget {
   const _ThreadBar({required this.post, required this.onPressed});
 
   final PostItem post;
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
     final count = post.replyCount;
@@ -425,7 +423,8 @@ class _ThreadBar extends StatelessWidget {
                           ),
                           if (lastReply != null)
                             TextSpan(
-                              text: '  Last reply ${_time(context, lastReply)}',
+                              text:
+                                  '  Last reply ${whenLabel(lastReply, ref.watch(todayProvider), use24: MediaQuery.alwaysUse24HourFormatOf(context))}',
                               style: TextStyle(color: tokens.muted),
                             ),
                         ],
