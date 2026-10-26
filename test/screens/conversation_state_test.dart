@@ -240,4 +240,73 @@ void main() {
       reason: 'nothing shown yet, so nothing is stale',
     );
   });
+
+  group('what a screen reader is told', () {
+    PostItem post(String id, {String user = 'bob', String? sendState}) =>
+        PostItem(
+          id: id,
+          key: id,
+          userId: user,
+          authorName: user,
+          createAt: DateTime.utc(2026, 10, 20, 12),
+          message: 'hello',
+          sendState: sendState,
+        );
+    ConversationState state(
+      List<PostItem> posts, {
+      Iterable<String> arrived = const [],
+    }) => ConversationState(
+      window: ConversationWindow(posts: posts, loaded: true),
+      arrived: {for (final key in arrived) key: DateTime.utc(2026)},
+    );
+
+    test('a message from someone else that arrives live', () {
+      final before = state([message]);
+      final after = state([post('p2'), message], arrived: ['p2']);
+      expect(conversationNews(before, after, myUserId: 'me'), [
+        'New message from bob',
+      ]);
+    });
+
+    test("nothing for history or for the user's own messages", () {
+      final before = state([message]);
+      expect(
+        conversationNews(before, state([post('p0'), message]), myUserId: 'me'),
+        isEmpty,
+        reason: 'loaded, not arrived',
+      );
+      expect(
+        conversationNews(
+          before,
+          state([post('p2', user: 'me'), message], arrived: ['p2']),
+          myUserId: 'me',
+        ),
+        isEmpty,
+      );
+    });
+
+    test("a message of the user's that failed, once", () {
+      final pending = state([post('p2', user: 'me', sendState: 'pending')]);
+      final failed = state([post('p2', user: 'me', sendState: 'failed')]);
+      expect(conversationNews(pending, failed, myUserId: 'me'), [
+        'Your message was not sent',
+      ]);
+      expect(conversationNews(failed, failed, myUserId: 'me'), isEmpty);
+    });
+
+    test('sending is told apart from other changes', () {
+      final before = state([message]);
+      expect(
+        sentJustNow(
+          before,
+          state([post('p2', user: 'me', sendState: 'pending'), message]),
+        ),
+        isTrue,
+      );
+      expect(
+        sentJustNow(before, state([post('p2'), message], arrived: ['p2'])),
+        isFalse,
+      );
+    });
+  });
 }

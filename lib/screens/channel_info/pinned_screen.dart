@@ -28,11 +28,12 @@ class PinnedScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final refresh = ref.watch(pinnedRefreshProvider(url, channelId));
     final ids = ref.watch(pinnedIdsProvider(url, channelId)).value;
-    final items =
-        ref
-            .watch(searchPostItemsProvider(url, (ids ?? const []).join(',')))
-            .value ??
-        const [];
+    final found = ref.watch(
+      searchPostItemsProvider(url, (ids ?? const []).join(',')),
+    );
+    final items = found.value ?? const [];
+    // Known ids still turning into rows aren't "no pinned messages".
+    final resolving = (ids?.isNotEmpty ?? false) && !found.hasValue;
     final host = Uri.parse(url).host;
     final bottom = MediaQuery.paddingOf(context).bottom;
     Future<void> pull() async {
@@ -68,7 +69,7 @@ class PinnedScreen extends ConsumerWidget {
             ),
         ],
       );
-    } else if (refresh.isLoading || ids == null) {
+    } else if (refresh.isLoading || ids == null || resolving) {
       body = const FillScrollable(
         child: Center(child: CircularProgressIndicator()),
       );

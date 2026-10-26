@@ -159,3 +159,14 @@ List<String> conversationNews(
     if (failed > 1) '$failed of your messages were not sent',
   ];
 }
+
+/// The user just sent a message here: one waiting to go out that wasn't
+/// there before.
+bool sentJustNow(ConversationState before, ConversationState after) {
+  final known = {
+    for (final p in before.window?.posts ?? const <PostItem>[]) p.key,
+  };
+  return (after.window?.posts ?? const <PostItem>[]).any(
+    (p) => p.sendState == 'pending' && !known.contains(p.key),
+  );
+}

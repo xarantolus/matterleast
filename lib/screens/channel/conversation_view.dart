@@ -152,9 +152,18 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     }
   }
 
+  void _changed(ConversationState? before, ConversationState after) {
+    if (before == null) return;
+    // What the user sends shows where they can see it go out.
+    if (sentJustNow(before, after) && !(_view.value?.pinned ?? true)) {
+      _showLatest(after);
+    }
+    _announce(before, after);
+  }
+
   /// Tells a screen reader what arrived or failed; nothing without one.
-  void _announce(ConversationState? before, ConversationState after) {
-    if (before == null || !MediaQuery.accessibleNavigationOf(context)) return;
+  void _announce(ConversationState before, ConversationState after) {
+    if (!MediaQuery.accessibleNavigationOf(context)) return;
     final news = conversationNews(
       before,
       after,
@@ -179,7 +188,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(widget.conversation, _announce);
+    ref.listen(widget.conversation, _changed);
     final state = ref.watch(widget.conversation);
     _state = state;
     final host = Uri.parse(widget.url).host;
