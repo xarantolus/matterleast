@@ -8,6 +8,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/message_links.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/data/emoji/custom_emoji.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
@@ -21,11 +22,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'message_environment.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 Future<MessageLinks> messageLinks(Ref ref, String url) async =>
     MessageLinks(await ref.watch(serverSessionProvider(url).future));
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<ParseOptions> parseOptions(Ref ref, String url) async* {
   final links = await ref.watch(messageLinksProvider(url).future);
   yield* links.parseOptions();
@@ -62,8 +63,11 @@ Stream<PostDisplay> postDisplay(Ref ref, String url) async* {
 }
 
 /// Gives the message bodies below it the server's parse options and what
-/// taps on mentions, channel links and links do.
-class MessageEnvironment extends ConsumerWidget {
+/// taps on mentions, channel links and links do. The rows are built only
+/// once the parse options and the custom emoji are known, so they are laid
+/// out once, at their final size; the values handed down stay identical
+/// while nothing changes, so rows don't rebuild for nothing.
+class MessageEnvironment extends ConsumerStatefulWidget {
   const MessageEnvironment({
     required this.url,
     required this.teamId,
@@ -76,39 +80,7 @@ class MessageEnvironment extends ConsumerWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final options =
-        ref.watch(parseOptionsProvider(url)).value ?? const ParseOptions();
-    final me = ref.watch(currentUserProvider(url)).value;
-    final emoji = ref.watch(customEmojiProvider(url)).value ?? const {};
-    final resolver = ref.watch(customEmojiResolverProvider(url)).value;
-    final display = ref.watch(postDisplayProvider(url)).value;
-    return PostEnvironment(
-      server: Uri.parse(url),
-      options: options,
-      myUsername: me?.username ?? '',
-      onMention: (name) => _showPerson(context, ref, name),
-      onChannel: (name) => _openChannel(context, ref, name),
-      onLink: (target) => _openLink(context, ref, target),
-      customEmoji: (name, size) {
-        if (!emoji.containsKey(name)) {
-          resolver?.want([name]);
-          return null;
-        }
-        return EmojiGlyph(name: name, size: size, serverUrl: url);
-      },
-      image: (imageUrl, size) => ServerImage(
-        serverUrl: url,
-        url: imageUrl,
-        width: size.width,
-        height: size.height,
-      ),
-      linkPreviews: display?.linkPreviews ?? true,
-      usernameOverride: display?.usernameOverride ?? false,
-      iconOverride: display?.iconOverride ?? false,
-      child: child,
-    );
-  }
+  ConsumerState<MessageEnvironment> createState() => _MessageEnvironmentState();
 
   Future<void> _showPerson(
     BuildContext context,
@@ -181,9 +153,79 @@ class MessageEnvironment extends ConsumerWidget {
   ) async {
     switch (target) {
       case UriLink(:final uri):
+        // Nothing may take focus back when the reader returns.
+        FocusManager.instance.primaryFocus?.unfocus();
         await openLinkFromMessage(Navigator.of(context), ref, uri);
       case NoLink():
         return;
     }
+  }
+}
+
+class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
+  late final _server = Uri.parse(widget.url);
+  Map<String, String>? _emoji;
+  Object? _resolver;
+  Widget? Function(String, double)? _customEmoji;
+
+  void _onMention(String name) => widget._showPerson(context, ref, name);
+
+  void _onChannel(String name) => widget._openChannel(context, ref, name);
+
+  void _onLink(LinkTarget target) => widget._openLink(context, ref, target);
+
+  Widget _image(String imageUrl, Size size) => ServerImage(
+    serverUrl: widget.url,
+    url: imageUrl,
+    width: size.width,
+    height: size.height,
+  );
+
+  Widget? Function(String, double) _emojiLookup(
+    Map<String, String> emoji,
+    CustomEmojiResolver? resolver,
+  ) {
+    if (_customEmoji case final same?
+        when identical(emoji, _emoji) && identical(resolver, _resolver)) {
+      return same;
+    }
+    _emoji = emoji;
+    _resolver = resolver;
+    final url = widget.url;
+    return _customEmoji = (name, size) {
+      if (!emoji.containsKey(name)) {
+        resolver?.want([name]);
+        return null;
+      }
+      return EmojiGlyph(name: name, size: size, serverUrl: url);
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final url = widget.url;
+    final options = ref.watch(parseOptionsProvider(url));
+    final emoji = ref.watch(customEmojiProvider(url));
+    bool known(AsyncValue<Object?> v) => v.hasValue || v.hasError;
+    if (!known(options) || !known(emoji)) {
+      return const SizedBox.expand();
+    }
+    final me = ref.watch(currentUserProvider(url)).value;
+    final resolver = ref.watch(customEmojiResolverProvider(url)).value;
+    final display = ref.watch(postDisplayProvider(url)).value;
+    return PostEnvironment(
+      server: _server,
+      options: options.value ?? const ParseOptions(),
+      myUsername: me?.username ?? '',
+      onMention: _onMention,
+      onChannel: _onChannel,
+      onLink: _onLink,
+      customEmoji: _emojiLookup(emoji.value ?? const {}, resolver),
+      image: _image,
+      linkPreviews: display?.linkPreviews ?? true,
+      usernameOverride: display?.usernameOverride ?? false,
+      iconOverride: display?.iconOverride ?? false,
+      child: widget.child,
+    );
   }
 }

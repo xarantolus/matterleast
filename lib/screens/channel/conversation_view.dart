@@ -15,6 +15,7 @@ import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/post_tile.dart';
 import 'package:matterleast/ui/swipe_to_open.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -48,17 +49,27 @@ class ConversationView extends ConsumerStatefulWidget {
 class _ConversationViewState extends ConsumerState<ConversationView> {
   final _list = AnchoredListController();
   late final Conversation _controller;
-  AnchoredListView? _view;
+  final _view = ValueNotifier<AnchoredListView?>(null);
+  final _lineSeen = ValueNotifier(false);
   ({int generation, AnchoredPosition? anchor})? _opened;
   Object? _highlighted;
   Timer? _highlightTimer;
-  var _lineSeen = false;
+  final _expanded = <String>{};
+  late ConversationState _state;
+
+  /// The built widget of each row, handed out again while the row is
+  /// unchanged, so an update rebuilds only the rows that changed.
+  final _built = <Object, _BuiltRow>{};
+  var _builtGeneration = -1;
 
   /// When the reader scrolled away from the bottom; what arrives after
   /// counts as new below.
   DateTime? _leftBottomAt;
 
   static const _arrivalAnimation = Duration(milliseconds: 250);
+
+  /// Room between the newest message and the composer.
+  static const _bottomGap = Spacing.md;
 
   @override
   void initState() {
@@ -70,6 +81,8 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   void dispose() {
     _controller.leave(_list.position);
     _highlightTimer?.cancel();
+    _view.dispose();
+    _lineSeen.dispose();
     super.dispose();
   }
 
@@ -113,24 +126,22 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   }
 
   void _onView(AnchoredListView view) {
-    final rows = ref.read(widget.conversation).rows;
+    final rows = _state.rows;
     final line = rows.indexWhere((r) => r is NewMessagesLine);
     final newest = view.newestVisible;
     final oldest = view.oldestVisible;
     if (line >= 0 && newest != null && oldest != null) {
-      if (line >= newest && line <= oldest) _lineSeen = true;
+      if (line >= newest && line <= oldest) _lineSeen.value = true;
     }
-    setState(() {
-      _view = view;
-      _leftBottomAt = view.pinned ? null : (_leftBottomAt ?? DateTime.now());
-    });
+    _leftBottomAt = view.pinned ? null : (_leftBottomAt ?? DateTime.now());
+    _view.value = view;
     _controller.onView(view);
   }
 
   void _jumpToLine(List<ListRow> rows, double height) {
     final line = rows.indexWhere((r) => r is NewMessagesLine);
     if (line < 0) return;
-    setState(() => _lineSeen = true);
+    _lineSeen.value = true;
     if (line + 1 < rows.length) {
       _list.jumpTo(rows[line + 1].key, offset: height * 0.75);
     } else {
@@ -148,6 +159,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(widget.conversation);
+    _state = state;
     final host = Uri.parse(widget.url).host;
     return switch (conversationBody(state, host: host)) {
       BodyLoading() => const Center(child: CircularProgressIndicator()),
@@ -171,9 +183,106 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     };
   }
 
-  Widget _ready(ConversationState state, double height) {
+  static Object _keyOf(ListRow row) => row.key;
+
+  Widget _row(BuildContext context, ListRow row) {
+    final state = _state;
+    if (_builtGeneration != state.generation) {
+      _built.clear();
+      _builtGeneration = state.generation;
+    }
     final rows = state.rows;
-    final view = _view;
+    final newest = rows.isNotEmpty && identical(rows.first, row);
+    final root = state.window?.root?.key;
+    var dividerBelow = false;
+    if (root != null && row.key == root && !newest) {
+      final index = rows.indexOf(row);
+      dividerBelow = index > 0 && rows[index - 1] is! DaySeparator;
+    }
+    final highlighted = _highlighted == row.key;
+    final cached = _built[row.key];
+    if (cached != null &&
+        cached.row == row &&
+        cached.highlighted == highlighted &&
+        cached.newest == newest &&
+        cached.dividerBelow == dividerBelow) {
+      return cached.widget;
+    }
+    Widget built = switch (row) {
+      MessageRow(:final post, :final compact, :final combined) => AppearOnce(
+        animate: _justArrived(state.arrived[row.key], DateTime.now()),
+        child: _message(post, compact, combined, highlighted: highlighted),
+      ),
+      DaySeparator(:final day) => DaySeparatorTile(day: day),
+      NewMessagesLine() => const NewMessagesTile(),
+    };
+    if (dividerBelow) {
+      built = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          built,
+          const Divider(height: Spacing.lg),
+        ],
+      );
+    }
+    if (newest) {
+      built = Padding(
+        padding: const EdgeInsets.only(bottom: _bottomGap),
+        child: built,
+      );
+    }
+    _built[row.key] = (
+      row: row,
+      highlighted: highlighted,
+      newest: newest,
+      dividerBelow: dividerBelow,
+      widget: built,
+    );
+    if (_built.length > rows.length * 2) {
+      final keys = {for (final r in rows) r.key};
+      _built.removeWhere((key, _) => !keys.contains(key));
+    }
+    return built;
+  }
+
+  Widget _ready(ConversationState state, double height) => Stack(
+    children: [
+      ShowMoreMemory(
+        expanded: _expanded,
+        child: MessageEnvironment(
+          url: widget.url,
+          teamId: state.window?.teamId ?? '',
+          child: AnchoredList<ListRow>(
+            key: ValueKey(state.generation),
+            rows: state.rows,
+            keyOf: _keyOf,
+            controller: _list,
+            initialAnchor: _openAt(state, height),
+            onViewChanged: _onView,
+            olderEdge: _OlderEdge(
+              state: state,
+              host: Uri.parse(widget.url).host,
+              startText: widget.startText,
+              onRetry: _controller.retryOlder,
+            ),
+            itemBuilder: _row,
+          ),
+        ),
+      ),
+      Positioned.fill(
+        child: ListenableBuilder(
+          listenable: Listenable.merge([_view, _lineSeen]),
+          builder: (context, _) => _pills(state, height),
+        ),
+      ),
+    ],
+  );
+
+  /// The "N new" chip above and the way back down below, which follow the
+  /// reader without rebuilding the list.
+  Widget _pills(ConversationState state, double height) {
+    final rows = state.rows;
+    final view = _view.value;
     final now = DateTime.now();
     final newestVisible = view?.newestVisible ?? 0;
     final newBelow = [
@@ -184,7 +293,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     ].length;
     final line = rows.indexWhere((r) => r is NewMessagesLine);
     final lineAbove =
-        !_lineSeen &&
+        !_lineSeen.value &&
         line >= 0 &&
         view?.oldestVisible != null &&
         line > view!.oldestVisible!;
@@ -192,33 +301,6 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     final scrolledUp = view != null && !view.pinned;
     return Stack(
       children: [
-        MessageEnvironment(
-          url: widget.url,
-          teamId: state.window?.teamId ?? '',
-          child: AnchoredList<ListRow>(
-            key: ValueKey(state.generation),
-            rows: rows,
-            keyOf: (row) => row.key,
-            controller: _list,
-            initialAnchor: _openAt(state, height),
-            onViewChanged: _onView,
-            olderEdge: _OlderEdge(
-              state: state,
-              host: Uri.parse(widget.url).host,
-              startText: widget.startText,
-              onRetry: _controller.retryOlder,
-            ),
-            itemBuilder: (context, row) => switch (row) {
-              MessageRow(:final post, :final compact, :final combined) =>
-                AppearOnce(
-                  animate: _justArrived(state.arrived[row.key], now),
-                  child: _message(state, post, compact, combined),
-                ),
-              DaySeparator(:final day) => DaySeparatorTile(day: day),
-              NewMessagesLine() => const NewMessagesTile(),
-            },
-          ),
-        ),
         if (lineAbove)
           Positioned(
             top: Spacing.sm,
@@ -268,23 +350,30 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   }
 }
 
+typedef _BuiltRow = ({
+  ListRow row,
+  bool highlighted,
+  bool newest,
+  bool dividerBelow,
+  Widget widget,
+});
+
 extension on _ConversationViewState {
   Widget _message(
-    ConversationState state,
     PostItem post,
     bool compact,
-    List<PostItem> combined,
-  ) {
-    final teamId = state.window?.teamId ?? '';
+    List<PostItem> combined, {
+    required bool highlighted,
+  }) {
     final usable = !post.isSystem && !post.deleted && !post.unreadable;
+    final threads = widget.onOpenThread != null;
+    void openThread() => widget.onOpenThread?.call(post);
     final tile = PostTile(
       post: post,
       compact: compact,
       combined: combined,
-      highlighted: _highlighted == post.key,
-      onOpenThread: widget.onOpenThread == null
-          ? null
-          : () => widget.onOpenThread!(post),
+      highlighted: highlighted,
+      onOpenThread: threads ? openThread : null,
       onDismiss: post.isEphemeral
           ? () async =>
                 (await ref.read(composerActionsProvider(widget.url).future))
@@ -304,12 +393,17 @@ extension on _ConversationViewState {
     if (!usable) return tile;
     void open() {
       FocusManager.instance.primaryFocus?.unfocus();
-      unawaited(_menu(post, teamId));
+      unawaited(_menu(post, _state.window?.teamId ?? ''));
     }
 
     return SwipeToOpen(
       onOpen: open,
-      child: InkWell(onLongPress: open, child: tile),
+      child: InkWell(
+        // Links, images, files, reactions and names take their own taps.
+        onTap: threads && post.sendState == null ? openThread : null,
+        onLongPress: open,
+        child: tile,
+      ),
     );
   }
 

@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'emoji_providers.g.dart';
 
 /// A server's known custom emoji, name → id.
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<Map<String, String>> customEmoji(Ref ref, String url) async* {
   final session = await ref.watch(serverSessionProvider(url).future);
   yield* watchCustomEmoji(session.store);
@@ -20,7 +20,7 @@ Stream<Set<String>> customEmojiMissing(Ref ref, String url) async* {
 }
 
 /// Where to report custom emoji names the map above doesn't have yet.
-@riverpod
+@Riverpod(keepAlive: true)
 Future<CustomEmojiResolver> customEmojiResolver(Ref ref, String url) async =>
     (await ref.watch(serverSessionProvider(url).future)).emoji;
 
