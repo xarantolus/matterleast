@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:matterleast/api/api_error.dart';
@@ -17,7 +18,7 @@ Future<T> cancellable<T>(CancelToken cancel, Future<T> Function() body) =>
     runZoned(body, zoneValues: {_cancelKey: cancel});
 
 /// One HTTP client per server: base URL, auth header, deadlines, error
-/// mapping and coalescing of identical in-flight requests. The generated
+/// mapping, and identical GETs in flight sharing one round trip. The generated
 /// [MattermostClient] sits on top; nothing above the data layer touches Dio.
 class ServerApi {
   ServerApi({
@@ -69,6 +70,7 @@ class ServerApi {
         },
       ),
     );
+    this.dio.httpClientAdapter = _SameGets(this.dio.httpClientAdapter);
     client = MattermostClient(this.dio);
   }
 
@@ -169,20 +171,16 @@ class ServerApi {
     return body is Map<String, Object?> ? body : null;
   }
 
-  Future<Map<String, Object?>?> clientConfig() => coalesced(
-    'config',
-    () => getJsonObject('/api/v4/config/client', query: {'format': 'old'}),
-  );
+  Future<Map<String, Object?>?> clientConfig() =>
+      getJsonObject('/api/v4/config/client', query: {'format': 'old'});
 
-  Future<Map<String, Object?>?> clientLicense() => coalesced(
-    'license',
-    () => getJsonObject('/api/v4/license/client', query: {'format': 'old'}),
-  );
+  Future<Map<String, Object?>?> clientLicense() =>
+      getJsonObject('/api/v4/license/client', query: {'format': 'old'});
 
-  /// Like [call], but callers asking for the same [key] while a request is
-  /// running share its result instead of starting another. The shared
-  /// request keeps only its deadline, so one caller giving up doesn't stop
-  /// it for the others.
+  /// Like [call], for work that is more than one GET (a search, which is a
+  /// POST, or fetches with their store writes): callers asking for the
+  /// same [key] while it runs share its result. The shared work keeps only
+  /// its deadline, so one caller giving up doesn't stop it for the others.
   Future<T> coalesced<T>(String key, Future<T> Function() request) =>
       coalesce<Object?>(
         _inFlight,
@@ -194,4 +192,108 @@ class ServerApi {
     dio.close(force: true);
     _sessionEnded.close();
   }
+}
+
+/// Joins identical GETs (same address, query and response type) while one
+/// is in flight: the bytes of one answer go to every caller, and each
+/// decodes its own copy. A caller that joined and gives up leaves the
+/// request running for the others; when the request it joined is
+/// cancelled, it sends its own.
+class _SameGets implements HttpClientAdapter {
+  _SameGets(this._inner);
+
+  final HttpClientAdapter _inner;
+  final _running = <String, Future<_Answer>>{};
+
+  static String? _keyOf(RequestOptions options) =>
+      options.method.toUpperCase() == 'GET' &&
+          (options.responseType == ResponseType.json ||
+              options.responseType == ResponseType.plain)
+      ? '${options.responseType.name} ${options.uri}'
+      : null;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    final key = _keyOf(options);
+    if (key == null) return _inner.fetch(options, requestStream, cancelFuture);
+    for (
+      var running = _running[key];
+      running != null;
+      running = _running[key]
+    ) {
+      try {
+        return (await running).body();
+      } on _GaveUp {
+        continue;
+      } on DioException catch (e) {
+        throw e.copyWith(requestOptions: options);
+      }
+    }
+    final done = Completer<_Answer>();
+    // Nobody may have joined; the failure reaches this caller below.
+    unawaited(done.future.then((_) {}, onError: (Object _) {}));
+    _running[key] = done.future;
+    void settled() {
+      if (identical(_running[key], done.future)) _running.remove(key);
+    }
+
+    var gaveUp = false;
+    unawaited(cancelFuture?.then((_) => gaveUp = true));
+    try {
+      final body = await _inner.fetch(options, requestStream, cancelFuture);
+      final bytes = BytesBuilder(copy: false);
+      await body.stream.forEach(bytes.add);
+      final answer = (
+        bytes: bytes.takeBytes(),
+        statusCode: body.statusCode,
+        statusMessage: body.statusMessage,
+        headers: body.headers,
+        isRedirect: body.isRedirect,
+        redirects: body.redirects,
+        extra: body.extra,
+      );
+      settled();
+      done.complete(answer);
+      return answer.body();
+    } catch (e, s) {
+      settled();
+      done.completeError(gaveUp ? const _GaveUp() : e, s);
+      rethrow;
+    }
+  }
+
+  @override
+  void close({bool force = false}) => _inner.close(force: force);
+}
+
+/// The caller whose request others joined gave up on it.
+class _GaveUp implements Exception {
+  const _GaveUp();
+}
+
+typedef _Answer = ({
+  Uint8List bytes,
+  int statusCode,
+  String? statusMessage,
+  Map<String, List<String>> headers,
+  bool isRedirect,
+  List<RedirectRecord>? redirects,
+  Map<String, dynamic> extra,
+});
+
+extension on _Answer {
+  ResponseBody body() => ResponseBody(
+    Stream.value(bytes),
+    statusCode,
+    statusMessage: statusMessage,
+    headers: {
+      for (final e in headers.entries) e.key: [...e.value],
+    },
+    isRedirect: isRedirect,
+    redirects: redirects,
+  )..extra = {...extra};
 }

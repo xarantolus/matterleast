@@ -20,11 +20,10 @@ class SettingsActions {
 
   /// Fetches the account's notification settings, every key the server
   /// has, into the store.
-  Future<void> refreshNotifyProps() =>
-      session.api.coalesced('me:notify_props', () async {
-        final me = await session.api.getJsonObject('/api/v4/users/me');
-        if (me != null) await _applyMe(me);
-      });
+  Future<void> refreshNotifyProps() async {
+    final me = await session.api.getJsonObject('/api/v4/users/me');
+    if (me != null) await _applyMe(me);
+  }
 
   /// Saves what [edited] changes against [shown]. The server replaces the
   /// whole map on a patch, so the changes go onto what it has now.

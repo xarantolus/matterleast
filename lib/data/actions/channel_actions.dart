@@ -9,6 +9,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/views/switch_views.dart';
+import 'package:matterleast/data/wait_limited.dart';
 import 'package:matterleast/domain/category_moves.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/teams.dart';
@@ -441,17 +442,15 @@ class ChannelActions {
   /// failure is thrown once all have finished.
   Future<void> addMembers(String channelId, List<String> userIds) async {
     try {
-      await Future.wait([
-        for (final userId in userIds)
-          session.api.call(
-            () => _client.channels.addChannelMember(
-              channelId: channelId,
-              body: api.ApiV4ChannelsChannelIdMembersRequestBody(
-                userId: userId,
-              ),
-            ),
+      await waitLimited(
+        userIds,
+        (userId) => session.api.call(
+          () => _client.channels.addChannelMember(
+            channelId: channelId,
+            body: api.ApiV4ChannelsChannelIdMembersRequestBody(userId: userId),
           ),
-      ]);
+        ),
+      );
     } finally {
       await refreshStats(channelId);
     }
@@ -459,34 +458,32 @@ class ChannelActions {
 
   /// The channel's member, pinned and file counts; the member count is
   /// stored.
-  Future<api.ChannelStats> refreshStats(String channelId) =>
-      session.api.coalesced('stats:$channelId', () async {
-        final stats = await session.api.call(
-          () => _client.channels.getChannelStats(channelId: channelId),
-        );
-        if (stats.memberCount case final count?) {
-          await session.store.applyChannelStats(channelId, count);
-        }
-        return stats;
-      });
+  Future<api.ChannelStats> refreshStats(String channelId) async {
+    final stats = await session.api.call(
+      () => _client.channels.getChannelStats(channelId: channelId),
+    );
+    if (stats.memberCount case final count?) {
+      await session.store.applyChannelStats(channelId, count);
+    }
+    return stats;
+  }
 
   /// The channel's pinned messages, stored as the list
   /// `pinned:<channel>`.
-  Future<void> refreshPinned(String channelId) =>
-      session.api.coalesced('pinned:$channelId', () async {
-        final page = await session.api.call(
-          () => _client.channels.getPinnedPosts(channelId: channelId),
-        );
-        await session.users.ensure([
-          for (final p in (page.posts ?? const <String, api.Post>{}).values)
-            ?p.userId,
-        ]);
-        await session.store.applyPostList(
-          pinnedList(channelId),
-          page,
-          fetchedAt: _clock(),
-        );
-      });
+  Future<void> refreshPinned(String channelId) async {
+    final page = await session.api.call(
+      () => _client.channels.getPinnedPosts(channelId: channelId),
+    );
+    await session.users.ensure([
+      for (final p in (page.posts ?? const <String, api.Post>{}).values)
+        ?p.userId,
+    ]);
+    await session.store.applyPostList(
+      pinnedList(channelId),
+      page,
+      fetchedAt: _clock(),
+    );
+  }
 
   static String pinnedList(String channelId) => 'pinned:$channelId';
 

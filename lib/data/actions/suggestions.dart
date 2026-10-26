@@ -52,7 +52,6 @@ class SuggestionSource {
                 rights.groupMentions &&
                 (await _db.features()).groupMentions
             ? _ask(
-                'groups:$prefix',
                 () => server.client.groups.getGroups(
                   q: prefix,
                   filterAllowReference: true,
@@ -62,7 +61,6 @@ class SuggestionSource {
               )
             : Future<List<api.Group>?>.value();
         final remote = await _ask(
-          'users:$teamId:$channelId:$prefix',
           () => server.client.users.autocompleteUsers(
             name: prefix,
             limit: 25,
@@ -100,7 +98,6 @@ class SuggestionSource {
         yield rankChannels(prefix, local);
         if (teamId.isEmpty) return;
         final remote = await _ask(
-          'channels:$teamId:$prefix',
           () => server.client.channels.autocompleteChannelsForTeam(
             teamId: teamId,
             name: prefix,
@@ -133,7 +130,6 @@ class SuggestionSource {
         yield ranked(custom);
         if (!await _customEmojiOn()) return;
         final remote = await _ask(
-          'emoji:$prefix',
           () => server.client.emoji.autocompleteEmoji(name: prefix),
           feature: OptionalFeature.customEmoji,
         );
@@ -159,7 +155,6 @@ class SuggestionSource {
         yield const [];
         if (teamId.isEmpty || !await _commandsOn()) return;
         final remote = await _ask(
-          'command-args:$teamId:$channelId:$rootId:$prefix',
           () => server.client.commands.listCommandAutocompleteSuggestions(
             teamId: teamId,
             userInput: '/$prefix',
@@ -189,7 +184,6 @@ class SuggestionSource {
       return cached.list;
     }
     final list = await _ask(
-      'commands:$teamId',
       () => server.client.commands.listAutocompleteCommands(teamId: teamId),
       feature: OptionalFeature.commandSuggestions,
     );
@@ -200,12 +194,11 @@ class SuggestionSource {
   /// The server's suggestions, or null when it has none to give; an
   /// answer that the optional [feature] is unavailable turns it off.
   Future<T?> _ask<T>(
-    String key,
     Future<T> Function() request, {
     OptionalFeature? feature,
   }) async {
     try {
-      return await server.coalesced('autocomplete:$key', request);
+      return await server.call(request);
     } on Object catch (e) {
       Log.info('autocomplete', 'Server suggestions failed: ${e.runtimeType}');
       if (feature != null &&

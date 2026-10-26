@@ -7,6 +7,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
+import 'package:matterleast/data/wait_limited.dart';
 
 /// Fetches the lists behind Home: recent mentions, saved messages and
 /// followed threads. Each is one job per server, coalesced, and is fetched
@@ -93,25 +94,25 @@ class InboxSync {
     var terms = await _db.syncText(SyncKeys.mentionTerms);
     if (terms == null) {
       await store.applyMe(
-        await server.coalesced('me', () => _client.users.getUser(userId: 'me')),
+        await server.call(() => _client.users.getUser(userId: 'me')),
       );
       terms = await _db.syncText(SyncKeys.mentionTerms);
     }
     if (terms == null) return;
-    final pages = await Future.wait([
-      for (final teamId in await _teamIds())
-        server.call(
-          () => _client.posts.searchPosts(
-            teamId: teamId,
-            body: api.ApiV4TeamsTeamIdPostsSearchRequestBody(
-              terms: terms!,
-              isOrSearch: true,
-              timeZoneOffset: started.toLocal().timeZoneOffset.inSeconds,
-              perPage: pageSize,
-            ),
+    final pages = await waitLimited(
+      await _teamIds(),
+      (teamId) => server.call(
+        () => _client.posts.searchPosts(
+          teamId: teamId,
+          body: api.ApiV4TeamsTeamIdPostsSearchRequestBody(
+            terms: terms!,
+            isOrSearch: true,
+            timeZoneOffset: started.toLocal().timeZoneOffset.inSeconds,
+            perPage: pageSize,
           ),
         ),
-    ]);
+      ),
+    );
     final posts = <String, api.Post>{for (final page in pages) ...?page.posts};
     final order = posts.values.where((p) => p.createAt != null).toList()
       ..sort((a, b) => b.createAt!.compareTo(a.createAt!));
@@ -135,7 +136,7 @@ class InboxSync {
 
   Future<void> _allThreads() async {
     final started = _clock();
-    await Future.wait([for (final id in await _teamIds()) _teamThreads(id)]);
+    await waitLimited(await _teamIds(), _teamThreads);
     await _db.setSyncInt(
       SyncKeys.listFetchedAt(threadsList),
       started.millisecondsSinceEpoch,

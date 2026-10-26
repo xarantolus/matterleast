@@ -28,6 +28,17 @@ void main() {
       expect(retryDelay(500), const Duration(minutes: 5));
     });
 
+    test('retries are spread by up to 20% either way', () {
+      expect(retryDelay(1, jitter: -1), const Duration(milliseconds: 2400));
+      expect(retryDelay(1, jitter: 1), const Duration(milliseconds: 3600));
+      expect(retryDelay(500, jitter: 1), const Duration(minutes: 6));
+      final spread = {for (var i = 0; i < 20; i++) jitteredRetryDelay(1)};
+      expect(spread.length, greaterThan(1));
+      for (final d in spread) {
+        expect(d.inMilliseconds, inInclusiveRange(2400, 3600));
+      }
+    });
+
     test('the socket address resumes the connection', () {
       final uri = socketUri(
         Uri.parse('https://chat.example.test/team-chat/'),

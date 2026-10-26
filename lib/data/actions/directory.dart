@@ -19,7 +19,8 @@ class Directory {
   ServerDatabase get _db => session.db;
   api.MattermostClient get _client => session.api.client;
 
-  Future<T> _get<T>(String key, Future<T> Function() request) =>
+  /// Searches are POSTs, which [ServerApi] doesn't join by itself.
+  Future<T> _search<T>(String key, Future<T> Function() request) =>
       session.api.coalesced(key, request);
 
   Future<List<String>> _stored(List<api.User> users) async {
@@ -31,56 +32,51 @@ class Directory {
   }
 
   /// Members of a channel, admins first.
-  Future<List<String>> members(String channelId, {int page = 0}) =>
-      _get('members:$channelId:$page', () async {
-        return _stored(
-          await session.api.call(
-            () => _client.users.getUsers(
-              inChannel: channelId,
-              active: true,
-              sort: 'admin',
-              page: page,
-              perPage: pageSize,
-            ),
+  Future<List<String>> members(String channelId, {int page = 0}) async =>
+      _stored(
+        await session.api.call(
+          () => _client.users.getUsers(
+            inChannel: channelId,
+            active: true,
+            sort: 'admin',
+            page: page,
+            perPage: pageSize,
           ),
-        );
-      });
+        ),
+      );
 
   /// People in [teamId] who are not in [channelId], to add.
   Future<List<String>> nonMembers(
     String teamId,
     String channelId, {
     int page = 0,
-  }) => _get('non-members:$channelId:$page', () async {
+  }) async => _stored(
+    await session.api.call(
+      () => _client.users.getUsers(
+        inTeam: teamId,
+        notInChannel: channelId,
+        active: true,
+        page: page,
+        perPage: pageSize,
+      ),
+    ),
+  );
+
+  /// Everyone the user may message: the team's people when the server
+  /// restricts direct messages to teams, else everyone.
+  Future<List<String>> people({String? teamId, int page = 0}) async {
+    final restricted = await _restricted();
     return _stored(
       await session.api.call(
         () => _client.users.getUsers(
-          inTeam: teamId,
-          notInChannel: channelId,
+          inTeam: restricted ? teamId : null,
           active: true,
           page: page,
           perPage: pageSize,
         ),
       ),
     );
-  });
-
-  /// Everyone the user may message: the team's people when the server
-  /// restricts direct messages to teams, else everyone.
-  Future<List<String>> people({String? teamId, int page = 0}) =>
-      _get('people:$teamId:$page', () async {
-        final restricted = await _restricted();
-        return _stored(
-          await session.api.call(
-            () => _client.users.getUsers(
-              inTeam: restricted ? teamId : null,
-              active: true,
-              page: page,
-              perPage: pageSize,
-            ),
-          ),
-        );
-      });
+  }
 
   /// People matching [term], narrowed like the lists above.
   Future<List<String>> searchPeople(
@@ -88,25 +84,26 @@ class Directory {
     String? teamId,
     String? inChannel,
     String? notInChannel,
-  }) => _get('people-search:$term:$teamId:$inChannel:$notInChannel', () async {
-    final restricted = inChannel == null && notInChannel == null
-        ? await _restricted()
-        : true;
-    return _stored(
-      await session.api.call(
-        () => _client.users.searchUsers(
-          body: api.ApiV4UsersSearchRequestBody(
-            term: term,
-            teamId: restricted ? teamId : null,
-            inChannelId: inChannel,
-            notInChannelId: notInChannel,
-            allowInactive: false,
-            limit: 50,
+  }) =>
+      _search('people-search:$term:$teamId:$inChannel:$notInChannel', () async {
+        final restricted = inChannel == null && notInChannel == null
+            ? await _restricted()
+            : true;
+        return _stored(
+          await session.api.call(
+            () => _client.users.searchUsers(
+              body: api.ApiV4UsersSearchRequestBody(
+                term: term,
+                teamId: restricted ? teamId : null,
+                inChannelId: inChannel,
+                notInChannelId: notInChannel,
+                allowInactive: false,
+                limit: 50,
+              ),
+            ),
           ),
-        ),
-      ),
-    );
-  });
+        );
+      });
 
   Future<bool> _restricted() async =>
       (await _db.features()).directMessagesRestricted;
@@ -117,7 +114,7 @@ class Directory {
     String teamId, {
     bool archived = false,
     int page = 0,
-  }) => _get('channels:$teamId:$archived:$page', () async {
+  }) async {
     final found = await session.api.call(
       () => archived
           ? _client.channels.getDeletedChannelsForTeam(
@@ -135,14 +132,14 @@ class Directory {
       items: await _channelItems(found, archived: archived),
       more: found.length >= pageSize,
     );
-  });
+  }
 
   /// Channels of [teamId] matching [term].
   Future<List<SwitchItem>> searchChannels(
     String teamId,
     String term, {
     bool archived = false,
-  }) => _get('channel-search:$teamId:$term:$archived', () async {
+  }) => _search('channel-search:$teamId:$term:$archived', () async {
     final found = await session.api.call(
       () => _client.channels.searchChannels(
         teamId: teamId,

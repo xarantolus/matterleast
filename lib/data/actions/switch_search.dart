@@ -4,6 +4,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/switch_views.dart';
+import 'package:matterleast/data/wait_limited.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 
 /// Asks one server for people and public channels matching a term, for the
@@ -43,15 +44,15 @@ class SwitchSearch {
     final teamIds = peopleOnly
         ? const <String>[]
         : [for (final t in await _db.select(_db.myTeams).get()) t.teamId];
-    final channels = Future.wait([
-      for (final teamId in teamIds)
-        session.api.call(
-          () => session.api.client.channels.autocompleteChannelsForTeam(
-            teamId: teamId,
-            name: query,
-          ),
+    final channels = waitLimited(
+      teamIds,
+      (teamId) => session.api.call(
+        () => session.api.client.channels.autocompleteChannelsForTeam(
+          teamId: teamId,
+          name: query,
         ),
-    ]).then((lists) => lists.expand((l) => l));
+      ),
+    ).then((lists) => lists.expand((l) => l));
     final found = await users;
     await session.store.applyUsers(found);
     final format = await _db.nameFormat();

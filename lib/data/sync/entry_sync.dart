@@ -102,10 +102,7 @@ class EntrySync {
     final preferences = server.call(
       () => _client.preferences.getPreferences(userId: 'me'),
     );
-    final me = server.coalesced(
-      'me',
-      () => _client.users.getUser(userId: 'me'),
-    );
+    final me = server.call(() => _client.users.getUser(userId: 'me'));
     final teams = server.call(
       () => _client.teams.getTeamsForUser(userId: 'me'),
     );

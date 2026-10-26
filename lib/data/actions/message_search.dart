@@ -2,6 +2,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/search_views.dart';
+import 'package:matterleast/data/wait_limited.dart';
 import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/server_features.dart';
 
@@ -128,14 +129,14 @@ class MessageSearch {
       )..where((c) => c.id.isIn(ids))).get())
         c.id,
     };
-    final found = await Future.wait([
-      for (final id in ids.difference(known))
-        session.api
-            .call(() => _client.channels.getChannel(channelId: id))
-            .then<api.Channel?>((c) => c)
-            // A channel that can't be read leaves its results unnamed.
-            .catchError((Object _) => null),
-    ]);
+    final found = await waitLimited(
+      ids.difference(known),
+      (id) => session.api
+          .call(() => _client.channels.getChannel(channelId: id))
+          .then<api.Channel?>((c) => c)
+          // A channel that can't be read leaves its results unnamed.
+          .catchError((Object _) => null),
+    );
     return found.nonNulls.toList();
   }
 }

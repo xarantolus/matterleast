@@ -20,7 +20,7 @@ class ServerSocket {
     required this.onResync,
     this.onClosed,
     this.pingInterval = const Duration(seconds: 30),
-    this.retryDelayOf = retryDelay,
+    this.retryDelayOf = jitteredRetryDelay,
   });
 
   final Uri serverUrl;

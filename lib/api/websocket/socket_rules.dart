@@ -2,15 +2,26 @@
 /// the channel so they can be tested on their own.
 library;
 
+import 'dart:math';
+
 /// Wait before reconnect attempt number [failCount] (1 = first failure):
 /// 3 s for the first seven, then growing by 3 s per failure up to 5 min.
-Duration retryDelay(int failCount) {
+/// [jitter], from -1 to 1, moves it by up to 20% either way, so clients
+/// that lost the network together don't all retry in step.
+Duration retryDelay(int failCount, {double jitter = 0}) {
   const step = Duration(seconds: 3);
-  if (failCount <= 7) return step;
-  final grown = step * failCount;
   const cap = Duration(minutes: 5);
-  return grown > cap ? cap : grown;
+  final base = failCount <= 7
+      ? step
+      : (step * failCount > cap ? cap : step * failCount);
+  return base * (1 + 0.2 * jitter.clamp(-1, 1));
 }
+
+final _random = Random();
+
+/// [retryDelay] with a random jitter.
+Duration jitteredRetryDelay(int failCount) =>
+    retryDelay(failCount, jitter: _random.nextDouble() * 2 - 1);
 
 /// The socket address for a server, resuming [connectionId] at [sequence]
 /// (reliable WebSockets; an empty id asks for a new connection).

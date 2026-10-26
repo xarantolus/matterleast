@@ -25,19 +25,16 @@ class ProfileActions {
   }
 
   /// Someone's profile and presence, fresh from the server.
-  Future<void> refresh(String userId) =>
-      session.api.coalesced('profile:$userId', () async {
-        final user = session.api.call(
-          () => _client.users.getUser(userId: userId),
-        );
-        final status = session.api.call(
-          () => _client.status.getUserStatus(userId: userId),
-        );
-        await session.store.applyUsers([await user]);
-        if ((await status).status case final s?) {
-          await session.store.applyStatuses({userId: s});
-        }
-      });
+  Future<void> refresh(String userId) async {
+    final user = session.api.call(() => _client.users.getUser(userId: userId));
+    final status = session.api.call(
+      () => _client.status.getUserStatus(userId: userId),
+    );
+    await session.store.applyUsers([await user]);
+    if ((await status).status case final s?) {
+      await session.store.applyStatuses({userId: s});
+    }
+  }
 
   /// Sets the user's presence; [dndEnd] ends do-not-disturb at that time.
   Future<void> setStatus(String status, {DateTime? dndEnd}) async {

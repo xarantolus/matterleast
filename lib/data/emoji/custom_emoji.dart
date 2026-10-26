@@ -213,8 +213,7 @@ class CustomEmojiResolver {
     for (final name in names) {
       try {
         found.add(
-          await server.coalesced(
-            'emoji-name:$name',
+          await server.call(
             () => server.client.emoji.getEmojiByName(emojiName: name),
           ),
         );

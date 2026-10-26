@@ -165,23 +165,52 @@ void main() {
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   });
 
-  test('identical in-flight requests share one round trip', () async {
+  test('identical GETs in flight share one round trip', () async {
     final gate = Completer<void>();
     respond = (req) async {
       await gate.future;
       req.response
         ..headers.contentType = ContentType.json
-        ..write(jsonEncode({'id': 'u1', 'username': 'alice'}));
+        ..write(
+          jsonEncode({'id': req.uri.pathSegments.last, 'username': 'alice'}),
+        );
       await req.response.close();
     };
     final api = ServerApi(baseUrl: base(), token: () => 't');
-    final a = api.coalesced('me', () => api.client.users.getUser(userId: 'me'));
-    final b = api.coalesced('me', () => api.client.users.getUser(userId: 'me'));
+    final a = api.call(() => api.client.users.getUser(userId: 'me'));
+    final b = api.call(() => api.client.users.getUser(userId: 'me'));
+    final other = api.call(() => api.client.users.getUser(userId: 'u2'));
     await Future<void>.delayed(const Duration(milliseconds: 50));
     gate.complete();
-    final results = await Future.wait([a, b]);
-    expect(results.map((u) => u.username), ['alice', 'alice']);
-    expect(seen, hasLength(1));
+    final results = await Future.wait([a, b, other]);
+    expect(results.map((u) => u.id), ['me', 'me', 'u2']);
+    expect(seen.map((r) => r.uri.path), [
+      '/api/v4/users/me',
+      '/api/v4/users/u2',
+    ]);
+    api.close();
+  });
+
+  test('a GET that joined another still gets its answer when the first '
+      'caller gives up', () async {
+    var answered = 0;
+    respond = (req) async {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      req.response
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'id': 'me', 'username': 'alice'}));
+      await req.response.close();
+      answered++;
+    };
+    final api = ServerApi(baseUrl: base(), token: () => 't');
+    final first = api.call(
+      () => api.client.users.getUser(userId: 'me'),
+      deadline: const Duration(milliseconds: 100),
+    );
+    final second = api.call(() => api.client.users.getUser(userId: 'me'));
+    await expectLater(first, throwsA(isA<RequestTimeout>()));
+    expect((await second).username, 'alice');
+    expect(answered, greaterThanOrEqualTo(1));
     api.close();
   });
 
