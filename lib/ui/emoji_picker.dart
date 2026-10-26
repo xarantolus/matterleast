@@ -93,7 +93,8 @@ List<double> sectionOffsets(
   return offsets;
 }
 
-const _cell = 48.0;
+/// At least 48 dp a cell on a 360 dp phone.
+const _cell = 52.0;
 
 /// Search, a category bar and every emoji in one list, by category.
 class EmojiPicker extends ConsumerStatefulWidget {
@@ -193,13 +194,19 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
 
     Widget cell(String name) {
       final shown = custom.containsKey(name) ? name : withSkinTone(name, tone);
-      return InkWell(
-        customBorder: const CircleBorder(),
-        onTap: () => Navigator.of(context).pop(shown),
-        child: Tooltip(
-          message: ':$name:',
-          child: Center(
-            child: EmojiGlyph(name: shown, size: 28, serverUrl: widget.url),
+      // Read by its name once, not as the tooltip and the glyph.
+      return Semantics(
+        button: true,
+        label: name.replaceAll('_', ' '),
+        excludeSemantics: true,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () => Navigator.of(context).pop(shown),
+          child: Tooltip(
+            message: ':$name:',
+            child: Center(
+              child: EmojiGlyph(name: shown, size: 28, serverUrl: widget.url),
+            ),
           ),
         ),
       );

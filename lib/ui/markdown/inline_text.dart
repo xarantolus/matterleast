@@ -209,14 +209,18 @@ class _InlineTextState extends State<InlineText> {
           spans.add(
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
-              child: Math.tex(
-                tex,
-                mathStyle: MathStyle.text,
-                textStyle: base.copyWith(color: base.color),
-                onErrorFallback: (_) => Text(
-                  '\$$tex\$',
-                  style: base.copyWith(
-                    color: Theme.of(context).colorScheme.error,
+              child: Semantics(
+                label: tex,
+                excludeSemantics: true,
+                child: Math.tex(
+                  tex,
+                  mathStyle: MathStyle.text,
+                  textStyle: base.copyWith(color: base.color),
+                  onErrorFallback: (_) => Text(
+                    '\$$tex\$',
+                    style: base.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ),
               ),
