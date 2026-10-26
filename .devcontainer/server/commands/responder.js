@@ -6,7 +6,10 @@
 //                  their buttons and menus are answered on /blocks/action
 //   /oauth/*       a fake GitLab that approves every login at once, so the
 //                  mobile SSO flow can be exercised without a real provider
+//   /llm/v1/*      a fake OpenAI-compatible model for the Agents plugin
+//                  (llm.js)
 const http = require('http');
+const { handleLlm } = require('./llm');
 
 const PORT = Number(process.env.PORT || 8066);
 const SERVER = 'http://127.0.0.1:8065';
@@ -239,6 +242,7 @@ http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
   const body = parse(req, await readBody(req));
   console.log(req.method, url.pathname, body.command || body.callback_id || (body.context || {}).action || '');
+  if (await handleLlm(url.pathname, body, res)) return;
 
   if (url.pathname === '/shout') {
     return reply(res, 200, {

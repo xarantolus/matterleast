@@ -68,6 +68,35 @@ Password for every user: `matterleast`.
 Not available without a licence (the server answers 501): post
 acknowledgements, SAML/LDAP/most SSO providers. GitLab SSO and MFA are free.
 
+## Agents (AI plugin)
+
+`server.sh agents` (`agents.sh`) installs the open-source Agents plugin
+(`mattermost-ai`, release 2.10.0 by default, cached under `~/.cache/matterleast`)
+through the API, configures one service and one agent, **Local Echo**
+(`@echo`), and points it at the fake OpenAI-compatible model in
+`commands/llm.js` (`http://127.0.0.1:8066/llm/v1`). No real model or key is
+involved; every answer is canned and invented. Plugins need
+`MM_PLUGINSETTINGS_ENABLE=true` and `…ENABLEUPLOADS=true` (in `mattermost.env`);
+a server created before that needs `server.sh recreate` (keeps its data), and
+the commands container a restart (`podman restart matterleast-commands`) to
+pick up `llm.js`. The image also ships the plugin 2.9.0 prepackaged; the
+script replaces it.
+
+Talk to `@echo` in a direct message (or from Agents in the app):
+
+| Message contains | The fake model |
+| --- | --- |
+| `long` | streams twelve paragraphs slowly enough to press Stop |
+| `think` | streams a reasoning summary before the answer |
+| `ask me` | asks a question (`AskUserQuestion`) and waits for the user's pick |
+| `tool` | runs `CreateFile`, which the plugin allows without asking |
+| anything else | a short markdown answer, word by word |
+
+Channel summaries ("Ask Agents") answer with a canned summary. To use the
+model from a dev checkout without restarting the shared container, run
+`PORT=8069 node commands/responder.js` and
+`LLM_URL=http://127.0.0.1:8069/llm/v1 ./agents.sh`.
+
 ## How the nested podman works
 
 The dev container is itself a rootless podman container. Podman inside it runs

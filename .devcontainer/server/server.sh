@@ -12,6 +12,10 @@
 #   server.sh logs [db|server|server2|commands]
 #   server.sh reset             delete all data, then start and seed again
 #   server.sh seed [port]       run the seed script against a running server
+#   server.sh recreate          recreate the server container (keeps its data)
+#                               so changes to mattermost.env apply
+#   server.sh agents            install the Agents plugin with a fake model
+#                               (agents.sh)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -143,6 +147,11 @@ stop) stop ;;
 reset) reset ;;
 status) status ;;
 seed) URL="http://127.0.0.1:${2:-8065}" ./seed.sh ;;
+recreate)
+    podman stop -t 10 "$PREFIX-server" >/dev/null && podman rm "$PREFIX-server" >/dev/null
+    create_server server 8065 mattermost
+    wait_ready 8065 ;;
+agents) ./agents.sh ;;
 logs) podman logs --tail 200 -f "$PREFIX-${2:-server}" ;;
-*) sed -n '2,15p' "$0"; exit 2 ;;
+*) sed -n '2,19p' "$0"; exit 2 ;;
 esac
