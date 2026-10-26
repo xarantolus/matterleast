@@ -118,6 +118,8 @@ void main() {
     for (final call in calls) {
       await expectLater(call, throwsA(isA<ServerError>()));
     }
+    // Callers that don't wait for the answer just drop the failure.
+    await users.ensure(['u3']).catchError((Object _) {});
     server.handle = handle;
     await users.ensure(['u1']);
     expect(await stored(), {'u1'});

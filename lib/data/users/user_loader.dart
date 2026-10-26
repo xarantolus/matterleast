@@ -102,7 +102,7 @@ class _Batches {
     if (_queued.isNotEmpty) {
       _timer ??= Timer(window, () => unawaited(_flush()));
     }
-    return Future.wait(waits);
+    return Future.wait(waits).then<void>((_) {});
   }
 
   Future<void> _flush() async {

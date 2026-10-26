@@ -8,7 +8,6 @@ import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
-import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/dialog_rules.dart';
 import 'package:matterleast/domain/typing.dart';
 
@@ -243,7 +242,7 @@ void main() {
       await receive('typing', {'user_id': 'u9', 'parent_id': ''});
       await Future<void>.delayed(const Duration(milliseconds: 50));
       expect(seen.last, ['u9']);
-      await session.runner.enqueue(const SyncJob(key: 'settle', run: _nothing));
+      await session.users.ensure(['u9']);
       final user = await (session.db.select(
         session.db.users,
       )..where((u) => u.id.equals('u9'))).getSingleOrNull();
@@ -335,5 +334,3 @@ void main() {
     );
   });
 }
-
-Future<void> _nothing() async {}
