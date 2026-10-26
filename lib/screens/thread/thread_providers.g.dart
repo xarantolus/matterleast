@@ -65,7 +65,7 @@ final class ThreadFollowingProvider
   }
 }
 
-String _$threadFollowingHash() => r'9438930b9acb4f534dd46a585fa144238fa72a56';
+String _$threadFollowingHash() => r'59188333e379ce6b064f22a71560b14350be2e47';
 
 /// Whether the user follows the thread; null without collapsed threads,
 /// where there is nothing to follow.

@@ -2,7 +2,9 @@ import 'package:drift/drift.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart' show ephemeralType;
+import 'package:matterleast/data/views/permission_views.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
@@ -10,6 +12,22 @@ import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_link.dart';
 import 'package:matterleast/domain/teams.dart';
+
+/// What the message menu needs to know beyond the post itself.
+typedef PostMenuFacts = ({
+  String myId,
+  bool saved,
+
+  /// Null when threads can't be followed (no collapsed threads).
+  bool? following,
+
+  /// For permalinks; empty when no team is known.
+  String teamName,
+  MessageRights rights,
+
+  /// The server can remind the user of the message later.
+  bool reminders,
+});
 
 /// The reads of an open channel or thread: one batched query each, re-run
 /// at most every 100 ms while writes land, passed on only when changed.
@@ -22,6 +40,138 @@ class ConversationViews {
   final Uri? server;
 
   static const _interval = Duration(milliseconds: 100);
+
+  /// What the message menu needs to know about [post] beyond the post
+  /// itself; [teamId] is the open channel's team, empty when unknown.
+  Future<PostMenuFacts> menuFacts(
+    PostItem post,
+    String teamId, {
+    required DateTime now,
+  }) async {
+    final me = await db.syncText(SyncKeys.currentUserId) ?? '';
+    final saved =
+        await (db.select(db.preferences)..where(
+              (p) =>
+                  p.category.equals(Prefs.flaggedPost) & p.name.equals(post.id),
+            ))
+            .getSingleOrNull();
+    final rootId = post.isReply ? post.rootId : post.id;
+    bool? following;
+    if (await db.collapsedThreads()) {
+      final thread = await (db.select(
+        db.threads,
+      )..where((t) => t.rootId.equals(rootId))).getSingleOrNull();
+      following = thread?.isFollowing ?? false;
+    }
+    final team = teamId.isNotEmpty
+        ? teamId
+        : await db.syncText(SyncKeys.currentTeamId) ?? '';
+    final teamRow = await (db.select(
+      db.teams,
+    )..where((t) => t.id.equals(team))).getSingleOrNull();
+    final channelId = (await (db.select(
+      db.posts,
+    )..where((p) => p.id.equals(post.id))).getSingleOrNull())?.channelId;
+    final channel = channelId == null
+        ? noChannelRights
+        : await PermissionViews(db).channel(channelId);
+    final features = await db.features();
+    return (
+      myId: me,
+      saved: saved != null && saved.value == 'true',
+      following: following,
+      teamName: teamRow?.name ?? '',
+      rights: messageRights(
+        channel,
+        mine: post.userId == me,
+        system: post.isSystem,
+        fromWebhook: PostDetails.decode(post.propsJson, null).fromWebhook,
+        createAt: post.createAt,
+        now: now,
+        editTimeLimit: features.editTimeLimit,
+        distinctReactions: post.reactions.length,
+      ),
+      reminders: features.postReminders && !post.isSystem,
+    );
+  }
+
+  /// What opening a channel or thread (with [rootId]) starts from: the
+  /// signed-in user, when it was last read, and the place the reader left
+  /// it.
+  Future<
+    ({
+      String? me,
+      DateTime? lastViewedAt,
+      ({String postId, double offset, DateTime savedAt})? saved,
+    })
+  >
+  openFacts(String channelId, {String? rootId}) async {
+    final scope = rootId == null ? 'channel' : 'thread';
+    final scopeId = rootId ?? channelId;
+    final saved =
+        await (db.select(db.viewStates)
+              ..where((v) => v.scope.equals(scope) & v.scopeId.equals(scopeId)))
+            .getSingleOrNull();
+    return (
+      me: await db.syncText(SyncKeys.currentUserId),
+      lastViewedAt: await _lastViewed(channelId, rootId),
+      saved: saved == null
+          ? null
+          : (
+              postId: saved.anchorPostId,
+              offset: saved.anchorOffsetPx,
+              savedAt: saved.savedAt,
+            ),
+    );
+  }
+
+  Future<DateTime?> _lastViewed(String channelId, String? rootId) async {
+    if (rootId == null) {
+      return (await (db.select(
+            db.myChannels,
+          )..where((m) => m.channelId.equals(channelId))).getSingleOrNull())
+          ?.lastViewedAt;
+    }
+    if (!await db.collapsedThreads()) return null;
+    return (await (db.select(
+      db.threads,
+    )..where((t) => t.rootId.equals(rootId))).getSingleOrNull())?.lastViewedAt;
+  }
+
+  /// The team a thread's read marks and following are kept in; null
+  /// without collapsed threads. [channelTeamId] is the channel's team when
+  /// already known.
+  Future<String?> threadTeam(
+    String channelId, {
+    String? channelTeamId,
+  }) async => threadReadTeam(
+    collapsedThreads: await db.collapsedThreads(),
+    channelTeamId:
+        channelTeamId ??
+        (await (db.select(
+          db.channels,
+        )..where((c) => c.id.equals(channelId))).getSingleOrNull())?.teamId ??
+        '',
+    currentTeamId: await db.syncText(SyncKeys.currentTeamId),
+  );
+
+  /// Whether the user follows the thread; null without collapsed threads,
+  /// where there is nothing to follow.
+  Stream<bool?> threadFollowing(String rootId) async* {
+    if (!await db.collapsedThreads()) {
+      yield null;
+      return;
+    }
+    yield* (db.select(db.threads)..where((t) => t.rootId.equals(rootId)))
+        .watchSingleOrNull()
+        .map((t) => t?.isFollowing ?? false)
+        .distinct();
+  }
+
+  /// When a stored message was posted; null when it isn't stored.
+  Future<DateTime?> postCreatedAt(String postId) async => (await (db.select(
+    db.posts,
+  )..where((p) => p.id.equals(postId))).getSingleOrNull())?.createAt;
 
   /// How many stored replies of [rootId] are newer than [postId]; null
   /// when that message isn't stored.

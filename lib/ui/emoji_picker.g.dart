@@ -149,7 +149,7 @@ final class SkinToneProvider
   }
 }
 
-String _$skinToneHash() => r'1983f1c17756938cde2cbf08ccfa9c3f50290aa3';
+String _$skinToneHash() => r'c6777f39ca3fdd0c9ecd30cf0176292c6a84813f';
 
 /// The skin tone the picker applies, 0 for none, as the user's preference
 /// on [url] has it.

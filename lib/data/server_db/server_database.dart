@@ -154,6 +154,21 @@ class ServerDatabase extends _$ServerDatabase {
         features.nameDisplay;
   }
 
+  /// One preference's value as it changes; null while it isn't set.
+  Stream<String?> watchPreference((String, String) key) =>
+      (select(preferences)
+            ..where((p) => p.category.equals(key.$1) & p.name.equals(key.$2)))
+          .watchSingleOrNull()
+          .map((p) => p?.value)
+          .distinct();
+
+  /// One sync-state text as it changes.
+  Stream<String?> watchSyncText(String key) =>
+      (select(syncState)..where((s) => s.key.equals(key)))
+          .watchSingleOrNull()
+          .map((s) => s?.valueText)
+          .distinct();
+
   Future<String?> syncText(String key) async => (await (select(
     syncState,
   )..where((s) => s.key.equals(key))).getSingleOrNull())?.valueText;

@@ -195,7 +195,7 @@ final class NotifySettingsProvider
   }
 }
 
-String _$notifySettingsHash() => r'a6b11b73b7767f14972ddfe637008bd9c51a1d57';
+String _$notifySettingsHash() => r'd6f664deec3151730d92cff85628b1f4dc946406';
 
 /// The account's notification settings as stored; empty until the first
 /// sign-in data arrived.
@@ -355,7 +355,7 @@ final class DisplayPrefsProvider
   }
 }
 
-String _$displayPrefsHash() => r'517766472bb6e00859f83c5945314340fd4f65ea';
+String _$displayPrefsHash() => r'ae2bda35992b457bf419838d0304698b81620f90';
 
 final class DisplayPrefsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<DisplayPrefs>, String> {

@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart' hide Column, Table;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -23,15 +22,8 @@ Future<List<String>> recentEmoji(Ref ref, String url) async =>
 /// on [url] has it.
 @riverpod
 Stream<int> skinTone(Ref ref, String url) async* {
-  final session = await ref.watch(serverSessionProvider(url).future);
-  final db = session.db;
-  yield* (db.select(db.preferences)..where(
-        (p) =>
-            p.category.equals(Prefs.skinTone.$1) &
-            p.name.equals(Prefs.skinTone.$2),
-      ))
-      .watchSingleOrNull()
-      .map((p) => skinToneOf(p?.value));
+  final db = (await ref.watch(serverSessionProvider(url).future)).db;
+  yield* db.watchPreference(Prefs.skinTone).map(skinToneOf);
 }
 
 /// Lets the user pick an emoji; completes with its name, or null.

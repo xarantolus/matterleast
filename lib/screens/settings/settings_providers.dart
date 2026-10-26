@@ -1,15 +1,12 @@
-import 'package:flutter/foundation.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/settings_actions.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/cache_usage.dart';
-import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/data/views/settings_views.dart';
 import 'package:matterleast/domain/notify_props.dart';
-import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
-import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -42,11 +39,7 @@ Future<SettingsActions> settingsActions(Ref ref, String url) async =>
 @riverpod
 Stream<NotifyProps> notifySettings(Ref ref, String url) async* {
   final db = (await ref.watch(serverSessionProvider(url).future)).db;
-  yield* (db.select(db.syncState)
-        ..where((s) => s.key.equals(SyncKeys.accountNotifyProps)))
-      .watchSingleOrNull()
-      .map((row) => NotifyProps.fromJsonText(row?.valueText))
-      .distinct((a, b) => mapEquals(a.raw, b.raw));
+  yield* SettingsViews(db).notifyProps();
 }
 
 /// Fetched when the notification settings open, so they show every key.
@@ -54,37 +47,10 @@ Stream<NotifyProps> notifySettings(Ref ref, String url) async* {
 Future<void> notifySettingsRefresh(Ref ref, String url) async =>
     (await ref.watch(settingsActionsProvider(url).future)).refreshNotifyProps();
 
-/// What the Display page shows for one server.
-typedef DisplayPrefs = ({
-  bool threadsOn,
-  bool threadsChangeable,
-  NameFormat nameFormat,
-  bool nameFormatLocked,
-});
-
 @riverpod
 Stream<DisplayPrefs> displayPrefs(Ref ref, String url) async* {
   final db = (await ref.watch(serverSessionProvider(url).future)).db;
-  final watch = db
-      .customSelect('SELECT 1', readsFrom: {db.preferences, db.config})
-      .watch();
-  await for (final _ in watch) {
-    final features = await db.features();
-    final threadSetting = features.collapsedThreads;
-    yield (
-      threadsOn: collapsedThreadsOn(
-        threadSetting,
-        await db.preference(
-          Prefs.collapsedThreads.$1,
-          Prefs.collapsedThreads.$2,
-        ),
-      ),
-      threadsChangeable:
-          threadSetting == 'default_on' || threadSetting == 'default_off',
-      nameFormat: NameFormat.of(await db.nameFormat()),
-      nameFormatLocked: features.nameDisplayLocked,
-    );
-  }
+  yield* SettingsViews(db).displayPrefs();
 }
 
 @riverpod

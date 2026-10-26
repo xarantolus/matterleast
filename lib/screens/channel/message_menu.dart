@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart' show BooleanExpressionOperators;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -8,12 +7,8 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
-import 'package:matterleast/data/server_db/server_database.dart';
-import 'package:matterleast/data/views/permission_views.dart';
-import 'package:matterleast/domain/permissions.dart';
-import 'package:matterleast/domain/post_details.dart';
+import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/domain/post_list.dart';
-import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/reminders.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
@@ -25,76 +20,15 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'message_menu.g.dart';
 
-/// What the message menu needs to know beyond the post itself.
-typedef PostMenuFacts = ({
-  String myId,
-  bool saved,
-
-  /// Null when threads can't be followed (no collapsed threads).
-  bool? following,
-
-  /// For permalinks; empty when no team is known.
-  String teamName,
-  MessageRights rights,
-
-  /// The server can remind the user of the message later.
-  bool reminders,
-});
-
 @riverpod
 Future<PostMenuFacts> postMenuFacts(
   Ref ref,
   String url,
   PostItem post,
   String teamId,
-) async {
-  final db = (await ref.watch(serverSessionProvider(url).future)).db;
-  final me = await db.syncText(SyncKeys.currentUserId) ?? '';
-  final saved =
-      await (db.select(db.preferences)..where(
-            (p) =>
-                p.category.equals(Prefs.flaggedPost) & p.name.equals(post.id),
-          ))
-          .getSingleOrNull();
-  final rootId = post.isReply ? post.rootId : post.id;
-  bool? following;
-  if (await db.collapsedThreads()) {
-    final thread = await (db.select(
-      db.threads,
-    )..where((t) => t.rootId.equals(rootId))).getSingleOrNull();
-    following = thread?.isFollowing ?? false;
-  }
-  final team = teamId.isNotEmpty
-      ? teamId
-      : await db.syncText(SyncKeys.currentTeamId) ?? '';
-  final teamRow = await (db.select(
-    db.teams,
-  )..where((t) => t.id.equals(team))).getSingleOrNull();
-  final channelId = (await (db.select(
-    db.posts,
-  )..where((p) => p.id.equals(post.id))).getSingleOrNull())?.channelId;
-  final channel = channelId == null
-      ? noChannelRights
-      : await PermissionViews(db).channel(channelId);
-  final features = await db.features();
-  return (
-    myId: me,
-    saved: saved != null && saved.value == 'true',
-    following: following,
-    teamName: teamRow?.name ?? '',
-    rights: messageRights(
-      channel,
-      mine: post.userId == me,
-      system: post.isSystem,
-      fromWebhook: PostDetails.decode(post.propsJson, null).fromWebhook,
-      createAt: post.createAt,
-      now: DateTime.now().toUtc(),
-      editTimeLimit: features.editTimeLimit,
-      distinctReactions: post.reactions.length,
-    ),
-    reminders: features.postReminders && !post.isSystem,
-  );
-}
+) async =>
+    ConversationViews((await ref.watch(serverSessionProvider(url).future)).db)
+        .menuFacts(post, teamId, now: DateTime.now().toUtc());
 
 /// Shown on the quick-reaction row before the user has reacted to anything.
 const _defaultQuickReactions = [

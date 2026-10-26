@@ -114,7 +114,7 @@ final class ServerPalettesProvider
   }
 }
 
-String _$serverPalettesHash() => r'e66a44f0d1195222da342cc1479d84c913d57f4c';
+String _$serverPalettesHash() => r'113ea8032dd8c9d21a78a3ee00793477ba1920aa';
 
 /// The user's Mattermost theme on the server at [url].
 

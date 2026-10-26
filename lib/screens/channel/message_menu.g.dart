@@ -64,7 +64,7 @@ final class PostMenuFactsProvider
   }
 }
 
-String _$postMenuFactsHash() => r'78100f86d47ee2618aa88a0d35467c8453af6111';
+String _$postMenuFactsHash() => r'51e169420b5495bfa58a0a44b51131e6d519a3d5';
 
 final class PostMenuFactsFamily extends $Family
     with

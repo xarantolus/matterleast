@@ -1,16 +1,12 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart' show BooleanExpressionOperators;
-
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
-import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
-import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/log.dart';
@@ -79,14 +75,10 @@ class Conversation extends _$Conversation {
     if (!ref.mounted) return;
     _session = session;
     _actions = ConversationActions(session);
-    final db = session.db;
-    _me = await db.syncText(SyncKeys.currentUserId);
-    _lastViewedAt = await _readLastViewed(db);
-    final saved =
-        await (db.select(db.viewStates)..where(
-              (v) => v.scope.equals(_scope) & v.scopeId.equals(_scopeId),
-            ))
-            .getSingleOrNull();
+    final facts = await ConversationViews(session.db)
+        .openFacts(channelId, rootId: rootId);
+    _me = facts.me;
+    _lastViewedAt = facts.lastViewedAt;
     if (!_isThread) {
       // Stay in the stretch of history stored now, even if the refresh
       // finds a gap and stores the newest messages apart.
@@ -95,15 +87,7 @@ class Conversation extends _$Conversation {
       )?.latest;
     }
     if (!ref.mounted) return;
-    state = state.copyWith(
-      saved: saved == null
-          ? null
-          : (
-              postId: saved.anchorPostId,
-              offset: saved.anchorOffsetPx,
-              savedAt: saved.savedAt,
-            ),
-    );
+    state = state.copyWith(saved: facts.saved);
     _watch();
     _caughtUp = session.connection.caughtUp.listen(
       (_) => unawaited(_catchUp()),
@@ -115,19 +99,6 @@ class Conversation extends _$Conversation {
         _actions!.channelStats(channelId, owner: this).catchError((_) {}),
       );
     }
-  }
-
-  Future<DateTime?> _readLastViewed(ServerDatabase db) async {
-    if (!_isThread) {
-      return (await (db.select(
-            db.myChannels,
-          )..where((m) => m.channelId.equals(channelId))).getSingleOrNull())
-          ?.lastViewedAt;
-    }
-    if (!await db.collapsedThreads()) return null;
-    return (await (db.select(
-      db.threads,
-    )..where((t) => t.rootId.equals(rootId!))).getSingleOrNull())?.lastViewedAt;
   }
 
   void _watch() {
@@ -221,14 +192,9 @@ class Conversation extends _$Conversation {
 
   /// The team a thread's read marks and following are kept in; null
   /// without collapsed threads.
-  Future<String?> _threadTeam() async {
-    final db = _session!.db;
-    return threadReadTeam(
-      collapsedThreads: await db.collapsedThreads(),
-      channelTeamId: state.window?.teamId ?? await _channelTeam(db),
-      currentTeamId: await db.syncText(SyncKeys.currentTeamId),
-    );
-  }
+  Future<String?> _threadTeam() =>
+      ConversationViews(_session!.db)
+          .threadTeam(channelId, channelTeamId: state.window?.teamId);
 
   /// Follows or stops following the open thread; shows at once and
   /// is undone when the server refuses, which throws [ApiError].
@@ -241,12 +207,6 @@ class Conversation extends _$Conversation {
         ? posts.followThread(team, rootId!, channelId: channelId)
         : posts.unfollowThread(team, rootId!));
   }
-
-  Future<String> _channelTeam(ServerDatabase db) async =>
-      (await (db.select(
-        db.channels,
-      )..where((c) => c.id.equals(channelId))).getSingleOrNull())?.teamId ??
-      '';
 
   Future<void> _refresh() async {
     if (!ref.mounted) return;
@@ -276,11 +236,8 @@ class Conversation extends _$Conversation {
   Future<void> _openHighlight() async {
     final key = state.highlightKey;
     if (key == null || state.rows.any((r) => r.key == key)) return;
-    final stored = await (_session!.db.select(
-      _session!.db.posts,
-    )..where((p) => p.id.equals(key))).getSingleOrNull();
+    var at = await ConversationViews(_session!.db).postCreatedAt(key);
     final ranges = await _session!.store.rangesFor('channel', channelId);
-    var at = stored?.createAt;
     if (at == null || rangeContaining(ranges, at) == null) {
       at = await _actions!.aroundInChannel(channelId, key, owner: this);
     }

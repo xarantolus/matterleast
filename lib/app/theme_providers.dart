@@ -1,11 +1,9 @@
-import 'package:drift/drift.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/app/wallpaper_colours.dart';
-import 'package:matterleast/data/db/throttled_watch.dart';
-import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/data/views/settings_views.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
@@ -42,31 +40,11 @@ Future<AppThemes?> appThemes(Ref ref) async {
   }
 }
 
-typedef ServerPalettes = ({ServerPalette light, ServerPalette dark});
-
 /// The user's Mattermost theme on the server at [url].
 @riverpod
 Stream<ServerPalettes> serverPalettes(Ref ref, String url) async* {
   final db = (await ref.watch(serverSessionProvider(url).future)).db;
-  yield* throttledWatch(
-    db.tableUpdates(
-      TableUpdateQuery.onAllTables([db.preferences, db.syncState]),
-    ),
-    () => _palettes(db),
-    interval: const Duration(milliseconds: 300),
-  ).distinct();
-}
-
-Future<ServerPalettes> _palettes(ServerDatabase db) async {
-  final rows = await (db.select(
-    db.preferences,
-  )..where((p) => p.category.equals('theme'))).get();
-  final themes = {for (final row in rows) row.name: row.value};
-  final team = await db.syncText(SyncKeys.currentTeamId);
-  return (
-    light: ServerPalette.of(themeForTeam(themes, team, dark: false)),
-    dark: ServerPalette.of(themeForTeam(themes, team, dark: true)),
-  );
+  yield* SettingsViews(db).palettes();
 }
 
 /// The phone's wallpaper colours, read again when the app comes back, since

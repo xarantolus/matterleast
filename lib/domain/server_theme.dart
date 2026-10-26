@@ -150,6 +150,8 @@ Color adjustToRead(Color colour, Color background) {
   return target;
 }
 
+typedef ServerPalettes = ({ServerPalette light, ServerPalette dark});
+
 /// The colours the app takes from a Mattermost theme, each pair readable.
 class ServerPalette {
   factory ServerPalette.of(MattermostTheme theme) {
