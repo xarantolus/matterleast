@@ -112,6 +112,9 @@ LIGHTHOUSE=$(team lighthouse "Lighthouse Crew")
 HARBOR=$(team harbor "Harbor Side")
 team_add "$LIGHTHOUSE" alice bob carol dave erin
 team_add "$HARBOR" alice bob
+# Harbor Side keeps no icon, so the rail shows both an icon and initials.
+node make-png.js "$TMP/team-lighthouse.png" 5f3dc4 128
+upload admin "/teams/$LIGHTHOUSE/image" -F "image=@$TMP/team-lighthouse.png" >/dev/null
 echo "seed: teams"
 
 TOWN=$(channel_by_name "$LIGHTHOUSE" town-square)
