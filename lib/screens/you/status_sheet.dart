@@ -5,6 +5,7 @@ import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/presence_dot.dart';
+import 'package:matterleast/ui/sheet_header.dart';
 
 /// Lets the user pick their presence on [url]; do not disturb asks how
 /// long.
@@ -72,10 +73,7 @@ Future<DndLength?> _askDndLength(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Do not disturb for',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        const SheetHeader('Do not disturb for'),
         for (final length in DndLength.values)
           ListTile(
             title: Text(switch (length) {

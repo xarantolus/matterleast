@@ -8,6 +8,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
+import 'package:matterleast/ui/sheet_header.dart';
 
 /// The long-press sheet of a channel row.
 Future<void> showChannelActions(
@@ -56,15 +57,7 @@ class _ChannelActionsSheet extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-            child: Text(
-              item.title,
-              style: Theme.of(context).textTheme.titleMedium,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+          SheetHeader(item.title),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Channel info'),

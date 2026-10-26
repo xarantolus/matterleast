@@ -7,6 +7,7 @@ import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
+import 'package:matterleast/ui/sheet_header.dart';
 
 /// The menu of a category header: reorder the list, add a category, and
 /// rename or delete a custom one.
@@ -29,15 +30,7 @@ Future<void> showCategoryMenu(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-            child: Text(
-              section.title,
-              style: Theme.of(sheet).textTheme.titleMedium,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+          SheetHeader(section.title),
           ListTile(
             leading: const Icon(Icons.swap_vert),
             title: const Text('Reorder'),

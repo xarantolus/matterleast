@@ -23,6 +23,7 @@ import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/person_tile.dart';
+import 'package:matterleast/ui/sheet_header.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -560,16 +561,7 @@ class _PriorityPickerState extends State<PriorityPicker> {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Message priority',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-        ),
+        const SheetHeader('Message priority'),
         RadioGroup<api.PostPriorityPriority>(
           groupValue: _level,
           onChanged: (v) => setState(() => _level = v ?? _level),

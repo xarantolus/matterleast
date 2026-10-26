@@ -13,6 +13,7 @@ import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
+import 'package:matterleast/ui/sheet_header.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _good = Color(0xFF339970);
@@ -669,18 +670,7 @@ Future<SelectOption?> _pickOption(BuildContext context, SelectBlock block) =>
         builder: (sheet, controller) => ListView(
           controller: controller,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.lg,
-                0,
-                Spacing.lg,
-                Spacing.sm,
-              ),
-              child: Text(
-                block.placeholder,
-                style: Theme.of(sheet).textTheme.titleMedium,
-              ),
-            ),
+            SheetHeader(block.placeholder),
             for (final o in block.options)
               ListTile(
                 title: Text(o.text),
