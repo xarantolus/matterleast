@@ -32,6 +32,7 @@ class ConversationScaffold extends ConsumerWidget {
     this.actions = const [],
     this.startText,
     this.onOpenThread,
+    this.header,
     super.key,
   });
 
@@ -46,6 +47,9 @@ class ConversationScaffold extends ConsumerWidget {
   final String composerHint;
   final String? startText;
   final ValueChanged<PostItem>? onOpenThread;
+
+  /// Shown between the app bar and the messages, such as bookmarks.
+  final Widget? header;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -89,6 +93,7 @@ class ConversationScaffold extends ConsumerWidget {
             bottom: window == null,
             child: Column(
               children: [
+                ?header,
                 Expanded(
                   child: Stack(
                     children: [

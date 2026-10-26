@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/screens/channel/bookmark_bar.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
@@ -78,6 +79,7 @@ class ChannelScreen extends ConsumerWidget {
           onPressed: openInfo,
         ),
       ],
+      header: BookmarkBar(url: url, channelId: channelId),
       composerHint: 'Write to $name',
       startText: 'This is the start of $name.',
       onOpenThread: (post) => openConversation(

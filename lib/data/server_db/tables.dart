@@ -439,3 +439,50 @@ class Config extends Table {
   @override
   Set<Column<Object>> get primaryKey => {key};
 }
+
+/// A channel's bookmarked links and files; a file's details are a [Files]
+/// row without a post.
+@DataClassName('BookmarkRow')
+@TableIndex(name: 'bookmarks_by_channel', columns: {#channelId})
+class ChannelBookmarks extends Table {
+  TextColumn get id => text()();
+  TextColumn get channelId => text()();
+  TextColumn get displayName => text()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  /// `link` or `file`.
+  TextColumn get type => text()();
+  TextColumn get linkUrl => text().nullable()();
+  TextColumn get imageUrl => text().nullable()();
+  TextColumn get emoji => text().nullable()();
+  TextColumn get fileId => text().nullable()();
+  IntColumn get updateAt => integer().map(const Millis()).nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Custom profile attribute fields the server defines.
+@DataClassName('ProfileFieldRow')
+class ProfileFields extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get type => text()();
+  TextColumn get attrs =>
+      text().named('attrs_json').map(const JsonMapColumn())();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// A person's values of the custom profile attributes.
+@DataClassName('ProfileValueRow')
+class ProfileValues extends Table {
+  TextColumn get userId => text()();
+  TextColumn get fieldId => text()();
+  TextColumn get values =>
+      text().named('values_json').map(const StringListColumn())();
+
+  @override
+  Set<Column<Object>> get primaryKey => {userId, fieldId};
+}

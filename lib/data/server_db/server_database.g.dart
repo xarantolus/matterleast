@@ -12033,6 +12033,1195 @@ class ConfigCompanion extends UpdateCompanion<ConfigRow> {
   }
 }
 
+class $ChannelBookmarksTable extends ChannelBookmarks
+    with TableInfo<$ChannelBookmarksTable, BookmarkRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChannelBookmarksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _channelIdMeta = const VerificationMeta(
+    'channelId',
+  );
+  @override
+  late final GeneratedColumn<String> channelId = GeneratedColumn<String>(
+    'channel_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _linkUrlMeta = const VerificationMeta(
+    'linkUrl',
+  );
+  @override
+  late final GeneratedColumn<String> linkUrl = GeneratedColumn<String>(
+    'link_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _imageUrlMeta = const VerificationMeta(
+    'imageUrl',
+  );
+  @override
+  late final GeneratedColumn<String> imageUrl = GeneratedColumn<String>(
+    'image_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _emojiMeta = const VerificationMeta('emoji');
+  @override
+  late final GeneratedColumn<String> emoji = GeneratedColumn<String>(
+    'emoji',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime?, int> updateAt =
+      GeneratedColumn<int>(
+        'update_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      ).withConverter<DateTime?>($ChannelBookmarksTable.$converterupdateAtn);
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    channelId,
+    displayName,
+    sortOrder,
+    type,
+    linkUrl,
+    imageUrl,
+    emoji,
+    fileId,
+    updateAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'channel_bookmarks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BookmarkRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('channel_id')) {
+      context.handle(
+        _channelIdMeta,
+        channelId.isAcceptableOrUnknown(data['channel_id']!, _channelIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_channelIdMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('link_url')) {
+      context.handle(
+        _linkUrlMeta,
+        linkUrl.isAcceptableOrUnknown(data['link_url']!, _linkUrlMeta),
+      );
+    }
+    if (data.containsKey('image_url')) {
+      context.handle(
+        _imageUrlMeta,
+        imageUrl.isAcceptableOrUnknown(data['image_url']!, _imageUrlMeta),
+      );
+    }
+    if (data.containsKey('emoji')) {
+      context.handle(
+        _emojiMeta,
+        emoji.isAcceptableOrUnknown(data['emoji']!, _emojiMeta),
+      );
+    }
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BookmarkRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BookmarkRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      channelId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}channel_id'],
+      )!,
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      linkUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}link_url'],
+      ),
+      imageUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_url'],
+      ),
+      emoji: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}emoji'],
+      ),
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      ),
+      updateAt: $ChannelBookmarksTable.$converterupdateAtn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}update_at'],
+        ),
+      ),
+    );
+  }
+
+  @override
+  $ChannelBookmarksTable createAlias(String alias) {
+    return $ChannelBookmarksTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<DateTime, int> $converterupdateAt = const Millis();
+  static TypeConverter<DateTime?, int?> $converterupdateAtn =
+      NullAwareTypeConverter.wrap($converterupdateAt);
+}
+
+class BookmarkRow extends DataClass implements Insertable<BookmarkRow> {
+  final String id;
+  final String channelId;
+  final String displayName;
+  final int sortOrder;
+
+  /// `link` or `file`.
+  final String type;
+  final String? linkUrl;
+  final String? imageUrl;
+  final String? emoji;
+  final String? fileId;
+  final DateTime? updateAt;
+  const BookmarkRow({
+    required this.id,
+    required this.channelId,
+    required this.displayName,
+    required this.sortOrder,
+    required this.type,
+    this.linkUrl,
+    this.imageUrl,
+    this.emoji,
+    this.fileId,
+    this.updateAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['channel_id'] = Variable<String>(channelId);
+    map['display_name'] = Variable<String>(displayName);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || linkUrl != null) {
+      map['link_url'] = Variable<String>(linkUrl);
+    }
+    if (!nullToAbsent || imageUrl != null) {
+      map['image_url'] = Variable<String>(imageUrl);
+    }
+    if (!nullToAbsent || emoji != null) {
+      map['emoji'] = Variable<String>(emoji);
+    }
+    if (!nullToAbsent || fileId != null) {
+      map['file_id'] = Variable<String>(fileId);
+    }
+    if (!nullToAbsent || updateAt != null) {
+      map['update_at'] = Variable<int>(
+        $ChannelBookmarksTable.$converterupdateAtn.toSql(updateAt),
+      );
+    }
+    return map;
+  }
+
+  ChannelBookmarksCompanion toCompanion(bool nullToAbsent) {
+    return ChannelBookmarksCompanion(
+      id: Value(id),
+      channelId: Value(channelId),
+      displayName: Value(displayName),
+      sortOrder: Value(sortOrder),
+      type: Value(type),
+      linkUrl: linkUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(linkUrl),
+      imageUrl: imageUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageUrl),
+      emoji: emoji == null && nullToAbsent
+          ? const Value.absent()
+          : Value(emoji),
+      fileId: fileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fileId),
+      updateAt: updateAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updateAt),
+    );
+  }
+
+  factory BookmarkRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BookmarkRow(
+      id: serializer.fromJson<String>(json['id']),
+      channelId: serializer.fromJson<String>(json['channelId']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      type: serializer.fromJson<String>(json['type']),
+      linkUrl: serializer.fromJson<String?>(json['linkUrl']),
+      imageUrl: serializer.fromJson<String?>(json['imageUrl']),
+      emoji: serializer.fromJson<String?>(json['emoji']),
+      fileId: serializer.fromJson<String?>(json['fileId']),
+      updateAt: serializer.fromJson<DateTime?>(json['updateAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'channelId': serializer.toJson<String>(channelId),
+      'displayName': serializer.toJson<String>(displayName),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'type': serializer.toJson<String>(type),
+      'linkUrl': serializer.toJson<String?>(linkUrl),
+      'imageUrl': serializer.toJson<String?>(imageUrl),
+      'emoji': serializer.toJson<String?>(emoji),
+      'fileId': serializer.toJson<String?>(fileId),
+      'updateAt': serializer.toJson<DateTime?>(updateAt),
+    };
+  }
+
+  BookmarkRow copyWith({
+    String? id,
+    String? channelId,
+    String? displayName,
+    int? sortOrder,
+    String? type,
+    Value<String?> linkUrl = const Value.absent(),
+    Value<String?> imageUrl = const Value.absent(),
+    Value<String?> emoji = const Value.absent(),
+    Value<String?> fileId = const Value.absent(),
+    Value<DateTime?> updateAt = const Value.absent(),
+  }) => BookmarkRow(
+    id: id ?? this.id,
+    channelId: channelId ?? this.channelId,
+    displayName: displayName ?? this.displayName,
+    sortOrder: sortOrder ?? this.sortOrder,
+    type: type ?? this.type,
+    linkUrl: linkUrl.present ? linkUrl.value : this.linkUrl,
+    imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
+    emoji: emoji.present ? emoji.value : this.emoji,
+    fileId: fileId.present ? fileId.value : this.fileId,
+    updateAt: updateAt.present ? updateAt.value : this.updateAt,
+  );
+  BookmarkRow copyWithCompanion(ChannelBookmarksCompanion data) {
+    return BookmarkRow(
+      id: data.id.present ? data.id.value : this.id,
+      channelId: data.channelId.present ? data.channelId.value : this.channelId,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      type: data.type.present ? data.type.value : this.type,
+      linkUrl: data.linkUrl.present ? data.linkUrl.value : this.linkUrl,
+      imageUrl: data.imageUrl.present ? data.imageUrl.value : this.imageUrl,
+      emoji: data.emoji.present ? data.emoji.value : this.emoji,
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      updateAt: data.updateAt.present ? data.updateAt.value : this.updateAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookmarkRow(')
+          ..write('id: $id, ')
+          ..write('channelId: $channelId, ')
+          ..write('displayName: $displayName, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('type: $type, ')
+          ..write('linkUrl: $linkUrl, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('emoji: $emoji, ')
+          ..write('fileId: $fileId, ')
+          ..write('updateAt: $updateAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    channelId,
+    displayName,
+    sortOrder,
+    type,
+    linkUrl,
+    imageUrl,
+    emoji,
+    fileId,
+    updateAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BookmarkRow &&
+          other.id == this.id &&
+          other.channelId == this.channelId &&
+          other.displayName == this.displayName &&
+          other.sortOrder == this.sortOrder &&
+          other.type == this.type &&
+          other.linkUrl == this.linkUrl &&
+          other.imageUrl == this.imageUrl &&
+          other.emoji == this.emoji &&
+          other.fileId == this.fileId &&
+          other.updateAt == this.updateAt);
+}
+
+class ChannelBookmarksCompanion extends UpdateCompanion<BookmarkRow> {
+  final Value<String> id;
+  final Value<String> channelId;
+  final Value<String> displayName;
+  final Value<int> sortOrder;
+  final Value<String> type;
+  final Value<String?> linkUrl;
+  final Value<String?> imageUrl;
+  final Value<String?> emoji;
+  final Value<String?> fileId;
+  final Value<DateTime?> updateAt;
+  final Value<int> rowid;
+  const ChannelBookmarksCompanion({
+    this.id = const Value.absent(),
+    this.channelId = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.type = const Value.absent(),
+    this.linkUrl = const Value.absent(),
+    this.imageUrl = const Value.absent(),
+    this.emoji = const Value.absent(),
+    this.fileId = const Value.absent(),
+    this.updateAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ChannelBookmarksCompanion.insert({
+    required String id,
+    required String channelId,
+    required String displayName,
+    this.sortOrder = const Value.absent(),
+    required String type,
+    this.linkUrl = const Value.absent(),
+    this.imageUrl = const Value.absent(),
+    this.emoji = const Value.absent(),
+    this.fileId = const Value.absent(),
+    this.updateAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       channelId = Value(channelId),
+       displayName = Value(displayName),
+       type = Value(type);
+  static Insertable<BookmarkRow> custom({
+    Expression<String>? id,
+    Expression<String>? channelId,
+    Expression<String>? displayName,
+    Expression<int>? sortOrder,
+    Expression<String>? type,
+    Expression<String>? linkUrl,
+    Expression<String>? imageUrl,
+    Expression<String>? emoji,
+    Expression<String>? fileId,
+    Expression<int>? updateAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (channelId != null) 'channel_id': channelId,
+      if (displayName != null) 'display_name': displayName,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (type != null) 'type': type,
+      if (linkUrl != null) 'link_url': linkUrl,
+      if (imageUrl != null) 'image_url': imageUrl,
+      if (emoji != null) 'emoji': emoji,
+      if (fileId != null) 'file_id': fileId,
+      if (updateAt != null) 'update_at': updateAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ChannelBookmarksCompanion copyWith({
+    Value<String>? id,
+    Value<String>? channelId,
+    Value<String>? displayName,
+    Value<int>? sortOrder,
+    Value<String>? type,
+    Value<String?>? linkUrl,
+    Value<String?>? imageUrl,
+    Value<String?>? emoji,
+    Value<String?>? fileId,
+    Value<DateTime?>? updateAt,
+    Value<int>? rowid,
+  }) {
+    return ChannelBookmarksCompanion(
+      id: id ?? this.id,
+      channelId: channelId ?? this.channelId,
+      displayName: displayName ?? this.displayName,
+      sortOrder: sortOrder ?? this.sortOrder,
+      type: type ?? this.type,
+      linkUrl: linkUrl ?? this.linkUrl,
+      imageUrl: imageUrl ?? this.imageUrl,
+      emoji: emoji ?? this.emoji,
+      fileId: fileId ?? this.fileId,
+      updateAt: updateAt ?? this.updateAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (channelId.present) {
+      map['channel_id'] = Variable<String>(channelId.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (linkUrl.present) {
+      map['link_url'] = Variable<String>(linkUrl.value);
+    }
+    if (imageUrl.present) {
+      map['image_url'] = Variable<String>(imageUrl.value);
+    }
+    if (emoji.present) {
+      map['emoji'] = Variable<String>(emoji.value);
+    }
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (updateAt.present) {
+      map['update_at'] = Variable<int>(
+        $ChannelBookmarksTable.$converterupdateAtn.toSql(updateAt.value),
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChannelBookmarksCompanion(')
+          ..write('id: $id, ')
+          ..write('channelId: $channelId, ')
+          ..write('displayName: $displayName, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('type: $type, ')
+          ..write('linkUrl: $linkUrl, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('emoji: $emoji, ')
+          ..write('fileId: $fileId, ')
+          ..write('updateAt: $updateAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ProfileFieldsTable extends ProfileFields
+    with TableInfo<$ProfileFieldsTable, ProfileFieldRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProfileFieldsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Map<String, Object?>, String>
+  attrs = GeneratedColumn<String>(
+    'attrs_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<Map<String, Object?>>($ProfileFieldsTable.$converterattrs);
+  @override
+  List<GeneratedColumn> get $columns => [id, name, type, attrs];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'profile_fields';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ProfileFieldRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ProfileFieldRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProfileFieldRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      attrs: $ProfileFieldsTable.$converterattrs.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}attrs_json'],
+        )!,
+      ),
+    );
+  }
+
+  @override
+  $ProfileFieldsTable createAlias(String alias) {
+    return $ProfileFieldsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Map<String, Object?>, String> $converterattrs =
+      const JsonMapColumn();
+}
+
+class ProfileFieldRow extends DataClass implements Insertable<ProfileFieldRow> {
+  final String id;
+  final String name;
+  final String type;
+  final Map<String, Object?> attrs;
+  const ProfileFieldRow({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.attrs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['type'] = Variable<String>(type);
+    {
+      map['attrs_json'] = Variable<String>(
+        $ProfileFieldsTable.$converterattrs.toSql(attrs),
+      );
+    }
+    return map;
+  }
+
+  ProfileFieldsCompanion toCompanion(bool nullToAbsent) {
+    return ProfileFieldsCompanion(
+      id: Value(id),
+      name: Value(name),
+      type: Value(type),
+      attrs: Value(attrs),
+    );
+  }
+
+  factory ProfileFieldRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProfileFieldRow(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      type: serializer.fromJson<String>(json['type']),
+      attrs: serializer.fromJson<Map<String, Object?>>(json['attrs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'type': serializer.toJson<String>(type),
+      'attrs': serializer.toJson<Map<String, Object?>>(attrs),
+    };
+  }
+
+  ProfileFieldRow copyWith({
+    String? id,
+    String? name,
+    String? type,
+    Map<String, Object?>? attrs,
+  }) => ProfileFieldRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    type: type ?? this.type,
+    attrs: attrs ?? this.attrs,
+  );
+  ProfileFieldRow copyWithCompanion(ProfileFieldsCompanion data) {
+    return ProfileFieldRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      type: data.type.present ? data.type.value : this.type,
+      attrs: data.attrs.present ? data.attrs.value : this.attrs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProfileFieldRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('attrs: $attrs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, type, attrs);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProfileFieldRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.type == this.type &&
+          other.attrs == this.attrs);
+}
+
+class ProfileFieldsCompanion extends UpdateCompanion<ProfileFieldRow> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> type;
+  final Value<Map<String, Object?>> attrs;
+  final Value<int> rowid;
+  const ProfileFieldsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.type = const Value.absent(),
+    this.attrs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProfileFieldsCompanion.insert({
+    required String id,
+    required String name,
+    required String type,
+    required Map<String, Object?> attrs,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       type = Value(type),
+       attrs = Value(attrs);
+  static Insertable<ProfileFieldRow> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? type,
+    Expression<String>? attrs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (type != null) 'type': type,
+      if (attrs != null) 'attrs_json': attrs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProfileFieldsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? type,
+    Value<Map<String, Object?>>? attrs,
+    Value<int>? rowid,
+  }) {
+    return ProfileFieldsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      attrs: attrs ?? this.attrs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (attrs.present) {
+      map['attrs_json'] = Variable<String>(
+        $ProfileFieldsTable.$converterattrs.toSql(attrs.value),
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProfileFieldsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('attrs: $attrs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ProfileValuesTable extends ProfileValues
+    with TableInfo<$ProfileValuesTable, ProfileValueRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProfileValuesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fieldIdMeta = const VerificationMeta(
+    'fieldId',
+  );
+  @override
+  late final GeneratedColumn<String> fieldId = GeneratedColumn<String>(
+    'field_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<List<String>, String> values =
+      GeneratedColumn<String>(
+        'values_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<List<String>>($ProfileValuesTable.$convertervalues);
+  @override
+  List<GeneratedColumn> get $columns => [userId, fieldId, values];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'profile_values';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ProfileValueRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('field_id')) {
+      context.handle(
+        _fieldIdMeta,
+        fieldId.isAcceptableOrUnknown(data['field_id']!, _fieldIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId, fieldId};
+  @override
+  ProfileValueRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProfileValueRow(
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      fieldId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field_id'],
+      )!,
+      values: $ProfileValuesTable.$convertervalues.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}values_json'],
+        )!,
+      ),
+    );
+  }
+
+  @override
+  $ProfileValuesTable createAlias(String alias) {
+    return $ProfileValuesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<List<String>, String> $convertervalues =
+      const StringListColumn();
+}
+
+class ProfileValueRow extends DataClass implements Insertable<ProfileValueRow> {
+  final String userId;
+  final String fieldId;
+  final List<String> values;
+  const ProfileValueRow({
+    required this.userId,
+    required this.fieldId,
+    required this.values,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    map['field_id'] = Variable<String>(fieldId);
+    {
+      map['values_json'] = Variable<String>(
+        $ProfileValuesTable.$convertervalues.toSql(values),
+      );
+    }
+    return map;
+  }
+
+  ProfileValuesCompanion toCompanion(bool nullToAbsent) {
+    return ProfileValuesCompanion(
+      userId: Value(userId),
+      fieldId: Value(fieldId),
+      values: Value(values),
+    );
+  }
+
+  factory ProfileValueRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProfileValueRow(
+      userId: serializer.fromJson<String>(json['userId']),
+      fieldId: serializer.fromJson<String>(json['fieldId']),
+      values: serializer.fromJson<List<String>>(json['values']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'fieldId': serializer.toJson<String>(fieldId),
+      'values': serializer.toJson<List<String>>(values),
+    };
+  }
+
+  ProfileValueRow copyWith({
+    String? userId,
+    String? fieldId,
+    List<String>? values,
+  }) => ProfileValueRow(
+    userId: userId ?? this.userId,
+    fieldId: fieldId ?? this.fieldId,
+    values: values ?? this.values,
+  );
+  ProfileValueRow copyWithCompanion(ProfileValuesCompanion data) {
+    return ProfileValueRow(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      fieldId: data.fieldId.present ? data.fieldId.value : this.fieldId,
+      values: data.values.present ? data.values.value : this.values,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProfileValueRow(')
+          ..write('userId: $userId, ')
+          ..write('fieldId: $fieldId, ')
+          ..write('values: $values')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(userId, fieldId, values);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProfileValueRow &&
+          other.userId == this.userId &&
+          other.fieldId == this.fieldId &&
+          other.values == this.values);
+}
+
+class ProfileValuesCompanion extends UpdateCompanion<ProfileValueRow> {
+  final Value<String> userId;
+  final Value<String> fieldId;
+  final Value<List<String>> values;
+  final Value<int> rowid;
+  const ProfileValuesCompanion({
+    this.userId = const Value.absent(),
+    this.fieldId = const Value.absent(),
+    this.values = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProfileValuesCompanion.insert({
+    required String userId,
+    required String fieldId,
+    required List<String> values,
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId),
+       fieldId = Value(fieldId),
+       values = Value(values);
+  static Insertable<ProfileValueRow> custom({
+    Expression<String>? userId,
+    Expression<String>? fieldId,
+    Expression<String>? values,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (fieldId != null) 'field_id': fieldId,
+      if (values != null) 'values_json': values,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProfileValuesCompanion copyWith({
+    Value<String>? userId,
+    Value<String>? fieldId,
+    Value<List<String>>? values,
+    Value<int>? rowid,
+  }) {
+    return ProfileValuesCompanion(
+      userId: userId ?? this.userId,
+      fieldId: fieldId ?? this.fieldId,
+      values: values ?? this.values,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (fieldId.present) {
+      map['field_id'] = Variable<String>(fieldId.value);
+    }
+    if (values.present) {
+      map['values_json'] = Variable<String>(
+        $ProfileValuesTable.$convertervalues.toSql(values.value),
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProfileValuesCompanion(')
+          ..write('userId: $userId, ')
+          ..write('fieldId: $fieldId, ')
+          ..write('values: $values, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$ServerDatabase extends GeneratedDatabase {
   _$ServerDatabase(QueryExecutor e) : super(e);
   $ServerDatabaseManager get managers => $ServerDatabaseManager(this);
@@ -12063,6 +13252,11 @@ abstract class _$ServerDatabase extends GeneratedDatabase {
   late final $ViewStatesTable viewStates = $ViewStatesTable(this);
   late final $SyncStateTable syncState = $SyncStateTable(this);
   late final $ConfigTable config = $ConfigTable(this);
+  late final $ChannelBookmarksTable channelBookmarks = $ChannelBookmarksTable(
+    this,
+  );
+  late final $ProfileFieldsTable profileFields = $ProfileFieldsTable(this);
+  late final $ProfileValuesTable profileValues = $ProfileValuesTable(this);
   late final Index channelsByTeam = Index(
     'channels_by_team',
     'CREATE INDEX channels_by_team ON channels (team_id)',
@@ -12103,6 +13297,10 @@ abstract class _$ServerDatabase extends GeneratedDatabase {
     'scheduled_posts_by_channel',
     'CREATE INDEX scheduled_posts_by_channel ON scheduled_posts (channel_id)',
   );
+  late final Index bookmarksByChannel = Index(
+    'bookmarks_by_channel',
+    'CREATE INDEX bookmarks_by_channel ON channel_bookmarks (channel_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -12133,6 +13331,9 @@ abstract class _$ServerDatabase extends GeneratedDatabase {
     viewStates,
     syncState,
     config,
+    channelBookmarks,
+    profileFields,
+    profileValues,
     channelsByTeam,
     categoriesByTeam,
     postsByChannel,
@@ -12143,6 +13344,7 @@ abstract class _$ServerDatabase extends GeneratedDatabase {
     filesByPost,
     customEmojiByName,
     scheduledPostsByChannel,
+    bookmarksByChannel,
   ];
 }
 
@@ -18562,6 +19764,698 @@ typedef $$ConfigTableProcessedTableManager =
       ConfigRow,
       PrefetchHooks Function()
     >;
+typedef $$ChannelBookmarksTableCreateCompanionBuilder =
+    ChannelBookmarksCompanion Function({
+      required String id,
+      required String channelId,
+      required String displayName,
+      Value<int> sortOrder,
+      required String type,
+      Value<String?> linkUrl,
+      Value<String?> imageUrl,
+      Value<String?> emoji,
+      Value<String?> fileId,
+      Value<DateTime?> updateAt,
+      Value<int> rowid,
+    });
+typedef $$ChannelBookmarksTableUpdateCompanionBuilder =
+    ChannelBookmarksCompanion Function({
+      Value<String> id,
+      Value<String> channelId,
+      Value<String> displayName,
+      Value<int> sortOrder,
+      Value<String> type,
+      Value<String?> linkUrl,
+      Value<String?> imageUrl,
+      Value<String?> emoji,
+      Value<String?> fileId,
+      Value<DateTime?> updateAt,
+      Value<int> rowid,
+    });
+
+class $$ChannelBookmarksTableFilterComposer
+    extends Composer<_$ServerDatabase, $ChannelBookmarksTable> {
+  $$ChannelBookmarksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get channelId => $composableBuilder(
+    column: $table.channelId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get linkUrl => $composableBuilder(
+    column: $table.linkUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imageUrl => $composableBuilder(
+    column: $table.imageUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get emoji => $composableBuilder(
+    column: $table.emoji,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<DateTime?, DateTime, int> get updateAt =>
+      $composableBuilder(
+        column: $table.updateAt,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+}
+
+class $$ChannelBookmarksTableOrderingComposer
+    extends Composer<_$ServerDatabase, $ChannelBookmarksTable> {
+  $$ChannelBookmarksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get channelId => $composableBuilder(
+    column: $table.channelId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get linkUrl => $composableBuilder(
+    column: $table.linkUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imageUrl => $composableBuilder(
+    column: $table.imageUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get emoji => $composableBuilder(
+    column: $table.emoji,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updateAt => $composableBuilder(
+    column: $table.updateAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ChannelBookmarksTableAnnotationComposer
+    extends Composer<_$ServerDatabase, $ChannelBookmarksTable> {
+  $$ChannelBookmarksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get channelId =>
+      $composableBuilder(column: $table.channelId, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get linkUrl =>
+      $composableBuilder(column: $table.linkUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get imageUrl =>
+      $composableBuilder(column: $table.imageUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get emoji =>
+      $composableBuilder(column: $table.emoji, builder: (column) => column);
+
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DateTime?, int> get updateAt =>
+      $composableBuilder(column: $table.updateAt, builder: (column) => column);
+}
+
+class $$ChannelBookmarksTableTableManager
+    extends
+        RootTableManager<
+          _$ServerDatabase,
+          $ChannelBookmarksTable,
+          BookmarkRow,
+          $$ChannelBookmarksTableFilterComposer,
+          $$ChannelBookmarksTableOrderingComposer,
+          $$ChannelBookmarksTableAnnotationComposer,
+          $$ChannelBookmarksTableCreateCompanionBuilder,
+          $$ChannelBookmarksTableUpdateCompanionBuilder,
+          (
+            BookmarkRow,
+            BaseReferences<
+              _$ServerDatabase,
+              $ChannelBookmarksTable,
+              BookmarkRow
+            >,
+          ),
+          BookmarkRow,
+          PrefetchHooks Function()
+        > {
+  $$ChannelBookmarksTableTableManager(
+    _$ServerDatabase db,
+    $ChannelBookmarksTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChannelBookmarksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChannelBookmarksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChannelBookmarksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> channelId = const Value.absent(),
+                Value<String> displayName = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String?> linkUrl = const Value.absent(),
+                Value<String?> imageUrl = const Value.absent(),
+                Value<String?> emoji = const Value.absent(),
+                Value<String?> fileId = const Value.absent(),
+                Value<DateTime?> updateAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ChannelBookmarksCompanion(
+                id: id,
+                channelId: channelId,
+                displayName: displayName,
+                sortOrder: sortOrder,
+                type: type,
+                linkUrl: linkUrl,
+                imageUrl: imageUrl,
+                emoji: emoji,
+                fileId: fileId,
+                updateAt: updateAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String channelId,
+                required String displayName,
+                Value<int> sortOrder = const Value.absent(),
+                required String type,
+                Value<String?> linkUrl = const Value.absent(),
+                Value<String?> imageUrl = const Value.absent(),
+                Value<String?> emoji = const Value.absent(),
+                Value<String?> fileId = const Value.absent(),
+                Value<DateTime?> updateAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ChannelBookmarksCompanion.insert(
+                id: id,
+                channelId: channelId,
+                displayName: displayName,
+                sortOrder: sortOrder,
+                type: type,
+                linkUrl: linkUrl,
+                imageUrl: imageUrl,
+                emoji: emoji,
+                fileId: fileId,
+                updateAt: updateAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ChannelBookmarksTable, BookmarkRow>(table),
+                  BaseReferences<
+                    _$ServerDatabase,
+                    $ChannelBookmarksTable,
+                    BookmarkRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ChannelBookmarksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$ServerDatabase,
+      $ChannelBookmarksTable,
+      BookmarkRow,
+      $$ChannelBookmarksTableFilterComposer,
+      $$ChannelBookmarksTableOrderingComposer,
+      $$ChannelBookmarksTableAnnotationComposer,
+      $$ChannelBookmarksTableCreateCompanionBuilder,
+      $$ChannelBookmarksTableUpdateCompanionBuilder,
+      (
+        BookmarkRow,
+        BaseReferences<_$ServerDatabase, $ChannelBookmarksTable, BookmarkRow>,
+      ),
+      BookmarkRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ProfileFieldsTableCreateCompanionBuilder =
+    ProfileFieldsCompanion Function({
+      required String id,
+      required String name,
+      required String type,
+      required Map<String, Object?> attrs,
+      Value<int> rowid,
+    });
+typedef $$ProfileFieldsTableUpdateCompanionBuilder =
+    ProfileFieldsCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> type,
+      Value<Map<String, Object?>> attrs,
+      Value<int> rowid,
+    });
+
+class $$ProfileFieldsTableFilterComposer
+    extends Composer<_$ServerDatabase, $ProfileFieldsTable> {
+  $$ProfileFieldsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    Map<String, Object?>,
+    Map<String, Object>,
+    String
+  >
+  get attrs => $composableBuilder(
+    column: $table.attrs,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+}
+
+class $$ProfileFieldsTableOrderingComposer
+    extends Composer<_$ServerDatabase, $ProfileFieldsTable> {
+  $$ProfileFieldsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get attrs => $composableBuilder(
+    column: $table.attrs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ProfileFieldsTableAnnotationComposer
+    extends Composer<_$ServerDatabase, $ProfileFieldsTable> {
+  $$ProfileFieldsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Map<String, Object?>, String> get attrs =>
+      $composableBuilder(column: $table.attrs, builder: (column) => column);
+}
+
+class $$ProfileFieldsTableTableManager
+    extends
+        RootTableManager<
+          _$ServerDatabase,
+          $ProfileFieldsTable,
+          ProfileFieldRow,
+          $$ProfileFieldsTableFilterComposer,
+          $$ProfileFieldsTableOrderingComposer,
+          $$ProfileFieldsTableAnnotationComposer,
+          $$ProfileFieldsTableCreateCompanionBuilder,
+          $$ProfileFieldsTableUpdateCompanionBuilder,
+          (
+            ProfileFieldRow,
+            BaseReferences<
+              _$ServerDatabase,
+              $ProfileFieldsTable,
+              ProfileFieldRow
+            >,
+          ),
+          ProfileFieldRow,
+          PrefetchHooks Function()
+        > {
+  $$ProfileFieldsTableTableManager(
+    _$ServerDatabase db,
+    $ProfileFieldsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProfileFieldsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProfileFieldsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProfileFieldsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<Map<String, Object?>> attrs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProfileFieldsCompanion(
+                id: id,
+                name: name,
+                type: type,
+                attrs: attrs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required String type,
+                required Map<String, Object?> attrs,
+                Value<int> rowid = const Value.absent(),
+              }) => ProfileFieldsCompanion.insert(
+                id: id,
+                name: name,
+                type: type,
+                attrs: attrs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ProfileFieldsTable, ProfileFieldRow>(table),
+                  BaseReferences<
+                    _$ServerDatabase,
+                    $ProfileFieldsTable,
+                    ProfileFieldRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ProfileFieldsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$ServerDatabase,
+      $ProfileFieldsTable,
+      ProfileFieldRow,
+      $$ProfileFieldsTableFilterComposer,
+      $$ProfileFieldsTableOrderingComposer,
+      $$ProfileFieldsTableAnnotationComposer,
+      $$ProfileFieldsTableCreateCompanionBuilder,
+      $$ProfileFieldsTableUpdateCompanionBuilder,
+      (
+        ProfileFieldRow,
+        BaseReferences<_$ServerDatabase, $ProfileFieldsTable, ProfileFieldRow>,
+      ),
+      ProfileFieldRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ProfileValuesTableCreateCompanionBuilder =
+    ProfileValuesCompanion Function({
+      required String userId,
+      required String fieldId,
+      required List<String> values,
+      Value<int> rowid,
+    });
+typedef $$ProfileValuesTableUpdateCompanionBuilder =
+    ProfileValuesCompanion Function({
+      Value<String> userId,
+      Value<String> fieldId,
+      Value<List<String>> values,
+      Value<int> rowid,
+    });
+
+class $$ProfileValuesTableFilterComposer
+    extends Composer<_$ServerDatabase, $ProfileValuesTable> {
+  $$ProfileValuesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fieldId => $composableBuilder(
+    column: $table.fieldId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<List<String>, List<String>, String>
+  get values => $composableBuilder(
+    column: $table.values,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+}
+
+class $$ProfileValuesTableOrderingComposer
+    extends Composer<_$ServerDatabase, $ProfileValuesTable> {
+  $$ProfileValuesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fieldId => $composableBuilder(
+    column: $table.fieldId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get values => $composableBuilder(
+    column: $table.values,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ProfileValuesTableAnnotationComposer
+    extends Composer<_$ServerDatabase, $ProfileValuesTable> {
+  $$ProfileValuesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get fieldId =>
+      $composableBuilder(column: $table.fieldId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<List<String>, String> get values =>
+      $composableBuilder(column: $table.values, builder: (column) => column);
+}
+
+class $$ProfileValuesTableTableManager
+    extends
+        RootTableManager<
+          _$ServerDatabase,
+          $ProfileValuesTable,
+          ProfileValueRow,
+          $$ProfileValuesTableFilterComposer,
+          $$ProfileValuesTableOrderingComposer,
+          $$ProfileValuesTableAnnotationComposer,
+          $$ProfileValuesTableCreateCompanionBuilder,
+          $$ProfileValuesTableUpdateCompanionBuilder,
+          (
+            ProfileValueRow,
+            BaseReferences<
+              _$ServerDatabase,
+              $ProfileValuesTable,
+              ProfileValueRow
+            >,
+          ),
+          ProfileValueRow,
+          PrefetchHooks Function()
+        > {
+  $$ProfileValuesTableTableManager(
+    _$ServerDatabase db,
+    $ProfileValuesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProfileValuesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProfileValuesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProfileValuesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> userId = const Value.absent(),
+                Value<String> fieldId = const Value.absent(),
+                Value<List<String>> values = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProfileValuesCompanion(
+                userId: userId,
+                fieldId: fieldId,
+                values: values,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String userId,
+                required String fieldId,
+                required List<String> values,
+                Value<int> rowid = const Value.absent(),
+              }) => ProfileValuesCompanion.insert(
+                userId: userId,
+                fieldId: fieldId,
+                values: values,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ProfileValuesTable, ProfileValueRow>(table),
+                  BaseReferences<
+                    _$ServerDatabase,
+                    $ProfileValuesTable,
+                    ProfileValueRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ProfileValuesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$ServerDatabase,
+      $ProfileValuesTable,
+      ProfileValueRow,
+      $$ProfileValuesTableFilterComposer,
+      $$ProfileValuesTableOrderingComposer,
+      $$ProfileValuesTableAnnotationComposer,
+      $$ProfileValuesTableCreateCompanionBuilder,
+      $$ProfileValuesTableUpdateCompanionBuilder,
+      (
+        ProfileValueRow,
+        BaseReferences<_$ServerDatabase, $ProfileValuesTable, ProfileValueRow>,
+      ),
+      ProfileValueRow,
+      PrefetchHooks Function()
+    >;
 
 class $ServerDatabaseManager {
   final _$ServerDatabase _db;
@@ -18616,4 +20510,10 @@ class $ServerDatabaseManager {
       $$SyncStateTableTableManager(_db, _db.syncState);
   $$ConfigTableTableManager get config =>
       $$ConfigTableTableManager(_db, _db.config);
+  $$ChannelBookmarksTableTableManager get channelBookmarks =>
+      $$ChannelBookmarksTableTableManager(_db, _db.channelBookmarks);
+  $$ProfileFieldsTableTableManager get profileFields =>
+      $$ProfileFieldsTableTableManager(_db, _db.profileFields);
+  $$ProfileValuesTableTableManager get profileValues =>
+      $$ProfileValuesTableTableManager(_db, _db.profileValues);
 }

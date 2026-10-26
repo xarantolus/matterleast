@@ -48,4 +48,6 @@ const _$OptionalFeatureEnumMap = {
   OptionalFeature.scheduledPosts: 'scheduledPosts',
   OptionalFeature.syncedDrafts: 'syncedDrafts',
   OptionalFeature.burnOnRead: 'burnOnRead',
+  OptionalFeature.bookmarks: 'bookmarks',
+  OptionalFeature.profileAttributes: 'profileAttributes',
 };

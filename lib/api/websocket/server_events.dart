@@ -537,6 +537,30 @@ final class AgentConversationEvent extends ServerEvent {
   final String conversationId;
 }
 
+/// `channel_bookmark_created/updated/sorted/deleted`: the bookmarks that
+/// changed, a deleted one with its delete time.
+final class BookmarksEvent extends ServerEvent {
+  const BookmarksEvent(this.channelId, this.bookmarks);
+  final String channelId;
+  final List<api.ChannelBookmarkWithFileInfo> bookmarks;
+}
+
+/// `custom_profile_attributes_field_created/updated/deleted`; [field] is
+/// null when the field with [fieldId] was deleted.
+final class ProfileFieldEvent extends ServerEvent {
+  const ProfileFieldEvent(this.fieldId, this.field);
+  final String fieldId;
+  final api.PropertyField? field;
+}
+
+/// `custom_profile_attributes_values_updated`: values by field id, each a
+/// string or a list of strings.
+final class ProfileValuesEvent extends ServerEvent {
+  const ProfileValuesEvent(this.userId, this.values);
+  final String userId;
+  final Map<String, Object?> values;
+}
+
 final class UnknownEvent extends ServerEvent {
   const UnknownEvent(this.name);
   final String name;
@@ -634,8 +658,66 @@ ServerEvent decodeEvent(SocketFrame frame) {
     'custom_mattermost-ai_conversation_updated' => AgentConversationEvent(
       const LenientString().fromJson(frame.data['conversation_id']) ?? '',
     ),
+    'channel_bookmark_created' ||
+    'channel_bookmark_deleted' => _bookmarks(frame, [frame.data['bookmark']]),
+    'channel_bookmark_updated' => _bookmarks(frame, switch (decodeJsonString(
+      frame.data['bookmarks'],
+    )) {
+      final Map<String, Object?> m => [m['deleted'], m['updated']],
+      _ => const [],
+    }),
+    'channel_bookmark_sorted' => _bookmarks(frame, switch (decodeJsonString(
+      frame.data['bookmarks'],
+    )) {
+      final List<Object?> l => l,
+      _ => const [],
+    }),
+    'custom_profile_attributes_field_created' ||
+    'custom_profile_attributes_field_updated' => switch (decodeJsonString(
+      frame.data['field'],
+    )) {
+      final Map<String, Object?> m => switch (decodeOrSkip(
+        m,
+        api.PropertyField.fromJson,
+      )) {
+        final field? when field.id != null => ProfileFieldEvent(
+          field.id!,
+          field,
+        ),
+        _ => UnknownEvent(frame.event!),
+      },
+      _ => UnknownEvent(frame.event!),
+    },
+    'custom_profile_attributes_field_deleted' =>
+      switch (frame.data['field_id']) {
+        final String id when id.isNotEmpty => ProfileFieldEvent(id, null),
+        _ => const UnknownEvent('custom_profile_attributes_field_deleted'),
+      },
+    'custom_profile_attributes_values_updated' => switch ((
+      frame.data['user_id'],
+      decodeJsonString(frame.data['values']),
+    )) {
+      (final String user, final Map<String, Object?> values)
+          when user.isNotEmpty =>
+        ProfileValuesEvent(user, values),
+      _ => const UnknownEvent('custom_profile_attributes_values_updated'),
+    },
     final name => UnknownEvent(name ?? ''),
   };
+}
+
+ServerEvent _bookmarks(SocketFrame frame, List<Object?> raw) {
+  final bookmarks = [
+    for (final r in raw)
+      if (decodeJsonString(r) case final Map<String, Object?> m)
+        ?decodeOrSkip(m, api.ChannelBookmarkWithFileInfo.fromJson),
+  ];
+  final channelId = switch (frame.broadcast['channel_id']) {
+    final String id when id.isNotEmpty => id,
+    _ => bookmarks.firstOrNull?.channelId,
+  };
+  if (channelId == null) return UnknownEvent(frame.event ?? '');
+  return BookmarksEvent(channelId, bookmarks);
 }
 
 TeamEvent _team(Map<String, Object?> json, TeamChange kind) {

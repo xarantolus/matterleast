@@ -395,6 +395,31 @@ class FileCard extends ConsumerWidget {
   }
 }
 
+/// Opens a file outside a message (such as a channel bookmark): pictures
+/// and videos in the gallery, anything else as a tap on its card would.
+void openFile(
+  BuildContext context,
+  WidgetRef ref, {
+  required String url,
+  required PostFile file,
+  required String author,
+  required DateTime sentAt,
+}) {
+  if (file.isMedia) {
+    openGallery(
+      context,
+      url: url,
+      media: [file],
+      index: 0,
+      heroPrefix: 'file-${file.id}',
+      author: author,
+      sentAt: sentAt,
+    );
+  } else {
+    unawaited(_runFileAction(context, ref, url, file, _FileAction.view));
+  }
+}
+
 enum _FileAction { view, save, share, openWith }
 
 /// Text files larger than this open in another app instead of our viewer.

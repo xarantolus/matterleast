@@ -19,6 +19,8 @@ enum OptionalFeature {
   scheduledPosts,
   syncedDrafts,
   burnOnRead,
+  bookmarks,
+  profileAttributes,
 }
 
 /// Profile fields a directory (LDAP or SAML) can fill in, which the user
@@ -78,6 +80,12 @@ abstract class ServerFeatures with _$ServerFeatures {
     /// User groups (custom or synced from a directory) can be @mentioned;
     /// each channel's permissions decide who may.
     @Default(false) bool groupMentions,
+
+    /// Channels can have a bar of bookmarked links and files.
+    @Default(false) bool bookmarks,
+
+    /// People have custom profile attributes the server defines.
+    @Default(false) bool profileAttributes,
 
     /// How long after posting a message can be edited; null for always.
     Duration? editTimeLimit,
@@ -226,6 +234,13 @@ ServerFeatures serverFeatures({
         !turnedOff.contains(OptionalFeature.postReminders),
     groupMentions:
         licensed && !turnedOff.contains(OptionalFeature.groupMentions),
+    bookmarks:
+        licensed &&
+        flagOn(config, 'ChannelBookmarks', removedIn: flagsRemovedIn) &&
+        !turnedOff.contains(OptionalFeature.bookmarks),
+    profileAttributes:
+        flagOn(config, 'CustomProfileAttributes', removedIn: flagsRemovedIn) &&
+        !turnedOff.contains(OptionalFeature.profileAttributes),
     editTimeLimit: editLimit != null && editLimit >= 0
         ? Duration(seconds: editLimit)
         : null,
@@ -263,6 +278,20 @@ ServerFeatures serverFeatures({
     },
   );
 }
+
+/// The version that dropped the bookmarks and profile attributes flags,
+/// leaving both features on.
+const flagsRemovedIn = (11, 10, 0);
+
+/// Pure: [ServerFeatures.flag] straight from the client config.
+bool flagOn(
+  ClientConfig config,
+  String name, {
+  required (int, int, int) removedIn,
+}) => ServerFeatures(
+  version: config.version?.trim() ?? '',
+  featureFlags: config.featureFlags,
+).flag(name, removedIn: removedIn);
 
 /// Pure: whether an optional endpoint's failure says the feature isn't
 /// there (switched off, not licensed, or not built into this server), as

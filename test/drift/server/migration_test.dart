@@ -8,6 +8,8 @@ import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v4.dart' as v4;
+import 'generated/schema_v5.dart' as v5;
+import 'generated/schema_v6.dart' as v6;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -65,6 +67,26 @@ void main() {
         final row = await newDb.select(newDb.users).getSingle();
         expect(row.username, 'wren');
         expect(row.roles, isNull);
+      },
+    );
+  });
+
+  test('keeps the people when going from v5 to v6, with no bookmarks or '
+      'profile attributes yet', () async {
+    await verifier.testWithDataIntegrity(
+      oldVersion: 5,
+      newVersion: 6,
+      createOld: v5.DatabaseAtV5.new,
+      createNew: v6.DatabaseAtV6.new,
+      openTestedDatabase: ServerDatabase.new,
+      createItems: (batch, oldDb) => batch.insert(
+        oldDb.users,
+        const v5.UsersCompanion(id: Value('u1'), username: Value('wren')),
+      ),
+      validateItems: (newDb) async {
+        expect((await newDb.select(newDb.users).getSingle()).username, 'wren');
+        expect(await newDb.select(newDb.channelBookmarks).get(), isEmpty);
+        expect(await newDb.select(newDb.profileFields).get(), isEmpty);
       },
     );
   });

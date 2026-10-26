@@ -40,6 +40,11 @@ abstract final class SyncKeys {
   /// The signed-in user's account notification settings, as JSON.
   static const accountNotifyProps = 'account_notify_props';
 
+  /// Watermark for `bookmarks?bookmarks_since=`: the newest change received
+  /// for a channel's bookmarks.
+  static String bookmarksSince(String channelId) =>
+      'bookmarks_since:$channelId';
+
   /// The channel the user last opened in a team.
   static String lastChannel(String teamId) => 'last_channel:$teamId';
 }
@@ -73,6 +78,9 @@ abstract final class SyncKeys {
     ViewStates,
     SyncState,
     Config,
+    ChannelBookmarks,
+    ProfileFields,
+    ProfileValues,
   ],
 )
 class ServerDatabase extends _$ServerDatabase {
@@ -95,7 +103,7 @@ class ServerDatabase extends _$ServerDatabase {
       );
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -114,6 +122,12 @@ class ServerDatabase extends _$ServerDatabase {
         await m.addColumn(schema.drafts, schema.drafts.syncedAt);
         await m.createTable(schema.scheduledPosts);
         await m.createIndex(schema.scheduledPostsByChannel);
+      },
+      from5To6: (m, schema) async {
+        await m.createTable(schema.channelBookmarks);
+        await m.createIndex(schema.bookmarksByChannel);
+        await m.createTable(schema.profileFields);
+        await m.createTable(schema.profileValues);
       },
     ),
   );

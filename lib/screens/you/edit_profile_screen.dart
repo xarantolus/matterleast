@@ -7,9 +7,12 @@ import 'package:image_picker_android/image_picker_android.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/app/extras_providers.dart';
 import 'package:matterleast/data/files/local_copies.dart';
+import 'package:matterleast/domain/profile_attributes.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/user_profile.dart';
+import 'package:matterleast/screens/you/profile_attributes_list.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
@@ -39,6 +42,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final _position = TextEditingController(text: widget.profile.position);
   late final _username = TextEditingController(text: widget.profile.username);
   File? _picture;
+  final _attributeEdits = <AttributeField, List<String>>{};
   var _saving = false;
   String? _error;
   String? _usernameError;
@@ -79,6 +83,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   bool get _dirty =>
       _picture != null ||
+      _attributeEdits.isNotEmpty ||
       _changed(_first, widget.profile.firstName) != null ||
       _changed(_last, widget.profile.lastName) != null ||
       _changed(_nickname, widget.profile.nickname) != null ||
@@ -120,6 +125,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           position: position,
           username: username,
         );
+      }
+      if (_attributeEdits.isNotEmpty) {
+        final attributes = await ref.read(
+          attributeActionsProvider(widget.url).future,
+        );
+        await attributes.saveMine(_attributeEdits);
       }
       navigator.pop();
     } on Object catch (e) {
@@ -165,6 +176,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final picture = _picture;
     final locks = ref.watch(myProfileLocksProvider(widget.url)).value;
+    ref.listen(
+      attributesRefreshProvider(widget.url, widget.profile.id),
+      (_, _) {},
+    );
+    final (attributeFields, attributeValues) =
+        ref
+            .watch(editableAttributesProvider(widget.url, widget.profile.id))
+            .value ??
+        (const <AttributeField>[], const <String, List<String>>{});
     String? by(bool? locked) => (locked ?? false) ? locks!.source : null;
     return Scaffold(
       appBar: AppBar(
@@ -237,6 +257,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             helper: 'Letters, digits, dots, dashes and underscores.',
             lockedBy: by(locks?.username),
           ),
+          AttributeEditors(
+            fields: attributeFields,
+            values: attributeValues,
+            edits: {for (final e in _attributeEdits.entries) e.key.id: e.value},
+            enabled: !_saving,
+            onChanged: (field, values) => setState(() {
+              if (_sameValues(values, attributeValues[field.id] ?? const [])) {
+                _attributeEdits.remove(field);
+              } else {
+                _attributeEdits[field] = values;
+              }
+            }),
+          ),
           if (_error case final error?)
             Padding(
               padding: const EdgeInsets.only(bottom: Spacing.md),
@@ -262,6 +295,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 }
+
+bool _sameValues(List<String> a, List<String> b) =>
+    a.length == b.length && a.indexed.every((e) => b[e.$1] == e.$2);
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({required this.url, super.key});

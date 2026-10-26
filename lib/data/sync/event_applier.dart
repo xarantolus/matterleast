@@ -8,6 +8,7 @@ import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/data/store/extras_store.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/draft_sync.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
@@ -202,6 +203,15 @@ class EventApplier {
         await store.setBurnExpiry(postId, senderExpireAt);
       case PluginsChangedEvent():
         _later(entry.refreshPlugins());
+      case BookmarksEvent(:final channelId, :final bookmarks)
+          when await _knownChannel(channelId):
+        await store.applyBookmarks(channelId, bookmarks);
+      case ProfileFieldEvent(:final field?):
+        await store.applyProfileField(field);
+      case ProfileFieldEvent(:final fieldId):
+        await store.removeProfileField(fieldId);
+      case ProfileValuesEvent(:final userId, :final values):
+        await store.applyProfileValues(userId, values);
       default:
         return;
     }

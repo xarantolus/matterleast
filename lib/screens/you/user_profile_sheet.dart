@@ -9,6 +9,7 @@ import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/you/profile_attributes_list.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/empty_state.dart';
@@ -107,6 +108,7 @@ class UserProfileSheet extends ConsumerWidget {
           if (profile.position.isNotEmpty)
             _Detail(label: 'Position', value: profile.position),
           if (profile.timezone case final zone?) _LocalTime(zone: zone),
+          ProfileAttributesList(url: url, userId: userId),
           if (!profile.isMe && !profile.isBot) ...[
             const SizedBox(height: Spacing.lg),
             SizedBox(

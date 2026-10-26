@@ -224,4 +224,34 @@ void main() {
       isTrue,
     );
   });
+
+  test('bookmarks need a licence; profile attributes only the flag or a '
+      'version past it', () {
+    const licensed = {'IsLicensed': 'true'};
+    expect(features({'Version': '12.0.1'}).bookmarks, isFalse);
+    expect(
+      features({'Version': '12.0.1'}, license: licensed).bookmarks,
+      isTrue,
+    );
+    expect(
+      features({'Version': '10.5.0'}, license: licensed).bookmarks,
+      isFalse,
+    );
+    expect(
+      features({
+        'Version': '10.5.0',
+        'FeatureFlagChannelBookmarks': 'true',
+      }, license: licensed).bookmarks,
+      isTrue,
+    );
+    expect(features({'Version': '12.0.1'}).profileAttributes, isTrue);
+    expect(features({'Version': '10.5.0'}).profileAttributes, isFalse);
+    expect(
+      features(
+        {'Version': '12.0.1'},
+        turnedOff: {OptionalFeature.profileAttributes},
+      ).profileAttributes,
+      isFalse,
+    );
+  });
 }
