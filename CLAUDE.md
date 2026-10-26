@@ -108,12 +108,12 @@ notes, and they win over this summary.
 
 ## Git and gate
 
-- Intermediate commits within a batch of work need no checks. The full gate
-  (`dart run build_runner build`, always, since CI fails on stale generated
-  code; never with `--build-filter`; then `dart format .`,
-  `flutter analyze`, `dart analyze`, `flutter test`,
-  `flutter build apk --debug`) runs once, close to the finish, before the
-  batch is pushed. Velocity matters.
+- Velocity over perfect commits; CI catches the rest. Intermediate commits
+  need no checks. Before a branch is pushed for merging, run the gate once:
+  `dart run build_runner build` (always, since CI fails on stale generated
+  code; never with `--build-filter`), `dart format .`, `flutter analyze`,
+  `dart analyze`, `flutter test`. No local APK build: the lane's
+  `flutter run` and CI cover it.
 - Commit after every feature or fix, so history shows when each change
   landed and a regression can be bisected. Push after committing.
 - Watch CI after pushing but don't block on it; come back to it, and fix it
@@ -123,3 +123,24 @@ notes, and they win over this summary.
   commits. Imperative, plain-sentence commit messages.
 - Never commit secrets, signing material, server credentials, `reference/` or
   the gitignored local notes.
+
+## Parallel work: lanes and pull requests
+
+- The main session coordinates: it splits work into lanes that touch
+  different parts of the code, writes each agent a self-contained brief
+  (the spec, the files and lines to change, what "done" looks like), does
+  quick fixes itself, merges, verifies and releases.
+- One agent per lane: its own git worktree, its own emulator and a running
+  app through `tool/lane.sh up [user]` (debug build signed in to the local
+  test server, hot reload on every change under `lib/`; `lane.sh reload`
+  prints compile errors, `lane.sh shot <label>` saves a screenshot,
+  `lane.sh adb …` drives the device, `lane.sh down` at the end). Iterate
+  by looking at the running app; run only the affected tests while
+  working.
+- Agents read only what the brief names, not the whole plan, reviews or
+  `setup-specific-guide.md`.
+- Done = gate passed, branch `lane/<topic>` pushed, a pull request opened
+  with `gh pr create` (what changed, what was checked on the device with
+  screenshot paths, what wasn't). The main session merges with
+  `gh pr merge --rebase --delete-branch` once CI is green, or fixes and
+  merges itself. Agents never bump the version or push to main.
