@@ -14,6 +14,7 @@ import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
+import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
@@ -153,8 +154,17 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     _text.removeListener(_typed);
     _text.dispose();
     _focus.dispose();
+    for (final path in _picked) {
+      unawaited(_deletePicked(path));
+    }
     super.dispose();
   }
+
+  /// Picker copies still shown as a preview; deleted when the composer goes.
+  final _picked = <String>{};
+
+  static Future<void> _deletePicked(String path) async =>
+      LocalCopies.deletePicked(await LocalCopies.cacheDirectory(), path);
 
   @override
   Widget build(BuildContext context) {
@@ -372,13 +382,21 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     }
     final draft = ref.read(_provider.notifier);
     for (final f in picked.take(room)) {
+      final copy = f.file.path;
+      // A copy with a preview stays until the composer goes, so the
+      // thumbnail can still be read.
+      if (f.path != null) _picked.add(copy);
       unawaited(
-        draft.attach(
-          open: f.file.openRead,
-          name: f.name,
-          size: f.size,
-          path: f.path,
-        ),
+        draft
+            .attach(
+              open: f.file.openRead,
+              name: f.name,
+              size: f.size,
+              path: f.path,
+            )
+            .whenComplete(() async {
+              if (f.path == null) await _deletePicked(copy);
+            }),
       );
     }
   }

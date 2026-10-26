@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/composer_actions.dart';
@@ -35,8 +33,7 @@ Future<api.FileInfo> uploadFile(
 }
 
 /// Sends what another app shared: the files are uploaded first, then one
-/// post goes through the outbox like any message. The shared copies in the
-/// app's cache are removed once sent.
+/// post goes through the outbox like any message.
 Future<void> sendShared(
   ServerSession session, {
   required String channelId,
@@ -48,11 +45,4 @@ Future<void> sendShared(
   ];
   await ComposerActions(session)
       .send(channelId, message: message, files: uploaded);
-  for (final path in files) {
-    try {
-      await File(path).delete();
-    } on FileSystemException {
-      // Already gone; the cache directory is the system's to clear.
-    }
-  }
 }

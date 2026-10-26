@@ -25,12 +25,17 @@ class FileDownloads {
     required this._api,
     required this._cache,
     required this._partialDirectory,
+    required this.handoffDirectory,
     required this._maxBytes,
   });
 
   final ServerApi _api;
   final CacheManager _cache;
   final String _partialDirectory;
+
+  /// Where named copies for other apps go; signing out deletes it with the
+  /// rest of the server's caches.
+  final String handoffDirectory;
   final Future<int?> Function() _maxBytes;
 
   final _running = <String, Future<File>>{};

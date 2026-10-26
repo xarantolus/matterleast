@@ -4,6 +4,7 @@ import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
+import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/outbox/outbox_sender.dart';
 import 'package:matterleast/data/secure/token_store.dart';
@@ -48,10 +49,18 @@ class ServerSession {
   final ServerImageCaches images;
   late final ServerConnection connection;
   late final emoji = CustomEmojiResolver(server: api, store: store);
+
+  /// Named copies of files handed to other apps; signing out deletes them
+  /// with the server's other caches.
+  late final handoffDirectory = p.join(
+    images.directory,
+    LocalCopies.handoffFolder,
+  );
   late final files = FileDownloads(
     api: api,
     cache: images.files,
     partialDirectory: p.join(images.directory, 'partial'),
+    handoffDirectory: handoffDirectory,
     maxBytes: () async => maxFileSize(await db.configJson('client_config')),
   );
   late final OutboxSender outbox;

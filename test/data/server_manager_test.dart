@@ -26,8 +26,10 @@ void main() {
   late Directory dir;
   late ServerManager manager;
   late String url;
+  late int sharesCleared;
 
   setUp(() async {
+    sharesCleared = 0;
     server = await FakeServer.start();
     url = server.url.toString();
     server.handle = (r) => switch (r.path) {
@@ -45,6 +47,7 @@ void main() {
       cacheDirectory: () async => p.join(dir.path, 'cache'),
       openDatabase: (path) => ServerDatabase(NativeDatabase(File(path))),
       clock: () => DateTime.utc(2026, 10, 25, 12),
+      clearShared: () async => sharesCleared++,
     );
   });
 
@@ -140,6 +143,27 @@ void main() {
 
     expect(await manager.signOut(url), isTrue);
     expect(images.existsSync(), isFalse);
+  });
+
+  test('signing out deletes the copies handed to other apps', () async {
+    await addServer();
+    final session = await manager.session(url);
+    final copy = File(p.join(session.handoffDirectory, 'f1', 'plan.pdf'))
+      ..createSync(recursive: true);
+
+    expect(await manager.signOut(url), isTrue);
+    expect(copy.existsSync(), isFalse);
+  });
+
+  test('shared files are cleared once no server is signed in', () async {
+    const other = 'http://other.example.test';
+    await addServer();
+    await addServer(probed(Uri.parse(other), 'diag-2'));
+
+    await manager.signOut(other, force: true);
+    expect(sharesCleared, 0);
+    await manager.signOut(url, force: true);
+    expect(sharesCleared, 1);
   });
 
   test('removing a server forgets it', () async {

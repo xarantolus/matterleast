@@ -1,5 +1,6 @@
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
+import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/servers/entries.dart';
 import 'package:matterleast/data/servers/server_manager.dart';
@@ -40,12 +41,16 @@ ServerManager serverManager(Ref ref) {
     db: ref.watch(appDatabaseProvider),
     tokens: ref.watch(tokenStoreProvider),
     dataDirectory: () async => (await getApplicationSupportDirectory()).path,
-    cacheDirectory: () async =>
-        p.join((await getApplicationCacheDirectory()).path, 'images'),
+    cacheDirectory: () async => p.join(
+      await LocalCopies.cacheDirectory(),
+      LocalCopies.serverCachesFolder,
+    ),
     mediaBudget: () =>
         ref.read(settingsStoreProvider).read(Settings.mediaCacheBytes),
     filesBudget: () =>
         ref.read(settingsStoreProvider).read(Settings.filesCacheBytes),
+    clearShared: () async =>
+        LocalCopies.clearLooseFiles(await LocalCopies.cacheDirectory()),
   );
   ref.onDispose(manager.dispose);
   return manager;

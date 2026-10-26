@@ -387,6 +387,7 @@ Future<void> _runFileAction(
   final navigator = Navigator.of(context);
   void say(String message) =>
       messenger.showSnackBar(SnackBar(content: Text(message)));
+  final downloads = ref.read(fileDownloadsProvider(url).future)..ignore();
   File? local;
   try {
     local = await ref.read(fileTransfersProvider(url).notifier).fetch(file);
@@ -404,6 +405,7 @@ Future<void> _runFileAction(
     return;
   }
   if (local == null) return;
+  final handoff = (await downloads).handoffDirectory;
   switch (action) {
     case _FileAction.view when file.kind == FileKind.pdf:
       unawaited(navigator.push(pdfRoute(local, url: url, file: file)));
@@ -426,13 +428,13 @@ Future<void> _runFileAction(
         ),
       );
     case _FileAction.view || _FileAction.openWith:
-      if (!await FileHandoff.open(local, file)) {
+      if (!await FileHandoff.open(local, file, handoff)) {
         say('No app on this phone opens ${file.name}.');
       }
     case _FileAction.share:
-      await FileHandoff.share(local, file);
+      await FileHandoff.share(local, file, handoff);
     case _FileAction.save:
-      final saved = await FileHandoff.save(local, file);
+      final saved = await FileHandoff.save(local, file, handoff);
       say(
         saved == null
             ? "Couldn't save ${file.name}."

@@ -28,6 +28,7 @@ class ServerManager {
     this._filesBudget = _defaultFilesBudget,
     this._openDatabase = ServerDatabase.open,
     this._clock = DateTime.now,
+    this._clearShared = _keepShared,
   });
 
   final AppDatabase _db;
@@ -38,6 +39,9 @@ class ServerManager {
   final Future<int> Function() _filesBudget;
   final OpenServerDatabase _openDatabase;
   final DateTime Function() _clock;
+  final Future<void> Function() _clearShared;
+
+  static Future<void> _keepShared() async {}
 
   static Future<int> _defaultMediaBudget() async => 250 * 1024 * 1024;
   static Future<int> _defaultFilesBudget() async => 500 * 1024 * 1024;
@@ -254,6 +258,12 @@ class ServerManager {
       await _deleteDatabaseFiles(row.dbFile);
       final images = Directory(await _imagesDirectory(row.dbFile));
       if (images.existsSync()) await images.delete(recursive: true);
+    }
+    // Shared files wait for a server to send them to; with none left they
+    // would only linger.
+    if (row?.lastActiveAt != null &&
+        !(await _db.allServers()).any((s) => s.lastActiveAt != null)) {
+      await _clearShared();
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/shortcuts.dart';
+import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
@@ -93,8 +94,14 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         (uri) => unawaited(openIncomingLink(navigator, ref, uri)),
       );
       final shares = ReceiveSharingIntent.instance;
-      void open(List<SharedMediaFile> media) {
-        final shared = sharedContentOf(media);
+      final cacheDir = LocalCopies.cacheDirectory();
+      unawaited(cacheDir.then((dir) => LocalCopies.sweep(dir, DateTime.now())));
+      Future<void> open(List<SharedMediaFile> media) async {
+        final shared = sharedContentOf(
+          media,
+          cacheDir: LocalCopies.resolveDirectory(await cacheDir),
+          resolve: LocalCopies.resolveFile,
+        );
         if (shared == null || !navigator.mounted) return;
         unawaited(
           navigator.push(
@@ -110,10 +117,10 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
           (type) => unawaited(_openShortcut(navigator, type)),
         ),
       );
-      _shares = shares.getMediaStream().listen(open);
+      _shares = shares.getMediaStream().listen((m) => unawaited(open(m)));
       unawaited(
-        shares.getInitialMedia().then((media) {
-          open(media);
+        shares.getInitialMedia().then((media) async {
+          await open(media);
           return shares.reset();
         }),
       );

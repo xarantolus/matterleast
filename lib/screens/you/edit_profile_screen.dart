@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:image_picker_android/image_picker_android.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
@@ -61,6 +63,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void dispose() {
     for (final f in _fields) {
       f.dispose();
+    }
+    if (_picture case final picture?) {
+      unawaited(
+        LocalCopies.cacheDirectory().then(
+          (dir) => LocalCopies.deletePicked(dir, picture.path),
+        ),
+      );
     }
     super.dispose();
   }
