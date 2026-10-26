@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:matterleast/api/server_api.dart';
+import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/data/live/typing.dart';
@@ -53,7 +54,11 @@ class ServerConnection {
       serverUrl: url,
       token: token,
       pingInterval: pingInterval,
-      onEvent: (event) => unawaited(events.add(event)),
+      onEvent: (event) => unawaited(
+        events.add(event).then((_) {
+          if (!_applied.isClosed) _applied.add(event);
+        }),
+      ),
       onResync: refreshAll,
       onClosed: (failCount) {
         // REST may work where the socket doesn't; try once per outage.
@@ -102,6 +107,10 @@ class ServerConnection {
   }
 
   final _caughtUp = StreamController<void>.broadcast();
+  final _applied = StreamController<ServerEvent>.broadcast();
+
+  /// Events once they are in the database.
+  Stream<ServerEvent> get applied => _applied.stream;
 
   /// Fires once the entry data is current again after events may have been
   /// missed; open conversations then fetch what they lack.
@@ -133,5 +142,6 @@ class ServerConnection {
     typing.close();
     dialogs.close();
     await _caughtUp.close();
+    await _applied.close();
   }
 }

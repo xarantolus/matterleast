@@ -74,17 +74,20 @@ class ServerDatabase extends _$ServerDatabase {
   ServerDatabase(super.connection);
 
   /// Opens (or connects to) the shared isolate for the file at [path], named
-  /// like `server-1a2b3c4d-chat_example_com.sqlite`.
-  factory ServerDatabase.open(String path) => ServerDatabase(
-    driftDatabase(
-      name: p.basename(path),
-      native: DriftNativeOptions(
-        databasePath: () async => path,
-        shareAcrossIsolates: true,
-        setup: configureConnection,
-      ),
-    ),
-  );
+  /// like `server-1a2b3c4d-chat_example_com.sqlite`. Short-lived background
+  /// engines open a connection of their own ([shared] false): a shared
+  /// database lives in the engine that opened it first and would go with it.
+  factory ServerDatabase.open(String path, {bool shared = true}) =>
+      ServerDatabase(
+        driftDatabase(
+          name: p.basename(path),
+          native: DriftNativeOptions(
+            databasePath: () async => path,
+            shareAcrossIsolates: shared,
+            setup: configureConnection,
+          ),
+        ),
+      );
 
   @override
   int get schemaVersion => 4;

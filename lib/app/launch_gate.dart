@@ -10,6 +10,8 @@ import 'package:matterleast/app/shortcuts.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/notifications/app_visibility.dart';
+import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_screen.dart';
@@ -96,6 +98,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       );
       if (!mounted) return;
       final navigator = Navigator.of(context);
+      unawaited(startNotifications(ref, navigator));
       _links = AppLinks().uriLinkStream.listen(
         (uri) => unawaited(openIncomingLink(navigator, ref, uri)),
       );
@@ -137,8 +140,14 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       fireImmediately: true,
     );
     _lifecycle = AppLifecycleListener(
-      onShow: () => unawaited(manager.setForeground(true)),
-      onHide: () => unawaited(manager.setForeground(false)),
+      onShow: () {
+        AppVisibility.set(visible: true);
+        unawaited(manager.setForeground(true));
+      },
+      onHide: () {
+        AppVisibility.set(visible: false);
+        unawaited(manager.setForeground(false));
+      },
     );
   }
 
@@ -188,6 +197,14 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   Widget build(BuildContext context) {
     ref.listen(sessionEndedProvider, (_, next) {
       if (next case AsyncData(:final value)) _showSignedOut(value);
+    });
+    ref.listen(serversProvider, (_, next) {
+      if (next case AsyncData(:final value)) {
+        unawaited(followSignedIn(value));
+        if (value.any((s) => s.signedIn)) {
+          unawaited(askForNotificationsOnce(context, ref));
+        }
+      }
     });
     final servers = ref.watch(serversProvider).value;
     final saved = ref.watch(savedRailTargetProvider);

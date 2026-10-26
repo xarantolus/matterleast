@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -45,6 +46,10 @@ class PageOutcome {
 
 const sinceCap = 1000;
 
+/// A channel ([channelId]) or a thread ([rootId]) read; a thread mark
+/// with an empty [rootId] means all threads.
+typedef ReadMark = ({String? channelId, String? rootId});
+
 abstract final class PostListNames {
   static const mentions = 'mentions';
   static const saved = 'saved';
@@ -56,6 +61,18 @@ class ServerStore {
   ServerStore(this.db);
 
   final ServerDatabase db;
+
+  final _read = StreamController<ReadMark>.broadcast(sync: true);
+
+  /// Conversations marked read here or elsewhere, so their notifications
+  /// go away.
+  Stream<ReadMark> get read => _read.stream;
+
+  void close() => unawaited(_read.close());
+
+  void _markRead(ReadMark mark) {
+    if (!_read.isClosed) _read.add(mark);
+  }
 
   /// The signed-in user. Their account notification settings are kept in
   /// one place: [notifyProps] when the server's whole map is at hand,
@@ -569,15 +586,21 @@ class ServerStore {
         ..where(db.threadTeams.teamId.equals(teamId));
       update.where((t) => t.rootId.isInQuery(teamThreads));
     }
-    return update.write(
-      ThreadsCompanion(
-        lastViewedAt: lastViewedAt == null
-            ? const Value.absent()
-            : Value(lastViewedAt),
-        unreadReplies: Value(unreadReplies),
-        unreadMentions: Value(unreadMentions),
-      ),
-    );
+    return update
+        .write(
+          ThreadsCompanion(
+            lastViewedAt: lastViewedAt == null
+                ? const Value.absent()
+                : Value(lastViewedAt),
+            unreadReplies: Value(unreadReplies),
+            unreadMentions: Value(unreadMentions),
+          ),
+        )
+        .then((_) {
+          if (unreadReplies == 0) {
+            _markRead((channelId: null, rootId: threadId ?? ''));
+          }
+        });
   }
 
   /// With [channelId], a thread not stored yet is added, as following one
@@ -1183,6 +1206,7 @@ class ServerStore {
             manuallyUnread: const Value(false),
           ),
         );
+        _markRead((channelId: channelId, rootId: null));
       });
 
   /// Our own new post: an ordinary post row keyed by its pending id, so the

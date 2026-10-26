@@ -4,6 +4,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/screens/settings/phone_notifications.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/ui/empty_state.dart';
@@ -77,6 +78,7 @@ class _NotificationSettingsPageState
     return ListView(
       padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
       children: [
+        const PhoneNotifications(),
         SettingsHeader('On ${widget.server.displayName}'),
         ListTile(
           enabled: enabled,

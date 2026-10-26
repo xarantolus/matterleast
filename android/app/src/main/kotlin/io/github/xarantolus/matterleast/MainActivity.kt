@@ -21,5 +21,24 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "matterleast/stay_connected")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "isEnabled" -> result.success(StayConnectedService.isEnabled(this))
+                    "enable" -> {
+                        StayConnectedService.enable(this)
+                        result.success(null)
+                    }
+                    "disable" -> {
+                        StayConnectedService.disable(this)
+                        result.success(null)
+                    }
+                    "resume" -> {
+                        StayConnectedService.resume(this)
+                        result.success(null)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
     }
 }

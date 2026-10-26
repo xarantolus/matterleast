@@ -50,29 +50,36 @@ class ChannelActions {
   Future<void> view(String channelId) async {
     await session.store.markViewed(channelId, at: _clock());
     unawaited(
-      session.runner
-          .enqueue(
-            SyncJob(
-              key: 'view:$channelId',
-              priority: SyncPriority.p0,
-              run: () => session.api.call(
-                () => _client.channels.viewChannel(
-                  userId: 'me',
-                  // Without the flag the server treats the client as not
-                  // knowing threads and marks the channel's threads read.
-                  body: api.ApiV4ChannelsMembersUserIdViewRequestBody(
-                    channelId: channelId,
-                    collapsedThreadsSupported: true,
-                  ),
-                ),
-              ),
-            ),
-          )
-          .catchError((Object e) {
-            Log.warn('channels', 'Marking a channel read failed', e);
-          }),
+      _tellViewed(channelId).catchError((Object e) {
+        Log.warn('channels', 'Marking a channel read failed', e);
+      }),
     );
   }
+
+  /// As [view], but completes once the server was told, e.g. from a
+  /// notification's Mark as read with no app around to retry.
+  Future<void> markRead(String channelId) async {
+    await session.store.markViewed(channelId, at: _clock());
+    await _tellViewed(channelId);
+  }
+
+  Future<void> _tellViewed(String channelId) => session.runner.enqueue(
+    SyncJob(
+      key: 'view:$channelId',
+      priority: SyncPriority.p0,
+      run: () => session.api.call(
+        () => _client.channels.viewChannel(
+          userId: 'me',
+          // Without the flag the server treats the client as not
+          // knowing threads and marks the channel's threads read.
+          body: api.ApiV4ChannelsMembersUserIdViewRequestBody(
+            channelId: channelId,
+            collapsedThreadsSupported: true,
+          ),
+        ),
+      ),
+    ),
+  );
 
   /// Moves the channel into Favourites, or back to Channels (Direct
   /// Messages for a conversation), as the official app does.

@@ -215,7 +215,53 @@ final class ServerManagerProvider
   }
 }
 
-String _$serverManagerHash() => r'ff2ef8d0cbbc537af006e3ae658a773fc1b39bb2';
+String _$serverManagerHash() => r'285e913c2c50f805fdeecccec801c497f45d14a8';
+
+/// Message notifications of this isolate; [Notifier.init] runs at launch.
+
+@ProviderFor(notifier)
+final notifierProvider = NotifierProvider._();
+
+/// Message notifications of this isolate; [Notifier.init] runs at launch.
+
+final class NotifierProvider
+    extends $FunctionalProvider<Notifier, Notifier, Notifier>
+    with $Provider<Notifier> {
+  /// Message notifications of this isolate; [Notifier.init] runs at launch.
+  NotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'notifierProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$notifierHash();
+
+  @$internal
+  @override
+  $ProviderElement<Notifier> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Notifier create(Ref ref) {
+    return notifier(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Notifier value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Notifier>(value),
+    );
+  }
+}
+
+String _$notifierHash() => r'eed641cbe646fd089cd186f801d90ef18cb4aec8';
 
 @ProviderFor(serverProbe)
 final serverProbeProvider = ServerProbeProvider._();

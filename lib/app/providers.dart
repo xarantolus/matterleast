@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
-import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/data/secure/token_store.dart';
+import 'package:matterleast/data/servers/app_servers.dart';
 import 'package:matterleast/data/servers/entries.dart';
 import 'package:matterleast/data/servers/server_manager.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
@@ -11,9 +13,10 @@ import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_features.dart';
+import 'package:matterleast/notifications/background.dart';
+import 'package:matterleast/notifications/notification_check.dart';
+import 'package:matterleast/notifications/notifier.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
@@ -39,24 +42,22 @@ TokenStore tokenStore(Ref ref) => TokenStore();
 
 @Riverpod(keepAlive: true)
 ServerManager serverManager(Ref ref) {
-  final manager = ServerManager(
+  final notifier = ref.watch(notifierProvider);
+  final manager = appServerManager(
     db: ref.watch(appDatabaseProvider),
     tokens: ref.watch(tokenStoreProvider),
-    dataDirectory: () async => (await getApplicationSupportDirectory()).path,
-    cacheDirectory: () async => p.join(
-      await LocalCopies.cacheDirectory(),
-      LocalCopies.serverCachesFolder,
-    ),
-    mediaBudget: () =>
-        ref.read(settingsStoreProvider).read(Settings.mediaCacheBytes),
-    filesBudget: () =>
-        ref.read(settingsStoreProvider).read(Settings.filesCacheBytes),
-    clearShared: () async =>
-        LocalCopies.clearLooseFiles(await LocalCopies.cacheDirectory()),
+    onRead: (url, mark) => unawaited(clearOnRead(notifier, url, mark)),
+    onWiped: notifier.clearServer,
+    // What the app showed until now never comes back as a notification.
+    onHidden: (session) => markSeen(session.db, DateTime.now().toUtc()),
   );
   ref.onDispose(manager.dispose);
   return manager;
 }
+
+/// Message notifications of this isolate; [Notifier.init] runs at launch.
+@Riverpod(keepAlive: true)
+Notifier notifier(Ref ref) => Notifier();
 
 @riverpod
 ServerProbe serverProbe(Ref ref) => ServerProbe();

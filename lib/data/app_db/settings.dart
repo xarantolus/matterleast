@@ -86,9 +86,10 @@ abstract final class Settings {
     _encodeBool,
   );
 
-  /// The opt-in foreground service that keeps the WebSocket alive.
-  static const stayConnected = Setting<bool>(
-    'stayConnected',
+  /// The app explained notifications and asked for the permission once;
+  /// after that only the settings ask.
+  static const notificationsAsked = Setting<bool>(
+    'notificationsAsked',
     false,
     _decodeBool,
     _encodeBool,
@@ -111,7 +112,7 @@ abstract final class Settings {
     use24HourClock,
     messageTextSize,
     wrapCode,
-    stayConnected,
+    notificationsAsked,
     lastRailTarget,
   ];
 

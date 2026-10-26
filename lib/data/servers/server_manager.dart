@@ -10,6 +10,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
+import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/server_url.dart';
 import 'package:matterleast/log.dart';
 import 'package:path/path.dart' as p;
@@ -30,6 +31,9 @@ class ServerManager {
     this._openDatabase = ServerDatabase.open,
     this._clock = DateTime.now,
     this._clearShared = _keepShared,
+    this._onRead = _ignoreRead,
+    this._onWiped = _ignoreUrl,
+    this._onHidden = _ignoreSession,
   });
 
   final AppDatabase _db;
@@ -42,13 +46,25 @@ class ServerManager {
   final DateTime Function() _clock;
   final Future<void> Function() _clearShared;
 
+  /// A conversation of the server at the URL was read, here or elsewhere.
+  final void Function(String url, ReadMark mark) _onRead;
+
+  /// Everything stored for the server at the URL is gone.
+  final Future<void> Function(String url) _onWiped;
+
+  /// The app went to the background while this session was open.
+  final Future<void> Function(ServerSession session) _onHidden;
+
   static Future<void> _keepShared() async {}
+  static void _ignoreRead(String url, ReadMark mark) {}
+  static Future<void> _ignoreUrl(String url) async {}
+  static Future<void> _ignoreSession(ServerSession session) async {}
 
   static Future<int> _defaultMediaBudget() async => 250 * 1024 * 1024;
   static Future<int> _defaultFilesBudget() async => 500 * 1024 * 1024;
 
   final _sessions = <String, Future<ServerSession>>{};
-  final _subscriptions = <String, StreamSubscription<void>>{};
+  final _subscriptions = <String, List<StreamSubscription<void>>>{};
 
   /// Servers being signed out on purpose; their 401s are not a notice.
   final _leaving = <String>{};
@@ -87,7 +103,9 @@ class ServerManager {
     _foreground = foreground;
     if (!foreground) {
       for (final pending in _sessions.values.toList()) {
-        (await pending).connection.background();
+        final session = await pending;
+        session.connection.background();
+        await _onHidden(session);
       }
       return;
     }
@@ -130,9 +148,10 @@ class ServerManager {
       filesBudget: _filesBudget,
       tokens: _tokens,
     );
-    _subscriptions[url] = session.api.sessionEnded.listen(
-      (_) => _onSessionEnded(url),
-    );
+    _subscriptions[url] = [
+      session.api.sessionEnded.listen((_) => _onSessionEnded(url)),
+      session.store.read.listen((mark) => _onRead(url, mark)),
+    ];
     return session;
   }
 
@@ -264,6 +283,7 @@ class ServerManager {
     }
     await _closeSession(url);
     await _tokens.delete(url);
+    await _onWiped(url);
     if (row != null) {
       await _deleteDatabaseFiles(row.dbFile);
       final images = Directory(await _imagesDirectory(row.dbFile));
@@ -284,7 +304,10 @@ class ServerManager {
 
   Future<void> _closeSession(String url) async {
     final pending = _sessions.remove(url);
-    await _subscriptions.remove(url)?.cancel();
+    for (final s
+        in _subscriptions.remove(url) ?? const <StreamSubscription<void>>[]) {
+      await s.cancel();
+    }
     if (pending == null) return;
     try {
       await (await pending).close();

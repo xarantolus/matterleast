@@ -55,6 +55,15 @@ class EntrySync {
     SyncJob(key: 'team:$teamId', priority: priority, run: () => _team(teamId)),
   );
 
+  /// The followed threads of [teamId] with unread replies.
+  Future<void> unreadThreads(String teamId) => runner.enqueue(
+    SyncJob(
+      key: 'threads:$teamId',
+      visible: false,
+      run: () => _threads(teamId),
+    ),
+  );
+
   /// The server's enabled webapp plugins, as far as it lets us see them.
   Future<void> refreshPlugins() => runner.enqueue(
     SyncJob(

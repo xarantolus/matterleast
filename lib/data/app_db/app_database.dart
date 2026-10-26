@@ -18,8 +18,10 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.connection);
 
   /// One database isolate per process, shared by the UI and background
-  /// isolates, so watchers see every write.
-  factory AppDatabase.open() => AppDatabase(
+  /// isolates, so watchers see every write. Short-lived background engines
+  /// open a connection of their own ([shared] false), since a shared
+  /// database lives in the engine that opened it first.
+  factory AppDatabase.open({bool shared = true}) => AppDatabase(
     driftDatabase(
       name: 'matterleast_app',
       native: DriftNativeOptions(
@@ -27,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
           (await getApplicationSupportDirectory()).path,
           appDatabaseFileName,
         ),
-        shareAcrossIsolates: true,
+        shareAcrossIsolates: shared,
         setup: configureConnection,
       ),
     ),

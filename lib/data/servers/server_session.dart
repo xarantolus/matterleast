@@ -123,6 +123,7 @@ class ServerSession {
     users.close();
     await images.close();
     runner.close();
+    store.close();
     api.close();
     await db.close();
   }
