@@ -26,45 +26,62 @@ class ReactionsBar extends StatelessWidget {
 
   // Each chip keeps a 48 dp tap target, which is the gap between rows.
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: Spacing.xs,
-    children: [
-      ?leading,
-      for (final group in reactions)
-        GestureDetector(
-          onLongPress: () => showReactions(context, reactions, group),
-          child: FilterChip(
-            showCheckmark: false,
-            selected: group.mine,
+  Widget build(BuildContext context) {
+    final chips = [for (final group in reactions) _chip(context, group)];
+    final add = onAdd == null
+        ? null
+        : ActionChip(
+            tooltip: 'Add reaction',
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.symmetric(horizontal: 2),
-            label: Semantics(
-              label: reactionLabel(group),
-              child: ExcludeSemantics(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    EmojiGlyph(name: group.emojiName, size: 18),
-                    const SizedBox(width: Spacing.xs),
-                    Text('${group.count}'),
-                  ],
-                ),
-              ),
-            ),
-            onSelected: (_) => onToggle != null
-                ? onToggle!(group.emojiName)
-                : showReactions(context, reactions, group),
+            label: const Icon(Icons.add_reaction_outlined, size: 18),
+            onPressed: onAdd,
+          );
+    return Wrap(
+      spacing: Spacing.xs,
+      children: [
+        ?leading,
+        if (add != null && chips.isNotEmpty) ...[
+          ...chips.take(chips.length - 1),
+          // The add button wraps together with the last reaction, never
+          // onto a line of its own.
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Spacing.xs,
+            children: [chips.last, add],
+          ),
+        ] else ...[
+          ...chips,
+          ?add,
+        ],
+      ],
+    );
+  }
+
+  Widget _chip(BuildContext context, ReactionGroup group) => GestureDetector(
+    onLongPress: () => showReactions(context, reactions, group),
+    child: FilterChip(
+      showCheckmark: false,
+      selected: group.mine,
+      visualDensity: VisualDensity.compact,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      label: Semantics(
+        label: reactionLabel(group),
+        child: ExcludeSemantics(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              EmojiGlyph(name: group.emojiName, size: 18),
+              const SizedBox(width: Spacing.xs),
+              Text('${group.count}'),
+            ],
           ),
         ),
-      if (onAdd != null)
-        ActionChip(
-          tooltip: 'Add reaction',
-          visualDensity: VisualDensity.compact,
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          label: const Icon(Icons.add_reaction_outlined, size: 18),
-          onPressed: onAdd,
-        ),
-    ],
+      ),
+      onSelected: (_) => onToggle != null
+          ? onToggle!(group.emojiName)
+          : showReactions(context, reactions, group),
+    ),
   );
 }
 
@@ -127,7 +144,8 @@ void showReactions(
                             ),
                             child: Text(
                               ':${group.emojiName}:',
-                              style: context.tokens.smallCaps,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: context.tokens.muted),
                             ),
                           ),
                           for (final person in group.people)
