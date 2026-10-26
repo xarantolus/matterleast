@@ -105,7 +105,7 @@ RUN sdkmanager --install "emulator" "${ANDROID_SYSTEM_IMAGE}" > /dev/null \
 ENV PATH=${PATH}:${ANDROID_HOME}/emulator
 
 # Drives the emulator (tap, type, screenshot) over MCP. Pinned.
-RUN npm install -g @mobilenext/mobile-mcp@1.0.2
+RUN npm install -g @mobilenext/mobile-mcp@1.0.13
 
 # Podman for the local Mattermost test server (.devcontainer/server/). It runs
 # rootful inside this container, which needs CAP_SYS_ADMIN, an unmasked /proc

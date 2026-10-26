@@ -82,7 +82,7 @@ up)
     (cd "$root" && exec flutter run -d "emulator-$port" --debug \
         --pid-file "$root/.lane.pid" \
         --dart-define="MATTERLEAST_DEV_LOGIN=http://10.0.2.2:8065|$user|matterleast" \
-        < <(tail -f /dev/null) >> "$log" 2>&1) &
+        < <(tail -f /dev/null 2> /dev/null) >> "$log" 2>&1) > /dev/null 2>&1 &
     run_pid=$!
     # Reload a second after the last change under lib/.
     (
