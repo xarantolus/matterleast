@@ -134,6 +134,30 @@ void main() {
       expect(options.sso.single.path, '/oauth/openid/mobile_login');
     });
 
+    test('"Forgot password?" opens only web, mail or phone links', () {
+      final server = Uri.parse('https://chat.example.test/team/');
+      expect(
+        forgotPasswordUri('https://help.example.test/reset', server),
+        Uri.parse('https://help.example.test/reset'),
+      );
+      expect(
+        forgotPasswordUri('mailto:help@example.test', server),
+        Uri.parse('mailto:help@example.test'),
+      );
+      for (final odd in [
+        null,
+        'javascript:alert(1)',
+        'intent://x#Intent;end',
+        'file:///sdcard/x',
+      ]) {
+        expect(
+          forgotPasswordUri(odd, server),
+          Uri.parse('https://chat.example.test/team/reset_password'),
+          reason: '$odd',
+        );
+      }
+    });
+
     test('old servers are flagged', () {
       expect(isServerVersionSupported('12.0.1'), isTrue);
       expect(isServerVersionSupported('10.11.25'), isTrue);

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/markdown/links.dart';
 
 part 'login_options.freezed.dart';
 
@@ -131,6 +132,18 @@ String _joinWithOr(List<String> parts) {
       ? parts.single
       : '${parts.sublist(0, parts.length - 1).join(', ')} or ${parts.last}';
   return text[0].toUpperCase() + text.substring(1);
+}
+
+/// Pure: where "Forgot password?" goes: the configured link when it is one
+/// the app may open, else the server's own reset page.
+Uri forgotPasswordUri(String? link, Uri server) {
+  if (link != null) {
+    if (classifyLink(link, server) case UriLink(:final uri)) return uri;
+  }
+  final base = server.path.endsWith('/')
+      ? server.path.substring(0, server.path.length - 1)
+      : server.path;
+  return server.replace(path: '$base/reset_password');
 }
 
 /// Oldest server we claim to work with; older ones get a warning, not a block.

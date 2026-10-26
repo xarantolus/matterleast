@@ -68,9 +68,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _forgotPassword() {
-    final link = _options.forgotPasswordLink;
     launchUrl(
-      link != null ? Uri.parse(link) : Uri.parse('$_url/reset_password'),
+      forgotPasswordUri(_options.forgotPasswordLink, widget.target.server.url),
       mode: LaunchMode.externalApplication,
     );
   }

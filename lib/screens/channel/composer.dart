@@ -16,6 +16,7 @@ import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/ui/custom_emoji_image.dart';
@@ -411,13 +412,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         draft.sent();
         await actions.clearDraft(channelId, rootId: rootId);
         if (outcome case CommandGoto(:final location)) {
-          final uri = Uri.tryParse(location);
-          if (uri != null && mounted) {
-            await openLinkFromMessage(
-              navigator,
-              ref,
-              uri.hasScheme ? uri : Uri.parse(url).resolveUri(uri),
-            );
+          if (classifyLink(location, Uri.parse(url)) case UriLink(:final uri)
+              when mounted) {
+            await openLinkFromMessage(navigator, ref, uri);
           }
         }
         return;
