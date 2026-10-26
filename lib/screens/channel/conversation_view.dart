@@ -70,7 +70,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
 
   /// Room between the newest message and the composer, which also holds
   /// the typing line.
-  static const _bottomGap = Spacing.xl;
+  static const _bottomGap = Spacing.xxl;
 
   @override
   void initState() {
