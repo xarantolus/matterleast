@@ -23,7 +23,8 @@ mixin _$SwitchItem {
  List<String> get keys;/// The team to show in the rail when opened.
  String? get teamId;/// Whose picture the row shows: the other person of a direct message, or
 /// the person.
- String? get userId; int? get pictureUpdate; String? get status; DateTime? get lastViewedAt; bool get unread; int get mentions; bool get muted;
+ String? get userId; int? get pictureUpdate; String? get status;/// The others of a group message, as far as they are known.
+ List<SwitchMember> get members; DateTime? get lastViewedAt; DateTime? get lastPostAt; bool get unread; int get mentions; bool get muted;
 /// Create a copy of SwitchItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -35,20 +36,20 @@ $SwitchItemCopyWith<SwitchItem> get copyWith => _$SwitchItemCopyWithImpl<SwitchI
 @override
 bool operator ==(Object other) {
   final _this = this as SwitchItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SwitchItem&&(identical(other.serverUrl, _this.serverUrl) || other.serverUrl == _this.serverUrl)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.subtitle, _this.subtitle) || other.subtitle == _this.subtitle)&&(identical(other.handle, _this.handle) || other.handle == _this.handle)&&const DeepCollectionEquality().equals(other.keys, _this.keys)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.pictureUpdate, _this.pictureUpdate) || other.pictureUpdate == _this.pictureUpdate)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.lastViewedAt, _this.lastViewedAt) || other.lastViewedAt == _this.lastViewedAt)&&(identical(other.unread, _this.unread) || other.unread == _this.unread)&&(identical(other.mentions, _this.mentions) || other.mentions == _this.mentions)&&(identical(other.muted, _this.muted) || other.muted == _this.muted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SwitchItem&&(identical(other.serverUrl, _this.serverUrl) || other.serverUrl == _this.serverUrl)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.subtitle, _this.subtitle) || other.subtitle == _this.subtitle)&&(identical(other.handle, _this.handle) || other.handle == _this.handle)&&const DeepCollectionEquality().equals(other.keys, _this.keys)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.pictureUpdate, _this.pictureUpdate) || other.pictureUpdate == _this.pictureUpdate)&&(identical(other.status, _this.status) || other.status == _this.status)&&const DeepCollectionEquality().equals(other.members, _this.members)&&(identical(other.lastViewedAt, _this.lastViewedAt) || other.lastViewedAt == _this.lastViewedAt)&&(identical(other.lastPostAt, _this.lastPostAt) || other.lastPostAt == _this.lastPostAt)&&(identical(other.unread, _this.unread) || other.unread == _this.unread)&&(identical(other.mentions, _this.mentions) || other.mentions == _this.mentions)&&(identical(other.muted, _this.muted) || other.muted == _this.muted));
 }
 
 
 @override
 int get hashCode {
   final _this = this as SwitchItem;
-  return Object.hash(runtimeType,_this.serverUrl,_this.kind,_this.id,_this.title,_this.subtitle,_this.handle,const DeepCollectionEquality().hash(_this.keys),_this.teamId,_this.userId,_this.pictureUpdate,_this.status,_this.lastViewedAt,_this.unread,_this.mentions,_this.muted);
+  return Object.hash(runtimeType,_this.serverUrl,_this.kind,_this.id,_this.title,_this.subtitle,_this.handle,const DeepCollectionEquality().hash(_this.keys),_this.teamId,_this.userId,_this.pictureUpdate,_this.status,const DeepCollectionEquality().hash(_this.members),_this.lastViewedAt,_this.lastPostAt,_this.unread,_this.mentions,_this.muted);
 }
 
 @override
 String toString() {
   final _this = this as SwitchItem;
-  return 'SwitchItem(serverUrl: ${_this.serverUrl}, kind: ${_this.kind}, id: ${_this.id}, title: ${_this.title}, subtitle: ${_this.subtitle}, handle: ${_this.handle}, keys: ${_this.keys}, teamId: ${_this.teamId}, userId: ${_this.userId}, pictureUpdate: ${_this.pictureUpdate}, status: ${_this.status}, lastViewedAt: ${_this.lastViewedAt}, unread: ${_this.unread}, mentions: ${_this.mentions}, muted: ${_this.muted})';
+  return 'SwitchItem(serverUrl: ${_this.serverUrl}, kind: ${_this.kind}, id: ${_this.id}, title: ${_this.title}, subtitle: ${_this.subtitle}, handle: ${_this.handle}, keys: ${_this.keys}, teamId: ${_this.teamId}, userId: ${_this.userId}, pictureUpdate: ${_this.pictureUpdate}, status: ${_this.status}, members: ${_this.members}, lastViewedAt: ${_this.lastViewedAt}, lastPostAt: ${_this.lastPostAt}, unread: ${_this.unread}, mentions: ${_this.mentions}, muted: ${_this.muted})';
 }
 
 
@@ -59,7 +60,7 @@ abstract mixin class $SwitchItemCopyWith<$Res>  {
   factory $SwitchItemCopyWith(SwitchItem value, $Res Function(SwitchItem) _then) = _$SwitchItemCopyWithImpl;
 @useResult
 $Res call({
- String serverUrl, SwitchKind kind, String id, String title, String? subtitle, String? handle, List<String> keys, String? teamId, String? userId, int? pictureUpdate, String? status, DateTime? lastViewedAt, bool unread, int mentions, bool muted
+ String serverUrl, SwitchKind kind, String id, String title, String? subtitle, String? handle, List<String> keys, String? teamId, String? userId, int? pictureUpdate, String? status, List<SwitchMember> members, DateTime? lastViewedAt, DateTime? lastPostAt, bool unread, int mentions, bool muted
 });
 
 
@@ -76,7 +77,7 @@ class _$SwitchItemCopyWithImpl<$Res>
 
 /// Create a copy of SwitchItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? serverUrl = null,Object? kind = null,Object? id = null,Object? title = null,Object? subtitle = freezed,Object? handle = freezed,Object? keys = null,Object? teamId = freezed,Object? userId = freezed,Object? pictureUpdate = freezed,Object? status = freezed,Object? lastViewedAt = freezed,Object? unread = null,Object? mentions = null,Object? muted = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? serverUrl = null,Object? kind = null,Object? id = null,Object? title = null,Object? subtitle = freezed,Object? handle = freezed,Object? keys = null,Object? teamId = freezed,Object? userId = freezed,Object? pictureUpdate = freezed,Object? status = freezed,Object? members = null,Object? lastViewedAt = freezed,Object? lastPostAt = freezed,Object? unread = null,Object? mentions = null,Object? muted = null,}) {
   return _then(SwitchItem(
 serverUrl: null == serverUrl ? _self.serverUrl : serverUrl // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -89,7 +90,9 @@ as List<String>,teamId: freezed == teamId ? _self.teamId : teamId // ignore: cas
 as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,pictureUpdate: freezed == pictureUpdate ? _self.pictureUpdate : pictureUpdate // ignore: cast_nullable_to_non_nullable
 as int?,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as String?,lastViewedAt: freezed == lastViewedAt ? _self.lastViewedAt : lastViewedAt // ignore: cast_nullable_to_non_nullable
+as String?,members: null == members ? _self.members : members // ignore: cast_nullable_to_non_nullable
+as List<SwitchMember>,lastViewedAt: freezed == lastViewedAt ? _self.lastViewedAt : lastViewedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,lastPostAt: freezed == lastPostAt ? _self.lastPostAt : lastPostAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,unread: null == unread ? _self.unread : unread // ignore: cast_nullable_to_non_nullable
 as bool,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_nullable_to_non_nullable
 as int,muted: null == muted ? _self.muted : muted // ignore: cast_nullable_to_non_nullable
@@ -178,10 +181,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverUrl,  SwitchKind kind,  String id,  String title,  String? subtitle,  String? handle,  List<String> keys,  String? teamId,  String? userId,  int? pictureUpdate,  String? status,  DateTime? lastViewedAt,  bool unread,  int mentions,  bool muted)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverUrl,  SwitchKind kind,  String id,  String title,  String? subtitle,  String? handle,  List<String> keys,  String? teamId,  String? userId,  int? pictureUpdate,  String? status,  List<SwitchMember> members,  DateTime? lastViewedAt,  DateTime? lastPostAt,  bool unread,  int mentions,  bool muted)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SwitchItem() when $default != null:
-return $default(_that.serverUrl,_that.kind,_that.id,_that.title,_that.subtitle,_that.handle,_that.keys,_that.teamId,_that.userId,_that.pictureUpdate,_that.status,_that.lastViewedAt,_that.unread,_that.mentions,_that.muted);case _:
+return $default(_that.serverUrl,_that.kind,_that.id,_that.title,_that.subtitle,_that.handle,_that.keys,_that.teamId,_that.userId,_that.pictureUpdate,_that.status,_that.members,_that.lastViewedAt,_that.lastPostAt,_that.unread,_that.mentions,_that.muted);case _:
   return orElse();
 
 }
@@ -199,10 +202,10 @@ return $default(_that.serverUrl,_that.kind,_that.id,_that.title,_that.subtitle,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverUrl,  SwitchKind kind,  String id,  String title,  String? subtitle,  String? handle,  List<String> keys,  String? teamId,  String? userId,  int? pictureUpdate,  String? status,  DateTime? lastViewedAt,  bool unread,  int mentions,  bool muted)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverUrl,  SwitchKind kind,  String id,  String title,  String? subtitle,  String? handle,  List<String> keys,  String? teamId,  String? userId,  int? pictureUpdate,  String? status,  List<SwitchMember> members,  DateTime? lastViewedAt,  DateTime? lastPostAt,  bool unread,  int mentions,  bool muted)  $default,) {final _that = this;
 switch (_that) {
 case _SwitchItem():
-return $default(_that.serverUrl,_that.kind,_that.id,_that.title,_that.subtitle,_that.handle,_that.keys,_that.teamId,_that.userId,_that.pictureUpdate,_that.status,_that.lastViewedAt,_that.unread,_that.mentions,_that.muted);case _:
+return $default(_that.serverUrl,_that.kind,_that.id,_that.title,_that.subtitle,_that.handle,_that.keys,_that.teamId,_that.userId,_that.pictureUpdate,_that.status,_that.members,_that.lastViewedAt,_that.lastPostAt,_that.unread,_that.mentions,_that.muted);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -219,10 +222,10 @@ return $default(_that.serverUrl,_that.kind,_that.id,_that.title,_that.subtitle,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverUrl,  SwitchKind kind,  String id,  String title,  String? subtitle,  String? handle,  List<String> keys,  String? teamId,  String? userId,  int? pictureUpdate,  String? status,  DateTime? lastViewedAt,  bool unread,  int mentions,  bool muted)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverUrl,  SwitchKind kind,  String id,  String title,  String? subtitle,  String? handle,  List<String> keys,  String? teamId,  String? userId,  int? pictureUpdate,  String? status,  List<SwitchMember> members,  DateTime? lastViewedAt,  DateTime? lastPostAt,  bool unread,  int mentions,  bool muted)?  $default,) {final _that = this;
 switch (_that) {
 case _SwitchItem() when $default != null:
-return $default(_that.serverUrl,_that.kind,_that.id,_that.title,_that.subtitle,_that.handle,_that.keys,_that.teamId,_that.userId,_that.pictureUpdate,_that.status,_that.lastViewedAt,_that.unread,_that.mentions,_that.muted);case _:
+return $default(_that.serverUrl,_that.kind,_that.id,_that.title,_that.subtitle,_that.handle,_that.keys,_that.teamId,_that.userId,_that.pictureUpdate,_that.status,_that.members,_that.lastViewedAt,_that.lastPostAt,_that.unread,_that.mentions,_that.muted);case _:
   return null;
 
 }
@@ -234,7 +237,7 @@ return $default(_that.serverUrl,_that.kind,_that.id,_that.title,_that.subtitle,_
 
 
 class _SwitchItem extends SwitchItem {
-  const _SwitchItem({required this.serverUrl, required this.kind, required this.id, required this.title, this.subtitle, this.handle,  List<String> keys = const <String>[], this.teamId, this.userId, this.pictureUpdate, this.status, this.lastViewedAt, this.unread = false, this.mentions = 0, this.muted = false}): _keys = keys,super._();
+  const _SwitchItem({required this.serverUrl, required this.kind, required this.id, required this.title, this.subtitle, this.handle,  List<String> keys = const <String>[], this.teamId, this.userId, this.pictureUpdate, this.status,  List<SwitchMember> members = const <SwitchMember>[], this.lastViewedAt, this.lastPostAt, this.unread = false, this.mentions = 0, this.muted = false}): _keys = keys,_members = members,super._();
   
 
 @override final  String serverUrl;
@@ -263,7 +266,17 @@ class _SwitchItem extends SwitchItem {
 @override final  String? userId;
 @override final  int? pictureUpdate;
 @override final  String? status;
+/// The others of a group message, as far as they are known.
+ final  List<SwitchMember> _members;
+/// The others of a group message, as far as they are known.
+@override@JsonKey() List<SwitchMember> get members {
+  if (_members is EqualUnmodifiableListView) return _members;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_members);
+}
+
 @override final  DateTime? lastViewedAt;
+@override final  DateTime? lastPostAt;
 @override@JsonKey() final  bool unread;
 @override@JsonKey() final  int mentions;
 @override@JsonKey() final  bool muted;
@@ -278,18 +291,18 @@ _$SwitchItemCopyWith<_SwitchItem> get copyWith => __$SwitchItemCopyWithImpl<_Swi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SwitchItem&&(identical(other.serverUrl, serverUrl) || other.serverUrl == serverUrl)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.handle, handle) || other.handle == handle)&&const DeepCollectionEquality().equals(other.keys, _keys)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.pictureUpdate, pictureUpdate) || other.pictureUpdate == pictureUpdate)&&(identical(other.status, status) || other.status == status)&&(identical(other.lastViewedAt, lastViewedAt) || other.lastViewedAt == lastViewedAt)&&(identical(other.unread, unread) || other.unread == unread)&&(identical(other.mentions, mentions) || other.mentions == mentions)&&(identical(other.muted, muted) || other.muted == muted));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SwitchItem&&(identical(other.serverUrl, serverUrl) || other.serverUrl == serverUrl)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.handle, handle) || other.handle == handle)&&const DeepCollectionEquality().equals(other.keys, _keys)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.pictureUpdate, pictureUpdate) || other.pictureUpdate == pictureUpdate)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.members, _members)&&(identical(other.lastViewedAt, lastViewedAt) || other.lastViewedAt == lastViewedAt)&&(identical(other.lastPostAt, lastPostAt) || other.lastPostAt == lastPostAt)&&(identical(other.unread, unread) || other.unread == unread)&&(identical(other.mentions, mentions) || other.mentions == mentions)&&(identical(other.muted, muted) || other.muted == muted));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,serverUrl,kind,id,title,subtitle,handle,const DeepCollectionEquality().hash(_keys),teamId,userId,pictureUpdate,status,lastViewedAt,unread,mentions,muted);
+    return Object.hash(runtimeType,serverUrl,kind,id,title,subtitle,handle,const DeepCollectionEquality().hash(_keys),teamId,userId,pictureUpdate,status,const DeepCollectionEquality().hash(_members),lastViewedAt,lastPostAt,unread,mentions,muted);
 }
 
 @override
 String toString() {
-    return 'SwitchItem(serverUrl: $serverUrl, kind: $kind, id: $id, title: $title, subtitle: $subtitle, handle: $handle, keys: $keys, teamId: $teamId, userId: $userId, pictureUpdate: $pictureUpdate, status: $status, lastViewedAt: $lastViewedAt, unread: $unread, mentions: $mentions, muted: $muted)';
+    return 'SwitchItem(serverUrl: $serverUrl, kind: $kind, id: $id, title: $title, subtitle: $subtitle, handle: $handle, keys: $keys, teamId: $teamId, userId: $userId, pictureUpdate: $pictureUpdate, status: $status, members: $members, lastViewedAt: $lastViewedAt, lastPostAt: $lastPostAt, unread: $unread, mentions: $mentions, muted: $muted)';
 }
 
 
@@ -300,7 +313,7 @@ abstract mixin class _$SwitchItemCopyWith<$Res> implements $SwitchItemCopyWith<$
   factory _$SwitchItemCopyWith(_SwitchItem value, $Res Function(_SwitchItem) _then) = __$SwitchItemCopyWithImpl;
 @override @useResult
 $Res call({
- String serverUrl, SwitchKind kind, String id, String title, String? subtitle, String? handle, List<String> keys, String? teamId, String? userId, int? pictureUpdate, String? status, DateTime? lastViewedAt, bool unread, int mentions, bool muted
+ String serverUrl, SwitchKind kind, String id, String title, String? subtitle, String? handle, List<String> keys, String? teamId, String? userId, int? pictureUpdate, String? status, List<SwitchMember> members, DateTime? lastViewedAt, DateTime? lastPostAt, bool unread, int mentions, bool muted
 });
 
 
@@ -317,7 +330,7 @@ class __$SwitchItemCopyWithImpl<$Res>
 
 /// Create a copy of SwitchItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? serverUrl = null,Object? kind = null,Object? id = null,Object? title = null,Object? subtitle = freezed,Object? handle = freezed,Object? keys = null,Object? teamId = freezed,Object? userId = freezed,Object? pictureUpdate = freezed,Object? status = freezed,Object? lastViewedAt = freezed,Object? unread = null,Object? mentions = null,Object? muted = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? serverUrl = null,Object? kind = null,Object? id = null,Object? title = null,Object? subtitle = freezed,Object? handle = freezed,Object? keys = null,Object? teamId = freezed,Object? userId = freezed,Object? pictureUpdate = freezed,Object? status = freezed,Object? members = null,Object? lastViewedAt = freezed,Object? lastPostAt = freezed,Object? unread = null,Object? mentions = null,Object? muted = null,}) {
   return _then(_SwitchItem(
 serverUrl: null == serverUrl ? _self.serverUrl : serverUrl // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -330,7 +343,9 @@ as List<String>,teamId: freezed == teamId ? _self.teamId : teamId // ignore: cas
 as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,pictureUpdate: freezed == pictureUpdate ? _self.pictureUpdate : pictureUpdate // ignore: cast_nullable_to_non_nullable
 as int?,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as String?,lastViewedAt: freezed == lastViewedAt ? _self.lastViewedAt : lastViewedAt // ignore: cast_nullable_to_non_nullable
+as String?,members: null == members ? _self._members : members // ignore: cast_nullable_to_non_nullable
+as List<SwitchMember>,lastViewedAt: freezed == lastViewedAt ? _self.lastViewedAt : lastViewedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,lastPostAt: freezed == lastPostAt ? _self.lastPostAt : lastPostAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,unread: null == unread ? _self.unread : unread // ignore: cast_nullable_to_non_nullable
 as bool,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_nullable_to_non_nullable
 as int,muted: null == muted ? _self.muted : muted // ignore: cast_nullable_to_non_nullable

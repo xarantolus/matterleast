@@ -58,6 +58,7 @@ class SwitchViews {
         ),
     };
     final userRows = {for (final u in users) u.id: u};
+    final byUsername = {for (final u in users) u.username: u};
     final items = <SwitchItem>[];
     final withDirect = <String>{};
     for (final row in rows) {
@@ -96,7 +97,18 @@ class SwitchViews {
           userId: name.userId,
           pictureUpdate: partner?.lastPictureUpdate,
           status: name.status,
+          members: c.type == 'G'
+              ? [
+                  for (final u in groupMembers(c.displayName, byUsername, myId))
+                    (
+                      userId: u.id,
+                      name: personName(people[u.id]!, format),
+                      pictureUpdate: u.lastPictureUpdate,
+                    ),
+                ]
+              : const [],
           lastViewedAt: input.lastViewedAt,
+          lastPostAt: input.lastPostAt,
           unread: unreadCount > 0,
           mentions: crt ? input.mentionCountRoot : input.mentionCount,
           muted: input.muted,
@@ -110,6 +122,17 @@ class SwitchViews {
     return items;
   }
 }
+
+/// Pure: the people a group message's [displayName] (their usernames,
+/// comma separated) names, without [myId] and those not stored.
+List<UserRow> groupMembers(
+  String displayName,
+  Map<String, UserRow> byUsername,
+  String myId,
+) => [
+  for (final name in displayName.split(','))
+    if (byUsername[name.trim()] case final u? when u.id != myId) u,
+];
 
 /// Someone the user has no conversation with yet.
 SwitchItem personItem(

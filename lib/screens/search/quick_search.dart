@@ -440,7 +440,11 @@ class SwitchTile extends StatelessWidget {
           ],
         );
       case SwitchKind.group:
-        return Icon(Icons.group_outlined, color: muted);
+        return GroupAvatar(
+          serverUrl: item.serverUrl,
+          members: item.members,
+          fallback: Icon(Icons.group_outlined, color: muted),
+        );
       case SwitchKind.privateChannel:
         return Icon(Icons.lock_outline, color: muted);
       case SwitchKind.archived:

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/data/images/image_rules.dart';
+import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 
 /// A person's round profile picture from their server, with their initials
@@ -70,6 +71,68 @@ class UserAvatar extends ConsumerWidget {
               frame == null && !synchronous ? badge : child,
           errorBuilder: (context, error, stack) => badge,
         ),
+      ),
+    );
+  }
+}
+
+/// A group message's picture: the first two others' pictures, overlapping
+/// in a square of [size].
+class GroupAvatar extends StatelessWidget {
+  const GroupAvatar({
+    required this.serverUrl,
+    required this.members,
+    required this.fallback,
+    this.size = 40,
+    super.key,
+  });
+
+  final String serverUrl;
+  final List<SwitchMember> members;
+
+  /// Shown when no member is known.
+  final Widget fallback;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    if (members.isEmpty) return fallback;
+    if (members.length == 1) {
+      final m = members.first;
+      return UserAvatar(
+        serverUrl: serverUrl,
+        userId: m.userId,
+        name: m.name,
+        lastPictureUpdate: m.pictureUpdate,
+        size: size,
+      );
+    }
+    final small = size * 0.7;
+    final ring = Theme.of(context).colorScheme.surface;
+    Widget avatar(SwitchMember m) => UserAvatar(
+      serverUrl: serverUrl,
+      userId: m.userId,
+      name: m.name,
+      lastPictureUpdate: m.pictureUpdate,
+      size: small,
+    );
+    return SizedBox.square(
+      dimension: size,
+      child: Stack(
+        children: [
+          PositionedDirectional(top: 0, start: 0, child: avatar(members[0])),
+          PositionedDirectional(
+            bottom: 0,
+            end: 0,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: ring, width: 2),
+              ),
+              child: avatar(members[1]),
+            ),
+          ),
+        ],
       ),
     );
   }

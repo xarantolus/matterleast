@@ -150,4 +150,25 @@ void main() {
     expect(titles(start.unread), ['pinged', 'busy']);
     expect(titles(start.recent), ['muted', 'quiet']);
   });
+
+  test('a picker starts with the most recently used, then all by name', () {
+    final items = [
+      item('zeta'),
+      item('Alpha'),
+      item(
+        'posted',
+        kind: SwitchKind.group,
+      ).copyWith(lastPostAt: DateTime.utc(2026, 10, 26, 9)),
+      item('older', viewed: DateTime.utc(2026, 10, 20)),
+      item(
+        'newest',
+        viewed: DateTime.utc(2026, 10, 25),
+        kind: SwitchKind.direct,
+      ),
+    ];
+    final start = pickerStart(items, recentLimit: 2);
+    expect(titles(start.recent), ['newest', 'older']);
+    expect(titles(start.rest), ['Alpha', 'posted', 'zeta']);
+    expect(titles(pickerStart(items).recent), ['newest', 'older', 'posted']);
+  });
 }

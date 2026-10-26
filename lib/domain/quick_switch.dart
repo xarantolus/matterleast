@@ -19,6 +19,9 @@ enum SwitchKind {
   joinable,
 }
 
+/// Someone in a group message, for its picture.
+typedef SwitchMember = ({String userId, String name, int? pictureUpdate});
+
 /// One row of the quick switcher.
 @freezed
 abstract class SwitchItem with _$SwitchItem {
@@ -48,7 +51,11 @@ abstract class SwitchItem with _$SwitchItem {
     String? userId,
     int? pictureUpdate,
     String? status,
+
+    /// The others of a group message, as far as they are known.
+    @Default(<SwitchMember>[]) List<SwitchMember> members,
     DateTime? lastViewedAt,
+    DateTime? lastPostAt,
     @Default(false) bool unread,
     @Default(0) int mentions,
     @Default(false) bool muted,
@@ -225,4 +232,31 @@ List<SwitchItem> extraRemoteItems(
       if (item.lastViewedAt != null && !unreadKeys.contains(item.key)) item,
   ]..sort(newest);
   return (unread: unread, recent: recent.take(recentLimit).toList());
+}
+
+/// Pure: what a picker shows before anything is typed: the [recentLimit]
+/// items used most recently (last viewed, then last post) and the rest by
+/// name.
+({List<SwitchItem> recent, List<SwitchItem> rest}) pickerStart(
+  Iterable<SwitchItem> items, {
+  int recentLimit = 8,
+}) {
+  int time(DateTime? t) => t?.millisecondsSinceEpoch ?? 0;
+  final used =
+      [
+        for (final item in items)
+          if (item.lastViewedAt != null || item.lastPostAt != null) item,
+      ]..sort((a, b) {
+        final byViewed = time(b.lastViewedAt).compareTo(time(a.lastViewedAt));
+        return byViewed != 0
+            ? byViewed
+            : time(b.lastPostAt).compareTo(time(a.lastPostAt));
+      });
+  final recent = used.take(recentLimit).toList();
+  final recentKeys = {for (final item in recent) item.key};
+  final rest = [
+    for (final item in items)
+      if (!recentKeys.contains(item.key)) item,
+  ]..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+  return (recent: recent, rest: rest);
 }

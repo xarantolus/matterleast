@@ -11,7 +11,8 @@ import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/log.dart';
-import 'package:matterleast/screens/search/search_providers.dart';
+import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/search/switch_picker.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:path/path.dart' as p;
@@ -128,9 +129,13 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     setState(() => _sending = true);
     try {
       final session = await ref.read(serverSessionProvider(server.url).future);
+      final channelId = channel.kind == SwitchKind.person
+          ? await (await ref.read(channelActionsProvider(server.url).future))
+                .directChannel(channel.id)
+          : channel.id;
       await sendShared(
         session,
-        channelId: channel.id,
+        channelId: channelId,
         message: _message.text.trim(),
         files: files,
       );
@@ -151,11 +156,18 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   }
 
   Future<void> _pickChannel(String url) async {
-    final picked = await showModalBottomSheet<SwitchItem>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _ChannelPicker(url: url),
+    final picked = await pickSwitchItem(
+      context,
+      title: 'Share to',
+      hint: 'Find a channel or person',
+      serverUrl: url,
+      kinds: const {
+        SwitchKind.channel,
+        SwitchKind.privateChannel,
+        SwitchKind.direct,
+        SwitchKind.group,
+      },
+      findPeople: true,
     );
     if (picked != null && mounted) setState(() => _channel = picked);
   }
@@ -295,38 +307,4 @@ class _FileRow extends StatelessWidget {
     title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
     subtitle: detail == null ? null : Text(detail!),
   );
-}
-
-class _ChannelPicker extends ConsumerWidget {
-  const _ChannelPicker({required this.url});
-
-  final String url;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final items = [
-      for (final item
-          in ref.watch(switchItemsProvider(url)).value ?? const <SwitchItem>[])
-        if (const {
-          SwitchKind.channel,
-          SwitchKind.privateChannel,
-          SwitchKind.direct,
-          SwitchKind.group,
-        }.contains(item.kind))
-          item,
-    ];
-    return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.7,
-      child: ListView(
-        children: [
-          for (final item in items)
-            ListTile(
-              title: Text(item.title),
-              subtitle: item.subtitle == null ? null : Text(item.subtitle!),
-              onTap: () => Navigator.of(context).pop(item),
-            ),
-        ],
-      ),
-    );
-  }
 }
