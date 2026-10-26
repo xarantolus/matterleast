@@ -148,7 +148,8 @@ done
 echo "seed: custom emoji"
 
 # Slash commands answered by commands/responder.js
-for spec in "shout|Shout|Shout text back into the channel|[text]" "lunch|Lunch dialog|Open an interactive dialog|"; do
+for spec in "shout|Shout|Shout text back into the channel|[text]" "lunch|Lunch dialog|Open an interactive dialog|" \
+    "blocks|Interactive demo|Post interactive content from helper-bot|attachment, blockkit, card or mmblocks"; do
     IFS='|' read -r trigger display desc hint <<<"$spec"
     api admin POST /commands "$(jq -n --arg t "$LIGHTHOUSE" --arg tr "$trigger" --arg d "$display" --arg desc "$desc" --arg h "$hint" --arg u "$COMMANDS_URL/$trigger" \
         '{team_id:$t, trigger:$tr, method:"P", url:$u, auto_complete:true, auto_complete_desc:$desc, auto_complete_hint:$h, display_name:$d, description:$desc}')" >/dev/null
@@ -360,5 +361,5 @@ cat <<EOF
 seed: done. Server: $URL (emulator: http://10.0.2.2:8065)
   users: admin (system admin), alice, bob, carol, dave, erin — password "$PASSWORD"
   teams: lighthouse (all), harbor (alice, bob)
-  commands: /shout <text>, /lunch
+  commands: /shout <text>, /lunch, /blocks <attachment|blockkit|card|mmblocks>
 EOF

@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/actions/integration_actions.dart';
 import 'package:matterleast/data/actions/message_links.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
+import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
@@ -26,6 +28,11 @@ part 'message_environment.g.dart';
 Future<MessageLinks> messageLinks(Ref ref, String url) async =>
     MessageLinks(await ref.watch(serverSessionProvider(url).future));
 
+/// Kept while the app runs, so a second tap joins an action still running.
+@Riverpod(keepAlive: true)
+Future<IntegrationActions> integrationActions(Ref ref, String url) async =>
+    IntegrationActions(await ref.watch(serverSessionProvider(url).future));
+
 @riverpod
 Stream<ParseOptions> parseOptions(Ref ref, String url) async* {
   final links = await ref.watch(messageLinksProvider(url).future);
@@ -34,11 +41,13 @@ Stream<ParseOptions> parseOptions(Ref ref, String url) async* {
 
 /// What message rows show of what integrations and links bring: preview
 /// cards when the server and the user's setting allow them, names and
-/// pictures integrations chose only when the server allows overriding.
+/// pictures integrations chose only when the server allows overriding,
+/// Mattermost's own interactive blocks when the server has them on.
 typedef PostDisplay = ({
   bool linkPreviews,
   bool usernameOverride,
   bool iconOverride,
+  bool mmBlocks,
 });
 
 @riverpod
@@ -56,6 +65,7 @@ Stream<PostDisplay> postDisplay(Ref ref, String url) async* {
         linkPreviews: features.linkPreviews && mine != 'false',
         usernameOverride: features.usernameOverride,
         iconOverride: features.iconOverride,
+        mmBlocks: features.flag('MmBlocksEnabled'),
       );
     },
     interval: const Duration(milliseconds: 300),
@@ -160,6 +170,29 @@ class MessageEnvironment extends ConsumerStatefulWidget {
         return;
     }
   }
+
+  Future<void> _runAction(
+    BuildContext context,
+    WidgetRef ref,
+    PostActionRequest request,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final server = Uri.parse(url);
+    try {
+      final actions = await ref.read(integrationActionsProvider(url).future);
+      final location = await actions.run(request);
+      if (location == null || !navigator.mounted) return;
+      if (classifyLink(location, server) case UriLink(:final uri)) {
+        FocusManager.instance.primaryFocus?.unfocus();
+        await openLinkFromMessage(navigator, ref, uri);
+      }
+    } on Object catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(requestProblemText(e, server.host))),
+      );
+    }
+  }
 }
 
 class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
@@ -173,6 +206,9 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
   void _onChannel(String name) => widget._openChannel(context, ref, name);
 
   void _onLink(LinkTarget target) => widget._openLink(context, ref, target);
+
+  Future<void> _onAction(PostActionRequest request) =>
+      widget._runAction(context, ref, request);
 
   Widget _image(String imageUrl, Size size) => ServerImage(
     serverUrl: widget.url,
@@ -225,6 +261,8 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
       linkPreviews: display?.linkPreviews ?? true,
       usernameOverride: display?.usernameOverride ?? false,
       iconOverride: display?.iconOverride ?? false,
+      mmBlocks: display?.mmBlocks ?? false,
+      onAction: _onAction,
       child: widget.child,
     );
   }

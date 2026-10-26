@@ -14,6 +14,7 @@ class PostProps {
   const PostProps({
     this.fromWebhook,
     this.fromBot,
+    this.fromPlugin,
     this.overrideUsername,
     this.overrideIconUrl,
     this.overrideIconEmoji,
@@ -40,6 +41,8 @@ class PostProps {
   @LenientString()
   final String? fromBot;
   @LenientString()
+  final String? fromPlugin;
+  @LenientString()
   final String? overrideUsername;
   @LenientString()
   final String? overrideIconUrl;
@@ -49,7 +52,7 @@ class PostProps {
   final String? useUserIcon;
   @LenientString()
   final String? unsafeLinks;
-  @_Attachments()
+  @AttachmentList()
   final List<Attachment> attachments;
   @_ChannelMentions()
   final Map<String, String> channelMentions;
@@ -149,7 +152,18 @@ class AttachmentField {
 
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
 class AttachmentAction {
-  const AttachmentAction({this.id, this.name, this.type, this.style});
+  const AttachmentAction({
+    this.id,
+    this.name,
+    this.type,
+    this.style,
+    this.tooltip,
+    this.disabled,
+    this.cookie,
+    this.dataSource,
+    this.defaultOption,
+    this.options = const [],
+  });
 
   factory AttachmentAction.fromJson(Map<String, Object?> json) =>
       _$AttachmentActionFromJson(json);
@@ -164,6 +178,35 @@ class AttachmentAction {
   final String? type;
   @LenientString()
   final String? style;
+  @LenientString()
+  final String? tooltip;
+  @LenientBool()
+  final bool? disabled;
+
+  /// Sealed by the server; sent back as is when the action runs.
+  @LenientString()
+  final String? cookie;
+
+  /// `users` or `channels` for a menu of people or channels.
+  @LenientString()
+  final String? dataSource;
+  @LenientString()
+  final String? defaultOption;
+  @_ActionOptions()
+  final List<AttachmentOption> options;
+}
+
+@JsonSerializable(createToJson: false)
+class AttachmentOption {
+  const AttachmentOption({this.text, this.value});
+
+  factory AttachmentOption.fromJson(Map<String, Object?> json) =>
+      _$AttachmentOptionFromJson(json);
+
+  @LenientString()
+  final String? text;
+  @LenientString()
+  final String? value;
 }
 
 /// `metadata.embeds[].data` of an `opengraph` embed.
@@ -233,8 +276,8 @@ List<T> _objects<T>(Object? json, T Function(Map<String, Object?>) decode) =>
       ]
     : const [];
 
-class _Attachments implements JsonConverter<List<Attachment>, Object?> {
-  const _Attachments();
+class AttachmentList implements JsonConverter<List<Attachment>, Object?> {
+  const AttachmentList();
   @override
   List<Attachment> fromJson(Object? json) =>
       _objects(json, Attachment.fromJson);
@@ -259,6 +302,16 @@ class _Actions implements JsonConverter<List<AttachmentAction>, Object?> {
       _objects(json, AttachmentAction.fromJson);
   @override
   Object? toJson(List<AttachmentAction> object) =>
+      throw UnsupportedError('decode');
+}
+
+class _ActionOptions implements JsonConverter<List<AttachmentOption>, Object?> {
+  const _ActionOptions();
+  @override
+  List<AttachmentOption> fromJson(Object? json) =>
+      _objects(json, AttachmentOption.fromJson);
+  @override
+  Object? toJson(List<AttachmentOption> object) =>
       throw UnsupportedError('decode');
 }
 

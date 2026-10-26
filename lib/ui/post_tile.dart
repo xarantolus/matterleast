@@ -9,8 +9,8 @@ import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
-import 'package:matterleast/ui/attachment_card.dart';
 import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/ui/interactive_message.dart';
 import 'package:matterleast/ui/link_preview_card.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -116,7 +116,11 @@ class PostTile extends StatelessWidget {
         if (post.unreadable)
           _Unreadable(post: post)
         else
-          PostText(post: post, details: details),
+          PostTextActions(
+            post: post,
+            details: details,
+            child: PostText(post: post, details: details),
+          ),
         if (details.files.isNotEmpty && !post.deleted)
           PostFiles(
             files: details.files,
@@ -124,12 +128,7 @@ class PostTile extends StatelessWidget {
             author: name,
             sentAt: post.createAt,
           ),
-        for (final (i, attachment) in details.props.attachments.indexed)
-          AttachmentCard(
-            attachment: attachment,
-            keyPrefix: '${post.id}:${post.editAt?.millisecondsSinceEpoch}:$i',
-            imageSizes: details.imageSizes,
-          ),
+        PostIntegration(post: post, details: details),
         if (details.preview case final preview? when env?.linkPreviews ?? true)
           LinkPreviewCard(preview: preview),
         if (post.reactions.isNotEmpty && !post.deleted)

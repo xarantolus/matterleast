@@ -9,6 +9,7 @@ part of 'post_extras.dart';
 PostProps _$PostPropsFromJson(Map<String, dynamic> json) => PostProps(
   fromWebhook: const LenientString().fromJson(json['from_webhook']),
   fromBot: const LenientString().fromJson(json['from_bot']),
+  fromPlugin: const LenientString().fromJson(json['from_plugin']),
   overrideUsername: const LenientString().fromJson(json['override_username']),
   overrideIconUrl: const LenientString().fromJson(json['override_icon_url']),
   overrideIconEmoji: const LenientString().fromJson(
@@ -18,7 +19,7 @@ PostProps _$PostPropsFromJson(Map<String, dynamic> json) => PostProps(
   unsafeLinks: const LenientString().fromJson(json['unsafe_links']),
   attachments: json['attachments'] == null
       ? const []
-      : const _Attachments().fromJson(json['attachments']),
+      : const AttachmentList().fromJson(json['attachments']),
   channelMentions: json['channel_mentions'] == null
       ? const {}
       : const _ChannelMentions().fromJson(json['channel_mentions']),
@@ -68,6 +69,20 @@ AttachmentAction _$AttachmentActionFromJson(Map<String, dynamic> json) =>
       name: const LenientString().fromJson(json['name']),
       type: const LenientString().fromJson(json['type']),
       style: const LenientString().fromJson(json['style']),
+      tooltip: const LenientString().fromJson(json['tooltip']),
+      disabled: const LenientBool().fromJson(json['disabled']),
+      cookie: const LenientString().fromJson(json['cookie']),
+      dataSource: const LenientString().fromJson(json['data_source']),
+      defaultOption: const LenientString().fromJson(json['default_option']),
+      options: json['options'] == null
+          ? const []
+          : const _ActionOptions().fromJson(json['options']),
+    );
+
+AttachmentOption _$AttachmentOptionFromJson(Map<String, dynamic> json) =>
+    AttachmentOption(
+      text: const LenientString().fromJson(json['text']),
+      value: const LenientString().fromJson(json['value']),
     );
 
 OpenGraph _$OpenGraphFromJson(Map<String, dynamic> json) => OpenGraph(

@@ -8,10 +8,14 @@ import 'package:matterleast/ui/tokens.dart';
 const showMoreAllowance = 54.0;
 
 /// Pure: the height a message body of [contentHeight] is cut to on a screen
-/// [screenHeight] tall, or null when it is shown whole.
-double? collapsedHeight(double contentHeight, double screenHeight) {
-  final limit = screenHeight * 0.5;
-  return contentHeight > limit + showMoreAllowance ? limit : null;
+/// [screenHeight] tall (or at [limit]), or null when it is shown whole.
+double? collapsedHeight(
+  double contentHeight,
+  double screenHeight, {
+  double? limit,
+}) {
+  final cut = limit ?? screenHeight * 0.5;
+  return contentHeight > cut + showMoreAllowance ? cut : null;
 }
 
 /// The messages a conversation shows expanded, kept above the rows so a
@@ -32,16 +36,23 @@ class ShowMoreMemory extends InheritedWidget {
   bool updateShouldNotify(ShowMoreMemory old) => expanded != old.expanded;
 }
 
-/// Shows [child] whole, or cut at half the screen with "Show more" over a
+/// Shows [child] whole, or cut at half the screen (or [limit]) with
+/// "Show more" over a
 /// fade at the bottom. The cut height is decided in layout, so the row
 /// never changes height after it is first laid out. Expanding and
 /// collapsing animate and keep the message's top edge in place.
 class ShowMore extends StatefulWidget {
-  const ShowMore({required this.id, required this.child, super.key});
+  const ShowMore({
+    required this.id,
+    required this.child,
+    this.limit,
+    super.key,
+  });
 
   /// Remembers the expanded state under this name in [ShowMoreMemory].
   final String id;
   final Widget child;
+  final double? limit;
 
   @override
   State<ShowMore> createState() => _ShowMoreState();
@@ -103,6 +114,7 @@ class _ShowMoreState extends State<ShowMore>
           children: [
             _CutToHeight(
               screenHeight: MediaQuery.sizeOf(context).height,
+              limit: widget.limit,
               open: open,
               onCut: _onCut,
               child: widget.child,
@@ -156,12 +168,14 @@ class _ShowMoreState extends State<ShowMore>
 class _CutToHeight extends SingleChildRenderObjectWidget {
   const _CutToHeight({
     required this.screenHeight,
+    required this.limit,
     required this.open,
     required this.onCut,
     required super.child,
   });
 
   final double screenHeight;
+  final double? limit;
 
   /// 0 cut, 1 whole, between while it opens or closes.
   final double open;
@@ -169,7 +183,7 @@ class _CutToHeight extends SingleChildRenderObjectWidget {
 
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderCutToHeight(screenHeight, open, onCut);
+      _RenderCutToHeight(screenHeight, limit, open, onCut);
 
   @override
   void updateRenderObject(
@@ -178,15 +192,17 @@ class _CutToHeight extends SingleChildRenderObjectWidget {
   ) {
     renderObject
       ..screenHeight = screenHeight
+      ..limit = limit
       ..open = open
       ..onCut = onCut;
   }
 }
 
 class _RenderCutToHeight extends RenderProxyBox {
-  _RenderCutToHeight(this._screenHeight, this._open, this.onCut);
+  _RenderCutToHeight(this._screenHeight, this._limit, this._open, this.onCut);
 
   double _screenHeight;
+  double? _limit;
   double _open;
   ValueChanged<bool> onCut;
   var _clipped = false;
@@ -194,6 +210,12 @@ class _RenderCutToHeight extends RenderProxyBox {
   set screenHeight(double value) {
     if (value == _screenHeight) return;
     _screenHeight = value;
+    markNeedsLayout();
+  }
+
+  set limit(double? value) {
+    if (value == _limit) return;
+    _limit = value;
     markNeedsLayout();
   }
 
@@ -214,7 +236,7 @@ class _RenderCutToHeight extends RenderProxyBox {
       parentUsesSize: true,
     );
     final full = child.size.height;
-    final cut = collapsedHeight(full, _screenHeight);
+    final cut = collapsedHeight(full, _screenHeight, limit: _limit);
     final height = cut == null ? full : cut + (full - cut) * _open;
     _clipped = height < full;
     size = constraints.constrain(Size(child.size.width, height));

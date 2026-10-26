@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/data/store/server_store.dart' show ephemeralType;
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/post_list.dart';
@@ -137,7 +138,11 @@ class ConversationViews {
           range.earliest.millisecondsSinceEpoch,
           range.latest.millisecondsSinceEpoch,
         ) &
-        (crt ? p.rootId.equals('') : const Constant(true)) &
+        // An integration's ephemeral answer to an action names the post
+        // as its root; it must show where the action was taken.
+        (crt
+            ? p.rootId.equals('') | p.type.equals(ephemeralType)
+            : const Constant(true)) &
         _notDeletedBefore(p, openedAt);
 
     var window = limit;

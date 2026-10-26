@@ -54,7 +54,15 @@ Password for every user: `matterleast`.
 - For alice: unread channels and mentions in several channels, a half-read
   thread, a saved post, a favourite channel and a custom sidebar category.
 - Custom emoji `:lighthouse:` and `:anchor-party:`.
-- Slash commands `/shout <text>` and `/lunch` (opens an interactive dialog).
+- Slash commands `/shout <text>`, `/lunch` (opens an interactive dialog) and
+  `/blocks attachment|blockkit|card|mmblocks`: helper-bot posts interactive
+  content in that format (message attachments, Slack Block Kit, Adaptive
+  Cards, MM Blocks). Its buttons and menus are answered by the responder:
+  Approve updates the post, Ping me and the menus send an ephemeral reply,
+  Open form returns a trigger id and opens the lunch dialog, Docs sends the
+  app to a page. Only a bot's or a webhook's post may carry the
+  `mm_blocks_actions` the server needs for the non-attachment formats, so
+  the responder signs in as the invented admin and makes helper-bot a token.
 - Statuses: bob away, carol do-not-disturb, dave with a custom status.
 
 Not available without a licence (the server answers 501): post

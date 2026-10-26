@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 
@@ -18,6 +19,8 @@ class PostEnvironment extends InheritedWidget {
     this.linkPreviews = true,
     this.usernameOverride = false,
     this.iconOverride = false,
+    this.mmBlocks = false,
+    this.onAction,
     super.key,
   });
 
@@ -43,6 +46,14 @@ class PostEnvironment extends InheritedWidget {
   final bool usernameOverride;
   final bool iconOverride;
 
+  /// The server renders Mattermost's own interactive blocks
+  /// (`FeatureFlagMmBlocksEnabled`).
+  final bool mmBlocks;
+
+  /// Runs an integration's action; completes when the server answered and
+  /// the user was told of any failure.
+  final Future<void> Function(PostActionRequest request)? onAction;
+
   static PostEnvironment? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<PostEnvironment>();
 
@@ -55,5 +66,7 @@ class PostEnvironment extends InheritedWidget {
       image != old.image ||
       linkPreviews != old.linkPreviews ||
       usernameOverride != old.usernameOverride ||
-      iconOverride != old.iconOverride;
+      iconOverride != old.iconOverride ||
+      mmBlocks != old.mmBlocks ||
+      onAction != old.onAction;
 }

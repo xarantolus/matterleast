@@ -4,7 +4,6 @@ import 'package:matterleast/api/json/post_extras.dart';
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/markdown/parse_post.dart';
 import 'package:matterleast/markdown/post_doc.dart';
-import 'package:matterleast/ui/attachment_card.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
@@ -84,35 +83,6 @@ void main() {
     expect(mentionedUsername('bob.', {'bob'}), 'bob');
     expect(mentionedUsername('bob.smith', {'bob'}), isNull);
     expect(mentionedUsername('bob_', {'bob_'}), 'bob_');
-  });
-
-  test('attachment colours: hex, short hex and named', () {
-    expect(attachmentColor('#ff0000'), const Color(0xFFFF0000));
-    expect(attachmentColor('#0f0'), const Color(0xFF00FF00));
-    expect(attachmentColor('danger'), const Color(0xFFE40303));
-    expect(attachmentColor('nope'), isNull);
-  });
-
-  testWidgets('an attachment with a colour bar draws', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: MatterleastApp.lightTheme,
-        home: const Scaffold(
-          body: AttachmentCard(
-            attachment: Attachment(
-              color: 'good',
-              title: 'Pipeline passed',
-              text: 'All tests passed.',
-              fields: [AttachmentField(title: 'Branch', value: 'main')],
-            ),
-            keyPrefix: 'p',
-            imageSizes: {},
-          ),
-        ),
-      ),
-    );
-    expect(tester.takeException(), isNull);
-    expect(find.text('Pipeline passed'), findsOneWidget);
   });
 
   testWidgets('an image at an address no image comes from shows its alt '

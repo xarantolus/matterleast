@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/integration_props.dart';
 import 'package:matterleast/api/json/post_extras.dart';
+import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/domain/post_files.dart';
 
 /// What a post row shows beyond its text, decoded from the stored props and
@@ -14,6 +16,8 @@ class PostDetails {
     this.priority,
     this.customEmoji = const {},
     this.files = const [],
+    this.integration = const IntegrationProps(),
+    this.integrationError,
   });
 
   /// Pure: decodes [propsJson] and [metadataJson]; anything malformed is
@@ -49,8 +53,11 @@ class PostDetails {
         );
       }
     }
+    final (integration, integrationError) = _integration(props);
     return PostDetails(
       props: props == null ? const PostProps() : PostProps.fromJson(props),
+      integration: integration,
+      integrationError: integrationError,
       imageSizes: sizes,
       preview: preview,
       priority: switch (meta?.priority?.priority?.json) {
@@ -79,6 +86,12 @@ class PostDetails {
 
   /// Attached files, in the order the author added them.
   final List<PostFile> files;
+
+  /// Interactive content from an integration, as sent.
+  final IntegrationProps integration;
+
+  /// Why [integration] could not be read, when it could not.
+  final String? integrationError;
 
   bool get fromWebhook => props.fromWebhook == 'true';
   bool get unsafeLinks => props.unsafeLinks == 'true';
@@ -113,6 +126,38 @@ Map<String, Object?>? _object(String? json) {
   } on FormatException {
     return null;
   }
+}
+
+/// Integrations nest blocks as deep as they like; one that cannot be read
+/// shows as an error card instead of failing the post.
+(IntegrationProps, String?) _integration(Map<String, Object?>? props) {
+  if (props == null) return (const IntegrationProps(), null);
+  try {
+    return (IntegrationProps.fromJson(props), null);
+  } on Object catch (e) {
+    return (const IntegrationProps(), e.runtimeType.toString());
+  }
+}
+
+final _withMmBlocks = Expando<(InteractiveContent?,)>();
+final _withoutMmBlocks = Expando<(InteractiveContent?,)>();
+
+/// The interactive content of [details], translated once per version; null
+/// when there is none.
+InteractiveContent? interactiveContentOf(
+  PostDetails details, {
+  required bool mmBlocks,
+}) {
+  if (details.integrationError case final error?) {
+    return InteractiveContent(
+      blocks: translationErrorBlocks(error),
+      format: IntegrationFormat.attachment,
+    );
+  }
+  final cache = mmBlocks ? _withMmBlocks : _withoutMmBlocks;
+  return (cache[details] ??= (
+    interactiveContent(details.integration, mmBlocks: mmBlocks),
+  )).$1;
 }
 
 final _details = <(String, String?, String?), PostDetails>{};

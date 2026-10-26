@@ -84,6 +84,93 @@ final class MessageLinksFamily extends $Family
   String toString() => r'messageLinksProvider';
 }
 
+/// Kept while the app runs, so a second tap joins an action still running.
+
+@ProviderFor(integrationActions)
+final integrationActionsProvider = IntegrationActionsFamily._();
+
+/// Kept while the app runs, so a second tap joins an action still running.
+
+final class IntegrationActionsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<IntegrationActions>,
+          IntegrationActions,
+          FutureOr<IntegrationActions>
+        >
+    with
+        $FutureModifier<IntegrationActions>,
+        $FutureProvider<IntegrationActions> {
+  /// Kept while the app runs, so a second tap joins an action still running.
+  IntegrationActionsProvider._({
+    required IntegrationActionsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'integrationActionsProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$integrationActionsHash();
+
+  @override
+  String toString() {
+    return r'integrationActionsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<IntegrationActions> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<IntegrationActions> create(Ref ref) {
+    final argument = this.argument as String;
+    return integrationActions(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is IntegrationActionsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$integrationActionsHash() =>
+    r'da21f60897f6a589a2d6bf870e1e02b80a763186';
+
+/// Kept while the app runs, so a second tap joins an action still running.
+
+final class IntegrationActionsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<IntegrationActions>, String> {
+  IntegrationActionsFamily._()
+    : super(
+        retry: null,
+        name: r'integrationActionsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  /// Kept while the app runs, so a second tap joins an action still running.
+
+  IntegrationActionsProvider call(String url) =>
+      IntegrationActionsProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'integrationActionsProvider';
+}
+
 @ProviderFor(parseOptions)
 final parseOptionsProvider = ParseOptionsFamily._();
 
@@ -214,7 +301,7 @@ final class PostDisplayProvider
   }
 }
 
-String _$postDisplayHash() => r'5f523adc8464124b95232cfef98e415c40c50c9e';
+String _$postDisplayHash() => r'55a5d7c0430feec47f58081b2c208e0cc0686d21';
 
 final class PostDisplayFamily extends $Family
     with $FunctionalFamilyOverride<Stream<PostDisplay>, String> {

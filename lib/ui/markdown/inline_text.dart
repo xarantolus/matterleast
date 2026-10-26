@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
+import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
+import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/link_gestures.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -65,6 +67,11 @@ class _InlineTextState extends State<InlineText> {
     final fontSize = base.fontSize ?? 14;
     final emojiBox = fontSize * 1.25;
     final spans = <InlineSpan>[];
+    final actions = InlineActions.maybeOf(context);
+    InlineAction? action(String link) =>
+        actions == null || env?.onAction == null
+        ? null
+        : parseInlineAction(link);
 
     TextStyle styled(int marks, {String? link}) {
       var style = const TextStyle();
@@ -77,12 +84,31 @@ class _InlineTextState extends State<InlineText> {
       if (marks & Marks.strike != 0) {
         style = style.copyWith(decoration: TextDecoration.lineThrough);
       }
-      if (link != null) style = style.copyWith(color: tokens.accent);
+      if (link != null && isInlineActionLink(link)) {
+        // An action looks like a small button where it can run.
+        if (action(link) != null) {
+          style = style.copyWith(
+            color: tokens.accent,
+            backgroundColor: tokens.accentWash,
+            fontWeight: FontWeight.w600,
+          );
+        }
+      } else if (link != null) {
+        style = style.copyWith(color: tokens.accent);
+      }
       return style;
     }
 
     GestureRecognizer? linkTap(String? link) {
       if (link == null || env == null) return null;
+      if (isInlineActionLink(link)) {
+        final run = action(link);
+        if (run == null) return null;
+        return _keep(
+          TapGestureRecognizer()
+            ..onTap = () => env.onAction?.call(actions!.request(run)),
+        );
+      }
       return _keep(
         TapOrHoldRecognizer(
           onTapped: () => env.onLink(classifyLink(link, env.server)),
