@@ -133,9 +133,8 @@ class UserProfileSheet extends ConsumerWidget {
       final actions = await ref.read(channelActionsProvider(url).future);
       final channelId = await actions.directChannel(profile.id);
       unawaited(
-        openChannel(
+        openConversation(
           navigator,
-          ref,
           url: url,
           channelId: channelId,
           title: profile.name,

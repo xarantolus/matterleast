@@ -8,10 +8,9 @@ import 'package:matterleast/data/actions/message_links.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
-import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
-import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
@@ -128,14 +127,12 @@ class MessageEnvironment extends ConsumerWidget {
       return;
     }
     unawaited(
-      navigator.push(
-        ConversationRoute<void>(
-          builder: (_) => ChannelScreen(
-            url: url,
-            channelId: channel.id,
-            title: channel.displayName,
-          ),
-        ),
+      openConversation(
+        navigator,
+        url: url,
+        channelId: channel.id,
+        title: channel.displayName,
+        teamId: channel.teamId,
       ),
     );
   }

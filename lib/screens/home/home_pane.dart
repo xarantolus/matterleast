@@ -145,7 +145,7 @@ class _HomePaneState extends ConsumerState<HomePane> {
                     key: ValueKey(item.key),
                     item: item,
                     serverName: names[item.serverUrl],
-                    onTap: () => openInboxItem(context, ref, item),
+                    onTap: () => openInboxItem(context, item),
                   );
                 },
               ),

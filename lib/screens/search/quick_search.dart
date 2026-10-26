@@ -132,9 +132,8 @@ class QuickSearchAnchor extends ConsumerWidget {
         _ => item.id,
       };
       controller.closeView('');
-      await openChannel(
+      await openConversation(
         navigator,
-        ref,
         url: item.serverUrl,
         channelId: channelId,
         title: item.title,

@@ -10,7 +10,7 @@ import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
-import 'package:matterleast/screens/thread/thread_screen.dart';
+import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
@@ -102,15 +102,13 @@ class ChannelScreen extends ConsumerWidget {
                       ? null
                       : composerDraftProvider(url, channelId, ''),
                   startText: 'This is the start of $name.',
-                  onOpenThread: (post) => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => ThreadScreen(
-                        url: url,
-                        channelId: channelId,
-                        rootId: post.id,
-                        channelName: name,
-                      ),
-                    ),
+                  onOpenThread: (post) => openConversation(
+                    Navigator.of(context),
+                    url: url,
+                    channelId: channelId,
+                    title: name,
+                    teamId: window?.teamId,
+                    rootId: post.id,
                   ),
                 ),
               ),

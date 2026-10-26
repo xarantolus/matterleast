@@ -101,9 +101,8 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
         );
         if (!mounted) return;
         unawaited(
-          openChannel(
+          openConversation(
             navigator,
-            ref,
             url: widget.url,
             channelId: id,
             title: name,

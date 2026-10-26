@@ -56,9 +56,8 @@ class PinnedScreen extends ConsumerWidget {
           for (final item in items)
             MessagePreviewTile(
               item: item,
-              onTap: () => openChannel(
+              onTap: () => openConversation(
                 Navigator.of(context),
-                ref,
                 url: url,
                 channelId: channelId,
                 title: title,

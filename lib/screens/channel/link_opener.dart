@@ -89,9 +89,8 @@ Future<void> _openPost(
         collapsedThreads: await session.db.collapsedThreads(),
       );
       if (!navigator.mounted) return;
-      await openChannel(
+      await openConversation(
         navigator,
-        ref,
         url: url,
         channelId: located.channelId,
         title: located.channelName,
@@ -147,9 +146,8 @@ Future<void> _openChannelNamed(
     await actions.join(id);
   }
   if (!navigator.mounted) return;
-  await openChannel(
+  await openConversation(
     navigator,
-    ref,
     url: url,
     channelId: id,
     title: channel.displayName,
@@ -188,9 +186,8 @@ Future<void> _openDirectMessage(
   }
   final channelId = await actions.directChannel(userId);
   if (!navigator.mounted) return;
-  await openChannel(
+  await openConversation(
     navigator,
-    ref,
     url: url,
     channelId: channelId,
     title: '@$username',

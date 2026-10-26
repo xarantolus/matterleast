@@ -531,9 +531,8 @@ class _PostList extends ConsumerWidget {
           final DateTime day => _DayHeader(day: day),
           final InboxItem item => MessagePreviewTile(
             item: item,
-            onTap: () => openChannel(
+            onTap: () => openConversation(
               Navigator.of(context),
-              ref,
               url: url,
               channelId: item.channelId,
               title: item.title.split(' · ').first.replaceFirst('#', ''),
@@ -603,9 +602,8 @@ class _FileResults extends ConsumerWidget {
               final DateTime day => _DayHeader(day: day),
               final FileHit file => _FileTile(
                 file: file,
-                onTap: () => openChannel(
+                onTap: () => openConversation(
                   Navigator.of(context),
-                  ref,
                   url: url,
                   channelId: file.channelId,
                   title: file.place.replaceFirst('#', ''),

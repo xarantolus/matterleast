@@ -4,14 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
-import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel_list/channel_actions_sheet.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/channel_list/channel_tile.dart';
 import 'package:matterleast/screens/drafts/drafts_screen.dart';
+import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
-import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -113,20 +112,13 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     return false;
   }
 
-  Future<void> _open(ChannelItem item) async {
-    final navigator = Navigator.of(context);
-    final actions = await ref.read(channelActionsProvider(widget.url).future);
-    unawaited(actions.open(item.id, teamId: widget.teamId));
-    await navigator.push(
-      ConversationRoute<void>(
-        builder: (_) => ChannelScreen(
-          url: widget.url,
-          channelId: item.id,
-          title: item.title,
-        ),
-      ),
-    );
-  }
+  Future<void> _open(ChannelItem item) => openConversation(
+    Navigator.of(context),
+    url: widget.url,
+    channelId: item.id,
+    title: item.title,
+    teamId: widget.teamId,
+  );
 
   @override
   Widget build(BuildContext context) {

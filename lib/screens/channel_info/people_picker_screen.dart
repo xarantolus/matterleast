@@ -194,9 +194,8 @@ Widget newMessageScreen({required String url, required String teamId}) =>
               : await actions.groupChannel([for (final p in people) p.id]);
           // The channel opens over the root once the picker has closed.
           unawaited(
-            openChannel(
+            openConversation(
               navigator,
-              ref,
               url: url,
               channelId: channelId,
               title: [for (final p in people) p.title].join(', '),

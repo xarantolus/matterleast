@@ -57,9 +57,8 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     final channel = items.where((i) => i.id == target.channelId).firstOrNull;
     if (channel == null || !navigator.mounted) return;
     navigator.popUntil((route) => route.isFirst);
-    await openChannel(
+    await openConversation(
       navigator,
-      ref,
       url: target.url,
       channelId: channel.id,
       title: channel.title,

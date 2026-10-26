@@ -129,7 +129,7 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
               itemBuilder: (context, i) => MessagePreviewTile(
                 key: ValueKey(items[i].key),
                 item: items[i],
-                onTap: () => openInboxItem(context, ref, items[i]),
+                onTap: () => openInboxItem(context, items[i]),
               ),
             ),
           SliverToBoxAdapter(

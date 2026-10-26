@@ -133,9 +133,8 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
       if (!_archived) await actions.join(item.id);
       if (!mounted) return;
       unawaited(
-        openChannel(
+        openConversation(
           navigator,
-          ref,
           url: widget.url,
           channelId: item.id,
           title: item.title,
