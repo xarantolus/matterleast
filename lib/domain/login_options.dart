@@ -136,9 +136,14 @@ String _joinWithOr(List<String> parts) {
 /// Oldest server we claim to work with; older ones get a warning, not a block.
 const minimumServerVersion = (10, 11);
 
-bool isServerVersionSupported(String version) {
+bool isServerVersionSupported(String version) =>
+    isVersionAtLeast(version, minimumServerVersion) ?? true;
+
+/// Pure: whether [version] (such as `12.0.1`) is [floor] or newer; null
+/// when it can't be read.
+bool? isVersionAtLeast(String version, (int, int) floor) {
   final parts = version.split('.').map(int.tryParse).toList();
-  if (parts.length < 2 || parts[0] == null || parts[1] == null) return true;
-  final (major, minor) = minimumServerVersion;
+  if (parts.length < 2 || parts[0] == null || parts[1] == null) return null;
+  final (major, minor) = floor;
   return parts[0]! > major || (parts[0] == major && parts[1]! >= minor);
 }

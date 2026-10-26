@@ -162,64 +162,55 @@ void main() {
       expect(saml.queryParameters['action'], 'mobile');
     });
 
+    SsoResult parse(String callback, {Uri? on, String version = '12.0.1'}) =>
+        parseSsoCallback(
+          Uri.parse(callback),
+          server: on ?? server,
+          serverVersion: version,
+        );
+
     test('accepts the server\'s own callback', () {
-      final result = parseSsoCallback(
-        Uri.parse(
+      expect(
+        parse(
           'mmauth://callback?MMAUTHTOKEN=abc&MMCSRF=x&srv=http%3A%2F%2F10.0.2.2%3A8065',
         ),
-        server: server,
+        const SsoResult.token('abc'),
       );
-      expect(result, const SsoResult.token('abc'));
+      expect(
+        parse(
+          'mmauth://callback?MMAUTHTOKEN=abc&srv=http%3A%2F%2Fchat.example.test%2F',
+          on: Uri.parse('https://chat.example.test'),
+        ),
+        const SsoResult.token('abc'),
+      );
     });
 
-    test('accepts a missing srv (older servers) and an http site URL', () {
-      expect(
-        parseSsoCallback(
-          Uri.parse('mmauth://callback?MMAUTHTOKEN=abc'),
-          server: server,
-        ),
-        const SsoResult.token('abc'),
-      );
-      expect(
-        parseSsoCallback(
-          Uri.parse('mmauth://callback?MMAUTHTOKEN=abc&srv='),
-          server: server,
-        ),
-        const SsoResult.token('abc'),
-      );
-      expect(
-        parseSsoCallback(
-          Uri.parse(
-            'mmauth://callback?MMAUTHTOKEN=abc&srv=http%3A%2F%2Fchat.example.test%2F',
-          ),
-          server: Uri.parse('https://chat.example.test'),
-        ),
-        const SsoResult.token('abc'),
-      );
+    test('accepts a missing srv only from servers older than 12.0', () {
+      for (final callback in [
+        'mmauth://callback?MMAUTHTOKEN=abc',
+        'mmauth://callback?MMAUTHTOKEN=abc&srv=',
+      ]) {
+        expect(
+          parse(callback, version: '11.7.3'),
+          const SsoResult.token('abc'),
+        );
+        expect(parse(callback), isA<SsoRejected>());
+        expect(parse(callback, version: '13.1.0'), isA<SsoRejected>());
+        expect(parse(callback, version: ''), isA<SsoRejected>());
+      }
     });
 
     test('rejects another server and a missing token', () {
       expect(
-        parseSsoCallback(
-          Uri.parse('mmauth://callback?MMAUTHTOKEN=abc&srv=https://evil.test'),
-          server: server,
-        ),
+        parse('mmauth://callback?MMAUTHTOKEN=abc&srv=https://evil.test'),
         isA<SsoRejected>(),
       );
       expect(
-        parseSsoCallback(
-          Uri.parse(
-            'mmauth://callback?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8066',
-          ),
-          server: server,
-        ),
+        parse('mmauth://callback?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8066'),
         isA<SsoRejected>(),
       );
       expect(
-        parseSsoCallback(
-          Uri.parse('mmauth://callback?srv=http://10.0.2.2:8065'),
-          server: server,
-        ),
+        parse('mmauth://callback?srv=http://10.0.2.2:8065'),
         isA<SsoRejected>(),
       );
     });

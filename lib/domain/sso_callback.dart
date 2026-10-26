@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/domain/login_options.dart';
 
 part 'sso_callback.freezed.dart';
 
@@ -31,16 +32,25 @@ sealed class SsoResult with _$SsoResult {
 
 /// Reads the session token out of `<scheme>://callback?MMAUTHTOKEN=…&srv=…`.
 /// Servers from 12.0 name themselves in `srv` (their configured site URL), so
-/// a redirect planted by another site cannot hand us its token; older servers
-/// send nothing and are accepted like the official app does. The scheme is
-/// ignored because the site URL may be configured as http behind a proxy.
-SsoResult parseSsoCallback(Uri callback, {required Uri server}) {
+/// a redirect planted by another site or app cannot hand us its token; only
+/// servers known to be older may leave it out, as the official app accepts.
+/// The scheme is ignored because the site URL may be configured as http
+/// behind a proxy.
+SsoResult parseSsoCallback(
+  Uri callback, {
+  required Uri server,
+  required String serverVersion,
+}) {
   final srv = callback.queryParameters['srv'];
   if (srv != null && srv.isNotEmpty) {
     final claimed = Uri.tryParse(srv);
     if (claimed == null || !_sameServer(claimed, server)) {
       return const SsoResult.rejected('The redirect came from another server.');
     }
+  } else if (isVersionAtLeast(serverVersion, (12, 0)) != false) {
+    return const SsoResult.rejected(
+      "The redirect didn't say which server it came from.",
+    );
   }
   final token = callback.queryParameters['MMAUTHTOKEN'];
   if (token == null || token.isEmpty) {

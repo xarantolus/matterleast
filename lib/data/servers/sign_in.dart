@@ -92,7 +92,11 @@ class SignIn {
         'installed and try again.',
       );
     }
-    return switch (parseSsoCallback(callback, server: server.url)) {
+    return switch (parseSsoCallback(
+      callback,
+      server: server.url,
+      serverVersion: server.options.serverVersion,
+    )) {
       SsoToken(:final token) => await _confirm(server, token),
       SsoRejected(:final reason) => throw LoginRejected('$reason Try again.'),
     };
