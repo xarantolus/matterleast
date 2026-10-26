@@ -5,6 +5,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/app/theme_providers.dart';
 import 'package:matterleast/domain/message_text_size.dart';
+import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/ui/message_display.dart';
 
 class MatterleastApp extends ConsumerWidget {
@@ -35,6 +36,7 @@ class MatterleastApp extends ConsumerWidget {
           child: child!,
         ),
       ),
+      navigatorObservers: [ref.watch(conversationRoutesProvider)],
       home: const LaunchGate(),
     );
   }

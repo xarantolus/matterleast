@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
@@ -64,6 +65,7 @@ class ConversationScaffold extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+        leading: InPane.closeButton(context),
         toolbarHeight: kToolbarHeight * scale,
         title: MediaQuery.withClampedTextScaling(
           maxScaleFactor: _maxBarTextScale,
@@ -81,48 +83,50 @@ class ConversationScaffold extends ConsumerWidget {
         bottom: ProgressSlot(active: state.refreshing && showsMessages(state)),
       ),
       body: ConversationPane(
-        child: SafeArea(
-          top: false,
-          bottom: window == null,
-          child: Column(
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: ConversationView(
-                        url: url,
-                        conversation: conversation,
-                        composer: window == null || window.archived
-                            ? null
-                            : composerDraftProvider(url, channelId, rootId),
-                        startText: startText,
-                        onOpenThread: onOpenThread,
+        child: _Readable(
+          child: SafeArea(
+            top: false,
+            bottom: window == null,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: ConversationView(
+                          url: url,
+                          conversation: conversation,
+                          composer: window == null || window.archived
+                              ? null
+                              : composerDraftProvider(url, channelId, rootId),
+                          startText: startText,
+                          onOpenThread: onOpenThread,
+                        ),
                       ),
-                    ),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: TypingLine(
-                        url: url,
-                        channelId: channelId,
-                        rootId: rootId,
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: TypingLine(
+                          url: url,
+                          channelId: channelId,
+                          rootId: rootId,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              if (window != null)
-                Composer(
-                  url: url,
-                  channelId: channelId,
-                  rootId: rootId,
-                  teamId: window.teamId,
-                  hint: composerHint,
-                  archived: window.archived,
-                ),
-            ],
+                if (window != null)
+                  Composer(
+                    url: url,
+                    channelId: channelId,
+                    rootId: rootId,
+                    teamId: window.teamId,
+                    hint: composerHint,
+                    archived: window.archived,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -224,3 +228,19 @@ void listenForRejectedPosts(
     ),
   );
 });
+
+/// Caps the message column at a readable width, centred in wider panes.
+class _Readable extends StatelessWidget {
+  const _Readable({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: readableWidth),
+      child: child,
+    ),
+  );
+}

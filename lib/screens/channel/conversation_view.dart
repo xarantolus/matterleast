@@ -14,6 +14,7 @@ import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
+import 'package:matterleast/screens/channel/reading_places.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/empty_state.dart';
@@ -51,6 +52,7 @@ class ConversationView extends ConsumerStatefulWidget {
 class _ConversationViewState extends ConsumerState<ConversationView> {
   final _list = AnchoredListController();
   late final Conversation _controller;
+  late final ReadingPlaces _places;
   final _view = ValueNotifier<AnchoredListView?>(null);
   final _lineSeen = ValueNotifier(false);
   ({int generation, AnchoredPosition? anchor})? _opened;
@@ -78,10 +80,13 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   void initState() {
     super.initState();
     _controller = ref.read(widget.conversation.notifier);
+    _places = ref.read(readingPlacesProvider)
+      ..attach(widget.conversation, _list);
   }
 
   @override
   void dispose() {
+    _places.detach(widget.conversation, _list);
     _controller.leave(_list.position);
     _highlightTimer?.cancel();
     _view.dispose();
@@ -95,15 +100,18 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     if (opened != null && opened.generation == state.generation) {
       return opened.anchor;
     }
-    final at = state.intent == OpenIntent.bottom
-        ? const OpenAtBottom()
-        : openPosition(
-            rows: state.rows,
-            height: height,
-            now: DateTime.now().toUtc(),
-            highlightKey: state.highlightKey,
-            saved: state.saved,
-          );
+    final handed = opened == null ? _places.take(widget.conversation) : null;
+    final at =
+        handed ??
+        (state.intent == OpenIntent.bottom
+            ? const OpenAtBottom()
+            : openPosition(
+                rows: state.rows,
+                height: height,
+                now: DateTime.now().toUtc(),
+                highlightKey: state.highlightKey,
+                saved: state.saved,
+              ));
     final anchor = switch (at) {
       OpenAtBottom() => null,
       OpenAtRow(:final key, :final offset) => (key: key, offset: offset),

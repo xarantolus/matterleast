@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
+import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
@@ -35,22 +37,53 @@ Future<void> openConversation(
     final actions = container.read(channelActionsProvider(url).future);
     unawaited(actions.then((a) => a.open(channelId, teamId: team)));
   }
-  await navigator.push(
-    ConversationRoute<void>(
-      builder: (_) => rootId != null
-          ? ThreadScreen(
-              url: url,
-              channelId: channelId,
-              rootId: rootId,
-              channelName: title,
-              highlightPostId: highlightPostId,
-            )
-          : ChannelScreen(
-              url: url,
-              channelId: channelId,
-              title: title,
-              highlightPostId: highlightPostId,
-            ),
-    ),
-  );
+  final target = rootId != null
+      ? ConversationTarget.thread(
+          url: url,
+          channelId: channelId,
+          rootId: rootId,
+          channelName: title,
+          teamId: team,
+          highlightPostId: highlightPostId,
+        )
+      : ConversationTarget.channel(
+          url: url,
+          channelId: channelId,
+          title: title,
+          teamId: team,
+          highlightPostId: highlightPostId,
+        );
+  if (windowClassOf(MediaQuery.sizeOf(navigator.context).width).showsPanes) {
+    navigator.popUntil((route) => route.isFirst);
+    container.read(openPanesProvider.notifier).open(target);
+    return;
+  }
+  await navigator.push(conversationRoute(target));
 }
+
+/// The route of [target] on a narrow screen.
+ConversationRoute<void> conversationRoute(
+  ConversationTarget target, {
+  bool instant = false,
+}) => ConversationRoute<void>(
+  target: target,
+  instant: instant,
+  builder: (_) => conversationScreen(target),
+);
+
+/// The screen of [target], in a route or a pane.
+Widget conversationScreen(ConversationTarget target) => switch (target) {
+  ThreadTarget() => ThreadScreen(
+    url: target.url,
+    channelId: target.channelId,
+    rootId: target.rootId,
+    channelName: target.channelName,
+    highlightPostId: target.highlightPostId,
+  ),
+  ChannelTarget() => ChannelScreen(
+    url: target.url,
+    channelId: target.channelId,
+    title: target.title,
+    highlightPostId: target.highlightPostId,
+  ),
+};

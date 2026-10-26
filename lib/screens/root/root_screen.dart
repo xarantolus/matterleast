@@ -11,6 +11,7 @@ import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/channel_list/channel_list_pane.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/home/home_pane.dart';
+import 'package:matterleast/screens/root/pane_layout.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/root/team_rail.dart';
@@ -151,24 +152,26 @@ class _RootLayout extends ConsumerWidget {
   final List<Widget> actions;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
-    appBar: AppBar(
-      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      actions: actions,
-      bottom: ProgressSlot(active: refreshing),
-    ),
-    body: SafeArea(
-      top: false,
-      child: Row(
-        children: [
-          TeamRail(
-            servers: servers,
-            target: ref.watch(railSelectionProvider),
-            teamId: teamId,
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(child: pane),
-        ],
+  Widget build(BuildContext context, WidgetRef ref) => PaneLayout(
+    list: Scaffold(
+      appBar: AppBar(
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: actions,
+        bottom: ProgressSlot(active: refreshing),
+      ),
+      body: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            TeamRail(
+              servers: servers,
+              target: ref.watch(railSelectionProvider),
+              teamId: teamId,
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(child: pane),
+          ],
+        ),
       ),
     ),
   );
