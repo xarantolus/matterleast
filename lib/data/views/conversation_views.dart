@@ -6,16 +6,22 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart' show ephemeralType;
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/permissions.dart';
+import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/post_ranges.dart';
+import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/server_link.dart';
 import 'package:matterleast/domain/teams.dart';
 
 /// The reads of an open channel or thread: one batched query each, re-run
 /// at most every 100 ms while writes land, passed on only when changed.
 class ConversationViews {
-  ConversationViews(this.db);
+  ConversationViews(this.db, {this.server});
 
   final ServerDatabase db;
+
+  /// Links to messages on this server show a card of a stored message.
+  final Uri? server;
 
   static const _interval = Duration(milliseconds: 100);
 
@@ -234,9 +240,31 @@ class ConversationViews {
     final participants = {
       for (final p in posts) p.id: _ids(p.participantIdsJson),
     };
+    final details = {
+      for (final p in posts)
+        p.id: detailsFor(p.id, p.propsJson, p.metadataJson),
+    };
+    final features = await db.features();
+    final links = features.permalinkPreviews
+        ? await _linkedPosts(posts, details)
+        : const <String, _Linked>{};
     final ids = {
       for (final p in posts) p.userId,
       for (final list in participants.values) ...list,
+      for (final d in details.values)
+        for (final a in d.acknowledgements) a.userId,
+      for (final l in links.values) l.authorId,
+    };
+    final saved = {
+      for (final pref
+          in await (db.select(db.preferences)..where(
+                (pref) =>
+                    pref.category.equals(Prefs.flaggedPost) &
+                    pref.name.isIn([for (final p in posts) p.id]) &
+                    pref.value.equals('true'),
+              ))
+              .get())
+        pref.name,
     };
     final people = {
       for (final u in await (db.select(
@@ -335,6 +363,27 @@ class ConversationViews {
           deleted: p.deleteAt != null,
           sendState: p.sendState,
           pinned: p.isPinned,
+          saved: saved.contains(p.id),
+          linked: switch (links[p.id]) {
+            final l? => LinkedPostPreview(
+              postId: l.postId,
+              teamName: l.teamName,
+              authorId: l.authorId,
+              authorName: nameOf(l.authorId),
+              authorPictureAt: people[l.authorId]?.pictureAt,
+              channelName: l.direct ? nameOf(l.authorId) : l.channelName,
+              createAt: l.createAt,
+              message: l.message,
+            ),
+            null => null,
+          },
+          acknowledgedBy: [
+            for (final a in details[p.id]!.acknowledgements) personOf(a.userId),
+          ],
+          acknowledgedAt: details[p.id]!.acknowledgements
+              .where((a) => a.userId == me)
+              .firstOrNull
+              ?.at,
           replyCount: p.replyCount,
           lastReplyAt: p.lastReplyAt,
           authorUsername: people[p.userId]?.username ?? '',
@@ -358,9 +407,83 @@ class ConversationViews {
     ];
   }
 
+  /// The message each post links to: as the server embedded it, else a
+  /// stored one a link in the text points to.
+  Future<Map<String, _Linked>> _linkedPosts(
+    List<PostRow> posts,
+    Map<String, PostDetails> details,
+  ) async {
+    final linked = <String, _Linked>{};
+    final wanted = <String, PostLink>{};
+    for (final p in posts) {
+      if (p.deleteAt != null) continue;
+      final embed = details[p.id]!.permalink;
+      final post = embed?.post;
+      if (embed != null && post != null) {
+        linked[p.id] = (
+          postId: embed.postId!,
+          teamName: embed.teamName ?? '',
+          authorId: post.userId ?? '',
+          channelName: embed.channelDisplayName ?? '',
+          direct: embed.channelType == 'D',
+          createAt: post.createAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+          message: post.message ?? '',
+        );
+        continue;
+      }
+      final server = this.server;
+      if (server == null) continue;
+      if (firstPostLink(p.message, server) case final link?
+          when link.postId != p.id) {
+        wanted[p.id] = link;
+      }
+    }
+    if (wanted.isEmpty) return linked;
+    final targets = {for (final link in wanted.values) link.postId};
+    final rows = {
+      for (final r in await (db.select(
+        db.posts,
+      )..where((r) => r.id.isIn(targets) & r.deleteAt.isNull())).get())
+        r.id: r,
+    };
+    final channels = {
+      for (final c
+          in await (db.select(db.channels)..where(
+                (c) => c.id.isIn([for (final r in rows.values) r.channelId]),
+              ))
+              .get())
+        c.id: c,
+    };
+    for (final MapEntry(key: id, value: link) in wanted.entries) {
+      final row = rows[link.postId];
+      final channel = row == null ? null : channels[row.channelId];
+      if (row == null || channel == null) continue;
+      linked[id] = (
+        postId: link.postId,
+        teamName: link.team,
+        authorId: row.userId,
+        channelName: channel.displayName,
+        direct: channel.type == 'D',
+        createAt: row.createAt,
+        message: row.message,
+      );
+    }
+    return linked;
+  }
+
   List<String> _ids(String? json) {
     if (json == null) return const [];
     final decoded = jsonDecode(json);
     return decoded is List ? decoded.whereType<String>().toList() : const [];
   }
 }
+
+typedef _Linked = ({
+  String postId,
+  String teamName,
+  String authorId,
+  String channelName,
+  bool direct,
+  DateTime createAt,
+  String message,
+});

@@ -21,6 +21,7 @@ class PostEnvironment extends InheritedWidget {
     this.iconOverride = false,
     this.mmBlocks = false,
     this.onAction,
+    this.acknowledgements = false,
     super.key,
   });
 
@@ -35,8 +36,8 @@ class PostEnvironment extends InheritedWidget {
   /// name is not a known custom emoji.
   final Widget? Function(String name, double size)? customEmoji;
 
-  /// An image from a message, filling [size].
-  final Widget Function(String url, Size size)? image;
+  /// An image from a message, fitted into [size].
+  final Widget Function(String url, Size size, BoxFit fit)? image;
 
   /// Link preview cards show.
   final bool linkPreviews;
@@ -54,6 +55,9 @@ class PostEnvironment extends InheritedWidget {
   /// the user was told of any failure.
   final Future<void> Function(PostActionRequest request)? onAction;
 
+  /// Messages can ask readers to acknowledge them.
+  final bool acknowledgements;
+
   static PostEnvironment? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<PostEnvironment>();
 
@@ -68,5 +72,6 @@ class PostEnvironment extends InheritedWidget {
       usernameOverride != old.usernameOverride ||
       iconOverride != old.iconOverride ||
       mmBlocks != old.mmBlocks ||
-      onAction != old.onAction;
+      onAction != old.onAction ||
+      acknowledgements != old.acknowledgements;
 }

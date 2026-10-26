@@ -46,6 +46,14 @@ PostDeletedEvent _$PostDeletedEventFromJson(Map<String, dynamic> json) =>
 ReactionEvent _$ReactionEventFromJson(Map<String, dynamic> json) =>
     ReactionEvent(reaction: const EncodedReaction().fromJson(json['reaction']));
 
+AcknowledgementEvent _$AcknowledgementEventFromJson(
+  Map<String, dynamic> json,
+) => AcknowledgementEvent(
+  acknowledgement: const EncodedAcknowledgement().fromJson(
+    json['acknowledgement'],
+  ),
+);
+
 EmojiAddedEvent _$EmojiAddedEventFromJson(Map<String, dynamic> json) =>
     EmojiAddedEvent(emoji: const EncodedEmoji().fromJson(json['emoji']));
 

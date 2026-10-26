@@ -260,6 +260,31 @@ void main() {
     });
   });
 
+  group('a moment on its own', () {
+    final now = DateTime(2026, 1, 1, 0, 30);
+    final cases = {
+      DateTime(2026, 1, 1, 0, 5): '00:05',
+      DateTime(2025, 12, 31, 23, 50): 'Yesterday, 23:50',
+      DateTime(2025, 12, 30, 10, 52): '30 Dec 2025, 10:52',
+      DateTime(2026, 1, 1, 1): '01:00',
+    };
+    for (final MapEntry(key: at, value: label) in cases.entries) {
+      test('$at reads "$label"', () {
+        expect(momentLabel(at, now, use24: true), label);
+      });
+    }
+    test('this year without the year, on a 12-hour clock', () {
+      expect(
+        momentLabel(
+          DateTime(2026, 10, 20, 14, 5),
+          DateTime(2026, 10, 26, 9),
+          use24: false,
+        ),
+        '20 Oct, 2:05 PM',
+      );
+    });
+  });
+
   group('until', () {
     final now = DateTime(2026, 10, 25, 15);
     final cases = {

@@ -33,6 +33,30 @@ Object? _encodable(Object? value) => switch (value) {
   _ => throw JsonUnsupportedObjectError(value),
 };
 
+/// Pure: stored post metadata with [ack] added, or with its user's
+/// acknowledgement taken out; everything else stays as it was.
+String metadataWithAcknowledgement(
+  String? metadataJson,
+  api.PostAcknowledgement ack, {
+  required bool added,
+}) {
+  Object? decoded;
+  try {
+    decoded = metadataJson == null ? null : jsonDecode(metadataJson);
+  } on FormatException {
+    decoded = null;
+  }
+  final metadata = decoded is Map<String, Object?>
+      ? {...decoded}
+      : <String, Object?>{};
+  final others = [
+    for (final a in api.PostMetadata.fromJson(metadata).acknowledgements)
+      if (a.userId != ack.userId) a,
+  ];
+  metadata['acknowledgements'] = [...others, if (added) ack];
+  return _postJson(metadata);
+}
+
 UsersCompanion userCompanion(api.User u) => UsersCompanion(
   id: Value(u.id!),
   username: Value(u.username ?? ''),

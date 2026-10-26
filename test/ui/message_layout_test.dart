@@ -99,7 +99,7 @@ void main() {
             onMention: (_) {},
             onChannel: (_) {},
             onLink: (_) {},
-            image: (url, size) {
+            image: (url, size, _) {
               fetched.add(url);
               return SizedBox.fromSize(size: size);
             },

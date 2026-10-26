@@ -21,7 +21,11 @@ mixin _$PostItem {
  int get unreadReplies;/// The people who replied, newest first, as far as they are known.
  List<PostPerson> get participants; String get authorUsername; bool get authorIsBot; bool get authorIsGuest; int? get authorPictureAt;/// The post's props and metadata as the server sent them; decoded when
 /// the row is drawn.
- String? get propsJson; String? get metadataJson; List<ReactionGroup> get reactions; bool get pinned;/// Why the server's copy couldn't be shown, such as an error type; the
+ String? get propsJson; String? get metadataJson; List<ReactionGroup> get reactions; bool get pinned;/// In the user's saved messages.
+ bool get saved;/// The message a link in this one points to, for a preview card.
+ LinkedPostPreview? get linked;/// Who acknowledged the message, first first.
+ List<PostPerson> get acknowledgedBy;/// When the current user acknowledged it.
+ DateTime? get acknowledgedAt;/// Why the server's copy couldn't be shown, such as an error type; the
 /// row then has no content.
  String? get decodeProblem;
 /// Create a copy of PostItem
@@ -35,20 +39,20 @@ $PostItemCopyWith<PostItem> get copyWith => _$PostItemCopyWithImpl<PostItem>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as PostItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.message, _this.message) || other.message == _this.message)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.editAt, _this.editAt) || other.editAt == _this.editAt)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted)&&(identical(other.sendState, _this.sendState) || other.sendState == _this.sendState)&&(identical(other.replyCount, _this.replyCount) || other.replyCount == _this.replyCount)&&(identical(other.lastReplyAt, _this.lastReplyAt) || other.lastReplyAt == _this.lastReplyAt)&&(identical(other.unreadReplies, _this.unreadReplies) || other.unreadReplies == _this.unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _this.participants)&&(identical(other.authorUsername, _this.authorUsername) || other.authorUsername == _this.authorUsername)&&(identical(other.authorIsBot, _this.authorIsBot) || other.authorIsBot == _this.authorIsBot)&&(identical(other.authorIsGuest, _this.authorIsGuest) || other.authorIsGuest == _this.authorIsGuest)&&(identical(other.authorPictureAt, _this.authorPictureAt) || other.authorPictureAt == _this.authorPictureAt)&&(identical(other.propsJson, _this.propsJson) || other.propsJson == _this.propsJson)&&(identical(other.metadataJson, _this.metadataJson) || other.metadataJson == _this.metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _this.reactions)&&(identical(other.pinned, _this.pinned) || other.pinned == _this.pinned)&&(identical(other.decodeProblem, _this.decodeProblem) || other.decodeProblem == _this.decodeProblem));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.message, _this.message) || other.message == _this.message)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.rootId, _this.rootId) || other.rootId == _this.rootId)&&(identical(other.editAt, _this.editAt) || other.editAt == _this.editAt)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted)&&(identical(other.sendState, _this.sendState) || other.sendState == _this.sendState)&&(identical(other.replyCount, _this.replyCount) || other.replyCount == _this.replyCount)&&(identical(other.lastReplyAt, _this.lastReplyAt) || other.lastReplyAt == _this.lastReplyAt)&&(identical(other.unreadReplies, _this.unreadReplies) || other.unreadReplies == _this.unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _this.participants)&&(identical(other.authorUsername, _this.authorUsername) || other.authorUsername == _this.authorUsername)&&(identical(other.authorIsBot, _this.authorIsBot) || other.authorIsBot == _this.authorIsBot)&&(identical(other.authorIsGuest, _this.authorIsGuest) || other.authorIsGuest == _this.authorIsGuest)&&(identical(other.authorPictureAt, _this.authorPictureAt) || other.authorPictureAt == _this.authorPictureAt)&&(identical(other.propsJson, _this.propsJson) || other.propsJson == _this.propsJson)&&(identical(other.metadataJson, _this.metadataJson) || other.metadataJson == _this.metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _this.reactions)&&(identical(other.pinned, _this.pinned) || other.pinned == _this.pinned)&&(identical(other.saved, _this.saved) || other.saved == _this.saved)&&(identical(other.linked, _this.linked) || other.linked == _this.linked)&&const DeepCollectionEquality().equals(other.acknowledgedBy, _this.acknowledgedBy)&&(identical(other.acknowledgedAt, _this.acknowledgedAt) || other.acknowledgedAt == _this.acknowledgedAt)&&(identical(other.decodeProblem, _this.decodeProblem) || other.decodeProblem == _this.decodeProblem));
 }
 
 
 @override
 int get hashCode {
   final _this = this as PostItem;
-  return Object.hashAll([runtimeType,_this.id,_this.key,_this.userId,_this.authorName,_this.createAt,_this.message,_this.type,_this.rootId,_this.editAt,_this.deleted,_this.sendState,_this.replyCount,_this.lastReplyAt,_this.unreadReplies,const DeepCollectionEquality().hash(_this.participants),_this.authorUsername,_this.authorIsBot,_this.authorIsGuest,_this.authorPictureAt,_this.propsJson,_this.metadataJson,const DeepCollectionEquality().hash(_this.reactions),_this.pinned,_this.decodeProblem]);
+  return Object.hashAll([runtimeType,_this.id,_this.key,_this.userId,_this.authorName,_this.createAt,_this.message,_this.type,_this.rootId,_this.editAt,_this.deleted,_this.sendState,_this.replyCount,_this.lastReplyAt,_this.unreadReplies,const DeepCollectionEquality().hash(_this.participants),_this.authorUsername,_this.authorIsBot,_this.authorIsGuest,_this.authorPictureAt,_this.propsJson,_this.metadataJson,const DeepCollectionEquality().hash(_this.reactions),_this.pinned,_this.saved,_this.linked,const DeepCollectionEquality().hash(_this.acknowledgedBy),_this.acknowledgedAt,_this.decodeProblem]);
 }
 
 @override
 String toString() {
   final _this = this as PostItem;
-  return 'PostItem(id: ${_this.id}, key: ${_this.key}, userId: ${_this.userId}, authorName: ${_this.authorName}, createAt: ${_this.createAt}, message: ${_this.message}, type: ${_this.type}, rootId: ${_this.rootId}, editAt: ${_this.editAt}, deleted: ${_this.deleted}, sendState: ${_this.sendState}, replyCount: ${_this.replyCount}, lastReplyAt: ${_this.lastReplyAt}, unreadReplies: ${_this.unreadReplies}, participants: ${_this.participants}, authorUsername: ${_this.authorUsername}, authorIsBot: ${_this.authorIsBot}, authorIsGuest: ${_this.authorIsGuest}, authorPictureAt: ${_this.authorPictureAt}, propsJson: ${_this.propsJson}, metadataJson: ${_this.metadataJson}, reactions: ${_this.reactions}, pinned: ${_this.pinned}, decodeProblem: ${_this.decodeProblem})';
+  return 'PostItem(id: ${_this.id}, key: ${_this.key}, userId: ${_this.userId}, authorName: ${_this.authorName}, createAt: ${_this.createAt}, message: ${_this.message}, type: ${_this.type}, rootId: ${_this.rootId}, editAt: ${_this.editAt}, deleted: ${_this.deleted}, sendState: ${_this.sendState}, replyCount: ${_this.replyCount}, lastReplyAt: ${_this.lastReplyAt}, unreadReplies: ${_this.unreadReplies}, participants: ${_this.participants}, authorUsername: ${_this.authorUsername}, authorIsBot: ${_this.authorIsBot}, authorIsGuest: ${_this.authorIsGuest}, authorPictureAt: ${_this.authorPictureAt}, propsJson: ${_this.propsJson}, metadataJson: ${_this.metadataJson}, reactions: ${_this.reactions}, pinned: ${_this.pinned}, saved: ${_this.saved}, linked: ${_this.linked}, acknowledgedBy: ${_this.acknowledgedBy}, acknowledgedAt: ${_this.acknowledgedAt}, decodeProblem: ${_this.decodeProblem})';
 }
 
 
@@ -59,11 +63,11 @@ abstract mixin class $PostItemCopyWith<$Res>  {
   factory $PostItemCopyWith(PostItem value, $Res Function(PostItem) _then) = _$PostItemCopyWithImpl;
 @useResult
 $Res call({
- String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<PostPerson> participants, String authorUsername, bool authorIsBot, bool authorIsGuest, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions, bool pinned, String? decodeProblem
+ String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<PostPerson> participants, String authorUsername, bool authorIsBot, bool authorIsGuest, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions, bool pinned, bool saved, LinkedPostPreview? linked, List<PostPerson> acknowledgedBy, DateTime? acknowledgedAt, String? decodeProblem
 });
 
 
-
+$LinkedPostPreviewCopyWith<$Res>? get linked;
 
 }
 /// @nodoc
@@ -76,7 +80,7 @@ class _$PostItemCopyWithImpl<$Res>
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorIsGuest = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,Object? pinned = null,Object? decodeProblem = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorIsGuest = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,Object? pinned = null,Object? saved = null,Object? linked = freezed,Object? acknowledgedBy = null,Object? acknowledgedAt = freezed,Object? decodeProblem = freezed,}) {
   return _then(PostItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -101,11 +105,27 @@ as int?,propsJson: freezed == propsJson ? _self.propsJson : propsJson // ignore:
 as String?,metadataJson: freezed == metadataJson ? _self.metadataJson : metadataJson // ignore: cast_nullable_to_non_nullable
 as String?,reactions: null == reactions ? _self.reactions : reactions // ignore: cast_nullable_to_non_nullable
 as List<ReactionGroup>,pinned: null == pinned ? _self.pinned : pinned // ignore: cast_nullable_to_non_nullable
-as bool,decodeProblem: freezed == decodeProblem ? _self.decodeProblem : decodeProblem // ignore: cast_nullable_to_non_nullable
+as bool,saved: null == saved ? _self.saved : saved // ignore: cast_nullable_to_non_nullable
+as bool,linked: freezed == linked ? _self.linked : linked // ignore: cast_nullable_to_non_nullable
+as LinkedPostPreview?,acknowledgedBy: null == acknowledgedBy ? _self.acknowledgedBy : acknowledgedBy // ignore: cast_nullable_to_non_nullable
+as List<PostPerson>,acknowledgedAt: freezed == acknowledgedAt ? _self.acknowledgedAt : acknowledgedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,decodeProblem: freezed == decodeProblem ? _self.decodeProblem : decodeProblem // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
+/// Create a copy of PostItem
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LinkedPostPreviewCopyWith<$Res>? get linked {
+    if (_self.linked == null) {
+    return null;
+  }
 
+  return $LinkedPostPreviewCopyWith<$Res>(_self.linked!, (value) {
+    return _then(_self.copyWith(linked: value));
+  });
+}
 }
 
 
@@ -187,10 +207,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<PostPerson> participants,  String authorUsername,  bool authorIsBot,  bool authorIsGuest,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions,  bool pinned,  String? decodeProblem)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<PostPerson> participants,  String authorUsername,  bool authorIsBot,  bool authorIsGuest,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions,  bool pinned,  bool saved,  LinkedPostPreview? linked,  List<PostPerson> acknowledgedBy,  DateTime? acknowledgedAt,  String? decodeProblem)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PostItem() when $default != null:
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorIsGuest,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions,_that.pinned,_that.decodeProblem);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorIsGuest,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions,_that.pinned,_that.saved,_that.linked,_that.acknowledgedBy,_that.acknowledgedAt,_that.decodeProblem);case _:
   return orElse();
 
 }
@@ -208,10 +228,10 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<PostPerson> participants,  String authorUsername,  bool authorIsBot,  bool authorIsGuest,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions,  bool pinned,  String? decodeProblem)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<PostPerson> participants,  String authorUsername,  bool authorIsBot,  bool authorIsGuest,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions,  bool pinned,  bool saved,  LinkedPostPreview? linked,  List<PostPerson> acknowledgedBy,  DateTime? acknowledgedAt,  String? decodeProblem)  $default,) {final _that = this;
 switch (_that) {
 case _PostItem():
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorIsGuest,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions,_that.pinned,_that.decodeProblem);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorIsGuest,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions,_that.pinned,_that.saved,_that.linked,_that.acknowledgedBy,_that.acknowledgedAt,_that.decodeProblem);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -228,10 +248,10 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<PostPerson> participants,  String authorUsername,  bool authorIsBot,  bool authorIsGuest,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions,  bool pinned,  String? decodeProblem)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String userId,  String authorName,  DateTime createAt,  String message,  String type,  String rootId,  DateTime? editAt,  bool deleted,  String? sendState,  int replyCount,  DateTime? lastReplyAt,  int unreadReplies,  List<PostPerson> participants,  String authorUsername,  bool authorIsBot,  bool authorIsGuest,  int? authorPictureAt,  String? propsJson,  String? metadataJson,  List<ReactionGroup> reactions,  bool pinned,  bool saved,  LinkedPostPreview? linked,  List<PostPerson> acknowledgedBy,  DateTime? acknowledgedAt,  String? decodeProblem)?  $default,) {final _that = this;
 switch (_that) {
 case _PostItem() when $default != null:
-return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorIsGuest,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions,_that.pinned,_that.decodeProblem);case _:
+return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,_that.message,_that.type,_that.rootId,_that.editAt,_that.deleted,_that.sendState,_that.replyCount,_that.lastReplyAt,_that.unreadReplies,_that.participants,_that.authorUsername,_that.authorIsBot,_that.authorIsGuest,_that.authorPictureAt,_that.propsJson,_that.metadataJson,_that.reactions,_that.pinned,_that.saved,_that.linked,_that.acknowledgedBy,_that.acknowledgedAt,_that.decodeProblem);case _:
   return null;
 
 }
@@ -243,7 +263,7 @@ return $default(_that.id,_that.key,_that.userId,_that.authorName,_that.createAt,
 
 
 class _PostItem extends PostItem {
-  const _PostItem({required this.id, required this.key, required this.userId, required this.authorName, required this.createAt, required this.message, this.type = '', this.rootId = '', this.editAt, this.deleted = false, this.sendState, this.replyCount = 0, this.lastReplyAt, this.unreadReplies = 0,  List<PostPerson> participants = const <PostPerson>[], this.authorUsername = '', this.authorIsBot = false, this.authorIsGuest = false, this.authorPictureAt, this.propsJson, this.metadataJson,  List<ReactionGroup> reactions = const <ReactionGroup>[], this.pinned = false, this.decodeProblem}): _participants = participants,_reactions = reactions,super._();
+  const _PostItem({required this.id, required this.key, required this.userId, required this.authorName, required this.createAt, required this.message, this.type = '', this.rootId = '', this.editAt, this.deleted = false, this.sendState, this.replyCount = 0, this.lastReplyAt, this.unreadReplies = 0,  List<PostPerson> participants = const <PostPerson>[], this.authorUsername = '', this.authorIsBot = false, this.authorIsGuest = false, this.authorPictureAt, this.propsJson, this.metadataJson,  List<ReactionGroup> reactions = const <ReactionGroup>[], this.pinned = false, this.saved = false, this.linked,  List<PostPerson> acknowledgedBy = const <PostPerson>[], this.acknowledgedAt, this.decodeProblem}): _participants = participants,_reactions = reactions,_acknowledgedBy = acknowledgedBy,super._();
   
 
 @override final  String id;
@@ -288,6 +308,21 @@ class _PostItem extends PostItem {
 }
 
 @override@JsonKey() final  bool pinned;
+/// In the user's saved messages.
+@override@JsonKey() final  bool saved;
+/// The message a link in this one points to, for a preview card.
+@override final  LinkedPostPreview? linked;
+/// Who acknowledged the message, first first.
+ final  List<PostPerson> _acknowledgedBy;
+/// Who acknowledged the message, first first.
+@override@JsonKey() List<PostPerson> get acknowledgedBy {
+  if (_acknowledgedBy is EqualUnmodifiableListView) return _acknowledgedBy;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_acknowledgedBy);
+}
+
+/// When the current user acknowledged it.
+@override final  DateTime? acknowledgedAt;
 /// Why the server's copy couldn't be shown, such as an error type; the
 /// row then has no content.
 @override final  String? decodeProblem;
@@ -302,18 +337,18 @@ _$PostItemCopyWith<_PostItem> get copyWith => __$PostItemCopyWithImpl<_PostItem>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostItem&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.message, message) || other.message == message)&&(identical(other.type, type) || other.type == type)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.editAt, editAt) || other.editAt == editAt)&&(identical(other.deleted, deleted) || other.deleted == deleted)&&(identical(other.sendState, sendState) || other.sendState == sendState)&&(identical(other.replyCount, replyCount) || other.replyCount == replyCount)&&(identical(other.lastReplyAt, lastReplyAt) || other.lastReplyAt == lastReplyAt)&&(identical(other.unreadReplies, unreadReplies) || other.unreadReplies == unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _participants)&&(identical(other.authorUsername, authorUsername) || other.authorUsername == authorUsername)&&(identical(other.authorIsBot, authorIsBot) || other.authorIsBot == authorIsBot)&&(identical(other.authorIsGuest, authorIsGuest) || other.authorIsGuest == authorIsGuest)&&(identical(other.authorPictureAt, authorPictureAt) || other.authorPictureAt == authorPictureAt)&&(identical(other.propsJson, propsJson) || other.propsJson == propsJson)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _reactions)&&(identical(other.pinned, pinned) || other.pinned == pinned)&&(identical(other.decodeProblem, decodeProblem) || other.decodeProblem == decodeProblem));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostItem&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.message, message) || other.message == message)&&(identical(other.type, type) || other.type == type)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.editAt, editAt) || other.editAt == editAt)&&(identical(other.deleted, deleted) || other.deleted == deleted)&&(identical(other.sendState, sendState) || other.sendState == sendState)&&(identical(other.replyCount, replyCount) || other.replyCount == replyCount)&&(identical(other.lastReplyAt, lastReplyAt) || other.lastReplyAt == lastReplyAt)&&(identical(other.unreadReplies, unreadReplies) || other.unreadReplies == unreadReplies)&&const DeepCollectionEquality().equals(other.participants, _participants)&&(identical(other.authorUsername, authorUsername) || other.authorUsername == authorUsername)&&(identical(other.authorIsBot, authorIsBot) || other.authorIsBot == authorIsBot)&&(identical(other.authorIsGuest, authorIsGuest) || other.authorIsGuest == authorIsGuest)&&(identical(other.authorPictureAt, authorPictureAt) || other.authorPictureAt == authorPictureAt)&&(identical(other.propsJson, propsJson) || other.propsJson == propsJson)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&const DeepCollectionEquality().equals(other.reactions, _reactions)&&(identical(other.pinned, pinned) || other.pinned == pinned)&&(identical(other.saved, saved) || other.saved == saved)&&(identical(other.linked, linked) || other.linked == linked)&&const DeepCollectionEquality().equals(other.acknowledgedBy, _acknowledgedBy)&&(identical(other.acknowledgedAt, acknowledgedAt) || other.acknowledgedAt == acknowledgedAt)&&(identical(other.decodeProblem, decodeProblem) || other.decodeProblem == decodeProblem));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,key,userId,authorName,createAt,message,type,rootId,editAt,deleted,sendState,replyCount,lastReplyAt,unreadReplies,const DeepCollectionEquality().hash(_participants),authorUsername,authorIsBot,authorIsGuest,authorPictureAt,propsJson,metadataJson,const DeepCollectionEquality().hash(_reactions),pinned,decodeProblem]);
+    return Object.hashAll([runtimeType,id,key,userId,authorName,createAt,message,type,rootId,editAt,deleted,sendState,replyCount,lastReplyAt,unreadReplies,const DeepCollectionEquality().hash(_participants),authorUsername,authorIsBot,authorIsGuest,authorPictureAt,propsJson,metadataJson,const DeepCollectionEquality().hash(_reactions),pinned,saved,linked,const DeepCollectionEquality().hash(_acknowledgedBy),acknowledgedAt,decodeProblem]);
 }
 
 @override
 String toString() {
-    return 'PostItem(id: $id, key: $key, userId: $userId, authorName: $authorName, createAt: $createAt, message: $message, type: $type, rootId: $rootId, editAt: $editAt, deleted: $deleted, sendState: $sendState, replyCount: $replyCount, lastReplyAt: $lastReplyAt, unreadReplies: $unreadReplies, participants: $participants, authorUsername: $authorUsername, authorIsBot: $authorIsBot, authorIsGuest: $authorIsGuest, authorPictureAt: $authorPictureAt, propsJson: $propsJson, metadataJson: $metadataJson, reactions: $reactions, pinned: $pinned, decodeProblem: $decodeProblem)';
+    return 'PostItem(id: $id, key: $key, userId: $userId, authorName: $authorName, createAt: $createAt, message: $message, type: $type, rootId: $rootId, editAt: $editAt, deleted: $deleted, sendState: $sendState, replyCount: $replyCount, lastReplyAt: $lastReplyAt, unreadReplies: $unreadReplies, participants: $participants, authorUsername: $authorUsername, authorIsBot: $authorIsBot, authorIsGuest: $authorIsGuest, authorPictureAt: $authorPictureAt, propsJson: $propsJson, metadataJson: $metadataJson, reactions: $reactions, pinned: $pinned, saved: $saved, linked: $linked, acknowledgedBy: $acknowledgedBy, acknowledgedAt: $acknowledgedAt, decodeProblem: $decodeProblem)';
 }
 
 
@@ -324,11 +359,11 @@ abstract mixin class _$PostItemCopyWith<$Res> implements $PostItemCopyWith<$Res>
   factory _$PostItemCopyWith(_PostItem value, $Res Function(_PostItem) _then) = __$PostItemCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<PostPerson> participants, String authorUsername, bool authorIsBot, bool authorIsGuest, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions, bool pinned, String? decodeProblem
+ String id, String key, String userId, String authorName, DateTime createAt, String message, String type, String rootId, DateTime? editAt, bool deleted, String? sendState, int replyCount, DateTime? lastReplyAt, int unreadReplies, List<PostPerson> participants, String authorUsername, bool authorIsBot, bool authorIsGuest, int? authorPictureAt, String? propsJson, String? metadataJson, List<ReactionGroup> reactions, bool pinned, bool saved, LinkedPostPreview? linked, List<PostPerson> acknowledgedBy, DateTime? acknowledgedAt, String? decodeProblem
 });
 
 
-
+@override $LinkedPostPreviewCopyWith<$Res>? get linked;
 
 }
 /// @nodoc
@@ -341,7 +376,7 @@ class __$PostItemCopyWithImpl<$Res>
 
 /// Create a copy of PostItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorIsGuest = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,Object? pinned = null,Object? decodeProblem = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? userId = null,Object? authorName = null,Object? createAt = null,Object? message = null,Object? type = null,Object? rootId = null,Object? editAt = freezed,Object? deleted = null,Object? sendState = freezed,Object? replyCount = null,Object? lastReplyAt = freezed,Object? unreadReplies = null,Object? participants = null,Object? authorUsername = null,Object? authorIsBot = null,Object? authorIsGuest = null,Object? authorPictureAt = freezed,Object? propsJson = freezed,Object? metadataJson = freezed,Object? reactions = null,Object? pinned = null,Object? saved = null,Object? linked = freezed,Object? acknowledgedBy = null,Object? acknowledgedAt = freezed,Object? decodeProblem = freezed,}) {
   return _then(_PostItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -366,8 +401,313 @@ as int?,propsJson: freezed == propsJson ? _self.propsJson : propsJson // ignore:
 as String?,metadataJson: freezed == metadataJson ? _self.metadataJson : metadataJson // ignore: cast_nullable_to_non_nullable
 as String?,reactions: null == reactions ? _self._reactions : reactions // ignore: cast_nullable_to_non_nullable
 as List<ReactionGroup>,pinned: null == pinned ? _self.pinned : pinned // ignore: cast_nullable_to_non_nullable
-as bool,decodeProblem: freezed == decodeProblem ? _self.decodeProblem : decodeProblem // ignore: cast_nullable_to_non_nullable
+as bool,saved: null == saved ? _self.saved : saved // ignore: cast_nullable_to_non_nullable
+as bool,linked: freezed == linked ? _self.linked : linked // ignore: cast_nullable_to_non_nullable
+as LinkedPostPreview?,acknowledgedBy: null == acknowledgedBy ? _self._acknowledgedBy : acknowledgedBy // ignore: cast_nullable_to_non_nullable
+as List<PostPerson>,acknowledgedAt: freezed == acknowledgedAt ? _self.acknowledgedAt : acknowledgedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,decodeProblem: freezed == decodeProblem ? _self.decodeProblem : decodeProblem // ignore: cast_nullable_to_non_nullable
 as String?,
+  ));
+}
+
+/// Create a copy of PostItem
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LinkedPostPreviewCopyWith<$Res>? get linked {
+    if (_self.linked == null) {
+    return null;
+  }
+
+  return $LinkedPostPreviewCopyWith<$Res>(_self.linked!, (value) {
+    return _then(_self.copyWith(linked: value));
+  });
+}
+}
+
+/// @nodoc
+mixin _$LinkedPostPreview {
+
+ String get postId; String get teamName; String get authorId; String get authorName; int? get authorPictureAt;/// Where it was posted: the channel's name, or for a direct message
+/// the author's.
+ String get channelName; DateTime get createAt; String get message;
+/// Create a copy of LinkedPostPreview
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LinkedPostPreviewCopyWith<LinkedPostPreview> get copyWith => _$LinkedPostPreviewCopyWithImpl<LinkedPostPreview>(this as LinkedPostPreview, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as LinkedPostPreview;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LinkedPostPreview&&(identical(other.postId, _this.postId) || other.postId == _this.postId)&&(identical(other.teamName, _this.teamName) || other.teamName == _this.teamName)&&(identical(other.authorId, _this.authorId) || other.authorId == _this.authorId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.authorPictureAt, _this.authorPictureAt) || other.authorPictureAt == _this.authorPictureAt)&&(identical(other.channelName, _this.channelName) || other.channelName == _this.channelName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.message, _this.message) || other.message == _this.message));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as LinkedPostPreview;
+  return Object.hash(runtimeType,_this.postId,_this.teamName,_this.authorId,_this.authorName,_this.authorPictureAt,_this.channelName,_this.createAt,_this.message);
+}
+
+@override
+String toString() {
+  final _this = this as LinkedPostPreview;
+  return 'LinkedPostPreview(postId: ${_this.postId}, teamName: ${_this.teamName}, authorId: ${_this.authorId}, authorName: ${_this.authorName}, authorPictureAt: ${_this.authorPictureAt}, channelName: ${_this.channelName}, createAt: ${_this.createAt}, message: ${_this.message})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LinkedPostPreviewCopyWith<$Res>  {
+  factory $LinkedPostPreviewCopyWith(LinkedPostPreview value, $Res Function(LinkedPostPreview) _then) = _$LinkedPostPreviewCopyWithImpl;
+@useResult
+$Res call({
+ String postId, String teamName, String authorId, String authorName, int? authorPictureAt, String channelName, DateTime createAt, String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$LinkedPostPreviewCopyWithImpl<$Res>
+    implements $LinkedPostPreviewCopyWith<$Res> {
+  _$LinkedPostPreviewCopyWithImpl(this._self, this._then);
+
+  final LinkedPostPreview _self;
+  final $Res Function(LinkedPostPreview) _then;
+
+/// Create a copy of LinkedPostPreview
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? postId = null,Object? teamName = null,Object? authorId = null,Object? authorName = null,Object? authorPictureAt = freezed,Object? channelName = null,Object? createAt = null,Object? message = null,}) {
+  return _then(LinkedPostPreview(
+postId: null == postId ? _self.postId : postId // ignore: cast_nullable_to_non_nullable
+as String,teamName: null == teamName ? _self.teamName : teamName // ignore: cast_nullable_to_non_nullable
+as String,authorId: null == authorId ? _self.authorId : authorId // ignore: cast_nullable_to_non_nullable
+as String,authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
+as String,authorPictureAt: freezed == authorPictureAt ? _self.authorPictureAt : authorPictureAt // ignore: cast_nullable_to_non_nullable
+as int?,channelName: null == channelName ? _self.channelName : channelName // ignore: cast_nullable_to_non_nullable
+as String,createAt: null == createAt ? _self.createAt : createAt // ignore: cast_nullable_to_non_nullable
+as DateTime,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LinkedPostPreview].
+extension LinkedPostPreviewPatterns on LinkedPostPreview {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LinkedPostPreview value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LinkedPostPreview() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LinkedPostPreview value)  $default,){
+final _that = this;
+switch (_that) {
+case _LinkedPostPreview():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LinkedPostPreview value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LinkedPostPreview() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String postId,  String teamName,  String authorId,  String authorName,  int? authorPictureAt,  String channelName,  DateTime createAt,  String message)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LinkedPostPreview() when $default != null:
+return $default(_that.postId,_that.teamName,_that.authorId,_that.authorName,_that.authorPictureAt,_that.channelName,_that.createAt,_that.message);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String postId,  String teamName,  String authorId,  String authorName,  int? authorPictureAt,  String channelName,  DateTime createAt,  String message)  $default,) {final _that = this;
+switch (_that) {
+case _LinkedPostPreview():
+return $default(_that.postId,_that.teamName,_that.authorId,_that.authorName,_that.authorPictureAt,_that.channelName,_that.createAt,_that.message);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String postId,  String teamName,  String authorId,  String authorName,  int? authorPictureAt,  String channelName,  DateTime createAt,  String message)?  $default,) {final _that = this;
+switch (_that) {
+case _LinkedPostPreview() when $default != null:
+return $default(_that.postId,_that.teamName,_that.authorId,_that.authorName,_that.authorPictureAt,_that.channelName,_that.createAt,_that.message);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _LinkedPostPreview implements LinkedPostPreview {
+  const _LinkedPostPreview({required this.postId, required this.teamName, required this.authorId, required this.authorName, this.authorPictureAt, required this.channelName, required this.createAt, required this.message});
+  
+
+@override final  String postId;
+@override final  String teamName;
+@override final  String authorId;
+@override final  String authorName;
+@override final  int? authorPictureAt;
+/// Where it was posted: the channel's name, or for a direct message
+/// the author's.
+@override final  String channelName;
+@override final  DateTime createAt;
+@override final  String message;
+
+/// Create a copy of LinkedPostPreview
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LinkedPostPreviewCopyWith<_LinkedPostPreview> get copyWith => __$LinkedPostPreviewCopyWithImpl<_LinkedPostPreview>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LinkedPostPreview&&(identical(other.postId, postId) || other.postId == postId)&&(identical(other.teamName, teamName) || other.teamName == teamName)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.authorPictureAt, authorPictureAt) || other.authorPictureAt == authorPictureAt)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,postId,teamName,authorId,authorName,authorPictureAt,channelName,createAt,message);
+}
+
+@override
+String toString() {
+    return 'LinkedPostPreview(postId: $postId, teamName: $teamName, authorId: $authorId, authorName: $authorName, authorPictureAt: $authorPictureAt, channelName: $channelName, createAt: $createAt, message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LinkedPostPreviewCopyWith<$Res> implements $LinkedPostPreviewCopyWith<$Res> {
+  factory _$LinkedPostPreviewCopyWith(_LinkedPostPreview value, $Res Function(_LinkedPostPreview) _then) = __$LinkedPostPreviewCopyWithImpl;
+@override @useResult
+$Res call({
+ String postId, String teamName, String authorId, String authorName, int? authorPictureAt, String channelName, DateTime createAt, String message
+});
+
+
+
+
+}
+/// @nodoc
+class __$LinkedPostPreviewCopyWithImpl<$Res>
+    implements _$LinkedPostPreviewCopyWith<$Res> {
+  __$LinkedPostPreviewCopyWithImpl(this._self, this._then);
+
+  final _LinkedPostPreview _self;
+  final $Res Function(_LinkedPostPreview) _then;
+
+/// Create a copy of LinkedPostPreview
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? postId = null,Object? teamName = null,Object? authorId = null,Object? authorName = null,Object? authorPictureAt = freezed,Object? channelName = null,Object? createAt = null,Object? message = null,}) {
+  return _then(_LinkedPostPreview(
+postId: null == postId ? _self.postId : postId // ignore: cast_nullable_to_non_nullable
+as String,teamName: null == teamName ? _self.teamName : teamName // ignore: cast_nullable_to_non_nullable
+as String,authorId: null == authorId ? _self.authorId : authorId // ignore: cast_nullable_to_non_nullable
+as String,authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
+as String,authorPictureAt: freezed == authorPictureAt ? _self.authorPictureAt : authorPictureAt // ignore: cast_nullable_to_non_nullable
+as int?,channelName: null == channelName ? _self.channelName : channelName // ignore: cast_nullable_to_non_nullable
+as String,createAt: null == createAt ? _self.createAt : createAt // ignore: cast_nullable_to_non_nullable
+as DateTime,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

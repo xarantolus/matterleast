@@ -108,3 +108,15 @@ ImageSize _$ImageSizeFromJson(Map<String, dynamic> json) => ImageSize(
   height: const LenientInt().fromJson(json['height']),
   format: const LenientString().fromJson(json['format']),
 );
+
+PermalinkEmbed _$PermalinkEmbedFromJson(Map<String, dynamic> json) =>
+    PermalinkEmbed(
+      postId: const LenientString().fromJson(json['post_id']),
+      teamName: const LenientString().fromJson(json['team_name']),
+      channelDisplayName: const LenientString().fromJson(
+        json['channel_display_name'],
+      ),
+      channelType: const LenientString().fromJson(json['channel_type']),
+      channelId: const LenientString().fromJson(json['channel_id']),
+      post: const LenientPost().fromJson(json['post']),
+    );

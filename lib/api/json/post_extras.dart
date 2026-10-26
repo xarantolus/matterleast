@@ -1,5 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/json/lenient.dart';
+import 'package:matterleast/api/json/lenient_models.dart';
 
 part 'post_extras.g.dart';
 
@@ -266,6 +268,36 @@ class ImageSize {
   final int? height;
   @LenientString()
   final String? format;
+}
+
+/// A `permalink` embed: the linked message as this reader may see it
+/// (`model/post_embed.go`, `PreviewPost`).
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+class PermalinkEmbed {
+  const PermalinkEmbed({
+    this.postId,
+    this.teamName,
+    this.channelDisplayName,
+    this.channelType,
+    this.channelId,
+    this.post,
+  });
+
+  factory PermalinkEmbed.fromJson(Map<String, Object?> json) =>
+      _$PermalinkEmbedFromJson(json);
+
+  @LenientString()
+  final String? postId;
+  @LenientString()
+  final String? teamName;
+  @LenientString()
+  final String? channelDisplayName;
+  @LenientString()
+  final String? channelType;
+  @LenientString()
+  final String? channelId;
+  @LenientPost()
+  final api.Post? post;
 }
 
 List<T> _objects<T>(Object? json, T Function(Map<String, Object?>) decode) =>

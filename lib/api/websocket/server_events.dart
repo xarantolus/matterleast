@@ -120,6 +120,19 @@ final class ReactionEvent extends ServerEvent {
   final bool added;
 }
 
+/// `post_acknowledgement_added` and `post_acknowledgement_removed`.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class AcknowledgementEvent extends ServerEvent {
+  const AcknowledgementEvent({this.acknowledgement, this.added = true});
+  factory AcknowledgementEvent.fromJson(Map<String, Object?> json) =>
+      _$AcknowledgementEventFromJson(json);
+
+  @EncodedAcknowledgement()
+  final api.PostAcknowledgement? acknowledgement;
+  @JsonKey(includeFromJson: false)
+  final bool added;
+}
+
 /// `emoji_added`: someone created a custom emoji.
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
 final class EmojiAddedEvent extends ServerEvent {
@@ -460,6 +473,11 @@ ServerEvent decodeEvent(SocketFrame frame) {
     'reaction_added' => ReactionEvent.fromJson(json),
     'reaction_removed' => ReactionEvent(
       reaction: ReactionEvent.fromJson(json).reaction,
+      added: false,
+    ),
+    'post_acknowledgement_added' => AcknowledgementEvent.fromJson(json),
+    'post_acknowledgement_removed' => AcknowledgementEvent(
+      acknowledgement: AcknowledgementEvent.fromJson(json).acknowledgement,
       added: false,
     ),
     'emoji_added' => EmojiAddedEvent.fromJson(json),

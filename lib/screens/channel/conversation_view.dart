@@ -6,6 +6,7 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
@@ -368,6 +369,9 @@ extension on _ConversationViewState {
   }) {
     final usable = !post.isSystem && !post.deleted && !post.unreadable;
     final threads = widget.onOpenThread != null;
+    // An archived channel is read-only, reactions included.
+    final reacts =
+        post.sendState == null && !(_state.window?.archived ?? false);
     void openThread() => widget.onOpenThread?.call(post);
     final tile = PostTile(
       post: post,
@@ -380,10 +384,9 @@ extension on _ConversationViewState {
                 (await ref.read(composerActionsProvider(widget.url).future))
                     .dismissEphemeral(post.id)
           : null,
-      onToggleReaction: post.sendState == null
-          ? (name) => _toggleReaction(post, name)
-          : null,
-      onAddReaction: post.sendState == null ? () => _pickReaction(post) : null,
+      onToggleReaction: reacts ? (name) => _toggleReaction(post, name) : null,
+      onAddReaction: reacts ? () => _pickReaction(post) : null,
+      onAcknowledge: reacts ? () => _toggleAcknowledged(post) : null,
     );
     if (post.sendState == 'failed') {
       return InkWell(
@@ -445,6 +448,29 @@ extension on _ConversationViewState {
         SnackBar(
           content: Text(
             "Couldn't change the reaction. "
+            '${requestProblemText(e, Uri.parse(widget.url).host)}',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _toggleAcknowledged(PostItem post) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final actions = await ref.read(postActionsProvider(widget.url).future);
+    try {
+      if (post.acknowledgedAt == null) {
+        await actions.acknowledge(post.id);
+      } else {
+        await actions.unacknowledge(post.id);
+      }
+    } on ApiError catch (e) {
+      // The button is gone then; the server has no acknowledgements.
+      if (endpointUnavailable(e)) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            "Couldn't change the acknowledgement. "
             '${requestProblemText(e, Uri.parse(widget.url).host)}',
           ),
         ),

@@ -132,7 +132,7 @@ class Conversation extends _$Conversation {
 
   void _watch() {
     if (!ref.mounted) return;
-    final views = ConversationViews(_session!.db);
+    final views = ConversationViews(_session!.db, server: _session!.url);
     unawaited(_subscription?.cancel());
     _subscription =
         (_isThread

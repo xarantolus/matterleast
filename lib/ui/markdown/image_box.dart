@@ -41,36 +41,76 @@ Size? imageBox({
   return Size(w * scale, h * scale);
 }
 
-/// An image written in a message, in a box reserved from its known size.
-/// Images the server did not measure are not shown, as in Mattermost's apps;
-/// an address no image can come from shows its alt text.
+/// What a tap on an image in a message's text does: opens it in the
+/// gallery with the message's other pictures. Read at tap time only, so a
+/// new callback never rebuilds the message.
+class MessageImageOpener extends InheritedWidget {
+  const MessageImageOpener({
+    required this.open,
+    required super.child,
+    super.key,
+  });
+
+  final ValueChanged<String> open;
+
+  static ValueChanged<String>? of(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<MessageImageOpener>()?.open;
+
+  @override
+  bool updateShouldNotify(MessageImageOpener oldWidget) => false;
+}
+
+/// An image written in a message, in a box reserved from its known size;
+/// one the server did not measure gets a fixed box it fits into. An
+/// address no image can come from shows its alt text.
 class MessageImage extends StatelessWidget {
   const MessageImage({required this.image, required this.measured, super.key});
 
   final ImagePart image;
   final ImageSize? measured;
 
+  static const unmeasured = Size(240, 160);
+
   @override
   Widget build(BuildContext context) {
     if (!canLoadImage(image.url)) {
       return image.alt.isEmpty ? const SizedBox.shrink() : Text(image.alt);
     }
-    final measured = this.measured;
-    if (measured == null) return const SizedBox.shrink();
     return LayoutBuilder(
       builder: (context, constraints) {
-        final box = imageBox(
-          measuredWidth: measured.width,
-          measuredHeight: measured.height,
+        final maxHeight = MediaQuery.sizeOf(context).height * 0.45;
+        final known = imageBox(
+          measuredWidth: measured?.width,
+          measuredHeight: measured?.height,
           width: image.width,
           height: image.height,
           maxWidth: constraints.maxWidth,
-          maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+          maxHeight: maxHeight,
         );
-        if (box == null) return const SizedBox.shrink();
+        final box =
+            known ??
+            Size(
+              unmeasured.width.clamp(0, constraints.maxWidth),
+              unmeasured.height,
+            );
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-          child: ImageSlot(url: image.url, size: box),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Semantics(
+              button: true,
+              label: image.alt.isEmpty ? 'Image' : image.alt,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => MessageImageOpener.of(context)?.call(image.url),
+                child: ImageSlot(
+                  url: image.url,
+                  size: box,
+                  fit: known == null ? BoxFit.contain : BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
         );
       },
     );
@@ -79,10 +119,16 @@ class MessageImage extends StatelessWidget {
 
 /// [url] drawn into exactly [size]; a tonal box until it loads.
 class ImageSlot extends StatelessWidget {
-  const ImageSlot({required this.url, required this.size, super.key});
+  const ImageSlot({
+    required this.url,
+    required this.size,
+    this.fit = BoxFit.cover,
+    super.key,
+  });
 
   final String url;
   final Size size;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +138,7 @@ class ImageSlot extends StatelessWidget {
       child: SizedBox.fromSize(
         size: size,
         child:
-            env?.image?.call(url, size) ??
+            env?.image?.call(url, size, fit) ??
             ColoredBox(color: context.tokens.codeBackground),
       ),
     );

@@ -1,6 +1,9 @@
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/post_extras.dart';
+import 'package:matterleast/data/images/image_rules.dart';
+import 'package:matterleast/domain/post_files.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/markdown/markdown_cache.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
@@ -11,6 +14,7 @@ import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/markdown/table_block.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/top_notice.dart';
 
 final markdownCache = MarkdownCache();
 
@@ -57,10 +61,15 @@ class PostBody extends StatelessWidget {
                 Theme.of(context).textTheme.bodyMedium!
                     .copyWith(color: tokens.text))
             .forMessages(context);
-    final editedSpan = edited
-        ? TextSpan(
-            text: ' (edited)',
-            style: body.copyWith(color: tokens.muted, fontSize: 12 * scale),
+    final editedAt = editAt;
+    final editedSpan = edited && editedAt != null
+        ? WidgetSpan(
+            alignment: PlaceholderAlignment.baseline,
+            baseline: TextBaseline.alphabetic,
+            child: EditedMark(
+              editAt: editedAt,
+              style: body.copyWith(color: tokens.muted, fontSize: 12 * scale),
+            ),
           )
         : null;
     final content = switch (doc) {
@@ -85,6 +94,53 @@ class PostBody extends StatelessWidget {
     };
     return collapsible ? ShowMore(id: postId, child: content) : content;
   }
+}
+
+/// The pictures written into a message's text, in reading order, as the
+/// gallery takes them.
+List<PostFile> messageImages(
+  BuildContext context, {
+  required String postId,
+  required String message,
+  DateTime? editAt,
+  bool unsafeLinks = false,
+  Map<String, ImageSize> sizes = const {},
+}) {
+  var options =
+      context.getInheritedWidgetOfExactType<PostEnvironment>()?.options ??
+      const ParseOptions();
+  if (unsafeLinks) options = options.copyWith(unsafeLinks: true);
+  final doc = markdownCache.get(postId, editAt, message, options);
+  if (doc is! ParsedPost) return const [];
+  final urls = <String>{};
+  void walk(List<Block> blocks) {
+    for (final block in blocks) {
+      switch (block) {
+        case Paragraph(:final inlines) || Heading(:final inlines):
+          for (final part in inlines) {
+            if (part is ImagePart && canLoadImage(part.url)) urls.add(part.url);
+          }
+        case Quote(:final blocks):
+          walk(blocks);
+        case ListBlock(:final items):
+          for (final item in items) {
+            walk(item.blocks);
+          }
+        default:
+      }
+    }
+  }
+
+  walk(doc.blocks);
+  return [
+    for (final url in urls)
+      PostFile.link(
+        url,
+        width: sizes[url]?.width,
+        height: sizes[url]?.height,
+        format: sizes[url]?.format,
+      ),
+  ];
 }
 
 /// Pure: a message of nothing but up to eight emoji is shown large.
@@ -269,5 +325,29 @@ TextStyle headingStyle(TextStyle base, int level) {
     fontSize: size * const [1.6, 1.4, 1.25, 1.12, 1.0, 0.92][level - 1],
     fontWeight: level <= 2 ? FontWeight.w700 : FontWeight.w600,
     height: 1.3,
+  );
+}
+
+/// "(edited)" after a message; a tap tells when.
+class EditedMark extends StatelessWidget {
+  const EditedMark({required this.editAt, required this.style, super.key});
+
+  final DateTime editAt;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    hint: 'Shows when',
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => showTopNotice(
+        context,
+        icon: Icons.edit_outlined,
+        text:
+            'Edited ${momentLabel(editAt, DateTime.now(), use24: MediaQuery.alwaysUse24HourFormatOf(context))}',
+      ),
+      child: Text(' (edited)', style: style),
+    ),
   );
 }

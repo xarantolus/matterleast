@@ -173,6 +173,50 @@ class PostActions {
     () => _store.setPinned(postId, pinned: !pinned),
   );
 
+  /// Acknowledges a message that asks for it, or takes the acknowledgement
+  /// back. A server without acknowledgements turns them off.
+  Future<void> acknowledge(String postId) => _setAcknowledged(postId, true);
+
+  Future<void> unacknowledge(String postId) => _setAcknowledged(postId, false);
+
+  Future<void> _setAcknowledged(String postId, bool acknowledged) async {
+    final me = await _me();
+    final ack = api.PostAcknowledgement(
+      userId: me,
+      postId: postId,
+      acknowledgedAt: _clock(),
+    );
+    try {
+      await _optimistic(
+        () => _store.applyAcknowledgement(ack, added: acknowledged),
+        () async {
+          if (!acknowledged) {
+            await _call(
+              () => _client.posts.deleteAcknowledgementForPost(
+                userId: me,
+                postId: postId,
+              ),
+            );
+            return;
+          }
+          final saved = await _call(
+            () => _client.posts.saveAcknowledgementForPost(
+              userId: me,
+              postId: postId,
+            ),
+          );
+          await _store.applyAcknowledgement(saved, added: true);
+        },
+        () => _store.applyAcknowledgement(ack, added: !acknowledged),
+      );
+    } on ApiError catch (e) {
+      if (endpointUnavailable(e)) {
+        await _store.turnOff(OptionalFeature.acknowledgements);
+      }
+      rethrow;
+    }
+  }
+
   /// Marks the channel unread from this post on; it stays unread until the
   /// user opens it again. The counts come from the server.
   Future<void> markUnread(String postId) async {

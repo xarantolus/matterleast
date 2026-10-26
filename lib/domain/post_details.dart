@@ -18,6 +18,9 @@ class PostDetails {
     this.files = const [],
     this.integration = const IntegrationProps(),
     this.integrationError,
+    this.permalink,
+    this.ackRequested = false,
+    this.acknowledgements = const [],
   });
 
   /// Pure: decodes [propsJson] and [metadataJson]; anything malformed is
@@ -31,7 +34,14 @@ class PostDetails {
         if (value is Map<String, Object?>) key: ImageSize.fromJson(value),
     };
     LinkPreview? preview;
+    PermalinkEmbed? permalink;
     final first = meta?.embeds.firstOrNull;
+    if (first != null && first.type?.json == 'permalink') {
+      final embed = PermalinkEmbed.fromJson(first.data ?? const {});
+      if ((embed.postId?.isNotEmpty ?? false) && embed.post != null) {
+        permalink = embed;
+      }
+    }
     if (first != null && first.type?.json == 'opengraph') {
       final og = OpenGraph.fromJson(first.data ?? const {});
       final image = og.images.firstOrNull;
@@ -73,6 +83,14 @@ class PostDetails {
         for (final f in meta?.files ?? const <api.FileInfo>[])
           if (f.id != null && f.deleteAt == null) PostFile.from(f),
       ],
+      permalink: permalink,
+      ackRequested: meta?.priority?.requestedAck ?? false,
+      acknowledgements: [
+        for (final a
+            in meta?.acknowledgements ?? const <api.PostAcknowledgement>[])
+          if (a.userId case final userId? when userId.isNotEmpty)
+            (userId: userId, at: a.acknowledgedAt),
+      ],
     );
   }
 
@@ -92,6 +110,14 @@ class PostDetails {
 
   /// Why [integration] could not be read, when it could not.
   final String? integrationError;
+
+  /// The message a permalink in this one points to, as the server
+  /// embedded it.
+  final PermalinkEmbed? permalink;
+
+  /// The author asked readers to acknowledge the message.
+  final bool ackRequested;
+  final List<({String userId, DateTime? at})> acknowledgements;
 
   bool get fromWebhook => props.fromWebhook == 'true';
   bool get unsafeLinks => props.unsafeLinks == 'true';

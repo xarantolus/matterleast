@@ -61,6 +61,9 @@ abstract class ServerFeatures with _$ServerFeatures {
     @Default(true) bool fileDownloads,
     @Default(true) bool linkPreviews,
 
+    /// Links to messages show a card of the linked message.
+    @Default(false) bool permalinkPreviews,
+
     /// Integrations may post under another name or picture.
     @Default(false) bool usernameOverride,
     @Default(false) bool iconOverride,
@@ -195,6 +198,7 @@ ServerFeatures serverFeatures({
         (!compliance || config.enableMobileFileDownload != false) &&
         !(advanced && config.mobileEnableSecureFilePreview == true),
     linkPreviews: config.enableLinkPreviews == true,
+    permalinkPreviews: config.enablePermalinkPreviews == true,
     usernameOverride: config.enablePostUsernameOverride == true,
     iconOverride: config.enablePostIconOverride == true,
     crossTeamSearch: config.enableCrossTeamSearch == true,

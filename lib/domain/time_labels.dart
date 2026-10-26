@@ -92,6 +92,17 @@ String whenLabel(DateTime at, DateTime now, {required bool use24}) {
   return '${dateLabel(local, now)} at $time';
 }
 
+/// One moment on its own, such as when a message was edited: "14:05"
+/// today, "Yesterday, 14:05", "20 Oct, 14:05", or "20 Oct 2025, 14:05".
+String momentLabel(DateTime at, DateTime now, {required bool use24}) {
+  final local = at.toLocal();
+  final time = timeLabel(local, use24: use24);
+  final days = _daysAgo(local, now);
+  if (days == 0) return time;
+  if (days == 1) return 'Yesterday, $time';
+  return '${dateLabel(local, now)}, $time';
+}
+
 /// A date without a time: "20 Oct", with the year when it isn't this one
 /// or when [alwaysYear] is set.
 String dateLabel(DateTime at, DateTime now, {bool alwaysYear = false}) {

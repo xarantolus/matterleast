@@ -82,4 +82,21 @@ void main() {
     expect(threadToOpen(rootId: 'r', collapsedThreads: false), isNull);
     expect(threadToOpen(rootId: '', collapsedThreads: true), isNull);
   });
+
+  test('the first link in a message to a message on this server', () {
+    const id = 'abcdefghijklmnopqrstuvwxyz';
+    expect(
+      firstPostLink(
+        'see https://elsewhere.example.test/t/pl/$id and '
+        '<https://chat.example.test/harbor/pl/$id>.',
+        chat,
+      )?.postId,
+      id,
+    );
+    expect(
+      firstPostLink('https://chat.example.test/harbor/channels/x', chat),
+      isNull,
+    );
+    expect(firstPostLink('no links here', chat), isNull);
+  });
 }

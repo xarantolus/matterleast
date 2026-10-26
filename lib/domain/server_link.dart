@@ -111,3 +111,16 @@ bool _startsWith(List<String> path, List<String> prefix) {
   }
   return true;
 }
+
+final _webLink = RegExp(r'''https?://[^\s<>()\[\]"'`]+''');
+
+/// Pure: the first link in [message] to a message on [server], like the
+/// one the server would embed.
+PostLink? firstPostLink(String message, Uri server) {
+  for (final match in _webLink.allMatches(message)) {
+    final uri = Uri.tryParse(match[0]!);
+    if (uri == null) continue;
+    if (parseServerLink(uri, [server]) case final PostLink link) return link;
+  }
+  return null;
+}

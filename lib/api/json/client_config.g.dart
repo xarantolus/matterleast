@@ -107,6 +107,9 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
     json['MobileEnableSecureFilePreview'],
   ),
   enableLinkPreviews: const LenientBool().fromJson(json['EnableLinkPreviews']),
+  enablePermalinkPreviews: const LenientBool().fromJson(
+    json['EnablePermalinkPreviews'],
+  ),
   enablePostUsernameOverride: const LenientBool().fromJson(
     json['EnablePostUsernameOverride'],
   ),

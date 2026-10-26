@@ -5,15 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/post_details.dart';
+import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/acknowledge_button.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/interactive_message.dart';
 import 'package:matterleast/ui/link_preview_card.dart';
+import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
+import 'package:matterleast/ui/permalink_card.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -34,6 +38,7 @@ class PostTile extends StatelessWidget {
     this.onDismiss,
     this.onToggleReaction,
     this.onAddReaction,
+    this.onAcknowledge,
     super.key,
   });
 
@@ -54,6 +59,9 @@ class PostTile extends StatelessWidget {
   final ValueChanged<String>? onToggleReaction;
   final VoidCallback? onAddReaction;
 
+  /// Acknowledges the message, or takes the acknowledgement back.
+  final VoidCallback? onAcknowledge;
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -72,6 +80,11 @@ class PostTile extends StatelessWidget {
         ? override!
         : post.authorName;
     final bot = post.authorIsBot || webhook || details.props.fromBot == 'true';
+    final acknowledge =
+        (env?.acknowledgements ?? false) &&
+        details.ackRequested &&
+        !post.deleted &&
+        post.sendState == null;
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -116,10 +129,13 @@ class PostTile extends StatelessWidget {
         if (post.unreadable)
           _Unreadable(post: post)
         else
-          PostTextActions(
-            post: post,
-            details: details,
-            child: PostText(post: post, details: details),
+          MessageImageOpener(
+            open: (url) => _openImage(context, url, details, name),
+            child: PostTextActions(
+              post: post,
+              details: details,
+              child: PostText(post: post, details: details),
+            ),
           ),
         if (details.files.isNotEmpty && !post.deleted)
           PostFiles(
@@ -127,47 +143,161 @@ class PostTile extends StatelessWidget {
             heroPrefix: 'post:${post.key}',
             author: name,
             sentAt: post.createAt,
+            leading: () => _textImages(context, details),
           ),
         PostIntegration(post: post, details: details),
         if (details.preview case final preview? when env?.linkPreviews ?? true)
           LinkPreviewCard(preview: preview),
-        if (post.reactions.isNotEmpty && !post.deleted)
+        if (post.linked case final linked? when !post.deleted)
+          PermalinkCard(linked: linked),
+        if ((post.reactions.isNotEmpty && !post.deleted) || acknowledge)
           ReactionsBar(
-            reactions: post.reactions,
+            reactions: post.deleted ? const [] : post.reactions,
             onToggle: onToggleReaction,
-            onAdd: onAddReaction,
+            onAdd: post.reactions.isEmpty ? null : onAddReaction,
+            leading: acknowledge
+                ? AcknowledgeButton(
+                    post: post,
+                    times: {
+                      for (final a in details.acknowledgements) a.userId: a.at,
+                    },
+                    onToggle: onAcknowledge,
+                  )
+                : null,
           ),
         if (onOpenThread != null && !post.isReply && post.replyCount > 0)
           _ThreadBar(post: post, onPressed: onOpenThread!),
+      ],
+    );
+    final marked = (post.pinned || post.saved) && !post.deleted;
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (compact)
+          const SizedBox(width: _gutter)
+        else ...[
+          _ToProfile(
+            post: post,
+            details: details,
+            child: _Avatar(post: post, name: name, details: details),
+          ),
+          const SizedBox(width: Spacing.md),
+        ],
+        Expanded(child: body),
       ],
     );
     return Opacity(
       opacity: post.sendState == null ? 1 : 0.5,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
-        color: highlighted ? tokens.accentWash : Colors.transparent,
+        color: highlighted
+            ? tokens.accentWash
+            : marked
+            ? markedTint(tokens)
+            : Colors.transparent,
         padding: EdgeInsets.fromLTRB(
           Spacing.lg,
-          compact ? 2 : Spacing.sm,
+          compact && !marked ? 2 : Spacing.sm,
           Spacing.lg,
           2,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (compact)
-              const SizedBox(width: _gutter)
-            else ...[
-              _ToProfile(
-                post: post,
-                details: details,
-                child: _Avatar(post: post, name: name, details: details),
-              ),
-              const SizedBox(width: Spacing.md),
-            ],
-            Expanded(child: body),
-          ],
-        ),
+        child: marked
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Marks(pinned: post.pinned, saved: post.saved),
+                  row,
+                ],
+              )
+            : row,
+      ),
+    );
+  }
+
+  /// Opens a picture from the message's text in the gallery, with the
+  /// rest of the message's pictures and videos.
+  void _openImage(
+    BuildContext context,
+    String url,
+    PostDetails details,
+    String author,
+  ) {
+    final env = PostEnvironment.maybeOf(context);
+    if (env == null) return;
+    final media = [
+      ..._textImages(context, details),
+      for (final f in details.files)
+        if (f.isMedia) f,
+    ];
+    final index = media.indexWhere((f) => f.link == url);
+    openGallery(
+      context,
+      url: env.server.toString(),
+      media: index < 0 ? [PostFile.link(url)] : media,
+      index: index < 0 ? 0 : index,
+      heroPrefix: 'post:${post.key}',
+      author: author,
+      sentAt: post.createAt,
+    );
+  }
+
+  List<PostFile> _textImages(BuildContext context, PostDetails details) =>
+      post.deleted || post.message.isEmpty
+      ? const []
+      : messageImages(
+          context,
+          postId: post.id,
+          message: post.message,
+          editAt: post.editAt,
+          unsafeLinks: details.unsafeLinks,
+          sizes: details.imageSizes,
+        );
+}
+
+/// The light tint of a pinned or saved message.
+Color markedTint(AppTokens tokens) => tokens.accent.withValues(alpha: 0.08);
+
+/// "Pinned", "Saved" or "Pinned and Saved" above a message, with their
+/// icons in the avatar's column.
+class _Marks extends StatelessWidget {
+  const _Marks({required this.pinned, required this.saved});
+
+  final bool pinned;
+  final bool saved;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.tokens.accent;
+    final label = switch ((pinned, saved)) {
+      (true, true) => 'Pinned and Saved',
+      (true, false) => 'Pinned',
+      _ => 'Saved',
+    };
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          SizedBox(
+            width: _gutter,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (pinned) Icon(Icons.push_pin, size: 14, color: color),
+                if (saved) Icon(Icons.bookmark, size: 14, color: color),
+                const SizedBox(width: Spacing.sm),
+              ],
+            ),
+          ),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: color, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -366,10 +496,14 @@ class PostText extends StatelessWidget {
       );
     }
     if (post.message.isEmpty) {
-      return post.edited
-          ? Text(
-              '(edited)',
-              style: style?.copyWith(color: tokens.muted, fontSize: 12),
+      final editAt = post.editAt;
+      return post.edited && editAt != null
+          ? Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: EditedMark(
+                editAt: editAt,
+                style: style?.copyWith(color: tokens.muted, fontSize: 12),
+              ),
             )
           : const SizedBox.shrink();
     }

@@ -57,6 +57,7 @@ class ClientConfig {
     this.enableMobileFileDownload,
     this.mobileEnableSecureFilePreview,
     this.enableLinkPreviews,
+    this.enablePermalinkPreviews,
     this.enablePostUsernameOverride,
     this.enablePostIconOverride,
     this.enableCrossTeamSearch,
@@ -180,6 +181,8 @@ class ClientConfig {
   final bool? mobileEnableSecureFilePreview;
   @LenientBool()
   final bool? enableLinkPreviews;
+  @LenientBool()
+  final bool? enablePermalinkPreviews;
   @LenientBool()
   final bool? enablePostUsernameOverride;
   @LenientBool()

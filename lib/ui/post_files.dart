@@ -30,10 +30,14 @@ class PostFiles extends StatelessWidget {
     required this.heroPrefix,
     required this.author,
     required this.sentAt,
+    this.leading,
     super.key,
   });
 
   final List<PostFile> files;
+
+  /// Pictures from the message's text, which come first in the gallery.
+  final List<PostFile> Function()? leading;
 
   /// Unique per message row, so a file shown twice gets two heroes.
   final String heroPrefix;
@@ -59,20 +63,15 @@ class PostFiles extends StatelessWidget {
               url: url,
               media: media,
               onOpen: (index) {
-                // Coming back must not bring the keyboard up for a field
-                // that kept its focus behind the gallery.
-                FocusManager.instance.primaryFocus?.unfocus();
-                unawaited(
-                  Navigator.of(context).push(
-                    galleryRoute(
-                      url: url,
-                      files: media,
-                      initialIndex: index,
-                      heroPrefix: heroPrefix,
-                      author: author,
-                      sentAt: sentAt,
-                    ),
-                  ),
+                final before = leading?.call() ?? const <PostFile>[];
+                openGallery(
+                  context,
+                  url: url,
+                  media: [...before, ...media],
+                  index: before.length + index,
+                  heroPrefix: heroPrefix,
+                  author: author,
+                  sentAt: sentAt,
                 );
               },
               heroPrefix: heroPrefix,
@@ -83,6 +82,33 @@ class PostFiles extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Opens [media] in the gallery at [index].
+void openGallery(
+  BuildContext context, {
+  required String url,
+  required List<PostFile> media,
+  required int index,
+  required String heroPrefix,
+  required String author,
+  required DateTime sentAt,
+}) {
+  // Coming back must not bring the keyboard up for a field that kept its
+  // focus behind the gallery.
+  FocusManager.instance.primaryFocus?.unfocus();
+  unawaited(
+    Navigator.of(context).push(
+      galleryRoute(
+        url: url,
+        files: media,
+        initialIndex: index,
+        heroPrefix: heroPrefix,
+        author: author,
+        sentAt: sentAt,
+      ),
+    ),
+  );
 }
 
 class _MediaGrid extends StatelessWidget {

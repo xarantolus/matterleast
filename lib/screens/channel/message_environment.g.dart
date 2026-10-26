@@ -301,7 +301,7 @@ final class PostDisplayProvider
   }
 }
 
-String _$postDisplayHash() => r'55a5d7c0430feec47f58081b2c208e0cc0686d21';
+String _$postDisplayHash() => r'0e43b1629a7a9a570364c727234f257b65b6197d';
 
 final class PostDisplayFamily extends $Family
     with $FunctionalFamilyOverride<Stream<PostDisplay>, String> {

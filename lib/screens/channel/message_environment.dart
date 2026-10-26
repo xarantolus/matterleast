@@ -48,6 +48,7 @@ typedef PostDisplay = ({
   bool usernameOverride,
   bool iconOverride,
   bool mmBlocks,
+  bool acknowledgements,
 });
 
 @riverpod
@@ -66,6 +67,7 @@ Stream<PostDisplay> postDisplay(Ref ref, String url) async* {
         usernameOverride: features.usernameOverride,
         iconOverride: features.iconOverride,
         mmBlocks: features.flag('MmBlocksEnabled'),
+        acknowledgements: features.acknowledgements,
       );
     },
     interval: const Duration(milliseconds: 300),
@@ -210,11 +212,12 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
   Future<void> _onAction(PostActionRequest request) =>
       widget._runAction(context, ref, request);
 
-  Widget _image(String imageUrl, Size size) => ServerImage(
+  Widget _image(String imageUrl, Size size, BoxFit fit) => ServerImage(
     serverUrl: widget.url,
     url: imageUrl,
     width: size.width,
     height: size.height,
+    fit: fit,
   );
 
   Widget? Function(String, double) _emojiLookup(
@@ -263,6 +266,7 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
       iconOverride: display?.iconOverride ?? false,
       mmBlocks: display?.mmBlocks ?? false,
       onAction: _onAction,
+      acknowledgements: display?.acknowledgements ?? false,
       child: widget.child,
     );
   }

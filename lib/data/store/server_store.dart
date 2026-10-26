@@ -1142,6 +1142,26 @@ class ServerStore {
             .write(PostsCompanion(reactionCount: Value(count)));
       });
 
+  /// Someone acknowledged a message, or took the acknowledgement back.
+  Future<void> applyAcknowledgement(
+    api.PostAcknowledgement ack, {
+    required bool added,
+  }) => db.transaction(() async {
+    final postId = ack.postId;
+    if (postId == null || ack.userId == null) return;
+    final row = await (db.select(
+      db.posts,
+    )..where((p) => p.id.equals(postId))).getSingleOrNull();
+    if (row == null) return;
+    await (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
+      PostsCompanion(
+        metadataJson: Value(
+          metadataWithAcknowledgement(row.metadataJson, ack, added: added),
+        ),
+      ),
+    );
+  });
+
   /// The channel counts as read up to [at]: the member counters catch up with
   /// the channel's, which is what the server does on `view`.
   Future<void> markViewed(String channelId, {required DateTime at}) =>

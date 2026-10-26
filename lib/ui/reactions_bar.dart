@@ -7,16 +7,20 @@ import 'package:matterleast/ui/tokens.dart';
 
 /// The emoji people reacted with, each with how many; the user's own are
 /// selected. Tap toggles the user's own reaction, long-press shows who
-/// reacted.
+/// reacted. Without [onToggle] a tap shows who reacted too.
 class ReactionsBar extends StatelessWidget {
   const ReactionsBar({
     required this.reactions,
     this.onToggle,
     this.onAdd,
+    this.leading,
     super.key,
   });
 
   final List<ReactionGroup> reactions;
+
+  /// Comes first in the row, such as the acknowledge button.
+  final Widget? leading;
   final ValueChanged<String>? onToggle;
   final VoidCallback? onAdd;
 
@@ -27,6 +31,7 @@ class ReactionsBar extends StatelessWidget {
       spacing: Spacing.xs,
       runSpacing: Spacing.xs,
       children: [
+        ?leading,
         for (final group in reactions)
           GestureDetector(
             onLongPress: () => showReactions(context, reactions, group),

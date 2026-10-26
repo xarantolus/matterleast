@@ -51,6 +51,18 @@ abstract class PostItem with _$PostItem {
     @Default(<ReactionGroup>[]) List<ReactionGroup> reactions,
     @Default(false) bool pinned,
 
+    /// In the user's saved messages.
+    @Default(false) bool saved,
+
+    /// The message a link in this one points to, for a preview card.
+    LinkedPostPreview? linked,
+
+    /// Who acknowledged the message, first first.
+    @Default(<PostPerson>[]) List<PostPerson> acknowledgedBy,
+
+    /// When the current user acknowledged it.
+    DateTime? acknowledgedAt,
+
     /// Why the server's copy couldn't be shown, such as an error type; the
     /// row then has no content.
     String? decodeProblem,
@@ -64,6 +76,24 @@ abstract class PostItem with _$PostItem {
   bool get isReply => rootId.isNotEmpty;
   bool get isEphemeral => type == 'system_ephemeral';
   bool get unreadable => decodeProblem != null;
+}
+
+/// The message a permalink points to, as its card shows it.
+@freezed
+abstract class LinkedPostPreview with _$LinkedPostPreview {
+  const factory LinkedPostPreview({
+    required String postId,
+    required String teamName,
+    required String authorId,
+    required String authorName,
+    int? authorPictureAt,
+
+    /// Where it was posted: the channel's name, or for a direct message
+    /// the author's.
+    required String channelName,
+    required DateTime createAt,
+    required String message,
+  }) = _LinkedPostPreview;
 }
 
 /// Pure: what "Copy details" puts on the clipboard for a post that

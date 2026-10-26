@@ -18,7 +18,27 @@ class PostFile {
     this.height,
     this.hasPreview = false,
     this.miniPreview,
+    this.link,
   });
+
+  /// An image written into a message's text, at [url]; [format] is what
+  /// the server found it to be, such as `gif`.
+  factory PostFile.link(String url, {int? width, int? height, String? format}) {
+    final name = Uri.tryParse(url)?.pathSegments.lastOrNull ?? '';
+    final dot = name.lastIndexOf('.');
+    final extension = format != null && format.isNotEmpty
+        ? format.toLowerCase()
+        : (dot < 0 ? '' : name.substring(dot + 1).toLowerCase());
+    return PostFile(
+      id: url,
+      name: name.isEmpty ? 'Image' : name,
+      extension: extension,
+      mimeType: extension == 'gif' ? 'image/gif' : 'image/*',
+      width: width,
+      height: height,
+      link: url,
+    );
+  }
 
   factory PostFile.from(api.FileInfo f) => PostFile(
     id: f.id ?? '',
@@ -43,6 +63,9 @@ class PostFile {
 
   /// A tiny JPEG the server makes of an image, to blur while it loads.
   final Uint8List? miniPreview;
+
+  /// Where an image from a message's text is; null for an uploaded file.
+  final String? link;
 
   FileKind get kind => fileKindOf(extension: extension, mimeType: mimeType);
 

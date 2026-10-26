@@ -261,7 +261,7 @@ class _Image extends StatelessWidget {
         final image = SizedBox.fromSize(
           size: box,
           child:
-              env?.image?.call(b.url, box) ??
+              env?.image?.call(b.url, box, BoxFit.cover) ??
               ColoredBox(color: context.tokens.codeBackground),
         );
         Widget shown = b.person

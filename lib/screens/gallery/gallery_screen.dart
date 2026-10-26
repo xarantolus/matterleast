@@ -10,6 +10,7 @@ import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
+import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
@@ -87,6 +88,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     final file = widget.files[_index];
     final caches = ref.watch(serverImageCachesProvider(widget.url)).value;
     final downloads = ref.watch(fileDownloadsProvider(widget.url)).value;
+    final proxy = ref.watch(imageProxyProvider(widget.url)).value;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Theme(
@@ -133,9 +135,19 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                           item.kind == FileKind.gif ||
                           !item.hasPreview ||
                           _originals.contains(item.id);
-                      final source = original
-                          ? downloads.originalUri(item.id)
-                          : downloads.previewUri(item.id);
+                      final source = switch (item.link) {
+                        final link? when proxy != null => imageRequestUri(
+                          link,
+                          Uri.parse(widget.url),
+                          proxy: proxy,
+                        ),
+                        _? => null,
+                        null =>
+                          original
+                              ? downloads.originalUri(item.id)
+                              : downloads.previewUri(item.id),
+                      };
+                      if (source == null) return const SizedBox.expand();
                       return ExtendedImage(
                         image: CachedNetworkImageProvider(
                           source.toString(),
@@ -178,11 +190,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   position: widget.files.length > 1
                       ? '${_index + 1} of ${widget.files.length}'
                       : null,
-                  menu: FileActionsMenu(
-                    url: widget.url,
-                    file: file,
-                    color: Colors.white,
-                  ),
+                  // An image from a message's text is no file to save.
+                  menu: file.link == null
+                      ? FileActionsMenu(
+                          url: widget.url,
+                          file: file,
+                          color: Colors.white,
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ],
             ),
