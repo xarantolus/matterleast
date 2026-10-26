@@ -71,11 +71,13 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
   }
 
   // Called on every position tick; only a change of playing rebuilds.
+  // Shown controls stay while stopped and hide again once playback goes
+  // on, also after a stall that briefly stopped it.
   void _videoChanged() {
     final playing = widget.video.value.isPlaying;
     if (playing == _playing) return;
     setState(() => _playing = playing);
-    if (!playing) _setControls(true);
+    if (!playing || _controls) _setControls(true);
   }
 
   /// Shows or hides the overlay; shown while playing, it hides again after

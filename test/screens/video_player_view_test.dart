@@ -33,6 +33,18 @@ class _FakePlayer extends VideoPlayerPlatform {
     return id;
   }
 
+  /// The player reporting that it stopped or went on by itself.
+  void playing(bool value) {
+    for (final events in _events.values) {
+      events.add(
+        VideoEvent(
+          eventType: VideoEventType.isPlayingStateUpdate,
+          isPlaying: value,
+        ),
+      );
+    }
+  }
+
   @override
   Stream<VideoEvent> videoEventsFor(int playerId) => _events[playerId]!.stream;
 
@@ -163,6 +175,18 @@ void main() {
     await video.pause();
     await tester.pump();
     expect(controlsShown(tester), isTrue);
+    await close(tester);
+  });
+
+  testWidgets('controls hide again after a stall', (tester) async {
+    await open(tester, play: true);
+    platform.playing(false);
+    await tester.pump();
+    platform.playing(true);
+    await tester.pump(controlsHideDelay);
+    await tester.pump();
+
+    expect(controlsShown(tester), isFalse);
     await close(tester);
   });
 
