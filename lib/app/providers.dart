@@ -7,6 +7,7 @@ import 'package:matterleast/data/servers/server_manager.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
+import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_features.dart';
@@ -110,3 +111,11 @@ Future<String> appVersion(Ref ref) async {
 @Riverpod(keepAlive: true)
 Stream<bool?> use24HourClock(Ref ref) =>
     ref.watch(settingsStoreProvider).watch(Settings.use24HourClock);
+
+@Riverpod(keepAlive: true)
+Stream<MessageTextSize> messageTextSize(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.messageTextSize);
+
+@Riverpod(keepAlive: true)
+Stream<bool> wrapCode(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.wrapCode);

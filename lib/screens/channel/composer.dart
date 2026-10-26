@@ -22,6 +22,7 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
+import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -265,6 +266,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                     child: TextField(
                       controller: _text,
                       focusNode: _focus,
+                      style: Theme.of(context).textTheme.bodyLarge
+                          ?.forMessages(context, fallbackSize: 16),
                       minLines: 1,
                       maxLines: 6,
                       keyboardType: TextInputType.multiline,

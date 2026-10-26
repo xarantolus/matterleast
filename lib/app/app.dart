@@ -4,6 +4,8 @@ import 'package:matterleast/app/launch_gate.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/app/theme_providers.dart';
+import 'package:matterleast/domain/message_text_size.dart';
+import 'package:matterleast/ui/message_display.dart';
 
 class MatterleastApp extends ConsumerWidget {
   const MatterleastApp({super.key});
@@ -14,6 +16,8 @@ class MatterleastApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final use24 = ref.watch(use24HourClockProvider).value;
+    final textSize = ref.watch(messageTextSizeProvider).value;
+    final wrapCode = ref.watch(wrapCodeProvider).value ?? false;
     final themes = ref.watch(appThemesProvider).value;
     return MaterialApp(
       title: 'Matterleast',
@@ -25,7 +29,11 @@ class MatterleastApp extends ConsumerWidget {
           alwaysUse24HourFormat:
               use24 ?? MediaQuery.alwaysUse24HourFormatOf(context),
         ),
-        child: child!,
+        child: MessageDisplay(
+          textScale: (textSize ?? MessageTextSize.normal).scale,
+          wrapCode: wrapCode,
+          child: child!,
+        ),
       ),
       home: const LaunchGate(),
     );

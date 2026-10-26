@@ -9,6 +9,7 @@ import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/markdown/table_block.dart';
+import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 final markdownCache = MarkdownCache();
@@ -50,13 +51,16 @@ class PostBody extends StatelessWidget {
     if (unsafeLinks) options = options.copyWith(unsafeLinks: true);
     final doc = markdownCache.get(postId, editAt, message, options);
     final tokens = context.tokens;
+    final scale = MessageDisplay.of(context).textScale;
     final body =
-        style ??
-        Theme.of(context).textTheme.bodyMedium!.copyWith(color: tokens.text);
+        (style ??
+                Theme.of(context).textTheme.bodyMedium!
+                    .copyWith(color: tokens.text))
+            .forMessages(context);
     final editedSpan = edited
         ? TextSpan(
             text: ' (edited)',
-            style: body.copyWith(color: tokens.muted, fontSize: 12),
+            style: body.copyWith(color: tokens.muted, fontSize: 12 * scale),
           )
         : null;
     final content = switch (doc) {
@@ -72,7 +76,7 @@ class PostBody extends StatelessWidget {
       ParsedPost(:final blocks) => _Blocks(
         blocks: blocks,
         style: isJumbo(blocks)
-            ? body.copyWith(fontSize: 32, height: 1.25)
+            ? body.copyWith(fontSize: 32 * scale, height: 1.25)
             : body,
         trailing: editedSpan,
         images: imageSizes,
@@ -190,7 +194,8 @@ class _Blocks extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      width: MediaQuery.textScalerOf(context).scale(24),
+                      width: MediaQuery.textScalerOf(context)
+                          .scale(24 * MessageDisplay.of(context).textScale),
                       child: switch (item.checked) {
                         final bool done => Icon(
                           done

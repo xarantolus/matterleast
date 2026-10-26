@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:matterleast/data/app_db/app_database.dart';
+import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/rail.dart';
 
 /// One typed setting: its key, default and text encoding. Settings are
@@ -70,6 +71,21 @@ abstract final class Settings {
     _encodeOptionalBool,
   );
 
+  static const messageTextSize = Setting<MessageTextSize>(
+    'messageTextSize',
+    MessageTextSize.normal,
+    _decodeTextSize,
+    _encodeName,
+  );
+
+  /// Code blocks start wrapped instead of scrolling sideways.
+  static const wrapCode = Setting<bool>(
+    'wrapCode',
+    false,
+    _decodeBool,
+    _encodeBool,
+  );
+
   /// The opt-in foreground service that keeps the WebSocket alive.
   static const stayConnected = Setting<bool>(
     'stayConnected',
@@ -93,6 +109,8 @@ abstract final class Settings {
     keepDays,
     keepPostsPerChannel,
     use24HourClock,
+    messageTextSize,
+    wrapCode,
     stayConnected,
     lastRailTarget,
   ];
@@ -108,6 +126,10 @@ abstract final class Settings {
   static String _encodeOptionalBool(bool? value) =>
       value == null ? 'system' : value.toString();
   static String _encodeInt(int value) => value.toString();
+  static MessageTextSize _decodeTextSize(String raw) =>
+      MessageTextSize.values.where((s) => s.name == raw).firstOrNull ??
+      (throw FormatException('text size', raw));
+  static String _encodeName(Enum value) => value.name;
   static RailTarget? _decodeRailTarget(String raw) {
     if (raw.isEmpty) return null;
     try {

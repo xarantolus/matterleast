@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
+import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _previewHeight = 300.0;
@@ -61,7 +62,8 @@ class MessageTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final body = Theme.of(context).textTheme.bodyMedium!
-        .copyWith(color: tokens.text);
+        .copyWith(color: tokens.text)
+        .forMessages(context);
     final columns = table.rows.fold(0, (n, r) => r.length > n ? r.length : n);
     return Table(
       defaultColumnWidth: const IntrinsicColumnWidth(),

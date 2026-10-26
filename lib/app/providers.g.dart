@@ -700,3 +700,75 @@ final class Use24HourClockProvider
 }
 
 String _$use24HourClockHash() => r'd0e8794540e17a29e7e55ed38f0e58708ec67672';
+
+@ProviderFor(messageTextSize)
+final messageTextSizeProvider = MessageTextSizeProvider._();
+
+final class MessageTextSizeProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<MessageTextSize>,
+          MessageTextSize,
+          Stream<MessageTextSize>
+        >
+    with $FutureModifier<MessageTextSize>, $StreamProvider<MessageTextSize> {
+  MessageTextSizeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'messageTextSizeProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$messageTextSizeHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<MessageTextSize> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<MessageTextSize> create(Ref ref) {
+    return messageTextSize(ref);
+  }
+}
+
+String _$messageTextSizeHash() => r'64f057ba1364d163a27b735e0b9cda6f2d4954b4';
+
+@ProviderFor(wrapCode)
+final wrapCodeProvider = WrapCodeProvider._();
+
+final class WrapCodeProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  WrapCodeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wrapCodeProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$wrapCodeHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return wrapCode(ref);
+  }
+}
+
+String _$wrapCodeHash() => r'29d6ee002f5e077605648ad91b2d08edd0583605';

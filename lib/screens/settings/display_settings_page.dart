@@ -4,6 +4,7 @@ import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme_providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
+import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
@@ -23,6 +24,13 @@ enum _Clock {
 
   static _Clock of(bool? use24) => values.firstWhere((c) => c.use24 == use24);
 }
+
+String _textSizeLabel(MessageTextSize size) => switch (size) {
+  MessageTextSize.small => 'Small',
+  MessageTextSize.normal => 'Default',
+  MessageTextSize.large => 'Large',
+  MessageTextSize.larger => 'Larger',
+};
 
 String _themeLabel(ThemeSource source) => switch (source) {
   ThemeSource.brand => 'Matterleast colours',
@@ -69,6 +77,9 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
     final store = ref.read(settingsStoreProvider);
     final clock = _Clock.of(ref.watch(use24HourClockProvider).value);
     final images = ref.watch(imagesOnMobileDataProvider).value ?? true;
+    final textSize =
+        ref.watch(messageTextSizeProvider).value ?? MessageTextSize.normal;
+    final wrapCode = ref.watch(wrapCodeProvider).value ?? false;
     final server = widget.server;
     return Scaffold(
       appBar: AppBar(
@@ -93,6 +104,33 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
                 await store.write(Settings.use24HourClock, picked.use24);
               }
             },
+          ),
+          ListTile(
+            title: const Text('Message text size'),
+            subtitle: Text(
+              '${_textSizeLabel(textSize)}, on top of the phone\'s font size',
+            ),
+            onTap: () async {
+              final picked = await pickOne(
+                context,
+                title: 'Message text size',
+                options: MessageTextSize.values,
+                current: textSize,
+                label: _textSizeLabel,
+              );
+              if (picked != null) {
+                await store.write(Settings.messageTextSize, picked);
+              }
+            },
+          ),
+          SwitchListTile(
+            title: const Text('Wrap lines in code'),
+            subtitle: const Text(
+              'Otherwise long lines scroll sideways. Each code block can '
+              'switch on its own.',
+            ),
+            value: wrapCode,
+            onChanged: (on) => store.write(Settings.wrapCode, on),
           ),
           SwitchListTile(
             title: const Text('Load images on mobile data'),
