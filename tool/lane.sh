@@ -3,7 +3,8 @@
 # with `flutter run`, signed in to the local test server, hot reloaded when
 # lib/ changes. Run from inside the worktree.
 #
-#   tool/lane.sh up [user]      boot an emulator, run the app as user (alice)
+#   tool/lane.sh up [user]      boot an emulator, run the app as user (alice);
+#                               mobile-mcp sees it as device matterleast-<port>
 #   tool/lane.sh reload         hot reload now and print the result
 #   tool/lane.sh restart        hot restart now and print the result
 #   tool/lane.sh shot <label>   screenshot to /tmp/matterleast-shots/, prints the path
@@ -72,8 +73,24 @@ up)
         load
         if alive "${RUN_PID:-}"; then echo "lane $name: already up on emulator-$PORT"; exit 0; fi
     fi
+    if [[ -r /sys/fs/cgroup/pids.max ]] && [[ $(cat /sys/fs/cgroup/pids.max) != max ]]; then
+        left=$(( $(cat /sys/fs/cgroup/pids.max) - $(cat /sys/fs/cgroup/pids.current) ))
+        if (( left < 400 )); then
+            echo "lane: only $left threads left in this container; an emulator needs ~250. Stop a lane first." >&2
+            exit 1
+        fi
+    fi
     port=$(free_port)
-    EMU_PORT=$port "$root/.devcontainer/emulator.sh" start
+    # A copy of the AVD per lane (36 MB; the system image is shared), so
+    # tools that name devices by AVD (mobile-mcp) can tell lanes apart.
+    avd=matterleast-$port
+    avd_dir=$HOME/.android/avd
+    if [[ ! -d $avd_dir/$avd.avd ]]; then
+        cp -r "$avd_dir/matterleast.avd" "$avd_dir/$avd.avd"
+        rm -f "$avd_dir/$avd.avd"/*.lock "$avd_dir/$avd.avd"/multiinstance.lock
+        sed "s#matterleast.avd#$avd.avd#" "$avd_dir/matterleast.ini" > "$avd_dir/$avd.ini"
+    fi
+    EMU_PORT=$port "$root/.devcontainer/emulator.sh" start "$avd"
     export ANDROID_SERIAL="emulator-$port"
     (cd "$root" && flutter pub get > /dev/null)
     : > "$log"
@@ -105,7 +122,7 @@ up)
     for _ in $(seq 400); do
         sleep 1
         if grep -qE 'Flutter run key commands|A Dart VM Service' "$log"; then
-            echo "lane $name: running on emulator-$port as $user; lib/ changes hot reload"
+            echo "lane $name: running on emulator-$port (mobile-mcp device id $avd) as $user; lib/ changes hot reload"
             exit 0
         fi
         if ! alive "$run_pid"; then

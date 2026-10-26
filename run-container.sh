@@ -27,6 +27,9 @@ args=(
   # for mount namespaces, unmasked /proc so a nested procfs can be mounted,
   # /dev/fuse for the fuse-overlayfs fallback.
   -v "${NAME}-containers":/var/lib/containers
+  # Each emulator runs ~200 threads; the default cap of 2048 fits about five
+  # lanes next to Gradle and the Dart tools.
+  --pids-limit 16384
   --cap-add SYS_ADMIN
   --cap-add SYS_PTRACE
   --security-opt unmask=ALL
