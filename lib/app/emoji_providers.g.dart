@@ -32,7 +32,7 @@ final class CustomEmojiProvider
   }) : super(
          retry: null,
          name: r'customEmojiProvider',
-         isAutoDispose: false,
+         isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -70,7 +70,7 @@ final class CustomEmojiProvider
   }
 }
 
-String _$customEmojiHash() => r'ad01a26c488fbd5074450411c483bd514c3c3ab4';
+String _$customEmojiHash() => r'673bce04c2625f20e8842786c8e0314e96bc1ceb';
 
 /// A server's known custom emoji, name → id.
 
@@ -82,7 +82,7 @@ final class CustomEmojiFamily extends $Family
         name: r'customEmojiProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: false,
+        isAutoDispose: true,
       );
 
   /// A server's known custom emoji, name → id.
@@ -203,7 +203,7 @@ final class CustomEmojiResolverProvider
   }) : super(
          retry: null,
          name: r'customEmojiResolverProvider',
-         isAutoDispose: false,
+         isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -242,7 +242,7 @@ final class CustomEmojiResolverProvider
 }
 
 String _$customEmojiResolverHash() =>
-    r'efec19dbdc079ac6d3ed3588efb482952311a178';
+    r'28d575676f8f24ca4e3c78547096069fe6e400b4';
 
 /// Where to report custom emoji names the map above doesn't have yet.
 
@@ -254,7 +254,7 @@ final class CustomEmojiResolverFamily extends $Family
         name: r'customEmojiResolverProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: false,
+        isAutoDispose: true,
       );
 
   /// Where to report custom emoji names the map above doesn't have yet.

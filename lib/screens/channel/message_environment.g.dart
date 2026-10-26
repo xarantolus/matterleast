@@ -26,7 +26,7 @@ final class MessageLinksProvider
   }) : super(
          retry: null,
          name: r'messageLinksProvider',
-         isAutoDispose: false,
+         isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -64,7 +64,7 @@ final class MessageLinksProvider
   }
 }
 
-String _$messageLinksHash() => r'c41d466b54380b0cf794317ff8f027df9e236c67';
+String _$messageLinksHash() => r'1b18652b27d91b6c6dfebb15e7030b202989b620';
 
 final class MessageLinksFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<MessageLinks>, String> {
@@ -74,7 +74,7 @@ final class MessageLinksFamily extends $Family
         name: r'messageLinksProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: false,
+        isAutoDispose: true,
       );
 
   MessageLinksProvider call(String url) =>
@@ -101,7 +101,7 @@ final class ParseOptionsProvider
   }) : super(
          retry: null,
          name: r'parseOptionsProvider',
-         isAutoDispose: false,
+         isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -139,7 +139,7 @@ final class ParseOptionsProvider
   }
 }
 
-String _$parseOptionsHash() => r'fba8944cf0834d9557aadc927b04ac0137b42846';
+String _$parseOptionsHash() => r'a8487d7429a29fefd85aef6b3314b012efeb68b4';
 
 final class ParseOptionsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<ParseOptions>, String> {
@@ -149,7 +149,7 @@ final class ParseOptionsFamily extends $Family
         name: r'parseOptionsProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: false,
+        isAutoDispose: true,
       );
 
   ParseOptionsProvider call(String url) =>

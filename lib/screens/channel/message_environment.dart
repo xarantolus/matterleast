@@ -22,11 +22,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'message_environment.g.dart';
 
-@Riverpod(keepAlive: true)
+@riverpod
 Future<MessageLinks> messageLinks(Ref ref, String url) async =>
     MessageLinks(await ref.watch(serverSessionProvider(url).future));
 
-@Riverpod(keepAlive: true)
+@riverpod
 Stream<ParseOptions> parseOptions(Ref ref, String url) async* {
   final links = await ref.watch(messageLinksProvider(url).future);
   yield* links.parseOptions();

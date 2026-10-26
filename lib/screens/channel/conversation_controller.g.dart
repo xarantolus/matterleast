@@ -68,7 +68,7 @@ final class ConversationProvider
   }
 }
 
-String _$conversationHash() => r'd2e026cfa96bff7b620edd929b0cb28c3a2cae15';
+String _$conversationHash() => r'e67167d2b70dd60c38d1ad7e52363a5e0b0018b7';
 
 /// An open channel, or the thread of [rootId] in it: watches the stored
 /// window, refreshes it once on open, loads older history as the reader
