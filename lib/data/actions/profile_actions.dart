@@ -123,6 +123,25 @@ class ProfileActions {
     await session.store.applyMe(user);
   }
 
+  /// Follows the phone's time zone, or [manual] when not [automatic]. The
+  /// zone the server last heard from a device stays as it is.
+  Future<void> setTimeZone({required bool automatic, String? manual}) async {
+    final current = (await _db.watchMe().first)?.timezone;
+    final user = await session.api.call(
+      () => _client.users.patchUser(
+        userId: 'me',
+        body: api.ApiV4UsersUserIdPatchRequestBody(
+          timezone: api.Timezone(
+            useAutomaticTimezone: '$automatic',
+            automaticTimezone: current?.automaticTimezone ?? '',
+            manualTimezone: manual ?? current?.manualTimezone ?? '',
+          ),
+        ),
+      ),
+    );
+    await session.store.applyMe(user);
+  }
+
   /// Uploads a new profile picture.
   Future<void> setPicture(File image) async {
     final me = await _myId();

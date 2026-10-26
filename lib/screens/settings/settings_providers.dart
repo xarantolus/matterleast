@@ -7,6 +7,7 @@ import 'package:matterleast/data/views/settings_views.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
+import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -46,6 +47,21 @@ Stream<NotifyProps> notifySettings(Ref ref, String url) async* {
 @Riverpod(retry: noRetry)
 Future<void> notifySettingsRefresh(Ref ref, String url) async =>
     (await ref.watch(settingsActionsProvider(url).future)).refreshNotifyProps();
+
+/// The user's time zone setting as stored.
+@riverpod
+Stream<ZoneSetting?> zoneSetting(Ref ref, String url) async* {
+  final db = (await ref.watch(serverSessionProvider(url).future)).db;
+  yield* db.watchMe().map((me) {
+    if (me == null) return null;
+    final zone = me.timezone;
+    return zoneSettingOf(
+      useAutomatic: zone?.useAutomaticTimezone,
+      automatic: zone?.automaticTimezone,
+      manual: zone?.manualTimezone,
+    );
+  }).distinct();
+}
 
 @riverpod
 Stream<DisplayPrefs> displayPrefs(Ref ref, String url) async* {

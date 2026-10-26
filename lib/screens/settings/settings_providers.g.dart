@@ -300,6 +300,90 @@ final class NotifySettingsRefreshFamily extends $Family
   String toString() => r'notifySettingsRefreshProvider';
 }
 
+/// The user's time zone setting as stored.
+
+@ProviderFor(zoneSetting)
+final zoneSettingProvider = ZoneSettingFamily._();
+
+/// The user's time zone setting as stored.
+
+final class ZoneSettingProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ZoneSetting?>,
+          ZoneSetting?,
+          Stream<ZoneSetting?>
+        >
+    with $FutureModifier<ZoneSetting?>, $StreamProvider<ZoneSetting?> {
+  /// The user's time zone setting as stored.
+  ZoneSettingProvider._({
+    required ZoneSettingFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'zoneSettingProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$zoneSettingHash();
+
+  @override
+  String toString() {
+    return r'zoneSettingProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<ZoneSetting?> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<ZoneSetting?> create(Ref ref) {
+    final argument = this.argument as String;
+    return zoneSetting(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ZoneSettingProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$zoneSettingHash() => r'1535b27496cf0489ed64bd7c50fe358febbec6da';
+
+/// The user's time zone setting as stored.
+
+final class ZoneSettingFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<ZoneSetting?>, String> {
+  ZoneSettingFamily._()
+    : super(
+        retry: null,
+        name: r'zoneSettingProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The user's time zone setting as stored.
+
+  ZoneSettingProvider call(String url) =>
+      ZoneSettingProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'zoneSettingProvider';
+}
+
 @ProviderFor(displayPrefs)
 final displayPrefsProvider = DisplayPrefsFamily._();
 

@@ -153,4 +153,38 @@ void main() {
     expect(recentCustomStatuses(null), isEmpty);
     expect(recentCustomStatuses('{oops'), isEmpty);
   });
+
+  group('the time zone setting', () {
+    test('is automatic unless the server says otherwise', () {
+      expect(zoneSettingOf().automatic, isTrue);
+      expect(
+        zoneSettingLabel(
+          zoneSettingOf(useAutomatic: 'true', automatic: 'America/New_York'),
+        ),
+        'Automatic · America / New York',
+      );
+      expect(
+        zoneSettingLabel(
+          zoneSettingOf(
+            useAutomatic: 'false',
+            automatic: 'Europe/Berlin',
+            manual: 'Asia/Kolkata',
+          ),
+        ),
+        'Asia / Kolkata',
+      );
+      expect(zoneSettingLabel(zoneSettingOf(automatic: '')), 'Automatic');
+    });
+
+    test('finds zones by any part of their name', () {
+      const zones = ['America/New_York', 'America/Denver', 'Europe/Berlin'];
+      expect(matchingZones(zones, 'new york'), ['America/New_York']);
+      expect(matchingZones(zones, 'AMERICA'), [
+        'America/New_York',
+        'America/Denver',
+      ]);
+      expect(matchingZones(zones, ''), zones);
+      expect(matchingZones(zones, 'tokyo'), isEmpty);
+    });
+  });
 }

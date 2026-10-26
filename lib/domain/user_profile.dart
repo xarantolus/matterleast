@@ -78,6 +78,55 @@ List<CustomStatus> recentCustomStatuses(String? json) {
   ].where((s) => s.emoji.isNotEmpty || s.text.isNotEmpty).toList();
 }
 
+/// The user's time zone setting on the server: the phone's zone, which
+/// the server last heard as [automaticZone], or [manualZone] picked by hand.
+typedef ZoneSetting = ({
+  bool automatic,
+  String? automaticZone,
+  String? manualZone,
+});
+
+/// Pure: the setting from the profile's values; automatic unless the
+/// server says `false`, as the server defaults it.
+ZoneSetting zoneSettingOf({
+  String? useAutomatic,
+  String? automatic,
+  String? manual,
+}) => (
+  automatic: useAutomatic != 'false',
+  automaticZone: automatic == null || automatic.isEmpty ? null : automatic,
+  manualZone: manual == null || manual.isEmpty ? null : manual,
+);
+
+/// Pure: how the time zone setting reads in Settings.
+String zoneSettingLabel(ZoneSetting setting) => setting.automatic
+    ? switch (setting.automaticZone) {
+        final zone? => 'Automatic · ${zoneLabel(zone)}',
+        null => 'Automatic',
+      }
+    : zoneLabel(setting.manualZone ?? 'UTC');
+
+/// Pure: an IANA zone as people read it: `America/New_York` as
+/// "America / New York".
+String zoneLabel(String zone) =>
+    zone.replaceAll('_', ' ').replaceAll('/', ' / ');
+
+/// Pure: the zones whose name contains every word of [query], ignoring
+/// case, spaces and underscores.
+List<String> matchingZones(Iterable<String> zones, String query) {
+  final words = [
+    for (final w in query.toLowerCase().split(RegExp(r'[\s/_]+')))
+      if (w.isNotEmpty) w,
+  ];
+  return [
+    for (final zone in zones)
+      if (words.every(
+        (w) => zone.toLowerCase().replaceAll('_', ' ').contains(w),
+      ))
+        zone,
+  ];
+}
+
 /// Pure: the IANA zone a user's timezone settings stand for, or null.
 String? timezoneName({
   String? useAutomatic,

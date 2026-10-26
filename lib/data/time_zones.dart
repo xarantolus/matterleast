@@ -3,13 +3,25 @@ import 'package:timezone/timezone.dart' as tz;
 
 var _loaded = false;
 
+void _load() {
+  if (_loaded) return;
+  tz_data.initializeTimeZones();
+  _loaded = true;
+}
+
+/// Every IANA zone the database knows, in name order.
+List<String> allTimeZones() {
+  _load();
+  return [
+    for (final name in tz.timeZoneDatabase.locations.keys)
+      if (name.contains('/') && !name.startsWith('Etc/')) name,
+  ]..sort();
+}
+
 /// The wall-clock time in the IANA zone [zone] at [now], or null for a zone
 /// the database doesn't know. The database loads on first use.
 DateTime? wallTimeIn(String zone, DateTime now) {
-  if (!_loaded) {
-    tz_data.initializeTimeZones();
-    _loaded = true;
-  }
+  _load();
   final tz.Location location;
   try {
     location = tz.getLocation(zone);

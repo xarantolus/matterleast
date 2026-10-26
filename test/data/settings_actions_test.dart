@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/data/actions/profile_actions.dart';
 import 'package:matterleast/data/actions/settings_actions.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -101,6 +102,53 @@ void main() {
       after.withAutoReply(true, '   ').autoReplyMessage,
       NotifyProps.defaultAutoReply,
     );
+  });
+
+  test('a time zone picked by hand keeps the one the devices reported, '
+      'and switching back to automatic keeps the picked one', () async {
+    Map<String, Object?>? zone;
+    server.handle = (r) => switch (r.path) {
+      '/api/v4/users/me/patch' => ok({
+        'id': meId,
+        'username': 'river',
+        'timezone': zone = r.body['timezone']! as Map<String, Object?>,
+      }),
+      _ => ok({
+        'id': meId,
+        'username': 'river',
+        'timezone': {
+          'useAutomaticTimezone': 'true',
+          'automaticTimezone': 'Europe/Berlin',
+          'manualTimezone': '',
+        },
+      }),
+    };
+    await session.store.applyMe(
+      api.User.fromJson({
+        'id': meId,
+        'username': 'river',
+        'timezone': {
+          'useAutomaticTimezone': 'true',
+          'automaticTimezone': 'Europe/Berlin',
+          'manualTimezone': '',
+        },
+      }),
+    );
+    final profile = ProfileActions(session);
+
+    await profile.setTimeZone(automatic: false, manual: 'Asia/Tokyo');
+    expect(zone, {
+      'useAutomaticTimezone': 'false',
+      'automaticTimezone': 'Europe/Berlin',
+      'manualTimezone': 'Asia/Tokyo',
+    });
+
+    await profile.setTimeZone(automatic: true);
+    expect(zone, {
+      'useAutomaticTimezone': 'true',
+      'automaticTimezone': 'Europe/Berlin',
+      'manualTimezone': 'Asia/Tokyo',
+    });
   });
 
   test('saved mention words reach the Mentions search at once', () async {

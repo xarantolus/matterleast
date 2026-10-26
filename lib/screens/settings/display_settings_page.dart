@@ -9,8 +9,10 @@ import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
+import 'package:matterleast/screens/settings/time_zone_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 enum _Clock {
@@ -151,6 +153,7 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
         theme == ThemeSource.wallpaper &&
         ref.watch(wallpaperPaletteProvider).value == null;
     final prefs = ref.watch(displayPrefsProvider(url)).value;
+    final zone = ref.watch(zoneSettingProvider(url)).value;
     return [
       SettingsHeader('Saved on the server · ${server.displayName}'),
       ListTile(
@@ -174,6 +177,16 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
           }
         },
       ),
+      if (zone != null)
+        ListTile(
+          title: const Text('Time zone'),
+          subtitle: Text(zoneSettingLabel(zone)),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => TimeZonePage(server: server),
+            ),
+          ),
+        ),
       if (prefs != null) ...[
         SwitchListTile(
           title: const Text('Collapsed reply threads'),
