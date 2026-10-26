@@ -279,6 +279,7 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
             hintText: e.placeholder,
             helperText: help,
             helperMaxLines: 3,
+            alignLabelWithHint: e.type == DialogElementType.textarea,
             errorText: error,
             border: const OutlineInputBorder(),
           ),

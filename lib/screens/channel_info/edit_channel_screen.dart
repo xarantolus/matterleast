@@ -212,6 +212,8 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
               decoration: const InputDecoration(
                 labelText: 'Purpose (optional)',
                 helperText: 'What the channel is for, shown in its info.',
+                helperMaxLines: 2,
+                alignLabelWithHint: true,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -226,6 +228,8 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
             decoration: const InputDecoration(
               labelText: 'Header (optional)',
               helperText: 'Shown above the messages.',
+              helperMaxLines: 2,
+              alignLabelWithHint: true,
               border: OutlineInputBorder(),
             ),
           ),

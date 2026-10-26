@@ -158,6 +158,15 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
     }
   }
 
+  void _create() => unawaited(
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            EditChannelScreen(url: widget.url, teamId: widget.teamId),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final rights = ref.watch(teamRightsProvider(widget.url, widget.teamId));
@@ -179,12 +188,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
               ),
-              onPressed: () => Navigator.of(context).pushReplacement(
-                MaterialPageRoute<void>(
-                  builder: (_) =>
-                      EditChannelScreen(url: widget.url, teamId: widget.teamId),
-                ),
-              ),
+              onPressed: _create,
               child: const Text('Create'),
             ),
         ],
@@ -259,6 +263,12 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                                 : "You're in every public channel of this "
                                       'team. Create one to start something '
                                       'new.',
+                            action: canCreate && !_archived && _term.isEmpty
+                                ? FilledButton.tonal(
+                                    onPressed: _create,
+                                    child: const Text('Create channel'),
+                                  )
+                                : null,
                           )
                   : NotificationListener<ScrollNotification>(
                       onNotification: (n) {
