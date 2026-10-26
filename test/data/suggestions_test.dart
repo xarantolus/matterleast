@@ -9,6 +9,7 @@ import 'package:matterleast/domain/autocomplete.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 void main() {
   late FakeServer server;
@@ -80,7 +81,7 @@ void main() {
     server.handle = (r) => answer.future;
     final first = suggest('@ma');
     final second = suggest('@ma');
-    await Future<void>.delayed(const Duration(milliseconds: 100));
+    await eventually(() => server.seen.isNotEmpty);
     answer.complete(ok({'users': <Object?>[], 'out_of_channel': <Object?>[]}));
     await Future.wait([first, second]);
     expect(server.seen.length, 1);

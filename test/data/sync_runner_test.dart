@@ -105,7 +105,7 @@ void main() {
         SyncJob(
           key: 'slow',
           timeout: const Duration(milliseconds: 20),
-          run: () => Future<void>.delayed(const Duration(seconds: 5)),
+          run: () => Completer<void>().future,
         ),
       ),
       throwsA(isA<RequestTimeout>()),

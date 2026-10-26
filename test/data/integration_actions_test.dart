@@ -12,6 +12,7 @@ import 'package:matterleast/domain/integration_blocks.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 void main() {
   late FakeServer server;
@@ -81,7 +82,7 @@ void main() {
     reply = () => answer.future;
     final first = actions.run(request());
     final second = actions.run(request());
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await eventually(() => server.seen.isNotEmpty);
     answer.complete(ok({'status': 'OK'}));
     await Future.wait([first, second]);
     expect(server.seen, hasLength(1));

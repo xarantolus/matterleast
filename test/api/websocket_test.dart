@@ -18,6 +18,7 @@ import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
 
 import '../support/fake_socket_server.dart';
+import '../support/wait.dart';
 
 void main() {
   group('rules', () {
@@ -179,12 +180,7 @@ void main() {
       socket.start();
     }
 
-    Future<void> until(bool Function() condition) async {
-      for (var i = 0; i < 200 && !condition(); i++) {
-        await Future<void>.delayed(const Duration(milliseconds: 10));
-      }
-      expect(condition(), isTrue);
-    }
+    Future<void> until(bool Function() condition) => eventually(condition);
 
     test('authenticates with the token after opening, then pings', () async {
       final actions = <Map<String, Object?>>[];

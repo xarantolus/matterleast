@@ -12,6 +12,7 @@ import 'package:matterleast/data/store/server_store.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 void main() {
   late FakeServer server;
@@ -49,7 +50,7 @@ void main() {
   test('a reaction shows before the server answers', () async {
     hold = Completer();
     final adding = actions.addReaction('old1', 'tada');
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await eventually(() async => (await myReactions()).isNotEmpty);
     expect(await myReactions(), ['tada']);
     expect((await old1()).reactionCount, 1);
     hold!.complete(ok({'user_id': meId, 'post_id': 'old1'}));
@@ -104,7 +105,7 @@ void main() {
   test('an edit shows at once and only the text is sent', () async {
     hold = Completer();
     final editing = actions.editPost('old1', 'good morning');
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await eventually(() => server.seen.isNotEmpty);
     expect((await old1()).message, 'good morning');
     expect((await old1()).editAt, isNotNull);
     expect(server.seen.single.body, {'message': 'good morning'});

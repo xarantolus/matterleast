@@ -7,6 +7,7 @@ import 'package:matterleast/data/views/root_views.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 void main() {
   late FakeServer server;
@@ -25,8 +26,11 @@ void main() {
     await server.close();
   });
 
-  Future<void> settle() =>
-      Future<void>.delayed(const Duration(milliseconds: 600));
+  /// Waits until the stored draft of the channel reads [message].
+  Future<void> saved(String message) => eventually(() async {
+    final rows = await session.db.select(session.db.drafts).get();
+    return rows.any((r) => r.message == message);
+  });
 
   final photo = api.FileInfo.fromJson({
     'id': 'file1',
@@ -55,7 +59,7 @@ void main() {
       ),
     );
     expect(await session.db.select(session.db.drafts).get(), isEmpty);
-    await settle();
+    await saved('half a thought');
 
     final fresh = ComposerActions(session);
     final draft = (await fresh.loadDraft(channelId))!;
@@ -72,7 +76,7 @@ void main() {
       ..saveDraft(const Draft(channelId: channelId, message: 'h'))
       ..saveDraft(const Draft(channelId: channelId, message: 'he'))
       ..saveDraft(const Draft(channelId: channelId, message: 'hey'));
-    await settle();
+    await saved('hey');
     final rows = await session.db.select(session.db.drafts).get();
     expect(rows.single.message, 'hey');
   });
@@ -113,7 +117,11 @@ void main() {
     () async {
       actions.saveDraft(const Draft(channelId: channelId, message: 'go'));
       await actions.send(channelId, message: 'go');
-      await settle();
+      // A later save in a thread lands after the one that was waiting.
+      actions.saveDraft(
+        const Draft(channelId: channelId, rootId: 'root1', message: 'mark'),
+      );
+      await saved('mark');
       expect(await actions.loadDraft(channelId), isNull);
     },
   );

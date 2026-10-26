@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/server_api.dart';
 
+import '../support/wait.dart';
+
 void main() {
   late HttpServer server;
   late List<HttpRequest> seen;
@@ -180,7 +182,7 @@ void main() {
     final a = api.call(() => api.client.users.getUser(userId: 'me'));
     final b = api.call(() => api.client.users.getUser(userId: 'me'));
     final other = api.call(() => api.client.users.getUser(userId: 'u2'));
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await eventually(() => seen.length == 2);
     gate.complete();
     final results = await Future.wait([a, b, other]);
     expect(results.map((u) => u.id), ['me', 'me', 'u2']);
@@ -233,7 +235,7 @@ void main() {
       scope,
       () => api.call(() => api.client.users.getUser(userId: 'me')),
     );
-    await Future<void>.delayed(const Duration(milliseconds: 100));
+    await eventually(() => seen.length == 2);
     scope.cancel();
     await expectLater(stopped, throwsA(isA<Cancelled>()));
     api.close();
