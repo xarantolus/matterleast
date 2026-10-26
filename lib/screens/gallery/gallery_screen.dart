@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:chewie/chewie.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +13,7 @@ import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
-import 'package:matterleast/ui/legacy_material.dart';
+import 'package:matterleast/screens/gallery/video_player_view.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:video_player/video_player.dart';
@@ -45,7 +44,7 @@ Route<void> galleryRoute({
 );
 
 /// A message's pictures and videos on black, one per page: pinch or
-/// double-tap to zoom, swipe between them, slide down to close. A tap
+/// double-tap to zoom, swipe between them, slide up or down to close. A tap
 /// shows or hides the bars.
 class GalleryScreen extends ConsumerStatefulWidget {
   const GalleryScreen({
@@ -121,6 +120,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                             url: widget.url,
                             file: item,
                             autoplay: i == widget.initialIndex,
+                            onControlsChanged: (visible) {
+                              if (i == _index) setState(() => _bars = visible);
+                            },
                           ),
                         );
                       }
@@ -204,8 +206,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   }
 }
 
-const _barHeight = 64.0;
-
 /// The author, time and menu on top, over a scrim only as dark as the white
 /// text needs.
 class _Bars extends StatelessWidget {
@@ -283,11 +283,13 @@ class _VideoPage extends ConsumerStatefulWidget {
     required this.url,
     required this.file,
     required this.autoplay,
+    required this.onControlsChanged,
   });
 
   final String url;
   final PostFile file;
   final bool autoplay;
+  final ValueChanged<bool> onControlsChanged;
 
   @override
   ConsumerState<_VideoPage> createState() => _VideoPageState();
@@ -295,7 +297,7 @@ class _VideoPage extends ConsumerStatefulWidget {
 
 class _VideoPageState extends ConsumerState<_VideoPage> {
   VideoPlayerController? _video;
-  ChewieController? _player;
+  var _ready = false;
   Object? _error;
 
   @override
@@ -330,15 +332,8 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
       // A stalled connection must not leave a spinner forever.
       await video.initialize().timeout(const Duration(seconds: 30));
       if (!mounted) return;
-      setState(
-        () => _player = ChewieController(
-          videoPlayerController: video,
-          autoPlay: widget.autoplay,
-          allowFullScreen: false,
-          showOptions: false,
-          allowMuting: true,
-        ),
-      );
+      if (widget.autoplay) unawaited(video.play());
+      setState(() => _ready = true);
     } on Object catch (e) {
       final video = _video;
       _video = null;
@@ -349,14 +344,13 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
 
   @override
   void dispose() {
-    _player?.dispose();
     _video?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final player = _player;
+    final video = _video;
     if (_error case final error?) {
       final cause = error is ApiError || error is TimeoutException
           ? requestProblemText(error, Uri.parse(widget.url).host)
@@ -380,15 +374,12 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
         ),
       );
     }
-    if (player == null) {
+    if (!_ready || video == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    // The player's own controls sit between the gallery's two bars.
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: _barHeight),
-        child: LegacyMaterial(child: Chewie(controller: player)),
-      ),
+    return VideoPlayerView(
+      video: video,
+      onControlsChanged: widget.onControlsChanged,
     );
   }
 }
