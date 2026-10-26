@@ -70,3 +70,4 @@ setup-specific-guide.md
 !.devcontainer/server/*.sh
 !tool/*.sh
 node_modules/
+.lane.pid
