@@ -176,6 +176,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final options = ref.watch(postPriorityOptionsProvider(widget.url)).value;
     final uploads =
         ref.watch(featuresProvider(widget.url)).value?.fileUploads ?? true;
+    final canPrioritize = widget.rootId.isEmpty && (options?.priority ?? false);
     final canSend =
         (value.text.text.trim().isNotEmpty ||
             files.any((a) => a.info != null)) &&
@@ -221,6 +222,43 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 attachments: files,
                 onRemove: ref.read(_provider.notifier).detach,
               ),
+            if (value.priority case final priority?
+                when canPrioritize && editing == null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.md,
+                  Spacing.sm,
+                  Spacing.md,
+                  0,
+                ),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: PriorityChip(
+                    priority: priority,
+                    onPressed: () => _pickPriority(options!.acknowledgements),
+                    onDeleted: () =>
+                        ref.read(_provider.notifier).setPriority(null),
+                  ),
+                ),
+              ),
+            if (length >= limit * _counterFrom)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.lg,
+                  Spacing.xs,
+                  Spacing.lg,
+                  0,
+                ),
+                child: Text(
+                  '$length / $limit',
+                  textAlign: TextAlign.end,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: length > limit
+                        ? Theme.of(context).colorScheme.error
+                        : tokens.muted,
+                  ),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 Spacing.xs,
@@ -231,66 +269,65 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  if (editing == null && uploads)
+                  if (editing == null && (uploads || canPrioritize))
                     IconButton(
                       tooltip: 'Attach',
-                      onPressed: files.length >= maxAttachments
+                      onPressed:
+                          (!uploads || files.length >= maxAttachments) &&
+                              !canPrioritize
                           ? null
-                          : _attach,
+                          : () => _attach(
+                              uploads: uploads,
+                              acknowledgements: canPrioritize
+                                  ? options!.acknowledgements
+                                  : null,
+                            ),
                       icon: const Icon(Icons.add_circle_outline),
                     )
                   else
                     const SizedBox(width: Spacing.md),
-                  if (editing == null &&
-                      widget.rootId.isEmpty &&
-                      (options?.priority ?? false))
-                    IconButton(
-                      tooltip: 'Message priority',
-                      isSelected: value.priority != null,
-                      onPressed: () => _pickPriority(options!.acknowledgements),
-                      icon: Icon(switch (value.priority?.priority) {
-                        api.PostPriorityPriority.urgent => Icons.error,
-                        api.PostPriorityPriority.important => Icons.info,
-                        _ => Icons.flag_outlined,
-                      }),
-                    ),
                   Expanded(
-                    child: TextField(
-                      controller: _text,
-                      focusNode: _focus,
-                      style: Theme.of(context).textTheme.bodyLarge
-                          ?.forMessages(context, fallbackSize: 16),
-                      minLines: 1,
-                      maxLines: 6,
-                      keyboardType: TextInputType.multiline,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: InputDecoration(
-                        suffixIcon: IconButton(
-                          tooltip: 'Emoji',
-                          onPressed: _pickEmoji,
-                          icon: const Icon(Icons.mood),
+                    child: Stack(
+                      children: [
+                        TextField(
+                          controller: _text,
+                          focusNode: _focus,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.forMessages(context, fallbackSize: 16),
+                          minLines: 1,
+                          maxLines: 6,
+                          keyboardType: TextInputType.multiline,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: InputDecoration(
+                            hintText: widget.hint,
+                            hintMaxLines: 1,
+                            filled: true,
+                            isDense: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding:
+                                const EdgeInsetsDirectional.fromSTEB(
+                                  Spacing.lg,
+                                  Spacing.md,
+                                  48,
+                                  Spacing.md,
+                                ),
+                          ),
                         ),
-                        hintText: widget.hint,
-                        hintMaxLines: 1,
-                        filled: true,
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
+                        // At the bottom like send, so a long message keeps
+                        // it next to the line being written.
+                        PositionedDirectional(
+                          end: 0,
+                          bottom: 0,
+                          child: IconButton(
+                            tooltip: 'Emoji',
+                            onPressed: _pickEmoji,
+                            icon: const Icon(Icons.mood),
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: Spacing.lg,
-                          vertical: Spacing.md,
-                        ),
-                        counterText: length >= limit * _counterFrom
-                            ? '$length / $limit'
-                            : null,
-                        counterStyle: length > limit
-                            ? TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                              )
-                            : null,
-                      ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: Spacing.xs),
@@ -333,8 +370,13 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     );
   }
 
-  Future<void> _attach() async {
+  /// Files only with [uploads]; priority unless [acknowledgements] is null.
+  Future<void> _attach({
+    required bool uploads,
+    required bool? acknowledgements,
+  }) async {
     FocusManager.instance.primaryFocus?.unfocus();
+    final room = maxAttachments - ref.read(_provider).attachments.length;
     final source = await showModalBottomSheet<PickSource>(
       context: context,
       showDragHandle: true,
@@ -342,26 +384,40 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (final (source, icon, label) in const [
-              (PickSource.camera, Icons.photo_camera_outlined, 'Take a photo'),
-              (
-                PickSource.media,
-                Icons.photo_library_outlined,
-                'Photos and videos',
-              ),
-              (PickSource.files, Icons.attach_file, 'Files'),
-            ])
+            if (uploads)
+              for (final (source, icon, label) in const [
+                (
+                  PickSource.camera,
+                  Icons.photo_camera_outlined,
+                  'Take a photo',
+                ),
+                (
+                  PickSource.media,
+                  Icons.photo_library_outlined,
+                  'Photos and videos',
+                ),
+                (PickSource.files, Icons.attach_file, 'Files'),
+              ])
+                ListTile(
+                  leading: Icon(icon),
+                  title: Text(label),
+                  enabled: room > 0,
+                  onTap: () => Navigator.of(sheet).pop(source),
+                ),
+            if (acknowledgements != null)
               ListTile(
-                leading: Icon(icon),
-                title: Text(label),
-                onTap: () => Navigator.of(sheet).pop(source),
+                leading: const Icon(Icons.flag_outlined),
+                title: const Text('Message priority'),
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  unawaited(_pickPriority(acknowledgements));
+                },
               ),
           ],
         ),
       ),
     );
     if (source == null) return;
-    final room = maxAttachments - ref.read(_provider).attachments.length;
     final picked = await pickFiles(source, room);
     if (!mounted) return;
     if (picked.length > room) {
@@ -448,6 +504,46 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       };
       messenger.showSnackBar(SnackBar(content: Text(text)));
     }
+  }
+}
+
+/// The priority the message will be sent with, above the field; a tap
+/// changes it.
+class PriorityChip extends StatelessWidget {
+  const PriorityChip({
+    required this.priority,
+    required this.onPressed,
+    required this.onDeleted,
+    super.key,
+  });
+
+  final api.PostPriority priority;
+  final VoidCallback onPressed;
+  final VoidCallback onDeleted;
+
+  @override
+  Widget build(BuildContext context) {
+    final urgent = priority.priority == api.PostPriorityPriority.urgent;
+    final colors = Theme.of(context).colorScheme;
+    return InputChip(
+      visualDensity: VisualDensity.compact,
+      avatar: Icon(
+        urgent ? Icons.error : Icons.info,
+        color: urgent ? colors.error : colors.primary,
+      ),
+      label: Text(
+        [
+          if (urgent) 'Urgent' else 'Important',
+          if (priority.requestedAck ?? false) 'acknowledgement requested',
+        ].join(' · '),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      tooltip: 'Message priority',
+      onPressed: onPressed,
+      onDeleted: onDeleted,
+      deleteButtonTooltipMessage: 'Remove priority',
+    );
   }
 }
 
