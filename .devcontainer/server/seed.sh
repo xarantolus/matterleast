@@ -41,14 +41,14 @@ login() {
     ID[$user]=$(api "$user" GET /users/me | jq -r .id)
 }
 
-# user <name> <first> <last> <position> <avatar colour>
+# user <name> <first> <last> <position>
 user() {
-    local name=$1 first=$2 last=$3 position=$4 colour=$5
+    local name=$1 first=$2 last=$3 position=$4
     curl -sS -m 30 --fail-with-body -X POST "$API/users" -H 'Content-Type: application/json' \
         --data-binary "$(jq -n --arg u "$name" --arg p "$PASSWORD" --arg f "$first" --arg l "$last" --arg pos "$position" \
             '{username:$u, email:($u+"@example.test"), password:$p, first_name:$f, last_name:$l, position:$pos}')" >/dev/null
     login "$name"
-    node make-png.js "$TMP/$name.png" "$colour" 128
+    node make-avatar.js "$TMP/$name.png" "$name" 256
     upload "$name" "/users/${ID[$name]}/image" -F "image=@$TMP/$name.png" >/dev/null
     echo "seed: user $name"
 }
@@ -101,19 +101,19 @@ if login admin 2>/dev/null; then
 fi
 
 # The first account on a fresh server becomes the system admin.
-user admin Ada Admin "Keeper of the server" 3b5bdb
-user alice Alice Archer "Backend" c2255c
-user bob Bob Brook "Design" 2b8a3e
-user carol Carol Cheng "Mobile" e8590c
-user dave Dave Duarte "Ops" 1971c2
-user erin Erin Eide "Support" 862e9c
+user admin Ada Admin "Keeper of the server"
+user alice Alice Archer "Backend"
+user bob Bob Brook "Design"
+user carol Carol Cheng "Mobile"
+user dave Dave Duarte "Ops"
+user erin Erin Eide "Support"
 
 LIGHTHOUSE=$(team lighthouse "Lighthouse Crew")
 HARBOR=$(team harbor "Harbor Side")
 team_add "$LIGHTHOUSE" alice bob carol dave erin
 team_add "$HARBOR" alice bob
 # Harbor Side keeps no icon, so the rail shows both an icon and initials.
-node make-png.js "$TMP/team-lighthouse.png" 5f3dc4 128
+node make-avatar.js "$TMP/team-lighthouse.png" "Lighthouse Crew" 256
 upload admin "/teams/$LIGHTHOUSE/image" -F "image=@$TMP/team-lighthouse.png" >/dev/null
 echo "seed: teams"
 
