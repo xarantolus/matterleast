@@ -76,19 +76,42 @@ void main() {
       expect(view.refreshing, isTrue);
     });
 
-    test("show the server's answer once it arrives", () {
+    test("the server's answer adds below the stored matches, which stay "
+        'where they are', () {
       final view = searchView<int>(
         local: const [1],
         server: const [3, 1, 2],
         serverLoading: false,
       ) as SearchShown<int>;
-      expect(view.results, [3, 1, 2]);
+      expect(view.results, [1]);
+      expect(view.more, [3, 2]);
       expect(view.refreshing, isFalse);
+    });
+
+    test("without stored matches the server's answer shows as it is", () {
+      final view = searchView<int>(
+        local: const [],
+        server: const [3, 1, 2],
+        serverLoading: false,
+      ) as SearchShown<int>;
+      expect(view.results, [3, 1, 2]);
+      expect(view.more, isEmpty);
+    });
+
+    test('the same result is recognised by its key', () {
+      final view = searchView<(int, String)>(
+        local: const [(1, 'saved')],
+        server: const [(1, 'fresh'), (2, 'fresh')],
+        serverLoading: false,
+        keyOf: (r) => r.$1,
+      ) as SearchShown<(int, String)>;
+      expect(view.results, [(1, 'saved')]);
+      expect(view.more, [(2, 'fresh')]);
     });
 
     test('keep the last answer while refreshing', () {
       final view = searchView<int>(
-        local: const [1],
+        local: const [],
         server: const [3],
         serverLoading: true,
       ) as SearchShown<int>;

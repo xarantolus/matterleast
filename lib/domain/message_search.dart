@@ -197,9 +197,18 @@ class SearchLoading<T> extends SearchView<T> {
 }
 
 class SearchShown<T> extends SearchView<T> {
-  const SearchShown(this.results, {required this.refreshing, this.notice});
+  const SearchShown(
+    this.results, {
+    required this.refreshing,
+    this.notice,
+    this.more = const [],
+  });
 
   final List<T> results;
+
+  /// What the server found beyond the stored [results], shown below them
+  /// so the rows already on screen stay where they are.
+  final List<T> more;
 
   /// The server's answer is still coming.
   final bool refreshing;
@@ -220,20 +229,36 @@ class SearchFailed<T> extends SearchView<T> {
   final String cause;
 }
 
-/// Pure: stored matches show at once; the server's answer replaces them
-/// when it arrives; a failed server keeps the stored ones.
+/// Pure: stored matches show at once; the server's answer adds what they
+/// lack below them, so nothing the reader sees moves; a failed server
+/// keeps the stored ones. [keyOf] tells which results are the same.
 SearchView<T> searchView<T>({
   required List<T>? local,
   required List<T>? server,
   required bool serverLoading,
   String? serverError,
+  Object? Function(T)? keyOf,
 }) {
+  SearchShown<T> merged(List<T> server, {required bool refreshing}) {
+    if (local == null || local.isEmpty) {
+      return SearchShown(server, refreshing: refreshing);
+    }
+    final key = keyOf ?? (T item) => item;
+    final stored = {for (final item in local) key(item)};
+    return SearchShown(
+      local,
+      refreshing: refreshing,
+      more: [
+        for (final item in server)
+          if (!stored.contains(key(item))) item,
+      ],
+    );
+  }
+
   if (server != null && !serverLoading) {
-    return server.isEmpty
-        ? (local?.isNotEmpty ?? false)
-              ? SearchShown(local!, refreshing: false)
-              : const SearchEmpty()
-        : SearchShown(server, refreshing: false);
+    return server.isEmpty && !(local?.isNotEmpty ?? false)
+        ? const SearchEmpty()
+        : merged(server, refreshing: false);
   }
   if (serverError != null && !serverLoading) {
     return (local?.isNotEmpty ?? false)
@@ -244,9 +269,11 @@ SearchView<T> searchView<T>({
           )
         : (local == null ? const SearchLoading() : SearchFailed(serverError));
   }
-  final shown = server ?? local;
-  if (shown == null || shown.isEmpty) return const SearchLoading();
-  return SearchShown(shown, refreshing: true);
+  if (server != null && server.isNotEmpty) {
+    return merged(server, refreshing: true);
+  }
+  if (local == null || local.isEmpty) return const SearchLoading();
+  return SearchShown(local, refreshing: true);
 }
 
 /// Pure: [items] with the day before each run of items from one local day,

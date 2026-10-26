@@ -507,9 +507,10 @@ class _MessageResults extends ConsumerWidget {
       ),
       SearchEmpty() => _NoResults(query: query),
       SearchFailed(:final cause) => _Failed(cause: cause, onRetry: onRetry),
-      SearchShown(:final results, :final notice) => _PostList(
+      SearchShown(:final results, :final more, :final notice) => _PostList(
         url: url,
         ids: results,
+        more: more,
         notice: notice,
       ),
     };
@@ -517,18 +518,35 @@ class _MessageResults extends ConsumerWidget {
 }
 
 class _PostList extends ConsumerWidget {
-  const _PostList({required this.url, required this.ids, this.notice});
+  const _PostList({
+    required this.url,
+    required this.ids,
+    required this.more,
+    this.notice,
+  });
 
   final String url;
   final List<String> ids;
+
+  /// The server's extra results, listed below [ids].
+  final List<String> more;
   final String? notice;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items =
-        ref.watch(searchPostItemsProvider(url, ids.join(','))).value ??
-        const <InboxItem>[];
-    final rows = withDays(items, (i) => i.time);
+    List<InboxItem> itemsOf(List<String> ids) => ids.isEmpty
+        ? const []
+        : ref.watch(searchPostItemsProvider(url, ids.join(','))).value ??
+              const <InboxItem>[];
+    final moreItems = itemsOf(more);
+    final rows = [
+      ...withDays(itemsOf(ids), (i) => i.time),
+      if (moreItems.isNotEmpty) ...[
+        const PaneLabel('More from the server'),
+        ...withDays(moreItems, (i) => i.time),
+      ],
+    ];
+    final count = ids.length + more.length;
     final bottom = MediaQuery.paddingOf(context).bottom;
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -540,13 +558,14 @@ class _PostList extends ConsumerWidget {
             [
               // The ids are known before their rows are read, so the count
               // is right at once instead of starting at 0.
-              '${ids.length} ${ids.length == 1 ? 'result' : 'results'}',
+              '$count ${count == 1 ? 'result' : 'results'}',
               ?notice,
             ].join(' · '),
           );
         }
         return switch (rows[i - 1]) {
           final DateTime day => _DayHeader(day: day),
+          final PaneLabel label => label,
           final InboxItem item => MessagePreviewTile(
             item: item,
             onTap: () => openConversation(
@@ -592,6 +611,7 @@ class _FileResults extends ConsumerWidget {
       serverError: server.hasError
           ? requestProblemText(server.error!, host)
           : null,
+      keyOf: (f) => f.id,
     );
     final bottom = MediaQuery.paddingOf(context).bottom;
     return switch (view) {
@@ -600,8 +620,15 @@ class _FileResults extends ConsumerWidget {
       ),
       SearchEmpty() => _NoResults(query: query),
       SearchFailed(:final cause) => _Failed(cause: cause, onRetry: onRetry),
-      SearchShown(:final results, :final notice) => () {
-        final rows = withDays(results, (f) => f.createAt);
+      SearchShown(:final results, :final more, :final notice) => () {
+        final rows = [
+          ...withDays(results, (f) => f.createAt),
+          if (more.isNotEmpty) ...[
+            const PaneLabel('More from the server'),
+            ...withDays(more, (f) => f.createAt),
+          ],
+        ];
+        final count = results.length + more.length;
         return ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
@@ -610,14 +637,14 @@ class _FileResults extends ConsumerWidget {
             if (i == 0) {
               return PaneLabel(
                 [
-                  '${results.length} '
-                      '${results.length == 1 ? 'file' : 'files'}',
+                  '$count ${count == 1 ? 'file' : 'files'}',
                   ?notice,
                 ].join(' · '),
               );
             }
             return switch (rows[i - 1]) {
               final DateTime day => _DayHeader(day: day),
+              final PaneLabel label => label,
               final FileHit file => _FileTile(
                 file: file,
                 onTap: () => openConversation(
