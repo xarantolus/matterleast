@@ -58,16 +58,23 @@ class PostFiles extends StatelessWidget {
             child: _MediaGrid(
               url: url,
               media: media,
-              onOpen: (index) => Navigator.of(context).push(
-                galleryRoute(
-                  url: url,
-                  files: media,
-                  initialIndex: index,
-                  heroPrefix: heroPrefix,
-                  author: author,
-                  sentAt: sentAt,
-                ),
-              ),
+              onOpen: (index) {
+                // Coming back must not bring the keyboard up for a field
+                // that kept its focus behind the gallery.
+                FocusManager.instance.primaryFocus?.unfocus();
+                unawaited(
+                  Navigator.of(context).push(
+                    galleryRoute(
+                      url: url,
+                      files: media,
+                      initialIndex: index,
+                      heroPrefix: heroPrefix,
+                      author: author,
+                      sentAt: sentAt,
+                    ),
+                  ),
+                );
+              },
               heroPrefix: heroPrefix,
             ),
           ),
