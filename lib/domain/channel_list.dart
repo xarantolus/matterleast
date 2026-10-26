@@ -437,6 +437,31 @@ List<CategorySection> keepOrder(
 /// Whose initials a direct message avatar shows.
 String avatarName(String title) => title.replaceAll(' (you)', '');
 
+/// The id of the one section the unreads filter shows.
+const unreadsSectionId = 'unreads';
+
+/// Pure: the list as the unreads filter shows it: one section with every
+/// unread channel, in the order the categories list them; none when
+/// nothing is unread.
+List<CategorySection> unreadsOnly(List<CategorySection> sections) {
+  final rows = [
+    for (final section in sections)
+      for (final item in section.rows)
+        if (item.unread || item.mentions > 0) item,
+  ];
+  return rows.isEmpty
+      ? const []
+      : [
+          CategorySection(
+            id: unreadsSectionId,
+            title: 'Unreads',
+            kind: CategoryKind.channels,
+            collapsed: false,
+            rows: rows,
+          ),
+        ];
+}
+
 /// Pure: the nearest unread channel above and below what the reader sees.
 /// [rows] are the list's channels in order; [placed] holds the rows laid
 /// out now, by id, with their top and bottom relative to the top of the

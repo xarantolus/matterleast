@@ -17,6 +17,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/root/team_rail.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
+import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
@@ -105,6 +106,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       status: status,
       serverName: server.displayName,
       host: Uri.parse(server.url).host,
+      liveUpdatesDown: ref.watch(socketDownProvider(server.url)).value ?? false,
     );
     return _RootLayout(
       servers: servers,

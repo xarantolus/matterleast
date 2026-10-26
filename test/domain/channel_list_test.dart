@@ -292,6 +292,21 @@ void main() {
     );
   });
 
+  test('the unreads filter shows only channels with something new, in one '
+      'section, and nothing when all is read', () {
+    final list = build([
+      channel('quiet'),
+      channel('busy', total: 12),
+      channel('called', mentions: 2),
+      channel('hushed', total: 12, muted: true),
+    ]);
+    final filtered = unreadsOnly(list.sections);
+    expect(filtered, hasLength(1));
+    expect(filtered.single.title, 'Unreads');
+    expect(filtered.single.shown.map((r) => r.id), ['busy', 'called']);
+    expect(unreadsOnly(build([channel('quiet')]).sections), isEmpty);
+  });
+
   group('pane state', () {
     final stored = build([channel('x')]);
     const never = ChannelList(
@@ -342,6 +357,28 @@ void main() {
       expect(
         (stateOf(stored, broken) as ChannelListReady).notice,
         "Couldn't update: server error 500",
+      );
+    });
+
+    test('live updates down for a while say so, unless a refresh failed', () {
+      ChannelListState down(SyncStatus? status) => channelListState(
+        list: stored,
+        status: status,
+        serverName: 'Harbour',
+        host: 'chat.example.test',
+        liveUpdatesDown: true,
+      );
+      expect(
+        (down(const SyncIdle()) as ChannelListReady).notice,
+        'Reconnecting…',
+      );
+      expect(
+        (down(offline) as ChannelListReady).notice,
+        'Offline · showing saved data',
+      );
+      expect(
+        (stateOf(stored, const SyncIdle()) as ChannelListReady).notice,
+        isNull,
       );
     });
 

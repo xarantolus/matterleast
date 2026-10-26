@@ -97,8 +97,9 @@ class _ChannelListView extends ConsumerStatefulWidget {
 }
 
 class _ChannelListViewState extends ConsumerState<_ChannelListView> {
-  late List<CategorySection> _shown = widget.list.sections;
+  late List<CategorySection> _shown = _sections;
   var _atRest = true;
+  var _unreadsOnly = false;
   var _reordering = false;
 
   /// The conversation last closed after opening it from this list; a left
@@ -136,12 +137,13 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     }
   }
 
+  List<CategorySection> get _sections =>
+      _unreadsOnly ? unreadsOnly(widget.list.sections) : widget.list.sections;
+
   /// Rows only move while the list rests at the top; otherwise they keep
   /// their places and just update.
   void _refreshShown() {
-    _shown = _atRest
-        ? widget.list.sections
-        : keepOrder(widget.list.sections, _shown);
+    _shown = _atRest ? _sections : keepOrder(_sections, _shown);
   }
 
   bool _onScroll(ScrollNotification n) {
@@ -150,7 +152,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     final atRest = n is ScrollEndNotification && n.metrics.pixels <= 0;
     if (atRest != _atRest) {
       _atRest = atRest;
-      if (atRest && _shown != widget.list.sections) {
+      if (atRest && _shown != _sections) {
         setState(_refreshShown);
       }
     }
@@ -321,7 +323,25 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
               Spacing.xs,
             ),
             sliver: SliverToBoxAdapter(
-              child: _FindChannels(onTap: widget.onFind),
+              child: Row(
+                children: [
+                  Expanded(child: _FindChannels(onTap: widget.onFind)),
+                  const SizedBox(width: Spacing.xs),
+                  IconButton(
+                    tooltip: _unreadsOnly
+                        ? 'Show all channels'
+                        : 'Show unread channels only',
+                    isSelected: _unreadsOnly,
+                    icon: const Icon(Icons.mark_chat_unread_outlined),
+                    selectedIcon: const Icon(Icons.mark_chat_unread),
+                    onPressed: () => setState(() {
+                      _unreadsOnly = !_unreadsOnly;
+                      _shown = _sections;
+                      _checkUnread();
+                    }),
+                  ),
+                ],
+              ),
             ),
           ),
           if (list.unreadThreads case final unread?)
@@ -402,6 +422,17 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                     : null,
               ),
             ),
+          if (_unreadsOnly && _shown.isEmpty && !list.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: EmptyState(
+                icon: Icons.mark_chat_read_outlined,
+                title: 'All caught up',
+                body:
+                    'Channels with new messages show up here. Turn off the '
+                    'unreads filter to see every channel.',
+              ),
+            ),
           for (final section in _shown) _section(section),
           const SliverToBoxAdapter(child: SizedBox(height: Spacing.lg)),
         ],
@@ -445,19 +476,24 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
       key: ValueKey(section.id),
       slivers: [
         PinnedHeaderSliver(
-          child: _CategoryHeader(
-            section: section,
-            onMenu: () => unawaited(_showMenu(section)),
-            onToggle: () async {
-              final actions = await ref.read(
-                channelActionsProvider(widget.url).future,
-              );
-              await actions.setCollapsed(
-                section.id,
-                collapsed: !section.collapsed,
-              );
-            },
-          ),
+          child: section.id == unreadsSectionId
+              ? Material(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  child: PaneLabel(section.title),
+                )
+              : _CategoryHeader(
+                  section: section,
+                  onMenu: () => unawaited(_showMenu(section)),
+                  onToggle: () async {
+                    final actions = await ref.read(
+                      channelActionsProvider(widget.url).future,
+                    );
+                    await actions.setCollapsed(
+                      section.id,
+                      collapsed: !section.collapsed,
+                    );
+                  },
+                ),
         ),
         SliverList.builder(
           itemCount: rows.length,
