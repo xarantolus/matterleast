@@ -4,7 +4,10 @@ import 'dart:io';
 
 /// A request the fake server received, with its body read and decoded.
 class SeenRequest {
-  SeenRequest(this.raw, this.body, [this.json]);
+  SeenRequest(this.raw, this.body, [this.json, this.text = '']);
+
+  /// The body as text, such as a multipart upload.
+  final String text;
 
   final HttpRequest raw;
   final Map<String, Object?> body;
@@ -53,12 +56,21 @@ class FakeServer {
   Iterable<String> get paths => seen.map((r) => r.path);
 
   Future<void> _serve(HttpRequest raw) async {
-    final text = await utf8.decodeStream(raw);
-    final decoded = text.isEmpty ? null : jsonDecode(text);
+    final bytes = await raw.fold<List<int>>(
+      [],
+      (all, part) => all..addAll(part),
+    );
+    final text = utf8.decode(bytes, allowMalformed: true);
+    final decoded = raw.headers.contentType?.mimeType == 'multipart/form-data'
+        ? null
+        : text.isEmpty
+        ? null
+        : jsonDecode(text);
     final request = SeenRequest(
       raw,
       decoded is Map<String, Object?> ? decoded : const {},
       decoded,
+      text,
     );
     seen.add(request);
     final reply = await handle(request);

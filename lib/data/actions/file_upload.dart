@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/file_upload_response.dart';
+import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/server_api.dart';
 
 /// One file going up to a channel: its progress, the stored file when done,
@@ -44,11 +46,7 @@ class FileUpload {
           ),
           deadline: ServerApi.transferDeadline,
         );
-        final body = response.data;
-        final infos = body is Map<String, Object?> ? body['file_infos'] : null;
-        if (infos is List && infos.firstOrNull is Map<String, Object?>) {
-          return api.FileInfo.fromJson(infos.first as Map<String, Object?>);
-        }
+        if (_firstFile(response.data) case final info?) return info;
         throw const ServerError(statusCode: 0, message: 'No file came back.');
       } finally {
         unawaited(progress.close());
@@ -56,6 +54,14 @@ class FileUpload {
     }
 
     return FileUpload._(cancel, progress.stream, run());
+  }
+
+  static api.FileInfo? _firstFile(Object? body) {
+    if (body is! Map<String, Object?>) return null;
+    return decodeOrSkip(
+      body,
+      FileUploadResponse.fromJson,
+    )?.fileInfos.firstOrNull;
   }
 
   static const uploadTimeout = Duration(minutes: 3);
