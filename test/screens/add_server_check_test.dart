@@ -69,4 +69,49 @@ void main() {
     expect(check.target!.displayName, 'chat.example.test');
     expect(check.target!.ssoScheme, 'matterleast');
   });
+
+  group('an entry with the same id under another address', () {
+    final old = entry(
+      'https://old.example.test',
+      'Work',
+      'd1',
+      signedIn: false,
+    );
+
+    test('is replaced without asking when its address leads here', () {
+      final check = checkNewServer(
+        server: probed,
+        typedName: '',
+        existing: [old],
+        previousLandsOn: Uri.parse('https://chat.example.test'),
+      );
+      expect(check.target!.replaces?.url, old.url);
+      expect(check.target!.confirmReplace, isFalse);
+    });
+
+    test('needs the user to agree when its address leads elsewhere', () {
+      for (final landsOn in [null, Uri.parse('https://old.example.test')]) {
+        final check = checkNewServer(
+          server: probed,
+          typedName: '',
+          existing: [old],
+          previousLandsOn: landsOn,
+        );
+        expect(check.target!.replaces?.url, old.url);
+        expect(check.target!.confirmReplace, isTrue);
+      }
+    });
+
+    test('is not involved when the address is the same', () {
+      final check = checkNewServer(
+        server: probed,
+        typedName: '',
+        existing: [
+          entry('https://chat.example.test', 'Work', 'd1', signedIn: false),
+        ],
+      );
+      expect(check.target!.replaces, isNull);
+      expect(check.target!.confirmReplace, isFalse);
+    });
+  });
 }

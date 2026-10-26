@@ -24,11 +24,21 @@ class LoginTarget {
     required this.server,
     required this.displayName,
     this.ssoScheme,
+    this.replaces,
+    this.confirmReplace = false,
   });
 
   final ProbedServer server;
   final String displayName;
   final String? ssoScheme;
+
+  /// The entry with the same DiagnosticId under another address, which
+  /// signing in removes.
+  final ServerEntry? replaces;
+
+  /// Whether the user must agree first: the old address doesn't lead here,
+  /// so this may be another server claiming the old one's id.
+  final bool confirmReplace;
 }
 
 @riverpod
@@ -43,13 +53,31 @@ class AddServerController extends _$AddServerController {
     if (state.checking) return null;
     state = const AddServerState(checking: true);
     try {
-      final server = await ref.read(serverProbeProvider).probe(url);
+      final probe = ref.read(serverProbeProvider);
+      final server = await probe.probe(url);
       final rows = await ref.read(appDatabaseProvider).allServers();
+      final existing = [for (final row in rows) serverEntryOf(row)];
+      final previous = existing
+          .where(
+            (e) =>
+                e.diagnosticId == server.options.diagnosticId &&
+                e.url != server.url.toString(),
+          )
+          .firstOrNull;
+      Uri? previousLandsOn;
+      if (previous != null && !previous.signedIn) {
+        try {
+          previousLandsOn = (await probe.probe(previous.url)).url;
+        } on ProbeFailure {
+          previousLandsOn = null;
+        }
+      }
       if (!ref.mounted) return null;
       final check = checkNewServer(
         server: server,
         typedName: name,
-        existing: [for (final row in rows) serverEntryOf(row)],
+        existing: existing,
+        previousLandsOn: previousLandsOn,
       );
       state = AddServerState(
         urlError: check.urlError,
@@ -70,11 +98,15 @@ typedef NewServerCheck = ({
 });
 
 /// Whether a checked server can go on to login: not already signed in under
-/// any address, and with a name no other signed-in server uses.
+/// any address, and with a name no other signed-in server uses. An entry
+/// with the same DiagnosticId under another address is replaced; the user
+/// is asked first unless that address, probed again, [previousLandsOn] the
+/// new one (the server moved).
 NewServerCheck checkNewServer({
   required ProbedServer server,
   required String typedName,
   required List<ServerEntry> existing,
+  Uri? previousLandsOn,
 }) {
   final id = server.options.diagnosticId;
   final same = existing.where((e) => e.diagnosticId == id).firstOrNull;
@@ -87,6 +119,7 @@ NewServerCheck checkNewServer({
       nameError: null,
     );
   }
+  final moved = same != null && same.url != server.url.toString() ? same : null;
   final taken = [
     for (final e in existing)
       if (e.signedIn && e.diagnosticId != id) e.displayName,
@@ -106,6 +139,8 @@ NewServerCheck checkNewServer({
           ? name
           : defaultDisplayName(server.options.siteName, server.url, taken),
       ssoScheme: same?.ssoScheme,
+      replaces: moved,
+      confirmReplace: moved != null && previousLandsOn != server.url,
     ),
     urlError: null,
     nameError: null,

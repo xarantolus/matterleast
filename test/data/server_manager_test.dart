@@ -203,12 +203,21 @@ void main() {
     },
   );
 
-  test('the same server under another address replaces the old row', () async {
-    await addServer(probed(Uri.parse('http://old.example.test')));
-    await manager.signOut('http://old.example.test', force: true);
-    await addServer();
-    final rows = await db.allServers();
-    expect(rows.map((r) => r.url), [url]);
+  test('the same server under another address replaces the old row only when '
+      'the user agreed', () async {
+    const old = 'http://old.example.test';
+    await addServer(probed(Uri.parse(old)));
+    await manager.signOut(old, force: true);
+    await expectLater(addServer(), throwsStateError);
+    expect((await db.allServers()).map((r) => r.url), [old]);
+
+    await manager.addSignedIn(
+      server: probed(),
+      displayName: 'Test server',
+      signedIn: SignedIn(token: 's3ss10n', me: me),
+      replaces: old,
+    );
+    expect((await db.allServers()).map((r) => r.url), [url]);
   });
 
   test('a signed-in server whose token is gone is signed out', () async {

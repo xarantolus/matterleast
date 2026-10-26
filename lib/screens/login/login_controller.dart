@@ -76,6 +76,7 @@ class LoginController extends _$LoginController {
             displayName: target.displayName,
             signedIn: signedIn,
             ssoScheme: target.ssoScheme,
+            replaces: target.replaces?.url,
           );
       if (ref.mounted) {
         ref.read(railSelectionProvider.notifier).select(RailTarget(url: url));

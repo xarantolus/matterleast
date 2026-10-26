@@ -42,7 +42,7 @@ final class AddServerControllerProvider
 }
 
 String _$addServerControllerHash() =>
-    r'210d4b180ede37b2be288635dec1d1a434a4c137';
+    r'ad7d7345ce0e0ac6d990a96afbe1f0987348587f';
 
 abstract class _$AddServerController extends $Notifier<AddServerState> {
   AddServerState build();

@@ -54,9 +54,38 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
         .read(addServerControllerProvider.notifier)
         .connect(url: _url.text, name: _name.text);
     if (target == null || !mounted) return;
+    if (target.replaces case final old? when target.confirmReplace) {
+      if (!await _confirmReplace(old, target) || !mounted) return;
+    }
     await navigator.push(
       MaterialPageRoute<void>(builder: (_) => LoginScreen(target: target)),
     );
+  }
+
+  Future<bool> _confirmReplace(ServerEntry old, LoginTarget target) async {
+    final replace = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Replace “${old.displayName}”?'),
+        content: Text(
+          '${target.server.url.authority} says it is the same server as '
+          '${Uri.parse(old.url).authority}, but that address does not lead '
+          'here. Only continue if the server really moved. Signing in '
+          'removes “${old.displayName}” from the app.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Replace'),
+          ),
+        ],
+      ),
+    );
+    return replace ?? false;
   }
 
   void _signInAgain(ServerEntry server) {

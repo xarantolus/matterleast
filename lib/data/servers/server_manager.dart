@@ -137,18 +137,24 @@ class ServerManager {
 
   /// Stores a fresh sign-in: token, server row and the first data in the
   /// server's own database. A row for the same server under another URL is
-  /// replaced.
+  /// replaced only when it is [replaces], which the user agreed to; any
+  /// other such row makes this throw, since the DiagnosticId is public and
+  /// another server may claim it.
   Future<void> addSignedIn({
     required ProbedServer server,
     required String displayName,
     required SignedIn signedIn,
     String? ssoScheme,
+    String? replaces,
   }) async {
     final url = server.url.toString();
     final previous = await _db.serverByDiagnosticId(
       server.options.diagnosticId,
     );
     if (previous != null && previous.url != url) {
+      if (previous.url != replaces) {
+        throw StateError('Another server entry has the same DiagnosticId');
+      }
       await remove(previous.url, force: true);
     }
     await _closeSession(url);
