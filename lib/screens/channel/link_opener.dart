@@ -165,7 +165,7 @@ Future<void> _openDirectMessage(
   required bool fromOutside,
 }) async {
   final links = await ref.read(messageLinksProvider(url).future);
-  final userId = await links.userIdNamed(username);
+  final userId = await links.userIdMentioned(username);
   if (userId == null) {
     _say(navigator, "There's nobody called @$username on this server.");
     return;

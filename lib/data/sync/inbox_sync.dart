@@ -6,6 +6,7 @@ import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/data/users/user_loader.dart';
 
 /// Fetches the lists behind Home: recent mentions, saved messages and
 /// followed threads. Each is one job per server, coalesced, and is fetched
@@ -15,12 +16,14 @@ class InboxSync {
     required this.server,
     required this.store,
     required this.runner,
+    required this.users,
     DateTime Function()? clock,
   }) : _clock = clock ?? (() => DateTime.now().toUtc());
 
   final ServerApi server;
   final ServerStore store;
   final SyncRunner runner;
+  final UserLoader users;
   final DateTime Function() _clock;
 
   static const maxAge = Duration(minutes: 10);
@@ -165,21 +168,8 @@ class InboxSync {
     final authors = _db.selectOnly(_db.posts, distinct: true)
       ..addColumns([_db.posts.userId])
       ..where(_db.posts.id.isInQuery(listed) | _db.posts.id.isInQuery(roots));
-    final ids = {
+    await users.ensure([
       for (final row in await authors.get()) ?row.read(_db.posts.userId),
-    }..remove('');
-    final known = {
-      for (final u in await (_db.select(
-        _db.users,
-      )..where((u) => u.id.isIn(ids))).get())
-        u.id,
-    };
-    final missing = ids.difference(known).toList();
-    for (var i = 0; i < missing.length; i += 100) {
-      final chunk = missing.sublist(i, (i + 100).clamp(0, missing.length));
-      await store.applyUsers(
-        await server.call(() => _client.users.getUsersByIds(body: chunk)),
-      );
-    }
+    ]);
   }
 }

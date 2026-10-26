@@ -102,22 +102,6 @@ class MessageLinks {
     }
   }
 
-  /// The id of the person with [username], stored or from the server; null
-  /// when there is none.
-  Future<String?> userIdNamed(String username) async {
-    final stored = await userMentioned(username);
-    if (stored != null) return stored.id;
-    final api = session.api;
-    try {
-      return (await api.call(
-        () => api.client.users.getUserByUsername(username: username),
-      )).id;
-    } on ServerError catch (e) {
-      if (e.isNotFound) return null;
-      rethrow;
-    }
-  }
-
   /// A channel by its URL name, in [teamId] when there is one by that name.
   /// The URL name of the team with [teamId], when stored.
   Future<String?> teamName(String teamId) async => (await (_db.select(
@@ -132,23 +116,24 @@ class MessageLinks {
         rows.firstOrNull;
   }
 
-  /// The person a typed `@name` refers to, allowing a trailing `.`, `-` or
-  /// `_` that belongs to the sentence.
-  Future<UserRow?> userMentioned(String typed) async {
-    final candidates = <String>[];
-    var name = typed.toLowerCase();
-    while (name.isNotEmpty) {
-      candidates.add(name);
-      final last = name[name.length - 1];
-      if (last != '.' && last != '-' && last != '_') break;
-      name = name.substring(0, name.length - 1);
-    }
+  /// The id of the person a typed `@name` refers to, stored or fetched;
+  /// null when there is none. A trailing `.`, `-` or `_` may belong to the
+  /// sentence instead of the name.
+  Future<String?> userIdMentioned(String typed) async {
+    final candidates = mentionCandidates(typed);
+    final stored = await _userNamed(candidates);
+    if (stored != null) return stored;
+    await session.users.ensureUsernames(candidates);
+    return _userNamed(candidates);
+  }
+
+  Future<String?> _userNamed(List<String> candidates) async {
     final rows = await (_db.select(
       _db.users,
     )..where((u) => u.username.isIn(candidates))).get();
     for (final candidate in candidates) {
       final match = rows.where((u) => u.username == candidate).firstOrNull;
-      if (match != null) return match;
+      if (match != null) return match.id;
     }
     return null;
   }
@@ -156,6 +141,20 @@ class MessageLinks {
   /// Parse options from what the server offers, as it changes.
   Stream<ParseOptions> parseOptions() =>
       _db.watchFeatures().map(parseOptionsFrom).distinct();
+}
+
+/// Pure: the usernames a typed `@name` may mean, longest first: the name
+/// itself, then without each trailing `.`, `-` or `_`.
+List<String> mentionCandidates(String typed) {
+  final candidates = <String>[];
+  var name = typed.toLowerCase();
+  while (name.isNotEmpty) {
+    candidates.add(name);
+    final last = name[name.length - 1];
+    if (last != '.' && last != '-' && last != '_') break;
+    name = name.substring(0, name.length - 1);
+  }
+  return candidates;
 }
 
 /// Pure: the server settings that change how messages parse.

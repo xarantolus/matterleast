@@ -7,6 +7,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/data/users/user_loader.dart';
 
 import '../support/fake_server.dart';
 
@@ -62,7 +63,12 @@ void main() {
     store = ServerStore(db);
     runner = SyncRunner();
     api = ServerApi(baseUrl: server.url, token: () => 'token');
-    sync = EntrySync(server: api, store: store, runner: runner);
+    sync = EntrySync(
+      server: api,
+      store: store,
+      runner: runner,
+      users: UserLoader(server: api, store: store),
+    );
   });
 
   tearDown(() async {

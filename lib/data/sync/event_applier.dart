@@ -12,6 +12,7 @@ import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
 import 'package:matterleast/data/sync/inbox_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/data/users/user_loader.dart';
 import 'package:matterleast/domain/teams.dart';
 
 /// Applies WebSocket events to the database, one at a time and in order.
@@ -22,6 +23,7 @@ class EventApplier {
     required this.server,
     required this.store,
     required this.runner,
+    required this.users,
     required this.entry,
     required this.inbox,
     TypingTracker? typing,
@@ -34,6 +36,7 @@ class EventApplier {
   final ServerApi server;
   final ServerStore store;
   final SyncRunner runner;
+  final UserLoader users;
   final EntrySync entry;
   final InboxSync inbox;
   final TypingTracker typing;
@@ -65,6 +68,7 @@ class EventApplier {
           fromSelf: post.userId == me && !_isAutomatic(post),
           mentionsMe: me != null && mentions.contains(me),
         );
+        if (post.userId case final author?) _later(users.ensure([author]));
         await setConversationShown(server, store, post.channelId!, show: true);
       case EphemeralMessageEvent(:final post?)
           when post.channelId != null && await _knownChannel(post.channelId!):
@@ -75,7 +79,7 @@ class EventApplier {
           when userId != me && (broadcast.channelId?.isNotEmpty ?? false):
         typing.expiry = await _typingExpiry();
         typing.typing(broadcast.channelId!, event.parentId ?? '', userId);
-        await _missingUser(userId);
+        _later(users.ensure([userId]));
       case PostEditedEvent(:final post?):
         await store.applyEdit(post);
       case PostDeletedEvent(:final post?) when post.id != null:
@@ -167,27 +171,6 @@ class EventApplier {
   Future<Duration> _typingExpiry() async =>
       (await _db.features()).typingInterval;
 
-  /// Someone not stored yet is typing: fetch them so they can be named.
-  Future<void> _missingUser(String userId) async {
-    final known = await (_db.select(
-      _db.users,
-    )..where((u) => u.id.equals(userId))).getSingleOrNull();
-    if (known != null) return;
-    _later(
-      runner.enqueue(
-        SyncJob(
-          key: 'user:$userId',
-          visible: false,
-          run: () async => store.applyUsers(
-            await server.call(
-              () => server.client.users.getUsersByIds(body: [userId]),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   /// System messages and webhook posts don't count as the user reading.
   bool _isAutomatic(api.Post post) =>
       (post.type ?? '').startsWith('system_') ||
@@ -238,10 +221,6 @@ class EventApplier {
     if (channel.type != 'D' || me == null || channel.name == null) return;
     final partner = directPartnerId(channel.name!, me);
     if (partner == null) return;
-    await store.applyUsers(
-      await server.call(
-        () => server.client.users.getUsersByIds(body: [partner]),
-      ),
-    );
+    await users.ensure([partner]);
   }
 }

@@ -12,6 +12,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/server_connection.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/data/users/user_loader.dart';
 import 'package:path/path.dart' as p;
 
 /// Everything that lives per connected server: its HTTP client, database,
@@ -27,11 +28,13 @@ class ServerSession {
     required this.images,
     required String? Function() token,
   }) : store = ServerStore(db) {
+    users = UserLoader(server: api, store: store);
     connection = ServerConnection(
       url: url,
       server: api,
       store: store,
       runner: runner,
+      users: users,
       token: token,
     );
     outbox = OutboxSender(server: api, store: store);
@@ -48,6 +51,9 @@ class ServerSession {
   final String dbPath;
   final ServerImageCaches images;
   late final ServerConnection connection;
+
+  /// Fetches people who aren't stored yet; every lookup goes through it.
+  late final UserLoader users;
   late final emoji = CustomEmojiResolver(server: api, store: store);
 
   /// Named copies of files handed to other apps; signing out deletes them
@@ -114,6 +120,7 @@ class ServerSession {
     await outbox.close();
     await connection.close();
     emoji.close();
+    users.close();
     await images.close();
     runner.close();
     api.close();

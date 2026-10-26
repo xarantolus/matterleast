@@ -45,12 +45,12 @@ class MessageSearch {
                 ),
         );
         final posts = (found.posts ?? const <String, api.Post>{}).values;
+        await session.users.ensure([for (final p in posts) ?p.userId]);
         await session.store.applySearchResults(
           posts,
           channels: await _missingChannels({
             for (final p in posts) ?p.channelId,
           }),
-          users: await _missingUsers({for (final p in posts) ?p.userId}),
         );
         return found.order;
       });
@@ -137,17 +137,5 @@ class MessageSearch {
             .catchError((Object _) => null),
     ]);
     return found.nonNulls.toList();
-  }
-
-  Future<List<api.User>> _missingUsers(Set<String> ids) async {
-    final known = {
-      for (final u in await (_db.select(
-        _db.users,
-      )..where((u) => u.id.isIn(ids))).get())
-        u.id,
-    };
-    final missing = ids.difference(known).toList();
-    if (missing.isEmpty) return const [];
-    return session.api.call(() => _client.users.getUsersByIds(body: missing));
   }
 }

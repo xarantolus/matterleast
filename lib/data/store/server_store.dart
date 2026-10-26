@@ -1018,7 +1018,6 @@ class ServerStore {
   Future<void> applySearchResults(
     Iterable<api.Post> posts, {
     Iterable<api.Channel> channels = const [],
-    Iterable<api.User> users = const [],
   }) => db.transaction(() async {
     await _upsertPosts([
       for (final p in posts)
@@ -1030,10 +1029,6 @@ class ServerStore {
         for (final c in channels)
           if (c.id != null) channelCompanion(c),
       ], mode: InsertMode.insertOrIgnore);
-      b.insertAllOnConflictUpdate(db.users, [
-        for (final u in users)
-          if (u.id != null) userCompanion(u),
-      ]);
     });
   });
 

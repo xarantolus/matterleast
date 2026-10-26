@@ -11,6 +11,7 @@ import 'package:matterleast/data/sync/event_applier.dart';
 import 'package:matterleast/data/sync/inbox_sync.dart';
 import 'package:matterleast/data/sync/presence.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/data/users/user_loader.dart';
 
 /// Keeps one server's database current while the app is in the foreground:
 /// the WebSocket, the entry sync it triggers and presence polling. It goes
@@ -21,15 +22,27 @@ class ServerConnection {
     required this.server,
     required this.store,
     required this.runner,
+    required this.users,
     required String? Function() token,
     Duration pingInterval = const Duration(seconds: 30),
   }) {
-    entry = EntrySync(server: server, store: store, runner: runner);
-    inbox = InboxSync(server: server, store: store, runner: runner);
+    entry = EntrySync(
+      server: server,
+      store: store,
+      runner: runner,
+      users: users,
+    );
+    inbox = InboxSync(
+      server: server,
+      store: store,
+      runner: runner,
+      users: users,
+    );
     events = EventApplier(
       server: server,
       store: store,
       runner: runner,
+      users: users,
       entry: entry,
       inbox: inbox,
       typing: typing,
@@ -52,6 +65,7 @@ class ServerConnection {
   final ServerApi server;
   final ServerStore store;
   final SyncRunner runner;
+  final UserLoader users;
   late final EntrySync entry;
   late final InboxSync inbox;
   late final EventApplier events;

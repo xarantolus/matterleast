@@ -293,14 +293,8 @@ class ConversationActions {
             _db.posts.userId.isNotInQuery(known) &
             _db.posts.userId.equals('').not(),
       );
-    final missing = [
+    await session.users.ensure([
       for (final row in await authors.get()) ?row.read(_db.posts.userId),
-    ];
-    for (var i = 0; i < missing.length; i += 100) {
-      final chunk = missing.sublist(i, (i + 100).clamp(0, missing.length));
-      await _store.applyUsers(
-        await _call(() => _client.users.getUsersByIds(body: chunk)),
-      );
-    }
+    ]);
   }
 }

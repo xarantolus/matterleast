@@ -346,24 +346,10 @@ class ChannelActions {
         final page = await session.api.call(
           () => _client.channels.getPinnedPosts(channelId: channelId),
         );
-        final authors = {
+        await session.users.ensure([
           for (final p in (page.posts ?? const <String, api.Post>{}).values)
             ?p.userId,
-        };
-        final known = {
-          for (final u in await (_db.select(
-            _db.users,
-          )..where((u) => u.id.isIn(authors))).get())
-            u.id,
-        };
-        final missing = authors.difference(known).toList();
-        if (missing.isNotEmpty) {
-          await session.store.applyUsers(
-            await session.api.call(
-              () => _client.users.getUsersByIds(body: missing),
-            ),
-          );
-        }
+        ]);
         await session.store.applyPostList(
           pinnedList(channelId),
           page,

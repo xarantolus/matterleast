@@ -7,6 +7,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/inbox_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/data/users/user_loader.dart';
 import 'package:matterleast/data/views/inbox_views.dart';
 import 'package:matterleast/domain/inbox.dart';
 
@@ -44,6 +45,7 @@ void main() {
       server: http,
       store: store,
       runner: runner,
+      users: UserLoader(server: http, store: store),
       clock: () => now,
     );
     await store.applyMe(api.User.fromJson(fixtureMap('me')));

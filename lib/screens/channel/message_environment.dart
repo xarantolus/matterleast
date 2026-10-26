@@ -5,18 +5,16 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/message_links.dart';
-import 'package:matterleast/data/server_db/server_database.dart';
-import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
-import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
-import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'message_environment.g.dart';
@@ -81,16 +79,30 @@ class MessageEnvironment extends ConsumerWidget {
     WidgetRef ref,
     String typed,
   ) async {
-    final links = await ref.read(messageLinksProvider(url).future);
-    final user = await links.userMentioned(typed);
+    final messenger = ScaffoldMessenger.of(context);
+    final links = ref.read(messageLinksProvider(url).future);
+    final String? userId;
+    try {
+      userId = await (await links).userIdMentioned(typed);
+    } on Object catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            "Couldn't look up @$typed. "
+            '${requestProblemText(e, Uri.parse(url).host)}',
+          ),
+        ),
+      );
+      return;
+    }
     if (!context.mounted) return;
-    unawaited(
-      showModalBottomSheet<void>(
-        context: context,
-        showDragHandle: true,
-        builder: (sheet) => _PersonSheet(user: user, typed: typed),
-      ),
-    );
+    if (userId == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('No one on this server is called @$typed.')),
+      );
+      return;
+    }
+    unawaited(showUserProfile(context, url: url, userId: userId));
   }
 
   Future<void> _openChannel(
@@ -139,60 +151,5 @@ class MessageEnvironment extends ConsumerWidget {
       case NoLink():
         return;
     }
-  }
-}
-
-class _PersonSheet extends StatelessWidget {
-  const _PersonSheet({required this.user, required this.typed});
-
-  final UserRow? user;
-  final String typed;
-
-  @override
-  Widget build(BuildContext context) {
-    final user = this.user;
-    final text = Theme.of(context).textTheme;
-    final name = user == null
-        ? '@$typed'
-        : personName((
-            username: user.username,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            nickname: user.nickname,
-            status: user.status,
-          ), 'full_name');
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.lg,
-          0,
-          Spacing.lg,
-          Spacing.xl,
-        ),
-        child: Row(
-          children: [
-            InitialsBadge(name: name, size: 56, round: true),
-            const SizedBox(width: Spacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, style: text.titleLarge),
-                  Text(
-                    user == null
-                        ? 'Not someone this app knows yet'
-                        : '@${user.username}'
-                              '${user.position.isEmpty ? '' : ' · ${user.position}'}',
-                    style: text.bodyMedium?.copyWith(
-                      color: context.tokens.muted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
