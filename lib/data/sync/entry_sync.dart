@@ -8,6 +8,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
+import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/teams.dart';
@@ -260,19 +261,39 @@ class EntrySync {
     await store.applyThreads(teamId, threads.threads, allUnread: true);
   }
 
+  /// Every role the user holds, fetched again: permissions may have
+  /// changed while events were missed.
   Future<void> _roles(String myRoles) async {
-    final names = <String>{
-      ...myRoles.split(' '),
-      for (final t in await _db.select(_db.myTeams).get())
-        ...t.roles.split(' '),
-      for (final c in await _db.select(_db.myChannels).get())
-        ...c.roles.split(' '),
-    }..removeWhere((n) => n.isEmpty);
-    final missing = names.difference(await store.roleNames()).toList();
+    final names = roleNames([
+      myRoles,
+      for (final t in await _db.select(_db.myTeams).get()) t.roles,
+      for (final c in await _db.select(_db.myChannels).get()) c.roles,
+    ]);
+    await _fetchRoles(names);
+  }
+
+  /// Fetches the permissions of the roles in [roleStrings] that aren't
+  /// stored yet, such as those of a membership that just changed.
+  Future<void> ensureRoles(Iterable<String> roleStrings) async {
+    final missing = roleNames(roleStrings).difference(await store.roleNames());
     if (missing.isEmpty) return;
+    final key = (missing.toList()..sort()).join(' ');
+    await runner.enqueue(
+      SyncJob(
+        key: 'roles:$key',
+        priority: SyncPriority.p1,
+        run: () => _fetchRoles(missing),
+      ),
+    );
+  }
+
+  Future<void> _fetchRoles(Set<String> names) async {
+    if (names.isEmpty) return;
     try {
       await store.applyRoles(
-        await server.call(() => _client.roles.getRolesByNames(body: missing)),
+        await server.call(
+          () => _client.roles.getRolesByNames(body: names.toList()),
+        ),
       );
     } on ApiError catch (e) {
       Log.warn('sync', 'Roles not loaded', e);

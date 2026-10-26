@@ -101,12 +101,21 @@ class ServerConnection {
     _stopTimer = Timer(backgroundGrace, () => unawaited(_stop()));
   }
 
+  final _caughtUp = StreamController<void>.broadcast();
+
+  /// Fires once the entry data is current again after events may have been
+  /// missed; open conversations then fetch what they lack.
+  Stream<void> get caughtUp => _caughtUp.stream;
+
   /// Events may have been missed: the entry data first, then Home's lists,
-  /// which only a fresh fetch brings up to date.
+  /// which only a fresh fetch brings up to date, and open conversations.
   void refreshAll() => unawaited(
     entry
         .run()
-        .then((_) => inbox.refresh(force: true))
+        .then((_) {
+          if (!_caughtUp.isClosed) _caughtUp.add(null);
+          return inbox.refresh(force: true);
+        })
         .catchError((Object _) {}),
   );
 
@@ -123,5 +132,6 @@ class ServerConnection {
     await socket.dispose();
     typing.close();
     dialogs.close();
+    await _caughtUp.close();
   }
 }

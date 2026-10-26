@@ -202,6 +202,43 @@ final class ChannelMemberUpdatedEvent extends ServerEvent {
   final api.ChannelMember? channelMember;
 }
 
+/// `role_updated`: a role's permissions changed.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class RoleUpdatedEvent extends ServerEvent {
+  const RoleUpdatedEvent({this.role});
+  factory RoleUpdatedEvent.fromJson(Map<String, Object?> json) =>
+      _$RoleUpdatedEventFromJson(json);
+
+  @EncodedRole()
+  final api.Role? role;
+}
+
+/// `user_role_updated`: a user's system roles changed.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class UserRolesEvent extends ServerEvent {
+  const UserRolesEvent({this.userId, this.roles});
+  factory UserRolesEvent.fromJson(Map<String, Object?> json) =>
+      _$UserRolesEventFromJson(json);
+
+  @LenientString()
+  final String? userId;
+
+  /// Space-separated role names.
+  @LenientString()
+  final String? roles;
+}
+
+/// `memberrole_updated`: a team membership's roles changed.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class TeamMemberRolesEvent extends ServerEvent {
+  const TeamMemberRolesEvent({this.member});
+  factory TeamMemberRolesEvent.fromJson(Map<String, Object?> json) =>
+      _$TeamMemberRolesEventFromJson(json);
+
+  @EncodedTeamMember()
+  final api.TeamMember? member;
+}
+
 /// `user_removed`: sent to the removed user (with [Broadcast.userId]) and to
 /// the channel (with [userId]).
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
@@ -444,6 +481,9 @@ ServerEvent decodeEvent(SocketFrame frame) {
     'user_added' => ChannelChangedEvent.fromJson(json),
     'channel_member_updated' => ChannelMemberUpdatedEvent.fromJson(json),
     'user_removed' => UserRemovedEvent.fromJson(json),
+    'role_updated' => RoleUpdatedEvent.fromJson(json),
+    'user_role_updated' => UserRolesEvent.fromJson(json),
+    'memberrole_updated' => TeamMemberRolesEvent.fromJson(json),
     'sidebar_category_created' ||
     'sidebar_category_updated' ||
     'sidebar_category_deleted' ||

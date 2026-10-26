@@ -104,6 +104,18 @@ class EventApplier {
       case ChannelMemberUpdatedEvent(:final channelMember?)
           when channelMember.userId == me:
         await store.applyChannelMember(channelMember);
+        _later(entry.ensureRoles([channelMember.roles ?? '']));
+      case RoleUpdatedEvent(:final role?):
+        if ((await store.roleNames()).contains(role.name)) {
+          await store.applyRoles([role]);
+        }
+      case UserRolesEvent(:final roles?) when event.userId == me:
+        await store.applyMyRoles(roles);
+        _later(entry.ensureRoles([roles]));
+      case TeamMemberRolesEvent(:final member?)
+          when member.userId == me && member.deleteAt == null:
+        await store.applyTeams(const [], [member]);
+        _later(entry.ensureRoles([member.roles ?? '']));
       case UserRemovedEvent(:final channel?) when event.removedUser == me:
         await store.removeChannel(channel);
       case CategoriesEvent(:final updatedCategories)
@@ -120,6 +132,9 @@ class EventApplier {
         await store.removeTeam(event.id!);
       case TeamEvent(kind: TeamChange.updated, :final team?):
         await store.applyTeams([team], const []);
+      case UserUpdatedEvent(:final user?) when user.id == me:
+        await store.applyMe(user);
+        _later(entry.ensureRoles([user.roles ?? '']));
       case UserUpdatedEvent(:final user?):
         await store.applyUsers([user]);
       case StatusChangedEvent(:final userId?, :final status?):

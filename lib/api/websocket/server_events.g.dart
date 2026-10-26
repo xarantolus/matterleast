@@ -84,6 +84,21 @@ ChannelMemberUpdatedEvent _$ChannelMemberUpdatedEventFromJson(
   channelMember: const EncodedChannelMember().fromJson(json['channelMember']),
 );
 
+RoleUpdatedEvent _$RoleUpdatedEventFromJson(Map<String, dynamic> json) =>
+    RoleUpdatedEvent(role: const EncodedRole().fromJson(json['role']));
+
+UserRolesEvent _$UserRolesEventFromJson(Map<String, dynamic> json) =>
+    UserRolesEvent(
+      userId: const LenientString().fromJson(json['user_id']),
+      roles: const LenientString().fromJson(json['roles']),
+    );
+
+TeamMemberRolesEvent _$TeamMemberRolesEventFromJson(
+  Map<String, dynamic> json,
+) => TeamMemberRolesEvent(
+  member: const EncodedTeamMember().fromJson(json['member']),
+);
+
 UserRemovedEvent _$UserRemovedEventFromJson(Map<String, dynamic> json) =>
     UserRemovedEvent(
       userId: const LenientString().fromJson(json['user_id']),

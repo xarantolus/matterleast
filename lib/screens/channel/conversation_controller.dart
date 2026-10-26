@@ -31,6 +31,7 @@ class Conversation extends _$Conversation {
   ServerSession? _session;
   ConversationActions? _actions;
   StreamSubscription<ConversationWindow>? _subscription;
+  StreamSubscription<void>? _caughtUp;
   var _limit = _step;
   DateTime? _rangeAt;
   DateTime? _lastViewedAt;
@@ -59,6 +60,7 @@ class Conversation extends _$Conversation {
   }) {
     ref.onDispose(() {
       unawaited(_subscription?.cancel());
+      unawaited(_caughtUp?.cancel());
       _session?.runner.cancelOwner(this);
     });
     unawaited(_start());
@@ -96,6 +98,9 @@ class Conversation extends _$Conversation {
             ),
     );
     _watch();
+    _caughtUp = session.connection.caughtUp.listen(
+      (_) => unawaited(_catchUp()),
+    );
     await _markRead();
     unawaited(_refresh());
     if (!_isThread) {
@@ -292,6 +297,17 @@ class Conversation extends _$Conversation {
   }
 
   Future<void> retry() => _refresh();
+
+  /// After a reconnect that may have missed events: fetch what came since
+  /// the newest stored message, as on opening, and mark it read when seen.
+  Future<void> _catchUp() async {
+    if (!ref.mounted || state.refreshing) return;
+    await _refresh();
+    if (!ref.mounted || state.refreshFailure != null) return;
+    if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+      await _markRead();
+    }
+  }
 
   /// Follows the reader: more of the stored window, then older pages, near
   /// the top; newer pages near the bottom of an older stretch.

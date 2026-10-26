@@ -62,6 +62,19 @@ class EncodedChannelMember extends _Decoding<api.ChannelMember?> {
       _object(json).let(api.ChannelMember.fromJson);
 }
 
+class EncodedTeamMember extends _Decoding<api.TeamMember?> {
+  const EncodedTeamMember();
+  @override
+  api.TeamMember? fromJson(Object? json) =>
+      _object(json).let(api.TeamMember.fromJson);
+}
+
+class EncodedRole extends _Decoding<api.Role?> {
+  const EncodedRole();
+  @override
+  api.Role? fromJson(Object? json) => _object(json).let(api.Role.fromJson);
+}
+
 class EncodedTeam extends _Decoding<api.Team?> {
   const EncodedTeam();
   @override

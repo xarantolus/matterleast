@@ -28,6 +28,11 @@ abstract final class SyncKeys {
   /// them.
   static const currentUserRoles = 'current_user_roles';
 
+  /// How the signed-in user signs in: empty for email or username and
+  /// password, else `ldap`, `saml`, `gitlab`, `google`, `office365` or
+  /// `openid`.
+  static const currentUserAuthService = 'current_user_auth_service';
+
   /// The signed-in user's account notification settings, as JSON.
   static const accountNotifyProps = 'account_notify_props';
 

@@ -50,7 +50,10 @@ class FakeSocketServer {
     socket.listen((message) {
       final json = jsonDecode(message as String) as Map<String, Object?>;
       _actions.add(json);
-      if (json['action'] == 'ping' && answerPings && !_closing) {
+      if (json['action'] == 'ping' &&
+          answerPings &&
+          !_closing &&
+          socket.readyState == WebSocket.open) {
         socket.add(
           jsonEncode({
             'status': 'OK',

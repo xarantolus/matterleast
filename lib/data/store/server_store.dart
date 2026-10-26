@@ -67,6 +67,9 @@ class ServerStore {
         if (me.roles case final roles?) {
           await db.setSyncText(SyncKeys.currentUserRoles, roles);
         }
+        if (me.authService case final service?) {
+          await db.setSyncText(SyncKeys.currentUserAuthService, service);
+        }
         final props =
             notifyProps ??
             {
@@ -88,6 +91,10 @@ class ServerStore {
           );
         }
       });
+
+  /// The signed-in user's system roles, space-separated.
+  Future<void> applyMyRoles(String roles) =>
+      db.setSyncText(SyncKeys.currentUserRoles, roles);
 
   /// A user's props as JSON, such as their custom status changed here.
   Future<void> applyUserProps(String userId, String? json) =>
