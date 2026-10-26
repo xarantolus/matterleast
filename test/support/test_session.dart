@@ -17,13 +17,15 @@ const teamId = 'tm000000000000000000000t01';
 
 /// A session on an in-memory database talking to [server], with the user,
 /// one team and one channel (with one stored post) as an entry sync would
-/// leave them.
+/// leave them. [interceptor] sees every statement the database runs.
 Future<ServerSession> testSession(
   FakeServer server, {
   ServerDatabase? db,
+  QueryInterceptor? interceptor,
 }) async {
-  final database =
-      db ?? ServerDatabase(DatabaseConnection(NativeDatabase.memory()));
+  var connection = DatabaseConnection(NativeDatabase.memory());
+  if (interceptor != null) connection = connection.interceptWith(interceptor);
+  final database = db ?? ServerDatabase(connection);
   final http = ServerApi(baseUrl: server.url, token: () => 'token');
   final session = ServerSession(
     url: server.url,

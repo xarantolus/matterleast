@@ -119,6 +119,7 @@ class Conversation extends _$Conversation {
   }
 
   void _watch() {
+    if (!ref.mounted) return;
     final views = ConversationViews(_session!.db);
     unawaited(_subscription?.cancel());
     _subscription =
@@ -340,10 +341,11 @@ class Conversation extends _$Conversation {
           owner: this,
         );
       }
+      if (!ref.mounted) return;
       _fetched();
       _limit += _step;
       _watch();
-      if (ref.mounted) state = state.copyWith(loadingOlder: false);
+      state = state.copyWith(loadingOlder: false);
     } on Object catch (e) {
       Log.warn('conversation', 'older page failed: ${ApiError.of(e)}');
       if (ref.mounted) {
