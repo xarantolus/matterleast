@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/broken_posts.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/log.dart';
 
@@ -109,18 +110,26 @@ CategoriesCompanion categoryCompanion(
   muted: _opt(c.muted),
 );
 
-/// [postCompanion], or the post without props and metadata when those cannot
-/// be stored, so one odd post never fails the page it came in.
+/// [postCompanion], or a stand-in without content when the post couldn't
+/// be read or stored, so one odd post never fails the page it came in and
+/// still shows where it belongs.
 PostsCompanion safePostCompanion(api.Post p) {
+  if (decodeProblemOf(p) case final problem?) {
+    return brokenPostCompanion(p, problem);
+  }
   try {
     return postCompanion(p);
   } on Object catch (e) {
-    Log.warn('store', 'post ${p.id} stored without details: ${e.runtimeType}');
-    return postCompanion(p, details: false);
+    Log.warn(
+      'store',
+      'post ${p.id} of type "${p.type ?? ''}" not stored: ${e.runtimeType}',
+    );
+    return brokenPostCompanion(p, e.runtimeType.toString());
   }
 }
 
-PostsCompanion postCompanion(api.Post p, {bool details = true}) =>
+/// Where a post stands and who wrote it, without its content.
+PostsCompanion brokenPostCompanion(api.Post p, String problem) =>
     PostsCompanion(
       id: Value(p.id!),
       channelId: Value(p.channelId!),
@@ -128,36 +137,53 @@ PostsCompanion postCompanion(api.Post p, {bool details = true}) =>
       userId: Value(p.userId ?? ''),
       createAt: Value(p.createAt!),
       updateAt: _opt(p.updateAt),
-      editAt: Value(p.editAt),
       deleteAt: Value(p.deleteAt),
       type: Value(p.type ?? ''),
-      message: Value(p.message ?? ''),
-      isPinned: Value(p.isPinned ?? false),
-      replyCount: _opt(p.replyCount),
-      lastReplyAt: _opt(p.lastReplyAt),
-      originalId: _opt(p.originalId),
-      // The server echoes it only right after creation; keeping it is what
-      // keeps the row's list key once our own post is confirmed.
-      pendingPostId: (p.pendingPostId?.isEmpty ?? true)
-          ? const Value.absent()
-          : Value(p.pendingPostId!),
-      sendState: const Value(null),
-      propsJson: Value(!details || p.props == null ? null : _postJson(p.props)),
-      // Some lists (followed threads) send posts without metadata; what is
-      // stored stays then.
-      metadataJson: p.metadata == null
-          ? const Value.absent()
-          : Value(details ? _postJson(p.metadata) : null),
-      fileCount: p.metadata == null
-          ? const Value.absent()
-          : Value(p.metadata!.files.length),
-      reactionCount: p.metadata == null
-          ? const Value.absent()
-          : Value(p.metadata!.reactions.length),
-      participantIdsJson: p.participants.isEmpty
-          ? const Value.absent()
-          : Value(jsonEncode([for (final u in p.participants) ?u.id])),
+      message: const Value(''),
+      propsJson: const Value(null),
+      metadataJson: const Value(null),
+      fileCount: const Value(0),
+      decodeProblem: Value(problem),
     );
+
+PostsCompanion postCompanion(api.Post p) => PostsCompanion(
+  id: Value(p.id!),
+  channelId: Value(p.channelId!),
+  rootId: Value(p.rootId ?? ''),
+  userId: Value(p.userId ?? ''),
+  createAt: Value(p.createAt!),
+  updateAt: _opt(p.updateAt),
+  editAt: Value(p.editAt),
+  deleteAt: Value(p.deleteAt),
+  type: Value(p.type ?? ''),
+  message: Value(p.message ?? ''),
+  isPinned: Value(p.isPinned ?? false),
+  replyCount: _opt(p.replyCount),
+  lastReplyAt: _opt(p.lastReplyAt),
+  originalId: _opt(p.originalId),
+  // The server echoes it only right after creation; keeping it is what
+  // keeps the row's list key once our own post is confirmed.
+  pendingPostId: (p.pendingPostId?.isEmpty ?? true)
+      ? const Value.absent()
+      : Value(p.pendingPostId!),
+  sendState: const Value(null),
+  propsJson: Value(p.props == null ? null : _postJson(p.props)),
+  // Some lists (followed threads) send posts without metadata; what is
+  // stored stays then.
+  metadataJson: p.metadata == null
+      ? const Value.absent()
+      : Value(_postJson(p.metadata)),
+  fileCount: p.metadata == null
+      ? const Value.absent()
+      : Value(p.metadata!.files.length),
+  reactionCount: p.metadata == null
+      ? const Value.absent()
+      : Value(p.metadata!.reactions.length),
+  participantIdsJson: p.participants.isEmpty
+      ? const Value.absent()
+      : Value(jsonEncode([for (final u in p.participants) ?u.id])),
+  decodeProblem: const Value(null),
+);
 
 FilesCompanion fileCompanion(api.FileInfo f, String postId) => FilesCompanion(
   id: Value(f.id!),

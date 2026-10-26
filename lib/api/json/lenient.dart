@@ -12,9 +12,11 @@ T? decodeOrSkip<T extends Object>(
     return decode(json);
   } on Object catch (e) {
     final id = json['id'];
+    final type = json['type'];
     Log.warn(
       'json',
-      'skipped unreadable $T${id is String ? ' $id' : ''}: ${e.runtimeType}',
+      'skipped unreadable $T${id is String ? ' $id' : ''}'
+          '${type is String ? ' of type "$type"' : ''}: ${e.runtimeType}',
     );
     return null;
   }

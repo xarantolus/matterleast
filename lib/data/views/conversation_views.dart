@@ -327,6 +327,7 @@ class ConversationViews {
           authorPictureAt: people[p.userId]?.pictureAt,
           propsJson: p.propsJson,
           metadataJson: p.metadataJson,
+          decodeProblem: p.decodeProblem,
           reactions: groupReactions(
             reactionsByPost[p.id] ?? const [],
             myUserId: me,

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/broken_posts.dart';
 import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/websocket/dialog.dart';
 
@@ -41,7 +42,10 @@ abstract class _Decoding<T> implements JsonConverter<T, Object?> {
 class EncodedPost extends _Decoding<api.Post?> {
   const EncodedPost();
   @override
-  api.Post? fromJson(Object? json) => _object(json).let(api.Post.fromJson);
+  api.Post? fromJson(Object? json) => switch (_object(json)) {
+    final post? => decodePost(post),
+    null => null,
+  };
 }
 
 class EncodedChannel extends _Decoding<api.Channel?> {

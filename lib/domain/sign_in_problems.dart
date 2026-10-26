@@ -44,8 +44,7 @@ String connectionProblemText(ApiError error, String host) => switch (error) {
 
 /// A few words for a small space, such as a file that didn't upload.
 String shortProblemText(ApiError error) => switch (error) {
-  ServerError(:final message?) when message.trim().isNotEmpty =>
-    message.trim(),
+  ServerError(:final message?) when message.trim().isNotEmpty => message.trim(),
   ServerError(statusCode: 403) => 'Not allowed',
   ServerError(statusCode: 413) => 'Too large for the server',
   ServerError(statusCode: 501) => 'Turned off on this server',

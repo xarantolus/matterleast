@@ -66,6 +66,7 @@ class SearchViews {
               createAt: p.createAt,
               message: p.message,
               deleted: p.deleteAt != null,
+              unreadable: p.decodeProblem != null,
             ),
         },
         savedIds: ids,

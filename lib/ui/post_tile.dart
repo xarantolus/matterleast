@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/today_provider.dart';
@@ -94,7 +97,10 @@ class PostTile extends StatelessWidget {
                 ),
             ],
           ),
-        PostText(post: post, details: details),
+        if (post.unreadable)
+          _Unreadable(post: post)
+        else
+          PostText(post: post, details: details),
         if (details.files.isNotEmpty && !post.deleted)
           PostFiles(
             files: details.files,
@@ -144,6 +150,41 @@ class PostTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// In place of a message the app couldn't read: says so, and lets the
+/// reader copy what a bug report needs.
+class _Unreadable extends StatelessWidget {
+  const _Unreadable({required this.post});
+
+  final PostItem post;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final text = Theme.of(context).textTheme;
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: Spacing.sm,
+      children: [
+        Text(
+          "This message couldn't be shown",
+          style: text.bodyMedium?.copyWith(
+            color: tokens.muted,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        TextButton.icon(
+          // Android confirms the copy itself.
+          onPressed: () => unawaited(
+            Clipboard.setData(ClipboardData(text: unreadableDetails(post))),
+          ),
+          icon: const Icon(Icons.copy, size: 18),
+          label: const Text('Copy details'),
+        ),
+      ],
     );
   }
 }

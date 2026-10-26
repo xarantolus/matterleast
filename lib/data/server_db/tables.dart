@@ -168,6 +168,11 @@ class Posts extends Table {
   /// server said (collapsed reply threads).
   TextColumn get participantIdsJson => text().nullable()();
 
+  /// Set when the server's copy couldn't be read or stored: what went
+  /// wrong, as an error type. The row keeps its place but no content, and
+  /// the next fetch that reads it clears this.
+  TextColumn get decodeProblem => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

@@ -12,6 +12,7 @@ InboxPost post(
   int minute = 0,
   String rootId = '',
   String message = 'hello',
+  bool unreadable = false,
 }) => (
   id: id,
   channelId: channelId,
@@ -20,10 +21,17 @@ InboxPost post(
   createAt: at(minute),
   message: message,
   deleted: false,
+  unreadable: unreadable,
 );
 
 void main() {
   final people = {'me': person('alice'), 'bob': person('bob')};
+
+  test('a message the app could not read previews as such, not as blank', () {
+    final broken = post('p1', channelId: 'c1', message: '', unreadable: true);
+    expect(postPreview(broken), "(message couldn't be shown)");
+    expect(postPreview(post('p2', channelId: 'c1')), 'hello');
+  });
 
   test('rows show the picture of the author or the other person', () {
     final inbox = buildServerInbox(

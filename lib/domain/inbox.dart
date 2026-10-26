@@ -85,7 +85,17 @@ typedef InboxPost = ({
   DateTime createAt,
   String message,
   bool deleted,
+
+  /// The server's copy couldn't be read; there is no message to show.
+  bool unreadable,
 });
+
+/// Pure: the one line a list shows for [post].
+String postPreview(InboxPost post) {
+  if (post.deleted) return '(message deleted)';
+  if (post.unreadable) return "(message couldn't be shown)";
+  return previewText(post.message);
+}
 
 typedef InboxThread = ({
   String rootId,
@@ -191,7 +201,7 @@ ServerInbox buildServerInbox(InboxSource s) {
       avatarUserId: post.userId,
       avatarPictureUpdate: s.pictureUpdates[post.userId],
       author: author,
-      preview: post.deleted ? '(message deleted)' : previewText(post.message),
+      preview: postPreview(post),
       place: null,
       time: post.createAt,
       count: 0,
@@ -246,7 +256,7 @@ ServerInbox buildServerInbox(InboxSource s) {
         avatarPictureUpdate: s.pictureUpdates[name.userId],
         author: current && c.type == 'G' ? nameOf(latest.userId) : null,
         preview: current
-            ? previewText(latest.message)
+            ? postPreview(latest)
             : count == 1
             ? '1 new message'
             : '$count new messages',
@@ -298,9 +308,7 @@ ServerInbox buildServerInbox(InboxSource s) {
             avatarUserId: root.userId,
             avatarPictureUpdate: s.pictureUpdates[root.userId],
             author: null,
-            preview: root.deleted
-                ? '(message deleted)'
-                : previewText(root.message),
+            preview: postPreview(root),
             place: place,
             time: t.lastReplyAt ?? root.createAt,
             count: t.unreadReplies,

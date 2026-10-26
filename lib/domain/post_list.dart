@@ -41,15 +41,31 @@ abstract class PostItem with _$PostItem {
     String? metadataJson,
     @Default(<ReactionGroup>[]) List<ReactionGroup> reactions,
     @Default(false) bool pinned,
+
+    /// Why the server's copy couldn't be shown, such as an error type; the
+    /// row then has no content.
+    String? decodeProblem,
   }) = _PostItem;
 
   const PostItem._();
 
-  bool get isSystem => type.startsWith('system_') && !isEphemeral;
+  bool get isSystem =>
+      type.startsWith('system_') && !isEphemeral && !unreadable;
   bool get edited => editAt != null && !deleted;
   bool get isReply => rootId.isNotEmpty;
   bool get isEphemeral => type == 'system_ephemeral';
+  bool get unreadable => decodeProblem != null;
 }
+
+/// Pure: what "Copy details" puts on the clipboard for a post that
+/// couldn't be shown, for a bug report: where it is and what went wrong,
+/// never what it says.
+String unreadableDetails(PostItem post) => [
+  'Message id: ${post.id}',
+  if (post.rootId.isNotEmpty) 'Thread: ${post.rootId}',
+  'Type: ${post.type.isEmpty ? '(regular message)' : post.type}',
+  'Problem: ${post.decodeProblem ?? 'none'}',
+].join('\n');
 
 /// The decoded props and metadata of [post].
 PostDetails detailsOf(PostItem post) =>

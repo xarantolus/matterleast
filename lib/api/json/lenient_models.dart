@@ -140,6 +140,7 @@ import 'package:matterleast/api/generated/models/user_terms_of_service.dart';
 import 'package:matterleast/api/generated/models/user_thread.dart';
 import 'package:matterleast/api/generated/models/user_threads.dart';
 import 'package:matterleast/api/generated/models/webapp2.dart';
+import 'package:matterleast/api/json/broken_posts.dart';
 import 'package:matterleast/api/json/lenient.dart';
 
 class LenientAccessControlResource
@@ -5113,7 +5114,7 @@ class LenientPost implements JsonConverter<Post?, Object?> {
   const LenientPost();
   @override
   Post? fromJson(Object? json) =>
-      json is Map<String, Object?> ? decodeOrSkip(json, Post.fromJson) : null;
+      json is Map<String, Object?> ? decodePost(json) : null;
   @override
   Object? toJson(Post? object) => object?.toJson();
 }
@@ -5124,7 +5125,7 @@ class LenientListOfPost implements JsonConverter<List<Post>, Object?> {
   List<Post> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ?decodeOrSkip(e, Post.fromJson),
+            if (e is Map<String, Object?>) ?decodePost(e),
         ]
       : const [];
   @override
@@ -5138,7 +5139,7 @@ class LenientMapOfPost implements JsonConverter<Map<String, Post>?, Object?> {
       ? {
           for (final e in json.entries)
             if (e.value case final Map<String, Object?> m)
-              e.key: ?decodeOrSkip(m, Post.fromJson),
+              e.key: ?decodePost(m),
         }
       : null;
   @override

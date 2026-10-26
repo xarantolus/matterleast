@@ -1912,8 +1912,550 @@ i1.GeneratedColumn<int> _column_113(String aliasedName) =>
       type: i1.DriftSqlType.int,
       $customConstraints: 'NOT NULL',
     );
+
+final class Schema3 extends i0.VersionedSchema {
+  Schema3({required super.database}) : super(version: 3);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    users,
+    teams,
+    myTeams,
+    channels,
+    myChannels,
+    categories,
+    categoryChannels,
+    posts,
+    postRanges,
+    reactions,
+    files,
+    threads,
+    threadTeams,
+    threadSync,
+    customEmoji,
+    preferences,
+    roles,
+    drafts,
+    outbox,
+    postLists,
+    searchHistory,
+    viewStates,
+    syncState,
+    config,
+    channelsByTeam,
+    categoriesByTeam,
+    postsByChannel,
+    postsByRoot,
+    postsByPending,
+    postRangesByScope,
+    reactionsByPost,
+    filesByPost,
+    customEmojiByName,
+  ];
+  late final Shape0 users = Shape0(
+    source: i0.VersionedTable(
+      entityName: 'users',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_0,
+        _column_1,
+        _column_2,
+        _column_3,
+        _column_4,
+        _column_5,
+        _column_6,
+        _column_7,
+        _column_8,
+        _column_9,
+        _column_10,
+        _column_11,
+        _column_12,
+        _column_13,
+        _column_14,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape1 teams = Shape1(
+    source: i0.VersionedTable(
+      entityName: 'teams',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_0,
+        _column_15,
+        _column_16,
+        _column_17,
+        _column_18,
+        _column_8,
+        _column_9,
+        _column_19,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape2 myTeams = Shape2(
+    source: i0.VersionedTable(
+      entityName: 'my_teams',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(team_id)'],
+      columns: [
+        _column_20,
+        _column_21,
+        _column_22,
+        _column_23,
+        _column_24,
+        _column_25,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape3 channels = Shape3(
+    source: i0.VersionedTable(
+      entityName: 'channels',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_0,
+        _column_26,
+        _column_17,
+        _column_15,
+        _column_16,
+        _column_27,
+        _column_28,
+        _column_29,
+        _column_30,
+        _column_8,
+        _column_9,
+        _column_31,
+        _column_32,
+        _column_33,
+        _column_34,
+        _column_35,
+        _column_36,
+        _column_37,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape4 myChannels = Shape4(
+    source: i0.VersionedTable(
+      entityName: 'my_channels',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(channel_id)'],
+      columns: [
+        _column_38,
+        _column_21,
+        _column_39,
+        _column_22,
+        _column_24,
+        _column_23,
+        _column_25,
+        _column_40,
+        _column_41,
+        _column_42,
+        _column_43,
+        _column_44,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape5 categories = Shape5(
+    source: i0.VersionedTable(
+      entityName: 'categories',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_0,
+        _column_20,
+        _column_17,
+        _column_16,
+        _column_45,
+        _column_46,
+        _column_47,
+        _column_48,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape6 categoryChannels = Shape6(
+    source: i0.VersionedTable(
+      entityName: 'category_channels',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(category_id, channel_id)'],
+      columns: [_column_49, _column_38, _column_46],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape24 posts = Shape24(
+    source: i0.VersionedTable(
+      entityName: 'posts',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_0,
+        _column_38,
+        _column_50,
+        _column_51,
+        _column_52,
+        _column_8,
+        _column_53,
+        _column_9,
+        _column_54,
+        _column_55,
+        _column_56,
+        _column_57,
+        _column_58,
+        _column_59,
+        _column_60,
+        _column_61,
+        _column_12,
+        _column_62,
+        _column_63,
+        _column_64,
+        _column_65,
+        _column_114,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape8 postRanges = Shape8(
+    source: i0.VersionedTable(
+      entityName: 'post_ranges',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [],
+      columns: [
+        _column_66,
+        _column_67,
+        _column_68,
+        _column_69,
+        _column_70,
+        _column_71,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape9 reactions = Shape9(
+    source: i0.VersionedTable(
+      entityName: 'reactions',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(post_id, user_id, emoji_name)'],
+      columns: [_column_72, _column_51, _column_73, _column_30],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape10 files = Shape10(
+    source: i0.VersionedTable(
+      entityName: 'files',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_0,
+        _column_74,
+        _column_15,
+        _column_75,
+        _column_76,
+        _column_77,
+        _column_78,
+        _column_79,
+        _column_80,
+        _column_81,
+        _column_82,
+        _column_9,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape11 threads = Shape11(
+    source: i0.VersionedTable(
+      entityName: 'threads',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(root_id)'],
+      columns: [
+        _column_83,
+        _column_38,
+        _column_58,
+        _column_39,
+        _column_57,
+        _column_84,
+        _column_85,
+        _column_86,
+        _column_87,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape12 threadTeams = Shape12(
+    source: i0.VersionedTable(
+      entityName: 'thread_teams',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(team_id, root_id)'],
+      columns: [_column_20, _column_83],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape13 threadSync = Shape13(
+    source: i0.VersionedTable(
+      entityName: 'thread_sync',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(team_id)'],
+      columns: [_column_20, _column_69, _column_70],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape14 customEmoji = Shape14(
+    source: i0.VersionedTable(
+      entityName: 'custom_emoji',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [_column_0, _column_15, _column_29, _column_30, _column_9],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape15 preferences = Shape15(
+    source: i0.VersionedTable(
+      entityName: 'preferences',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(category, name)'],
+      columns: [_column_88, _column_15, _column_89],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape16 roles = Shape16(
+    source: i0.VersionedTable(
+      entityName: 'roles',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(name)'],
+      columns: [_column_15, _column_90],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape17 drafts = Shape17(
+    source: i0.VersionedTable(
+      entityName: 'drafts',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(channel_id, root_id)'],
+      columns: [
+        _column_38,
+        _column_50,
+        _column_55,
+        _column_91,
+        _column_92,
+        _column_93,
+        _column_94,
+        _column_95,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape18 outbox = Shape18(
+    source: i0.VersionedTable(
+      entityName: 'outbox',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(pending_post_id)'],
+      columns: [
+        _column_96,
+        _column_38,
+        _column_50,
+        _column_97,
+        _column_98,
+        _column_99,
+        _column_100,
+        _column_101,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape19 postLists = Shape19(
+    source: i0.VersionedTable(
+      entityName: 'post_lists',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(list, post_id)'],
+      columns: [_column_102, _column_72, _column_103],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape20 searchHistory = Shape20(
+    source: i0.VersionedTable(
+      entityName: 'search_history',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(team_id, term)'],
+      columns: [_column_20, _column_104, _column_105],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape21 viewStates = Shape21(
+    source: i0.VersionedTable(
+      entityName: 'view_states',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(scope, scope_id)'],
+      columns: [_column_67, _column_68, _column_106, _column_107, _column_108],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape22 syncState = Shape22(
+    source: i0.VersionedTable(
+      entityName: 'sync_state',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY("key")'],
+      columns: [_column_109, _column_110, _column_111],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape23 config = Shape23(
+    source: i0.VersionedTable(
+      entityName: 'config',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY("key")'],
+      columns: [_column_109, _column_112, _column_113],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  final i1.Index channelsByTeam = i1.Index(
+    'channels_by_team',
+    'CREATE INDEX channels_by_team ON channels (team_id)',
+  );
+  final i1.Index categoriesByTeam = i1.Index(
+    'categories_by_team',
+    'CREATE INDEX categories_by_team ON categories (team_id)',
+  );
+  final i1.Index postsByChannel = i1.Index(
+    'posts_by_channel',
+    'CREATE INDEX posts_by_channel ON posts (channel_id, create_at)',
+  );
+  final i1.Index postsByRoot = i1.Index(
+    'posts_by_root',
+    'CREATE INDEX posts_by_root ON posts (root_id, create_at)',
+  );
+  final i1.Index postsByPending = i1.Index(
+    'posts_by_pending',
+    'CREATE INDEX posts_by_pending ON posts (pending_post_id)',
+  );
+  final i1.Index postRangesByScope = i1.Index(
+    'post_ranges_by_scope',
+    'CREATE INDEX post_ranges_by_scope ON post_ranges (scope, scope_id, latest)',
+  );
+  final i1.Index reactionsByPost = i1.Index(
+    'reactions_by_post',
+    'CREATE INDEX reactions_by_post ON reactions (post_id)',
+  );
+  final i1.Index filesByPost = i1.Index(
+    'files_by_post',
+    'CREATE INDEX files_by_post ON files (post_id)',
+  );
+  final i1.Index customEmojiByName = i1.Index(
+    'custom_emoji_by_name',
+    'CREATE UNIQUE INDEX custom_emoji_by_name ON custom_emoji (name)',
+  );
+}
+
+class Shape24 extends i0.VersionedTable {
+  Shape24({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get channelId =>
+      columnsByName['channel_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get rootId =>
+      columnsByName['root_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get userId =>
+      columnsByName['user_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createAt =>
+      columnsByName['create_at']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updateAt =>
+      columnsByName['update_at']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get editAt =>
+      columnsByName['edit_at']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get deleteAt =>
+      columnsByName['delete_at']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get type =>
+      columnsByName['type']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get message =>
+      columnsByName['message']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get isPinned =>
+      columnsByName['is_pinned']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get replyCount =>
+      columnsByName['reply_count']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get lastReplyAt =>
+      columnsByName['last_reply_at']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get originalId =>
+      columnsByName['original_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get pendingPostId =>
+      columnsByName['pending_post_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get sendState =>
+      columnsByName['send_state']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get propsJson =>
+      columnsByName['props_json']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get metadataJson =>
+      columnsByName['metadata_json']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get fileCount =>
+      columnsByName['file_count']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get reactionCount =>
+      columnsByName['reaction_count']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get participantIdsJson =>
+      columnsByName['participant_ids_json']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get decodeProblem =>
+      columnsByName['decode_problem']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_114(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'decode_problem',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
 i0.MigrationStepWithVersion migrationSteps({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
+  required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
 }) {
   return (currentVersion, database) async {
     switch (currentVersion) {
@@ -1922,6 +2464,11 @@ i0.MigrationStepWithVersion migrationSteps({
         final migrator = i1.Migrator(database, schema);
         await from1To2(migrator, schema);
         return 2;
+      case 2:
+        final schema = Schema3(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from2To3(migrator, schema);
+        return 3;
       default:
         throw ArgumentError.value('Unknown migration from $currentVersion');
     }
@@ -1930,6 +2477,7 @@ i0.MigrationStepWithVersion migrationSteps({
 
 i1.OnUpgrade stepByStep({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
+  required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
 }) => i0.VersionedSchema.stepByStepHelper(
-  step: migrationSteps(from1To2: from1To2),
+  step: migrationSteps(from1To2: from1To2, from2To3: from2To3),
 );

@@ -4589,6 +4589,17 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _decodeProblemMeta = const VerificationMeta(
+    'decodeProblem',
+  );
+  @override
+  late final GeneratedColumn<String> decodeProblem = GeneratedColumn<String>(
+    'decode_problem',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4612,6 +4623,7 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
     fileCount,
     reactionCount,
     participantIdsJson,
+    decodeProblem,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4736,6 +4748,15 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
         ),
       );
     }
+    if (data.containsKey('decode_problem')) {
+      context.handle(
+        _decodeProblemMeta,
+        decodeProblem.isAcceptableOrUnknown(
+          data['decode_problem']!,
+          _decodeProblemMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -4839,6 +4860,10 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
         DriftSqlType.string,
         data['${effectivePrefix}participant_ids_json'],
       ),
+      decodeProblem: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}decode_problem'],
+      ),
     );
   }
 
@@ -4890,6 +4915,11 @@ class PostRow extends DataClass implements Insertable<PostRow> {
   /// Who replied to a root post, as a JSON list of user ids, when the
   /// server said (collapsed reply threads).
   final String? participantIdsJson;
+
+  /// Set when the server's copy couldn't be read or stored: what went
+  /// wrong, as an error type. The row keeps its place but no content, and
+  /// the next fetch that reads it clears this.
+  final String? decodeProblem;
   const PostRow({
     required this.id,
     required this.channelId,
@@ -4912,6 +4942,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     required this.fileCount,
     required this.reactionCount,
     this.participantIdsJson,
+    this.decodeProblem,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4965,6 +4996,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     if (!nullToAbsent || participantIdsJson != null) {
       map['participant_ids_json'] = Variable<String>(participantIdsJson);
     }
+    if (!nullToAbsent || decodeProblem != null) {
+      map['decode_problem'] = Variable<String>(decodeProblem);
+    }
     return map;
   }
 
@@ -5007,6 +5041,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       participantIdsJson: participantIdsJson == null && nullToAbsent
           ? const Value.absent()
           : Value(participantIdsJson),
+      decodeProblem: decodeProblem == null && nullToAbsent
+          ? const Value.absent()
+          : Value(decodeProblem),
     );
   }
 
@@ -5039,6 +5076,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       participantIdsJson: serializer.fromJson<String?>(
         json['participantIdsJson'],
       ),
+      decodeProblem: serializer.fromJson<String?>(json['decodeProblem']),
     );
   }
   @override
@@ -5066,6 +5104,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       'fileCount': serializer.toJson<int>(fileCount),
       'reactionCount': serializer.toJson<int>(reactionCount),
       'participantIdsJson': serializer.toJson<String?>(participantIdsJson),
+      'decodeProblem': serializer.toJson<String?>(decodeProblem),
     };
   }
 
@@ -5091,6 +5130,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     int? fileCount,
     int? reactionCount,
     Value<String?> participantIdsJson = const Value.absent(),
+    Value<String?> decodeProblem = const Value.absent(),
   }) => PostRow(
     id: id ?? this.id,
     channelId: channelId ?? this.channelId,
@@ -5115,6 +5155,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     participantIdsJson: participantIdsJson.present
         ? participantIdsJson.value
         : this.participantIdsJson,
+    decodeProblem: decodeProblem.present
+        ? decodeProblem.value
+        : this.decodeProblem,
   );
   PostRow copyWithCompanion(PostsCompanion data) {
     return PostRow(
@@ -5153,6 +5196,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       participantIdsJson: data.participantIdsJson.present
           ? data.participantIdsJson.value
           : this.participantIdsJson,
+      decodeProblem: data.decodeProblem.present
+          ? data.decodeProblem.value
+          : this.decodeProblem,
     );
   }
 
@@ -5179,7 +5225,8 @@ class PostRow extends DataClass implements Insertable<PostRow> {
           ..write('metadataJson: $metadataJson, ')
           ..write('fileCount: $fileCount, ')
           ..write('reactionCount: $reactionCount, ')
-          ..write('participantIdsJson: $participantIdsJson')
+          ..write('participantIdsJson: $participantIdsJson, ')
+          ..write('decodeProblem: $decodeProblem')
           ..write(')'))
         .toString();
   }
@@ -5207,6 +5254,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     fileCount,
     reactionCount,
     participantIdsJson,
+    decodeProblem,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -5232,7 +5280,8 @@ class PostRow extends DataClass implements Insertable<PostRow> {
           other.metadataJson == this.metadataJson &&
           other.fileCount == this.fileCount &&
           other.reactionCount == this.reactionCount &&
-          other.participantIdsJson == this.participantIdsJson);
+          other.participantIdsJson == this.participantIdsJson &&
+          other.decodeProblem == this.decodeProblem);
 }
 
 class PostsCompanion extends UpdateCompanion<PostRow> {
@@ -5257,6 +5306,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
   final Value<int> fileCount;
   final Value<int> reactionCount;
   final Value<String?> participantIdsJson;
+  final Value<String?> decodeProblem;
   final Value<int> rowid;
   const PostsCompanion({
     this.id = const Value.absent(),
@@ -5280,6 +5330,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     this.fileCount = const Value.absent(),
     this.reactionCount = const Value.absent(),
     this.participantIdsJson = const Value.absent(),
+    this.decodeProblem = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PostsCompanion.insert({
@@ -5304,6 +5355,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     this.fileCount = const Value.absent(),
     this.reactionCount = const Value.absent(),
     this.participantIdsJson = const Value.absent(),
+    this.decodeProblem = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        channelId = Value(channelId),
@@ -5331,6 +5383,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     Expression<int>? fileCount,
     Expression<int>? reactionCount,
     Expression<String>? participantIdsJson,
+    Expression<String>? decodeProblem,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5356,6 +5409,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
       if (reactionCount != null) 'reaction_count': reactionCount,
       if (participantIdsJson != null)
         'participant_ids_json': participantIdsJson,
+      if (decodeProblem != null) 'decode_problem': decodeProblem,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5382,6 +5436,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     Value<int>? fileCount,
     Value<int>? reactionCount,
     Value<String?>? participantIdsJson,
+    Value<String?>? decodeProblem,
     Value<int>? rowid,
   }) {
     return PostsCompanion(
@@ -5406,6 +5461,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
       fileCount: fileCount ?? this.fileCount,
       reactionCount: reactionCount ?? this.reactionCount,
       participantIdsJson: participantIdsJson ?? this.participantIdsJson,
+      decodeProblem: decodeProblem ?? this.decodeProblem,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5486,6 +5542,9 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     if (participantIdsJson.present) {
       map['participant_ids_json'] = Variable<String>(participantIdsJson.value);
     }
+    if (decodeProblem.present) {
+      map['decode_problem'] = Variable<String>(decodeProblem.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5516,6 +5575,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
           ..write('fileCount: $fileCount, ')
           ..write('reactionCount: $reactionCount, ')
           ..write('participantIdsJson: $participantIdsJson, ')
+          ..write('decodeProblem: $decodeProblem, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -13641,6 +13701,7 @@ typedef $$PostsTableCreateCompanionBuilder = PostsCompanion Function({
   Value<int> fileCount,
   Value<int> reactionCount,
   Value<String?> participantIdsJson,
+  Value<String?> decodeProblem,
   Value<int> rowid,
 });
 typedef $$PostsTableUpdateCompanionBuilder = PostsCompanion Function({
@@ -13665,6 +13726,7 @@ typedef $$PostsTableUpdateCompanionBuilder = PostsCompanion Function({
   Value<int> fileCount,
   Value<int> reactionCount,
   Value<String?> participantIdsJson,
+  Value<String?> decodeProblem,
   Value<int> rowid,
 });
 
@@ -13786,6 +13848,11 @@ class $$PostsTableFilterComposer
     column: $table.participantIdsJson,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get decodeProblem => $composableBuilder(
+    column: $table.decodeProblem,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$PostsTableOrderingComposer
@@ -13901,6 +13968,11 @@ class $$PostsTableOrderingComposer
     column: $table.participantIdsJson,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get decodeProblem => $composableBuilder(
+    column: $table.decodeProblem,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PostsTableAnnotationComposer
@@ -13989,6 +14061,11 @@ class $$PostsTableAnnotationComposer
     column: $table.participantIdsJson,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get decodeProblem => $composableBuilder(
+    column: $table.decodeProblem,
+    builder: (column) => column,
+  );
 }
 
 class $$PostsTableTableManager
@@ -14040,6 +14117,7 @@ class $$PostsTableTableManager
                 Value<int> fileCount = const Value.absent(),
                 Value<int> reactionCount = const Value.absent(),
                 Value<String?> participantIdsJson = const Value.absent(),
+                Value<String?> decodeProblem = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PostsCompanion(
                 id: id,
@@ -14063,6 +14141,7 @@ class $$PostsTableTableManager
                 fileCount: fileCount,
                 reactionCount: reactionCount,
                 participantIdsJson: participantIdsJson,
+                decodeProblem: decodeProblem,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -14088,6 +14167,7 @@ class $$PostsTableTableManager
                 Value<int> fileCount = const Value.absent(),
                 Value<int> reactionCount = const Value.absent(),
                 Value<String?> participantIdsJson = const Value.absent(),
+                Value<String?> decodeProblem = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PostsCompanion.insert(
                 id: id,
@@ -14111,6 +14191,7 @@ class $$PostsTableTableManager
                 fileCount: fileCount,
                 reactionCount: reactionCount,
                 participantIdsJson: participantIdsJson,
+                decodeProblem: decodeProblem,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

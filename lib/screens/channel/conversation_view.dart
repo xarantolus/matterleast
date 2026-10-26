@@ -276,7 +276,7 @@ extension on _ConversationViewState {
     List<PostItem> combined,
   ) {
     final teamId = state.window?.teamId ?? '';
-    final usable = !post.isSystem && !post.deleted;
+    final usable = !post.isSystem && !post.deleted && !post.unreadable;
     final tile = PostTile(
       post: post,
       compact: compact,
