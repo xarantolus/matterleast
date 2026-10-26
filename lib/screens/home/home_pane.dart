@@ -14,16 +14,18 @@ import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
-import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Unread conversations, mentions, followed threads and saved messages
 /// from every signed-in server, newest first.
 class HomePane extends ConsumerStatefulWidget {
-  const HomePane({required this.servers, super.key});
+  const HomePane({required this.servers, this.onSearch, super.key});
 
   /// Signed-in servers, never empty.
   final List<ServerEntry> servers;
+
+  /// Opens the search view.
+  final VoidCallback? onSearch;
 
   @override
   ConsumerState<HomePane> createState() => _HomePaneState();
@@ -96,12 +98,15 @@ class _HomePaneState extends ConsumerState<HomePane> {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          if (state case HomeReady(:final notice?))
-            SliverToBoxAdapter(child: PaneLabel(notice)),
           SliverToBoxAdapter(
             child: _FilterChips(
               selected: filter,
               onSelected: ref.read(homeFilterSelectionProvider.notifier).select,
+              notice: switch (state) {
+                HomeReady(:final notice) => notice,
+                _ => null,
+              },
+              onRetry: () => unawaited(_pull()),
             ),
           ),
           ...switch (state) {
@@ -128,7 +133,7 @@ class _HomePaneState extends ConsumerState<HomePane> {
             HomeReady(:final items) when items.isEmpty => [
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _Empty(filter: filter),
+                child: _Empty(filter: filter, onSearch: widget.onSearch),
               ),
             ],
             HomeReady(:final items) => [
@@ -162,11 +167,20 @@ class _HomePaneState extends ConsumerState<HomePane> {
   }
 }
 
+/// The filter chips, led by the failed-refresh notice as a chip that
+/// retries, so the notice never pushes the list down.
 class _FilterChips extends StatelessWidget {
-  const _FilterChips({required this.selected, required this.onSelected});
+  const _FilterChips({
+    required this.selected,
+    required this.onSelected,
+    required this.onRetry,
+    this.notice,
+  });
 
   final InboxFilter selected;
   final ValueChanged<InboxFilter> onSelected;
+  final String? notice;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
@@ -178,6 +192,13 @@ class _FilterChips extends StatelessWidget {
     child: Row(
       spacing: Spacing.sm,
       children: [
+        if (notice case final notice?)
+          ActionChip(
+            avatar: const Icon(Icons.cloud_off),
+            label: Text(notice),
+            tooltip: 'Retry',
+            onPressed: onRetry,
+          ),
         for (final filter in InboxFilter.values)
           ChoiceChip(
             label: Text(switch (filter) {
@@ -195,18 +216,26 @@ class _FilterChips extends StatelessWidget {
 }
 
 class _Empty extends StatelessWidget {
-  const _Empty({required this.filter});
+  const _Empty({required this.filter, this.onSearch});
 
   final InboxFilter filter;
+  final VoidCallback? onSearch;
 
   @override
   Widget build(BuildContext context) => switch (filter) {
-    InboxFilter.unread => const EmptyState(
+    InboxFilter.unread => EmptyState(
       icon: Icons.done_all,
       title: "You're all caught up",
       body:
           'New direct messages, mentions and thread replies show up here. '
           'Open a team from the rail, or search, to read more.',
+      action: onSearch == null
+          ? null
+          : FilledButton.tonalIcon(
+              onPressed: onSearch,
+              icon: const Icon(Icons.search),
+              label: const Text('Search'),
+            ),
     ),
     InboxFilter.mentions => const EmptyState(
       icon: Icons.alternate_email,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
+import 'package:matterleast/data/sync/server_connection.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/views/root_views.dart';
 import 'package:matterleast/domain/channel_list.dart';
@@ -46,3 +47,18 @@ Stream<SyncStatus> syncStatus(Ref ref, String url) async* {
 @Riverpod(keepAlive: true)
 Future<ChannelActions> channelActions(Ref ref, String url) async =>
     ChannelActions(await ref.watch(serverSessionProvider(url).future));
+
+/// Fetches a server's channels, teams and Home lists again; the outcome
+/// shows in [syncStatus].
+class ServerRefresh {
+  const ServerRefresh(this._connection);
+
+  final ServerConnection _connection;
+
+  void call() => _connection.refreshAll();
+}
+
+@Riverpod(keepAlive: true)
+Future<ServerRefresh> serverRefresh(Ref ref, String url) async => ServerRefresh(
+  (await ref.watch(serverSessionProvider(url).future)).connection,
+);

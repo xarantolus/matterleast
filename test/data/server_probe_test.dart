@@ -93,6 +93,13 @@ void main() {
     expect(await failureOf(probe().probe('   ')), invalidAddressText);
   });
 
+  test('names a mistyped scheme instead of asking for an address', () async {
+    final message = await failureOf(probe().probe('ttp://chat.example.test'));
+    expect(message, contains('“ttp://”'));
+    expect(message, isNot(invalidAddressText));
+    expect(server.seen, isEmpty);
+  });
+
   test('the base URL comes from the ping URL that answered', () {
     expect(
       baseUrlFromPing(

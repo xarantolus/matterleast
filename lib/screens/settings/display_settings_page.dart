@@ -152,7 +152,7 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
         ref.watch(wallpaperPaletteProvider).value == null;
     final prefs = ref.watch(displayPrefsProvider(url)).value;
     return [
-      SettingsHeader('On ${server.displayName}'),
+      SettingsHeader('Saved on the server · ${server.displayName}'),
       ListTile(
         title: const Text('Colours'),
         subtitle: Text(

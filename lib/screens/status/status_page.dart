@@ -5,8 +5,10 @@ import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_status.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
+import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Per signed-in server: the connection, the last refresh, what is stored,
@@ -23,14 +25,29 @@ class StatusPage extends ConsumerWidget {
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
       appBar: AppBar(title: const Text('Status')),
-      body: ListView(
-        padding: EdgeInsets.only(top: Spacing.sm, bottom: bottom + Spacing.lg),
-        children: [
-          if (servers.isEmpty)
-            const ListTile(title: Text('No server is signed in.')),
-          for (final server in servers) _ServerStatus(server: server),
-        ],
-      ),
+      body: servers.isEmpty
+          ? EmptyState(
+              icon: Icons.dns_outlined,
+              title: 'No server is signed in',
+              body: 'Add a server to see its connection and what is saved.',
+              action: FilledButton.tonal(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const AddServerScreen(),
+                  ),
+                ),
+                child: const Text('Add server'),
+              ),
+            )
+          : ListView(
+              padding: EdgeInsets.only(
+                top: Spacing.sm,
+                bottom: bottom + Spacing.lg,
+              ),
+              children: [
+                for (final server in servers) _ServerStatus(server: server),
+              ],
+            ),
     );
   }
 }
@@ -89,12 +106,8 @@ class _ServerStatus extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
           child: FilledButton.tonalIcon(
-            onPressed: () async {
-              final session = await ref.read(
-                serverSessionProvider(server.url).future,
-              );
-              session.connection.refreshAll();
-            },
+            onPressed: () async =>
+                (await ref.read(serverRefreshProvider(server.url).future))(),
             icon: const Icon(Icons.refresh),
             label: const Text('Refresh now'),
           ),

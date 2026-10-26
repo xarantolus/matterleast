@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/quick_switch.dart';
@@ -209,6 +210,23 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final background =
+        theme.searchViewTheme.backgroundColor ??
+        theme.colorScheme.surfaceContainerHigh;
+    // The view covers the app bar, whose light status-bar icons would be
+    // unreadable on the view's surface. Unsized, so it covers the status
+    // bar above the view's header too.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      sized: false,
+      value: background.computeLuminance() > 0.5
+          ? SystemUiOverlayStyle.dark
+          : SystemUiOverlayStyle.light,
+      child: _content(context),
+    );
+  }
+
+  Widget _content(BuildContext context) {
     final items = [
       for (final s in widget.servers)
         ...?ref.watch(switchItemsProvider(s.url)).value,
@@ -233,9 +251,13 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
     final local = rankSwitchItems(term, items);
     var searching = _remoteTerm.trim() != term;
     final remote = <SwitchItem>[];
+    String? failedHost;
     for (final s in widget.servers) {
       final answer = ref.watch(switchRemoteProvider(s.url, _remoteTerm));
       if (answer.isLoading) searching = true;
+      if (answer.hasError && !answer.isLoading) {
+        failedHost ??= Uri.parse(s.url).host;
+      }
       remote.addAll(answer.value ?? const []);
     }
     final extra = extraRemoteItems(term, local, remote);
@@ -253,13 +275,21 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
                   serverName: names[item.serverUrl],
                   onTap: () => widget.onOpen(item),
                 ),
-              if (local.isEmpty && extra.isEmpty && !searching)
+              if (!searching &&
+                  (failedHost != null || (local.isEmpty && extra.isEmpty)))
                 Padding(
                   padding: const EdgeInsets.all(Spacing.lg),
-                  child: Text(
-                    'No channels or people match "$term".',
-                    style: TextStyle(color: context.tokens.muted),
-                  ),
+                  child: Text(switch ((
+                    failedHost,
+                    local.isEmpty && extra.isEmpty,
+                  )) {
+                    (final host?, true) =>
+                      "Couldn't search $host, and nothing saved on this "
+                          'phone matches “$term”.',
+                    (final host?, false) =>
+                      "Couldn't search $host · showing saved matches",
+                    _ => 'No channels or people match “$term”.',
+                  }, style: TextStyle(color: context.tokens.muted)),
                 ),
               if (widget.target != null)
                 ListTile(
@@ -267,7 +297,7 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
                     width: 40,
                     child: Icon(Icons.manage_search),
                   ),
-                  title: Text('Search messages for "$term"'),
+                  title: Text('Search messages for “$term”'),
                   onTap: () => widget.onSearch(term),
                 ),
             ],

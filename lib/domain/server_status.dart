@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 
 part 'server_status.freezed.dart';
@@ -52,22 +53,8 @@ ServerStatusView serverStatusView({
         ? '…'
         : '${_count(stored.channels, 'channel')} · '
               '${_count(stored.posts, 'message')}',
-    size: stored == null ? '…' : fileSize(stored.bytes),
+    size: stored == null ? '…' : formatBytes(stored.bytes),
   );
 }
 
 String _count(int n, String noun) => '$n ${n == 1 ? noun : '${noun}s'}';
-
-/// Bytes in the largest unit that keeps the number at least 1.
-String fileSize(int bytes) {
-  const units = ['bytes', 'KB', 'MB', 'GB'];
-  var value = bytes.toDouble();
-  var unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit++;
-  }
-  return unit == 0
-      ? '$bytes bytes'
-      : '${value.toStringAsFixed(value < 10 ? 1 : 0)} ${units[unit]}';
-}

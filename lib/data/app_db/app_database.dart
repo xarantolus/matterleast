@@ -83,6 +83,11 @@ class AppDatabase extends _$AppDatabase {
         ServersCompanion(themeMode: Value(mode.name)),
       );
 
+  Future<void> renameServer(String url, String name) =>
+      (update(servers)..where((s) => s.url.equals(url))).write(
+        ServersCompanion(displayName: Value(name)),
+      );
+
   Future<Map<String, String>> allSettings() async => {
     for (final row in await select(settingEntries).get()) row.key: row.value,
   };

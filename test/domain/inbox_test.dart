@@ -64,6 +64,47 @@ void main() {
     expect(mention.avatarPictureUpdate, 22);
   });
 
+  test('rows name the team only when the server has several', () {
+    final inbox = buildServerInbox(
+      InboxSource(
+        serverUrl: 's1',
+        myId: 'me',
+        people: people,
+        channels: {
+          'town': (teamId: 't1', input: channel('town', displayName: 'Town')),
+        },
+        teams: {'t1': 'Team One', 't2': 'Team Two'},
+        posts: {'m': post('m', channelId: 'town')},
+        mentionIds: ['m'],
+      ),
+    );
+    final row = inbox.mentions.single;
+    expect(row.title, '#Town');
+    expect(row.team, 'Team One');
+  });
+
+  test('a direct message from the other person is not prefixed by name', () {
+    final inbox = buildServerInbox(
+      InboxSource(
+        serverUrl: 's1',
+        myId: 'me',
+        people: people,
+        channels: {
+          'dm': (teamId: '', input: channel('dm', type: 'D', name: 'bob__me')),
+        },
+        posts: {
+          'theirs': post('theirs', channelId: 'dm'),
+          'mine': post('mine', channelId: 'dm', userId: 'me', minute: 1),
+        },
+        savedIds: ['mine', 'theirs'],
+      ),
+    );
+    final byId = {for (final i in inbox.saved) i.postId: i};
+    expect(byId['theirs']!.title, 'bob');
+    expect(byId['theirs']!.author, isNull);
+    expect(byId['mine']!.author, 'alice');
+  });
+
   group('unread', () {
     test('unread direct messages, new mentions and threads, newest first', () {
       final inbox = buildServerInbox(
@@ -124,7 +165,9 @@ void main() {
       expect(dm.count, 2);
       expect(dm.preview, '2 new messages');
       expect(inbox.unread[2].postId, 'new');
-      expect(inbox.unread[2].title, '#Town · Team One');
+      expect(inbox.unread[2].title, '#Town');
+      // One team: naming it on every row is noise.
+      expect(inbox.unread[2].team, isNull);
       expect(inbox.unread.first.count, 3);
       expect(inbox.mentions.map((m) => m.postId), ['own', 'new', 'old']);
       expect(inbox.mentions.map((m) => m.unread), [false, true, false]);

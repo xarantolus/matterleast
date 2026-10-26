@@ -53,7 +53,7 @@ class ServerProbe {
 
   Future<ProbedServer> probe(String typed) async {
     final typedUrl = normalizeServerUrl(typed);
-    if (typedUrl == null) throw const ProbeFailure(invalidAddressText);
+    if (typedUrl == null) throw ProbeFailure(addressProblemText(typed));
     if (typedUrl.scheme == 'http' && !allowHttp) {
       throw const ProbeFailure(httpNotAllowedText);
     }

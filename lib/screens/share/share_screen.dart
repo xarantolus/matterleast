@@ -11,8 +11,10 @@ import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/log.dart';
+import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
+import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:path/path.dart' as p;
@@ -174,8 +176,9 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final stored = ref.watch(serversProvider).value;
     final servers = [
-      for (final s in ref.watch(serversProvider).value ?? const <ServerEntry>[])
+      for (final s in stored ?? const <ServerEntry>[])
         if (s.signedIn) s,
     ];
     final server =
@@ -207,11 +210,22 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
             ),
           ],
         ),
-        body: server == null
-            ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(Spacing.xl),
-                  child: Text('Sign in to a server first, then share again.'),
+        body: stored == null
+            ? const Center(child: CircularProgressIndicator())
+            : server == null
+            ? EmptyState(
+                icon: Icons.dns_outlined,
+                title: 'No server to share to',
+                body:
+                    'Sign in to a server first. What you shared stays here '
+                    'until you send it or go back.',
+                action: FilledButton.tonal(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AddServerScreen(),
+                    ),
+                  ),
+                  child: const Text('Add server'),
                 ),
               )
             : ListView(

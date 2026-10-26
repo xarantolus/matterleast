@@ -5,8 +5,9 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/screens/channel_info/browse_channels_screen.dart';
+import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_list/category_menu.dart';
 import 'package:matterleast/screens/channel_list/channel_actions_sheet.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
@@ -50,10 +51,7 @@ class ChannelListPane extends ConsumerWidget {
       title: title,
       body: detail,
       action: FilledButton.tonal(
-        onPressed: () async {
-          final session = await ref.read(serverSessionProvider(url).future);
-          await session.connection.entry.run().catchError((Object _) {});
-        },
+        onPressed: () => _retry(ref),
         child: const Text('Retry'),
       ),
     ),
@@ -62,10 +60,14 @@ class ChannelListPane extends ConsumerWidget {
       url: url,
       teamId: teamId,
       label: [serverLabel, ?notice].join(' · '),
+      onRetry: notice == null ? null : () => _retry(ref),
       list: list,
       onFind: onFind,
     ),
   };
+
+  Future<void> _retry(WidgetRef ref) async =>
+      (await ref.read(serverRefreshProvider(url).future))();
 }
 
 class _ChannelListView extends ConsumerStatefulWidget {
@@ -75,6 +77,7 @@ class _ChannelListView extends ConsumerStatefulWidget {
     required this.label,
     required this.list,
     this.onFind,
+    this.onRetry,
     super.key,
   });
 
@@ -83,6 +86,9 @@ class _ChannelListView extends ConsumerStatefulWidget {
   final String label;
   final ChannelList list;
   final VoidCallback? onFind;
+
+  /// Set while the label says a refresh failed; tapping the label retries.
+  final VoidCallback? onRetry;
 
   @override
   ConsumerState<_ChannelListView> createState() => _ChannelListViewState();
@@ -287,7 +293,18 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
       child: CustomScrollView(
         controller: _scroll,
         slivers: [
-          SliverToBoxAdapter(child: PaneLabel(widget.label)),
+          SliverToBoxAdapter(
+            child: widget.onRetry == null
+                ? PaneLabel(widget.label)
+                : Semantics(
+                    button: true,
+                    onTapHint: 'Retry',
+                    child: InkWell(
+                      onTap: widget.onRetry,
+                      child: PaneLabel(widget.label),
+                    ),
+                  ),
+          ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
               Spacing.md,
@@ -334,7 +351,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
               ),
             ),
           if (list.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
               child: EmptyState(
                 icon: Icons.tag,
@@ -342,6 +359,26 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 body:
                     'Channels you join or create in this team, and your '
                     'direct messages, show up here.',
+                action:
+                    ref
+                            .watch(
+                              teamRightsProvider(widget.url, widget.teamId),
+                            )
+                            .value
+                            ?.join ??
+                        true
+                    ? FilledButton.tonal(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => BrowseChannelsScreen(
+                              url: widget.url,
+                              teamId: widget.teamId,
+                            ),
+                          ),
+                        ),
+                        child: const Text('Browse channels'),
+                      )
+                    : null,
               ),
             ),
           for (final section in _shown) _section(section),
@@ -557,8 +594,11 @@ class _FindChannels extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     button: true,
     label: 'Find channels',
-    child: GestureDetector(
+    // InkWell rather than a gesture detector, so keyboard and switch
+    // access can focus it.
+    child: InkWell(
       onTap: onTap,
+      customBorder: const StadiumBorder(),
       child: const AbsorbPointer(
         child: ExcludeSemantics(
           child: SearchBar(
@@ -586,17 +626,31 @@ class _ShortcutTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    dense: true,
-    visualDensity: VisualDensity.compact,
-    leading: Icon(icon, size: 22),
-    title: Text(
-      title,
-      style: count > 0 ? const TextStyle(fontWeight: FontWeight.w700) : null,
-    ),
-    trailing: count > 0 ? Text('$count') : null,
-    onTap: onTap,
-  );
+  Widget build(BuildContext context) {
+    final color = context.tokens.text;
+    // Same metrics as ChannelTile: these are rows of the same list.
+    return ListTile(
+      dense: true,
+      contentPadding: const EdgeInsets.only(
+        left: Spacing.lg,
+        right: Spacing.md,
+      ),
+      minLeadingWidth: 28,
+      leading: SizedBox(width: 28, child: Icon(icon, size: 20, color: color)),
+      title: Text(
+        title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 15,
+          color: color,
+          fontWeight: count > 0 ? FontWeight.w700 : FontWeight.w400,
+        ),
+      ),
+      trailing: count > 0 ? Text('$count') : null,
+      onTap: onTap,
+    );
+  }
 }
 
 class _CategoryHeader extends StatelessWidget {
@@ -621,6 +675,8 @@ class _CategoryHeader extends StatelessWidget {
         child: Semantics(
           expanded: !section.collapsed,
           button: true,
+          header: true,
+          label: section.title,
           child: Padding(
             padding: const EdgeInsets.only(left: Spacing.md, top: Spacing.xs),
             child: Row(
@@ -633,16 +689,19 @@ class _CategoryHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: Spacing.xs),
                 Expanded(
-                  child: Text(
-                    section.title.toUpperCase(),
-                    style: tokens.smallCaps,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  // The label above reads the name as written; capitals
+                  // may be spelled out letter by letter.
+                  child: ExcludeSemantics(
+                    child: Text(
+                      section.title.toUpperCase(),
+                      style: tokens.smallCaps,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
                 IconButton(
                   tooltip: '${section.title} options',
-                  visualDensity: VisualDensity.compact,
                   iconSize: 18,
                   color: tokens.muted,
                   icon: const Icon(Icons.more_horiz),

@@ -30,7 +30,6 @@ class ChannelTile extends StatelessWidget {
     final color = item.muted ? tokens.muted : tokens.text;
     return ListTile(
       dense: true,
-      visualDensity: VisualDensity.compact,
       contentPadding: const EdgeInsets.only(
         left: Spacing.lg,
         right: Spacing.md,
@@ -81,10 +80,15 @@ class _Markers extends StatelessWidget {
           semanticLabel: 'Muted',
         ),
       if (item.mentions > 0)
-        Badge.count(
-          count: item.mentions,
-          backgroundColor: item.muted ? tokens.muted : scheme.error,
-          textColor: item.muted ? tokens.page : scheme.onError,
+        Semantics(
+          label: item.mentions == 1 ? '1 mention' : '${item.mentions} mentions',
+          child: ExcludeSemantics(
+            child: Badge.count(
+              count: item.mentions,
+              backgroundColor: item.muted ? tokens.muted : scheme.error,
+              textColor: item.muted ? tokens.page : scheme.onError,
+            ),
+          ),
         )
       else if (item.unread)
         Semantics(

@@ -113,7 +113,14 @@ class _ServerTeams extends ConsumerWidget {
       children: [
         for (final team in teams)
           _RailButton(
-            tooltip: '${team.displayName} · ${server.displayName}',
+            tooltip: [
+              team.displayName,
+              server.displayName,
+              if (team.id != selectedTeam && team.mentions > 0)
+                team.mentions == 1 ? '1 mention' : '${team.mentions} mentions'
+              else if (team.id != selectedTeam && team.unread)
+                'unread',
+            ].join(' · '),
             selected: team.id == selectedTeam,
             onPressed: () =>
                 selection.select(RailTarget(url: server.url, teamId: team.id)),

@@ -30,7 +30,16 @@ class MessagePreviewTile extends ConsumerWidget {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
     final strong = item.unread ? FontWeight.w700 : FontWeight.w500;
-    final labels = [?serverName, ?item.place];
+    final detail = [?item.place, ?item.team, ?serverName].join(' · ');
+    final when = shortWhen(
+      item.time,
+      today,
+      use24: MediaQuery.alwaysUse24HourFormatOf(context),
+    );
+    // At large text sizes the time leaves the title line, which would
+    // otherwise have room for a few letters only.
+    final large = MediaQuery.textScalerOf(context).scale(10) > 15;
+    final marker = _marker(context, item);
     return ListTile(
       onTap: onTap,
       leading: Stack(
@@ -55,32 +64,38 @@ class MessagePreviewTile extends ConsumerWidget {
       title: Row(
         children: [
           Expanded(
-            child: Text(
-              item.title,
+            // The detail comes last, so it is what the ellipsis cuts.
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: item.title,
+                    style: TextStyle(fontWeight: strong),
+                  ),
+                  if (detail.isNotEmpty)
+                    TextSpan(
+                      text: ' · $detail',
+                      style: TextStyle(
+                        color: tokens.muted,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                ],
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontWeight: strong),
             ),
           ),
-          const SizedBox(width: Spacing.sm),
-          Text(
-            shortWhen(
-              item.time,
-              today,
-              use24: MediaQuery.alwaysUse24HourFormatOf(context),
-            ),
-            style: text.bodySmall?.copyWith(color: tokens.muted),
-          ),
+          if (!large) ...[
+            const SizedBox(width: Spacing.sm),
+            Text(when, style: text.bodySmall?.copyWith(color: tokens.muted)),
+          ],
         ],
       ),
       subtitle: Text.rich(
         TextSpan(
           children: [
-            if (labels.isNotEmpty)
-              TextSpan(
-                text: '${labels.join(' · ')} · ',
-                style: TextStyle(color: tokens.accent),
-              ),
+            if (large) TextSpan(text: '$when · '),
             if (item.author case final author?)
               TextSpan(
                 text: '$author: ',
@@ -89,37 +104,32 @@ class MessagePreviewTile extends ConsumerWidget {
             TextSpan(text: item.preview),
           ],
         ),
-        maxLines: 1,
+        maxLines: large ? 2 : 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(color: item.unread ? tokens.text : tokens.muted),
       ),
-      trailing: _Marker(item: item),
+      trailing: marker,
     );
   }
 }
 
-class _Marker extends StatelessWidget {
-  const _Marker({required this.item});
-
-  final InboxItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    if (item.count > 0) {
-      final label = item.kind == InboxKind.thread
-          ? '${item.count} new ${item.count == 1 ? 'reply' : 'replies'}'
-          : '${item.count} unread';
-      return Semantics(
-        label: label,
-        child: ExcludeSemantics(child: Badge.count(count: item.count)),
-      );
-    }
-    if (item.unread) {
-      return Semantics(
-        label: 'Unread',
-        child: Badge(smallSize: 10, backgroundColor: context.tokens.unread),
-      );
-    }
-    return const SizedBox.shrink();
+/// The new-message count or unread dot, or null so that rows without one
+/// keep no empty slot at the end.
+Widget? _marker(BuildContext context, InboxItem item) {
+  if (item.count > 0) {
+    final label = item.kind == InboxKind.thread
+        ? '${item.count} new ${item.count == 1 ? 'reply' : 'replies'}'
+        : '${item.count} unread';
+    return Semantics(
+      label: label,
+      child: ExcludeSemantics(child: Badge.count(count: item.count)),
+    );
   }
+  if (item.unread) {
+    return Semantics(
+      label: 'Unread',
+      child: Badge(smallSize: 10, backgroundColor: context.tokens.unread),
+    );
+  }
+  return null;
 }

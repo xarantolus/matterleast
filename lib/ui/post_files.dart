@@ -13,6 +13,7 @@ import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
+import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -360,7 +361,10 @@ class FileCard extends ConsumerWidget {
             start: Spacing.md,
             end: Spacing.xs,
           ),
-          leading: Icon(_iconOf(file), color: tokens.accent),
+          leading: Icon(
+            fileIcon(file.kind, file.extension),
+            color: tokens.accent,
+          ),
           title: Text(file.name, maxLines: 2, overflow: TextOverflow.ellipsis),
           subtitle: running
               ? Padding(
@@ -390,18 +394,6 @@ class FileCard extends ConsumerWidget {
     );
   }
 }
-
-IconData _iconOf(PostFile file) => switch (file.kind) {
-  FileKind.pdf => Icons.picture_as_pdf_outlined,
-  FileKind.text => Icons.description_outlined,
-  FileKind.image || FileKind.gif => Icons.image_outlined,
-  FileKind.video => Icons.movie_outlined,
-  FileKind.other => switch (file.extension) {
-    'zip' || 'gz' || 'tar' || '7z' || 'rar' => Icons.folder_zip_outlined,
-    'mp3' || 'ogg' || 'wav' || 'm4a' || 'flac' => Icons.audio_file_outlined,
-    _ => Icons.insert_drive_file_outlined,
-  },
-};
 
 enum _FileAction { view, save, share, openWith }
 

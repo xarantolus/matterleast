@@ -352,3 +352,78 @@ final class ChannelActionsFamily extends $Family
   @override
   String toString() => r'channelActionsProvider';
 }
+
+@ProviderFor(serverRefresh)
+final serverRefreshProvider = ServerRefreshFamily._();
+
+final class ServerRefreshProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ServerRefresh>,
+          ServerRefresh,
+          FutureOr<ServerRefresh>
+        >
+    with $FutureModifier<ServerRefresh>, $FutureProvider<ServerRefresh> {
+  ServerRefreshProvider._({
+    required ServerRefreshFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'serverRefreshProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverRefreshHash();
+
+  @override
+  String toString() {
+    return r'serverRefreshProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<ServerRefresh> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ServerRefresh> create(Ref ref) {
+    final argument = this.argument as String;
+    return serverRefresh(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ServerRefreshProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$serverRefreshHash() => r'7c9efa0bf1696a3e482257be9806537944da15aa';
+
+final class ServerRefreshFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<ServerRefresh>, String> {
+  ServerRefreshFamily._()
+    : super(
+        retry: null,
+        name: r'serverRefreshProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  ServerRefreshProvider call(String url) =>
+      ServerRefreshProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'serverRefreshProvider';
+}

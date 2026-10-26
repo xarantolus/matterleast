@@ -60,3 +60,18 @@ String initialsOf(String name) {
       : first(words[0], 1) + first(words[1], 1);
   return letters.toUpperCase();
 }
+
+/// Why [name] can't be the new name of the server at [url], or null when it
+/// can: names tell signed-in servers apart in the rail and on Home.
+String? renameProblem(
+  String name, {
+  required String url,
+  required Iterable<ServerEntry> servers,
+}) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) return 'Enter a name.';
+  final taken = servers.any(
+    (s) => s.url != url && s.signedIn && s.displayName == trimmed,
+  );
+  return taken ? 'Another server already has this name.' : null;
+}

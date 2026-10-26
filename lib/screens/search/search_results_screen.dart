@@ -6,8 +6,9 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/message_search.dart';
+import 'package:matterleast/domain/post_files.dart'
+    show fileKindOf, formatBytes;
 import 'package:matterleast/domain/quick_switch.dart';
-import 'package:matterleast/domain/server_status.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/open_channel.dart';
@@ -15,6 +16,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/pane_label.dart';
@@ -85,7 +87,9 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
 
   bool get _hasTerms => searchTerms(_query, _scope).isNotEmpty;
 
-  Future<void> _refresh() async {
+  /// Fetches the results again; a pull says when that failed, while Retry
+  /// on a failed search shows the cause in place already.
+  Future<void> _refresh({bool quiet = false}) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       if (_tab == _Tab.messages) {
@@ -102,11 +106,14 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         await ref.read(server.future);
       }
     } on Object catch (e) {
+      if (quiet) return;
       messenger.showSnackBar(
         SnackBar(content: Text(requestProblemText(e, _host))),
       );
     }
   }
+
+  void _retry() => unawaited(_refresh(quiet: true));
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +138,12 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
           ),
           cursorColor: Theme.of(context).appBarTheme.foregroundColor,
           decoration: InputDecoration(
-            hintText: 'Search',
+            hintText: switch ((_tab, _scope.channelLabel)) {
+              (_Tab.files, final where?) => 'Search files in $where',
+              (_Tab.files, null) => 'Search files',
+              (_, final where?) => 'Search in $where',
+              _ => 'Search messages',
+            },
             border: InputBorder.none,
             hintStyle: TextStyle(
               color: Theme.of(context).appBarTheme.foregroundColor
@@ -201,14 +213,14 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                               scope: _scope,
                               query: _query,
                               host: _host,
-                              onRetry: _refresh,
+                              onRetry: _retry,
                             )
                           : _FileResults(
                               url: widget.url,
                               scope: _scope,
                               query: _query,
                               host: _host,
-                              onRetry: _refresh,
+                              onRetry: _retry,
                             ),
                     ),
             ),
@@ -526,7 +538,9 @@ class _PostList extends ConsumerWidget {
         if (i == 0) {
           return PaneLabel(
             [
-              '${items.length} ${items.length == 1 ? 'result' : 'results'}',
+              // The ids are known before their rows are read, so the count
+              // is right at once instead of starting at 0.
+              '${ids.length} ${ids.length == 1 ? 'result' : 'results'}',
               ?notice,
             ].join(' · '),
           );
@@ -539,7 +553,7 @@ class _PostList extends ConsumerWidget {
               Navigator.of(context),
               url: url,
               channelId: item.channelId,
-              title: item.title.split(' · ').first.replaceFirst('#', ''),
+              title: item.title.replaceFirst('#', ''),
               teamId: item.teamId,
               highlightPostId: item.postId,
               rootId: item.rootId,
@@ -655,32 +669,25 @@ class _FileTile extends StatelessWidget {
     onTap: onTap,
     leading: SizedBox(
       width: 40,
-      child: Icon(fileIcon(file.mimeType, file.extension)),
+      child: Icon(
+        fileIcon(
+          fileKindOf(extension: file.extension, mimeType: file.mimeType),
+          file.extension,
+        ),
+        color: context.tokens.accent,
+      ),
     ),
     title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
     subtitle: Text(
-      [fileSize(file.size), if (file.place.isNotEmpty) file.place].join(' · '),
+      [
+        formatBytes(file.size),
+        if (file.place.isNotEmpty) file.place,
+      ].join(' · '),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(color: context.tokens.muted),
     ),
   );
-}
-
-/// An icon for a file by its type.
-IconData fileIcon(String mimeType, String extension) {
-  final ext = extension.toLowerCase();
-  if (mimeType.startsWith('image/')) return Icons.image_outlined;
-  if (mimeType.startsWith('video/')) return Icons.movie_outlined;
-  if (mimeType.startsWith('audio/')) return Icons.audio_file_outlined;
-  if (ext == 'pdf') return Icons.picture_as_pdf_outlined;
-  if (const {'zip', 'gz', 'tar', '7z', 'rar'}.contains(ext)) {
-    return Icons.folder_zip_outlined;
-  }
-  if (const {'xls', 'xlsx', 'csv', 'ods'}.contains(ext)) {
-    return Icons.table_chart_outlined;
-  }
-  return Icons.description_outlined;
 }
 
 class _NoResults extends StatelessWidget {
@@ -692,7 +699,7 @@ class _NoResults extends StatelessWidget {
   Widget build(BuildContext context) => FillScrollable(
     child: EmptyState(
       icon: Icons.search_off,
-      title: query.isEmpty ? 'No results' : 'No results for "$query"',
+      title: query.isEmpty ? 'No results' : 'No results for “$query”',
       body:
           'Check the spelling, use fewer words, or remove a filter. A * at '
           'the end of a word finds words starting with it.',

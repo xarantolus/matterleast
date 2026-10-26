@@ -26,7 +26,9 @@ Future<void> showStatusSheet(
             ListTile(
               leading: SizedBox(
                 width: 40,
-                child: Center(child: PresenceDot(status: s, size: 16)),
+                child: Center(
+                  child: PresenceDot(status: s, size: 16, announce: false),
+                ),
               ),
               title: Text(presenceLabel(s)),
               subtitle: s == 'dnd'

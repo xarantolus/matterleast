@@ -79,7 +79,7 @@ class _NotificationSettingsPageState
       padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
       children: [
         const PhoneNotifications(),
-        SettingsHeader('On ${widget.server.displayName}'),
+        SettingsHeader('Saved on the server · ${widget.server.displayName}'),
         ListTile(
           enabled: enabled,
           title: const Text('Notify me about'),

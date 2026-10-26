@@ -42,7 +42,5 @@ void main() {
     final stored = view(stored: (channels: 1, posts: 340, bytes: 1536000));
     expect(stored.stored, '1 channel · 340 messages');
     expect(stored.size, '1.5 MB');
-    expect(fileSize(512), '512 bytes');
-    expect(fileSize(20 * 1024), '20 KB');
   });
 }

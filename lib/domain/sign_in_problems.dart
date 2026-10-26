@@ -11,6 +11,22 @@ const httpNotAllowedText =
 const invalidAddressText =
     "Enter the server's address, for example chat.example.com.";
 
+/// Why [typed] is not a server address, for the field's error line.
+String addressProblemText(String typed) {
+  final text = typed.trim();
+  if (text.isEmpty) return invalidAddressText;
+  final scheme = RegExp(r'^([^:/\s]*)://').firstMatch(text)?.group(1);
+  if (scheme != null && scheme != 'https' && scheme != 'http') {
+    return scheme.isEmpty
+        ? 'The address starts with “://”. Start with https:// or leave it '
+              'out.'
+        : "“$scheme://” isn't a web address. Start with https:// or leave it "
+              'out.';
+  }
+  return "“$text” isn't a server address. Check it for typos, for example "
+      'chat.example.com.';
+}
+
 const wrongCredentialsText = 'The email and password combination is incorrect.';
 
 const mfaSetupNeededText =

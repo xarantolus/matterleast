@@ -16,6 +16,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/root/team_rail.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
+import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 /// The rail of teams beside Home or the picked team's channel list.
@@ -88,7 +89,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
             target: team == null ? null : (url: recent.url, teamId: team),
           ),
         ],
-        pane: HomePane(servers: servers),
+        pane: HomePane(servers: servers, onSearch: _openSearch),
       );
     }
     final teams = ref.watch(railTeamsProvider(server.url)).value ?? const [];
@@ -118,7 +119,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         if (teamId != null) _NewMenu(url: server.url, teamId: teamId),
       ],
       pane: teamId == null && state is! ChannelListFailed
-          ? const Center(child: CircularProgressIndicator())
+          ? status is SyncIdle && status.lastSuccess != null
+                ? _NoTeam(url: server.url, serverName: server.displayName)
+                : const Center(child: CircularProgressIndicator())
           : ChannelListPane(
               url: server.url,
               teamId: teamId ?? '',
@@ -167,6 +170,29 @@ class _RootLayout extends ConsumerWidget {
           Expanded(child: pane),
         ],
       ),
+    ),
+  );
+}
+
+/// A signed-in user who is in no team on the server: nothing to list.
+class _NoTeam extends ConsumerWidget {
+  const _NoTeam({required this.url, required this.serverName});
+
+  final String url;
+  final String serverName;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => EmptyState(
+    icon: Icons.groups_outlined,
+    title: 'Not in a team yet',
+    body:
+        "You aren't a member of any team on $serverName. Open an invite "
+        'link from a team member, or join a team in the web app, then '
+        'refresh.',
+    action: FilledButton.tonal(
+      onPressed: () async =>
+          (await ref.read(serverRefreshProvider(url).future))(),
+      child: const Text('Refresh'),
     ),
   );
 }

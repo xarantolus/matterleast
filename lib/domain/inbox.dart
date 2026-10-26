@@ -35,6 +35,9 @@ abstract class InboxItem with _$InboxItem {
     /// Where the message is, for rows whose title doesn't say it, such as
     /// `#town-square` for a thread.
     required String? place,
+
+    /// The channel's team, when the server has more than one.
+    String? team,
     required DateTime time,
 
     /// Unread messages or new replies; 0 shows a dot when [unread].
@@ -176,7 +179,7 @@ ServerInbox buildServerInbox(InboxSource s) {
     final channel = s.channels[post.channelId];
     final c = channel?.input;
     final conversation = c != null && (c.type == 'D' || c.type == 'G');
-    final teamName = s.teams[channel?.teamId];
+    final teamName = s.teams.length > 1 ? s.teams[channel?.teamId] : null;
     final title = switch (c) {
       null => 'Unknown channel',
       _ when conversation => conversationName(
@@ -185,12 +188,10 @@ ServerInbox buildServerInbox(InboxSource s) {
         people: s.people,
         nameFormat: s.nameFormat,
       ).title,
-      _ =>
-        teamName == null
-            ? '#${c.displayName}'
-            : '#${c.displayName} · $teamName',
+      _ => '#${c.displayName}',
     };
     final author = nameOf(post.userId);
+    final titledByAuthor = c?.type == 'D' && title == author;
     return InboxItem(
       serverUrl: s.serverUrl,
       kind: kind,
@@ -200,9 +201,10 @@ ServerInbox buildServerInbox(InboxSource s) {
       avatarName: author,
       avatarUserId: post.userId,
       avatarPictureUpdate: s.pictureUpdates[post.userId],
-      author: author,
+      author: titledByAuthor ? null : author,
       preview: postPreview(post),
       place: null,
+      team: conversation ? null : teamName,
       time: post.createAt,
       count: 0,
       unread: unread,

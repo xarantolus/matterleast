@@ -21,7 +21,7 @@ import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// The user's own page: who they are on the server picked in the rail,
-/// their saved messages, settings, about, and the servers with sign in,
+/// their saved messages, settings, and the servers with sign in,
 /// sign out and remove.
 class YouPage extends ConsumerWidget {
   const YouPage({super.key});
@@ -41,7 +41,6 @@ class YouPage extends ConsumerWidget {
             : signedIn.reduce(
                 (a, b) => b.lastActiveAt!.isAfter(a.lastActiveAt!) ? b : a,
               ));
-    final version = ref.watch(appVersionProvider).value;
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
       appBar: AppBar(title: const Text('You')),
@@ -71,16 +70,6 @@ class YouPage extends ConsumerWidget {
             title: const Text('Settings'),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
-            ),
-          ),
-          ListTile(
-            leading: const SizedBox(width: 40, child: Icon(Icons.info_outline)),
-            title: const Text('About Matterleast'),
-            subtitle: version == null ? null : Text('Version $version'),
-            onTap: () => showLicensePage(
-              context: context,
-              applicationName: 'Matterleast',
-              applicationVersion: version,
             ),
           ),
           const SizedBox(height: Spacing.lg),
@@ -177,7 +166,9 @@ class _Profile extends ConsumerWidget {
           ListTile(
             leading: SizedBox(
               width: 40,
-              child: Center(child: PresenceDot(status: status, size: 16)),
+              child: Center(
+                child: PresenceDot(status: status, size: 16, announce: false),
+              ),
             ),
             title: Text(presenceLabel(status)),
             subtitle: const Text('Tap to change'),
@@ -255,7 +246,7 @@ class _Profile extends ConsumerWidget {
   }
 }
 
-enum _ServerAction { signIn, signOut, remove }
+enum _ServerAction { signIn, signOut, rename, remove }
 
 class _ServerTile extends ConsumerWidget {
   const _ServerTile({required this.server});
@@ -315,6 +306,11 @@ class _ServerTile extends ConsumerWidget {
                 onTap: () => Navigator.pop(context, _ServerAction.signIn),
               ),
             ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Rename'),
+              onTap: () => Navigator.pop(context, _ServerAction.rename),
+            ),
+            ListTile(
               leading: const Icon(Icons.delete_outline),
               title: const Text('Remove server'),
               onTap: () => Navigator.pop(context, _ServerAction.remove),
@@ -349,6 +345,14 @@ class _ServerTile extends ConsumerWidget {
             ),
           ),
         );
+      case _ServerAction.rename:
+        final servers = ref.read(serversProvider).value ?? const [];
+        final db = ref.read(appDatabaseProvider);
+        final name = await showDialog<String>(
+          context: context,
+          builder: (_) => _RenameDialog(server: server, servers: servers),
+        );
+        if (name != null) await db.renameServer(server.url, name);
       case _ServerAction.signOut:
       case _ServerAction.remove:
         await _leave(context, ref, remove: action == _ServerAction.remove);
@@ -397,6 +401,65 @@ class _ServerTile extends ConsumerWidget {
     );
     if (done && !anySignedIn) navigator.popUntil((route) => route.isFirst);
   }
+}
+
+/// Asks for a server's new name; pops it, trimmed, or null.
+class _RenameDialog extends StatefulWidget {
+  const _RenameDialog({required this.server, required this.servers});
+
+  final ServerEntry server;
+  final List<ServerEntry> servers;
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final _name = TextEditingController(text: widget.server.displayName);
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final error = renameProblem(
+      _name.text,
+      url: widget.server.url,
+      servers: widget.servers,
+    );
+    if (error != null) {
+      setState(() => _error = error);
+      return;
+    }
+    Navigator.pop(context, _name.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Rename server'),
+    content: TextField(
+      controller: _name,
+      autofocus: true,
+      textInputAction: TextInputAction.done,
+      onSubmitted: (_) => _save(),
+      decoration: InputDecoration(
+        labelText: 'Name',
+        helperText: 'Shown in the rail and on Home',
+        errorText: _error,
+        border: const OutlineInputBorder(),
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      TextButton(onPressed: _save, child: const Text('Save')),
+    ],
+  );
 }
 
 Future<bool> _confirm(
