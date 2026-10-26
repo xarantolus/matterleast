@@ -91,9 +91,7 @@ class _PeoplePickerScreenState extends ConsumerState<PeoplePickerScreen> {
       title: Text(widget.title),
       actions: [
         TextButton(
-          style: TextButton.styleFrom(
-            foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-          ),
+          style: context.barButtonStyle,
           onPressed: _picked.isEmpty || _working ? null : _done,
           child: Text(widget.action),
         ),

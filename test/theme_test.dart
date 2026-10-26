@@ -14,152 +14,369 @@ import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/ui/tokens.dart';
 
+/// Mattermost's built-in themes as the server stores them.
+const _presets = {
+  'Denim': {
+    'sidebarHeaderBg': '#192a4d',
+    'sidebarHeaderTextColor': '#ffffff',
+    'centerChannelBg': '#ffffff',
+    'centerChannelColor': '#3f4350',
+    'buttonBg': '#1c58d9',
+    'buttonColor': '#ffffff',
+  },
+  'Sapphire': {
+    'sidebarHeaderBg': '#123b91',
+    'sidebarHeaderTextColor': '#ffffff',
+    'centerChannelBg': '#ffffff',
+    'centerChannelColor': '#3f4350',
+    'buttonBg': '#1c58d9',
+    'buttonColor': '#ffffff',
+  },
+  'Quartz': {
+    'sidebarHeaderBg': '#ebecef',
+    'sidebarHeaderTextColor': '#1f2228',
+    'centerChannelBg': '#ffffff',
+    'centerChannelColor': '#3f4350',
+    'buttonBg': '#1c58d9',
+    'buttonColor': '#ffffff',
+  },
+  'Indigo': {
+    'sidebarHeaderBg': '#182339',
+    'sidebarHeaderTextColor': '#ffffff',
+    'centerChannelBg': '#111827',
+    'centerChannelColor': '#dddfe4',
+    'buttonBg': '#4a7ce8',
+    'buttonColor': '#ffffff',
+  },
+  'Onyx': {
+    'sidebarHeaderBg': '#24272d',
+    'sidebarHeaderTextColor': '#ffffff',
+    'centerChannelBg': '#191b1f',
+    'centerChannelColor': '#e3e4e8',
+    'buttonBg': '#4a7ce8',
+    'buttonColor': '#ffffff',
+  },
+  // Invented custom themes that break one rule each.
+  'mid-grey page with white text': {
+    'sidebarHeaderBg': '#8a8a8a',
+    'sidebarHeaderTextColor': '#ffffff',
+    'centerChannelBg': '#8a8a8a',
+    'centerChannelColor': '#ffffff',
+    'buttonBg': '#9a9a9a',
+    'buttonColor': '#ffffff',
+  },
+  'pale accents on a dark page': {
+    'sidebarHeaderBg': '#e0e0ff',
+    'sidebarHeaderTextColor': '#ffffff',
+    'centerChannelBg': '#2b2b40',
+    'centerChannelColor': '#3a3a55',
+    'buttonBg': '#ffd1dc',
+    'buttonColor': '#ffffff',
+  },
+  'neon on black': {
+    'sidebarHeaderBg': '#ff00ff',
+    'sidebarHeaderTextColor': '#00ff00',
+    'centerChannelBg': '#000000',
+    'centerChannelColor': '#00ff00',
+    'buttonBg': '#0000ff',
+    'buttonColor': '#000000',
+  },
+  'washed out on white': {
+    'sidebarHeaderBg': '#ffffff',
+    'sidebarHeaderTextColor': '#eeeeee',
+    'centerChannelBg': '#ffffff',
+    'centerChannelColor': '#eeeeee',
+    'buttonBg': '#ffff00',
+    'buttonColor': '#ffffff',
+  },
+};
+
+ServerPalette _palette(Map<String, String> colours) =>
+    ServerPalette.of(MattermostTheme.parse(jsonEncode(colours))!);
+
+/// Every theme the app can show: the brand, each server theme and
+/// wallpaper colours from a few seeds, in light and dark.
+Map<String, ThemeData> _allThemes() {
+  final recorded = jsonDecode(
+    File('test/fixtures/api/theme_preferences.json').readAsStringSync(),
+  ) as List<Object?>;
+  final stored = {
+    for (final p in recorded)
+      if (p case {'name': final String name, 'value': final String value})
+        name: value,
+  };
+  const seeds = {
+    'violet': Color(0xFF6750A4),
+    'pale yellow': Color(0xFFF2C94C),
+    'bright green': Color(0xFF00E676),
+    'red': Color(0xFFB3261E),
+    'grey': Color(0xFF8A8A8A),
+  };
+  return {
+    'brand light': MatterleastApp.lightTheme,
+    'brand dark': MatterleastApp.darkTheme,
+    for (final MapEntry(:key, :value) in _presets.entries)
+      'server $key': buildServerTheme(_palette(value)),
+    'server recorded yellow': buildServerTheme(
+      ServerPalette.of(
+        themeForTeam(stored, 'tm000000000000000000000t01', dark: false),
+      ),
+    ),
+    for (final MapEntry(:key, :value) in seeds.entries)
+      for (final brightness in Brightness.values)
+        'wallpaper $key ${brightness.name}': buildWallpaperTheme(
+          WallpaperColours.fromSeed(value),
+          brightness,
+        ),
+  };
+}
+
+/// The pairs Material and the app draw small text with, beyond the tokens.
+Map<String, (Color, Color)> _schemePairs(ThemeData theme) {
+  final s = theme.colorScheme;
+  final t = theme.extension<AppTokens>()!;
+  return {
+    'app bar text on the bar': (
+      theme.appBarTheme.foregroundColor!,
+      theme.appBarTheme.backgroundColor!,
+    ),
+    'button text on primary': (s.onPrimary, s.primary),
+    'primary as text on the page (focused field label)': (s.primary, t.page),
+    'primary as text on a panel': (s.primary, t.panel),
+    'error on the page (New messages, field errors)': (s.error, t.page),
+    'URGENT label on error': (s.onError, s.error),
+    'text on a menu': (s.onSurface, s.surfaceContainer),
+    'text on a sheet': (s.onSurface, s.surfaceContainerLow),
+    'muted on a sheet': (s.onSurfaceVariant, s.surfaceContainerLow),
+    'text on a dialog': (s.onSurface, s.surfaceContainerHigh),
+    'muted on a dialog': (s.onSurfaceVariant, s.surfaceContainerHigh),
+    'text on the highest container': (s.onSurface, s.surfaceContainerHighest),
+    'tonal button text': (s.onSecondaryContainer, s.secondaryContainer),
+    'primary container text': (s.onPrimaryContainer, s.primaryContainer),
+    'snack bar text': (s.onInverseSurface, s.inverseSurface),
+    'text on the highlighted row': (t.text, t.accentWash),
+    'muted on the highlighted row': (t.muted, t.accentWash),
+  };
+}
+
 void main() {
-  final themes = [MatterleastApp.lightTheme, MatterleastApp.darkTheme];
+  final themes = _allThemes();
 
-  test('light and dark disagree about brightness', () {
-    expect(MatterleastApp.lightTheme.brightness, Brightness.light);
-    expect(MatterleastApp.darkTheme.brightness, Brightness.dark);
-  });
+  for (final MapEntry(key: name, value: theme) in themes.entries) {
+    test('every small-text pair clears 4.5:1 in $name', () {
+      final tokens = theme.extension<AppTokens>()!;
+      final pairs = {...tokens.textPairs, ..._schemePairs(theme)};
+      for (final MapEntry(:key, value: (fg, bg)) in pairs.entries) {
+        expect(
+          contrast(fg, bg),
+          greaterThanOrEqualTo(4.5),
+          reason: '$key: $fg on $bg',
+        );
+      }
+    });
+  }
 
-  test('white app bar text stays readable on the brand colour', () {
-    for (final theme in themes) {
-      final fill = theme.appBarTheme.backgroundColor!;
-      expect(fill, theme.colorScheme.primary);
-      expect(
-        contrast(Colors.white, fill),
-        greaterThanOrEqualTo(4.5),
-        reason: 'white on primary in the ${theme.brightness.name} theme',
+  for (final name in [
+    'brand light',
+    'brand dark',
+    'server Denim',
+    'server Quartz',
+    'server Onyx',
+    'server recorded yellow',
+    'server washed out on white',
+    'wallpaper violet light',
+    'wallpaper pale yellow dark',
+  ]) {
+    testWidgets('app bar actions read on the bar in $name, Save even when '
+        'disabled', (tester) async {
+      final theme = themes[name]!;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Builder(
+            builder: (context) => Scaffold(
+              appBar: AppBar(
+                leading: const BackButton(),
+                title: const Text('Edit profile'),
+                actions: [
+                  SearchAnchor(
+                    builder: (_, _) => IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.search),
+                    ),
+                    suggestionsBuilder: (_, _) => const [],
+                  ),
+                  IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+                  TextButton(
+                    style: context.barButtonStyle,
+                    onPressed: () {},
+                    child: const Text('Create'),
+                  ),
+                  TextButton(
+                    style: context.barButtonStyle,
+                    onPressed: null,
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       );
-    }
-  });
+      final bar = theme.appBarTheme.backgroundColor!;
+      Color drawn(Finder finder) => drawnColour(tester, finder);
+      for (final finder in [
+        find.byIcon(Icons.search),
+        find.byIcon(Icons.add),
+        find.byIcon(Icons.arrow_back),
+        find.text('Edit profile'),
+        find.text('Create'),
+      ]) {
+        expect(
+          contrast(drawn(finder), bar),
+          greaterThanOrEqualTo(4.5),
+          reason: '$finder',
+        );
+      }
+      final disabled = Color.alphaBlend(drawn(find.text('Save')), bar);
+      expect(contrast(disabled, bar), greaterThanOrEqualTo(3));
+      expect(
+        contrast(disabled, bar),
+        lessThan(contrast(drawn(find.text('Create')), bar)),
+        reason: 'a disabled action looks different from an enabled one',
+      );
+    });
+  }
 
-  testWidgets('app bar icons, search included, clear 4.5:1 on the brand', (
-    tester,
-  ) async {
-    for (final theme in themes) {
+  for (final name in [
+    'brand dark',
+    'server recorded yellow',
+    'server pale accents on a dark page',
+    'wallpaper bright green light',
+  ]) {
+    testWidgets('a focused field and a filled button read in $name', (
+      tester,
+    ) async {
+      final theme = themes[name]!;
       await tester.pumpWidget(
         MaterialApp(
           theme: theme,
           home: Scaffold(
-            appBar: AppBar(
-              leading: const BackButton(),
-              actions: [
-                SearchAnchor(
-                  builder: (_, _) => IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.search),
+            body: Column(
+              children: [
+                const TextField(
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Purpose',
+                    border: OutlineInputBorder(),
                   ),
-                  suggestionsBuilder: (_, _) => const [],
                 ),
-                IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+                FilledButton(onPressed: () {}, child: const Text('Send')),
               ],
             ),
           ),
         ),
       );
-      for (final icon in [Icons.search, Icons.add, Icons.arrow_back]) {
-        final glyph = tester.widget<RichText>(
-          find.descendant(
-            of: find.byIcon(icon),
-            matching: find.byType(RichText),
-          ),
-        );
-        expect(
-          contrast(
-            glyph.text.style!.color!,
-            theme.appBarTheme.backgroundColor!,
-          ),
-          greaterThanOrEqualTo(4.5),
-          reason: '$icon in the ${theme.brightness.name} theme',
-        );
-      }
-    }
-  });
+      await tester.pumpAndSettle();
+      expect(
+        contrast(
+          drawnColour(tester, find.text('Purpose')),
+          theme.scaffoldBackgroundColor,
+        ),
+        greaterThanOrEqualTo(4.5),
+        reason: 'the floating label of a focused field',
+      );
+      final fill = tester
+          .widget<Material>(
+            find.descendant(
+              of: find.byType(FilledButton),
+              matching: find.byType(Material),
+            ),
+          )
+          .color!;
+      expect(
+        contrast(drawnColour(tester, find.text('Send')), fill),
+        greaterThanOrEqualTo(4.5),
+      );
+      expect(
+        contrast(fill, theme.scaffoldBackgroundColor),
+        greaterThanOrEqualTo(3),
+      );
+    });
+  }
 
-  test('every small-text pair clears 4.5:1', () {
-    for (final theme in themes) {
-      final tokens = theme.extension<AppTokens>()!;
-      for (final entry in tokens.textPairs.entries) {
-        final (fg, bg) = entry.value;
+  test('presence dots stand out from the page (3:1)', () {
+    for (final MapEntry(key: name, value: theme) in themes.entries) {
+      final t = theme.extension<AppTokens>()!;
+      for (final (label, dot) in [
+        ('online', t.online),
+        ('away', t.away),
+        ('busy', t.busy),
+      ]) {
         expect(
-          contrast(fg, bg),
-          greaterThanOrEqualTo(4.5),
-          reason: '${entry.key} in the ${theme.brightness.name} theme',
+          contrast(dot, t.page),
+          greaterThanOrEqualTo(3),
+          reason: '$label in $name',
         );
       }
     }
   });
 
   group('server theme', () {
-    final recorded = jsonDecode(
-      File('test/fixtures/api/theme_preferences.json').readAsStringSync(),
-    ) as List<Object?>;
-    final stored = {
-      for (final p in recorded)
-        if (p case {'name': final String name, 'value': final String value})
-          name: value,
-    };
-    final palettes = {
-      'the recorded theme': ServerPalette.of(
-        themeForTeam(stored, 'tm000000000000000000000t01', dark: false),
-      ),
-      'Denim': ServerPalette.of(themeForTeam(const {}, null, dark: false)),
-      'Onyx': ServerPalette.of(themeForTeam(const {}, null, dark: true)),
-    };
-
-    test('the recorded theme seeds the colours that read', () {
-      final palette = palettes['the recorded theme']!;
-      expect(palette.dark, isFalse);
-      expect(palette.bar, const Color(0xFFF2C94C));
-      expect(palette.primary, const Color(0xFF7FB3FF));
-      expect(palette.page, const Color(0xFFFFFDF7));
-      // White fails 4.5:1 on the pale yellow header and the pale button.
-      expect(palette.onBar, isNot(const Color(0xFFFFFFFF)));
-      expect(palette.onPrimary, isNot(const Color(0xFFFFFFFF)));
+    test('a pale header gets dark text and a pale button colour darkens '
+        'until it reads on the page', () {
+      final theme = themes['server recorded yellow']!;
+      expect(theme.brightness, Brightness.light);
+      expect(theme.appBarTheme.backgroundColor, const Color(0xFFF2C94C));
+      expect(theme.scaffoldBackgroundColor, const Color(0xFFFFFDF7));
+      expect(theme.appBarTheme.foregroundColor, isNot(Colors.white));
+      const pale = Color(0xFF7FB3FF);
+      final primary = theme.colorScheme.primary;
+      expect(primary.computeLuminance(), lessThan(pale.computeLuminance()));
+      expect(primary.b, greaterThan(primary.r), reason: 'still blue');
     });
 
-    test('Onyx is dark and Denim light', () {
-      expect(buildServerTheme(palettes['Onyx']!).brightness, Brightness.dark);
-      expect(buildServerTheme(palettes['Denim']!).brightness, Brightness.light);
+    test('a theme that already reads keeps its colours', () {
+      final denim = themes['server Denim']!;
+      expect(denim.appBarTheme.backgroundColor, const Color(0xFF192A4D));
+      expect(denim.appBarTheme.foregroundColor, Colors.white);
+      expect(denim.colorScheme.primary, const Color(0xFF1C58D9));
+      expect(denim.colorScheme.onPrimary, Colors.white);
     });
 
-    for (final MapEntry(key: name, value: palette) in palettes.entries) {
-      test('every pair clears 4.5:1 in $name', () {
-        final theme = buildServerTheme(palette);
-        final bar = theme.appBarTheme;
-        expect(
-          contrast(bar.foregroundColor!, bar.backgroundColor!),
-          greaterThanOrEqualTo(4.5),
-        );
-        expect(
-          contrast(theme.colorScheme.onPrimary, theme.colorScheme.primary),
-          greaterThanOrEqualTo(4.5),
-        );
-        final tokens = theme.extension<AppTokens>()!;
-        for (final entry in tokens.textPairs.entries) {
-          final (fg, bg) = entry.value;
-          expect(
-            contrast(fg, bg),
-            greaterThanOrEqualTo(4.5),
-            reason: entry.key,
-          );
-        }
-      });
-    }
+    test('sheets and menus take the page colour, not the button hue', () {
+      final theme = themes['server recorded yellow']!;
+      final page = theme.scaffoldBackgroundColor;
+      final sheet = theme.colorScheme.surfaceContainerLow;
+      expect(contrast(sheet, page), lessThan(1.1));
+      // Yellowish like the page, not blue like the buttons.
+      expect(sheet.r, greaterThan(sheet.b));
+    });
+
+    test('Indigo and Onyx are dark, Denim, Sapphire and Quartz light', () {
+      for (final dark in ['Indigo', 'Onyx']) {
+        expect(themes['server $dark']!.brightness, Brightness.dark);
+      }
+      for (final light in ['Denim', 'Sapphire', 'Quartz']) {
+        expect(themes['server $light']!.brightness, Brightness.light);
+      }
+    });
+
+    test('no saved theme falls back to Denim, or Onyx in dark mode', () {
+      expect(
+        ServerPalette.of(themeForTeam(const {}, null, dark: false)),
+        _palette(_presets['Denim']!),
+      );
+      expect(
+        ServerPalette.of(themeForTeam(const {}, null, dark: true)),
+        _palette(_presets['Onyx']!),
+      );
+    });
   });
 
   group('wallpaper colours', () {
-    const seeds = {
-      'violet': Color(0xFF6750A4),
-      'pale yellow': Color(0xFFF2C94C),
-      'bright green': Color(0xFF00E676),
-      'red': Color(0xFFB3261E),
-      'grey': Color(0xFF8A8A8A),
-    };
-
     test('Android\'s tones become the scheme, tone 40 the light primary', () {
-      final colours = WallpaperColours.fromSeed(seeds['violet']!);
+      final colours = WallpaperColours.fromSeed(const Color(0xFF6750A4));
       expect(colours.tones, hasLength(65));
       final light = buildWallpaperTheme(colours, Brightness.light);
       expect(light.colorScheme.primary, Color(colours.tones[4]));
@@ -174,37 +391,6 @@ void main() {
       );
       expect(() => WallpaperColours([1, 2, 3]), throwsFormatException);
     });
-
-    for (final MapEntry(key: name, value: seed) in seeds.entries) {
-      for (final brightness in Brightness.values) {
-        test('every pair clears 4.5:1 from a $name wallpaper, '
-            '${brightness.name}', () {
-          final theme = buildWallpaperTheme(
-            WallpaperColours.fromSeed(seed),
-            brightness,
-          );
-          expect(theme.brightness, brightness);
-          final bar = theme.appBarTheme;
-          expect(
-            contrast(bar.foregroundColor!, bar.backgroundColor!),
-            greaterThanOrEqualTo(4.5),
-          );
-          expect(
-            contrast(theme.colorScheme.onPrimary, theme.colorScheme.primary),
-            greaterThanOrEqualTo(4.5),
-          );
-          final tokens = theme.extension<AppTokens>()!;
-          for (final entry in tokens.textPairs.entries) {
-            final (fg, bg) = entry.value;
-            expect(
-              contrast(fg, bg),
-              greaterThanOrEqualTo(4.5),
-              reason: entry.key,
-            );
-          }
-        });
-      }
-    }
 
     Future<AppThemes?> themesFor(
       ThemeSource source,
@@ -236,7 +422,7 @@ void main() {
     }
 
     test('the wallpaper theme follows the wallpaper', () async {
-      final colours = WallpaperColours.fromSeed(seeds['red']!);
+      final colours = WallpaperColours.fromSeed(const Color(0xFFB3261E));
       final themes = await themesFor(ThemeSource.wallpaper, colours);
       expect(
         themes?.light.colorScheme.primary,
@@ -253,7 +439,7 @@ void main() {
       expect(
         await themesFor(
           ThemeSource.brand,
-          WallpaperColours.fromSeed(seeds['red']!),
+          WallpaperColours.fromSeed(const Color(0xFFB3261E)),
         ),
         isNull,
       );
@@ -261,7 +447,7 @@ void main() {
   });
 
   test('pages use the predictive back transition on Android', () {
-    for (final theme in themes) {
+    for (final theme in themes.values) {
       expect(
         theme.pageTransitionsTheme.builders[TargetPlatform.android],
         isA<PredictiveBackPageTransitionsBuilder>(),
@@ -278,6 +464,19 @@ class _FixedWallpaper extends WallpaperPalette {
   @override
   Future<WallpaperColours?> build() async => colours;
 }
+
+/// The colour the text or icon under [finder] is painted in.
+Color drawnColour(WidgetTester tester, Finder finder) => tester
+    .widget<RichText>(
+      find.descendant(
+        of: finder,
+        matching: find.byType(RichText),
+        matchRoot: true,
+      ),
+    )
+    .text
+    .style!
+    .color!;
 
 /// WCAG relative contrast between two opaque colours.
 double contrast(Color a, Color b) {

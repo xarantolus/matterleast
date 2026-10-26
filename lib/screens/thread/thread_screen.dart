@@ -95,7 +95,9 @@ class _FollowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).appBarTheme.foregroundColor;
+    final theme = Theme.of(context);
+    final color =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: following
@@ -106,7 +108,7 @@ class _FollowButton extends StatelessWidget {
           : OutlinedButton(
               style: OutlinedButton.styleFrom(
                 foregroundColor: color,
-                side: BorderSide(color: color ?? Colors.white),
+                side: BorderSide(color: color),
               ),
               onPressed: onPressed,
               child: const Text('Follow'),

@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/domain/server_theme.dart';
 
 abstract final class Spacing {
   static const xs = 4.0;
@@ -159,4 +160,22 @@ class AppTokens extends ThemeExtension<AppTokens> {
 
 extension AppTokensContext on BuildContext {
   AppTokens get tokens => Theme.of(this).extension<AppTokens>()!;
+
+  /// A text button in the app bar, still visible on the bar when disabled.
+  ButtonStyle get barButtonStyle => barButtonStyleOf(Theme.of(this));
+}
+
+ButtonStyle barButtonStyleOf(ThemeData theme) {
+  final colour =
+      theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
+  final bar = theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface;
+  var disabled = colour.withValues(alpha: 0.6);
+  while (disabled.a < 0.9 &&
+      contrastRatio(Color.alphaBlend(disabled, bar), bar) < minShapeContrast) {
+    disabled = colour.withValues(alpha: disabled.a + 0.05);
+  }
+  return TextButton.styleFrom(
+    foregroundColor: colour,
+    disabledForegroundColor: disabled,
+  );
 }

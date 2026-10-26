@@ -24,14 +24,33 @@ ThemeData buildTheme(Brightness brightness) {
 }
 
 /// The theme seeded from the user's Mattermost theme on a server.
-ThemeData buildServerTheme(ServerPalette palette) => _build(
-  brightness: palette.dark ? Brightness.dark : Brightness.light,
-  tokens: serverTokens(palette),
-  primary: palette.primary,
-  onPrimary: palette.onPrimary,
-  bar: palette.bar,
-  onBar: palette.onBar,
-);
+ThemeData buildServerTheme(ServerPalette palette) {
+  final brightness = palette.dark ? Brightness.dark : Brightness.light;
+  final tokens = serverTokens(palette);
+  Color mix(double t) => Color.lerp(palette.page, palette.text, t)!;
+  // Sheets, menus and dialogs sit on the server's page colour, not on
+  // neutrals tinted by the button colour.
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: palette.primary,
+        brightness: brightness,
+      ).copyWith(
+        surfaceContainerLowest: palette.page,
+        surfaceContainerLow: mix(0.03),
+        surfaceContainer: mix(0.05),
+        surfaceContainerHigh: mix(0.08),
+        surfaceContainerHighest: tokens.panel,
+      );
+  return _build(
+    brightness: brightness,
+    tokens: tokens,
+    primary: palette.primary,
+    onPrimary: palette.onPrimary,
+    bar: palette.bar,
+    onBar: palette.onBar,
+    scheme: scheme,
+  );
+}
 
 /// Surface tokens for a server theme, each text pair kept readable.
 AppTokens serverTokens(ServerPalette palette) {
@@ -44,16 +63,25 @@ AppTokens serverTokens(ServerPalette palette) {
   return base.copyWith(
     page: page,
     text: text,
-    muted: adjustToRead(adjustToRead(mix(0.62), panel), page),
+    muted: _readOnAll(mix(0.62), [panel, wash, page]),
     hairline: mix(0.14),
     divider: mix(0.32),
-    accent: adjustToRead(adjustToRead(palette.accent, panel), wash),
+    accent: _readOnAll(palette.accent, [panel, wash, page]),
     accentWash: wash,
     codeBackground: mix(0.05),
     panel: panel,
     unread: text,
+    online: _visibleOn(base.online, page),
+    away: _visibleOn(base.away, page),
+    busy: _visibleOn(base.busy, page),
   );
 }
+
+Color _readOnAll(Color colour, List<Color> backgrounds) =>
+    backgrounds.fold(colour, adjustToRead);
+
+Color _visibleOn(Color colour, Color background) =>
+    adjustToRead(colour, background, minimum: minShapeContrast);
 
 /// The theme from the phone's wallpaper colours (Material You).
 ThemeData buildWallpaperTheme(WallpaperColours colours, Brightness brightness) {
@@ -79,22 +107,27 @@ AppTokens wallpaperTokens(ColorScheme scheme) {
   final panel = scheme.surfaceContainerHighest;
   final code = scheme.surfaceContainer;
   final wash = scheme.primaryContainer;
-  Color readOnAll(Color colour, List<Color> backgrounds) =>
-      backgrounds.fold(colour, adjustToRead);
   return base.copyWith(
     page: page,
-    text: readOnAll(scheme.onSurface, [code, page]),
-    muted: readOnAll(scheme.onSurfaceVariant, [panel, code, page]),
+    text: _readOnAll(scheme.onSurface, [code, page]),
+    muted: _readOnAll(scheme.onSurfaceVariant, [panel, code, page]),
     hairline: scheme.outlineVariant,
     divider: scheme.outline,
-    accent: readOnAll(scheme.primary, [panel, wash, page]),
+    accent: _readOnAll(scheme.primary, [panel, wash, page]),
     accentWash: wash,
     codeBackground: code,
     panel: panel,
-    unread: readOnAll(scheme.onSurface, [page]),
+    unread: _readOnAll(scheme.onSurface, [page]),
+    online: _visibleOn(base.online, page),
+    away: _visibleOn(base.away, page),
+    busy: _visibleOn(base.busy, page),
   );
 }
 
+/// [primary] seeds the scheme, but Material also draws `colorScheme.primary`
+/// as text and outlines on the page (focused fields, switches, tabs), so
+/// the scheme takes the accent, which reads there, with the colour on it
+/// computed. The same goes for `error`.
 ThemeData _build({
   required Brightness brightness,
   required AppTokens tokens,
@@ -104,18 +137,21 @@ ThemeData _build({
   required Color onBar,
   ColorScheme? scheme,
 }) {
-  final colours =
-      (scheme ??
-              ColorScheme.fromSeed(seedColor: primary, brightness: brightness))
-          .copyWith(
-            primary: primary,
-            onPrimary: onPrimary,
-            surface: tokens.page,
-            onSurface: tokens.text,
-            onSurfaceVariant: tokens.muted,
-            outline: tokens.divider,
-            outlineVariant: tokens.hairline,
-          );
+  final seeded =
+      scheme ??
+      ColorScheme.fromSeed(seedColor: primary, brightness: brightness);
+  final error = [tokens.page, tokens.panel].fold(seeded.error, adjustToRead);
+  final colours = seeded.copyWith(
+    primary: tokens.accent,
+    onPrimary: readableOn(tokens.accent, onPrimary),
+    error: error,
+    onError: readableOn(error, seeded.onError),
+    surface: tokens.page,
+    onSurface: tokens.text,
+    onSurfaceVariant: tokens.muted,
+    outline: tokens.divider,
+    outlineVariant: tokens.hairline,
+  );
   final base = ThemeData(colorScheme: colours, brightness: brightness);
   return base.copyWith(
     extensions: [tokens],

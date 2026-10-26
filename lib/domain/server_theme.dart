@@ -125,10 +125,17 @@ double contrastRatio(Color a, Color b) {
 
 const minContrast = 4.5;
 
+/// Contrast for shapes that carry meaning without text, such as dots.
+const minShapeContrast = 3.0;
+
 /// [preferred] when it reads on [background], else black or white,
 /// whichever reads better.
 Color readableOn(Color background, Color preferred) {
   if (contrastRatio(preferred, background) >= minContrast) return preferred;
+  return _extremeFor(background);
+}
+
+Color _extremeFor(Color background) {
   const white = Color(0xFFFFFFFF);
   const black = Color(0xFF000000);
   return contrastRatio(white, background) >= contrastRatio(black, background)
@@ -136,16 +143,18 @@ Color readableOn(Color background, Color preferred) {
       : black;
 }
 
-/// [colour] moved towards black or white, keeping its hue, until it reads
-/// on [background].
-Color adjustToRead(Color colour, Color background) {
-  if (contrastRatio(colour, background) >= minContrast) return colour;
-  final target = background.computeLuminance() > 0.5
-      ? const Color(0xFF000000)
-      : const Color(0xFFFFFFFF);
+/// [colour] moved towards black or white, keeping its hue, until it has
+/// [minimum] contrast on [background].
+Color adjustToRead(
+  Color colour,
+  Color background, {
+  double minimum = minContrast,
+}) {
+  if (contrastRatio(colour, background) >= minimum) return colour;
+  final target = _extremeFor(background);
   for (var t = 0.05; t < 1; t += 0.05) {
     final moved = Color.lerp(colour, target, t)!;
-    if (contrastRatio(moved, background) >= minContrast) return moved;
+    if (contrastRatio(moved, background) >= minimum) return moved;
   }
   return target;
 }

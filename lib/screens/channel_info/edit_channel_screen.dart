@@ -149,9 +149,7 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
         ),
         actions: [
           TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-            ),
+            style: context.barButtonStyle,
             onPressed: _saving || !_valid || !_changed ? null : _save,
             child: Text(_creating ? 'Create' : 'Save'),
           ),

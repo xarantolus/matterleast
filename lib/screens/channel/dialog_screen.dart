@@ -142,9 +142,7 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
           title: Text(_form.title ?? 'Form'),
           actions: [
             TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-              ),
+              style: context.barButtonStyle,
               onPressed: _sending ? null : _submit,
               child: Text(
                 _form.submitLabel?.isNotEmpty ?? false

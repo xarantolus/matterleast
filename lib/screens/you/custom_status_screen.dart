@@ -103,9 +103,7 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
         title: const Text('Custom status'),
         actions: [
           TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-            ),
+            style: context.barButtonStyle,
             onPressed: _saving || (_empty && widget.current == null)
                 ? null
                 : _done,

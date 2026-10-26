@@ -143,9 +143,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
         actions: [
           if (canCreate)
             TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-              ),
+              style: context.barButtonStyle,
               onPressed: _create,
               child: const Text('Create'),
             ),

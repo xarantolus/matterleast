@@ -171,9 +171,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         title: const Text('Edit profile'),
         actions: [
           TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-            ),
+            style: context.barButtonStyle,
             onPressed: _saving || !_dirty ? null : _save,
             child: const Text('Save'),
           ),
@@ -354,9 +352,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       title: const Text('Change password'),
       actions: [
         TextButton(
-          style: TextButton.styleFrom(
-            foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-          ),
+          style: context.barButtonStyle,
           onPressed: _saving || !_ready ? null : _save,
           child: const Text('Save'),
         ),
