@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Where the reader is in an [AnchoredList], reported after each scroll and
@@ -68,9 +69,11 @@ class AnchoredListController {
 ///
 /// The rows are split at an anchor row: the anchor and everything older grow
 /// up from the scroll origin, everything newer grows down from it, so no
-/// insertion shifts the origin. When scrolling settles, the bottom-most
-/// visible row becomes the anchor, and the offset is rewritten in the same
-/// frame so nothing moves on screen.
+/// insertion shifts the origin. When scrolling settles, the row above the
+/// topmost visible one becomes the anchor, so the top edge of what the
+/// reader sees stays put and a visible row that grows pushes the rows below
+/// it down. A reader at the newest row instead stays pinned to the bottom.
+/// The offset is rewritten in the same frame, so re-anchoring moves nothing.
 class AnchoredList<T> extends StatefulWidget {
   const AnchoredList({
     required this.rows,
@@ -101,7 +104,19 @@ class AnchoredList<T> extends StatefulWidget {
 
   @override
   State<AnchoredList<T>> createState() => _AnchoredListState<T>();
+
+  /// Keeps the top edge of the row around [context] in place through its
+  /// next change of height, so it grows or shrinks downwards. Call it just
+  /// before the change.
+  static void keepTopOf(BuildContext context) {
+    final probe = context.findAncestorStateOfType<_RowProbeState>();
+    if (probe == null) return;
+    probe.widget.list._keepTop(probe.widget.rowKey);
+  }
 }
+
+/// The anchor when the oldest row's top edge is the fixed one.
+const _pastOldest = Object();
 
 class _AnchoredListState<T> extends State<AnchoredList<T>> {
   static const pinTolerance = 48.0;
@@ -128,6 +143,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       initialScrollOffset: known ? -initial.offset : 0,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _settle());
+    _watchShifts();
   }
 
   @override
@@ -142,16 +158,18 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     final oldNewest = old.rows.isEmpty ? null : old.keyOf(old.rows.first);
     final idle =
         !_scroll.hasClients || !_scroll.position.isScrollingNotifier.value;
-    final wasPinned = idle && _isPinned();
+    final wasPinned = idle && _isPinned(oldNewest);
     _indexRows();
-    if (wasPinned || _anchor == null) {
-      // New rows enter at the bottom: the newest row becomes the anchor at
-      // the bottom edge, so the list lifts.
-      if (_anchor != oldNewest && _scroll.hasClients) {
+    final newest = _newestKey;
+    if (_anchor == null || (wasPinned && newest != oldNewest)) {
+      // A new row entered at the bottom under a reader who is there: it
+      // becomes the anchor at the bottom edge, so the list lifts.
+      if (_scroll.hasClients && _anchor != null) {
+        _moved('new newest row while pinned', 0, shifts: false);
         _scroll.position.correctPixels(0);
       }
-      _anchor = _newestKey;
-    } else if (!_indexOf.containsKey(_anchor)) {
+      _anchor = newest;
+    } else if (_anchor != _pastOldest && !_indexOf.containsKey(_anchor)) {
       _anchor = _survivor(old.rows, old.keyOf, oldIndex);
     }
     _scheduleReport();
@@ -189,16 +207,37 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     return _newestKey;
   }
 
-  bool _isPinned() {
+  /// The reader is at the bottom: the newest row is laid out and its
+  /// bottom edge is within [pinTolerance] of the list's bottom. Decided
+  /// from where rows were drawn, which a re-anchoring doesn't change,
+  /// rather than from extents, which lag one layout behind it.
+  bool _isPinned([Object? newest]) {
     if (!_scroll.hasClients) return true;
-    final p = _scroll.position;
-    // With the newest row anchored the bottom is offset 0, whatever extent
-    // the emptied newer side still reports.
-    final bottom = _anchorIndex == 0 ? 0.0 : p.minScrollExtent;
-    return p.pixels - bottom <= pinTolerance;
+    final key = newest ?? _newestKey;
+    final height = _viewportHeight;
+    if (key == null || height == null) return true;
+    final row = _rowAt(key);
+    if (row == null) return false;
+    return row.bottom - height <= pinTolerance;
   }
 
-  int get _anchorIndex => _indexOf[_anchor] ?? 0;
+  int get _anchorIndex =>
+      _anchor == _pastOldest ? widget.rows.length : (_indexOf[_anchor] ?? 0);
+
+  double? get _viewportHeight {
+    final viewport = _viewportBox;
+    return viewport != null && viewport.hasSize ? viewport.size.height : null;
+  }
+
+  ({Object key, double top, double bottom})? _rowAt(Object key) {
+    final viewport = _viewportBox;
+    final box = _built[key]?.findRenderObject() as RenderBox?;
+    if (viewport == null || box == null || !box.attached || !box.hasSize) {
+      return null;
+    }
+    final top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+    return (key: key, top: top, bottom: top + box.size.height);
+  }
 
   RenderBox? get _viewportBox =>
       _viewportKey.currentContext?.findRenderObject() as RenderBox?;
@@ -237,21 +276,127 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     return (key: best.key, offset: height - best.bottom);
   }
 
+  /// The anchor that keeps the reader's view in place, and the offset that
+  /// leaves everything where it is drawn now: the newest row at the bottom
+  /// for a pinned reader, else the row above the topmost visible one, so
+  /// that one's top edge is the fixed point.
+  ({Object key, double pixels})? _readingAnchor() {
+    final height = _viewportHeight;
+    final newest = _newestKey;
+    if (height == null || newest == null) return null;
+    if (_isPinned()) {
+      final row = _rowAt(newest);
+      if (row != null) return (key: newest, pixels: row.bottom - height);
+    }
+    ({Object key, double top, double bottom})? top;
+    ({Object key, double top, double bottom})? tall;
+    for (final row in _laidOut()) {
+      if (row.bottom <= 0 || row.top >= height) continue;
+      if (row.top >= 0) {
+        if (top == null || row.top < top.top) top = row;
+      } else {
+        tall = row;
+      }
+    }
+    if (top == null) {
+      // One row fills the screen; it keeps its bottom edge.
+      if (tall == null) return null;
+      return (key: tall.key, pixels: tall.bottom - height);
+    }
+    return _aboveOf(top.key, top.top - height);
+  }
+
+  /// The anchor whose bottom edge is the top edge of row [key].
+  ({Object key, double pixels})? _aboveOf(Object key, double pixels) {
+    final index = _indexOf[key];
+    if (index == null) return null;
+    final older = index + 1 < widget.rows.length
+        ? widget.keyOf(widget.rows[index + 1])
+        : _pastOldest;
+    return (key: older, pixels: pixels);
+  }
+
+  void _setAnchor(({Object key, double pixels}) to) {
+    final p = _scroll.position;
+    if (to.key == _anchor && (p.pixels - to.pixels).abs() < 0.5) return;
+    setState(() => _anchor = to.key);
+    p.correctPixels(to.pixels);
+    // Extents are those of the old split until the next layout.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _report());
+  }
+
   void _reanchor() {
     if (!_scroll.hasClients) return;
-    final measured = _measuredAnchor();
-    if (measured == null) return;
-    final pixels = -measured.offset;
-    if (measured.key == _anchor &&
-        (_scroll.position.pixels - pixels).abs() < 0.5) {
-      return;
+    if (_readingAnchor() case final to?) _setAnchor(to);
+  }
+
+  void _keepTop(Object key) {
+    if (!mounted || !_scroll.hasClients) return;
+    if (key == _newestKey && _isPinned()) return;
+    final height = _viewportHeight;
+    final row = _rowAt(key);
+    if (height == null || row == null) return;
+    if (_aboveOf(key, row.top - height) case final to?) _setAnchor(to);
+  }
+
+  // Debug only: every programmatic move of the list, and any frame in which
+  // what the reader sees moved without a scroll, go to the log.
+  var _jumps = 0;
+  var _intended = false;
+  ({Object key, double top})? _lastTop;
+
+  void _moved(String reason, double to, {bool shifts = true}) {
+    if (!kDebugMode) return;
+    _intended = true;
+    if (!shifts) return;
+    _jumps++;
+    final from = _scroll.hasClients ? _scroll.position.pixels : 0.0;
+    debugPrint(
+      'anchored_list: move #$_jumps $reason '
+      '${from.toStringAsFixed(1)} -> ${to.toStringAsFixed(1)} '
+      'anchor $_anchorIndex of ${widget.rows.length}',
+    );
+  }
+
+  void _watchShifts() {
+    if (!kDebugMode || !mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final scrolling =
+          _scroll.hasClients && _scroll.position.isScrollingNotifier.value;
+      final last = _lastTop;
+      if (!scrolling && !_intended && last != null && !_isPinned()) {
+        final now = _rowAt(last.key);
+        if (now != null && (now.top - last.top).abs() > 0.5) {
+          _jumps++;
+          debugPrint(
+            'anchored_list: SHIFT #$_jumps visible row moved '
+            '${(now.top - last.top).toStringAsFixed(1)} px without a scroll',
+          );
+        }
+      }
+      _intended = false;
+      _lastTop = scrolling ? null : _topVisible();
+      _watchShifts();
+    });
+  }
+
+  ({Object key, double top})? _topVisible() {
+    final height = _viewportHeight;
+    if (height == null) return null;
+    ({Object key, double top})? best;
+    for (final row in _laidOut()) {
+      if (row.top < 0 || row.top >= height) continue;
+      if (best == null || row.top < best.top) {
+        best = (key: row.key, top: row.top);
+      }
     }
-    setState(() => _anchor = measured.key);
-    _scroll.position.correctPixels(pixels);
+    return best;
   }
 
   void _jumpToBottom() {
     if (!mounted) return;
+    _moved('to the bottom', 0);
     setState(() {
       _anchor = _newestKey;
       _pendingCentre = null;
@@ -276,6 +421,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
 
   void _jumpTo(Object key, double offset) {
     if (!_indexOf.containsKey(key)) return;
+    _moved('to row ${_indexOf[key]}', -offset);
     setState(() {
       _anchor = key;
       _pendingCentre = null;
@@ -293,6 +439,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     if (!p.hasContentDimensions) return;
     final inRange = p.pixels.clamp(p.minScrollExtent, p.maxScrollExtent);
     if (inRange != p.pixels) {
+      _moved('back into range after a jump', inRange);
       p.jumpTo(inRange);
       WidgetsBinding.instance.addPostFrameCallback((_) => _settle());
       return;
@@ -337,6 +484,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
 
   bool _onScroll(ScrollNotification n) {
     if (n.depth != 0) return false;
+    if (n is ScrollUpdateNotification) _intended = true;
     if (n is ScrollStartNotification && n.dragDetails != null) {
       widget.onDragStart?.call();
     }
@@ -372,6 +520,10 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     if (!p.isScrollingNotifier.value &&
         (p.pixels < p.minScrollExtent || p.pixels > p.maxScrollExtent)) {
       // An anchor placed past the content (a jump near the newest row).
+      _moved(
+        'clamped into range',
+        p.pixels.clamp(p.minScrollExtent, p.maxScrollExtent),
+      );
       p.jumpTo(p.pixels.clamp(p.minScrollExtent, p.maxScrollExtent));
     }
     final viewport = _viewportBox;
@@ -402,7 +554,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     return _RowProbe(
       key: ValueKey(key),
       rowKey: key,
-      registry: _built,
+      list: this as _AnchoredListState<Object?>,
       child: widget.itemBuilder(context, row),
     );
   }
@@ -489,13 +641,13 @@ class _KeepInRangePhysics extends ScrollPhysics {
 class _RowProbe extends StatefulWidget {
   const _RowProbe({
     required this.rowKey,
-    required this.registry,
+    required this.list,
     required this.child,
     super.key,
   });
 
   final Object rowKey;
-  final Map<Object, BuildContext> registry;
+  final _AnchoredListState<Object?> list;
   final Widget child;
 
   @override
@@ -506,14 +658,13 @@ class _RowProbeState extends State<_RowProbe> {
   @override
   void initState() {
     super.initState();
-    widget.registry[widget.rowKey] = context;
+    widget.list._built[widget.rowKey] = context;
   }
 
   @override
   void dispose() {
-    if (widget.registry[widget.rowKey] == context) {
-      widget.registry.remove(widget.rowKey);
-    }
+    final built = widget.list._built;
+    if (built[widget.rowKey] == context) built.remove(widget.rowKey);
     super.dispose();
   }
 

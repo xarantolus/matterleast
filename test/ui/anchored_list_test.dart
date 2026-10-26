@@ -106,4 +106,64 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.getBottomLeft(find.text('row 100')).dy, closeTo(600, 0.5));
   });
+
+  int topVisible(WidgetTester tester, List<Item> rows) => rows
+      .map((r) => r.id)
+      .where((id) => find.text('row $id').evaluate().isNotEmpty)
+      .where((id) => topOf(tester, id) >= 0)
+      .reduce((a, b) => topOf(tester, a) <= topOf(tester, b) ? a : b);
+
+  testWidgets('a new row in the frame after scrolling up moves nothing', (
+    tester,
+  ) async {
+    final rows = rowsFrom(100, 1);
+    await tester.pumpWidget(list(rows));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable), const Offset(0, 300));
+    // The scroll ends and the list re-anchors in this frame; the new row
+    // lands in the next one.
+    await tester.pump();
+    final reading = topVisible(tester, rows);
+    final before = topOf(tester, reading);
+    await tester.pumpWidget(list(rowsFrom(101, 1)));
+    await tester.pumpAndSettle();
+    expect(topOf(tester, reading), closeTo(before, 0.01));
+    expect(controller.pinned, isFalse);
+  });
+
+  testWidgets('a visible row that grows pushes the rows below it down', (
+    tester,
+  ) async {
+    final rows = rowsFrom(100, 1);
+    await tester.pumpWidget(list(rows));
+    await tester.pumpAndSettle();
+    await scrollUpAndSettle(tester);
+    final reading = topVisible(tester, rows);
+    final grows = reading + 1;
+    final before = topOf(tester, reading);
+    final belowBefore = topOf(tester, grows + 1);
+    await tester.pumpWidget(
+      list([
+        for (final r in rows)
+          r.id == grows ? (id: grows, height: r.height + 100) : r,
+      ]),
+    );
+    await tester.pumpAndSettle();
+    expect(topOf(tester, reading), closeTo(before, 0.01));
+    expect(topOf(tester, grows + 1), closeTo(belowBefore + 100, 0.01));
+  });
+
+  testWidgets('at the bottom, the newest row grows upwards', (tester) async {
+    final rows = rowsFrom(100, 1);
+    await tester.pumpWidget(list(rows));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      list([
+        for (final r in rows)
+          r.id == 100 ? (id: 100, height: r.height + 100) : r,
+      ]),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getBottomLeft(find.text('row 100')).dy, closeTo(600, 0.5));
+  });
 }
