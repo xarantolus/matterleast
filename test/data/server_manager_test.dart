@@ -75,11 +75,13 @@ void main() {
 
   final me = api.User.fromJson(fixtureMap('me'));
 
-  Future<void> addServer([ProbedServer? server]) => manager.addSignedIn(
-    server: server ?? probed(),
-    displayName: 'Test server',
-    signedIn: SignedIn(token: 's3ss10n', me: me),
-  );
+  Future<void> addServer([ProbedServer? server, String? loginId]) =>
+      manager.addSignedIn(
+        server: server ?? probed(),
+        displayName: 'Test server',
+        signedIn: SignedIn(token: 's3ss10n', me: me),
+        loginId: loginId,
+      );
 
   List<String> dbFiles() => dir
       .listSync()
@@ -165,6 +167,28 @@ void main() {
     expect(sharesCleared, 0);
     await manager.signOut(url, force: true);
     expect(sharesCleared, 1);
+  });
+
+  test('the username typed last outlives signing out and an ended '
+      'session, and a sign-in without one keeps it', () async {
+    await addServer(null, 'river@example.test');
+    await manager.signOut(url);
+    expect(await db.lastLoginId(url), 'river@example.test');
+
+    await addServer();
+    expect(await db.lastLoginId(url), 'river@example.test');
+    server.handle = (_) => error(401, 'api.context.session_expired.app_error');
+    final ended = manager.sessionEnded.first;
+    final session = await manager.session(url);
+    await expectLater(
+      session.api.call(() => session.api.client.users.getUser(userId: 'me')),
+      throwsA(isA<ServerError>()),
+    );
+    await ended;
+    expect(await db.lastLoginId(url), 'river@example.test');
+
+    expect(await manager.remove(url), isTrue);
+    expect(await db.lastLoginId(url), isNull);
   });
 
   test('removing a server forgets it', () async {

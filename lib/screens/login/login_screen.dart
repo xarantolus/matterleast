@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/screens/add_server/add_server_controller.dart';
 import 'package:matterleast/screens/login/login_controller.dart';
@@ -31,10 +34,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    if (_options.password) unawaited(_offerLastLoginId());
     final only = _options.onlySso;
     if (only != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _sso(only));
     }
+  }
+
+  Future<void> _offerLastLoginId() async {
+    final last = await ref.read(appDatabaseProvider).lastLoginId(_url);
+    if (!mounted || last == null || _loginId.text.isNotEmpty) return;
+    _loginId.text = last;
   }
 
   @override

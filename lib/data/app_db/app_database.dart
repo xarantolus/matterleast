@@ -34,13 +34,15 @@ class AppDatabase extends _$AppDatabase {
   );
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: stepByStep(
       from1To2: (m, schema) =>
           m.addColumn(schema.servers, schema.servers.ssoScheme),
+      from2To3: (m, schema) =>
+          m.addColumn(schema.servers, schema.servers.lastLoginId),
     ),
   );
 
@@ -60,6 +62,10 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> upsertServer(ServersCompanion server) =>
       into(servers).insertOnConflictUpdate(server);
+
+  /// What was typed to sign in to [url] last, kept after signing out.
+  Future<String?> lastLoginId(String url) async =>
+      (await serverByUrl(url))?.lastLoginId;
 
   Future<void> deleteServer(String url) =>
       (delete(servers)..where((s) => s.url.equals(url))).go();

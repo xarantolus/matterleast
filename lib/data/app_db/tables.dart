@@ -25,6 +25,10 @@ class Servers extends Table {
   /// null uses the scheme every stock server accepts.
   TextColumn get ssoScheme => text().nullable()();
 
+  /// What was typed as the username or email at the last password sign-in,
+  /// offered again after the session ends.
+  TextColumn get lastLoginId => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {url};
 }

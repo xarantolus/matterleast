@@ -6,6 +6,7 @@ import 'package:matterleast/data/app_db/app_database.dart';
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
+import 'generated/schema_v3.dart' as v3;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -50,4 +51,34 @@ void main() {
       },
     );
   });
+
+  test(
+    'keeps the servers and their SSO scheme when going from v2 to v3',
+    () async {
+      const url = 'https://chat.example.test';
+      await verifier.testWithDataIntegrity(
+        oldVersion: 2,
+        newVersion: 3,
+        createOld: v2.DatabaseAtV2.new,
+        createNew: v3.DatabaseAtV3.new,
+        openTestedDatabase: AppDatabase.new,
+        createItems: (batch, oldDb) => batch.insert(
+          oldDb.servers,
+          const v2.ServersCompanion(
+            url: Value(url),
+            displayName: Value('Example'),
+            dbFile: Value('server-1.sqlite'),
+            addedAt: Value(1000),
+            ssoScheme: Value('mmauth'),
+          ),
+        ),
+        validateItems: (newDb) async {
+          final row = await newDb.select(newDb.servers).getSingle();
+          expect(row.url, url);
+          expect(row.ssoScheme, 'mmauth');
+          expect(row.lastLoginId, isNull);
+        },
+      );
+    },
+  );
 }

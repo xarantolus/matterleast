@@ -140,13 +140,15 @@ class ServerManager {
   /// server's own database. A row for the same server under another URL is
   /// replaced only when it is [replaces], which the user agreed to; any
   /// other such row makes this throw, since the DiagnosticId is public and
-  /// another server may claim it.
+  /// another server may claim it. [loginId] is what the user typed to sign
+  /// in with a password, kept for the next sign-in.
   Future<void> addSignedIn({
     required ProbedServer server,
     required String displayName,
     required SignedIn signedIn,
     String? ssoScheme,
     String? replaces,
+    String? loginId,
   }) async {
     final url = server.url.toString();
     final previous = await _db.serverByDiagnosticId(
@@ -174,6 +176,7 @@ class ServerManager {
         addedAt: existing?.addedAt ?? now,
         lastActiveAt: Value(now),
         ssoScheme: Value(ssoScheme ?? existing?.ssoScheme),
+        lastLoginId: Value(loginId ?? existing?.lastLoginId),
       ),
     );
     final session = await this.session(url);

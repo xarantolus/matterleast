@@ -35,6 +35,7 @@ class LoginController extends _$LoginController {
     required String mfaCode,
   }) => _attempt(
     target,
+    loginId: loginId.trim(),
     () => ref
         .read(signInProvider)
         .withPassword(
@@ -59,8 +60,9 @@ class LoginController extends _$LoginController {
   /// Signs in and stores the server; true when the user is signed in.
   Future<bool> _attempt(
     LoginTarget target,
-    Future<SignedIn?> Function() signIn,
-  ) async {
+    Future<SignedIn?> Function() signIn, {
+    String? loginId,
+  }) async {
     if (state.busy) return false;
     state = state.copyWith(busy: true, error: null, mfaError: null);
     try {
@@ -77,6 +79,7 @@ class LoginController extends _$LoginController {
             signedIn: signedIn,
             ssoScheme: target.ssoScheme,
             replaces: target.replaces?.url,
+            loginId: loginId,
           );
       if (ref.mounted) {
         ref.read(railSelectionProvider.notifier).select(RailTarget(url: url));
