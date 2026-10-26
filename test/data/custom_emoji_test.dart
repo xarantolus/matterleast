@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart' hide isNotNull, isNull;
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
@@ -11,6 +9,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 
 import '../support/fake_server.dart';
+import '../support/memory_database.dart';
 
 Map<String, Object?> emojiJson(String name, {String? id}) => {
   'id': id ?? 'id-$name',
@@ -34,7 +33,7 @@ void main() {
 
   setUp(() async {
     server = await FakeServer.start();
-    db = ServerDatabase(DatabaseConnection(NativeDatabase.memory()));
+    db = memoryDatabase();
     store = ServerStore(db);
     http = ServerApi(baseUrl: server.url, token: () => 't');
     now = DateTime.utc(2026, 10, 25, 12);

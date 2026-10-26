@@ -12,14 +12,8 @@ void main() {
   late ConversationActions actions;
 
   setUp(() async {
-    server = await FakeServer.start();
-    session = await testSession(server);
+    (server, session) = await startServerSession();
     actions = ConversationActions(session);
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   final start = DateTime.utc(2026, 10, 26, 10);

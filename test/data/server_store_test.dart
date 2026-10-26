@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' hide isNotNull, isNull;
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/post_ranges.dart';
+
+import '../support/memory_database.dart';
 
 Object? fixture(String name) =>
     jsonDecode(File('test/fixtures/api/$name.json').readAsStringSync());
@@ -57,7 +58,7 @@ void main() {
   late ServerStore store;
 
   setUp(() {
-    db = ServerDatabase(DatabaseConnection(NativeDatabase.memory()));
+    db = memoryDatabase();
     store = ServerStore(db);
   });
 

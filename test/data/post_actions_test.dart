@@ -27,15 +27,9 @@ void main() {
   setUp(() async {
     hold = null;
     answer = ok({'status': 'OK'});
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     server.handle = (r) => hold?.future ?? answer;
-    session = await testSession(server);
     actions = PostActions(session);
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   Future<PostRow> old1() async => (await session.store.post('old1'))!;

@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:drift/drift.dart' hide isNotNull, isNull;
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
@@ -18,6 +16,7 @@ import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
 
 import '../support/fake_socket_server.dart';
+import '../support/memory_database.dart';
 import '../support/wait.dart';
 
 void main() {
@@ -247,7 +246,7 @@ void main() {
 
     setUp(() async {
       server = await FakeSocketServer.start();
-      db = ServerDatabase(DatabaseConnection(NativeDatabase.memory()));
+      db = memoryDatabase();
       store = ServerStore(db);
       runner = SyncRunner();
       http = ServerApi(baseUrl: server.url, token: () => 't');

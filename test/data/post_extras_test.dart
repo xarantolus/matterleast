@@ -1,5 +1,3 @@
-import 'package:drift/drift.dart' show DatabaseConnection;
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -7,6 +5,8 @@ import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+
+import '../support/memory_database.dart';
 
 const channel = 'ch000000000000000000000c01';
 const other = 'ch000000000000000000000c02';
@@ -34,7 +34,7 @@ void main() {
   late ServerStore store;
 
   setUp(() async {
-    db = ServerDatabase(DatabaseConnection(NativeDatabase.memory()));
+    db = memoryDatabase();
     store = ServerStore(db);
     await db.setSyncText(SyncKeys.currentUserId, 'me');
     await store.applyUsers([

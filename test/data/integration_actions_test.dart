@@ -22,16 +22,10 @@ void main() {
 
   setUp(() async {
     reply = () => ok({'status': 'OK'});
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     server.handle = (r) =>
         r.path.startsWith('/api/v4/posts/') ? reply() : error(404, 'not_found');
-    session = await testSession(server);
     actions = IntegrationActions(session);
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   PostActionRequest request({

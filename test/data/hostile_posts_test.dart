@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart' show DatabaseConnection;
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
+
+import '../support/memory_database.dart';
 
 Map<String, Object?> plain(String id, int at) => {
   'id': id,
@@ -69,7 +69,7 @@ void main() {
   late ServerStore store;
 
   setUp(() {
-    db = ServerDatabase(DatabaseConnection(NativeDatabase.memory()));
+    db = memoryDatabase();
     store = ServerStore(db);
   });
   tearDown(() => db.close());

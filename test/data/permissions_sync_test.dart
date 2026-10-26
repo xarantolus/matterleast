@@ -21,7 +21,7 @@ void main() {
   late ServerSession session;
 
   setUp(() async {
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     server.handle = (r) => switch (r.path) {
       '/api/v4/roles/names' => ok([
         for (final name in (r.json as List).cast<String>())
@@ -32,7 +32,6 @@ void main() {
       ]),
       _ => error(404, 'not_found'),
     };
-    session = await testSession(server);
     await session.store.applyMyRoles('system_user');
     await session.store.applyChannelMember(
       api.ChannelMember.fromJson({
@@ -51,11 +50,6 @@ void main() {
       ),
       api.Role.fromJson(_role('system_user', [])),
     ]);
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   Future<void> receive(String event, Map<String, Object?> data) =>

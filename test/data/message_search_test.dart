@@ -30,8 +30,7 @@ void main() {
   };
 
   setUp(() async {
-    server = await FakeServer.start();
-    session = await testSession(server);
+    (server, session) = await startServerSession();
     search = MessageSearch(
       session,
       SearchViews(session.db, serverUrl: server.url.toString()),
@@ -54,11 +53,6 @@ void main() {
       '/api/v4/users/ids' => ok(<Object>[]),
       _ => error(404, 'not_found'),
     };
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   test('searching all teams finds messages outside the current team', () async {

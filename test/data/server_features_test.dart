@@ -16,13 +16,7 @@ void main() {
   late ServerSession session;
 
   setUp(() async {
-    server = await FakeServer.start();
-    session = await testSession(server);
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
+    (server, session) = await startServerSession();
   });
 
   Iterable<String> asked(String path) =>

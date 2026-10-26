@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart' hide isNotNull, isNull;
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
@@ -104,4 +105,15 @@ Future<void> closeTestSession(ServerSession session) async {
   session.runner.close();
   session.api.close();
   await session.db.close();
+}
+
+/// A fake server and a session on it, both closed when the test ends.
+Future<(FakeServer, ServerSession)> startServerSession() async {
+  final server = await FakeServer.start();
+  final session = await testSession(server);
+  addTearDown(() async {
+    await closeTestSession(session);
+    await server.close();
+  });
+  return (server, session);
 }

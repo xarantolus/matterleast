@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart' hide isNotNull, isNull;
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
@@ -12,6 +11,7 @@ import 'package:matterleast/data/views/inbox_views.dart';
 import 'package:matterleast/domain/inbox.dart';
 
 import '../support/fake_server.dart';
+import '../support/memory_database.dart';
 import 'entry_sync_test.dart' show harbor, lighthouse, recordedServer;
 
 void main() {
@@ -36,7 +36,7 @@ void main() {
   setUp(() async {
     server = await FakeServer.start();
     server.handle = inboxServer;
-    db = ServerDatabase(DatabaseConnection(NativeDatabase.memory()));
+    db = memoryDatabase();
     store = ServerStore(db);
     runner = SyncRunner();
     http = ServerApi(baseUrl: server.url, token: () => 'token');

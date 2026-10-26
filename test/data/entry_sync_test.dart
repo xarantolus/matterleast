@@ -1,5 +1,3 @@
-import 'package:drift/drift.dart' hide isNotNull, isNull;
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/server_api.dart';
@@ -10,6 +8,7 @@ import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
 
 import '../support/fake_server.dart';
+import '../support/memory_database.dart';
 
 const lighthouse = '4aw9gh6hbfy5byx4e66ejs3oyy';
 const harbor = 'uzwiwgr4b7np7qcs1knx7nkxbo';
@@ -59,7 +58,7 @@ void main() {
   setUp(() async {
     server = await FakeServer.start();
     server.handle = recordedServer;
-    db = ServerDatabase(DatabaseConnection(NativeDatabase.memory()));
+    db = memoryDatabase();
     store = ServerStore(db);
     runner = SyncRunner();
     api = ServerApi(baseUrl: server.url, token: () => 'token');

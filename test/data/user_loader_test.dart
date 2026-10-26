@@ -1,5 +1,3 @@
-import 'package:drift/drift.dart' hide isNotNull, isNull;
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
@@ -10,6 +8,7 @@ import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/users/user_loader.dart';
 
 import '../support/fake_server.dart';
+import '../support/memory_database.dart';
 import '../support/test_session.dart';
 
 Map<String, Object?> _user(String id) => {
@@ -30,7 +29,7 @@ void main() {
 
   setUp(() async {
     server = await FakeServer.start();
-    db = ServerDatabase(DatabaseConnection(NativeDatabase.memory()));
+    db = memoryDatabase();
     store = ServerStore(db);
     http = ServerApi(baseUrl: server.url, token: () => 't');
     users = UserLoader(server: http, store: store);

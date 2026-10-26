@@ -27,7 +27,7 @@ void main() {
       (await File('${dir.path}/tide.txt').writeAsString('low at six')).path,
       (await File('${dir.path}/chart.txt').writeAsString('x' * 100)).path,
     ];
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     server.handle = (r) async {
       if (r.method == 'POST' && r.path == '/api/v4/files') {
         await holdUpload?.future;
@@ -42,12 +42,9 @@ void main() {
       }
       return error(404, 'not_found');
     };
-    session = await testSession(server);
   });
 
   tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
     await dir.delete(recursive: true);
   });
 
