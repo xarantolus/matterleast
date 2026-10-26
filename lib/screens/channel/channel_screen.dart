@@ -2,13 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/post_list.dart';
-import 'package:matterleast/domain/typing.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
+import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
@@ -55,7 +55,6 @@ class ChannelScreen extends ConsumerWidget {
     final partner = partnerId == null
         ? null
         : ref.watch(userProfileProvider(url, partnerId)).value;
-    final typing = ref.watch(typingNamesProvider(url, channelId, '')).value;
     listenForRejectedPosts(context, ref, url, channelId);
     listenForDialogs(
       context,
@@ -78,23 +77,13 @@ class ChannelScreen extends ConsumerWidget {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: openInfo,
-            child: switch (typingText(typing ?? const [])) {
-              final typing? => ConversationTitle(
-                title: name,
-                subtitle: typing,
-                opensDetails: true,
-              ),
-              null => ConversationTitle(
-                title: name,
-                subtitle: conversationSubtitle(state, partner: partner),
-                subtitleEmoji: conversationSubtitleEmoji(
-                  state,
-                  partner: partner,
-                ),
-                url: url,
-                opensDetails: true,
-              ),
-            },
+            child: ConversationTitle(
+              title: name,
+              subtitle: conversationSubtitle(state, partner: partner),
+              subtitleEmoji: conversationSubtitleEmoji(state, partner: partner),
+              url: url,
+              opensDetails: true,
+            ),
           ),
         ),
         actions: [
@@ -115,22 +104,34 @@ class ChannelScreen extends ConsumerWidget {
           child: Column(
             children: [
               Expanded(
-                child: ConversationView(
-                  url: url,
-                  conversation: conversation,
-                  composer: window == null || window.archived
-                      ? null
-                      : composerDraftProvider(url, channelId, ''),
-                  startText: 'This is the start of $name.',
-                  onOpenThread: (post) => openConversation(
-                    Navigator.of(context),
-                    url: url,
-                    channelId: channelId,
-                    title: name,
-                    teamId: window?.teamId,
-                    rootId: post.isReply ? post.rootId : post.id,
-                    highlightPostId: post.isReply ? post.id : null,
-                  ),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: ConversationView(
+                        url: url,
+                        conversation: conversation,
+                        composer: window == null || window.archived
+                            ? null
+                            : composerDraftProvider(url, channelId, ''),
+                        startText: 'This is the start of $name.',
+                        onOpenThread: (post) => openConversation(
+                          Navigator.of(context),
+                          url: url,
+                          channelId: channelId,
+                          title: name,
+                          teamId: window?.teamId,
+                          rootId: post.isReply ? post.rootId : post.id,
+                          highlightPostId: post.isReply ? post.id : null,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: TypingLine(url: url, channelId: channelId),
+                    ),
+                  ],
                 ),
               ),
               if (window != null)

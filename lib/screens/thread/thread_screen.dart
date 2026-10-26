@@ -1,15 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
-import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
-import 'package:matterleast/domain/typing.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
+import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/screens/thread/thread_providers.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/progress_slot.dart';
@@ -44,7 +43,6 @@ class ThreadScreen extends ConsumerWidget {
     final state = ref.watch(conversation);
     final following = ref.watch(threadFollowingProvider(url, rootId)).value;
     final failure = state.refreshing ? null : state.refreshFailure;
-    final typing = ref.watch(typingNamesProvider(url, channelId, rootId)).value;
     listenForRejectedPosts(context, ref, url, channelId);
     listenForDialogs(
       context,
@@ -59,16 +57,14 @@ class ThreadScreen extends ConsumerWidget {
       appBar: AppBar(
         title: ConversationTitle(
           title: 'Thread',
-          subtitle:
-              typingText(typing ?? const []) ??
-              [
-                if (window?.channelName case final name? when name.isNotEmpty)
-                  name
-                else
-                  channelName,
-                if (failure != null && window?.root != null)
-                  staleDataNotice(failure),
-              ].join(' · '),
+          subtitle: [
+            if (window?.channelName case final name? when name.isNotEmpty)
+              name
+            else
+              channelName,
+            if (failure != null && window?.root != null)
+              staleDataNotice(failure),
+          ].join(' · '),
         ),
         actions: [
           if (following != null)
@@ -88,13 +84,29 @@ class ThreadScreen extends ConsumerWidget {
           child: Column(
             children: [
               Expanded(
-                child: ConversationView(
-                  url: url,
-                  conversation: conversation,
-                  composer: window == null || window.archived
-                      ? null
-                      : composerDraftProvider(url, channelId, rootId),
-                  startText: null,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: ConversationView(
+                        url: url,
+                        conversation: conversation,
+                        composer: window == null || window.archived
+                            ? null
+                            : composerDraftProvider(url, channelId, rootId),
+                        startText: null,
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: TypingLine(
+                        url: url,
+                        channelId: channelId,
+                        rootId: rootId,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (window != null)

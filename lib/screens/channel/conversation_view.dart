@@ -68,8 +68,9 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
 
   static const _arrivalAnimation = Duration(milliseconds: 250);
 
-  /// Room between the newest message and the composer.
-  static const _bottomGap = Spacing.md;
+  /// Room between the newest message and the composer, which also holds
+  /// the typing line.
+  static const _bottomGap = Spacing.xl;
 
   @override
   void initState() {
