@@ -9,6 +9,7 @@ import 'package:matterleast/api/generated/models/action_search_result.dart';
 import 'package:matterleast/api/generated/models/action_search_subject.dart';
 import 'package:matterleast/api/generated/models/api_v4_actions_dialogs_lookup_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_actions_dialogs_submit_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_channels_channel_id_bookmarks_bookmark_id_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_channels_channel_id_bookmarks_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_channels_channel_id_convert_to_channel_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_channels_channel_id_members_request_body.dart';
@@ -134,6 +135,7 @@ import 'package:matterleast/api/generated/models/team_stats.dart';
 import 'package:matterleast/api/generated/models/team_unread.dart';
 import 'package:matterleast/api/generated/models/terms_of_service.dart';
 import 'package:matterleast/api/generated/models/timezone.dart';
+import 'package:matterleast/api/generated/models/update_channel_bookmark_response.dart';
 import 'package:matterleast/api/generated/models/user.dart';
 import 'package:matterleast/api/generated/models/user_autocomplete.dart';
 import 'package:matterleast/api/generated/models/user_notify_props.dart';
@@ -562,6 +564,80 @@ class LenientMapOfApiV4ActionsDialogsSubmitRequestBody
   @override
   Object? toJson(Map<String, ApiV4ActionsDialogsSubmitRequestBody>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody
+    implements
+        JsonConverter<
+          ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody?,
+          Object?
+        > {
+  const LenientApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody();
+  @override
+  ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? decodeOrSkip(
+          json,
+          ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody.fromJson,
+        )
+      : null;
+  @override
+  Object? toJson(
+    ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody? object,
+  ) => object?.toJson();
+}
+
+class LenientListOfApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody
+    implements
+        JsonConverter<
+          List<ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody>,
+          Object?
+        > {
+  const LenientListOfApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody();
+  @override
+  List<ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody> fromJson(
+    Object? json,
+  ) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody.fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(
+    List<ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody> object,
+  ) => [for (final e in object) e.toJson()];
+}
+
+class LenientMapOfApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody
+    implements
+        JsonConverter<
+          Map<String, ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody>?,
+          Object?
+        > {
+  const LenientMapOfApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody();
+  @override
+  Map<String, ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody>? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody>? object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientApiV4ChannelsChannelIdBookmarksRequestBody
@@ -6794,6 +6870,53 @@ class LenientMapOfTimezone
       : null;
   @override
   Object? toJson(Map<String, Timezone>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientUpdateChannelBookmarkResponse
+    implements JsonConverter<UpdateChannelBookmarkResponse?, Object?> {
+  const LenientUpdateChannelBookmarkResponse();
+  @override
+  UpdateChannelBookmarkResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, UpdateChannelBookmarkResponse.fromJson)
+      : null;
+  @override
+  Object? toJson(UpdateChannelBookmarkResponse? object) => object?.toJson();
+}
+
+class LenientListOfUpdateChannelBookmarkResponse
+    implements JsonConverter<List<UpdateChannelBookmarkResponse>, Object?> {
+  const LenientListOfUpdateChannelBookmarkResponse();
+  @override
+  List<UpdateChannelBookmarkResponse> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, UpdateChannelBookmarkResponse.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<UpdateChannelBookmarkResponse> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfUpdateChannelBookmarkResponse
+    implements
+        JsonConverter<Map<String, UpdateChannelBookmarkResponse>?, Object?> {
+  const LenientMapOfUpdateChannelBookmarkResponse();
+  @override
+  Map<String, UpdateChannelBookmarkResponse>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, UpdateChannelBookmarkResponse.fromJson),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, UpdateChannelBookmarkResponse>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 

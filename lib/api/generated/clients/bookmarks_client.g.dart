@@ -90,6 +90,68 @@ class _BookmarksClient implements BookmarksClient {
   }
 
   @override
+  Future<UpdateChannelBookmarkResponse> updateChannelBookmark({
+    required String channelId,
+    required String bookmarkId,
+    required ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody body,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(body.toJson());
+    final _options = _setStreamType<UpdateChannelBookmarkResponse>(
+      Options(method: 'PATCH', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/channels/${channelId}/bookmarks/${bookmarkId}',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late UpdateChannelBookmarkResponse _value;
+    try {
+      _value = UpdateChannelBookmarkResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<ChannelBookmarkWithFileInfo> deleteChannelBookmark({
+    required String channelId,
+    required String bookmarkId,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<ChannelBookmarkWithFileInfo>(
+      Options(method: 'DELETE', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/channels/${channelId}/bookmarks/${bookmarkId}',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late ChannelBookmarkWithFileInfo _value;
+    try {
+      _value = ChannelBookmarkWithFileInfo.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<List<ChannelBookmarkWithFileInfo>> updateChannelBookmarkSortOrder({
     required String channelId,
     required String bookmarkId,

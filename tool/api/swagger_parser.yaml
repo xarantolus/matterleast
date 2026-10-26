@@ -49,6 +49,9 @@ swagger_parser:
     - {apply_to_type: "ApiV4ActionsDialogsSubmitRequestBody?", parser_name: LenientApiV4ActionsDialogsSubmitRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4ActionsDialogsSubmitRequestBody>", parser_name: LenientListOfApiV4ActionsDialogsSubmitRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4ActionsDialogsSubmitRequestBody>?", parser_name: LenientMapOfApiV4ActionsDialogsSubmitRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody?", parser_name: LenientApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody>", parser_name: LenientListOfApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, ApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody>?", parser_name: LenientMapOfApiV4ChannelsChannelIdBookmarksBookmarkIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "ApiV4ChannelsChannelIdBookmarksRequestBody?", parser_name: LenientApiV4ChannelsChannelIdBookmarksRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4ChannelsChannelIdBookmarksRequestBody>", parser_name: LenientListOfApiV4ChannelsChannelIdBookmarksRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4ChannelsChannelIdBookmarksRequestBody>?", parser_name: LenientMapOfApiV4ChannelsChannelIdBookmarksRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -424,6 +427,9 @@ swagger_parser:
     - {apply_to_type: "Timezone?", parser_name: LenientTimezone, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<Timezone>", parser_name: LenientListOfTimezone, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, Timezone>?", parser_name: LenientMapOfTimezone, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "UpdateChannelBookmarkResponse?", parser_name: LenientUpdateChannelBookmarkResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<UpdateChannelBookmarkResponse>", parser_name: LenientListOfUpdateChannelBookmarkResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, UpdateChannelBookmarkResponse>?", parser_name: LenientMapOfUpdateChannelBookmarkResponse, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "User?", parser_name: LenientUser, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<User>", parser_name: LenientListOfUser, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, User>?", parser_name: LenientMapOfUser, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -457,6 +463,7 @@ swagger_parser:
     - "/api/v4/channels/{channel_id}"
     - "/api/v4/channels/{channel_id}/access_control/attributes"
     - "/api/v4/channels/{channel_id}/bookmarks"
+    - "/api/v4/channels/{channel_id}/bookmarks/{bookmark_id}"
     - "/api/v4/channels/{channel_id}/bookmarks/{bookmark_id}/sort_order"
     - "/api/v4/channels/{channel_id}/common_teams"
     - "/api/v4/channels/{channel_id}/convert_to_channel"

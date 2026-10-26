@@ -33,9 +33,7 @@ abstract class CustomProfileAttributesClient {
   });
 
   @GET('/api/v4/users/{user_id}/custom_profile_attributes')
-  Future<Map<String, String>> listCpaValues({
-    @Path('user_id') required String userId,
-  });
+  Future<dynamic> listCpaValues({@Path('user_id') required String userId});
 
   @PATCH('/api/v4/users/{user_id}/custom_profile_attributes')
   Future<List<PatchApiV4UsersUserIdCustomProfileAttributesResponse>>

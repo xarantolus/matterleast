@@ -18,7 +18,7 @@ actions:
         application/json:
           schema:
             type: object
-            additionalProperties: {type: string}
+            additionalProperties: {}
   - target: "$.components.schemas.ContentFlaggingConfig.properties.EnableContentFlagging"
     remove: true
   - target: "$.components.schemas.ContentFlaggingConfig.properties"

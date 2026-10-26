@@ -9,6 +9,7 @@
 - "/api/v4/channels/{channel_id}"
 - "/api/v4/channels/{channel_id}/access_control/attributes"
 - "/api/v4/channels/{channel_id}/bookmarks"
+- "/api/v4/channels/{channel_id}/bookmarks/{bookmark_id}"
 - "/api/v4/channels/{channel_id}/bookmarks/{bookmark_id}/sort_order"
 - "/api/v4/channels/{channel_id}/common_teams"
 - "/api/v4/channels/{channel_id}/convert_to_channel"
