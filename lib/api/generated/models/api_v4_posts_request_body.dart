@@ -20,6 +20,7 @@ class ApiV4PostsRequestBody {
     this.props,
     this.metadata,
     this.pendingPostId,
+    this.type,
   });
 
   factory ApiV4PostsRequestBody.fromJson(Map<String, Object?> json) =>
@@ -47,6 +48,9 @@ class ApiV4PostsRequestBody {
   @LenientString()
   @JsonKey(name: 'pending_post_id')
   final String? pendingPostId;
+
+  @LenientString()
+  final String? type;
 
   Map<String, Object?> toJson() => _$ApiV4PostsRequestBodyToJson(this);
 }

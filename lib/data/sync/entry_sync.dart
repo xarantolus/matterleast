@@ -6,6 +6,8 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/sync/draft_sync.dart';
+import 'package:matterleast/data/sync/scheduled_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
 import 'package:matterleast/domain/permissions.dart';
@@ -23,6 +25,8 @@ class EntrySync {
     required this.store,
     required this.runner,
     required this.users,
+    this.drafts,
+    this.scheduled,
     DateTime Function()? clock,
   }) : _clock = clock ?? (() => DateTime.now().toUtc());
 
@@ -30,6 +34,8 @@ class EntrySync {
   final ServerStore store;
   final SyncRunner runner;
   final UserLoader users;
+  final DraftSync? drafts;
+  final ScheduledSync? scheduled;
   final DateTime Function() _clock;
 
   ServerDatabase get _db => store.db;
@@ -206,7 +212,22 @@ class EntrySync {
         SyncPriority.p1,
         () => _threads(currentTeam),
       );
+      if (drafts case final drafts?) {
+        later(
+          'drafts:$currentTeam',
+          SyncPriority.p2,
+          () => drafts.pull(currentTeam),
+        );
+      }
+      if (scheduled case final scheduled?) {
+        later(
+          'scheduled:$currentTeam',
+          SyncPriority.p2,
+          () => scheduled.fetch(currentTeam),
+        );
+      }
     }
+    later('burned', SyncPriority.p3, () => store.removeBurnedPosts(_clock()));
     for (final team in teams) {
       if (team.id == currentTeam) continue;
       later('team:${team.id}', SyncPriority.p1, () => _team(team.id));

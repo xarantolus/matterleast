@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/today_provider.dart';
+import 'package:matterleast/domain/burn_on_read.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/post_list.dart';
@@ -12,6 +13,7 @@ import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/acknowledge_button.dart';
+import 'package:matterleast/ui/burn_on_read_view.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/interactive_message.dart';
 import 'package:matterleast/ui/link_preview_card.dart';
@@ -150,6 +152,18 @@ class PostTile extends StatelessWidget {
           ),
         if (post.unreadable)
           _Unreadable(post: post)
+        else if (post.type == burnOnReadType && !post.deleted)
+          BurnOnReadView(
+            post: post,
+            child: MessageImageOpener(
+              open: (url) => _openImage(context, url, details, name),
+              child: PostTextActions(
+                post: post,
+                details: details,
+                child: PostText(post: post, details: details),
+              ),
+            ),
+          )
         else
           MessageImageOpener(
             open: (url) => _openImage(context, url, details, name),

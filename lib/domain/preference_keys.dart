@@ -16,6 +16,10 @@ abstract final class Prefs {
   static const flaggedPost = 'flagged_post';
   static const skinTone = ('emoji', 'emoji_skintone');
   static const linkPreviews = ('display_settings', 'link_previews');
+
+  /// `false` keeps drafts on this device; anything else syncs them where
+  /// the server allows it.
+  static const syncDrafts = ('advanced_settings', 'sync_drafts');
   static const recentCustomStatuses = (
     'custom_status',
     'recent_custom_statuses',

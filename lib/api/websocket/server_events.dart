@@ -441,6 +441,73 @@ final class TypingEvent extends ServerEvent {
   final Broadcast? broadcast;
 }
 
+/// `scheduled_post_created`, `scheduled_post_updated` and
+/// `scheduled_post_deleted`.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.none)
+final class ScheduledPostEvent extends ServerEvent {
+  const ScheduledPostEvent({this.scheduledPost, this.deleted = false});
+  factory ScheduledPostEvent.fromJson(Map<String, Object?> json) =>
+      _$ScheduledPostEventFromJson(json);
+
+  @EncodedScheduledPost()
+  final api.ScheduledPost? scheduledPost;
+  @JsonKey(includeFromJson: false)
+  final bool deleted;
+}
+
+/// `draft_created`, `draft_updated` and `draft_deleted`.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class DraftEvent extends ServerEvent {
+  const DraftEvent({this.draft, this.deleted = false});
+  factory DraftEvent.fromJson(Map<String, Object?> json) =>
+      _$DraftEventFromJson(json);
+
+  @EncodedDraft()
+  final api.Draft? draft;
+  @JsonKey(includeFromJson: false)
+  final bool deleted;
+}
+
+/// A recipient opened a burn-on-read message; [recipients] are those who
+/// have so far.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class PostRevealedEvent extends ServerEvent {
+  const PostRevealedEvent({this.post, this.recipients = const []});
+  factory PostRevealedEvent.fromJson(Map<String, Object?> json) =>
+      _$PostRevealedEventFromJson(json);
+
+  @EncodedPost()
+  final api.Post? post;
+  @EncodedStringList()
+  final List<String> recipients;
+}
+
+/// A burn-on-read message burned: its sender burned it, or it expired for
+/// this user.
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class PostBurnedEvent extends ServerEvent {
+  const PostBurnedEvent({this.postId});
+  factory PostBurnedEvent.fromJson(Map<String, Object?> json) =>
+      _$PostBurnedEventFromJson(json);
+
+  @LenientString()
+  final String? postId;
+}
+
+/// Every recipient opened the user's burn-on-read message; it burns for the
+/// sender at [senderExpireAt].
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class BurnAllRevealedEvent extends ServerEvent {
+  const BurnAllRevealedEvent({this.postId, this.senderExpireAt});
+  factory BurnAllRevealedEvent.fromJson(Map<String, Object?> json) =>
+      _$BurnAllRevealedEventFromJson(json);
+
+  @LenientString()
+  final String? postId;
+  @MillisDateTime()
+  final DateTime? senderExpireAt;
+}
+
 enum ConfigKind { clientConfig, license }
 
 /// `config_changed` and `license_changed`; the snapshot replaces the stored
@@ -529,6 +596,20 @@ ServerEvent decodeEvent(SocketFrame frame) {
       ConfigKind.license,
       const JsonMapOrEmpty().fromJson(frame.data['license']),
     ),
+    'scheduled_post_created' ||
+    'scheduled_post_updated' => ScheduledPostEvent.fromJson(json),
+    'scheduled_post_deleted' => ScheduledPostEvent(
+      scheduledPost: ScheduledPostEvent.fromJson(json).scheduledPost,
+      deleted: true,
+    ),
+    'draft_created' || 'draft_updated' => DraftEvent.fromJson(json),
+    'draft_deleted' => DraftEvent(
+      draft: DraftEvent.fromJson(json).draft,
+      deleted: true,
+    ),
+    'post_revealed' => PostRevealedEvent.fromJson(json),
+    'post_burned' => PostBurnedEvent.fromJson(json),
+    'burn_on_read_all_revealed' => BurnAllRevealedEvent.fromJson(json),
     'plugin_enabled' ||
     'plugin_disabled' ||
     'plugin_statuses_changed' => const PluginsChangedEvent(),

@@ -108,6 +108,19 @@ class EncodedThread extends _Decoding<api.UserThread?> {
       _object(json).let(api.UserThread.fromJson);
 }
 
+class EncodedScheduledPost extends _Decoding<api.ScheduledPost?> {
+  const EncodedScheduledPost();
+  @override
+  api.ScheduledPost? fromJson(Object? json) =>
+      _object(json).let(api.ScheduledPost.fromJson);
+}
+
+class EncodedDraft extends _Decoding<api.Draft?> {
+  const EncodedDraft();
+  @override
+  api.Draft? fromJson(Object? json) => _object(json).let(api.Draft.fromJson);
+}
+
 /// One preference or a list of them.
 class EncodedPreferences extends _Decoding<List<api.Preference>> {
   const EncodedPreferences();

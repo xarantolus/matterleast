@@ -40,11 +40,15 @@ class DraftSaver {
   DraftSaver(
     this.store, {
     this.delay = const Duration(milliseconds: 500),
+    this.onWritten,
     DateTime Function()? clock,
   }) : _clock = clock ?? (() => DateTime.now().toUtc());
 
   final ServerStore store;
   final Duration delay;
+
+  /// Told after a draft was written or deleted, with its channel and root.
+  final void Function(String channelId, String rootId)? onWritten;
   final DateTime Function() _clock;
 
   final _waiting = <(String, String), Draft>{};
@@ -71,9 +75,10 @@ class DraftSaver {
     _waiting.remove(key);
   }
 
-  Future<void> clear(String channelId, String rootId) {
+  Future<void> clear(String channelId, String rootId) async {
     cancel(channelId, rootId);
-    return store.deleteDraft(channelId, rootId);
+    await store.deleteDraft(channelId, rootId);
+    onWritten?.call(channelId, rootId);
   }
 
   Future<void> flush() =>
@@ -85,8 +90,13 @@ class DraftSaver {
     if (draft == null) return;
     if (draft.isEmpty) {
       await store.deleteDraft(draft.channelId, draft.rootId);
-      return;
+    } else {
+      await _save(draft);
     }
+    onWritten?.call(draft.channelId, draft.rootId);
+  }
+
+  Future<void> _save(Draft draft) async {
     await store.saveDraft(
       DraftsCompanion.insert(
         channelId: draft.channelId,

@@ -8,6 +8,7 @@ import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
+import 'package:matterleast/domain/burn_on_read.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/reminders.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -139,6 +140,7 @@ class MessageMenu extends ConsumerWidget {
     final following = facts.following;
     final threadRoot = post.isReply ? post.rootId : post.id;
     void close() => Navigator.of(context).pop();
+    final burns = post.type == burnOnReadType;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: Spacing.lg),
@@ -191,7 +193,7 @@ class MessageMenu extends ConsumerWidget {
                 ],
               ),
             ),
-          if (onReply != null && !unsent && rights.reply)
+          if (onReply != null && !unsent && rights.reply && !burns)
             ListTile(
               leading: const Icon(Icons.reply),
               title: const Text('Reply'),
@@ -322,6 +324,27 @@ class MessageMenu extends ConsumerWidget {
                 onTap: () {
                   close();
                   onEdit!();
+                },
+              ),
+            if (burns)
+              ListTile(
+                leading: Icon(
+                  Icons.local_fire_department_outlined,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                title: Text(
+                  'Burn now',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+                onTap: () {
+                  close();
+                  unawaited(
+                    _run(
+                      ref.read(postActionsProvider(url).future),
+                      (a) => a.burnNow(post.id),
+                      "Couldn't burn the message.",
+                    ),
+                  );
                 },
               ),
             if (rights.delete)

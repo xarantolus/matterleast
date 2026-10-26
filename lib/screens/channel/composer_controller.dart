@@ -13,6 +13,7 @@ import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/quote.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
+import 'package:matterleast/screens/channel/composer_extras.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'composer_controller.g.dart';
@@ -87,6 +88,12 @@ final class SubmitDone extends SubmitOutcome {
 final class SubmitOpenLink extends SubmitOutcome {
   const SubmitOpenLink(this.uri);
   final Uri uri;
+}
+
+/// Scheduled to go out at [at].
+final class SubmitScheduled extends SubmitOutcome {
+  const SubmitScheduled(this.at);
+  final DateTime at;
 }
 
 final class SubmitFailed extends SubmitOutcome {
@@ -429,9 +436,13 @@ class ComposerDraft extends _$ComposerDraft {
   /// Sends what was written: saves the message being edited, runs a
   /// command, or posts once [confirmMention] agreed to a channel-wide
   /// mention.
+  /// Sends what is written, or schedules it for [at]; [burnOnRead] sends
+  /// it to burn after reading.
   Future<SubmitOutcome> submit({
     required String teamId,
     required Future<bool> Function(String message) confirmMention,
+    DateTime? at,
+    bool burnOnRead = false,
   }) async {
     final value = state;
     final message = value.text.text.trim();
@@ -465,13 +476,31 @@ class ComposerDraft extends _$ComposerDraft {
         return const SubmitDone();
       }
       final files = [for (final a in value.attachments) ?a.info];
+      if (at != null) {
+        await actions.schedule(
+          channelId,
+          rootId: rootId,
+          message: message,
+          at: at,
+          files: files,
+          priority: value.priority,
+        );
+        if (ref.mounted) sent();
+        return SubmitScheduled(at);
+      }
       sent();
+      if (burnOnRead) {
+        ref
+            .read(burnOnReadChoiceProvider(url, channelId).notifier)
+            .set(on: false);
+      }
       await actions.send(
         channelId,
         rootId: rootId,
         message: message,
         files: files,
         priority: value.priority,
+        burnOnRead: burnOnRead,
       );
       return const SubmitDone();
     } on ApiError catch (e) {

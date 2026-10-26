@@ -330,8 +330,37 @@ class Drafts extends Table {
       .map(const PostPriorityColumn())();
   IntColumn get updatedAt => integer().map(const Millis())();
 
+  /// The `update_at` of the copy the server last confirmed, when drafts
+  /// sync; null for one it never had.
+  IntColumn get syncedAt => integer().map(const Millis()).nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {channelId, rootId};
+}
+
+/// Messages the user scheduled to send later, as the server keeps them.
+@DataClassName('ScheduledPostRow')
+@TableIndex(name: 'scheduled_posts_by_channel', columns: {#channelId})
+class ScheduledPosts extends Table {
+  TextColumn get id => text()();
+
+  /// The team the server listed it under; empty for direct and group
+  /// messages.
+  TextColumn get teamId => text().withDefault(const Constant(''))();
+  TextColumn get channelId => text()();
+  TextColumn get rootId => text().withDefault(const Constant(''))();
+  TextColumn get message => text().withDefault(const Constant(''))();
+  IntColumn get scheduledAt => integer().map(const Millis())();
+  IntColumn get updateAt => integer().map(const Millis()).nullable()();
+
+  /// Why the server could not send it, such as `channel_archived`.
+  TextColumn get errorCode => text().nullable()();
+
+  /// The server's copy, sent back as it is when it changes.
+  TextColumn get json => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
 }
 
 /// Delivery state of our own unsent posts; the post itself is a [Posts] row.

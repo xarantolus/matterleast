@@ -16,6 +16,9 @@ enum OptionalFeature {
   fileUploads,
   postReminders,
   groupMentions,
+  scheduledPosts,
+  syncedDrafts,
+  burnOnRead,
 }
 
 /// Profile fields a directory (LDAP or SAML) can fill in, which the user
@@ -85,6 +88,20 @@ abstract class ServerFeatures with _$ServerFeatures {
     /// The default channel takes posts from admins only.
     @Default(false) bool townSquareReadOnly,
 
+    /// Messages can be scheduled to send later.
+    @Default(false) bool scheduledPosts,
+
+    /// Drafts are kept on the server too, so other devices see them; the
+    /// user's own setting can still turn it off.
+    @Default(false) bool syncedDrafts,
+
+    /// Messages can be sent that burn after the recipient read them.
+    @Default(false) bool burnOnRead,
+
+    /// How long a revealed burn-on-read message stays.
+    @Default(ServerFeatures.defaultBurnOnReadDuration)
+    Duration burnOnReadDuration,
+
     /// Fields that sign-in through LDAP or SAML fills in.
     @Default({}) Set<ProfileField> ldapFields,
     @Default({}) Set<ProfileField> samlFields,
@@ -104,6 +121,7 @@ abstract class ServerFeatures with _$ServerFeatures {
   /// What the client may assume before the server has answered.
   static const defaultMaxPostSize = 4000;
   static const defaultTypingInterval = Duration(seconds: 5);
+  static const defaultBurnOnReadDuration = Duration(minutes: 10);
 
   /// Whether the server runs [major].[minor].[patch] or newer; false when
   /// the version is unknown.
@@ -152,6 +170,7 @@ ServerFeatures serverFeatures({
   final proxyType = config.imageProxyType;
   final maxFileSize = config.maxFileSize;
   final typingMs = config.timeBetweenUserTypingUpdatesMilliseconds;
+  final burnSeconds = config.burnOnReadDurationSeconds;
   return ServerFeatures(
     version: config.version?.trim() ?? '',
     collapsedThreads: config.collapsedThreads,
@@ -211,6 +230,16 @@ ServerFeatures serverFeatures({
         ? Duration(seconds: editLimit)
         : null,
     confirmChannelMentions: config.enableConfirmNotificationsToChannel == true,
+    scheduledPosts:
+        licensed &&
+        config.scheduledPosts == true &&
+        !turnedOff.contains(OptionalFeature.scheduledPosts),
+    syncedDrafts: on(OptionalFeature.syncedDrafts, config.allowSyncedDrafts),
+    burnOnRead:
+        advanced && on(OptionalFeature.burnOnRead, config.enableBurnOnRead),
+    burnOnReadDuration: burnSeconds != null && burnSeconds > 0
+        ? Duration(seconds: burnSeconds)
+        : ServerFeatures.defaultBurnOnReadDuration,
     townSquareReadOnly:
         licensed && config.experimentalTownSquareIsReadOnly == true,
     ldapFields: {

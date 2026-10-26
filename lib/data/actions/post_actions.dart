@@ -121,6 +121,31 @@ class PostActions {
     await _store.removePost(postId);
   }
 
+  /// Opens a burn-on-read message; its countdown starts. When the server
+  /// says it is gone (expired or burned), it goes here too.
+  Future<void> reveal(String postId) async {
+    try {
+      await _store.applyEdit(
+        await _call(() => _client.posts.revealPost(postId: postId)),
+      );
+    } on ServerError catch (e) {
+      if (e.isNotFound || (e.id?.contains('burn_on_read') ?? false)) {
+        await _store.removePost(postId);
+      }
+      rethrow;
+    }
+  }
+
+  /// Burns a burn-on-read message at once: for everyone when it is the
+  /// user's own, else for the user.
+  Future<void> burnNow(String postId) async {
+    await _call(() => _client.posts.burnPost(postId: postId));
+    await _store.removePost(postId);
+  }
+
+  /// A burn-on-read message's time ran out while it was on screen.
+  Future<void> burned() => _store.removeBurnedPosts(_clock());
+
   Future<void> savePost(String postId) => _setSaved(postId, saved: true);
 
   Future<void> unsavePost(String postId) => _setSaved(postId, saved: false);

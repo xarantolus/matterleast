@@ -6,6 +6,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/domain/burn_on_read.dart';
 import 'package:matterleast/domain/outbox.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/log.dart';
@@ -135,12 +136,16 @@ class OutboxSender {
                 ? null
                 : api.Metadata(priority: priority),
             pendingPostId: id,
+            type: post.type.isEmpty ? null : post.type,
           ),
         ),
       );
     } on ApiError catch (e) {
       if (priority?.requestedAck == true && endpointUnavailable(e)) {
         await store.turnOff(OptionalFeature.acknowledgements);
+      }
+      if (post.type == burnOnReadType && endpointUnavailable(e)) {
+        await store.turnOff(OptionalFeature.burnOnRead);
       }
       await _failed(row, e);
       return;

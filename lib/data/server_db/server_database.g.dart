@@ -9035,6 +9035,15 @@ class $DraftsTable extends Drafts with TableInfo<$DraftsTable, DraftRow> {
         requiredDuringInsert: true,
       ).withConverter<DateTime>($DraftsTable.$converterupdatedAt);
   @override
+  late final GeneratedColumnWithTypeConverter<DateTime?, int> syncedAt =
+      GeneratedColumn<int>(
+        'synced_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      ).withConverter<DateTime?>($DraftsTable.$convertersyncedAtn);
+  @override
   List<GeneratedColumn> get $columns => [
     channelId,
     rootId,
@@ -9044,6 +9053,7 @@ class $DraftsTable extends Drafts with TableInfo<$DraftsTable, DraftRow> {
     files,
     priority,
     updatedAt,
+    syncedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -9142,6 +9152,12 @@ class $DraftsTable extends Drafts with TableInfo<$DraftsTable, DraftRow> {
           data['${effectivePrefix}updated_at'],
         )!,
       ),
+      syncedAt: $DraftsTable.$convertersyncedAtn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}synced_at'],
+        ),
+      ),
     );
   }
 
@@ -9155,6 +9171,9 @@ class $DraftsTable extends Drafts with TableInfo<$DraftsTable, DraftRow> {
   static TypeConverter<PostPriority?, String?> $converterpriority =
       const PostPriorityColumn();
   static TypeConverter<DateTime, int> $converterupdatedAt = const Millis();
+  static TypeConverter<DateTime, int> $convertersyncedAt = const Millis();
+  static TypeConverter<DateTime?, int?> $convertersyncedAtn =
+      NullAwareTypeConverter.wrap($convertersyncedAt);
 }
 
 class DraftRow extends DataClass implements Insertable<DraftRow> {
@@ -9166,6 +9185,10 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
   final List<FileInfo> files;
   final PostPriority? priority;
   final DateTime updatedAt;
+
+  /// The `update_at` of the copy the server last confirmed, when drafts
+  /// sync; null for one it never had.
+  final DateTime? syncedAt;
   const DraftRow({
     required this.channelId,
     required this.rootId,
@@ -9175,6 +9198,7 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
     required this.files,
     this.priority,
     required this.updatedAt,
+    this.syncedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -9203,6 +9227,11 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
         $DraftsTable.$converterupdatedAt.toSql(updatedAt),
       );
     }
+    if (!nullToAbsent || syncedAt != null) {
+      map['synced_at'] = Variable<int>(
+        $DraftsTable.$convertersyncedAtn.toSql(syncedAt),
+      );
+    }
     return map;
   }
 
@@ -9222,6 +9251,9 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
           ? const Value.absent()
           : Value(priority),
       updatedAt: Value(updatedAt),
+      syncedAt: syncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncedAt),
     );
   }
 
@@ -9239,6 +9271,7 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
       files: serializer.fromJson<List<FileInfo>>(json['files']),
       priority: serializer.fromJson<PostPriority?>(json['priority']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
     );
   }
   @override
@@ -9253,6 +9286,7 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
       'files': serializer.toJson<List<FileInfo>>(files),
       'priority': serializer.toJson<PostPriority?>(priority),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'syncedAt': serializer.toJson<DateTime?>(syncedAt),
     };
   }
 
@@ -9265,6 +9299,7 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
     List<FileInfo>? files,
     Value<PostPriority?> priority = const Value.absent(),
     DateTime? updatedAt,
+    Value<DateTime?> syncedAt = const Value.absent(),
   }) => DraftRow(
     channelId: channelId ?? this.channelId,
     rootId: rootId ?? this.rootId,
@@ -9278,6 +9313,7 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
     files: files ?? this.files,
     priority: priority.present ? priority.value : this.priority,
     updatedAt: updatedAt ?? this.updatedAt,
+    syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
   );
   DraftRow copyWithCompanion(DraftsCompanion data) {
     return DraftRow(
@@ -9293,6 +9329,7 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
       files: data.files.present ? data.files.value : this.files,
       priority: data.priority.present ? data.priority.value : this.priority,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
     );
   }
 
@@ -9306,7 +9343,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
           ..write('selectionExtent: $selectionExtent, ')
           ..write('files: $files, ')
           ..write('priority: $priority, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('syncedAt: $syncedAt')
           ..write(')'))
         .toString();
   }
@@ -9321,6 +9359,7 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
     files,
     priority,
     updatedAt,
+    syncedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -9333,7 +9372,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
           other.selectionExtent == this.selectionExtent &&
           other.files == this.files &&
           other.priority == this.priority &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.syncedAt == this.syncedAt);
 }
 
 class DraftsCompanion extends UpdateCompanion<DraftRow> {
@@ -9345,6 +9385,7 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
   final Value<List<FileInfo>> files;
   final Value<PostPriority?> priority;
   final Value<DateTime> updatedAt;
+  final Value<DateTime?> syncedAt;
   final Value<int> rowid;
   const DraftsCompanion({
     this.channelId = const Value.absent(),
@@ -9355,6 +9396,7 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
     this.files = const Value.absent(),
     this.priority = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.syncedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DraftsCompanion.insert({
@@ -9366,6 +9408,7 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
     this.files = const Value.absent(),
     this.priority = const Value.absent(),
     required DateTime updatedAt,
+    this.syncedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : channelId = Value(channelId),
        updatedAt = Value(updatedAt);
@@ -9378,6 +9421,7 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
     Expression<String>? files,
     Expression<String>? priority,
     Expression<int>? updatedAt,
+    Expression<int>? syncedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -9389,6 +9433,7 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
       if (files != null) 'files_json': files,
       if (priority != null) 'priority_json': priority,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (syncedAt != null) 'synced_at': syncedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -9402,6 +9447,7 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
     Value<List<FileInfo>>? files,
     Value<PostPriority?>? priority,
     Value<DateTime>? updatedAt,
+    Value<DateTime?>? syncedAt,
     Value<int>? rowid,
   }) {
     return DraftsCompanion(
@@ -9413,6 +9459,7 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
       files: files ?? this.files,
       priority: priority ?? this.priority,
       updatedAt: updatedAt ?? this.updatedAt,
+      syncedAt: syncedAt ?? this.syncedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -9450,6 +9497,11 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
         $DraftsTable.$converterupdatedAt.toSql(updatedAt.value),
       );
     }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<int>(
+        $DraftsTable.$convertersyncedAtn.toSql(syncedAt.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -9467,6 +9519,568 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
           ..write('files: $files, ')
           ..write('priority: $priority, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ScheduledPostsTable extends ScheduledPosts
+    with TableInfo<$ScheduledPostsTable, ScheduledPostRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ScheduledPostsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _teamIdMeta = const VerificationMeta('teamId');
+  @override
+  late final GeneratedColumn<String> teamId = GeneratedColumn<String>(
+    'team_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _channelIdMeta = const VerificationMeta(
+    'channelId',
+  );
+  @override
+  late final GeneratedColumn<String> channelId = GeneratedColumn<String>(
+    'channel_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rootIdMeta = const VerificationMeta('rootId');
+  @override
+  late final GeneratedColumn<String> rootId = GeneratedColumn<String>(
+    'root_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _messageMeta = const VerificationMeta(
+    'message',
+  );
+  @override
+  late final GeneratedColumn<String> message = GeneratedColumn<String>(
+    'message',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime, int> scheduledAt =
+      GeneratedColumn<int>(
+        'scheduled_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<DateTime>($ScheduledPostsTable.$converterscheduledAt);
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime?, int> updateAt =
+      GeneratedColumn<int>(
+        'update_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      ).withConverter<DateTime?>($ScheduledPostsTable.$converterupdateAtn);
+  static const VerificationMeta _errorCodeMeta = const VerificationMeta(
+    'errorCode',
+  );
+  @override
+  late final GeneratedColumn<String> errorCode = GeneratedColumn<String>(
+    'error_code',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _jsonMeta = const VerificationMeta('json');
+  @override
+  late final GeneratedColumn<String> json = GeneratedColumn<String>(
+    'json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    teamId,
+    channelId,
+    rootId,
+    message,
+    scheduledAt,
+    updateAt,
+    errorCode,
+    json,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'scheduled_posts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ScheduledPostRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('team_id')) {
+      context.handle(
+        _teamIdMeta,
+        teamId.isAcceptableOrUnknown(data['team_id']!, _teamIdMeta),
+      );
+    }
+    if (data.containsKey('channel_id')) {
+      context.handle(
+        _channelIdMeta,
+        channelId.isAcceptableOrUnknown(data['channel_id']!, _channelIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_channelIdMeta);
+    }
+    if (data.containsKey('root_id')) {
+      context.handle(
+        _rootIdMeta,
+        rootId.isAcceptableOrUnknown(data['root_id']!, _rootIdMeta),
+      );
+    }
+    if (data.containsKey('message')) {
+      context.handle(
+        _messageMeta,
+        message.isAcceptableOrUnknown(data['message']!, _messageMeta),
+      );
+    }
+    if (data.containsKey('error_code')) {
+      context.handle(
+        _errorCodeMeta,
+        errorCode.isAcceptableOrUnknown(data['error_code']!, _errorCodeMeta),
+      );
+    }
+    if (data.containsKey('json')) {
+      context.handle(
+        _jsonMeta,
+        json.isAcceptableOrUnknown(data['json']!, _jsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ScheduledPostRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ScheduledPostRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      teamId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}team_id'],
+      )!,
+      channelId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}channel_id'],
+      )!,
+      rootId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}root_id'],
+      )!,
+      message: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}message'],
+      )!,
+      scheduledAt: $ScheduledPostsTable.$converterscheduledAt.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}scheduled_at'],
+        )!,
+      ),
+      updateAt: $ScheduledPostsTable.$converterupdateAtn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}update_at'],
+        ),
+      ),
+      errorCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error_code'],
+      ),
+      json: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}json'],
+      )!,
+    );
+  }
+
+  @override
+  $ScheduledPostsTable createAlias(String alias) {
+    return $ScheduledPostsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<DateTime, int> $converterscheduledAt = const Millis();
+  static TypeConverter<DateTime, int> $converterupdateAt = const Millis();
+  static TypeConverter<DateTime?, int?> $converterupdateAtn =
+      NullAwareTypeConverter.wrap($converterupdateAt);
+}
+
+class ScheduledPostRow extends DataClass
+    implements Insertable<ScheduledPostRow> {
+  final String id;
+
+  /// The team the server listed it under; empty for direct and group
+  /// messages.
+  final String teamId;
+  final String channelId;
+  final String rootId;
+  final String message;
+  final DateTime scheduledAt;
+  final DateTime? updateAt;
+
+  /// Why the server could not send it, such as `channel_archived`.
+  final String? errorCode;
+
+  /// The server's copy, sent back as it is when it changes.
+  final String json;
+  const ScheduledPostRow({
+    required this.id,
+    required this.teamId,
+    required this.channelId,
+    required this.rootId,
+    required this.message,
+    required this.scheduledAt,
+    this.updateAt,
+    this.errorCode,
+    required this.json,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['team_id'] = Variable<String>(teamId);
+    map['channel_id'] = Variable<String>(channelId);
+    map['root_id'] = Variable<String>(rootId);
+    map['message'] = Variable<String>(message);
+    {
+      map['scheduled_at'] = Variable<int>(
+        $ScheduledPostsTable.$converterscheduledAt.toSql(scheduledAt),
+      );
+    }
+    if (!nullToAbsent || updateAt != null) {
+      map['update_at'] = Variable<int>(
+        $ScheduledPostsTable.$converterupdateAtn.toSql(updateAt),
+      );
+    }
+    if (!nullToAbsent || errorCode != null) {
+      map['error_code'] = Variable<String>(errorCode);
+    }
+    map['json'] = Variable<String>(json);
+    return map;
+  }
+
+  ScheduledPostsCompanion toCompanion(bool nullToAbsent) {
+    return ScheduledPostsCompanion(
+      id: Value(id),
+      teamId: Value(teamId),
+      channelId: Value(channelId),
+      rootId: Value(rootId),
+      message: Value(message),
+      scheduledAt: Value(scheduledAt),
+      updateAt: updateAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updateAt),
+      errorCode: errorCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(errorCode),
+      json: Value(json),
+    );
+  }
+
+  factory ScheduledPostRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ScheduledPostRow(
+      id: serializer.fromJson<String>(json['id']),
+      teamId: serializer.fromJson<String>(json['teamId']),
+      channelId: serializer.fromJson<String>(json['channelId']),
+      rootId: serializer.fromJson<String>(json['rootId']),
+      message: serializer.fromJson<String>(json['message']),
+      scheduledAt: serializer.fromJson<DateTime>(json['scheduledAt']),
+      updateAt: serializer.fromJson<DateTime?>(json['updateAt']),
+      errorCode: serializer.fromJson<String?>(json['errorCode']),
+      json: serializer.fromJson<String>(json['json']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'teamId': serializer.toJson<String>(teamId),
+      'channelId': serializer.toJson<String>(channelId),
+      'rootId': serializer.toJson<String>(rootId),
+      'message': serializer.toJson<String>(message),
+      'scheduledAt': serializer.toJson<DateTime>(scheduledAt),
+      'updateAt': serializer.toJson<DateTime?>(updateAt),
+      'errorCode': serializer.toJson<String?>(errorCode),
+      'json': serializer.toJson<String>(json),
+    };
+  }
+
+  ScheduledPostRow copyWith({
+    String? id,
+    String? teamId,
+    String? channelId,
+    String? rootId,
+    String? message,
+    DateTime? scheduledAt,
+    Value<DateTime?> updateAt = const Value.absent(),
+    Value<String?> errorCode = const Value.absent(),
+    String? json,
+  }) => ScheduledPostRow(
+    id: id ?? this.id,
+    teamId: teamId ?? this.teamId,
+    channelId: channelId ?? this.channelId,
+    rootId: rootId ?? this.rootId,
+    message: message ?? this.message,
+    scheduledAt: scheduledAt ?? this.scheduledAt,
+    updateAt: updateAt.present ? updateAt.value : this.updateAt,
+    errorCode: errorCode.present ? errorCode.value : this.errorCode,
+    json: json ?? this.json,
+  );
+  ScheduledPostRow copyWithCompanion(ScheduledPostsCompanion data) {
+    return ScheduledPostRow(
+      id: data.id.present ? data.id.value : this.id,
+      teamId: data.teamId.present ? data.teamId.value : this.teamId,
+      channelId: data.channelId.present ? data.channelId.value : this.channelId,
+      rootId: data.rootId.present ? data.rootId.value : this.rootId,
+      message: data.message.present ? data.message.value : this.message,
+      scheduledAt: data.scheduledAt.present
+          ? data.scheduledAt.value
+          : this.scheduledAt,
+      updateAt: data.updateAt.present ? data.updateAt.value : this.updateAt,
+      errorCode: data.errorCode.present ? data.errorCode.value : this.errorCode,
+      json: data.json.present ? data.json.value : this.json,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduledPostRow(')
+          ..write('id: $id, ')
+          ..write('teamId: $teamId, ')
+          ..write('channelId: $channelId, ')
+          ..write('rootId: $rootId, ')
+          ..write('message: $message, ')
+          ..write('scheduledAt: $scheduledAt, ')
+          ..write('updateAt: $updateAt, ')
+          ..write('errorCode: $errorCode, ')
+          ..write('json: $json')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    teamId,
+    channelId,
+    rootId,
+    message,
+    scheduledAt,
+    updateAt,
+    errorCode,
+    json,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ScheduledPostRow &&
+          other.id == this.id &&
+          other.teamId == this.teamId &&
+          other.channelId == this.channelId &&
+          other.rootId == this.rootId &&
+          other.message == this.message &&
+          other.scheduledAt == this.scheduledAt &&
+          other.updateAt == this.updateAt &&
+          other.errorCode == this.errorCode &&
+          other.json == this.json);
+}
+
+class ScheduledPostsCompanion extends UpdateCompanion<ScheduledPostRow> {
+  final Value<String> id;
+  final Value<String> teamId;
+  final Value<String> channelId;
+  final Value<String> rootId;
+  final Value<String> message;
+  final Value<DateTime> scheduledAt;
+  final Value<DateTime?> updateAt;
+  final Value<String?> errorCode;
+  final Value<String> json;
+  final Value<int> rowid;
+  const ScheduledPostsCompanion({
+    this.id = const Value.absent(),
+    this.teamId = const Value.absent(),
+    this.channelId = const Value.absent(),
+    this.rootId = const Value.absent(),
+    this.message = const Value.absent(),
+    this.scheduledAt = const Value.absent(),
+    this.updateAt = const Value.absent(),
+    this.errorCode = const Value.absent(),
+    this.json = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ScheduledPostsCompanion.insert({
+    required String id,
+    this.teamId = const Value.absent(),
+    required String channelId,
+    this.rootId = const Value.absent(),
+    this.message = const Value.absent(),
+    required DateTime scheduledAt,
+    this.updateAt = const Value.absent(),
+    this.errorCode = const Value.absent(),
+    required String json,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       channelId = Value(channelId),
+       scheduledAt = Value(scheduledAt),
+       json = Value(json);
+  static Insertable<ScheduledPostRow> custom({
+    Expression<String>? id,
+    Expression<String>? teamId,
+    Expression<String>? channelId,
+    Expression<String>? rootId,
+    Expression<String>? message,
+    Expression<int>? scheduledAt,
+    Expression<int>? updateAt,
+    Expression<String>? errorCode,
+    Expression<String>? json,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (teamId != null) 'team_id': teamId,
+      if (channelId != null) 'channel_id': channelId,
+      if (rootId != null) 'root_id': rootId,
+      if (message != null) 'message': message,
+      if (scheduledAt != null) 'scheduled_at': scheduledAt,
+      if (updateAt != null) 'update_at': updateAt,
+      if (errorCode != null) 'error_code': errorCode,
+      if (json != null) 'json': json,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ScheduledPostsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? teamId,
+    Value<String>? channelId,
+    Value<String>? rootId,
+    Value<String>? message,
+    Value<DateTime>? scheduledAt,
+    Value<DateTime?>? updateAt,
+    Value<String?>? errorCode,
+    Value<String>? json,
+    Value<int>? rowid,
+  }) {
+    return ScheduledPostsCompanion(
+      id: id ?? this.id,
+      teamId: teamId ?? this.teamId,
+      channelId: channelId ?? this.channelId,
+      rootId: rootId ?? this.rootId,
+      message: message ?? this.message,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
+      updateAt: updateAt ?? this.updateAt,
+      errorCode: errorCode ?? this.errorCode,
+      json: json ?? this.json,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (teamId.present) {
+      map['team_id'] = Variable<String>(teamId.value);
+    }
+    if (channelId.present) {
+      map['channel_id'] = Variable<String>(channelId.value);
+    }
+    if (rootId.present) {
+      map['root_id'] = Variable<String>(rootId.value);
+    }
+    if (message.present) {
+      map['message'] = Variable<String>(message.value);
+    }
+    if (scheduledAt.present) {
+      map['scheduled_at'] = Variable<int>(
+        $ScheduledPostsTable.$converterscheduledAt.toSql(scheduledAt.value),
+      );
+    }
+    if (updateAt.present) {
+      map['update_at'] = Variable<int>(
+        $ScheduledPostsTable.$converterupdateAtn.toSql(updateAt.value),
+      );
+    }
+    if (errorCode.present) {
+      map['error_code'] = Variable<String>(errorCode.value);
+    }
+    if (json.present) {
+      map['json'] = Variable<String>(json.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduledPostsCompanion(')
+          ..write('id: $id, ')
+          ..write('teamId: $teamId, ')
+          ..write('channelId: $channelId, ')
+          ..write('rootId: $rootId, ')
+          ..write('message: $message, ')
+          ..write('scheduledAt: $scheduledAt, ')
+          ..write('updateAt: $updateAt, ')
+          ..write('errorCode: $errorCode, ')
+          ..write('json: $json, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -11442,6 +12056,7 @@ abstract class _$ServerDatabase extends GeneratedDatabase {
   late final $PreferencesTable preferences = $PreferencesTable(this);
   late final $RolesTable roles = $RolesTable(this);
   late final $DraftsTable drafts = $DraftsTable(this);
+  late final $ScheduledPostsTable scheduledPosts = $ScheduledPostsTable(this);
   late final $OutboxTable outbox = $OutboxTable(this);
   late final $PostListsTable postLists = $PostListsTable(this);
   late final $SearchHistoryTable searchHistory = $SearchHistoryTable(this);
@@ -11484,6 +12099,10 @@ abstract class _$ServerDatabase extends GeneratedDatabase {
     'custom_emoji_by_name',
     'CREATE UNIQUE INDEX custom_emoji_by_name ON custom_emoji (name)',
   );
+  late final Index scheduledPostsByChannel = Index(
+    'scheduled_posts_by_channel',
+    'CREATE INDEX scheduled_posts_by_channel ON scheduled_posts (channel_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -11507,6 +12126,7 @@ abstract class _$ServerDatabase extends GeneratedDatabase {
     preferences,
     roles,
     drafts,
+    scheduledPosts,
     outbox,
     postLists,
     searchHistory,
@@ -11522,6 +12142,7 @@ abstract class _$ServerDatabase extends GeneratedDatabase {
     reactionsByPost,
     filesByPost,
     customEmojiByName,
+    scheduledPostsByChannel,
   ];
 }
 
@@ -16202,6 +16823,7 @@ typedef $$DraftsTableCreateCompanionBuilder = DraftsCompanion Function({
   Value<List<FileInfo>> files,
   Value<PostPriority?> priority,
   required DateTime updatedAt,
+  Value<DateTime?> syncedAt,
   Value<int> rowid,
 });
 typedef $$DraftsTableUpdateCompanionBuilder = DraftsCompanion Function({
@@ -16213,6 +16835,7 @@ typedef $$DraftsTableUpdateCompanionBuilder = DraftsCompanion Function({
   Value<List<FileInfo>> files,
   Value<PostPriority?> priority,
   Value<DateTime> updatedAt,
+  Value<DateTime?> syncedAt,
   Value<int> rowid,
 });
 
@@ -16267,6 +16890,12 @@ class $$DraftsTableFilterComposer
         column: $table.updatedAt,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
+
+  ColumnWithTypeConverterFilters<DateTime?, DateTime, int> get syncedAt =>
+      $composableBuilder(
+        column: $table.syncedAt,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 }
 
 class $$DraftsTableOrderingComposer
@@ -16317,6 +16946,11 @@ class $$DraftsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DraftsTableAnnotationComposer
@@ -16355,6 +16989,9 @@ class $$DraftsTableAnnotationComposer
 
   GeneratedColumnWithTypeConverter<DateTime, int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DateTime?, int> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
 }
 
 class $$DraftsTableTableManager
@@ -16393,6 +17030,7 @@ class $$DraftsTableTableManager
                 Value<List<FileInfo>> files = const Value.absent(),
                 Value<PostPriority?> priority = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> syncedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DraftsCompanion(
                 channelId: channelId,
@@ -16403,6 +17041,7 @@ class $$DraftsTableTableManager
                 files: files,
                 priority: priority,
                 updatedAt: updatedAt,
+                syncedAt: syncedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -16415,6 +17054,7 @@ class $$DraftsTableTableManager
                 Value<List<FileInfo>> files = const Value.absent(),
                 Value<PostPriority?> priority = const Value.absent(),
                 required DateTime updatedAt,
+                Value<DateTime?> syncedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DraftsCompanion.insert(
                 channelId: channelId,
@@ -16425,6 +17065,7 @@ class $$DraftsTableTableManager
                 files: files,
                 priority: priority,
                 updatedAt: updatedAt,
+                syncedAt: syncedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -16456,6 +17097,306 @@ typedef $$DraftsTableProcessedTableManager =
       $$DraftsTableUpdateCompanionBuilder,
       (DraftRow, BaseReferences<_$ServerDatabase, $DraftsTable, DraftRow>),
       DraftRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ScheduledPostsTableCreateCompanionBuilder =
+    ScheduledPostsCompanion Function({
+      required String id,
+      Value<String> teamId,
+      required String channelId,
+      Value<String> rootId,
+      Value<String> message,
+      required DateTime scheduledAt,
+      Value<DateTime?> updateAt,
+      Value<String?> errorCode,
+      required String json,
+      Value<int> rowid,
+    });
+typedef $$ScheduledPostsTableUpdateCompanionBuilder =
+    ScheduledPostsCompanion Function({
+      Value<String> id,
+      Value<String> teamId,
+      Value<String> channelId,
+      Value<String> rootId,
+      Value<String> message,
+      Value<DateTime> scheduledAt,
+      Value<DateTime?> updateAt,
+      Value<String?> errorCode,
+      Value<String> json,
+      Value<int> rowid,
+    });
+
+class $$ScheduledPostsTableFilterComposer
+    extends Composer<_$ServerDatabase, $ScheduledPostsTable> {
+  $$ScheduledPostsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get teamId => $composableBuilder(
+    column: $table.teamId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get channelId => $composableBuilder(
+    column: $table.channelId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rootId => $composableBuilder(
+    column: $table.rootId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<DateTime, DateTime, int> get scheduledAt =>
+      $composableBuilder(
+        column: $table.scheduledAt,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<DateTime?, DateTime, int> get updateAt =>
+      $composableBuilder(
+        column: $table.updateAt,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get errorCode => $composableBuilder(
+    column: $table.errorCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ScheduledPostsTableOrderingComposer
+    extends Composer<_$ServerDatabase, $ScheduledPostsTable> {
+  $$ScheduledPostsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get teamId => $composableBuilder(
+    column: $table.teamId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get channelId => $composableBuilder(
+    column: $table.channelId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rootId => $composableBuilder(
+    column: $table.rootId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get scheduledAt => $composableBuilder(
+    column: $table.scheduledAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updateAt => $composableBuilder(
+    column: $table.updateAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get errorCode => $composableBuilder(
+    column: $table.errorCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ScheduledPostsTableAnnotationComposer
+    extends Composer<_$ServerDatabase, $ScheduledPostsTable> {
+  $$ScheduledPostsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get teamId =>
+      $composableBuilder(column: $table.teamId, builder: (column) => column);
+
+  GeneratedColumn<String> get channelId =>
+      $composableBuilder(column: $table.channelId, builder: (column) => column);
+
+  GeneratedColumn<String> get rootId =>
+      $composableBuilder(column: $table.rootId, builder: (column) => column);
+
+  GeneratedColumn<String> get message =>
+      $composableBuilder(column: $table.message, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DateTime, int> get scheduledAt =>
+      $composableBuilder(
+        column: $table.scheduledAt,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<DateTime?, int> get updateAt =>
+      $composableBuilder(column: $table.updateAt, builder: (column) => column);
+
+  GeneratedColumn<String> get errorCode =>
+      $composableBuilder(column: $table.errorCode, builder: (column) => column);
+
+  GeneratedColumn<String> get json =>
+      $composableBuilder(column: $table.json, builder: (column) => column);
+}
+
+class $$ScheduledPostsTableTableManager
+    extends
+        RootTableManager<
+          _$ServerDatabase,
+          $ScheduledPostsTable,
+          ScheduledPostRow,
+          $$ScheduledPostsTableFilterComposer,
+          $$ScheduledPostsTableOrderingComposer,
+          $$ScheduledPostsTableAnnotationComposer,
+          $$ScheduledPostsTableCreateCompanionBuilder,
+          $$ScheduledPostsTableUpdateCompanionBuilder,
+          (
+            ScheduledPostRow,
+            BaseReferences<
+              _$ServerDatabase,
+              $ScheduledPostsTable,
+              ScheduledPostRow
+            >,
+          ),
+          ScheduledPostRow,
+          PrefetchHooks Function()
+        > {
+  $$ScheduledPostsTableTableManager(
+    _$ServerDatabase db,
+    $ScheduledPostsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ScheduledPostsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ScheduledPostsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ScheduledPostsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> teamId = const Value.absent(),
+                Value<String> channelId = const Value.absent(),
+                Value<String> rootId = const Value.absent(),
+                Value<String> message = const Value.absent(),
+                Value<DateTime> scheduledAt = const Value.absent(),
+                Value<DateTime?> updateAt = const Value.absent(),
+                Value<String?> errorCode = const Value.absent(),
+                Value<String> json = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ScheduledPostsCompanion(
+                id: id,
+                teamId: teamId,
+                channelId: channelId,
+                rootId: rootId,
+                message: message,
+                scheduledAt: scheduledAt,
+                updateAt: updateAt,
+                errorCode: errorCode,
+                json: json,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<String> teamId = const Value.absent(),
+                required String channelId,
+                Value<String> rootId = const Value.absent(),
+                Value<String> message = const Value.absent(),
+                required DateTime scheduledAt,
+                Value<DateTime?> updateAt = const Value.absent(),
+                Value<String?> errorCode = const Value.absent(),
+                required String json,
+                Value<int> rowid = const Value.absent(),
+              }) => ScheduledPostsCompanion.insert(
+                id: id,
+                teamId: teamId,
+                channelId: channelId,
+                rootId: rootId,
+                message: message,
+                scheduledAt: scheduledAt,
+                updateAt: updateAt,
+                errorCode: errorCode,
+                json: json,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ScheduledPostsTable, ScheduledPostRow>(table),
+                  BaseReferences<
+                    _$ServerDatabase,
+                    $ScheduledPostsTable,
+                    ScheduledPostRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ScheduledPostsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$ServerDatabase,
+      $ScheduledPostsTable,
+      ScheduledPostRow,
+      $$ScheduledPostsTableFilterComposer,
+      $$ScheduledPostsTableOrderingComposer,
+      $$ScheduledPostsTableAnnotationComposer,
+      $$ScheduledPostsTableCreateCompanionBuilder,
+      $$ScheduledPostsTableUpdateCompanionBuilder,
+      (
+        ScheduledPostRow,
+        BaseReferences<
+          _$ServerDatabase,
+          $ScheduledPostsTable,
+          ScheduledPostRow
+        >,
+      ),
+      ScheduledPostRow,
       PrefetchHooks Function()
     >;
 typedef $$OutboxTableCreateCompanionBuilder = OutboxCompanion Function({
@@ -17661,6 +18602,8 @@ class $ServerDatabaseManager {
       $$RolesTableTableManager(_db, _db.roles);
   $$DraftsTableTableManager get drafts =>
       $$DraftsTableTableManager(_db, _db.drafts);
+  $$ScheduledPostsTableTableManager get scheduledPosts =>
+      $$ScheduledPostsTableTableManager(_db, _db.scheduledPosts);
   $$OutboxTableTableManager get outbox =>
       $$OutboxTableTableManager(_db, _db.outbox);
   $$PostListsTableTableManager get postLists =>

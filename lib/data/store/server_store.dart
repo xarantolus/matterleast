@@ -7,6 +7,7 @@ import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/mappers.dart';
 import 'package:matterleast/domain/autocomplete.dart';
+import 'package:matterleast/domain/burn_on_read.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/outbox.dart';
@@ -1221,6 +1222,7 @@ class ServerStore {
     required DateTime createAt,
     List<api.FileInfo> files = const [],
     api.PostPriority? priority,
+    String type = '',
   }) => db.transaction(() async {
     final metadata = files.isEmpty && priority == null
         ? null
@@ -1236,6 +1238,7 @@ class ServerStore {
             createAt: createAt,
             updateAt: Value(createAt),
             message: Value(message),
+            type: Value(type),
             pendingPostId: Value(pendingPostId),
             sendState: const Value(SendStates.pending),
             metadataJson: Value(
@@ -1479,6 +1482,40 @@ class ServerStore {
     await (db.delete(db.files)..where((f) => f.postId.equals(postId))).go();
     await (db.delete(db.postLists)..where((l) => l.postId.equals(postId))).go();
   });
+
+  /// Removes burn-on-read messages that burned by [now], for this reader or
+  /// for everyone, so nothing of them stays cached.
+  Future<void> removeBurnedPosts(DateTime now) async {
+    final rows = await (db.select(
+      db.posts,
+    )..where((p) => p.type.equals(burnOnReadType))).get();
+    for (final row in rows) {
+      final ends = burnEnds(row.propsJson, row.metadataJson);
+      final state = burnState(
+        own: false,
+        expireAt: ends.expireAt,
+        maxExpireAt: ends.maxExpireAt,
+        now: now,
+      );
+      if (state is BurnExpired) await removePost(row.id);
+    }
+  }
+
+  /// Every recipient read the user's burn-on-read message: it burns for
+  /// the sender too at [at].
+  Future<void> setBurnExpiry(String postId, DateTime at) =>
+      db.transaction(() async {
+        final row = await post(postId);
+        if (row == null || row.type != burnOnReadType) return;
+        final metadata = jsonObjectOrEmpty(row.metadataJson);
+        await (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
+          PostsCompanion(
+            metadataJson: Value(
+              jsonEncode({...metadata, 'expire_at': at.millisecondsSinceEpoch}),
+            ),
+          ),
+        );
+      });
 
   /// After "Mark as unread": the server's counts, and no automatic read
   /// until the channel is opened again.

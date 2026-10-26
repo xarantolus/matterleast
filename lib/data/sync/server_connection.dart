@@ -7,10 +7,12 @@ import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/sync/draft_sync.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
 import 'package:matterleast/data/sync/event_applier.dart';
 import 'package:matterleast/data/sync/inbox_sync.dart';
 import 'package:matterleast/data/sync/presence.dart';
+import 'package:matterleast/data/sync/scheduled_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
 
@@ -27,11 +29,15 @@ class ServerConnection {
     required String? Function() token,
     Duration pingInterval = const Duration(seconds: 30),
   }) {
+    drafts = DraftSync(server: server, store: store);
+    scheduled = ScheduledSync(server: server, store: store);
     entry = EntrySync(
       server: server,
       store: store,
       runner: runner,
       users: users,
+      drafts: drafts,
+      scheduled: scheduled,
     );
     inbox = InboxSync(
       server: server,
@@ -48,6 +54,8 @@ class ServerConnection {
       inbox: inbox,
       typing: typing,
       dialogs: dialogs,
+      drafts: drafts,
+      scheduled: scheduled,
     );
     presence = PresencePoller(server: server, store: store, runner: runner);
     socket = ServerSocket(
@@ -71,6 +79,8 @@ class ServerConnection {
   final ServerStore store;
   final SyncRunner runner;
   final UserLoader users;
+  late final DraftSync drafts;
+  late final ScheduledSync scheduled;
   late final EntrySync entry;
   late final InboxSync inbox;
   late final EventApplier events;

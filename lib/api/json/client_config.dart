@@ -74,6 +74,11 @@ class ClientConfig {
     this.samlNicknameAttributeSet,
     this.samlPositionAttributeSet,
     this.buildEnterpriseReady,
+    this.scheduledPosts,
+    this.allowSyncedDrafts,
+    this.enableBurnOnRead,
+    this.burnOnReadDurationSeconds,
+    this.burnOnReadMaximumTimeToLiveSeconds,
     this.featureFlags = const {},
   });
 
@@ -218,6 +223,18 @@ class ClientConfig {
   final bool? samlPositionAttributeSet;
   @LenientBool()
   final bool? buildEnterpriseReady;
+
+  /// Sent only to licensed servers' signed-in users.
+  @LenientBool()
+  final bool? scheduledPosts;
+  @LenientBool()
+  final bool? allowSyncedDrafts;
+  @LenientBool()
+  final bool? enableBurnOnRead;
+  @LenientInt()
+  final int? burnOnReadDurationSeconds;
+  @LenientInt()
+  final int? burnOnReadMaximumTimeToLiveSeconds;
 
   /// Every `FeatureFlag…` key, without the prefix.
   @JsonKey(readValue: _featureFlags)

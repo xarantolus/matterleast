@@ -124,9 +124,6 @@ swagger_parser:
     - {apply_to_type: "ApiV4PostsRequestBody?", parser_name: LenientApiV4PostsRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4PostsRequestBody>", parser_name: LenientListOfApiV4PostsRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4PostsRequestBody>?", parser_name: LenientMapOfApiV4PostsRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
-    - {apply_to_type: "ApiV4PostsScheduleScheduledPostIdRequestBody?", parser_name: LenientApiV4PostsScheduleScheduledPostIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
-    - {apply_to_type: "List<ApiV4PostsScheduleScheduledPostIdRequestBody>", parser_name: LenientListOfApiV4PostsScheduleScheduledPostIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
-    - {apply_to_type: "Map<String, ApiV4PostsScheduleScheduledPostIdRequestBody>?", parser_name: LenientMapOfApiV4PostsScheduleScheduledPostIdRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "ApiV4PostsSearchRequestBody?", parser_name: LenientApiV4PostsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<ApiV4PostsSearchRequestBody>", parser_name: LenientListOfApiV4PostsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, ApiV4PostsSearchRequestBody>?", parser_name: LenientMapOfApiV4PostsSearchRequestBody, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -253,6 +250,12 @@ swagger_parser:
     - {apply_to_type: "DataRetentionPolicyForTeam?", parser_name: LenientDataRetentionPolicyForTeam, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<DataRetentionPolicyForTeam>", parser_name: LenientListOfDataRetentionPolicyForTeam, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, DataRetentionPolicyForTeam>?", parser_name: LenientMapOfDataRetentionPolicyForTeam, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Draft?", parser_name: LenientDraft, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<Draft>", parser_name: LenientListOfDraft, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, Draft>?", parser_name: LenientMapOfDraft, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "DraftUpsertRequest?", parser_name: LenientDraftUpsertRequest, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "List<DraftUpsertRequest>", parser_name: LenientListOfDraftUpsertRequest, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
+    - {apply_to_type: "Map<String, DraftUpsertRequest>?", parser_name: LenientMapOfDraftUpsertRequest, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Embeds?", parser_name: LenientEmbeds, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "List<Embeds>", parser_name: LenientListOfEmbeds, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
     - {apply_to_type: "Map<String, Embeds>?", parser_name: LenientMapOfEmbeds, parser_absolute_path: "package:matterleast/api/json/lenient_models.dart"}
@@ -478,6 +481,7 @@ swagger_parser:
     - "/api/v4/custom_profile_attributes/fields"
     - "/api/v4/custom_profile_attributes/values"
     - "/api/v4/data_retention/policy"
+    - "/api/v4/drafts"
     - "/api/v4/emoji"
     - "/api/v4/emoji/autocomplete"
     - "/api/v4/emoji/name/{emoji_name}"
@@ -495,6 +499,7 @@ swagger_parser:
     - "/api/v4/notifications/test"
     - "/api/v4/plugins/webapp"
     - "/api/v4/posts"
+    - "/api/v4/posts/schedule"
     - "/api/v4/posts/schedule/{scheduled_post_id}"
     - "/api/v4/posts/scheduled/team/{team_id}"
     - "/api/v4/posts/search"
@@ -561,6 +566,8 @@ swagger_parser:
     - "/api/v4/users/{user_id}"
     - "/api/v4/users/{user_id}/channel_members"
     - "/api/v4/users/{user_id}/channels"
+    - "/api/v4/users/{user_id}/channels/{channel_id}/drafts"
+    - "/api/v4/users/{user_id}/channels/{channel_id}/drafts/{thread_id}"
     - "/api/v4/users/{user_id}/custom_profile_attributes"
     - "/api/v4/users/{user_id}/data_retention/channel_policies"
     - "/api/v4/users/{user_id}/data_retention/team_policies"
@@ -587,6 +594,7 @@ swagger_parser:
     - "/api/v4/users/{user_id}/teams/{team_id}/channels/categories/order"
     - "/api/v4/users/{user_id}/teams/{team_id}/channels/categories/{category_id}"
     - "/api/v4/users/{user_id}/teams/{team_id}/channels/members"
+    - "/api/v4/users/{user_id}/teams/{team_id}/drafts"
     - "/api/v4/users/{user_id}/teams/{team_id}/threads"
     - "/api/v4/users/{user_id}/teams/{team_id}/threads/{thread_id}"
     - "/api/v4/users/{user_id}/teams/{team_id}/threads/{thread_id}/following"

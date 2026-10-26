@@ -16,9 +16,13 @@ import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/server_features.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
+import 'package:matterleast/screens/channel/composer_extras.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/channel/posting_rules.dart';
+import 'package:matterleast/screens/drafts/drafts_providers.dart';
+import 'package:matterleast/screens/drafts/schedule_picker.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/message_display.dart';
@@ -80,12 +84,25 @@ class Composer extends ConsumerWidget {
     final rights = ref.watch(channelRightsProvider(url, channelId)).value;
     final block = archived ? PostingBlock.archived : rights?.block;
     if (block != null) return PostingNotice(block: block);
-    return _ComposerField(
+    final field = _ComposerField(
       url: url,
       channelId: channelId,
       rootId: rootId,
       teamId: teamId,
       hint: hint,
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ScheduledNotice(
+          url: url,
+          channelId: channelId,
+          rootId: rootId,
+          teamId: teamId,
+        ),
+        field,
+      ],
     );
   }
 }
@@ -181,10 +198,16 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final editing = value.editing;
     final files = value.attachments;
     final options = ref.watch(postPriorityOptionsProvider(widget.url)).value;
-    final uploads =
-        ref.watch(featuresProvider(widget.url)).value?.fileUploads ?? true;
+    final features = ref.watch(featuresProvider(widget.url)).value;
+    final uploads = features?.fileUploads ?? true;
     final canPrioritize = widget.rootId.isEmpty && (options?.priority ?? false);
     final sendable = canSend(value, limit);
+    final canBurn = widget.rootId.isEmpty && (features?.burnOnRead ?? false);
+    // Kept current for the schedule picker.
+    ref.watch(manualTimeZoneProvider(widget.url));
+    final burning =
+        canBurn &&
+        ref.watch(burnOnReadChoiceProvider(widget.url, widget.channelId));
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainer,
       child: SafeArea(
@@ -244,6 +267,29 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                   ),
                 ),
               ),
+            if (burning && editing == null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.md,
+                  Spacing.sm,
+                  Spacing.md,
+                  0,
+                ),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: BurnOnReadChip(
+                    duration: features!.burnOnReadDuration,
+                    onDeleted: () => ref
+                        .read(
+                          burnOnReadChoiceProvider(
+                            widget.url,
+                            widget.channelId,
+                          ).notifier,
+                        )
+                        .set(on: false),
+                  ),
+                ),
+              ),
             if (length >= limit * _counterFrom)
               Padding(
                 padding: const EdgeInsets.fromLTRB(
@@ -272,18 +318,20 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  if (editing == null && (uploads || canPrioritize))
+                  if (editing == null && (uploads || canPrioritize || canBurn))
                     IconButton(
                       tooltip: 'Attach',
                       onPressed:
                           (!uploads || files.length >= maxAttachments) &&
-                              !canPrioritize
+                              !canPrioritize &&
+                              !canBurn
                           ? null
                           : () => _attach(
                               uploads: uploads,
                               acknowledgements: canPrioritize
                                   ? options!.acknowledgements
                                   : null,
+                              burnOnRead: canBurn,
                             ),
                       icon: const Icon(Icons.add_circle_outline),
                     )
@@ -353,10 +401,17 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                     ),
                   ),
                   const SizedBox(width: Spacing.xs),
-                  IconButton.filled(
-                    tooltip: editing != null ? 'Save' : 'Send',
-                    onPressed: sendable ? _send : null,
-                    icon: Icon(editing != null ? Icons.check : Icons.send),
+                  SendButton(
+                    editing: editing != null,
+                    onSend: sendable ? _send : null,
+                    onSchedule:
+                        sendable &&
+                            editing == null &&
+                            !burning &&
+                            (features?.scheduledPosts ?? false) &&
+                            !value.text.text.trimLeft().startsWith('/')
+                        ? _schedule
+                        : null,
                   ),
                 ],
               ),
@@ -392,10 +447,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     );
   }
 
-  /// Files only with [uploads]; priority unless [acknowledgements] is null.
+  /// Files only with [uploads]; priority unless [acknowledgements] is null;
+  /// the burn-on-read switch with [burnOnRead].
   Future<void> _attach({
     required bool uploads,
     required bool? acknowledgements,
+    bool burnOnRead = false,
   }) async {
     FocusManager.instance.primaryFocus?.unfocus();
     final room = maxAttachments - ref.read(_provider).attachments.length;
@@ -435,6 +492,27 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                   unawaited(_pickPriority(acknowledgements));
                 },
               ),
+            if (burnOnRead)
+              Consumer(
+                builder: (context, ref, _) {
+                  final choice = burnOnReadChoiceProvider(
+                    widget.url,
+                    widget.channelId,
+                  );
+                  return SwitchListTile(
+                    secondary: const Icon(Icons.local_fire_department_outlined),
+                    title: const Text('Burn on read'),
+                    subtitle: const Text(
+                      'Hidden until opened, then deleted after a while',
+                    ),
+                    value: ref.watch(choice),
+                    onChanged: (on) {
+                      ref.read(choice.notifier).set(on: on);
+                      Navigator.of(sheet).pop();
+                    },
+                  );
+                },
+              ),
           ],
         ),
       ),
@@ -470,13 +548,35 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     }
   }
 
-  Future<void> _send() async {
+  Future<void> _schedule() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final zone = ref.read(manualTimeZoneProvider(widget.url)).value;
+    final at = await pickScheduleTime(context, zone: zone);
+    if (at != null && mounted) await _send(at: at);
+  }
+
+  String _when(DateTime at) => untilLabel(
+    at,
+    DateTime.now(),
+    use24: MediaQuery.alwaysUse24HourFormatOf(context),
+  );
+
+  /// Sends now, or at [at] where the server schedules it.
+  Future<void> _send({DateTime? at}) async {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final outcome = await ref
         .read(_provider.notifier)
         .submit(
           teamId: widget.teamId,
+          at: at,
+          burnOnRead:
+              widget.rootId.isEmpty &&
+              ref.read(
+                burnOnReadChoiceProvider(widget.url, widget.channelId),
+              ) &&
+              (ref.read(featuresProvider(widget.url)).value?.burnOnRead ??
+                  false),
           confirmMention: (message) async =>
               mounted &&
               await confirmChannelMention(
@@ -492,6 +592,10 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         await openLinkFromMessage(navigator, uri);
       case SubmitFailed(:final text):
         messenger.showSnackBar(SnackBar(content: Text(text)));
+      case SubmitScheduled(:final at):
+        messenger.showSnackBar(
+          SnackBar(content: Text('Scheduled for ${_when(at)}')),
+        );
       case SubmitDone():
     }
   }

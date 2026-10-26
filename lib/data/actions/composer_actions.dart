@@ -10,6 +10,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/autocomplete.dart';
+import 'package:matterleast/domain/burn_on_read.dart';
 import 'package:matterleast/domain/commands.dart';
 import 'package:matterleast/domain/dialog_rules.dart';
 import 'package:matterleast/domain/outbox.dart';
@@ -29,7 +30,10 @@ class ComposerActions {
   ServerStore get _store => session.store;
 
   DateTime? _lastQueuedAt;
-  late final _drafts = DraftSaver(_store, clock: _clock);
+  late final _drafts = DraftSaver(_store, clock: _clock, onWritten: _synced);
+
+  void _synced(String channelId, String rootId) =>
+      unawaited(session.connection.drafts.changed(channelId, rootId));
   late final _suggestions = SuggestionSource(
     server: session.api,
     store: _store,
@@ -45,6 +49,7 @@ class ComposerActions {
     required String message,
     List<api.FileInfo> files = const [],
     api.PostPriority? priority,
+    bool burnOnRead = false,
   }) async {
     final me = await _db.syncText(SyncKeys.currentUserId);
     if (me == null) throw StateError('Not signed in');
@@ -60,10 +65,33 @@ class ComposerActions {
       createAt: at,
       files: files,
       priority: rootId.isEmpty ? priority : null,
+      type: burnOnRead ? burnOnReadType : '',
     );
+    _synced(channelId, rootId);
     unawaited(session.outbox.kick());
     await _rememberEmoji(message);
     return pendingPostId;
+  }
+
+  /// Schedules the message for [at] instead of sending it, and clears the
+  /// draft once the server took it.
+  Future<void> schedule(
+    String channelId, {
+    String rootId = '',
+    required String message,
+    required DateTime at,
+    List<api.FileInfo> files = const [],
+    api.PostPriority? priority,
+  }) async {
+    await session.connection.scheduled.schedule(
+      channelId: channelId,
+      rootId: rootId,
+      message: message,
+      at: at,
+      files: files,
+      priority: rootId.isEmpty ? priority : null,
+    );
+    await clearDraft(channelId, rootId: rootId);
   }
 
   /// Emoji written as `:name:` count as recently used, as in the official
@@ -124,8 +152,10 @@ class ComposerActions {
     return row;
   }
 
-  Future<void> restoreDraft(DraftRow row) =>
-      _store.saveDraft(row.toCompanion(false));
+  Future<void> restoreDraft(DraftRow row) async {
+    await _store.saveDraft(row.toCompanion(false));
+    _synced(row.channelId, row.rootId);
+  }
 
   /// Writes waiting drafts now, e.g. when the app goes to the background.
   Future<void> flushDrafts() => _drafts.flush();

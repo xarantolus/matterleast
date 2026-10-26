@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/channel_list.dart';
@@ -13,6 +12,7 @@ import 'package:matterleast/screens/channel_list/channel_actions_sheet.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/channel_list/channel_tile.dart';
 import 'package:matterleast/screens/channel_list/reorder_view.dart';
+import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/drafts_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -288,6 +288,12 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
       );
     }
     final list = widget.list;
+    final scheduled =
+        ref
+            .watch(teamScheduledProvider(widget.url, widget.teamId))
+            .value
+            ?.length ??
+        0;
     final scrollView = NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: CustomScrollView(
@@ -333,12 +339,12 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 ),
               ),
             ),
-          if (list.drafts > 0)
+          if (list.drafts > 0 || scheduled > 0)
             SliverToBoxAdapter(
               child: _ShortcutTile(
                 icon: Icons.edit_note,
                 title: 'Drafts',
-                count: list.drafts,
+                count: list.drafts + scheduled,
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => DraftsScreen(

@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/drafts.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
+import 'package:matterleast/screens/drafts/scheduled_list.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
@@ -14,12 +16,14 @@ import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// Unsent messages of one team and of direct messages: tap to go on
-/// writing, swipe or long-press to delete.
+/// writing, swipe or long-press to delete. Where the server schedules
+/// messages, a second tab lists those.
 class DraftsScreen extends ConsumerWidget {
   const DraftsScreen({
     required this.url,
     required this.teamId,
     required this.teamName,
+    this.scheduledFirst = false,
     super.key,
   });
 
@@ -27,60 +31,98 @@ class DraftsScreen extends ConsumerWidget {
   final String teamId;
   final String teamName;
 
+  /// Opens on the scheduled messages.
+  final bool scheduledFirst;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final drafts = ref.watch(teamDraftsProvider(url, teamId)).value;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Drafts · $teamName',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+    ref.watch(refreshDraftsProvider(url, teamId));
+    final scheduling =
+        ref.watch(featuresProvider(url)).value?.scheduledPosts ?? false;
+    final scheduled = ref.watch(teamScheduledProvider(url, teamId)).value;
+    final title = Text(
+      teamName.isEmpty ? 'Drafts' : 'Drafts · $teamName',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+    if (!scheduling && (scheduled?.isEmpty ?? true)) {
+      return Scaffold(
+        appBar: AppBar(title: title),
+        body: _drafts(context, ref),
+      );
+    }
+    return DefaultTabController(
+      length: 2,
+      initialIndex: scheduledFirst ? 1 : 0,
+      child: Scaffold(
+        appBar: AppBar(
+          title: title,
+          bottom: TabBar(
+            tabs: [
+              const Tab(text: 'Drafts'),
+              Tab(
+                text: switch (scheduled?.length ?? 0) {
+                  0 => 'Scheduled',
+                  final n => 'Scheduled ($n)',
+                },
+              ),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _drafts(context, ref),
+            ScheduledList(url: url, teamId: teamId),
+          ],
         ),
       ),
-      body: switch (drafts) {
-        null => const Center(child: CircularProgressIndicator()),
-        [] => const EmptyState(
-          icon: Icons.edit_note,
-          title: 'No drafts',
-          body:
-              "Messages you start writing and don't send are kept here, "
-              'so you can finish them later.',
-        ),
-        final drafts => ListView.builder(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
-          ),
-          itemCount: drafts.length,
-          itemBuilder: (context, i) {
-            final draft = drafts[i];
-            return Dismissible(
-              key: ValueKey('${draft.channelId}/${draft.rootId}'),
-              background: const _DeleteBackground(
-                alignment: AlignmentDirectional.centerStart,
-              ),
-              secondaryBackground: const _DeleteBackground(
-                alignment: AlignmentDirectional.centerEnd,
-              ),
-              onDismissed: (_) => _delete(context, ref, draft),
-              child: _DraftTile(
-                url: url,
-                draft: draft,
-                onTap: () => openConversation(
-                  Navigator.of(context),
-                  url: url,
-                  channelId: draft.channelId,
-                  title: draft.title,
-                  teamId: teamId,
-                  rootId: draft.rootId.isEmpty ? null : draft.rootId,
-                ),
-                onLongPress: () => _options(context, ref, draft),
-              ),
-            );
-          },
-        ),
-      },
     );
+  }
+
+  Widget _drafts(BuildContext context, WidgetRef ref) {
+    final drafts = ref.watch(teamDraftsProvider(url, teamId)).value;
+    return switch (drafts) {
+      null => const Center(child: CircularProgressIndicator()),
+      [] => const EmptyState(
+        icon: Icons.edit_note,
+        title: 'No drafts',
+        body:
+            "Messages you start writing and don't send are kept here, "
+            'so you can finish them later.',
+      ),
+      final drafts => ListView.builder(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
+        ),
+        itemCount: drafts.length,
+        itemBuilder: (context, i) {
+          final draft = drafts[i];
+          return Dismissible(
+            key: ValueKey('${draft.channelId}/${draft.rootId}'),
+            background: const _DeleteBackground(
+              alignment: AlignmentDirectional.centerStart,
+            ),
+            secondaryBackground: const _DeleteBackground(
+              alignment: AlignmentDirectional.centerEnd,
+            ),
+            onDismissed: (_) => _delete(context, ref, draft),
+            child: _DraftTile(
+              url: url,
+              draft: draft,
+              onTap: () => openConversation(
+                Navigator.of(context),
+                url: url,
+                channelId: draft.channelId,
+                title: draft.title,
+                teamId: teamId,
+                rootId: draft.rootId.isEmpty ? null : draft.rootId,
+              ),
+              onLongPress: () => _options(context, ref, draft),
+            ),
+          );
+        },
+      ),
+    };
   }
 
   Future<void> _options(

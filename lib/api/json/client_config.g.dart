@@ -156,6 +156,15 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
   buildEnterpriseReady: const LenientBool().fromJson(
     json['BuildEnterpriseReady'],
   ),
+  scheduledPosts: const LenientBool().fromJson(json['ScheduledPosts']),
+  allowSyncedDrafts: const LenientBool().fromJson(json['AllowSyncedDrafts']),
+  enableBurnOnRead: const LenientBool().fromJson(json['EnableBurnOnRead']),
+  burnOnReadDurationSeconds: const LenientInt().fromJson(
+    json['BurnOnReadDurationSeconds'],
+  ),
+  burnOnReadMaximumTimeToLiveSeconds: const LenientInt().fromJson(
+    json['BurnOnReadMaximumTimeToLiveSeconds'],
+  ),
   featureFlags: _featureFlags(json, 'FeatureFlags') == null
       ? const {}
       : const _StringMap().fromJson(_featureFlags(json, 'FeatureFlags')),

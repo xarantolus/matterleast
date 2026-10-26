@@ -18,6 +18,7 @@ ApiV4PostsRequestBody _$ApiV4PostsRequestBodyFromJson(
   props: const JsonMap().fromJson(json['props']),
   metadata: const LenientMetadata().fromJson(json['metadata']),
   pendingPostId: const LenientString().fromJson(json['pending_post_id']),
+  type: const LenientString().fromJson(json['type']),
 );
 
 Map<String, dynamic> _$ApiV4PostsRequestBodyToJson(
@@ -30,4 +31,5 @@ Map<String, dynamic> _$ApiV4PostsRequestBodyToJson(
   'props': const JsonMap().toJson(instance.props),
   'metadata': const LenientMetadata().toJson(instance.metadata),
   'pending_post_id': const LenientString().toJson(instance.pendingPostId),
+  'type': const LenientString().toJson(instance.type),
 };

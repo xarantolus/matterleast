@@ -20,6 +20,8 @@ import '../models/api_v4_users_user_id_patch_request_body.dart';
 import '../models/api_v4_users_user_id_request_body.dart';
 import '../models/api_v4_users_user_id_terms_of_service_request_body.dart';
 import '../models/channel_member_with_team_data.dart';
+import '../models/draft.dart';
+import '../models/draft_upsert_request.dart';
 import '../models/get_api_v4_users_sessions_attributes_manifest_response.dart';
 import '../models/post_api_v4_users_group_channels_response.dart';
 import '../models/post_api_v4_users_login_sso_code_exchange_response.dart';
@@ -198,5 +200,27 @@ abstract class UsersClient {
     @Path('user_id') required String userId,
     @Query('per_page') int? perPage = 60,
     @Query('page') int? page,
+  });
+
+  @POST('/api/v4/drafts')
+  Future<Draft?> upsertDraft({@Body() required DraftUpsertRequest body});
+
+  @GET('/api/v4/users/{user_id}/teams/{team_id}/drafts')
+  Future<List<Draft>> getDrafts({
+    @Path('user_id') required String userId,
+    @Path('team_id') required String teamId,
+  });
+
+  @DELETE('/api/v4/users/{user_id}/channels/{channel_id}/drafts')
+  Future<StatusOk> deleteDraft({
+    @Path('user_id') required String userId,
+    @Path('channel_id') required String channelId,
+  });
+
+  @DELETE('/api/v4/users/{user_id}/channels/{channel_id}/drafts/{thread_id}')
+  Future<StatusOk> deleteDraftForThread({
+    @Path('user_id') required String userId,
+    @Path('channel_id') required String channelId,
+    @Path('thread_id') required String threadId,
   });
 }

@@ -45,4 +45,7 @@ const _$OptionalFeatureEnumMap = {
   OptionalFeature.fileUploads: 'fileUploads',
   OptionalFeature.postReminders: 'postReminders',
   OptionalFeature.groupMentions: 'groupMentions',
+  OptionalFeature.scheduledPosts: 'scheduledPosts',
+  OptionalFeature.syncedDrafts: 'syncedDrafts',
+  OptionalFeature.burnOnRead: 'burnOnRead',
 };

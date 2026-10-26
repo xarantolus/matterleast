@@ -66,6 +66,7 @@ abstract final class SyncKeys {
     Preferences,
     Roles,
     Drafts,
+    ScheduledPosts,
     Outbox,
     PostLists,
     SearchHistory,
@@ -94,7 +95,7 @@ class ServerDatabase extends _$ServerDatabase {
       );
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -108,6 +109,11 @@ class ServerDatabase extends _$ServerDatabase {
       },
       from3To4: (m, schema) async {
         await m.addColumn(schema.users, schema.users.roles);
+      },
+      from4To5: (m, schema) async {
+        await m.addColumn(schema.drafts, schema.drafts.syncedAt);
+        await m.createTable(schema.scheduledPosts);
+        await m.createIndex(schema.scheduledPostsByChannel);
       },
     ),
   );

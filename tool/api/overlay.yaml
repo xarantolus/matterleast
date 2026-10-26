@@ -247,6 +247,7 @@ actions:
   - target: "$.paths['/api/v4/posts'].post.requestBody.content['application/json'].schema.properties"
     update:
       pending_post_id: {type: string, description: "Client id that the created post and its posted event echo back"}
+      type: {type: string, description: "Empty, or burn_on_read where the server allows it"}
   - target: "$.paths['/api/v4/commands/execute'].post.requestBody.content['application/json'].schema.properties"
     update:
       team_id: {type: string}
@@ -318,3 +319,32 @@ actions:
   - target: "$.paths['/api/v4/channels/members/{user_id}/view'].post.requestBody.content['application/json'].schema.properties"
     update:
       collapsed_threads_supported: {type: boolean}
+  # --- scheduled posts (M6): the server reads and answers the whole scheduled post (api4/scheduled_post.go) ---
+  - target: "$.paths['/api/v4/posts/schedule'].post.requestBody.content"
+    remove: true
+  - target: "$.paths['/api/v4/posts/schedule'].post.requestBody"
+    update:
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/ScheduledPost"}
+  - target: "$.paths['/api/v4/posts/schedule'].post.responses['200'].content"
+    remove: true
+  - target: "$.paths['/api/v4/posts/schedule'].post.responses['200']"
+    update:
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/ScheduledPost"}
+  - target: "$.paths['/api/v4/posts/schedule/{scheduled_post_id}'].put.requestBody.content"
+    remove: true
+  - target: "$.paths['/api/v4/posts/schedule/{scheduled_post_id}'].put.requestBody"
+    update:
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/ScheduledPost"}
+  - target: "$.paths['/api/v4/posts/schedule/{scheduled_post_id}'].put.responses['200'].content"
+    remove: true
+  - target: "$.paths['/api/v4/posts/schedule/{scheduled_post_id}'].put.responses['200']"
+    update:
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/ScheduledPost"}

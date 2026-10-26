@@ -191,3 +191,31 @@ TypingEvent _$TypingEventFromJson(Map<String, dynamic> json) => TypingEvent(
       ? null
       : Broadcast.fromJson(json['broadcast'] as Map<String, dynamic>),
 );
+
+ScheduledPostEvent _$ScheduledPostEventFromJson(Map<String, dynamic> json) =>
+    ScheduledPostEvent(
+      scheduledPost: const EncodedScheduledPost().fromJson(
+        json['scheduledPost'],
+      ),
+    );
+
+DraftEvent _$DraftEventFromJson(Map<String, dynamic> json) =>
+    DraftEvent(draft: const EncodedDraft().fromJson(json['draft']));
+
+PostRevealedEvent _$PostRevealedEventFromJson(Map<String, dynamic> json) =>
+    PostRevealedEvent(
+      post: const EncodedPost().fromJson(json['post']),
+      recipients: json['recipients'] == null
+          ? const []
+          : const EncodedStringList().fromJson(json['recipients']),
+    );
+
+PostBurnedEvent _$PostBurnedEventFromJson(Map<String, dynamic> json) =>
+    PostBurnedEvent(postId: const LenientString().fromJson(json['post_id']));
+
+BurnAllRevealedEvent _$BurnAllRevealedEventFromJson(
+  Map<String, dynamic> json,
+) => BurnAllRevealedEvent(
+  postId: const LenientString().fromJson(json['post_id']),
+  senderExpireAt: const MillisDateTime().fromJson(json['sender_expire_at']),
+);

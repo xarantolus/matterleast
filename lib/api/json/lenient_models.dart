@@ -34,7 +34,6 @@ import 'package:matterleast/api/generated/models/api_v4_groups_request_body.dart
 import 'package:matterleast/api/generated/models/api_v4_posts_post_id_patch_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_posts_post_id_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_posts_request_body.dart';
-import 'package:matterleast/api/generated/models/api_v4_posts_schedule_scheduled_post_id_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_posts_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_remotecluster_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_request_body.dart';
@@ -77,6 +76,8 @@ import 'package:matterleast/api/generated/models/command.dart';
 import 'package:matterleast/api/generated/models/command_response.dart';
 import 'package:matterleast/api/generated/models/data_retention_policy_for_channel.dart';
 import 'package:matterleast/api/generated/models/data_retention_policy_for_team.dart';
+import 'package:matterleast/api/generated/models/draft.dart';
+import 'package:matterleast/api/generated/models/draft_upsert_request.dart';
 import 'package:matterleast/api/generated/models/embeds.dart';
 import 'package:matterleast/api/generated/models/emoji.dart';
 import 'package:matterleast/api/generated/models/file_info.dart';
@@ -1986,74 +1987,6 @@ class LenientMapOfApiV4PostsRequestBody
   @override
   Object? toJson(Map<String, ApiV4PostsRequestBody>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
-}
-
-class LenientApiV4PostsScheduleScheduledPostIdRequestBody
-    implements
-        JsonConverter<ApiV4PostsScheduleScheduledPostIdRequestBody?, Object?> {
-  const LenientApiV4PostsScheduleScheduledPostIdRequestBody();
-  @override
-  ApiV4PostsScheduleScheduledPostIdRequestBody? fromJson(Object? json) =>
-      json is Map<String, Object?>
-      ? decodeOrSkip(
-          json,
-          ApiV4PostsScheduleScheduledPostIdRequestBody.fromJson,
-        )
-      : null;
-  @override
-  Object? toJson(ApiV4PostsScheduleScheduledPostIdRequestBody? object) =>
-      object?.toJson();
-}
-
-class LenientListOfApiV4PostsScheduleScheduledPostIdRequestBody
-    implements
-        JsonConverter<
-          List<ApiV4PostsScheduleScheduledPostIdRequestBody>,
-          Object?
-        > {
-  const LenientListOfApiV4PostsScheduleScheduledPostIdRequestBody();
-  @override
-  List<ApiV4PostsScheduleScheduledPostIdRequestBody> fromJson(Object? json) =>
-      json is List
-      ? [
-          for (final e in json)
-            if (e is Map<String, Object?>)
-              ?decodeOrSkip(
-                e,
-                ApiV4PostsScheduleScheduledPostIdRequestBody.fromJson,
-              ),
-        ]
-      : const [];
-  @override
-  Object? toJson(List<ApiV4PostsScheduleScheduledPostIdRequestBody> object) => [
-    for (final e in object) e.toJson(),
-  ];
-}
-
-class LenientMapOfApiV4PostsScheduleScheduledPostIdRequestBody
-    implements
-        JsonConverter<
-          Map<String, ApiV4PostsScheduleScheduledPostIdRequestBody>?,
-          Object?
-        > {
-  const LenientMapOfApiV4PostsScheduleScheduledPostIdRequestBody();
-  @override
-  Map<String, ApiV4PostsScheduleScheduledPostIdRequestBody>? fromJson(
-    Object? json,
-  ) => json is Map<String, Object?>
-      ? {
-          for (final e in json.entries)
-            if (e.value case final Map<String, Object?> m)
-              e.key: ?decodeOrSkip(
-                m,
-                ApiV4PostsScheduleScheduledPostIdRequestBody.fromJson,
-              ),
-        }
-      : null;
-  @override
-  Object? toJson(
-    Map<String, ApiV4PostsScheduleScheduledPostIdRequestBody>? object,
-  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientApiV4PostsSearchRequestBody
@@ -4206,6 +4139,88 @@ class LenientMapOfDataRetentionPolicyForTeam
       : null;
   @override
   Object? toJson(Map<String, DataRetentionPolicyForTeam>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientDraft implements JsonConverter<Draft?, Object?> {
+  const LenientDraft();
+  @override
+  Draft? fromJson(Object? json) =>
+      json is Map<String, Object?> ? decodeOrSkip(json, Draft.fromJson) : null;
+  @override
+  Object? toJson(Draft? object) => object?.toJson();
+}
+
+class LenientListOfDraft implements JsonConverter<List<Draft>, Object?> {
+  const LenientListOfDraft();
+  @override
+  List<Draft> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, Draft.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<Draft> object) => [for (final e in object) e.toJson()];
+}
+
+class LenientMapOfDraft implements JsonConverter<Map<String, Draft>?, Object?> {
+  const LenientMapOfDraft();
+  @override
+  Map<String, Draft>? fromJson(Object? json) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, Draft.fromJson),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, Draft>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientDraftUpsertRequest
+    implements JsonConverter<DraftUpsertRequest?, Object?> {
+  const LenientDraftUpsertRequest();
+  @override
+  DraftUpsertRequest? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, DraftUpsertRequest.fromJson)
+      : null;
+  @override
+  Object? toJson(DraftUpsertRequest? object) => object?.toJson();
+}
+
+class LenientListOfDraftUpsertRequest
+    implements JsonConverter<List<DraftUpsertRequest>, Object?> {
+  const LenientListOfDraftUpsertRequest();
+  @override
+  List<DraftUpsertRequest> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, DraftUpsertRequest.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<DraftUpsertRequest> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfDraftUpsertRequest
+    implements JsonConverter<Map<String, DraftUpsertRequest>?, Object?> {
+  const LenientMapOfDraftUpsertRequest();
+  @override
+  Map<String, DraftUpsertRequest>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, DraftUpsertRequest.fromJson),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, DraftUpsertRequest>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 

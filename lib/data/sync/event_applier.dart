@@ -9,10 +9,13 @@ import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/sync/draft_sync.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
 import 'package:matterleast/data/sync/inbox_sync.dart';
+import 'package:matterleast/data/sync/scheduled_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
+import 'package:matterleast/domain/burn_on_read.dart';
 import 'package:matterleast/domain/teams.dart';
 
 /// Applies WebSocket events to the database, one at a time and in order.
@@ -28,6 +31,8 @@ class EventApplier {
     required this.inbox,
     TypingTracker? typing,
     DialogInbox? dialogs,
+    this.drafts,
+    this.scheduled,
     DateTime Function()? clock,
   }) : typing = typing ?? TypingTracker(),
        dialogs = dialogs ?? DialogInbox(),
@@ -41,6 +46,8 @@ class EventApplier {
   final InboxSync inbox;
   final TypingTracker typing;
   final DialogInbox dialogs;
+  final DraftSync? drafts;
+  final ScheduledSync? scheduled;
   final DateTime Function() _clock;
 
   ServerDatabase get _db => store.db;
@@ -181,6 +188,18 @@ class EventApplier {
           case ConfigKind.license:
             await store.applyConfig(ConfigKeys.license, values);
         }
+      case ScheduledPostEvent(:final scheduledPost?, :final deleted):
+        await scheduled?.applyEvent(scheduledPost, deleted: deleted);
+      case DraftEvent(:final draft?, :final deleted):
+        await drafts?.applyEvent(draft, deleted: deleted);
+      case PostRevealedEvent(:final post?):
+        await store.applyEdit(post);
+      case PostBurnedEvent(:final postId?):
+        if ((await store.post(postId))?.type == burnOnReadType) {
+          await store.removePost(postId);
+        }
+      case BurnAllRevealedEvent(:final postId?, :final senderExpireAt?):
+        await store.setBurnExpiry(postId, senderExpireAt);
       case PluginsChangedEvent():
         _later(entry.refreshPlugins());
       default:
