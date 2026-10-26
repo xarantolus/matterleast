@@ -1,11 +1,11 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:matterleast/data/db/millis.dart';
+import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.steps.dart';
 import 'package:matterleast/data/server_db/tables.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:path/path.dart' as p;
 
@@ -113,38 +113,28 @@ class ServerDatabase extends _$ServerDatabase {
               .getSingleOrNull())
           ?.value;
 
-  /// A stored config snapshot (`client_config`, `license`).
-  Future<Map<String, Object?>> configJson(String key) async =>
-      _configOf(await _config(key).getSingleOrNull());
+  /// What the server offers, from the stored config, licence and plugins.
+  Future<ServerFeatures> features() async =>
+      _features(await select(config).get());
 
-  Stream<Map<String, Object?>> watchConfigJson(String key) =>
-      _config(key).watchSingleOrNull().map(_configOf);
+  Stream<ServerFeatures> watchFeatures() =>
+      select(config).watch().map(_features.call).distinct();
 
-  SimpleSelectStatement<$ConfigTable, ConfigRow> _config(String key) =>
-      select(config)..where((c) => c.key.equals(key));
-
-  static Map<String, Object?> _configOf(ConfigRow? row) {
-    final decoded = row == null ? null : jsonDecode(row.json);
-    return decoded is Map<String, Object?> ? decoded : const {};
-  }
+  final _features = _Features();
 
   /// Whether replies are counted per thread for this user on this server.
-  Future<bool> collapsedThreads() async {
-    final config = await configJson('client_config');
-    return collapsedThreadsOn(
-      config['CollapsedThreads'] as String?,
-      await preference(Prefs.collapsedThreads.$1, Prefs.collapsedThreads.$2),
-    );
-  }
+  Future<bool> collapsedThreads() async => collapsedThreadsOn(
+    (await features()).collapsedThreads,
+    await preference(Prefs.collapsedThreads.$1, Prefs.collapsedThreads.$2),
+  );
 
   /// How people are named: the server's setting when locked, else the
   /// user's preference.
   Future<String?> nameFormat() async {
-    final config = await configJson('client_config');
-    final serverFormat = config['TeammateNameDisplay'] as String?;
-    if (config['LockTeammateNameDisplay'] == 'true') return serverFormat;
+    final features = await this.features();
+    if (features.nameDisplayLocked) return features.nameDisplay;
     return await preference(Prefs.nameFormat.$1, Prefs.nameFormat.$2) ??
-        serverFormat;
+        features.nameDisplay;
   }
 
   Future<String?> syncText(String key) async => (await (select(
@@ -164,4 +154,10 @@ class ServerDatabase extends _$ServerDatabase {
       .insertOnConflictUpdate(
         SyncStateCompanion.insert(key: key, valueInt: Value(value)),
       );
+}
+
+class _Features {
+  final _decode = FeaturesDecoder();
+  ServerFeatures call(List<ConfigRow> rows) =>
+      _decode([for (final r in rows) (key: r.key, json: r.json)]);
 }

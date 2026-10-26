@@ -3,6 +3,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/search_views.dart';
 import 'package:matterleast/domain/message_search.dart';
+import 'package:matterleast/domain/server_features.dart';
 
 /// Searches one server's messages and files. Found posts are stored with
 /// the channels and people they need, and read back from the database.
@@ -54,28 +55,37 @@ class MessageSearch {
         return found.order;
       });
 
+  /// Files found on the server; none when it has no file search.
   Future<List<FileHit>> files(String? teamId, String terms) =>
       session.api.coalesced('search:files:$teamId:$terms', () async {
-        final found = await session.api.call(
-          () => teamId == null
-              ? _client.files.searchFilesAllTeams(
-                  body: api.ApiV4FilesSearchRequestBody(
-                    terms: terms,
-                    isOrSearch: false,
-                    timeZoneOffset: _offsetSeconds,
-                    includeDeletedChannels: true,
+        if (!(await _db.features()).fileSearch) return const <FileHit>[];
+        final api.FileInfoList found;
+        try {
+          found = await session.api.call(
+            () => teamId == null
+                ? _client.files.searchFilesAllTeams(
+                    body: api.ApiV4FilesSearchRequestBody(
+                      terms: terms,
+                      isOrSearch: false,
+                      timeZoneOffset: _offsetSeconds,
+                      includeDeletedChannels: true,
+                    ),
+                  )
+                : _client.teams.searchFiles(
+                    teamId: teamId,
+                    body: api.ApiV4TeamsTeamIdFilesSearchRequestBody(
+                      terms: terms,
+                      isOrSearch: false,
+                      timeZoneOffset: _offsetSeconds,
+                      includeDeletedChannels: true,
+                    ),
                   ),
-                )
-              : _client.teams.searchFiles(
-                  teamId: teamId,
-                  body: api.ApiV4TeamsTeamIdFilesSearchRequestBody(
-                    terms: terms,
-                    isOrSearch: false,
-                    timeZoneOffset: _offsetSeconds,
-                    includeDeletedChannels: true,
-                  ),
-                ),
-        );
+          );
+        } on Object catch (e) {
+          if (!endpointUnavailable(e)) rethrow;
+          await session.store.turnOff(OptionalFeature.fileSearch);
+          return const <FileHit>[];
+        }
         final infos = [
           for (final id in found.order)
             if (found.fileInfos?[id] case final api.FileInfo f

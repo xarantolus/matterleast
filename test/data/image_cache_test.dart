@@ -156,12 +156,6 @@ void main() {
         expect(imageRequestUri(odd, server, proxy: false), isNull, reason: odd);
       }
     });
-
-    test('the client config switches the proxy', () {
-      expect(hasImageProxy({'HasImageProxy': 'true'}), isTrue);
-      expect(hasImageProxy({'HasImageProxy': 'false'}), isFalse);
-      expect(hasImageProxy({}), isFalse);
-    });
   });
 
   group('images on mobile data', () {

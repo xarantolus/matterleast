@@ -118,12 +118,15 @@ final class DropPost extends SendFailure {
 SendFailure classifySendError(ApiError error, int failures) {
   if (error case ServerError(:final statusCode, :final id, :final message)) {
     if (_dropErrorIds.contains(id)) return DropPost(message);
+    // 501: the server lacks something the post asks for; trying again
+    // won't change that.
     final refused =
+        statusCode == 501 ||
         statusCode >= 400 &&
-        statusCode < 500 &&
-        statusCode != 401 &&
-        statusCode != 408 &&
-        statusCode != 429;
+            statusCode < 500 &&
+            statusCode != 401 &&
+            statusCode != 408 &&
+            statusCode != 429;
     if (refused) return GiveUp(message);
   }
   if (failures >= maxSendAttempts) return const GiveUp(null);

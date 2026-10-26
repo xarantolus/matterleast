@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:matterleast/api/json/client_config.dart';
 import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/domain/server_url.dart';
 import 'package:matterleast/domain/sso_callback.dart';
@@ -65,7 +66,7 @@ void main() {
 
   group('login options', () {
     test('the recorded test server offers a password form and MFA', () {
-      final options = loginOptionsFrom(
+      final options = _loginOptions(
         fixtureMap('client_config'),
         fixtureMap('client_license'),
       );
@@ -81,7 +82,7 @@ void main() {
     });
 
     test('the login field names LDAP and the reset link follows config', () {
-      final options = loginOptionsFrom(
+      final options = _loginOptions(
         {
           'EnableSignInWithEmail': 'true',
           'EnableLdap': 'true',
@@ -92,7 +93,7 @@ void main() {
       );
       expect(options.loginIdLabel, 'Email or Staff ID');
       expect(options.forgotPasswordLink, 'https://help.example.test/reset');
-      final ldapOnly = loginOptionsFrom(
+      final ldapOnly = _loginOptions(
         {'EnableLdap': 'true', 'PasswordEnableForgotLink': 'true'},
         {'IsLicensed': 'true', 'LDAP': 'true'},
       );
@@ -108,11 +109,11 @@ void main() {
         'EnableSignUpWithGitLab': 'true',
         'EnableLdap': 'true',
       };
-      final unlicensed = loginOptionsFrom(config, {'IsLicensed': 'false'});
+      final unlicensed = _loginOptions(config, {'IsLicensed': 'false'});
       expect(unlicensed.sso.map((s) => s.provider), [SsoProvider.gitlab]);
       expect(unlicensed.onlySso?.provider, SsoProvider.gitlab);
       expect(unlicensed.ldap, isFalse);
-      final licensed = loginOptionsFrom(config, {
+      final licensed = _loginOptions(config, {
         'IsLicensed': 'true',
         'SAML': 'true',
         'LDAP': 'true',
@@ -126,7 +127,7 @@ void main() {
     });
 
     test('button labels fall back when the server leaves them empty', () {
-      final options = loginOptionsFrom({
+      final options = _loginOptions({
         'EnableSignUpWithOpenId': 'true',
         'OpenIdButtonText': '',
       }, {});
@@ -240,3 +241,11 @@ void main() {
     });
   });
 }
+
+LoginOptions _loginOptions(
+  Map<String, Object?> config,
+  Map<String, Object?> license,
+) => loginOptionsFrom(
+  ClientConfig.fromJson(config),
+  ClientLicense.fromJson(license),
+);

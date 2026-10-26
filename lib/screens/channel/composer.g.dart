@@ -73,7 +73,7 @@ final class PostPriorityOptionsProvider
 }
 
 String _$postPriorityOptionsHash() =>
-    r'4eb9409f2e45ef46488e553464889627bc083f3f';
+    r'43d89998088f6aeb6b0382e65a2b16b801685a47';
 
 /// Whether messages can be marked important or urgent, and whether they
 /// can ask for acknowledgement.
@@ -157,7 +157,7 @@ final class MaxPostSizeProvider
   }
 }
 
-String _$maxPostSizeHash() => r'd56d3a5fc398b9407ac37f7c86848fdb7f4bcacd';
+String _$maxPostSizeHash() => r'1ca3512f18a66121b501ff320a84930e9a1a13ce';
 
 /// The longest message the server takes.
 

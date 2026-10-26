@@ -9,6 +9,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -84,6 +85,13 @@ Future<ServerSession> serverSession(Ref ref, String url) {
 Stream<Me?> currentUser(Ref ref, String url) async* {
   final session = await ref.watch(serverSessionProvider(url).future);
   yield* session.db.watchMe().map((row) => row == null ? null : meOf(row));
+}
+
+/// What one server offers, as it changes.
+@riverpod
+Stream<ServerFeatures> features(Ref ref, String url) async* {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  yield* session.db.watchFeatures();
 }
 
 /// Servers that ended their session, as they happen.

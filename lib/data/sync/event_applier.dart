@@ -6,6 +6,7 @@ import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/data/live/typing.dart';
+import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/entry_sync.dart';
@@ -148,22 +149,23 @@ class EventApplier {
           following: state,
           replyCount: event.replyCount,
         );
-      case ConfigEvent(:final key, :final values) when values.isNotEmpty:
-        await store.applyConfig(key, values);
+      case ConfigEvent(:final kind, :final values) when values.isNotEmpty:
+        switch (kind) {
+          case ConfigKind.clientConfig:
+            await store.applyConfig(ConfigKeys.clientConfig, values);
+            _later(entry.refreshPlugins());
+          case ConfigKind.license:
+            await store.applyConfig(ConfigKeys.license, values);
+        }
+      case PluginsChangedEvent():
+        _later(entry.refreshPlugins());
       default:
         return;
     }
   }
 
-  Future<Duration> _typingExpiry() async {
-    final config = await _db.configJson('client_config');
-    final ms = int.tryParse(
-      '${config['TimeBetweenUserTypingUpdatesMilliseconds'] ?? ''}',
-    );
-    return ms == null || ms <= 0
-        ? TypingTracker.defaultExpiry
-        : Duration(milliseconds: ms);
-  }
+  Future<Duration> _typingExpiry() async =>
+      (await _db.features()).typingInterval;
 
   /// Someone not stored yet is typing: fetch them so they can be named.
   Future<void> _missingUser(String userId) async {

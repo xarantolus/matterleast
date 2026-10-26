@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/secure/token_store.dart';
+import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -178,8 +179,8 @@ class ServerManager {
     final session = await this.session(url);
     _changed.add(url);
     await session.store.applyMe(signedIn.me);
-    await session.store.applyConfig('client_config', server.config);
-    await session.store.applyConfig('license', server.license);
+    await session.store.applyConfig(ConfigKeys.clientConfig, server.config);
+    await session.store.applyConfig(ConfigKeys.license, server.license);
     if (_foreground) session.connection.foreground();
   }
 

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/share_actions.dart';
-import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/quick_switch.dart';
@@ -77,7 +76,7 @@ List<String> filesWithinLimit(Map<String, int?> sizes, int? limit) => [
 @riverpod
 Future<int?> shareSizeLimit(Ref ref, String url) async {
   final session = await ref.watch(serverSessionProvider(url).future);
-  return maxFileSize(await session.db.configJson('client_config'));
+  return (await session.db.features()).maxFileSize;
 }
 
 /// Sends shared text and files to a channel the user picks.

@@ -116,6 +116,8 @@ class _Profile extends ConsumerWidget {
     final name = profile?.name ?? me?.displayName ?? '';
     final status = profile?.status ?? me?.status;
     final custom = profile?.customStatus;
+    final customStatusOn =
+        ref.watch(featuresProvider(server.url)).value?.customStatus ?? true;
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
     void push(Widget screen) =>
@@ -185,51 +187,52 @@ class _Profile extends ConsumerWidget {
               current: status ?? 'offline',
             ),
           ),
-          ListTile(
-            leading: SizedBox(
-              width: 40,
-              child: Center(
-                child: custom == null
-                    ? const Icon(Icons.add_reaction_outlined)
-                    : Text(
-                        emojiText(custom.emoji),
-                        style: const TextStyle(fontSize: 22),
-                      ),
+          if (customStatusOn)
+            ListTile(
+              leading: SizedBox(
+                width: 40,
+                child: Center(
+                  child: custom == null
+                      ? const Icon(Icons.add_reaction_outlined)
+                      : Text(
+                          emojiText(custom.emoji),
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                ),
               ),
-            ),
-            title: custom == null
-                ? const Text('Set a custom status')
-                : CustomStatusLine(
-                    status: custom.copyWith(emoji: ''),
-                    textAlign: TextAlign.start,
-                  ),
-            trailing: custom == null
-                ? null
-                : IconButton(
-                    tooltip: 'Clear custom status',
-                    icon: const Icon(Icons.close),
-                    onPressed: () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      try {
-                        final actions = await ref.read(
-                          profileActionsProvider(server.url).future,
-                        );
-                        await actions.setCustomStatus(null);
-                      } on Object catch (e) {
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Couldn't clear your status. "
-                              '${requestProblemText(e, Uri.parse(server.url).host)}',
+              title: custom == null
+                  ? const Text('Set a custom status')
+                  : CustomStatusLine(
+                      status: custom.copyWith(emoji: ''),
+                      textAlign: TextAlign.start,
+                    ),
+              trailing: custom == null
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear custom status',
+                      icon: const Icon(Icons.close),
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          final actions = await ref.read(
+                            profileActionsProvider(server.url).future,
+                          );
+                          await actions.setCustomStatus(null);
+                        } on Object catch (e) {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Couldn't clear your status. "
+                                '${requestProblemText(e, Uri.parse(server.url).host)}',
+                              ),
                             ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-            onTap: () =>
-                push(CustomStatusScreen(url: server.url, current: custom)),
-          ),
+                          );
+                        }
+                      },
+                    ),
+              onTap: () =>
+                  push(CustomStatusScreen(url: server.url, current: custom)),
+            ),
           if (profile != null)
             ListTile(
               leading: const SizedBox(

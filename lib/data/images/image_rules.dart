@@ -103,13 +103,6 @@ Uri? imageRequestUri(String url, Uri server, {required bool proxy}) {
   return serverUri(server, 'api/v4/image', {'url': resolved.toString()});
 }
 
-/// Pure: whether the client config says the server proxies images.
-bool hasImageProxy(Map<String, Object?> clientConfig) {
-  final type = clientConfig['ImageProxyType'];
-  return clientConfig['HasImageProxy'] == 'true' ||
-      (type is String && type.isNotEmpty);
-}
-
 /// Pure: whether the connection is likely billed by volume. Mobile data
 /// without Wi-Fi or Ethernet counts; Android's Data Saver can't be seen
 /// through connectivity_plus.

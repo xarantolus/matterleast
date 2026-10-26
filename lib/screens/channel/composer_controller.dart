@@ -203,9 +203,9 @@ class ComposerDraft extends _$ComposerDraft {
   }) async {
     final clientId =
         '${DateTime.now().microsecondsSinceEpoch}-${state.attachments.length}';
-    final config = await (await ref.read(serverSessionProvider(url).future)).db
-        .configJson('client_config');
-    final limit = int.tryParse('${config['MaxFileSize'] ?? ''}');
+    final limit = (await (await ref.read(
+      serverSessionProvider(url).future,
+    )).db.features()).maxFileSize;
     final tooBig = limit != null && size > limit;
     _setAttachments([
       ...state.attachments,

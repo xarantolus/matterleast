@@ -1,6 +1,7 @@
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 
 /// Looks up what mentions, channel links and permalinks in messages point
@@ -152,23 +153,17 @@ class MessageLinks {
     return null;
   }
 
-  /// Parse options from the stored client config, as it changes.
+  /// Parse options from what the server offers, as it changes.
   Stream<ParseOptions> parseOptions() =>
-      (_db.select(_db.config)..where((c) => c.key.equals('client_config')))
-          .watchSingleOrNull()
-          .asyncMap((_) => _db.configJson('client_config'))
-          .map(parseOptionsFrom)
-          .distinct();
+      _db.watchFeatures().map(parseOptionsFrom).distinct();
 }
 
 /// Pure: the server settings that change how messages parse.
-ParseOptions parseOptionsFrom(Map<String, Object?> config) => ParseOptions(
-  latexBlocks: config['EnableLatex'] == 'true',
-  latexInline:
-      config['EnableLatex'] == 'true' && config['EnableInlineLatex'] == 'true',
-  minimumHashtagLength:
-      int.tryParse('${config['MinimumHashtagLength'] ?? ''}') ?? 3,
-  maxNodes: int.tryParse('${config['MaxMarkdownNodes'] ?? ''}'),
+ParseOptions parseOptionsFrom(ServerFeatures features) => ParseOptions(
+  latexBlocks: features.latex,
+  latexInline: features.inlineLatex,
+  minimumHashtagLength: features.minimumHashtagLength,
+  maxNodes: features.maxMarkdownNodes,
 );
 
 /// Where a message from a link is.

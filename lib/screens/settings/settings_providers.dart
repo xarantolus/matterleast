@@ -59,10 +59,12 @@ typedef DisplayPrefs = ({
 @riverpod
 Stream<DisplayPrefs> displayPrefs(Ref ref, String url) async* {
   final db = (await ref.watch(serverSessionProvider(url).future)).db;
-  final watch = db.select(db.preferences).watch();
+  final watch = db
+      .customSelect('SELECT 1', readsFrom: {db.preferences, db.config})
+      .watch();
   await for (final _ in watch) {
-    final config = await db.configJson('client_config');
-    final threadSetting = config['CollapsedThreads'] as String?;
+    final features = await db.features();
+    final threadSetting = features.collapsedThreads;
     yield (
       threadsOn: collapsedThreadsOn(
         threadSetting,
@@ -74,7 +76,7 @@ Stream<DisplayPrefs> displayPrefs(Ref ref, String url) async* {
       threadsChangeable:
           threadSetting == 'default_on' || threadSetting == 'default_off',
       nameFormat: NameFormat.of(await db.nameFormat()),
-      nameFormatLocked: config['LockTeammateNameDisplay'] == 'true',
+      nameFormatLocked: features.nameDisplayLocked,
     );
   }
 }

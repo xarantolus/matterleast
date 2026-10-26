@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_files.dart';
 
@@ -69,12 +68,6 @@ void main() {
       expect(needs(big, 1), isFalse);
       expect(needs(big, 2.5), isTrue);
       expect(needs(small, 5), isFalse);
-    });
-
-    test('the server file size limit applies when set', () {
-      expect(maxFileSize({'MaxFileSize': '52428800'}), 52428800);
-      expect(maxFileSize({}), isNull);
-      expect(maxFileSize({'MaxFileSize': '0'}), isNull);
     });
   });
 }

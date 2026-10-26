@@ -199,24 +199,19 @@ class ComposerActions {
   /// writing, at most once per the server's interval. Sent over the socket,
   /// as the official app does.
   Future<void> userTyping(String channelId, {String rootId = ''}) async {
-    final config = await _db.configJson('client_config');
+    final features = await _db.features();
     final channel = await (_db.select(
       _db.channels,
     )..where((c) => c.id.equals(channelId))).getSingleOrNull();
     final key = (channelId, rootId);
     final now = _clock();
-    final interval = int.tryParse(
-      '${config['TimeBetweenUserTypingUpdatesMilliseconds'] ?? ''}',
-    );
     final send = shouldSendTyping(
       now: now,
       lastSent: _typingSent[key],
-      interval: Duration(milliseconds: interval ?? 5000),
-      enabled: config['EnableUserTypingMessages'] != 'false',
+      interval: features.typingInterval,
+      enabled: features.typing,
       memberCount: channel?.memberCount,
-      maxNotificationsPerChannel: int.tryParse(
-        '${config['MaxNotificationsPerChannel'] ?? ''}',
-      ),
+      maxNotificationsPerChannel: features.maxNotificationsPerChannel,
     );
     if (send && session.connection.socket.sendTyping(channelId, rootId)) {
       _typingSent[key] = now;

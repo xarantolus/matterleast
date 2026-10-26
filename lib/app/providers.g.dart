@@ -497,6 +497,90 @@ final class CurrentUserFamily extends $Family
   String toString() => r'currentUserProvider';
 }
 
+/// What one server offers, as it changes.
+
+@ProviderFor(features)
+final featuresProvider = FeaturesFamily._();
+
+/// What one server offers, as it changes.
+
+final class FeaturesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ServerFeatures>,
+          ServerFeatures,
+          Stream<ServerFeatures>
+        >
+    with $FutureModifier<ServerFeatures>, $StreamProvider<ServerFeatures> {
+  /// What one server offers, as it changes.
+  FeaturesProvider._({
+    required FeaturesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'featuresProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$featuresHash();
+
+  @override
+  String toString() {
+    return r'featuresProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<ServerFeatures> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<ServerFeatures> create(Ref ref) {
+    final argument = this.argument as String;
+    return features(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FeaturesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$featuresHash() => r'ef2ad933d1ed66c3e27967412967dff5ca544f91';
+
+/// What one server offers, as it changes.
+
+final class FeaturesFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<ServerFeatures>, String> {
+  FeaturesFamily._()
+    : super(
+        retry: null,
+        name: r'featuresProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// What one server offers, as it changes.
+
+  FeaturesProvider call(String url) =>
+      FeaturesProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'featuresProvider';
+}
+
 /// Servers that ended their session, as they happen.
 
 @ProviderFor(sessionEnded)

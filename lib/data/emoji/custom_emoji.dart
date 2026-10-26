@@ -8,6 +8,7 @@ import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/log.dart';
 
 /// The server's custom emoji as name → id, from the `custom_emoji` table.
@@ -107,8 +108,7 @@ class CustomEmojiResolver {
   }
 
   Future<void> _resolve(List<String> names) async {
-    final config = await store.db.configJson('client_config');
-    if (config['EnableCustomEmoji'] != 'true') return;
+    if (!(await store.db.features()).customEmoji) return;
     final stored = {
       for (final row in await (store.db.select(
         store.db.customEmoji,
@@ -134,6 +134,10 @@ class CustomEmojiResolver {
     try {
       found = await _find(names);
     } on ApiError catch (e) {
+      if (endpointUnavailable(e)) {
+        await store.turnOff(OptionalFeature.customEmoji);
+        return;
+      }
       _quiet(names, failedFor);
       Log.warn('emoji', 'Looking up custom emoji failed', e);
       return;
@@ -195,7 +199,8 @@ class CustomEmojiResolver {
           ),
         );
       } on ServerError catch (e) {
-        if (!_isAbsent(e)) rethrow;
+        // 501 is the whole feature switched off, not one unknown name.
+        if (!_isAbsent(e) || endpointUnavailable(e)) rethrow;
       }
     }
     return found;

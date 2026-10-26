@@ -7,6 +7,7 @@ import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/autocomplete.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/log.dart';
 
 /// Suggestions for the word at the cursor: what the database knows first,
@@ -102,13 +103,14 @@ class SuggestionSource {
         final remote = await _ask(
           'emoji:$prefix',
           () => server.client.emoji.autocompleteEmoji(name: prefix),
+          feature: OptionalFeature.customEmoji,
         );
         if (remote == null) return;
         await store.applyCustomEmoji(remote);
         yield ranked({...custom, for (final e in remote) ?e.name});
       case final CommandTrigger trigger when !trigger.hasArguments:
         yield const [];
-        if (teamId.isEmpty) return;
+        if (teamId.isEmpty || !await _commandsOn()) return;
         final commands = await _teamCommands(teamId);
         if (commands == null) return;
         yield rankCommands(trigger.prefix, [
@@ -123,7 +125,7 @@ class SuggestionSource {
         ]);
       case CommandTrigger(:final prefix):
         yield const [];
-        if (teamId.isEmpty) return;
+        if (teamId.isEmpty || !await _commandsOn()) return;
         final remote = await _ask(
           'command-args:$teamId:$channelId:$rootId:$prefix',
           () => server.client.commands.listCommandAutocompleteSuggestions(
@@ -132,6 +134,7 @@ class SuggestionSource {
             channelId: channelId,
             rootId: rootId.isEmpty ? null : rootId,
           ),
+          feature: OptionalFeature.commandSuggestions,
         );
         if (remote == null) return;
         yield [
@@ -156,16 +159,30 @@ class SuggestionSource {
     final list = await _ask(
       'commands:$teamId',
       () => server.client.commands.listAutocompleteCommands(teamId: teamId),
+      feature: OptionalFeature.commandSuggestions,
     );
     if (list != null) _commands[teamId] = (at: _clock(), list: list);
     return list;
   }
 
-  Future<T?> _ask<T>(String key, Future<T> Function() request) async {
+  /// The server's suggestions, or null when it has none to give; an
+  /// answer that the optional [feature] is unavailable turns it off.
+  Future<T?> _ask<T>(
+    String key,
+    Future<T> Function() request, {
+    OptionalFeature? feature,
+  }) async {
     try {
       return await server.coalesced('autocomplete:$key', request);
     } on Object catch (e) {
       Log.info('autocomplete', 'Server suggestions failed: ${e.runtimeType}');
+      if (feature != null &&
+          endpointUnavailable(
+            e,
+            refusalMeansAbsent: feature == OptionalFeature.commandSuggestions,
+          )) {
+        await store.turnOff(feature);
+      }
       return null;
     }
   }
@@ -251,6 +268,7 @@ class SuggestionSource {
     for (final e in await _db.select(_db.customEmoji).get()) e.name,
   };
 
-  Future<bool> _customEmojiOn() async =>
-      (await _db.configJson('client_config'))['EnableCustomEmoji'] == 'true';
+  Future<bool> _customEmojiOn() async => (await _db.features()).customEmoji;
+
+  Future<bool> _commandsOn() async => (await _db.features()).commandSuggestions;
 }

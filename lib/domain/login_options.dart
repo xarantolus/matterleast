@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/api/json/client_config.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/markdown/links.dart';
 
 part 'login_options.freezed.dart';
@@ -58,49 +60,38 @@ abstract class SsoButton with _$SsoButton {
   };
 }
 
-bool _flag(Map<String, Object?> config, String key) =>
-    config[key]?.toString() == 'true';
-
-String _text(Map<String, Object?> config, String key, String fallback) {
-  final value = config[key]?.toString().trim();
-  return value == null || value.isEmpty ? fallback : value;
+String _text(String? value, String fallback) {
+  final text = value?.trim();
+  return text == null || text.isEmpty ? fallback : text;
 }
 
-LoginOptions loginOptionsFrom(
-  Map<String, Object?> config,
-  Map<String, Object?> license,
-) {
-  final licensed = _flag(license, 'IsLicensed');
-  final ldap =
-      _flag(config, 'EnableLdap') && licensed && _flag(license, 'LDAP');
-  final email = _flag(config, 'EnableSignInWithEmail');
-  final username = _flag(config, 'EnableSignInWithUsername');
+LoginOptions loginOptionsFrom(ClientConfig config, ClientLicense license) {
+  final licensed = license.isLicensed == true;
+  final ldap = config.enableLdap == true && licensed && license.ldap == true;
+  final email = config.enableSignInWithEmail == true;
+  final username = config.enableSignInWithUsername == true;
   final password = email || username || ldap;
-  final ldapFieldLabel = _text(
-    config,
-    'LdapLoginFieldName',
-    'AD/LDAP username',
-  );
-  final forgotLink = _text(config, 'ForgotPasswordLink', '');
+  final ldapFieldLabel = _text(config.ldapLoginFieldName, 'AD/LDAP username');
+  final forgotLink = _text(config.forgotPasswordLink, '');
   final sso = <SsoButton>[
-    if (_flag(config, 'EnableSignUpWithGitLab'))
+    if (config.enableSignUpWithGitLab == true)
       SsoButton(
         provider: SsoProvider.gitlab,
-        label: _text(config, 'GitLabButtonText', 'GitLab'),
+        label: _text(config.gitLabButtonText, 'GitLab'),
       ),
-    if (_flag(config, 'EnableSignUpWithGoogle'))
+    if (config.enableSignUpWithGoogle == true)
       const SsoButton(provider: SsoProvider.google, label: 'Google'),
-    if (_flag(config, 'EnableSignUpWithOffice365'))
+    if (config.enableSignUpWithOffice365 == true)
       const SsoButton(provider: SsoProvider.office365, label: 'Entra ID'),
-    if (_flag(config, 'EnableSignUpWithOpenId'))
+    if (config.enableSignUpWithOpenId == true)
       SsoButton(
         provider: SsoProvider.openid,
-        label: _text(config, 'OpenIdButtonText', 'OpenID Connect'),
+        label: _text(config.openIdButtonText, 'OpenID Connect'),
       ),
-    if (_flag(config, 'EnableSaml') && licensed && _flag(license, 'SAML'))
+    if (config.enableSaml == true && licensed && license.saml == true)
       SsoButton(
         provider: SsoProvider.saml,
-        label: _text(config, 'SamlLoginButtonText', 'SAML'),
+        label: _text(config.samlLoginButtonText, 'SAML'),
       ),
   ];
   return LoginOptions(
@@ -113,16 +104,15 @@ LoginOptions loginOptionsFrom(
       if (ldap) ldapFieldLabel,
     ]),
     forgotPassword:
-        (email || username) &&
-        config['PasswordEnableForgotLink']?.toString() != 'false',
+        (email || username) && config.passwordEnableForgotLink != false,
     forgotPasswordLink: forgotLink.isEmpty ? null : forgotLink,
     sso: sso,
-    mfaPossible: _flag(config, 'EnableMultifactorAuthentication'),
-    mfaEnforced: _flag(config, 'EnforceMultifactorAuthentication'),
-    siteName: _text(config, 'SiteName', 'Mattermost'),
-    serverVersion: _text(config, 'Version', ''),
-    diagnosticId: _text(config, 'DiagnosticId', ''),
-    externalBrowserForSso: _flag(config, 'MobileExternalBrowser'),
+    mfaPossible: config.enableMultifactorAuthentication == true,
+    mfaEnforced: config.enforceMultifactorAuthentication == true,
+    siteName: _text(config.siteName, 'Mattermost'),
+    serverVersion: _text(config.version, ''),
+    diagnosticId: _text(config.diagnosticId, ''),
+    externalBrowserForSso: config.mobileExternalBrowser == true,
   );
 }
 
@@ -155,8 +145,7 @@ bool isServerVersionSupported(String version) =>
 /// Pure: whether [version] (such as `12.0.1`) is [floor] or newer; null
 /// when it can't be read.
 bool? isVersionAtLeast(String version, (int, int) floor) {
-  final parts = version.split('.').map(int.tryParse).toList();
-  if (parts.length < 2 || parts[0] == null || parts[1] == null) return null;
   final (major, minor) = floor;
-  return parts[0]! > major || (parts[0] == major && parts[1]! >= minor);
+  final compared = compareVersions(version, (major, minor, 0));
+  return compared == null ? null : compared >= 0;
 }

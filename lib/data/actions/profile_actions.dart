@@ -5,6 +5,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/user_profile.dart';
 
 /// What the user changes about themself, and fetching someone's profile.
@@ -92,8 +93,11 @@ class ProfileActions {
                 ),
               ),
       );
-    } on Object {
+    } on Object catch (e) {
       await session.store.applyUserProps(me, before);
+      if (endpointUnavailable(e)) {
+        await session.store.turnOff(OptionalFeature.customStatus);
+      }
       rethrow;
     }
   }

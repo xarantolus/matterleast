@@ -151,7 +151,7 @@ final class ImageProxyProvider
   }
 }
 
-String _$imageProxyHash() => r'21a1ce5e3e2ddad33054b5884d448c71ba2217fa';
+String _$imageProxyHash() => r'6b61aafc1a3371ac6da8fbf2da4de2aebf312e3f';
 
 /// Whether the server proxies images from other hosts, from its stored
 /// client config.

@@ -292,7 +292,7 @@ final class DisplayPrefsProvider
   }
 }
 
-String _$displayPrefsHash() => r'50d9cec8d32319d130dc09fffdc181992c02c162';
+String _$displayPrefsHash() => r'517766472bb6e00859f83c5945314340fd4f65ea';
 
 final class DisplayPrefsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<DisplayPrefs>, String> {

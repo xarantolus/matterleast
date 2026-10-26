@@ -108,10 +108,8 @@ class Directory {
     );
   });
 
-  Future<bool> _restricted() async {
-    final config = await _db.configJson('client_config');
-    return (config['RestrictDirectMessage'] as String? ?? 'any') != 'any';
-  }
+  Future<bool> _restricted() async =>
+      (await _db.features()).directMessagesRestricted;
 
   /// Public channels of [teamId] the user is not in, or archived ones with
   /// [archived]; [more] says whether another page may follow.

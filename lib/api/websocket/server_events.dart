@@ -391,12 +391,19 @@ final class TypingEvent extends ServerEvent {
   final Broadcast? broadcast;
 }
 
+enum ConfigKind { clientConfig, license }
+
 /// `config_changed` and `license_changed`; the snapshot replaces the stored
-/// one under [key].
+/// one.
 final class ConfigEvent extends ServerEvent {
-  const ConfigEvent(this.key, this.values);
-  final String key;
+  const ConfigEvent(this.kind, this.values);
+  final ConfigKind kind;
   final Map<String, Object?> values;
+}
+
+/// `plugin_enabled`, `plugin_disabled` and `plugin_statuses_changed`.
+final class PluginsChangedEvent extends ServerEvent {
+  const PluginsChangedEvent();
 }
 
 final class UnknownEvent extends ServerEvent {
@@ -457,13 +464,16 @@ ServerEvent decodeEvent(SocketFrame frame) {
     'thread_read_changed' => ThreadReadEvent.fromJson(json),
     'thread_follow_changed' => ThreadFollowEvent.fromJson(json),
     'config_changed' => ConfigEvent(
-      'client_config',
+      ConfigKind.clientConfig,
       const JsonMapOrEmpty().fromJson(frame.data['config']),
     ),
     'license_changed' => ConfigEvent(
-      'license',
+      ConfigKind.license,
       const JsonMapOrEmpty().fromJson(frame.data['license']),
     ),
+    'plugin_enabled' ||
+    'plugin_disabled' ||
+    'plugin_statuses_changed' => const PluginsChangedEvent(),
     final name => UnknownEvent(name ?? ''),
   };
 }

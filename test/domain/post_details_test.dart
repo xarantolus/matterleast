@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:matterleast/api/json/client_config.dart';
 import 'package:matterleast/data/actions/message_links.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/server_features.dart';
 
 void main() {
   group('details', () {
@@ -76,12 +78,17 @@ void main() {
   });
 
   test('server settings switch LaTeX and set the hashtag length', () {
-    final options = parseOptionsFrom({
-      'EnableLatex': 'true',
-      'EnableInlineLatex': 'false',
-      'MinimumHashtagLength': '4',
-      'MaxMarkdownNodes': '0',
-    });
+    final options = parseOptionsFrom(
+      serverFeatures(
+        config: ClientConfig.fromJson({
+          'EnableLatex': 'true',
+          'EnableInlineLatex': 'false',
+          'MinimumHashtagLength': '4',
+          'MaxMarkdownNodes': '0',
+        }),
+        license: const ClientLicense(),
+      ),
+    );
     expect(options.latexBlocks, isTrue);
     expect(options.latexInline, isFalse);
     expect(options.minimumHashtagLength, 4);

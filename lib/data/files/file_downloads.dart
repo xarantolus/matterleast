@@ -119,10 +119,3 @@ class FileDownloads {
     }
   }
 }
-
-/// Pure: the server's upload limit from its client config, which downloads
-/// honour too.
-int? maxFileSize(Map<String, Object?> clientConfig) {
-  final value = int.tryParse('${clientConfig['MaxFileSize'] ?? ''}');
-  return value == null || value <= 0 ? null : value;
-}

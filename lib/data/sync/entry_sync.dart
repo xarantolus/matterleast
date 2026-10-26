@@ -8,6 +8,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/log.dart';
 
@@ -48,6 +49,16 @@ class EntrySync {
     SyncPriority priority = SyncPriority.p0,
   }) => runner.enqueue(
     SyncJob(key: 'team:$teamId', priority: priority, run: () => _team(teamId)),
+  );
+
+  /// The server's enabled webapp plugins, as far as it lets us see them.
+  Future<void> refreshPlugins() => runner.enqueue(
+    SyncJob(
+      key: 'plugins',
+      priority: SyncPriority.p2,
+      visible: false,
+      run: _plugins,
+    ),
   );
 
   /// Stores a team the user just joined, then its channels.
@@ -191,6 +202,23 @@ class EntrySync {
       later('team:${team.id}', SyncPriority.p1, () => _team(team.id));
     }
     later('roles', SyncPriority.p3, () => _roles(myRoles));
+    unawaited(refreshPlugins().catchError((Object _) {}));
+  }
+
+  Future<void> _plugins() async {
+    if (!(await _db.features()).pluginsAllowed) {
+      await store.applyPlugins(const []);
+      return;
+    }
+    final List<api.PluginManifestWebapp> plugins;
+    try {
+      plugins = await server.call(_client.plugins.getWebappPlugins);
+    } on ApiError catch (e) {
+      if (!endpointUnavailable(e, refusalMeansAbsent: true)) rethrow;
+      await store.applyPlugins(const []);
+      return;
+    }
+    await store.applyPlugins(plugins);
   }
 
   Future<void> _teamUnreads() async {
@@ -228,15 +256,7 @@ class EntrySync {
   }
 
   Future<void> _threads(String teamId) async {
-    final config = await _db.configJson('client_config');
-    final crt = collapsedThreadsOn(
-      config['CollapsedThreads'] as String?,
-      await _db.preference(
-        Prefs.collapsedThreads.$1,
-        Prefs.collapsedThreads.$2,
-      ),
-    );
-    if (!crt) return;
+    if (!await _db.collapsedThreads()) return;
     final threads = await server.call(
       () => _client.threads.getUserThreads(
         userId: 'me',

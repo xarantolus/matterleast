@@ -17,7 +17,7 @@ Future<ServerImageCaches> serverImageCaches(Ref ref, String url) async =>
 @riverpod
 Stream<bool> imageProxy(Ref ref, String url) async* {
   final db = (await ref.watch(serverSessionProvider(url).future)).db;
-  yield* db.watchConfigJson('client_config').map(hasImageProxy).distinct();
+  yield* db.watchFeatures().map((f) => f.imageProxy).distinct();
 }
 
 @Riverpod(keepAlive: true)

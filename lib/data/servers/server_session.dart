@@ -61,7 +61,7 @@ class ServerSession {
     cache: images.files,
     partialDirectory: p.join(images.directory, 'partial'),
     handoffDirectory: handoffDirectory,
-    maxBytes: () async => maxFileSize(await db.configJson('client_config')),
+    maxBytes: () async => (await db.features()).maxFileSize,
   );
   late final OutboxSender outbox;
 
@@ -101,7 +101,10 @@ class ServerSession {
       token: () => tokens.cached(key),
     );
     unawaited(
-      session.store.removeEphemeralPosts().whenComplete(session.outbox.start),
+      Future.wait([
+        session.store.removeEphemeralPosts(),
+        session.store.clearTurnedOff(),
+      ]).whenComplete(session.outbox.start),
     );
     return session;
   }

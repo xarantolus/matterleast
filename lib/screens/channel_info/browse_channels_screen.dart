@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
@@ -158,6 +159,8 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
   @override
   Widget build(BuildContext context) {
     final rights = ref.watch(teamRightsProvider(widget.url, widget.teamId));
+    final archivedShown =
+        ref.watch(featuresProvider(widget.url)).value?.archivedChannels ?? true;
     final canCreate =
         (rights.value?.public ?? false) || (rights.value?.private ?? false);
     final shown =
@@ -203,21 +206,22 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                 onChanged: _typed,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.md,
-                vertical: Spacing.sm,
-              ),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: FilterChip(
-                  avatar: const Icon(Icons.archive_outlined, size: 18),
-                  label: const Text('Archived channels'),
-                  selected: _archived,
-                  onSelected: _switch,
+            if (archivedShown)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.md,
+                  vertical: Spacing.sm,
+                ),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: FilterChip(
+                    avatar: const Icon(Icons.archive_outlined, size: 18),
+                    label: const Text('Archived channels'),
+                    selected: _archived,
+                    onSelected: _switch,
+                  ),
                 ),
               ),
-            ),
             SizedBox(
               height: 3,
               child: busy && shown.isNotEmpty

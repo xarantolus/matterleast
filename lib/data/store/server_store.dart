@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/mappers.dart';
 import 'package:matterleast/domain/autocomplete.dart';
@@ -9,6 +10,8 @@ import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/outbox.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/server_features.dart';
+import 'package:matterleast/log.dart';
 
 /// How a page of posts was fetched, which decides how it joins the cached
 /// history (see [PostRange]).
@@ -100,6 +103,29 @@ class ServerStore {
           fetchedAt: DateTime.now().toUtc(),
         ),
       );
+
+  Future<void> applyPlugins(List<api.PluginManifestWebapp> plugins) =>
+      applyConfig(ConfigKeys.plugins, StoredPlugins.encode(plugins));
+
+  /// The server answered [feature]'s endpoint as unavailable: it stays off
+  /// until the server is opened again.
+  Future<void> turnOff(OptionalFeature feature) => db.transaction(() async {
+    final row = await (db.select(
+      db.config,
+    )..where((c) => c.key.equals(ConfigKeys.turnedOff))).getSingleOrNull();
+    final current = TurnedOff.of(row?.json);
+    if (current.contains(feature)) return;
+    Log.info('features', '${feature.name} is unavailable on this server');
+    await applyConfig(
+      ConfigKeys.turnedOff,
+      TurnedOff(features: {...current, feature}).toJson(),
+    );
+  });
+
+  /// Features turned off last session get another chance.
+  Future<void> clearTurnedOff() => (db.delete(
+    db.config,
+  )..where((c) => c.key.equals(ConfigKeys.turnedOff))).go();
 
   Future<void> applyTeams(
     Iterable<api.Team> teams,
@@ -239,8 +265,8 @@ class ServerStore {
     required List<api.Team> teams,
     required List<api.TeamMember> members,
   }) => db.transaction(() async {
-    if (config != null) await applyConfig('client_config', config);
-    if (license != null) await applyConfig('license', license);
+    if (config != null) await applyConfig(ConfigKeys.clientConfig, config);
+    if (license != null) await applyConfig(ConfigKeys.license, license);
     await db.delete(db.preferences).go();
     await applyPreferences(preferences);
     await applyMe(me);

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/api/json/client_config.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/domain/server_url.dart';
@@ -64,7 +65,10 @@ class ServerProbe {
       if (config == null || license == null) {
         throw const ProbeFailure(notMattermostText);
       }
-      final options = loginOptionsFrom(config, license);
+      final options = loginOptionsFrom(
+        ClientConfig.fromJson(config),
+        ClientLicense.fromJson(license),
+      );
       if (options.diagnosticId.isEmpty) {
         throw const ProbeFailure(notMattermostText);
       }

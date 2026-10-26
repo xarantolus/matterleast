@@ -16,6 +16,7 @@ import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/autocomplete.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
@@ -37,12 +38,9 @@ Stream<({bool priority, bool acknowledgements})> postPriorityOptions(
 ) async* {
   final db = (await ref.watch(serverSessionProvider(url).future)).db;
   yield* db
-      .watchConfigJson('client_config')
+      .watchFeatures()
       .map(
-        (c) => (
-          priority: c['PostPriority'] == 'true',
-          acknowledgements: c['PostAcknowledgements'] == 'true',
-        ),
+        (f) => (priority: f.postPriority, acknowledgements: f.acknowledgements),
       )
       .distinct();
 }
@@ -51,10 +49,7 @@ Stream<({bool priority, bool acknowledgements})> postPriorityOptions(
 @riverpod
 Stream<int> maxPostSize(Ref ref, String url) async* {
   final db = (await ref.watch(serverSessionProvider(url).future)).db;
-  yield* db
-      .watchConfigJson('client_config')
-      .map((c) => int.tryParse('${c['MaxPostSize'] ?? ''}') ?? 16383)
-      .distinct();
+  yield* db.watchFeatures().map((f) => f.maxPostSize).distinct();
 }
 
 /// The counter shows from this share of the limit on.
@@ -182,7 +177,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final value = ref.watch(_provider);
     ref.read(_provider.notifier).inTeam(widget.teamId);
     final tokens = context.tokens;
-    final limit = ref.watch(maxPostSizeProvider(widget.url)).value ?? 16383;
+    final limit =
+        ref.watch(maxPostSizeProvider(widget.url)).value ??
+        ServerFeatures.defaultMaxPostSize;
     final length = value.text.text.length;
     final editing = value.editing;
     final files = value.attachments;

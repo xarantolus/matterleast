@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/client_config.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -66,7 +67,7 @@ void main() {
     final license = fixtureMap('client_license');
     return ProbedServer(
       url: url ?? server.url,
-      options: loginOptionsFrom(config, license),
+      options: _loginOptions(config, license),
       config: config,
       license: license,
     );
@@ -228,3 +229,11 @@ void main() {
     expect(dbFiles(), isEmpty);
   });
 }
+
+LoginOptions _loginOptions(
+  Map<String, Object?> config,
+  Map<String, Object?> license,
+) => loginOptionsFrom(
+  ClientConfig.fromJson(config),
+  ClientLicense.fromJson(license),
+);

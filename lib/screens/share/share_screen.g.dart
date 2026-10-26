@@ -62,7 +62,7 @@ final class ShareSizeLimitProvider
   }
 }
 
-String _$shareSizeLimitHash() => r'73ebb3988ef2467d24946058730057a73d1c4437';
+String _$shareSizeLimitHash() => r'10698137072e0ef8289c8b4eb60aac5ee5038658';
 
 /// The largest file the server takes, null when it doesn't say.
 

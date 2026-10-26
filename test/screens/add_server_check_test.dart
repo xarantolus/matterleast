@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:matterleast/api/json/client_config.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/domain/server_entry.dart';
@@ -7,10 +8,7 @@ import 'package:matterleast/screens/add_server/add_server_controller.dart';
 void main() {
   final probed = ProbedServer(
     url: Uri.parse('https://chat.example.test'),
-    options: loginOptionsFrom({
-      'DiagnosticId': 'd1',
-      'SiteName': 'Team Chat',
-    }, {}),
+    options: _loginOptions({'DiagnosticId': 'd1', 'SiteName': 'Team Chat'}, {}),
     config: const {},
     license: const {},
   );
@@ -115,3 +113,11 @@ void main() {
     });
   });
 }
+
+LoginOptions _loginOptions(
+  Map<String, Object?> config,
+  Map<String, Object?> license,
+) => loginOptionsFrom(
+  ClientConfig.fromJson(config),
+  ClientLicense.fromJson(license),
+);
