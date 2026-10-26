@@ -7,6 +7,7 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/coalesce.dart';
 import 'package:matterleast/api/generated/export.dart' show MattermostClient;
 import 'package:matterleast/api/server_paths.dart';
+import 'package:matterleast/api/trusted_authorities.dart';
 
 typedef TokenProvider = FutureOr<String?> Function();
 
@@ -27,7 +28,7 @@ class ServerApi {
     String? preAuthSecret,
     this.deadline = defaultDeadline,
     Dio? dio,
-  }) : dio = dio ?? Dio() {
+  }) : dio = dio ?? (Dio()..httpClientAdapter = TrustingAdapter(baseUrl)) {
     this.dio.options = BaseOptions(
       baseUrl: baseUrl.toString(),
       connectTimeout: const Duration(seconds: 15),

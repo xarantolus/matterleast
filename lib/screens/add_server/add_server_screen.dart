@@ -2,12 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/server_url.dart';
 import 'package:matterleast/screens/add_server/add_server_controller.dart';
 import 'package:matterleast/screens/login/login_screen.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/trust_authority.dart';
 
 /// Asks for a server address, checks it and goes on to its login. As the
 /// first screen it also lists signed-out servers for a quick sign-in.
@@ -45,6 +47,12 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
     _url.dispose();
     _name.dispose();
     super.dispose();
+  }
+
+  Future<void> _trust() async {
+    final url = normalizeServerUrl(_url.text);
+    if (url == null) return;
+    if (await trustAuthority(context, url) && mounted) await _connect();
   }
 
   Future<void> _connect() async {
@@ -134,6 +142,15 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
               errorMaxLines: 4,
             ),
           ),
+          if (state.untrustedCertificate && !state.checking)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                onPressed: _trust,
+                icon: const Icon(Icons.verified_user_outlined),
+                label: const Text('Trust a certificate authority…'),
+              ),
+            ),
           const SizedBox(height: Spacing.lg),
           TextField(
             controller: _name,

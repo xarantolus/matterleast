@@ -15,6 +15,9 @@ abstract class AddServerState with _$AddServerState {
     @Default(false) bool checking,
     String? urlError,
     String? nameError,
+
+    /// The check failed on the certificate, so trusting a CA may help.
+    @Default(false) bool untrustedCertificate,
   }) = _AddServerState;
 }
 
@@ -85,7 +88,12 @@ class AddServerController extends _$AddServerController {
       );
       return check.target;
     } on ProbeFailure catch (e) {
-      if (ref.mounted) state = AddServerState(urlError: e.message);
+      if (ref.mounted) {
+        state = AddServerState(
+          urlError: e.message,
+          untrustedCertificate: e.untrustedCertificate,
+        );
+      }
       return null;
     }
   }

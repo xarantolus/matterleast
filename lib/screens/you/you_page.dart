@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/api/trusted_authorities.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/rail.dart';
@@ -19,6 +20,7 @@ import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/trust_authority.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// The user's own page: who they are on the server picked in the rail,
@@ -247,7 +249,7 @@ class _Profile extends ConsumerWidget {
   }
 }
 
-enum _ServerAction { signIn, signOut, rename, remove }
+enum _ServerAction { signIn, signOut, rename, trust, untrust, remove }
 
 class _ServerTile extends ConsumerWidget {
   const _ServerTile({required this.server});
@@ -311,6 +313,19 @@ class _ServerTile extends ConsumerWidget {
               title: const Text('Rename'),
               onTap: () => Navigator.pop(context, _ServerAction.rename),
             ),
+            if (TrustedAuthorities.instance.pemFor(Uri.parse(server.url)) ==
+                null)
+              ListTile(
+                leading: const Icon(Icons.verified_user_outlined),
+                title: const Text('Trust a certificate authority…'),
+                onTap: () => Navigator.pop(context, _ServerAction.trust),
+              )
+            else
+              ListTile(
+                leading: const Icon(Icons.remove_moderator_outlined),
+                title: const Text('Remove trusted certificate'),
+                onTap: () => Navigator.pop(context, _ServerAction.untrust),
+              ),
             ListTile(
               leading: const Icon(Icons.delete_outline),
               title: const Text('Remove server'),
@@ -354,6 +369,10 @@ class _ServerTile extends ConsumerWidget {
           builder: (_) => _RenameDialog(server: server, servers: servers),
         );
         if (name != null) await db.renameServer(server.url, name);
+      case _ServerAction.trust:
+        await trustAuthority(context, Uri.parse(server.url));
+      case _ServerAction.untrust:
+        await TrustedAuthorities.instance.forget(Uri.parse(server.url));
       case _ServerAction.signOut:
       case _ServerAction.remove:
         await _leave(context, ref, remove: action == _ServerAction.remove);

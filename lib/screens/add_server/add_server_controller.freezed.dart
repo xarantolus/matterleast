@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AddServerState {
 
- bool get checking; String? get urlError; String? get nameError;
+ bool get checking; String? get urlError; String? get nameError;/// The check failed on the certificate, so trusting a CA may help.
+ bool get untrustedCertificate;
 /// Create a copy of AddServerState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +28,20 @@ $AddServerStateCopyWith<AddServerState> get copyWith => _$AddServerStateCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as AddServerState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddServerState&&(identical(other.checking, _this.checking) || other.checking == _this.checking)&&(identical(other.urlError, _this.urlError) || other.urlError == _this.urlError)&&(identical(other.nameError, _this.nameError) || other.nameError == _this.nameError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddServerState&&(identical(other.checking, _this.checking) || other.checking == _this.checking)&&(identical(other.urlError, _this.urlError) || other.urlError == _this.urlError)&&(identical(other.nameError, _this.nameError) || other.nameError == _this.nameError)&&(identical(other.untrustedCertificate, _this.untrustedCertificate) || other.untrustedCertificate == _this.untrustedCertificate));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AddServerState;
-  return Object.hash(runtimeType,_this.checking,_this.urlError,_this.nameError);
+  return Object.hash(runtimeType,_this.checking,_this.urlError,_this.nameError,_this.untrustedCertificate);
 }
 
 @override
 String toString() {
   final _this = this as AddServerState;
-  return 'AddServerState(checking: ${_this.checking}, urlError: ${_this.urlError}, nameError: ${_this.nameError})';
+  return 'AddServerState(checking: ${_this.checking}, urlError: ${_this.urlError}, nameError: ${_this.nameError}, untrustedCertificate: ${_this.untrustedCertificate})';
 }
 
 
@@ -51,7 +52,7 @@ abstract mixin class $AddServerStateCopyWith<$Res>  {
   factory $AddServerStateCopyWith(AddServerState value, $Res Function(AddServerState) _then) = _$AddServerStateCopyWithImpl;
 @useResult
 $Res call({
- bool checking, String? urlError, String? nameError
+ bool checking, String? urlError, String? nameError, bool untrustedCertificate
 });
 
 
@@ -68,12 +69,13 @@ class _$AddServerStateCopyWithImpl<$Res>
 
 /// Create a copy of AddServerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? checking = null,Object? urlError = freezed,Object? nameError = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? checking = null,Object? urlError = freezed,Object? nameError = freezed,Object? untrustedCertificate = null,}) {
   return _then(AddServerState(
 checking: null == checking ? _self.checking : checking // ignore: cast_nullable_to_non_nullable
 as bool,urlError: freezed == urlError ? _self.urlError : urlError // ignore: cast_nullable_to_non_nullable
 as String?,nameError: freezed == nameError ? _self.nameError : nameError // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,untrustedCertificate: null == untrustedCertificate ? _self.untrustedCertificate : untrustedCertificate // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -158,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool checking,  String? urlError,  String? nameError)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool checking,  String? urlError,  String? nameError,  bool untrustedCertificate)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AddServerState() when $default != null:
-return $default(_that.checking,_that.urlError,_that.nameError);case _:
+return $default(_that.checking,_that.urlError,_that.nameError,_that.untrustedCertificate);case _:
   return orElse();
 
 }
@@ -179,10 +181,10 @@ return $default(_that.checking,_that.urlError,_that.nameError);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool checking,  String? urlError,  String? nameError)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool checking,  String? urlError,  String? nameError,  bool untrustedCertificate)  $default,) {final _that = this;
 switch (_that) {
 case _AddServerState():
-return $default(_that.checking,_that.urlError,_that.nameError);case _:
+return $default(_that.checking,_that.urlError,_that.nameError,_that.untrustedCertificate);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +201,10 @@ return $default(_that.checking,_that.urlError,_that.nameError);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool checking,  String? urlError,  String? nameError)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool checking,  String? urlError,  String? nameError,  bool untrustedCertificate)?  $default,) {final _that = this;
 switch (_that) {
 case _AddServerState() when $default != null:
-return $default(_that.checking,_that.urlError,_that.nameError);case _:
+return $default(_that.checking,_that.urlError,_that.nameError,_that.untrustedCertificate);case _:
   return null;
 
 }
@@ -214,12 +216,14 @@ return $default(_that.checking,_that.urlError,_that.nameError);case _:
 
 
 class _AddServerState implements AddServerState {
-  const _AddServerState({this.checking = false, this.urlError, this.nameError});
+  const _AddServerState({this.checking = false, this.urlError, this.nameError, this.untrustedCertificate = false});
   
 
 @override@JsonKey() final  bool checking;
 @override final  String? urlError;
 @override final  String? nameError;
+/// The check failed on the certificate, so trusting a CA may help.
+@override@JsonKey() final  bool untrustedCertificate;
 
 /// Create a copy of AddServerState
 /// with the given fields replaced by the non-null parameter values.
@@ -231,18 +235,18 @@ _$AddServerStateCopyWith<_AddServerState> get copyWith => __$AddServerStateCopyW
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AddServerState&&(identical(other.checking, checking) || other.checking == checking)&&(identical(other.urlError, urlError) || other.urlError == urlError)&&(identical(other.nameError, nameError) || other.nameError == nameError));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AddServerState&&(identical(other.checking, checking) || other.checking == checking)&&(identical(other.urlError, urlError) || other.urlError == urlError)&&(identical(other.nameError, nameError) || other.nameError == nameError)&&(identical(other.untrustedCertificate, untrustedCertificate) || other.untrustedCertificate == untrustedCertificate));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,checking,urlError,nameError);
+    return Object.hash(runtimeType,checking,urlError,nameError,untrustedCertificate);
 }
 
 @override
 String toString() {
-    return 'AddServerState(checking: $checking, urlError: $urlError, nameError: $nameError)';
+    return 'AddServerState(checking: $checking, urlError: $urlError, nameError: $nameError, untrustedCertificate: $untrustedCertificate)';
 }
 
 
@@ -253,7 +257,7 @@ abstract mixin class _$AddServerStateCopyWith<$Res> implements $AddServerStateCo
   factory _$AddServerStateCopyWith(_AddServerState value, $Res Function(_AddServerState) _then) = __$AddServerStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool checking, String? urlError, String? nameError
+ bool checking, String? urlError, String? nameError, bool untrustedCertificate
 });
 
 
@@ -270,12 +274,13 @@ class __$AddServerStateCopyWithImpl<$Res>
 
 /// Create a copy of AddServerState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? checking = null,Object? urlError = freezed,Object? nameError = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? checking = null,Object? urlError = freezed,Object? nameError = freezed,Object? untrustedCertificate = null,}) {
   return _then(_AddServerState(
 checking: null == checking ? _self.checking : checking // ignore: cast_nullable_to_non_nullable
 as bool,urlError: freezed == urlError ? _self.urlError : urlError // ignore: cast_nullable_to_non_nullable
 as String?,nameError: freezed == nameError ? _self.nameError : nameError // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,untrustedCertificate: null == untrustedCertificate ? _self.untrustedCertificate : untrustedCertificate // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

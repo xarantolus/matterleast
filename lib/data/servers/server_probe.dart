@@ -29,8 +29,11 @@ class ProbedServer {
 }
 
 class ProbeFailure implements Exception {
-  const ProbeFailure(this.message);
+  const ProbeFailure(this.message, {this.untrustedCertificate = false});
   final String message;
+
+  /// The server's certificate isn't trusted; trusting its CA may help.
+  final bool untrustedCertificate;
 
   @override
   String toString() => 'ProbeFailure($message)';
@@ -79,7 +82,10 @@ class ServerProbe {
         license: license,
       );
     } on ApiError catch (e) {
-      throw ProbeFailure(probeProblemText(e, url.authority));
+      throw ProbeFailure(
+        probeProblemText(e, url.authority),
+        untrustedCertificate: e is UntrustedCertificate,
+      );
     } finally {
       api.close();
     }
@@ -115,7 +121,10 @@ class ServerProbe {
       }
       return base;
     } on ApiError catch (e) {
-      throw ProbeFailure(probeProblemText(e, url.authority));
+      throw ProbeFailure(
+        probeProblemText(e, url.authority),
+        untrustedCertificate: e is UntrustedCertificate,
+      );
     } finally {
       api.close();
     }

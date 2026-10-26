@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/api/trusted_authorities.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
@@ -239,6 +240,7 @@ class ServerManager {
     }
     await _wipe(url);
     await _db.deleteServer(url);
+    await TrustedAuthorities.instance.forget(Uri.parse(url));
     return true;
   }
 

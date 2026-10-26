@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:matterleast/api/trusted_authorities.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/api/websocket/socket_rules.dart';
 import 'package:matterleast/log.dart';
@@ -73,6 +74,9 @@ class ServerSocket {
   Future<void> _open() async {
     final attempt = ++_attempt;
     _state.value = SocketState.connecting;
+    final authorities = TrustedAuthorities.instance;
+    await authorities.ready;
+    if (attempt != _attempt || !_running) return;
     final uri = socketUri(
       serverUrl,
       connectionId: _connectionId,
@@ -85,6 +89,9 @@ class ServerSocket {
         if (token() case final token?) 'Authorization': 'Bearer $token',
       },
       connectTimeout: const Duration(seconds: 30),
+      customClient: authorities.pemFor(serverUrl) == null
+          ? null
+          : authorities.httpClient(serverUrl),
     );
     try {
       await channel.ready;
