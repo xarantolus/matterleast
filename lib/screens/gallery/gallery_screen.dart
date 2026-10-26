@@ -375,7 +375,7 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
                     ?.copyWith(color: Colors.white),
               ),
               const SizedBox(height: Spacing.md),
-              FilledButton(onPressed: _open, child: const Text('Try again')),
+              FilledButton(onPressed: _open, child: const Text('Retry')),
             ],
           ),
         ),

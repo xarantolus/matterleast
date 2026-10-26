@@ -10,6 +10,7 @@ import 'package:matterleast/data/actions/drafts.dart';
 import 'package:matterleast/data/actions/file_upload.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'composer_controller.g.dart';
@@ -240,11 +241,7 @@ class ComposerDraft extends _$ComposerDraft {
     } on ApiError catch (e) {
       _updateAttachment(
         clientId,
-        (a) => a.copyWith(
-          error: e is ServerError && (e.message?.isNotEmpty ?? false)
-              ? e.message
-              : "Couldn't upload",
-        ),
+        (a) => a.copyWith(error: shortProblemText(e)),
       );
     } finally {
       _uploads.remove(clientId);

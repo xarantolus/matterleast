@@ -84,6 +84,39 @@ void main() {
         '$host said: You do not have the appropriate permissions.',
       );
     });
+
+    test('without a message, the status says what happened, never the '
+        'connection', () {
+      String say(int status) =>
+          requestProblemText(ServerError(statusCode: status), host);
+      expect(say(403), contains("doesn't allow"));
+      expect(say(404), contains("couldn't find"));
+      expect(say(501), contains('turned off'));
+      expect(say(401), contains('Sign in again'));
+      for (final status in [400, 401, 403, 404, 429, 500, 501, 503]) {
+        expect(say(status).toLowerCase(), isNot(contains('connection')));
+        expect(say(status).toLowerCase(), isNot(contains('offline')));
+      }
+    });
+  });
+
+  test('the short form keeps the server message and blames the connection '
+      'only when no answer came', () {
+    expect(
+      shortProblemText(
+        const ServerError(statusCode: 413, message: 'File is too big.'),
+      ),
+      'File is too big.',
+    );
+    expect(
+      shortProblemText(const ServerError(statusCode: 413)),
+      contains('large'),
+    );
+    expect(shortProblemText(const Unreachable()), 'No connection');
+    expect(
+      shortProblemText(const RequestTimeout()).toLowerCase(),
+      isNot(contains('connection')),
+    );
   });
 
   test('a reply that cannot be read is not offline', () {

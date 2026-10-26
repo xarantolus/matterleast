@@ -61,7 +61,7 @@ class _NotificationSettingsPageState
               body: requestProblemText(settings.error!, widget.server.address),
               action: FilledButton(
                 onPressed: () => ref.invalidate(notifySettingsProvider(_url)),
-                child: const Text('Try again'),
+                child: const Text('Retry'),
               ),
             )
           : const SizedBox.shrink(),

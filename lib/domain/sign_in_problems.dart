@@ -28,10 +28,33 @@ String connectionProblemText(ApiError error, String host) => switch (error) {
   Cancelled() => 'The request was stopped.',
   UnexpectedFailure(:final type) =>
     "$host's answer couldn't be read ($type). Try again later.",
-  ServerError(:final statusCode, :final message) =>
-    message == null || message.isEmpty
-        ? '$host answered with an error ($statusCode). Try again later.'
-        : '$host said: $message',
+  ServerError(:final message?) when message.trim().isNotEmpty =>
+    '$host said: ${message.trim()}',
+  ServerError(statusCode: 401) =>
+    'Your session on $host has ended. Sign in again.',
+  ServerError(statusCode: 403) => "$host doesn't allow this for your account.",
+  ServerError(statusCode: 404) =>
+    "$host couldn't find it. It may have been deleted.",
+  ServerError(statusCode: 429) =>
+    '$host is getting too many requests. Wait a moment, then try again.',
+  ServerError(statusCode: 501) => 'This is turned off on $host.',
+  ServerError(:final statusCode) =>
+    '$host answered with an error ($statusCode). Try again later.',
+};
+
+/// A few words for a small space, such as a file that didn't upload.
+String shortProblemText(ApiError error) => switch (error) {
+  ServerError(:final message?) when message.trim().isNotEmpty =>
+    message.trim(),
+  ServerError(statusCode: 403) => 'Not allowed',
+  ServerError(statusCode: 413) => 'Too large for the server',
+  ServerError(statusCode: 501) => 'Turned off on this server',
+  ServerError(:final statusCode) => 'Server error $statusCode',
+  Unreachable() => 'No connection',
+  RequestTimeout() => 'No answer in time',
+  UntrustedCertificate() => 'Untrusted certificate',
+  Cancelled() => 'Stopped',
+  UnexpectedFailure() => 'Unreadable answer',
 };
 
 /// The notice over saved data after a failed refresh: offline only when no

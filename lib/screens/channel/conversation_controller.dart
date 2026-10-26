@@ -304,7 +304,7 @@ class Conversation extends _$Conversation {
         _watch();
       } else if (!window.reachesStart &&
           !state.loadingOlder &&
-          !state.olderFailed) {
+          state.olderFailure == null) {
         unawaited(_loadOlder());
       }
     }
@@ -320,7 +320,7 @@ class Conversation extends _$Conversation {
 
   Future<void> _loadOlder() async {
     final oldest = state.window?.posts.lastOrNull;
-    state = state.copyWith(loadingOlder: true, olderFailed: false);
+    state = state.copyWith(loadingOlder: true, olderFailure: null);
     try {
       if (oldest == null) {
         await (_isThread
@@ -349,7 +349,10 @@ class Conversation extends _$Conversation {
     } on Object catch (e) {
       Log.warn('conversation', 'older page failed: ${ApiError.of(e)}');
       if (ref.mounted) {
-        state = state.copyWith(loadingOlder: false, olderFailed: true);
+        state = state.copyWith(
+          loadingOlder: false,
+          olderFailure: ApiError.of(e),
+        );
       }
     }
   }

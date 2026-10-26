@@ -204,6 +204,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
             onViewChanged: _onView,
             olderEdge: _OlderEdge(
               state: state,
+              host: Uri.parse(widget.url).host,
               startText: widget.startText,
               onRetry: _controller.retryOlder,
             ),
@@ -365,11 +366,13 @@ extension on _ConversationViewState {
 class _OlderEdge extends StatelessWidget {
   const _OlderEdge({
     required this.state,
+    required this.host,
     required this.startText,
     required this.onRetry,
   });
 
   final ConversationState state;
+  final String host;
   final String? startText;
   final VoidCallback onRetry;
 
@@ -390,11 +393,19 @@ class _OlderEdge extends StatelessWidget {
         child: Text(text, style: Theme.of(context).textTheme.titleMedium),
       );
     }
-    if (state.olderFailed) {
-      return Center(
-        child: TextButton(
-          onPressed: onRetry,
-          child: const Text("Couldn't load older messages · Retry"),
+    if (state.olderFailure case final cause?) {
+      return Padding(
+        padding: const EdgeInsets.all(Spacing.md),
+        child: Column(
+          children: [
+            Text(
+              "Couldn't load older messages. "
+              '${requestProblemText(cause, host)}',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: context.tokens.muted),
+            ),
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
         ),
       );
     }

@@ -22,7 +22,7 @@ abstract class ConversationState with _$ConversationState {
     @Default(false) bool refreshing,
     ApiError? refreshFailure,
     @Default(false) bool loadingOlder,
-    @Default(false) bool olderFailed,
+    ApiError? olderFailure,
 
     /// Messages that arrived live while the screen was open, by key, with
     /// when they arrived: they animate in and count towards "N new".

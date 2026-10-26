@@ -72,7 +72,9 @@ void main() {
       (s) => (s.window?.posts.length ?? 0) >= 2 && !s.refreshing,
     );
     container.read(provider.notifier).retryOlder();
-    final after = await settled((s) => s.olderFailed && !s.loadingOlder);
+    final after = await settled(
+      (s) => s.olderFailure != null && !s.loadingOlder,
+    );
 
     expect(after.generation, before.generation);
     expect(after.intent, before.intent);

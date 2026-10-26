@@ -7,6 +7,7 @@ import 'package:matterleast/data/actions/settings_actions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/emoji/emoji_table.g.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/ui/custom_emoji_image.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -83,10 +84,13 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
       final session = await ref.read(serverSessionProvider(widget.url).future);
       await SettingsActions(session)
           .savePreference(Prefs.skinTone, skinToneCode(tone));
-    } on Object {
+    } on Object catch (e) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text("Couldn't save the skin tone. Try again."),
+        SnackBar(
+          content: Text(
+            "Couldn't save the skin tone. "
+            '${requestProblemText(e, Uri.parse(widget.url).host)}',
+          ),
         ),
       );
     }
