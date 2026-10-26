@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -24,12 +25,14 @@ void main() {
   late Completer<void> answerOlder;
 
   final start = DateTime.utc(2026, 10, 26, 8);
+  const linkRow = 50;
+  const link = 'https://example.test/tide';
   Map<String, Object?> post(int i) => {
     'id': 'n$i',
     'channel_id': channelId,
     'user_id': 'someone',
     'create_at': start.add(Duration(minutes: i)).millisecondsSinceEpoch,
-    'message': 'message $i',
+    'message': i == linkRow ? 'tide table at $link' : 'message $i',
   };
 
   Future<void> open(WidgetTester tester) async {
@@ -67,6 +70,7 @@ void main() {
       ProviderScope(
         overrides: [
           serverSessionProvider(url).overrideWith((ref) async => session),
+          serversProvider.overrideWith((ref) => Stream.value(const [])),
           serverImageCachesProvider(url)
               .overrideWith((ref) => Completer<ServerImageCaches>().future),
         ],
@@ -122,6 +126,49 @@ void main() {
     }
     expect(notice, findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('tapping a link in a message opens it and moves nothing', (
+    tester,
+  ) async {
+    final launched = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/url_launcher'),
+      (call) async {
+        if (call.method == 'canLaunch') return true;
+        launched.add((call.arguments as Map)['url'] as String);
+        return true;
+      },
+    );
+    await open(tester);
+    answerOlder.complete();
+    final linkText = find.textContaining('tide table');
+    for (var i = 0; i < 10 && linkText.evaluate().isEmpty; i++) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
+      await settle(tester);
+    }
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 150));
+    await settle(tester);
+    final rows = [
+      for (var i = 0; i < 60; i++)
+        if (find.text('message $i').evaluate().isNotEmpty) i,
+    ];
+    final before = {
+      for (final i in rows) i: tester.getTopLeft(find.text('message $i')).dy,
+    };
+
+    await tester.tapOnText(find.textRange.ofSubstring(link));
+    await settle(tester);
+
+    expect(launched, [link]);
+    for (final i in rows) {
+      expect(
+        tester.getTopLeft(find.text('message $i')).dy,
+        closeTo(before[i]!, 0.5),
+        reason: 'message $i',
+      );
+    }
     await close(tester);
   });
 }
