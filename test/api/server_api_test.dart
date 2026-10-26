@@ -82,6 +82,39 @@ void main() {
     api.close();
   });
 
+  group('a video streamed by a player', () {
+    test('gets the token when the server answers itself', () async {
+      respond = (req) async {
+        req.response
+          ..statusCode = 206
+          ..write('v');
+        await req.response.close();
+      };
+      final api = ServerApi(baseUrl: base(), token: () => 'secret');
+      final file = base().replace(path: '/api/v4/files/f1');
+      final source = await api.streamSource(file);
+      expect(source.uri, file);
+      expect(source.headers, {'Authorization': 'Bearer secret'});
+      api.close();
+    });
+
+    test('goes to a redirect target without the token', () async {
+      respond = (req) async {
+        req.response
+          ..statusCode = 302
+          ..headers.set('location', 'http://files.example.test/f1?sig=x');
+        await req.response.close();
+      };
+      final api = ServerApi(baseUrl: base(), token: () => 'secret');
+      final source = await api.streamSource(
+        base().replace(path: '/api/v4/files/f1'),
+      );
+      expect(source.uri, Uri.parse('http://files.example.test/f1?sig=x'));
+      expect(source.headers, isEmpty);
+      api.close();
+    });
+  });
+
   test(
     'a 401 outside login ends the session and surfaces as ServerError',
     () async {

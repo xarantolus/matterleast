@@ -307,12 +307,18 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
       final session = await ref.read(serverSessionProvider(widget.url).future);
       final downloads = session.files;
       final cached = await downloads.cached(widget.file.id);
-      final video = cached != null
-          ? VideoPlayerController.file(cached)
-          : VideoPlayerController.networkUrl(
-              downloads.originalUri(widget.file.id),
-              httpHeaders: await session.api.authHeaders(),
-            );
+      final VideoPlayerController video;
+      if (cached != null) {
+        video = VideoPlayerController.file(cached);
+      } else {
+        final source = await session.api.streamSource(
+          downloads.originalUri(widget.file.id),
+        );
+        video = VideoPlayerController.networkUrl(
+          source.uri,
+          httpHeaders: source.headers,
+        );
+      }
       if (!mounted) {
         await video.dispose();
         return;

@@ -1,9 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/coalesce.dart';
-import 'package:matterleast/api/generated/export.dart';
+import 'package:matterleast/api/generated/export.dart' show MattermostClient;
 import 'package:matterleast/api/server_paths.dart';
 
 typedef TokenProvider = FutureOr<String?> Function();
@@ -67,11 +68,40 @@ class ServerApi {
   /// Fires when the server rejects the session token (401 outside login).
   Stream<void> get sessionEnded => _sessionEnded.stream;
 
-  /// The header that signs a request to this server, for players that
-  /// fetch on their own.
-  Future<Map<String, String>> authHeaders() async {
+  /// Where a player that fetches on its own may stream [url] from, and with
+  /// which headers. Players follow redirects themselves and repeat every
+  /// header on each hop, so the token goes only with an address that
+  /// answers without redirecting; a redirect target is streamed bare.
+  Future<({Uri uri, Map<String, String> headers})> streamSource(Uri url) async {
+    final cancel = CancelToken();
+    final response = await call(
+      () => dio.getUri<ResponseBody>(
+        url,
+        cancelToken: cancel,
+        options: Options(
+          responseType: ResponseType.stream,
+          followRedirects: false,
+          validateStatus: (_) => true,
+          headers: {HttpHeaders.rangeHeader: 'bytes=0-0'},
+        ),
+      ),
+    );
+    unawaited(response.data?.stream.drain<void>().catchError((_) {}));
+    cancel.cancel();
+    final status = response.statusCode ?? 0;
+    final location = response.headers.value(HttpHeaders.locationHeader);
+    if (status >= 300 && status < 400 && location != null) {
+      return (uri: url.resolve(location), headers: const <String, String>{});
+    }
+    if (status >= 400) throw ServerError(statusCode: status);
     final token = await _token();
-    return {'Authorization': ?(token == null ? null : 'Bearer $token')};
+    return (
+      uri: url,
+      headers: {
+        if (token != null && carriesToken(url, baseUrl))
+          'Authorization': 'Bearer $token',
+      },
+    );
   }
 
   /// Runs [request] and turns transport failures into [ApiError]s.
