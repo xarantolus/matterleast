@@ -68,14 +68,14 @@ class ProfileActions {
     final row = await (_db.select(
       _db.users,
     )..where((u) => u.id.equals(me))).getSingle();
-    final before = row.propsJson;
-    final props = {...?_object(before)};
+    final before = row.props;
+    final props = {...?before};
     if (status == null) {
       props.remove('customStatus');
     } else {
       props['customStatus'] = jsonEncode(status.toJson());
     }
-    await session.store.applyUserProps(me, jsonEncode(props));
+    await session.store.applyUserProps(me, props);
     try {
       await session.api.call(
         () => status == null
@@ -149,11 +149,5 @@ class ProfileActions {
         ),
       ),
     );
-  }
-
-  static Map<String, Object?>? _object(String? json) {
-    if (json == null) return null;
-    final decoded = jsonDecode(json);
-    return decoded is Map<String, Object?> ? decoded : null;
   }
 }

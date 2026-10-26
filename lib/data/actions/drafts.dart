@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
@@ -95,34 +94,22 @@ class DraftSaver {
         message: Value(draft.message),
         selectionBase: Value(draft.selectionBase),
         selectionExtent: Value(draft.selectionExtent),
-        filesJson: Value(jsonEncode([for (final f in draft.files) f.toJson()])),
-        priorityJson: Value(
-          draft.priority == null ? null : jsonEncode(draft.priority!.toJson()),
-        ),
+        files: Value(draft.files),
+        priority: Value(draft.priority),
         updatedAt: _clock(),
       ),
     );
   }
 
   Draft _draftOf(DraftRow row) {
-    final files = jsonDecode(row.filesJson);
-    final priority = row.priorityJson == null
-        ? null
-        : jsonDecode(row.priorityJson!);
     return Draft(
       channelId: row.channelId,
       rootId: row.rootId,
       message: row.message,
       selectionBase: row.selectionBase,
       selectionExtent: row.selectionExtent,
-      files: [
-        if (files is List)
-          for (final f in files)
-            if (f is Map<String, Object?>) api.FileInfo.fromJson(f),
-      ],
-      priority: priority is Map<String, Object?>
-          ? api.PostPriority.fromJson(priority)
-          : null,
+      files: row.files,
+      priority: row.priority,
     );
   }
 

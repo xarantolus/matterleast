@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/json/broken_posts.dart';
+import 'package:matterleast/data/db/json_columns.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/log.dart';
 
@@ -11,27 +12,6 @@ import 'package:matterleast/log.dart';
 
 Value<T> _opt<T extends Object>(T? value) =>
     value == null ? const Value.absent() : Value(value);
-
-String? _json(Object? value) => value == null ? null : jsonEncode(value);
-
-String _postJson(Object? value) => jsonEncode(value, toEncodable: _encodable);
-
-// Generated enums throw on toJson for values the spec does not list (a newer
-// server's embed type, say); those are stored as null instead.
-Object? _encodable(Object? value) => switch (value) {
-  api.Type2(:final json) => json,
-  api.PostPriorityPriority(:final json) => json,
-  final api.Post v => v.toJson(),
-  final api.PostMetadata v => v.toJson(),
-  final api.Embeds v => v.toJson(),
-  final api.Emoji v => v.toJson(),
-  final api.FileInfo v => v.toJson(),
-  final api.Reaction v => v.toJson(),
-  final api.PostPriority v => v.toJson(),
-  final api.PostAcknowledgement v => v.toJson(),
-  final api.User v => v.toJson(),
-  _ => throw JsonUnsupportedObjectError(value),
-};
 
 /// Pure: stored post metadata with [ack] added, or with its user's
 /// acknowledgement taken out; everything else stays as it was.
@@ -54,7 +34,7 @@ String metadataWithAcknowledgement(
       if (a.userId != ack.userId) a,
   ];
   metadata['acknowledgements'] = [...others, if (added) ack];
-  return _postJson(metadata);
+  return storedJson(metadata);
 }
 
 UsersCompanion userCompanion(api.User u) => UsersCompanion(
@@ -70,8 +50,8 @@ UsersCompanion userCompanion(api.User u) => UsersCompanion(
   updateAt: _opt(u.updateAt),
   deleteAt: Value(u.deleteAt),
   lastPictureUpdate: _opt(u.lastPictureUpdate?.millisecondsSinceEpoch),
-  timezoneJson: _opt(_json(u.timezone?.toJson())),
-  propsJson: _opt(_json(u.props)),
+  timezone: _opt(u.timezone),
+  props: _opt(u.props),
 );
 
 TeamsCompanion teamCompanion(api.Team t) => TeamsCompanion(
@@ -118,7 +98,7 @@ MyChannelsCompanion myChannelCompanion(api.ChannelMember m) =>
       mentionCount: _opt(m.mentionCount),
       mentionCountRoot: _opt(m.mentionCountRoot),
       urgentMentionCount: _opt(m.urgentMentionCount),
-      notifyPropsJson: _opt(_json(m.notifyProps?.toJson())),
+      notifyProps: _opt(m.notifyProps),
       lastUpdateAt: _opt(m.lastUpdateAt),
     );
 
@@ -192,21 +172,21 @@ PostsCompanion postCompanion(api.Post p) => PostsCompanion(
       ? const Value.absent()
       : Value(p.pendingPostId!),
   sendState: const Value(null),
-  propsJson: Value(p.props == null ? null : _postJson(p.props)),
+  propsJson: Value(p.props == null ? null : storedJson(p.props)),
   // Some lists (followed threads) send posts without metadata; what is
   // stored stays then.
   metadataJson: p.metadata == null
       ? const Value.absent()
-      : Value(_postJson(p.metadata)),
+      : Value(storedJson(p.metadata)),
   fileCount: p.metadata == null
       ? const Value.absent()
       : Value(p.metadata!.files.length),
   reactionCount: p.metadata == null
       ? const Value.absent()
       : Value(p.metadata!.reactions.length),
-  participantIdsJson: p.participants.isEmpty
+  participantIds: p.participants.isEmpty
       ? const Value.absent()
-      : Value(jsonEncode([for (final u in p.participants) ?u.id])),
+      : Value([for (final u in p.participants) ?u.id]),
   decodeProblem: const Value(null),
 );
 
@@ -238,10 +218,8 @@ PreferencesCompanion preferenceCompanion(api.Preference p) =>
       value: Value(p.value ?? ''),
     );
 
-RolesCompanion roleCompanion(api.Role r) => RolesCompanion(
-  name: Value(r.name!),
-  permissionsJson: Value(jsonEncode(r.permissions)),
-);
+RolesCompanion roleCompanion(api.Role r) =>
+    RolesCompanion(name: Value(r.name!), permissions: Value(r.permissions));
 
 ThreadsCompanion threadCompanion(api.UserThread t, String channelId) =>
     ThreadsCompanion(
@@ -253,9 +231,7 @@ ThreadsCompanion threadCompanion(api.UserThread t, String channelId) =>
       unreadReplies: Value(t.unreadReplies ?? 0),
       unreadMentions: Value(t.unreadMentions ?? 0),
       isFollowing: const Value(true),
-      participantIdsJson: Value(
-        jsonEncode([for (final u in t.participants) ?u.id]),
-      ),
+      participantIds: Value([for (final u in t.participants) ?u.id]),
     );
 
 CustomEmojiCompanion emojiCompanion(api.Emoji e) => CustomEmojiCompanion(

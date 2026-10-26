@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
@@ -296,19 +295,16 @@ class ChannelActions {
     final mine = await (_db.select(
       _db.myChannels,
     )..where((m) => m.channelId.equals(channelId))).getSingle();
-    final before = mine.notifyPropsJson;
-    final stored = jsonDecode(before ?? '{}');
+    final before = mine.notifyProps;
     final next = completeNotifyProps(
-      api.ChannelNotifyProps.fromJson(
-        stored is Map<String, Object?> ? stored : const {},
-      ),
+      before ?? api.ChannelNotifyProps.fromJson(const {}),
       push: push,
       desktop: desktop,
       markUnread: markUnread,
       ignoreChannelMentions: ignoreChannelMentions,
       pushThreads: pushThreads,
     );
-    await session.store.applyNotifyProps(channelId, jsonEncode(next.toJson()));
+    await session.store.applyNotifyProps(channelId, next);
     try {
       await session.api.call(
         () => _client.channels.updateChannelNotifyProps(

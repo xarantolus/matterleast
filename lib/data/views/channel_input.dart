@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/channel_list.dart';
 
@@ -20,14 +17,7 @@ ChannelInput channelInputOf(ChannelRow c, MyChannelRow m) => (
   msgCountRoot: m.msgCountRoot,
   mentionCount: m.mentionCount,
   mentionCountRoot: m.mentionCountRoot,
-  muted: _muted(m.notifyPropsJson),
+  // Muted channels only count mentions as unread.
+  muted: m.notifyProps?.markUnread == 'mention',
   lastViewedAt: m.lastViewedAt,
 );
-
-/// Muted channels only count mentions as unread.
-bool _muted(String? notifyPropsJson) {
-  if (notifyPropsJson == null) return false;
-  final decoded = jsonDecode(notifyPropsJson);
-  if (decoded is! Map<String, Object?>) return false;
-  return api.ChannelNotifyProps.fromJson(decoded).markUnread == 'mention';
-}

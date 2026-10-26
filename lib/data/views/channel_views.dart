@@ -112,7 +112,8 @@ class ChannelViews {
       ]),
       granted: granted,
     );
-    final props = _channelProps(mine?.notifyPropsJson);
+    final props =
+        mine?.notifyProps ?? api.ChannelNotifyProps.fromJson(const {});
     final account = _accountProps(
       await db.syncText(SyncKeys.accountNotifyProps),
     );
@@ -166,13 +167,6 @@ class ChannelViews {
       public: can(Permission.createPublicChannel),
       private: can(Permission.createPrivateChannel),
       join: can(Permission.joinPublicChannels),
-    );
-  }
-
-  static api.ChannelNotifyProps _channelProps(String? json) {
-    final decoded = json == null ? null : jsonDecode(json);
-    return api.ChannelNotifyProps.fromJson(
-      decoded is Map<String, Object?> ? decoded : const {},
     );
   }
 

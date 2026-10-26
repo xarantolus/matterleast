@@ -134,10 +134,13 @@ abstract final class Settings {
   static RailTarget? _decodeRailTarget(String raw) {
     if (raw.isEmpty) return null;
     try {
-      return RailTarget.fromJson(jsonDecode(raw) as Map<String, Object?>);
+      if (jsonDecode(raw) case final Map<String, Object?> json) {
+        return RailTarget.fromJson(json);
+      }
     } on Object {
-      throw FormatException('rail target', raw);
+      // Falls through to the format error below.
     }
+    throw FormatException('rail target', raw);
   }
 
   static String _encodeRailTarget(RailTarget? value) =>

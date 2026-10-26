@@ -268,14 +268,14 @@ class NotificationCheck {
   }
 
   static NotifyChannel _notifyChannel(ChannelRow c, MyChannelRow m) {
-    final props = NotifyProps.fromJsonText(m.notifyPropsJson).raw;
+    final props = m.notifyProps;
     return NotifyChannel(
       id: c.id,
       type: c.type,
       lastViewedAt: m.lastViewedAt,
-      push: props['push'] ?? 'default',
-      muted: props['mark_unread'] == 'mention',
-      ignoreChannelMentions: props['ignore_channel_mentions'] == 'on',
+      push: props?.push ?? 'default',
+      muted: props?.markUnread == 'mention',
+      ignoreChannelMentions: props?.ignoreChannelMentions == 'on',
     );
   }
 

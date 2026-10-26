@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
-import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/channel_list.dart';
@@ -59,8 +56,7 @@ class ProfileViews {
       db.users,
     )..where((u) => u.id.equals(userId))).getSingleOrNull();
     if (u == null) return null;
-    final timezone = _object(u.timezoneJson);
-    final zone = timezone == null ? null : api.Timezone.fromJson(timezone);
+    final zone = u.timezone;
     return UserProfile(
       id: u.id,
       name: personName((
@@ -83,17 +79,11 @@ class ProfileViews {
         manual: zone?.manualTimezone,
       ),
       customStatus: (await db.features()).customStatus
-          ? customStatusOf(_object(u.propsJson), _clock())
+          ? customStatusOf(u.props, _clock())
           : null,
       isBot: u.isBot,
       isGuest: isGuest(u.roles),
       isMe: await db.syncText(SyncKeys.currentUserId) == u.id,
     );
-  }
-
-  static Map<String, Object?>? _object(String? json) {
-    if (json == null) return null;
-    final decoded = jsonDecode(json);
-    return decoded is Map<String, Object?> ? decoded : null;
   }
 }

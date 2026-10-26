@@ -136,28 +136,24 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserRow> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _timezoneJsonMeta = const VerificationMeta(
-    'timezoneJson',
-  );
   @override
-  late final GeneratedColumn<String> timezoneJson = GeneratedColumn<String>(
-    'timezone_json',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _propsJsonMeta = const VerificationMeta(
-    'propsJson',
-  );
+  late final GeneratedColumnWithTypeConverter<Timezone?, String> timezone =
+      GeneratedColumn<String>(
+        'timezone_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Timezone?>($UsersTable.$convertertimezone);
   @override
-  late final GeneratedColumn<String> propsJson = GeneratedColumn<String>(
+  late final GeneratedColumnWithTypeConverter<Map<String, Object?>?, String>
+  props = GeneratedColumn<String>(
     'props_json',
     aliasedName,
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-  );
+  ).withConverter<Map<String, Object?>?>($UsersTable.$converterpropsn);
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -191,8 +187,8 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserRow> {
     updateAt,
     deleteAt,
     lastPictureUpdate,
-    timezoneJson,
-    propsJson,
+    timezone,
+    props,
     status,
     statusUpdatedAt,
   ];
@@ -272,21 +268,6 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserRow> {
         ),
       );
     }
-    if (data.containsKey('timezone_json')) {
-      context.handle(
-        _timezoneJsonMeta,
-        timezoneJson.isAcceptableOrUnknown(
-          data['timezone_json']!,
-          _timezoneJsonMeta,
-        ),
-      );
-    }
-    if (data.containsKey('props_json')) {
-      context.handle(
-        _propsJsonMeta,
-        propsJson.isAcceptableOrUnknown(data['props_json']!, _propsJsonMeta),
-      );
-    }
     if (data.containsKey('status')) {
       context.handle(
         _statusMeta,
@@ -354,13 +335,17 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserRow> {
         DriftSqlType.int,
         data['${effectivePrefix}last_picture_update'],
       ),
-      timezoneJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}timezone_json'],
+      timezone: $UsersTable.$convertertimezone.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}timezone_json'],
+        ),
       ),
-      propsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}props_json'],
+      props: $UsersTable.$converterpropsn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}props_json'],
+        ),
       ),
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -386,6 +371,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserRow> {
   static TypeConverter<DateTime, int> $converterdeleteAt = const Millis();
   static TypeConverter<DateTime?, int?> $converterdeleteAtn =
       NullAwareTypeConverter.wrap($converterdeleteAt);
+  static TypeConverter<Timezone?, String?> $convertertimezone =
+      const TimezoneColumn();
+  static TypeConverter<Map<String, Object?>, String> $converterprops =
+      const JsonMapColumn();
+  static TypeConverter<Map<String, Object?>?, String?> $converterpropsn =
+      NullAwareTypeConverter.wrap($converterprops);
   static TypeConverter<DateTime, int> $converterstatusUpdatedAt =
       const Millis();
   static TypeConverter<DateTime?, int?> $converterstatusUpdatedAtn =
@@ -408,8 +399,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
   final DateTime? updateAt;
   final DateTime? deleteAt;
   final int? lastPictureUpdate;
-  final String? timezoneJson;
-  final String? propsJson;
+  final Timezone? timezone;
+  final Map<String, Object?>? props;
   final String status;
   final DateTime? statusUpdatedAt;
   const UserRow({
@@ -425,8 +416,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     this.updateAt,
     this.deleteAt,
     this.lastPictureUpdate,
-    this.timezoneJson,
-    this.propsJson,
+    this.timezone,
+    this.props,
     required this.status,
     this.statusUpdatedAt,
   });
@@ -459,11 +450,15 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     if (!nullToAbsent || lastPictureUpdate != null) {
       map['last_picture_update'] = Variable<int>(lastPictureUpdate);
     }
-    if (!nullToAbsent || timezoneJson != null) {
-      map['timezone_json'] = Variable<String>(timezoneJson);
+    if (!nullToAbsent || timezone != null) {
+      map['timezone_json'] = Variable<String>(
+        $UsersTable.$convertertimezone.toSql(timezone),
+      );
     }
-    if (!nullToAbsent || propsJson != null) {
-      map['props_json'] = Variable<String>(propsJson);
+    if (!nullToAbsent || props != null) {
+      map['props_json'] = Variable<String>(
+        $UsersTable.$converterpropsn.toSql(props),
+      );
     }
     map['status'] = Variable<String>(status);
     if (!nullToAbsent || statusUpdatedAt != null) {
@@ -498,12 +493,12 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       lastPictureUpdate: lastPictureUpdate == null && nullToAbsent
           ? const Value.absent()
           : Value(lastPictureUpdate),
-      timezoneJson: timezoneJson == null && nullToAbsent
+      timezone: timezone == null && nullToAbsent
           ? const Value.absent()
-          : Value(timezoneJson),
-      propsJson: propsJson == null && nullToAbsent
+          : Value(timezone),
+      props: props == null && nullToAbsent
           ? const Value.absent()
-          : Value(propsJson),
+          : Value(props),
       status: Value(status),
       statusUpdatedAt: statusUpdatedAt == null && nullToAbsent
           ? const Value.absent()
@@ -529,8 +524,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       updateAt: serializer.fromJson<DateTime?>(json['updateAt']),
       deleteAt: serializer.fromJson<DateTime?>(json['deleteAt']),
       lastPictureUpdate: serializer.fromJson<int?>(json['lastPictureUpdate']),
-      timezoneJson: serializer.fromJson<String?>(json['timezoneJson']),
-      propsJson: serializer.fromJson<String?>(json['propsJson']),
+      timezone: serializer.fromJson<Timezone?>(json['timezone']),
+      props: serializer.fromJson<Map<String, Object?>?>(json['props']),
       status: serializer.fromJson<String>(json['status']),
       statusUpdatedAt: serializer.fromJson<DateTime?>(json['statusUpdatedAt']),
     );
@@ -551,8 +546,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       'updateAt': serializer.toJson<DateTime?>(updateAt),
       'deleteAt': serializer.toJson<DateTime?>(deleteAt),
       'lastPictureUpdate': serializer.toJson<int?>(lastPictureUpdate),
-      'timezoneJson': serializer.toJson<String?>(timezoneJson),
-      'propsJson': serializer.toJson<String?>(propsJson),
+      'timezone': serializer.toJson<Timezone?>(timezone),
+      'props': serializer.toJson<Map<String, Object?>?>(props),
       'status': serializer.toJson<String>(status),
       'statusUpdatedAt': serializer.toJson<DateTime?>(statusUpdatedAt),
     };
@@ -571,8 +566,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     Value<DateTime?> updateAt = const Value.absent(),
     Value<DateTime?> deleteAt = const Value.absent(),
     Value<int?> lastPictureUpdate = const Value.absent(),
-    Value<String?> timezoneJson = const Value.absent(),
-    Value<String?> propsJson = const Value.absent(),
+    Value<Timezone?> timezone = const Value.absent(),
+    Value<Map<String, Object?>?> props = const Value.absent(),
     String? status,
     Value<DateTime?> statusUpdatedAt = const Value.absent(),
   }) => UserRow(
@@ -590,8 +585,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     lastPictureUpdate: lastPictureUpdate.present
         ? lastPictureUpdate.value
         : this.lastPictureUpdate,
-    timezoneJson: timezoneJson.present ? timezoneJson.value : this.timezoneJson,
-    propsJson: propsJson.present ? propsJson.value : this.propsJson,
+    timezone: timezone.present ? timezone.value : this.timezone,
+    props: props.present ? props.value : this.props,
     status: status ?? this.status,
     statusUpdatedAt: statusUpdatedAt.present
         ? statusUpdatedAt.value
@@ -613,10 +608,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       lastPictureUpdate: data.lastPictureUpdate.present
           ? data.lastPictureUpdate.value
           : this.lastPictureUpdate,
-      timezoneJson: data.timezoneJson.present
-          ? data.timezoneJson.value
-          : this.timezoneJson,
-      propsJson: data.propsJson.present ? data.propsJson.value : this.propsJson,
+      timezone: data.timezone.present ? data.timezone.value : this.timezone,
+      props: data.props.present ? data.props.value : this.props,
       status: data.status.present ? data.status.value : this.status,
       statusUpdatedAt: data.statusUpdatedAt.present
           ? data.statusUpdatedAt.value
@@ -639,8 +632,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           ..write('updateAt: $updateAt, ')
           ..write('deleteAt: $deleteAt, ')
           ..write('lastPictureUpdate: $lastPictureUpdate, ')
-          ..write('timezoneJson: $timezoneJson, ')
-          ..write('propsJson: $propsJson, ')
+          ..write('timezone: $timezone, ')
+          ..write('props: $props, ')
           ..write('status: $status, ')
           ..write('statusUpdatedAt: $statusUpdatedAt')
           ..write(')'))
@@ -661,8 +654,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     updateAt,
     deleteAt,
     lastPictureUpdate,
-    timezoneJson,
-    propsJson,
+    timezone,
+    props,
     status,
     statusUpdatedAt,
   );
@@ -682,8 +675,8 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           other.updateAt == this.updateAt &&
           other.deleteAt == this.deleteAt &&
           other.lastPictureUpdate == this.lastPictureUpdate &&
-          other.timezoneJson == this.timezoneJson &&
-          other.propsJson == this.propsJson &&
+          other.timezone == this.timezone &&
+          other.props == this.props &&
           other.status == this.status &&
           other.statusUpdatedAt == this.statusUpdatedAt);
 }
@@ -701,8 +694,8 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
   final Value<DateTime?> updateAt;
   final Value<DateTime?> deleteAt;
   final Value<int?> lastPictureUpdate;
-  final Value<String?> timezoneJson;
-  final Value<String?> propsJson;
+  final Value<Timezone?> timezone;
+  final Value<Map<String, Object?>?> props;
   final Value<String> status;
   final Value<DateTime?> statusUpdatedAt;
   final Value<int> rowid;
@@ -719,8 +712,8 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     this.updateAt = const Value.absent(),
     this.deleteAt = const Value.absent(),
     this.lastPictureUpdate = const Value.absent(),
-    this.timezoneJson = const Value.absent(),
-    this.propsJson = const Value.absent(),
+    this.timezone = const Value.absent(),
+    this.props = const Value.absent(),
     this.status = const Value.absent(),
     this.statusUpdatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -738,8 +731,8 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     this.updateAt = const Value.absent(),
     this.deleteAt = const Value.absent(),
     this.lastPictureUpdate = const Value.absent(),
-    this.timezoneJson = const Value.absent(),
-    this.propsJson = const Value.absent(),
+    this.timezone = const Value.absent(),
+    this.props = const Value.absent(),
     this.status = const Value.absent(),
     this.statusUpdatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -758,8 +751,8 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     Expression<int>? updateAt,
     Expression<int>? deleteAt,
     Expression<int>? lastPictureUpdate,
-    Expression<String>? timezoneJson,
-    Expression<String>? propsJson,
+    Expression<String>? timezone,
+    Expression<String>? props,
     Expression<String>? status,
     Expression<int>? statusUpdatedAt,
     Expression<int>? rowid,
@@ -777,8 +770,8 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
       if (updateAt != null) 'update_at': updateAt,
       if (deleteAt != null) 'delete_at': deleteAt,
       if (lastPictureUpdate != null) 'last_picture_update': lastPictureUpdate,
-      if (timezoneJson != null) 'timezone_json': timezoneJson,
-      if (propsJson != null) 'props_json': propsJson,
+      if (timezone != null) 'timezone_json': timezone,
+      if (props != null) 'props_json': props,
       if (status != null) 'status': status,
       if (statusUpdatedAt != null) 'status_updated_at': statusUpdatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -798,8 +791,8 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     Value<DateTime?>? updateAt,
     Value<DateTime?>? deleteAt,
     Value<int?>? lastPictureUpdate,
-    Value<String?>? timezoneJson,
-    Value<String?>? propsJson,
+    Value<Timezone?>? timezone,
+    Value<Map<String, Object?>?>? props,
     Value<String>? status,
     Value<DateTime?>? statusUpdatedAt,
     Value<int>? rowid,
@@ -817,8 +810,8 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
       updateAt: updateAt ?? this.updateAt,
       deleteAt: deleteAt ?? this.deleteAt,
       lastPictureUpdate: lastPictureUpdate ?? this.lastPictureUpdate,
-      timezoneJson: timezoneJson ?? this.timezoneJson,
-      propsJson: propsJson ?? this.propsJson,
+      timezone: timezone ?? this.timezone,
+      props: props ?? this.props,
       status: status ?? this.status,
       statusUpdatedAt: statusUpdatedAt ?? this.statusUpdatedAt,
       rowid: rowid ?? this.rowid,
@@ -868,11 +861,15 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     if (lastPictureUpdate.present) {
       map['last_picture_update'] = Variable<int>(lastPictureUpdate.value);
     }
-    if (timezoneJson.present) {
-      map['timezone_json'] = Variable<String>(timezoneJson.value);
+    if (timezone.present) {
+      map['timezone_json'] = Variable<String>(
+        $UsersTable.$convertertimezone.toSql(timezone.value),
+      );
     }
-    if (propsJson.present) {
-      map['props_json'] = Variable<String>(propsJson.value);
+    if (props.present) {
+      map['props_json'] = Variable<String>(
+        $UsersTable.$converterpropsn.toSql(props.value),
+      );
     }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
@@ -903,8 +900,8 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
           ..write('updateAt: $updateAt, ')
           ..write('deleteAt: $deleteAt, ')
           ..write('lastPictureUpdate: $lastPictureUpdate, ')
-          ..write('timezoneJson: $timezoneJson, ')
-          ..write('propsJson: $propsJson, ')
+          ..write('timezone: $timezone, ')
+          ..write('props: $props, ')
           ..write('status: $status, ')
           ..write('statusUpdatedAt: $statusUpdatedAt, ')
           ..write('rowid: $rowid')
@@ -2991,17 +2988,15 @@ class $MyChannelsTable extends MyChannels
     ),
     defaultValue: const Constant(false),
   );
-  static const VerificationMeta _notifyPropsJsonMeta = const VerificationMeta(
-    'notifyPropsJson',
-  );
   @override
-  late final GeneratedColumn<String> notifyPropsJson = GeneratedColumn<String>(
+  late final GeneratedColumnWithTypeConverter<ChannelNotifyProps?, String>
+  notifyProps = GeneratedColumn<String>(
     'notify_props_json',
     aliasedName,
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-  );
+  ).withConverter<ChannelNotifyProps?>($MyChannelsTable.$converternotifyProps);
   @override
   late final GeneratedColumnWithTypeConverter<DateTime?, int> lastUpdateAt =
       GeneratedColumn<int>(
@@ -3031,7 +3026,7 @@ class $MyChannelsTable extends MyChannels
     mentionCountRoot,
     urgentMentionCount,
     manuallyUnread,
-    notifyPropsJson,
+    notifyProps,
     lastUpdateAt,
     postsFetchedAt,
   ];
@@ -3112,15 +3107,6 @@ class $MyChannelsTable extends MyChannels
         ),
       );
     }
-    if (data.containsKey('notify_props_json')) {
-      context.handle(
-        _notifyPropsJsonMeta,
-        notifyPropsJson.isAcceptableOrUnknown(
-          data['notify_props_json']!,
-          _notifyPropsJsonMeta,
-        ),
-      );
-    }
     return context;
   }
 
@@ -3168,9 +3154,11 @@ class $MyChannelsTable extends MyChannels
         DriftSqlType.bool,
         data['${effectivePrefix}manually_unread'],
       )!,
-      notifyPropsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}notify_props_json'],
+      notifyProps: $MyChannelsTable.$converternotifyProps.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}notify_props_json'],
+        ),
       ),
       lastUpdateAt: $MyChannelsTable.$converterlastUpdateAtn.fromSql(
         attachedDatabase.typeMapping.read(
@@ -3195,6 +3183,8 @@ class $MyChannelsTable extends MyChannels
   static TypeConverter<DateTime, int> $converterlastViewedAt = const Millis();
   static TypeConverter<DateTime?, int?> $converterlastViewedAtn =
       NullAwareTypeConverter.wrap($converterlastViewedAt);
+  static TypeConverter<ChannelNotifyProps?, String?> $converternotifyProps =
+      const ChannelNotifyPropsColumn();
   static TypeConverter<DateTime, int> $converterlastUpdateAt = const Millis();
   static TypeConverter<DateTime?, int?> $converterlastUpdateAtn =
       NullAwareTypeConverter.wrap($converterlastUpdateAt);
@@ -3213,7 +3203,7 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
   final int mentionCountRoot;
   final int urgentMentionCount;
   final bool manuallyUnread;
-  final String? notifyPropsJson;
+  final ChannelNotifyProps? notifyProps;
   final DateTime? lastUpdateAt;
 
   /// Watermark for `posts?since=`: the newest create, update or delete time
@@ -3229,7 +3219,7 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
     required this.mentionCountRoot,
     required this.urgentMentionCount,
     required this.manuallyUnread,
-    this.notifyPropsJson,
+    this.notifyProps,
     this.lastUpdateAt,
     this.postsFetchedAt,
   });
@@ -3249,8 +3239,10 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
     map['mention_count_root'] = Variable<int>(mentionCountRoot);
     map['urgent_mention_count'] = Variable<int>(urgentMentionCount);
     map['manually_unread'] = Variable<bool>(manuallyUnread);
-    if (!nullToAbsent || notifyPropsJson != null) {
-      map['notify_props_json'] = Variable<String>(notifyPropsJson);
+    if (!nullToAbsent || notifyProps != null) {
+      map['notify_props_json'] = Variable<String>(
+        $MyChannelsTable.$converternotifyProps.toSql(notifyProps),
+      );
     }
     if (!nullToAbsent || lastUpdateAt != null) {
       map['last_update_at'] = Variable<int>(
@@ -3278,9 +3270,9 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
       mentionCountRoot: Value(mentionCountRoot),
       urgentMentionCount: Value(urgentMentionCount),
       manuallyUnread: Value(manuallyUnread),
-      notifyPropsJson: notifyPropsJson == null && nullToAbsent
+      notifyProps: notifyProps == null && nullToAbsent
           ? const Value.absent()
-          : Value(notifyPropsJson),
+          : Value(notifyProps),
       lastUpdateAt: lastUpdateAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastUpdateAt),
@@ -3305,7 +3297,9 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
       mentionCountRoot: serializer.fromJson<int>(json['mentionCountRoot']),
       urgentMentionCount: serializer.fromJson<int>(json['urgentMentionCount']),
       manuallyUnread: serializer.fromJson<bool>(json['manuallyUnread']),
-      notifyPropsJson: serializer.fromJson<String?>(json['notifyPropsJson']),
+      notifyProps: serializer.fromJson<ChannelNotifyProps?>(
+        json['notifyProps'],
+      ),
       lastUpdateAt: serializer.fromJson<DateTime?>(json['lastUpdateAt']),
       postsFetchedAt: serializer.fromJson<DateTime?>(json['postsFetchedAt']),
     );
@@ -3323,7 +3317,7 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
       'mentionCountRoot': serializer.toJson<int>(mentionCountRoot),
       'urgentMentionCount': serializer.toJson<int>(urgentMentionCount),
       'manuallyUnread': serializer.toJson<bool>(manuallyUnread),
-      'notifyPropsJson': serializer.toJson<String?>(notifyPropsJson),
+      'notifyProps': serializer.toJson<ChannelNotifyProps?>(notifyProps),
       'lastUpdateAt': serializer.toJson<DateTime?>(lastUpdateAt),
       'postsFetchedAt': serializer.toJson<DateTime?>(postsFetchedAt),
     };
@@ -3339,7 +3333,7 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
     int? mentionCountRoot,
     int? urgentMentionCount,
     bool? manuallyUnread,
-    Value<String?> notifyPropsJson = const Value.absent(),
+    Value<ChannelNotifyProps?> notifyProps = const Value.absent(),
     Value<DateTime?> lastUpdateAt = const Value.absent(),
     Value<DateTime?> postsFetchedAt = const Value.absent(),
   }) => MyChannelRow(
@@ -3352,9 +3346,7 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
     mentionCountRoot: mentionCountRoot ?? this.mentionCountRoot,
     urgentMentionCount: urgentMentionCount ?? this.urgentMentionCount,
     manuallyUnread: manuallyUnread ?? this.manuallyUnread,
-    notifyPropsJson: notifyPropsJson.present
-        ? notifyPropsJson.value
-        : this.notifyPropsJson,
+    notifyProps: notifyProps.present ? notifyProps.value : this.notifyProps,
     lastUpdateAt: lastUpdateAt.present ? lastUpdateAt.value : this.lastUpdateAt,
     postsFetchedAt: postsFetchedAt.present
         ? postsFetchedAt.value
@@ -3383,9 +3375,9 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
       manuallyUnread: data.manuallyUnread.present
           ? data.manuallyUnread.value
           : this.manuallyUnread,
-      notifyPropsJson: data.notifyPropsJson.present
-          ? data.notifyPropsJson.value
-          : this.notifyPropsJson,
+      notifyProps: data.notifyProps.present
+          ? data.notifyProps.value
+          : this.notifyProps,
       lastUpdateAt: data.lastUpdateAt.present
           ? data.lastUpdateAt.value
           : this.lastUpdateAt,
@@ -3407,7 +3399,7 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
           ..write('mentionCountRoot: $mentionCountRoot, ')
           ..write('urgentMentionCount: $urgentMentionCount, ')
           ..write('manuallyUnread: $manuallyUnread, ')
-          ..write('notifyPropsJson: $notifyPropsJson, ')
+          ..write('notifyProps: $notifyProps, ')
           ..write('lastUpdateAt: $lastUpdateAt, ')
           ..write('postsFetchedAt: $postsFetchedAt')
           ..write(')'))
@@ -3425,7 +3417,7 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
     mentionCountRoot,
     urgentMentionCount,
     manuallyUnread,
-    notifyPropsJson,
+    notifyProps,
     lastUpdateAt,
     postsFetchedAt,
   );
@@ -3442,7 +3434,7 @@ class MyChannelRow extends DataClass implements Insertable<MyChannelRow> {
           other.mentionCountRoot == this.mentionCountRoot &&
           other.urgentMentionCount == this.urgentMentionCount &&
           other.manuallyUnread == this.manuallyUnread &&
-          other.notifyPropsJson == this.notifyPropsJson &&
+          other.notifyProps == this.notifyProps &&
           other.lastUpdateAt == this.lastUpdateAt &&
           other.postsFetchedAt == this.postsFetchedAt);
 }
@@ -3457,7 +3449,7 @@ class MyChannelsCompanion extends UpdateCompanion<MyChannelRow> {
   final Value<int> mentionCountRoot;
   final Value<int> urgentMentionCount;
   final Value<bool> manuallyUnread;
-  final Value<String?> notifyPropsJson;
+  final Value<ChannelNotifyProps?> notifyProps;
   final Value<DateTime?> lastUpdateAt;
   final Value<DateTime?> postsFetchedAt;
   final Value<int> rowid;
@@ -3471,7 +3463,7 @@ class MyChannelsCompanion extends UpdateCompanion<MyChannelRow> {
     this.mentionCountRoot = const Value.absent(),
     this.urgentMentionCount = const Value.absent(),
     this.manuallyUnread = const Value.absent(),
-    this.notifyPropsJson = const Value.absent(),
+    this.notifyProps = const Value.absent(),
     this.lastUpdateAt = const Value.absent(),
     this.postsFetchedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3486,7 +3478,7 @@ class MyChannelsCompanion extends UpdateCompanion<MyChannelRow> {
     this.mentionCountRoot = const Value.absent(),
     this.urgentMentionCount = const Value.absent(),
     this.manuallyUnread = const Value.absent(),
-    this.notifyPropsJson = const Value.absent(),
+    this.notifyProps = const Value.absent(),
     this.lastUpdateAt = const Value.absent(),
     this.postsFetchedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3501,7 +3493,7 @@ class MyChannelsCompanion extends UpdateCompanion<MyChannelRow> {
     Expression<int>? mentionCountRoot,
     Expression<int>? urgentMentionCount,
     Expression<bool>? manuallyUnread,
-    Expression<String>? notifyPropsJson,
+    Expression<String>? notifyProps,
     Expression<int>? lastUpdateAt,
     Expression<int>? postsFetchedAt,
     Expression<int>? rowid,
@@ -3517,7 +3509,7 @@ class MyChannelsCompanion extends UpdateCompanion<MyChannelRow> {
       if (urgentMentionCount != null)
         'urgent_mention_count': urgentMentionCount,
       if (manuallyUnread != null) 'manually_unread': manuallyUnread,
-      if (notifyPropsJson != null) 'notify_props_json': notifyPropsJson,
+      if (notifyProps != null) 'notify_props_json': notifyProps,
       if (lastUpdateAt != null) 'last_update_at': lastUpdateAt,
       if (postsFetchedAt != null) 'posts_fetched_at': postsFetchedAt,
       if (rowid != null) 'rowid': rowid,
@@ -3534,7 +3526,7 @@ class MyChannelsCompanion extends UpdateCompanion<MyChannelRow> {
     Value<int>? mentionCountRoot,
     Value<int>? urgentMentionCount,
     Value<bool>? manuallyUnread,
-    Value<String?>? notifyPropsJson,
+    Value<ChannelNotifyProps?>? notifyProps,
     Value<DateTime?>? lastUpdateAt,
     Value<DateTime?>? postsFetchedAt,
     Value<int>? rowid,
@@ -3549,7 +3541,7 @@ class MyChannelsCompanion extends UpdateCompanion<MyChannelRow> {
       mentionCountRoot: mentionCountRoot ?? this.mentionCountRoot,
       urgentMentionCount: urgentMentionCount ?? this.urgentMentionCount,
       manuallyUnread: manuallyUnread ?? this.manuallyUnread,
-      notifyPropsJson: notifyPropsJson ?? this.notifyPropsJson,
+      notifyProps: notifyProps ?? this.notifyProps,
       lastUpdateAt: lastUpdateAt ?? this.lastUpdateAt,
       postsFetchedAt: postsFetchedAt ?? this.postsFetchedAt,
       rowid: rowid ?? this.rowid,
@@ -3588,8 +3580,10 @@ class MyChannelsCompanion extends UpdateCompanion<MyChannelRow> {
     if (manuallyUnread.present) {
       map['manually_unread'] = Variable<bool>(manuallyUnread.value);
     }
-    if (notifyPropsJson.present) {
-      map['notify_props_json'] = Variable<String>(notifyPropsJson.value);
+    if (notifyProps.present) {
+      map['notify_props_json'] = Variable<String>(
+        $MyChannelsTable.$converternotifyProps.toSql(notifyProps.value),
+      );
     }
     if (lastUpdateAt.present) {
       map['last_update_at'] = Variable<int>(
@@ -3619,7 +3613,7 @@ class MyChannelsCompanion extends UpdateCompanion<MyChannelRow> {
           ..write('mentionCountRoot: $mentionCountRoot, ')
           ..write('urgentMentionCount: $urgentMentionCount, ')
           ..write('manuallyUnread: $manuallyUnread, ')
-          ..write('notifyPropsJson: $notifyPropsJson, ')
+          ..write('notifyProps: $notifyProps, ')
           ..write('lastUpdateAt: $lastUpdateAt, ')
           ..write('postsFetchedAt: $postsFetchedAt, ')
           ..write('rowid: $rowid')
@@ -4628,17 +4622,15 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-  static const VerificationMeta _participantIdsJsonMeta =
-      const VerificationMeta('participantIdsJson');
   @override
-  late final GeneratedColumn<String> participantIdsJson =
-      GeneratedColumn<String>(
-        'participant_ids_json',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
+  late final GeneratedColumnWithTypeConverter<List<String>?, String>
+  participantIds = GeneratedColumn<String>(
+    'participant_ids_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<List<String>?>($PostsTable.$converterparticipantIdsn);
   static const VerificationMeta _decodeProblemMeta = const VerificationMeta(
     'decodeProblem',
   );
@@ -4672,7 +4664,7 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
     metadataJson,
     fileCount,
     reactionCount,
-    participantIdsJson,
+    participantIds,
     decodeProblem,
   ];
   @override
@@ -4789,15 +4781,6 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
         ),
       );
     }
-    if (data.containsKey('participant_ids_json')) {
-      context.handle(
-        _participantIdsJsonMeta,
-        participantIdsJson.isAcceptableOrUnknown(
-          data['participant_ids_json']!,
-          _participantIdsJsonMeta,
-        ),
-      );
-    }
     if (data.containsKey('decode_problem')) {
       context.handle(
         _decodeProblemMeta,
@@ -4906,9 +4889,11 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
         DriftSqlType.int,
         data['${effectivePrefix}reaction_count'],
       )!,
-      participantIdsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}participant_ids_json'],
+      participantIds: $PostsTable.$converterparticipantIdsn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}participant_ids_json'],
+        ),
       ),
       decodeProblem: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -4935,6 +4920,10 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, PostRow> {
   static TypeConverter<DateTime, int> $converterlastReplyAt = const Millis();
   static TypeConverter<DateTime?, int?> $converterlastReplyAtn =
       NullAwareTypeConverter.wrap($converterlastReplyAt);
+  static TypeConverter<List<String>, String> $converterparticipantIds =
+      const StringListColumn();
+  static TypeConverter<List<String>?, String?> $converterparticipantIdsn =
+      NullAwareTypeConverter.wrap($converterparticipantIds);
 }
 
 class PostRow extends DataClass implements Insertable<PostRow> {
@@ -4964,7 +4953,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
 
   /// Who replied to a root post, as a JSON list of user ids, when the
   /// server said (collapsed reply threads).
-  final String? participantIdsJson;
+  final List<String>? participantIds;
 
   /// Set when the server's copy couldn't be read or stored: what went
   /// wrong, as an error type. The row keeps its place but no content, and
@@ -4991,7 +4980,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     this.metadataJson,
     required this.fileCount,
     required this.reactionCount,
-    this.participantIdsJson,
+    this.participantIds,
     this.decodeProblem,
   });
   @override
@@ -5043,8 +5032,10 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     }
     map['file_count'] = Variable<int>(fileCount);
     map['reaction_count'] = Variable<int>(reactionCount);
-    if (!nullToAbsent || participantIdsJson != null) {
-      map['participant_ids_json'] = Variable<String>(participantIdsJson);
+    if (!nullToAbsent || participantIds != null) {
+      map['participant_ids_json'] = Variable<String>(
+        $PostsTable.$converterparticipantIdsn.toSql(participantIds),
+      );
     }
     if (!nullToAbsent || decodeProblem != null) {
       map['decode_problem'] = Variable<String>(decodeProblem);
@@ -5088,9 +5079,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
           : Value(metadataJson),
       fileCount: Value(fileCount),
       reactionCount: Value(reactionCount),
-      participantIdsJson: participantIdsJson == null && nullToAbsent
+      participantIds: participantIds == null && nullToAbsent
           ? const Value.absent()
-          : Value(participantIdsJson),
+          : Value(participantIds),
       decodeProblem: decodeProblem == null && nullToAbsent
           ? const Value.absent()
           : Value(decodeProblem),
@@ -5123,8 +5114,8 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       metadataJson: serializer.fromJson<String?>(json['metadataJson']),
       fileCount: serializer.fromJson<int>(json['fileCount']),
       reactionCount: serializer.fromJson<int>(json['reactionCount']),
-      participantIdsJson: serializer.fromJson<String?>(
-        json['participantIdsJson'],
+      participantIds: serializer.fromJson<List<String>?>(
+        json['participantIds'],
       ),
       decodeProblem: serializer.fromJson<String?>(json['decodeProblem']),
     );
@@ -5153,7 +5144,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       'metadataJson': serializer.toJson<String?>(metadataJson),
       'fileCount': serializer.toJson<int>(fileCount),
       'reactionCount': serializer.toJson<int>(reactionCount),
-      'participantIdsJson': serializer.toJson<String?>(participantIdsJson),
+      'participantIds': serializer.toJson<List<String>?>(participantIds),
       'decodeProblem': serializer.toJson<String?>(decodeProblem),
     };
   }
@@ -5179,7 +5170,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     Value<String?> metadataJson = const Value.absent(),
     int? fileCount,
     int? reactionCount,
-    Value<String?> participantIdsJson = const Value.absent(),
+    Value<List<String>?> participantIds = const Value.absent(),
     Value<String?> decodeProblem = const Value.absent(),
   }) => PostRow(
     id: id ?? this.id,
@@ -5202,9 +5193,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     metadataJson: metadataJson.present ? metadataJson.value : this.metadataJson,
     fileCount: fileCount ?? this.fileCount,
     reactionCount: reactionCount ?? this.reactionCount,
-    participantIdsJson: participantIdsJson.present
-        ? participantIdsJson.value
-        : this.participantIdsJson,
+    participantIds: participantIds.present
+        ? participantIds.value
+        : this.participantIds,
     decodeProblem: decodeProblem.present
         ? decodeProblem.value
         : this.decodeProblem,
@@ -5243,9 +5234,9 @@ class PostRow extends DataClass implements Insertable<PostRow> {
       reactionCount: data.reactionCount.present
           ? data.reactionCount.value
           : this.reactionCount,
-      participantIdsJson: data.participantIdsJson.present
-          ? data.participantIdsJson.value
-          : this.participantIdsJson,
+      participantIds: data.participantIds.present
+          ? data.participantIds.value
+          : this.participantIds,
       decodeProblem: data.decodeProblem.present
           ? data.decodeProblem.value
           : this.decodeProblem,
@@ -5275,7 +5266,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
           ..write('metadataJson: $metadataJson, ')
           ..write('fileCount: $fileCount, ')
           ..write('reactionCount: $reactionCount, ')
-          ..write('participantIdsJson: $participantIdsJson, ')
+          ..write('participantIds: $participantIds, ')
           ..write('decodeProblem: $decodeProblem')
           ..write(')'))
         .toString();
@@ -5303,7 +5294,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
     metadataJson,
     fileCount,
     reactionCount,
-    participantIdsJson,
+    participantIds,
     decodeProblem,
   ]);
   @override
@@ -5330,7 +5321,7 @@ class PostRow extends DataClass implements Insertable<PostRow> {
           other.metadataJson == this.metadataJson &&
           other.fileCount == this.fileCount &&
           other.reactionCount == this.reactionCount &&
-          other.participantIdsJson == this.participantIdsJson &&
+          other.participantIds == this.participantIds &&
           other.decodeProblem == this.decodeProblem);
 }
 
@@ -5355,7 +5346,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
   final Value<String?> metadataJson;
   final Value<int> fileCount;
   final Value<int> reactionCount;
-  final Value<String?> participantIdsJson;
+  final Value<List<String>?> participantIds;
   final Value<String?> decodeProblem;
   final Value<int> rowid;
   const PostsCompanion({
@@ -5379,7 +5370,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     this.metadataJson = const Value.absent(),
     this.fileCount = const Value.absent(),
     this.reactionCount = const Value.absent(),
-    this.participantIdsJson = const Value.absent(),
+    this.participantIds = const Value.absent(),
     this.decodeProblem = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -5404,7 +5395,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     this.metadataJson = const Value.absent(),
     this.fileCount = const Value.absent(),
     this.reactionCount = const Value.absent(),
-    this.participantIdsJson = const Value.absent(),
+    this.participantIds = const Value.absent(),
     this.decodeProblem = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -5432,7 +5423,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     Expression<String>? metadataJson,
     Expression<int>? fileCount,
     Expression<int>? reactionCount,
-    Expression<String>? participantIdsJson,
+    Expression<String>? participantIds,
     Expression<String>? decodeProblem,
     Expression<int>? rowid,
   }) {
@@ -5457,8 +5448,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
       if (metadataJson != null) 'metadata_json': metadataJson,
       if (fileCount != null) 'file_count': fileCount,
       if (reactionCount != null) 'reaction_count': reactionCount,
-      if (participantIdsJson != null)
-        'participant_ids_json': participantIdsJson,
+      if (participantIds != null) 'participant_ids_json': participantIds,
       if (decodeProblem != null) 'decode_problem': decodeProblem,
       if (rowid != null) 'rowid': rowid,
     });
@@ -5485,7 +5475,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     Value<String?>? metadataJson,
     Value<int>? fileCount,
     Value<int>? reactionCount,
-    Value<String?>? participantIdsJson,
+    Value<List<String>?>? participantIds,
     Value<String?>? decodeProblem,
     Value<int>? rowid,
   }) {
@@ -5510,7 +5500,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
       metadataJson: metadataJson ?? this.metadataJson,
       fileCount: fileCount ?? this.fileCount,
       reactionCount: reactionCount ?? this.reactionCount,
-      participantIdsJson: participantIdsJson ?? this.participantIdsJson,
+      participantIds: participantIds ?? this.participantIds,
       decodeProblem: decodeProblem ?? this.decodeProblem,
       rowid: rowid ?? this.rowid,
     );
@@ -5589,8 +5579,10 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
     if (reactionCount.present) {
       map['reaction_count'] = Variable<int>(reactionCount.value);
     }
-    if (participantIdsJson.present) {
-      map['participant_ids_json'] = Variable<String>(participantIdsJson.value);
+    if (participantIds.present) {
+      map['participant_ids_json'] = Variable<String>(
+        $PostsTable.$converterparticipantIdsn.toSql(participantIds.value),
+      );
     }
     if (decodeProblem.present) {
       map['decode_problem'] = Variable<String>(decodeProblem.value);
@@ -5624,7 +5616,7 @@ class PostsCompanion extends UpdateCompanion<PostRow> {
           ..write('metadataJson: $metadataJson, ')
           ..write('fileCount: $fileCount, ')
           ..write('reactionCount: $reactionCount, ')
-          ..write('participantIdsJson: $participantIdsJson, ')
+          ..write('participantIds: $participantIds, ')
           ..write('decodeProblem: $decodeProblem, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -7148,18 +7140,16 @@ class $ThreadsTable extends Threads with TableInfo<$ThreadsTable, ThreadRow> {
     ),
     defaultValue: const Constant(false),
   );
-  static const VerificationMeta _participantIdsJsonMeta =
-      const VerificationMeta('participantIdsJson');
   @override
-  late final GeneratedColumn<String> participantIdsJson =
-      GeneratedColumn<String>(
-        'participant_ids_json',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultValue: const Constant('[]'),
-      );
+  late final GeneratedColumnWithTypeConverter<List<String>, String>
+  participantIds = GeneratedColumn<String>(
+    'participant_ids_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  ).withConverter<List<String>>($ThreadsTable.$converterparticipantIds);
   @override
   List<GeneratedColumn> get $columns => [
     rootId,
@@ -7170,7 +7160,7 @@ class $ThreadsTable extends Threads with TableInfo<$ThreadsTable, ThreadRow> {
     unreadReplies,
     unreadMentions,
     isFollowing,
-    participantIdsJson,
+    participantIds,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7233,15 +7223,6 @@ class $ThreadsTable extends Threads with TableInfo<$ThreadsTable, ThreadRow> {
         ),
       );
     }
-    if (data.containsKey('participant_ids_json')) {
-      context.handle(
-        _participantIdsJsonMeta,
-        participantIdsJson.isAcceptableOrUnknown(
-          data['participant_ids_json']!,
-          _participantIdsJsonMeta,
-        ),
-      );
-    }
     return context;
   }
 
@@ -7287,10 +7268,12 @@ class $ThreadsTable extends Threads with TableInfo<$ThreadsTable, ThreadRow> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_following'],
       )!,
-      participantIdsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}participant_ids_json'],
-      )!,
+      participantIds: $ThreadsTable.$converterparticipantIds.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}participant_ids_json'],
+        )!,
+      ),
     );
   }
 
@@ -7305,6 +7288,8 @@ class $ThreadsTable extends Threads with TableInfo<$ThreadsTable, ThreadRow> {
   static TypeConverter<DateTime, int> $converterlastViewedAt = const Millis();
   static TypeConverter<DateTime?, int?> $converterlastViewedAtn =
       NullAwareTypeConverter.wrap($converterlastViewedAt);
+  static TypeConverter<List<String>, String> $converterparticipantIds =
+      const StringListColumn();
 }
 
 class ThreadRow extends DataClass implements Insertable<ThreadRow> {
@@ -7316,7 +7301,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
   final int unreadReplies;
   final int unreadMentions;
   final bool isFollowing;
-  final String participantIdsJson;
+  final List<String> participantIds;
   const ThreadRow({
     required this.rootId,
     required this.channelId,
@@ -7326,7 +7311,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
     required this.unreadReplies,
     required this.unreadMentions,
     required this.isFollowing,
-    required this.participantIdsJson,
+    required this.participantIds,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7347,7 +7332,11 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
     map['unread_replies'] = Variable<int>(unreadReplies);
     map['unread_mentions'] = Variable<int>(unreadMentions);
     map['is_following'] = Variable<bool>(isFollowing);
-    map['participant_ids_json'] = Variable<String>(participantIdsJson);
+    {
+      map['participant_ids_json'] = Variable<String>(
+        $ThreadsTable.$converterparticipantIds.toSql(participantIds),
+      );
+    }
     return map;
   }
 
@@ -7365,7 +7354,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
       unreadReplies: Value(unreadReplies),
       unreadMentions: Value(unreadMentions),
       isFollowing: Value(isFollowing),
-      participantIdsJson: Value(participantIdsJson),
+      participantIds: Value(participantIds),
     );
   }
 
@@ -7383,9 +7372,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
       unreadReplies: serializer.fromJson<int>(json['unreadReplies']),
       unreadMentions: serializer.fromJson<int>(json['unreadMentions']),
       isFollowing: serializer.fromJson<bool>(json['isFollowing']),
-      participantIdsJson: serializer.fromJson<String>(
-        json['participantIdsJson'],
-      ),
+      participantIds: serializer.fromJson<List<String>>(json['participantIds']),
     );
   }
   @override
@@ -7400,7 +7387,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
       'unreadReplies': serializer.toJson<int>(unreadReplies),
       'unreadMentions': serializer.toJson<int>(unreadMentions),
       'isFollowing': serializer.toJson<bool>(isFollowing),
-      'participantIdsJson': serializer.toJson<String>(participantIdsJson),
+      'participantIds': serializer.toJson<List<String>>(participantIds),
     };
   }
 
@@ -7413,7 +7400,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
     int? unreadReplies,
     int? unreadMentions,
     bool? isFollowing,
-    String? participantIdsJson,
+    List<String>? participantIds,
   }) => ThreadRow(
     rootId: rootId ?? this.rootId,
     channelId: channelId ?? this.channelId,
@@ -7423,7 +7410,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
     unreadReplies: unreadReplies ?? this.unreadReplies,
     unreadMentions: unreadMentions ?? this.unreadMentions,
     isFollowing: isFollowing ?? this.isFollowing,
-    participantIdsJson: participantIdsJson ?? this.participantIdsJson,
+    participantIds: participantIds ?? this.participantIds,
   );
   ThreadRow copyWithCompanion(ThreadsCompanion data) {
     return ThreadRow(
@@ -7447,9 +7434,9 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
       isFollowing: data.isFollowing.present
           ? data.isFollowing.value
           : this.isFollowing,
-      participantIdsJson: data.participantIdsJson.present
-          ? data.participantIdsJson.value
-          : this.participantIdsJson,
+      participantIds: data.participantIds.present
+          ? data.participantIds.value
+          : this.participantIds,
     );
   }
 
@@ -7464,7 +7451,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
           ..write('unreadReplies: $unreadReplies, ')
           ..write('unreadMentions: $unreadMentions, ')
           ..write('isFollowing: $isFollowing, ')
-          ..write('participantIdsJson: $participantIdsJson')
+          ..write('participantIds: $participantIds')
           ..write(')'))
         .toString();
   }
@@ -7479,7 +7466,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
     unreadReplies,
     unreadMentions,
     isFollowing,
-    participantIdsJson,
+    participantIds,
   );
   @override
   bool operator ==(Object other) =>
@@ -7493,7 +7480,7 @@ class ThreadRow extends DataClass implements Insertable<ThreadRow> {
           other.unreadReplies == this.unreadReplies &&
           other.unreadMentions == this.unreadMentions &&
           other.isFollowing == this.isFollowing &&
-          other.participantIdsJson == this.participantIdsJson);
+          other.participantIds == this.participantIds);
 }
 
 class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
@@ -7505,7 +7492,7 @@ class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
   final Value<int> unreadReplies;
   final Value<int> unreadMentions;
   final Value<bool> isFollowing;
-  final Value<String> participantIdsJson;
+  final Value<List<String>> participantIds;
   final Value<int> rowid;
   const ThreadsCompanion({
     this.rootId = const Value.absent(),
@@ -7516,7 +7503,7 @@ class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
     this.unreadReplies = const Value.absent(),
     this.unreadMentions = const Value.absent(),
     this.isFollowing = const Value.absent(),
-    this.participantIdsJson = const Value.absent(),
+    this.participantIds = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ThreadsCompanion.insert({
@@ -7528,7 +7515,7 @@ class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
     this.unreadReplies = const Value.absent(),
     this.unreadMentions = const Value.absent(),
     this.isFollowing = const Value.absent(),
-    this.participantIdsJson = const Value.absent(),
+    this.participantIds = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : rootId = Value(rootId),
        channelId = Value(channelId);
@@ -7541,7 +7528,7 @@ class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
     Expression<int>? unreadReplies,
     Expression<int>? unreadMentions,
     Expression<bool>? isFollowing,
-    Expression<String>? participantIdsJson,
+    Expression<String>? participantIds,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -7553,8 +7540,7 @@ class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
       if (unreadReplies != null) 'unread_replies': unreadReplies,
       if (unreadMentions != null) 'unread_mentions': unreadMentions,
       if (isFollowing != null) 'is_following': isFollowing,
-      if (participantIdsJson != null)
-        'participant_ids_json': participantIdsJson,
+      if (participantIds != null) 'participant_ids_json': participantIds,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -7568,7 +7554,7 @@ class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
     Value<int>? unreadReplies,
     Value<int>? unreadMentions,
     Value<bool>? isFollowing,
-    Value<String>? participantIdsJson,
+    Value<List<String>>? participantIds,
     Value<int>? rowid,
   }) {
     return ThreadsCompanion(
@@ -7580,7 +7566,7 @@ class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
       unreadReplies: unreadReplies ?? this.unreadReplies,
       unreadMentions: unreadMentions ?? this.unreadMentions,
       isFollowing: isFollowing ?? this.isFollowing,
-      participantIdsJson: participantIdsJson ?? this.participantIdsJson,
+      participantIds: participantIds ?? this.participantIds,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -7616,8 +7602,10 @@ class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
     if (isFollowing.present) {
       map['is_following'] = Variable<bool>(isFollowing.value);
     }
-    if (participantIdsJson.present) {
-      map['participant_ids_json'] = Variable<String>(participantIdsJson.value);
+    if (participantIds.present) {
+      map['participant_ids_json'] = Variable<String>(
+        $ThreadsTable.$converterparticipantIds.toSql(participantIds.value),
+      );
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -7636,7 +7624,7 @@ class ThreadsCompanion extends UpdateCompanion<ThreadRow> {
           ..write('unreadReplies: $unreadReplies, ')
           ..write('unreadMentions: $unreadMentions, ')
           ..write('isFollowing: $isFollowing, ')
-          ..write('participantIdsJson: $participantIdsJson, ')
+          ..write('participantIds: $participantIds, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8758,20 +8746,18 @@ class $RolesTable extends Roles with TableInfo<$RolesTable, RoleRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _permissionsJsonMeta = const VerificationMeta(
-    'permissionsJson',
-  );
   @override
-  late final GeneratedColumn<String> permissionsJson = GeneratedColumn<String>(
+  late final GeneratedColumnWithTypeConverter<List<String>, String>
+  permissions = GeneratedColumn<String>(
     'permissions_json',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
-  );
+  ).withConverter<List<String>>($RolesTable.$converterpermissions);
   @override
-  List<GeneratedColumn> get $columns => [name, permissionsJson];
+  List<GeneratedColumn> get $columns => [name, permissions];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -8792,15 +8778,6 @@ class $RolesTable extends Roles with TableInfo<$RolesTable, RoleRow> {
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
-    if (data.containsKey('permissions_json')) {
-      context.handle(
-        _permissionsJsonMeta,
-        permissionsJson.isAcceptableOrUnknown(
-          data['permissions_json']!,
-          _permissionsJsonMeta,
-        ),
-      );
-    }
     return context;
   }
 
@@ -8814,10 +8791,12 @@ class $RolesTable extends Roles with TableInfo<$RolesTable, RoleRow> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
-      permissionsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}permissions_json'],
-      )!,
+      permissions: $RolesTable.$converterpermissions.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}permissions_json'],
+        )!,
+      ),
     );
   }
 
@@ -8825,25 +8804,29 @@ class $RolesTable extends Roles with TableInfo<$RolesTable, RoleRow> {
   $RolesTable createAlias(String alias) {
     return $RolesTable(attachedDatabase, alias);
   }
+
+  static TypeConverter<List<String>, String> $converterpermissions =
+      const StringListColumn();
 }
 
 class RoleRow extends DataClass implements Insertable<RoleRow> {
   final String name;
-  final String permissionsJson;
-  const RoleRow({required this.name, required this.permissionsJson});
+  final List<String> permissions;
+  const RoleRow({required this.name, required this.permissions});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['name'] = Variable<String>(name);
-    map['permissions_json'] = Variable<String>(permissionsJson);
+    {
+      map['permissions_json'] = Variable<String>(
+        $RolesTable.$converterpermissions.toSql(permissions),
+      );
+    }
     return map;
   }
 
   RolesCompanion toCompanion(bool nullToAbsent) {
-    return RolesCompanion(
-      name: Value(name),
-      permissionsJson: Value(permissionsJson),
-    );
+    return RolesCompanion(name: Value(name), permissions: Value(permissions));
   }
 
   factory RoleRow.fromJson(
@@ -8853,7 +8836,7 @@ class RoleRow extends DataClass implements Insertable<RoleRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return RoleRow(
       name: serializer.fromJson<String>(json['name']),
-      permissionsJson: serializer.fromJson<String>(json['permissionsJson']),
+      permissions: serializer.fromJson<List<String>>(json['permissions']),
     );
   }
   @override
@@ -8861,20 +8844,20 @@ class RoleRow extends DataClass implements Insertable<RoleRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'name': serializer.toJson<String>(name),
-      'permissionsJson': serializer.toJson<String>(permissionsJson),
+      'permissions': serializer.toJson<List<String>>(permissions),
     };
   }
 
-  RoleRow copyWith({String? name, String? permissionsJson}) => RoleRow(
+  RoleRow copyWith({String? name, List<String>? permissions}) => RoleRow(
     name: name ?? this.name,
-    permissionsJson: permissionsJson ?? this.permissionsJson,
+    permissions: permissions ?? this.permissions,
   );
   RoleRow copyWithCompanion(RolesCompanion data) {
     return RoleRow(
       name: data.name.present ? data.name.value : this.name,
-      permissionsJson: data.permissionsJson.present
-          ? data.permissionsJson.value
-          : this.permissionsJson,
+      permissions: data.permissions.present
+          ? data.permissions.value
+          : this.permissions,
     );
   }
 
@@ -8882,55 +8865,55 @@ class RoleRow extends DataClass implements Insertable<RoleRow> {
   String toString() {
     return (StringBuffer('RoleRow(')
           ..write('name: $name, ')
-          ..write('permissionsJson: $permissionsJson')
+          ..write('permissions: $permissions')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(name, permissionsJson);
+  int get hashCode => Object.hash(name, permissions);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RoleRow &&
           other.name == this.name &&
-          other.permissionsJson == this.permissionsJson);
+          other.permissions == this.permissions);
 }
 
 class RolesCompanion extends UpdateCompanion<RoleRow> {
   final Value<String> name;
-  final Value<String> permissionsJson;
+  final Value<List<String>> permissions;
   final Value<int> rowid;
   const RolesCompanion({
     this.name = const Value.absent(),
-    this.permissionsJson = const Value.absent(),
+    this.permissions = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   RolesCompanion.insert({
     required String name,
-    this.permissionsJson = const Value.absent(),
+    this.permissions = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name);
   static Insertable<RoleRow> custom({
     Expression<String>? name,
-    Expression<String>? permissionsJson,
+    Expression<String>? permissions,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (name != null) 'name': name,
-      if (permissionsJson != null) 'permissions_json': permissionsJson,
+      if (permissions != null) 'permissions_json': permissions,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
   RolesCompanion copyWith({
     Value<String>? name,
-    Value<String>? permissionsJson,
+    Value<List<String>>? permissions,
     Value<int>? rowid,
   }) {
     return RolesCompanion(
       name: name ?? this.name,
-      permissionsJson: permissionsJson ?? this.permissionsJson,
+      permissions: permissions ?? this.permissions,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -8941,8 +8924,10 @@ class RolesCompanion extends UpdateCompanion<RoleRow> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
-    if (permissionsJson.present) {
-      map['permissions_json'] = Variable<String>(permissionsJson.value);
+    if (permissions.present) {
+      map['permissions_json'] = Variable<String>(
+        $RolesTable.$converterpermissions.toSql(permissions.value),
+      );
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -8954,7 +8939,7 @@ class RolesCompanion extends UpdateCompanion<RoleRow> {
   String toString() {
     return (StringBuffer('RolesCompanion(')
           ..write('name: $name, ')
-          ..write('permissionsJson: $permissionsJson, ')
+          ..write('permissions: $permissions, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -9021,29 +9006,25 @@ class $DraftsTable extends Drafts with TableInfo<$DraftsTable, DraftRow> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _filesJsonMeta = const VerificationMeta(
-    'filesJson',
-  );
   @override
-  late final GeneratedColumn<String> filesJson = GeneratedColumn<String>(
-    'files_json',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('[]'),
-  );
-  static const VerificationMeta _priorityJsonMeta = const VerificationMeta(
-    'priorityJson',
-  );
+  late final GeneratedColumnWithTypeConverter<List<FileInfo>, String> files =
+      GeneratedColumn<String>(
+        'files_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      ).withConverter<List<FileInfo>>($DraftsTable.$converterfiles);
   @override
-  late final GeneratedColumn<String> priorityJson = GeneratedColumn<String>(
-    'priority_json',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
+  late final GeneratedColumnWithTypeConverter<PostPriority?, String> priority =
+      GeneratedColumn<String>(
+        'priority_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<PostPriority?>($DraftsTable.$converterpriority);
   @override
   late final GeneratedColumnWithTypeConverter<DateTime, int> updatedAt =
       GeneratedColumn<int>(
@@ -9060,8 +9041,8 @@ class $DraftsTable extends Drafts with TableInfo<$DraftsTable, DraftRow> {
     message,
     selectionBase,
     selectionExtent,
-    filesJson,
-    priorityJson,
+    files,
+    priority,
     updatedAt,
   ];
   @override
@@ -9114,21 +9095,6 @@ class $DraftsTable extends Drafts with TableInfo<$DraftsTable, DraftRow> {
         ),
       );
     }
-    if (data.containsKey('files_json')) {
-      context.handle(
-        _filesJsonMeta,
-        filesJson.isAcceptableOrUnknown(data['files_json']!, _filesJsonMeta),
-      );
-    }
-    if (data.containsKey('priority_json')) {
-      context.handle(
-        _priorityJsonMeta,
-        priorityJson.isAcceptableOrUnknown(
-          data['priority_json']!,
-          _priorityJsonMeta,
-        ),
-      );
-    }
     return context;
   }
 
@@ -9158,13 +9124,17 @@ class $DraftsTable extends Drafts with TableInfo<$DraftsTable, DraftRow> {
         DriftSqlType.int,
         data['${effectivePrefix}selection_extent'],
       ),
-      filesJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}files_json'],
-      )!,
-      priorityJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}priority_json'],
+      files: $DraftsTable.$converterfiles.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}files_json'],
+        )!,
+      ),
+      priority: $DraftsTable.$converterpriority.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}priority_json'],
+        ),
       ),
       updatedAt: $DraftsTable.$converterupdatedAt.fromSql(
         attachedDatabase.typeMapping.read(
@@ -9180,6 +9150,10 @@ class $DraftsTable extends Drafts with TableInfo<$DraftsTable, DraftRow> {
     return $DraftsTable(attachedDatabase, alias);
   }
 
+  static TypeConverter<List<FileInfo>, String> $converterfiles =
+      const FileInfoListColumn();
+  static TypeConverter<PostPriority?, String?> $converterpriority =
+      const PostPriorityColumn();
   static TypeConverter<DateTime, int> $converterupdatedAt = const Millis();
 }
 
@@ -9189,8 +9163,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
   final String message;
   final int? selectionBase;
   final int? selectionExtent;
-  final String filesJson;
-  final String? priorityJson;
+  final List<FileInfo> files;
+  final PostPriority? priority;
   final DateTime updatedAt;
   const DraftRow({
     required this.channelId,
@@ -9198,8 +9172,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
     required this.message,
     this.selectionBase,
     this.selectionExtent,
-    required this.filesJson,
-    this.priorityJson,
+    required this.files,
+    this.priority,
     required this.updatedAt,
   });
   @override
@@ -9214,9 +9188,15 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
     if (!nullToAbsent || selectionExtent != null) {
       map['selection_extent'] = Variable<int>(selectionExtent);
     }
-    map['files_json'] = Variable<String>(filesJson);
-    if (!nullToAbsent || priorityJson != null) {
-      map['priority_json'] = Variable<String>(priorityJson);
+    {
+      map['files_json'] = Variable<String>(
+        $DraftsTable.$converterfiles.toSql(files),
+      );
+    }
+    if (!nullToAbsent || priority != null) {
+      map['priority_json'] = Variable<String>(
+        $DraftsTable.$converterpriority.toSql(priority),
+      );
     }
     {
       map['updated_at'] = Variable<int>(
@@ -9237,10 +9217,10 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
       selectionExtent: selectionExtent == null && nullToAbsent
           ? const Value.absent()
           : Value(selectionExtent),
-      filesJson: Value(filesJson),
-      priorityJson: priorityJson == null && nullToAbsent
+      files: Value(files),
+      priority: priority == null && nullToAbsent
           ? const Value.absent()
-          : Value(priorityJson),
+          : Value(priority),
       updatedAt: Value(updatedAt),
     );
   }
@@ -9256,8 +9236,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
       message: serializer.fromJson<String>(json['message']),
       selectionBase: serializer.fromJson<int?>(json['selectionBase']),
       selectionExtent: serializer.fromJson<int?>(json['selectionExtent']),
-      filesJson: serializer.fromJson<String>(json['filesJson']),
-      priorityJson: serializer.fromJson<String?>(json['priorityJson']),
+      files: serializer.fromJson<List<FileInfo>>(json['files']),
+      priority: serializer.fromJson<PostPriority?>(json['priority']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -9270,8 +9250,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
       'message': serializer.toJson<String>(message),
       'selectionBase': serializer.toJson<int?>(selectionBase),
       'selectionExtent': serializer.toJson<int?>(selectionExtent),
-      'filesJson': serializer.toJson<String>(filesJson),
-      'priorityJson': serializer.toJson<String?>(priorityJson),
+      'files': serializer.toJson<List<FileInfo>>(files),
+      'priority': serializer.toJson<PostPriority?>(priority),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -9282,8 +9262,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
     String? message,
     Value<int?> selectionBase = const Value.absent(),
     Value<int?> selectionExtent = const Value.absent(),
-    String? filesJson,
-    Value<String?> priorityJson = const Value.absent(),
+    List<FileInfo>? files,
+    Value<PostPriority?> priority = const Value.absent(),
     DateTime? updatedAt,
   }) => DraftRow(
     channelId: channelId ?? this.channelId,
@@ -9295,8 +9275,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
     selectionExtent: selectionExtent.present
         ? selectionExtent.value
         : this.selectionExtent,
-    filesJson: filesJson ?? this.filesJson,
-    priorityJson: priorityJson.present ? priorityJson.value : this.priorityJson,
+    files: files ?? this.files,
+    priority: priority.present ? priority.value : this.priority,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   DraftRow copyWithCompanion(DraftsCompanion data) {
@@ -9310,10 +9290,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
       selectionExtent: data.selectionExtent.present
           ? data.selectionExtent.value
           : this.selectionExtent,
-      filesJson: data.filesJson.present ? data.filesJson.value : this.filesJson,
-      priorityJson: data.priorityJson.present
-          ? data.priorityJson.value
-          : this.priorityJson,
+      files: data.files.present ? data.files.value : this.files,
+      priority: data.priority.present ? data.priority.value : this.priority,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -9326,8 +9304,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
           ..write('message: $message, ')
           ..write('selectionBase: $selectionBase, ')
           ..write('selectionExtent: $selectionExtent, ')
-          ..write('filesJson: $filesJson, ')
-          ..write('priorityJson: $priorityJson, ')
+          ..write('files: $files, ')
+          ..write('priority: $priority, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -9340,8 +9318,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
     message,
     selectionBase,
     selectionExtent,
-    filesJson,
-    priorityJson,
+    files,
+    priority,
     updatedAt,
   );
   @override
@@ -9353,8 +9331,8 @@ class DraftRow extends DataClass implements Insertable<DraftRow> {
           other.message == this.message &&
           other.selectionBase == this.selectionBase &&
           other.selectionExtent == this.selectionExtent &&
-          other.filesJson == this.filesJson &&
-          other.priorityJson == this.priorityJson &&
+          other.files == this.files &&
+          other.priority == this.priority &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -9364,8 +9342,8 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
   final Value<String> message;
   final Value<int?> selectionBase;
   final Value<int?> selectionExtent;
-  final Value<String> filesJson;
-  final Value<String?> priorityJson;
+  final Value<List<FileInfo>> files;
+  final Value<PostPriority?> priority;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const DraftsCompanion({
@@ -9374,8 +9352,8 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
     this.message = const Value.absent(),
     this.selectionBase = const Value.absent(),
     this.selectionExtent = const Value.absent(),
-    this.filesJson = const Value.absent(),
-    this.priorityJson = const Value.absent(),
+    this.files = const Value.absent(),
+    this.priority = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -9385,8 +9363,8 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
     this.message = const Value.absent(),
     this.selectionBase = const Value.absent(),
     this.selectionExtent = const Value.absent(),
-    this.filesJson = const Value.absent(),
-    this.priorityJson = const Value.absent(),
+    this.files = const Value.absent(),
+    this.priority = const Value.absent(),
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : channelId = Value(channelId),
@@ -9397,8 +9375,8 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
     Expression<String>? message,
     Expression<int>? selectionBase,
     Expression<int>? selectionExtent,
-    Expression<String>? filesJson,
-    Expression<String>? priorityJson,
+    Expression<String>? files,
+    Expression<String>? priority,
     Expression<int>? updatedAt,
     Expression<int>? rowid,
   }) {
@@ -9408,8 +9386,8 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
       if (message != null) 'message': message,
       if (selectionBase != null) 'selection_base': selectionBase,
       if (selectionExtent != null) 'selection_extent': selectionExtent,
-      if (filesJson != null) 'files_json': filesJson,
-      if (priorityJson != null) 'priority_json': priorityJson,
+      if (files != null) 'files_json': files,
+      if (priority != null) 'priority_json': priority,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -9421,8 +9399,8 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
     Value<String>? message,
     Value<int?>? selectionBase,
     Value<int?>? selectionExtent,
-    Value<String>? filesJson,
-    Value<String?>? priorityJson,
+    Value<List<FileInfo>>? files,
+    Value<PostPriority?>? priority,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
@@ -9432,8 +9410,8 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
       message: message ?? this.message,
       selectionBase: selectionBase ?? this.selectionBase,
       selectionExtent: selectionExtent ?? this.selectionExtent,
-      filesJson: filesJson ?? this.filesJson,
-      priorityJson: priorityJson ?? this.priorityJson,
+      files: files ?? this.files,
+      priority: priority ?? this.priority,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -9457,11 +9435,15 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
     if (selectionExtent.present) {
       map['selection_extent'] = Variable<int>(selectionExtent.value);
     }
-    if (filesJson.present) {
-      map['files_json'] = Variable<String>(filesJson.value);
+    if (files.present) {
+      map['files_json'] = Variable<String>(
+        $DraftsTable.$converterfiles.toSql(files.value),
+      );
     }
-    if (priorityJson.present) {
-      map['priority_json'] = Variable<String>(priorityJson.value);
+    if (priority.present) {
+      map['priority_json'] = Variable<String>(
+        $DraftsTable.$converterpriority.toSql(priority.value),
+      );
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(
@@ -9482,8 +9464,8 @@ class DraftsCompanion extends UpdateCompanion<DraftRow> {
           ..write('message: $message, ')
           ..write('selectionBase: $selectionBase, ')
           ..write('selectionExtent: $selectionExtent, ')
-          ..write('filesJson: $filesJson, ')
-          ..write('priorityJson: $priorityJson, ')
+          ..write('files: $files, ')
+          ..write('priority: $priority, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -11556,8 +11538,8 @@ typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
   Value<DateTime?> updateAt,
   Value<DateTime?> deleteAt,
   Value<int?> lastPictureUpdate,
-  Value<String?> timezoneJson,
-  Value<String?> propsJson,
+  Value<Timezone?> timezone,
+  Value<Map<String, Object?>?> props,
   Value<String> status,
   Value<DateTime?> statusUpdatedAt,
   Value<int> rowid,
@@ -11575,8 +11557,8 @@ typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
   Value<DateTime?> updateAt,
   Value<DateTime?> deleteAt,
   Value<int?> lastPictureUpdate,
-  Value<String?> timezoneJson,
-  Value<String?> propsJson,
+  Value<Timezone?> timezone,
+  Value<Map<String, Object?>?> props,
   Value<String> status,
   Value<DateTime?> statusUpdatedAt,
   Value<int> rowid,
@@ -11653,14 +11635,20 @@ class $$UsersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get timezoneJson => $composableBuilder(
-    column: $table.timezoneJson,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<Timezone?, Timezone, String> get timezone =>
+      $composableBuilder(
+        column: $table.timezone,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
-  ColumnFilters<String> get propsJson => $composableBuilder(
-    column: $table.propsJson,
-    builder: (column) => ColumnFilters(column),
+  ColumnWithTypeConverterFilters<
+    Map<String, Object?>?,
+    Map<String, Object>?,
+    String
+  >
+  get props => $composableBuilder(
+    column: $table.props,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<String> get status => $composableBuilder(
@@ -11744,13 +11732,13 @@ class $$UsersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get timezoneJson => $composableBuilder(
-    column: $table.timezoneJson,
+  ColumnOrderings<String> get timezone => $composableBuilder(
+    column: $table.timezone,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get propsJson => $composableBuilder(
-    column: $table.propsJson,
+  ColumnOrderings<String> get props => $composableBuilder(
+    column: $table.props,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -11812,13 +11800,11 @@ class $$UsersTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get timezoneJson => $composableBuilder(
-    column: $table.timezoneJson,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<Timezone?, String> get timezone =>
+      $composableBuilder(column: $table.timezone, builder: (column) => column);
 
-  GeneratedColumn<String> get propsJson =>
-      $composableBuilder(column: $table.propsJson, builder: (column) => column);
+  GeneratedColumnWithTypeConverter<Map<String, Object?>?, String> get props =>
+      $composableBuilder(column: $table.props, builder: (column) => column);
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
@@ -11870,8 +11856,8 @@ class $$UsersTableTableManager
                 Value<DateTime?> updateAt = const Value.absent(),
                 Value<DateTime?> deleteAt = const Value.absent(),
                 Value<int?> lastPictureUpdate = const Value.absent(),
-                Value<String?> timezoneJson = const Value.absent(),
-                Value<String?> propsJson = const Value.absent(),
+                Value<Timezone?> timezone = const Value.absent(),
+                Value<Map<String, Object?>?> props = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime?> statusUpdatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -11888,8 +11874,8 @@ class $$UsersTableTableManager
                 updateAt: updateAt,
                 deleteAt: deleteAt,
                 lastPictureUpdate: lastPictureUpdate,
-                timezoneJson: timezoneJson,
-                propsJson: propsJson,
+                timezone: timezone,
+                props: props,
                 status: status,
                 statusUpdatedAt: statusUpdatedAt,
                 rowid: rowid,
@@ -11908,8 +11894,8 @@ class $$UsersTableTableManager
                 Value<DateTime?> updateAt = const Value.absent(),
                 Value<DateTime?> deleteAt = const Value.absent(),
                 Value<int?> lastPictureUpdate = const Value.absent(),
-                Value<String?> timezoneJson = const Value.absent(),
-                Value<String?> propsJson = const Value.absent(),
+                Value<Timezone?> timezone = const Value.absent(),
+                Value<Map<String, Object?>?> props = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime?> statusUpdatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -11926,8 +11912,8 @@ class $$UsersTableTableManager
                 updateAt: updateAt,
                 deleteAt: deleteAt,
                 lastPictureUpdate: lastPictureUpdate,
-                timezoneJson: timezoneJson,
-                propsJson: propsJson,
+                timezone: timezone,
+                props: props,
                 status: status,
                 statusUpdatedAt: statusUpdatedAt,
                 rowid: rowid,
@@ -12943,7 +12929,7 @@ typedef $$MyChannelsTableCreateCompanionBuilder = MyChannelsCompanion Function({
   Value<int> mentionCountRoot,
   Value<int> urgentMentionCount,
   Value<bool> manuallyUnread,
-  Value<String?> notifyPropsJson,
+  Value<ChannelNotifyProps?> notifyProps,
   Value<DateTime?> lastUpdateAt,
   Value<DateTime?> postsFetchedAt,
   Value<int> rowid,
@@ -12958,7 +12944,7 @@ typedef $$MyChannelsTableUpdateCompanionBuilder = MyChannelsCompanion Function({
   Value<int> mentionCountRoot,
   Value<int> urgentMentionCount,
   Value<bool> manuallyUnread,
-  Value<String?> notifyPropsJson,
+  Value<ChannelNotifyProps?> notifyProps,
   Value<DateTime?> lastUpdateAt,
   Value<DateTime?> postsFetchedAt,
   Value<int> rowid,
@@ -13019,9 +13005,14 @@ class $$MyChannelsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get notifyPropsJson => $composableBuilder(
-    column: $table.notifyPropsJson,
-    builder: (column) => ColumnFilters(column),
+  ColumnWithTypeConverterFilters<
+    ChannelNotifyProps?,
+    ChannelNotifyProps,
+    String
+  >
+  get notifyProps => $composableBuilder(
+    column: $table.notifyProps,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnWithTypeConverterFilters<DateTime?, DateTime, int> get lastUpdateAt =>
@@ -13091,8 +13082,8 @@ class $$MyChannelsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get notifyPropsJson => $composableBuilder(
-    column: $table.notifyPropsJson,
+  ColumnOrderings<String> get notifyProps => $composableBuilder(
+    column: $table.notifyProps,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -13156,8 +13147,9 @@ class $$MyChannelsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get notifyPropsJson => $composableBuilder(
-    column: $table.notifyPropsJson,
+  GeneratedColumnWithTypeConverter<ChannelNotifyProps?, String>
+  get notifyProps => $composableBuilder(
+    column: $table.notifyProps,
     builder: (column) => column,
   );
 
@@ -13214,7 +13206,7 @@ class $$MyChannelsTableTableManager
                 Value<int> mentionCountRoot = const Value.absent(),
                 Value<int> urgentMentionCount = const Value.absent(),
                 Value<bool> manuallyUnread = const Value.absent(),
-                Value<String?> notifyPropsJson = const Value.absent(),
+                Value<ChannelNotifyProps?> notifyProps = const Value.absent(),
                 Value<DateTime?> lastUpdateAt = const Value.absent(),
                 Value<DateTime?> postsFetchedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -13228,7 +13220,7 @@ class $$MyChannelsTableTableManager
                 mentionCountRoot: mentionCountRoot,
                 urgentMentionCount: urgentMentionCount,
                 manuallyUnread: manuallyUnread,
-                notifyPropsJson: notifyPropsJson,
+                notifyProps: notifyProps,
                 lastUpdateAt: lastUpdateAt,
                 postsFetchedAt: postsFetchedAt,
                 rowid: rowid,
@@ -13244,7 +13236,7 @@ class $$MyChannelsTableTableManager
                 Value<int> mentionCountRoot = const Value.absent(),
                 Value<int> urgentMentionCount = const Value.absent(),
                 Value<bool> manuallyUnread = const Value.absent(),
-                Value<String?> notifyPropsJson = const Value.absent(),
+                Value<ChannelNotifyProps?> notifyProps = const Value.absent(),
                 Value<DateTime?> lastUpdateAt = const Value.absent(),
                 Value<DateTime?> postsFetchedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -13258,7 +13250,7 @@ class $$MyChannelsTableTableManager
                 mentionCountRoot: mentionCountRoot,
                 urgentMentionCount: urgentMentionCount,
                 manuallyUnread: manuallyUnread,
-                notifyPropsJson: notifyPropsJson,
+                notifyProps: notifyProps,
                 lastUpdateAt: lastUpdateAt,
                 postsFetchedAt: postsFetchedAt,
                 rowid: rowid,
@@ -13769,7 +13761,7 @@ typedef $$PostsTableCreateCompanionBuilder = PostsCompanion Function({
   Value<String?> metadataJson,
   Value<int> fileCount,
   Value<int> reactionCount,
-  Value<String?> participantIdsJson,
+  Value<List<String>?> participantIds,
   Value<String?> decodeProblem,
   Value<int> rowid,
 });
@@ -13794,7 +13786,7 @@ typedef $$PostsTableUpdateCompanionBuilder = PostsCompanion Function({
   Value<String?> metadataJson,
   Value<int> fileCount,
   Value<int> reactionCount,
-  Value<String?> participantIdsJson,
+  Value<List<String>?> participantIds,
   Value<String?> decodeProblem,
   Value<int> rowid,
 });
@@ -13913,9 +13905,10 @@ class $$PostsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get participantIdsJson => $composableBuilder(
-    column: $table.participantIdsJson,
-    builder: (column) => ColumnFilters(column),
+  ColumnWithTypeConverterFilters<List<String>?, List<String>, String>
+  get participantIds => $composableBuilder(
+    column: $table.participantIds,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<String> get decodeProblem => $composableBuilder(
@@ -14033,8 +14026,8 @@ class $$PostsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get participantIdsJson => $composableBuilder(
-    column: $table.participantIdsJson,
+  ColumnOrderings<String> get participantIds => $composableBuilder(
+    column: $table.participantIds,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -14126,10 +14119,11 @@ class $$PostsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get participantIdsJson => $composableBuilder(
-    column: $table.participantIdsJson,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<List<String>?, String> get participantIds =>
+      $composableBuilder(
+        column: $table.participantIds,
+        builder: (column) => column,
+      );
 
   GeneratedColumn<String> get decodeProblem => $composableBuilder(
     column: $table.decodeProblem,
@@ -14185,7 +14179,7 @@ class $$PostsTableTableManager
                 Value<String?> metadataJson = const Value.absent(),
                 Value<int> fileCount = const Value.absent(),
                 Value<int> reactionCount = const Value.absent(),
-                Value<String?> participantIdsJson = const Value.absent(),
+                Value<List<String>?> participantIds = const Value.absent(),
                 Value<String?> decodeProblem = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PostsCompanion(
@@ -14209,7 +14203,7 @@ class $$PostsTableTableManager
                 metadataJson: metadataJson,
                 fileCount: fileCount,
                 reactionCount: reactionCount,
-                participantIdsJson: participantIdsJson,
+                participantIds: participantIds,
                 decodeProblem: decodeProblem,
                 rowid: rowid,
               ),
@@ -14235,7 +14229,7 @@ class $$PostsTableTableManager
                 Value<String?> metadataJson = const Value.absent(),
                 Value<int> fileCount = const Value.absent(),
                 Value<int> reactionCount = const Value.absent(),
-                Value<String?> participantIdsJson = const Value.absent(),
+                Value<List<String>?> participantIds = const Value.absent(),
                 Value<String?> decodeProblem = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PostsCompanion.insert(
@@ -14259,7 +14253,7 @@ class $$PostsTableTableManager
                 metadataJson: metadataJson,
                 fileCount: fileCount,
                 reactionCount: reactionCount,
-                participantIdsJson: participantIdsJson,
+                participantIds: participantIds,
                 decodeProblem: decodeProblem,
                 rowid: rowid,
               ),
@@ -15055,7 +15049,7 @@ typedef $$ThreadsTableCreateCompanionBuilder = ThreadsCompanion Function({
   Value<int> unreadReplies,
   Value<int> unreadMentions,
   Value<bool> isFollowing,
-  Value<String> participantIdsJson,
+  Value<List<String>> participantIds,
   Value<int> rowid,
 });
 typedef $$ThreadsTableUpdateCompanionBuilder = ThreadsCompanion Function({
@@ -15067,7 +15061,7 @@ typedef $$ThreadsTableUpdateCompanionBuilder = ThreadsCompanion Function({
   Value<int> unreadReplies,
   Value<int> unreadMentions,
   Value<bool> isFollowing,
-  Value<String> participantIdsJson,
+  Value<List<String>> participantIds,
   Value<int> rowid,
 });
 
@@ -15122,9 +15116,10 @@ class $$ThreadsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get participantIdsJson => $composableBuilder(
-    column: $table.participantIdsJson,
-    builder: (column) => ColumnFilters(column),
+  ColumnWithTypeConverterFilters<List<String>, List<String>, String>
+  get participantIds => $composableBuilder(
+    column: $table.participantIds,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 }
 
@@ -15177,8 +15172,8 @@ class $$ThreadsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get participantIdsJson => $composableBuilder(
-    column: $table.participantIdsJson,
+  ColumnOrderings<String> get participantIds => $composableBuilder(
+    column: $table.participantIds,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -15230,10 +15225,11 @@ class $$ThreadsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get participantIdsJson => $composableBuilder(
-    column: $table.participantIdsJson,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<List<String>, String> get participantIds =>
+      $composableBuilder(
+        column: $table.participantIds,
+        builder: (column) => column,
+      );
 }
 
 class $$ThreadsTableTableManager
@@ -15275,7 +15271,7 @@ class $$ThreadsTableTableManager
                 Value<int> unreadReplies = const Value.absent(),
                 Value<int> unreadMentions = const Value.absent(),
                 Value<bool> isFollowing = const Value.absent(),
-                Value<String> participantIdsJson = const Value.absent(),
+                Value<List<String>> participantIds = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ThreadsCompanion(
                 rootId: rootId,
@@ -15286,7 +15282,7 @@ class $$ThreadsTableTableManager
                 unreadReplies: unreadReplies,
                 unreadMentions: unreadMentions,
                 isFollowing: isFollowing,
-                participantIdsJson: participantIdsJson,
+                participantIds: participantIds,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -15299,7 +15295,7 @@ class $$ThreadsTableTableManager
                 Value<int> unreadReplies = const Value.absent(),
                 Value<int> unreadMentions = const Value.absent(),
                 Value<bool> isFollowing = const Value.absent(),
-                Value<String> participantIdsJson = const Value.absent(),
+                Value<List<String>> participantIds = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ThreadsCompanion.insert(
                 rootId: rootId,
@@ -15310,7 +15306,7 @@ class $$ThreadsTableTableManager
                 unreadReplies: unreadReplies,
                 unreadMentions: unreadMentions,
                 isFollowing: isFollowing,
-                participantIdsJson: participantIdsJson,
+                participantIds: participantIds,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -16051,12 +16047,12 @@ typedef $$PreferencesTableProcessedTableManager =
     >;
 typedef $$RolesTableCreateCompanionBuilder = RolesCompanion Function({
   required String name,
-  Value<String> permissionsJson,
+  Value<List<String>> permissions,
   Value<int> rowid,
 });
 typedef $$RolesTableUpdateCompanionBuilder = RolesCompanion Function({
   Value<String> name,
-  Value<String> permissionsJson,
+  Value<List<String>> permissions,
   Value<int> rowid,
 });
 
@@ -16074,9 +16070,10 @@ class $$RolesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get permissionsJson => $composableBuilder(
-    column: $table.permissionsJson,
-    builder: (column) => ColumnFilters(column),
+  ColumnWithTypeConverterFilters<List<String>, List<String>, String>
+  get permissions => $composableBuilder(
+    column: $table.permissions,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 }
 
@@ -16094,8 +16091,8 @@ class $$RolesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get permissionsJson => $composableBuilder(
-    column: $table.permissionsJson,
+  ColumnOrderings<String> get permissions => $composableBuilder(
+    column: $table.permissions,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -16112,10 +16109,11 @@ class $$RolesTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumn<String> get permissionsJson => $composableBuilder(
-    column: $table.permissionsJson,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<List<String>, String> get permissions =>
+      $composableBuilder(
+        column: $table.permissions,
+        builder: (column) => column,
+      );
 }
 
 class $$RolesTableTableManager
@@ -16147,21 +16145,21 @@ class $$RolesTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> name = const Value.absent(),
-                Value<String> permissionsJson = const Value.absent(),
+                Value<List<String>> permissions = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RolesCompanion(
                 name: name,
-                permissionsJson: permissionsJson,
+                permissions: permissions,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String name,
-                Value<String> permissionsJson = const Value.absent(),
+                Value<List<String>> permissions = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RolesCompanion.insert(
                 name: name,
-                permissionsJson: permissionsJson,
+                permissions: permissions,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -16201,8 +16199,8 @@ typedef $$DraftsTableCreateCompanionBuilder = DraftsCompanion Function({
   Value<String> message,
   Value<int?> selectionBase,
   Value<int?> selectionExtent,
-  Value<String> filesJson,
-  Value<String?> priorityJson,
+  Value<List<FileInfo>> files,
+  Value<PostPriority?> priority,
   required DateTime updatedAt,
   Value<int> rowid,
 });
@@ -16212,8 +16210,8 @@ typedef $$DraftsTableUpdateCompanionBuilder = DraftsCompanion Function({
   Value<String> message,
   Value<int?> selectionBase,
   Value<int?> selectionExtent,
-  Value<String> filesJson,
-  Value<String?> priorityJson,
+  Value<List<FileInfo>> files,
+  Value<PostPriority?> priority,
   Value<DateTime> updatedAt,
   Value<int> rowid,
 });
@@ -16252,14 +16250,16 @@ class $$DraftsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get filesJson => $composableBuilder(
-    column: $table.filesJson,
-    builder: (column) => ColumnFilters(column),
+  ColumnWithTypeConverterFilters<List<FileInfo>, List<FileInfo>, String>
+  get files => $composableBuilder(
+    column: $table.files,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
-  ColumnFilters<String> get priorityJson => $composableBuilder(
-    column: $table.priorityJson,
-    builder: (column) => ColumnFilters(column),
+  ColumnWithTypeConverterFilters<PostPriority?, PostPriority, String>
+  get priority => $composableBuilder(
+    column: $table.priority,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnWithTypeConverterFilters<DateTime, DateTime, int> get updatedAt =>
@@ -16303,13 +16303,13 @@ class $$DraftsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get filesJson => $composableBuilder(
-    column: $table.filesJson,
+  ColumnOrderings<String> get files => $composableBuilder(
+    column: $table.files,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get priorityJson => $composableBuilder(
-    column: $table.priorityJson,
+  ColumnOrderings<String> get priority => $composableBuilder(
+    column: $table.priority,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -16347,13 +16347,11 @@ class $$DraftsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get filesJson =>
-      $composableBuilder(column: $table.filesJson, builder: (column) => column);
+  GeneratedColumnWithTypeConverter<List<FileInfo>, String> get files =>
+      $composableBuilder(column: $table.files, builder: (column) => column);
 
-  GeneratedColumn<String> get priorityJson => $composableBuilder(
-    column: $table.priorityJson,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<PostPriority?, String> get priority =>
+      $composableBuilder(column: $table.priority, builder: (column) => column);
 
   GeneratedColumnWithTypeConverter<DateTime, int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -16392,8 +16390,8 @@ class $$DraftsTableTableManager
                 Value<String> message = const Value.absent(),
                 Value<int?> selectionBase = const Value.absent(),
                 Value<int?> selectionExtent = const Value.absent(),
-                Value<String> filesJson = const Value.absent(),
-                Value<String?> priorityJson = const Value.absent(),
+                Value<List<FileInfo>> files = const Value.absent(),
+                Value<PostPriority?> priority = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DraftsCompanion(
@@ -16402,8 +16400,8 @@ class $$DraftsTableTableManager
                 message: message,
                 selectionBase: selectionBase,
                 selectionExtent: selectionExtent,
-                filesJson: filesJson,
-                priorityJson: priorityJson,
+                files: files,
+                priority: priority,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -16414,8 +16412,8 @@ class $$DraftsTableTableManager
                 Value<String> message = const Value.absent(),
                 Value<int?> selectionBase = const Value.absent(),
                 Value<int?> selectionExtent = const Value.absent(),
-                Value<String> filesJson = const Value.absent(),
-                Value<String?> priorityJson = const Value.absent(),
+                Value<List<FileInfo>> files = const Value.absent(),
+                Value<PostPriority?> priority = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => DraftsCompanion.insert(
@@ -16424,8 +16422,8 @@ class $$DraftsTableTableManager
                 message: message,
                 selectionBase: selectionBase,
                 selectionExtent: selectionExtent,
-                filesJson: filesJson,
-                priorityJson: priorityJson,
+                files: files,
+                priority: priority,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),

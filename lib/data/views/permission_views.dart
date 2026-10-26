@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -14,10 +12,7 @@ class PermissionViews {
   /// Each stored role's permissions by role name.
   Future<Map<String, Set<String>>> roleGrants() async => {
     for (final r in await db.select(db.roles).get())
-      r.name: {
-        for (final p in jsonDecode(r.permissionsJson) as List<Object?>)
-          if (p is String) p,
-      },
+      r.name: r.permissions.toSet(),
   };
 
   /// The user's system, team and channel role names in [channelId]; for

@@ -1,5 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:matterleast/api/generated/export.dart'
+    show ChannelNotifyProps, FileInfo, PostPriority, Timezone;
+import 'package:matterleast/data/db/json_columns.dart';
 import 'package:matterleast/data/db/millis.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.steps.dart';

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -238,7 +236,7 @@ class ConversationViews {
 
   Future<List<PostItem>> _items(List<PostRow> posts) async {
     final participants = {
-      for (final p in posts) p.id: _ids(p.participantIdsJson),
+      for (final p in posts) p.id: p.participantIds ?? const [],
     };
     final details = {
       for (final p in posts)
@@ -469,12 +467,6 @@ class ConversationViews {
       );
     }
     return linked;
-  }
-
-  List<String> _ids(String? json) {
-    if (json == null) return const [];
-    final decoded = jsonDecode(json);
-    return decoded is List ? decoded.whereType<String>().toList() : const [];
   }
 }
 

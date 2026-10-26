@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:matterleast/data/db/json_columns.dart';
 import 'package:matterleast/data/db/millis.dart';
 
 @DataClassName('UserRow')
@@ -18,8 +19,10 @@ class Users extends Table {
   IntColumn get updateAt => integer().map(const Millis()).nullable()();
   IntColumn get deleteAt => integer().map(const Millis()).nullable()();
   IntColumn get lastPictureUpdate => integer().nullable()();
-  TextColumn get timezoneJson => text().nullable()();
-  TextColumn get propsJson => text().nullable()();
+  TextColumn get timezone =>
+      text().named('timezone_json').nullable().map(const TimezoneColumn())();
+  TextColumn get props =>
+      text().named('props_json').nullable().map(const JsonMapColumn())();
   TextColumn get status => text().withDefault(const Constant('offline'))();
   IntColumn get statusUpdatedAt => integer().map(const Millis()).nullable()();
 
@@ -100,7 +103,10 @@ class MyChannels extends Table {
       integer().withDefault(const Constant(0))();
   BoolColumn get manuallyUnread =>
       boolean().withDefault(const Constant(false))();
-  TextColumn get notifyPropsJson => text().nullable()();
+  TextColumn get notifyProps => text()
+      .named('notify_props_json')
+      .nullable()
+      .map(const ChannelNotifyPropsColumn())();
   IntColumn get lastUpdateAt => integer().map(const Millis()).nullable()();
 
   /// Watermark for `posts?since=`: the newest create, update or delete time
@@ -170,7 +176,10 @@ class Posts extends Table {
 
   /// Who replied to a root post, as a JSON list of user ids, when the
   /// server said (collapsed reply threads).
-  TextColumn get participantIdsJson => text().nullable()();
+  TextColumn get participantIds => text()
+      .named('participant_ids_json')
+      .nullable()
+      .map(const StringListColumn())();
 
   /// Set when the server's copy couldn't be read or stored: what went
   /// wrong, as an error type. The row keeps its place but no content, and
@@ -241,8 +250,10 @@ class Threads extends Table {
   IntColumn get unreadReplies => integer().withDefault(const Constant(0))();
   IntColumn get unreadMentions => integer().withDefault(const Constant(0))();
   BoolColumn get isFollowing => boolean().withDefault(const Constant(false))();
-  TextColumn get participantIdsJson =>
-      text().withDefault(const Constant('[]'))();
+  TextColumn get participantIds => text()
+      .named('participant_ids_json')
+      .withDefault(const Constant('[]'))
+      .map(const StringListColumn())();
 
   @override
   Set<Column<Object>> get primaryKey => {rootId};
@@ -293,7 +304,10 @@ class Preferences extends Table {
 @DataClassName('RoleRow')
 class Roles extends Table {
   TextColumn get name => text()();
-  TextColumn get permissionsJson => text().withDefault(const Constant('[]'))();
+  TextColumn get permissions => text()
+      .named('permissions_json')
+      .withDefault(const Constant('[]'))
+      .map(const StringListColumn())();
 
   @override
   Set<Column<Object>> get primaryKey => {name};
@@ -306,8 +320,14 @@ class Drafts extends Table {
   TextColumn get message => text().withDefault(const Constant(''))();
   IntColumn get selectionBase => integer().nullable()();
   IntColumn get selectionExtent => integer().nullable()();
-  TextColumn get filesJson => text().withDefault(const Constant('[]'))();
-  TextColumn get priorityJson => text().nullable()();
+  TextColumn get files => text()
+      .named('files_json')
+      .withDefault(const Constant('[]'))
+      .map(const FileInfoListColumn())();
+  TextColumn get priority => text()
+      .named('priority_json')
+      .nullable()
+      .map(const PostPriorityColumn())();
   IntColumn get updatedAt => integer().map(const Millis())();
 
   @override

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
@@ -68,7 +66,7 @@ class DraftViews {
             channelId: d.channelId,
             rootId: d.rootId,
             message: d.message,
-            files: _count(d.filesJson),
+            files: d.files.length,
             updatedAt: d.updatedAt,
           ),
       ],
@@ -86,10 +84,5 @@ class DraftViews {
       },
       nameFormat: await db.nameFormat(),
     );
-  }
-
-  static int _count(String json) {
-    final decoded = jsonDecode(json);
-    return decoded is List ? decoded.length : 0;
   }
 }

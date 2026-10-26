@@ -113,10 +113,10 @@ class ServerStore {
   Future<void> applyMyRoles(String roles) =>
       db.setSyncText(SyncKeys.currentUserRoles, roles);
 
-  /// A user's props as JSON, such as their custom status changed here.
-  Future<void> applyUserProps(String userId, String? json) =>
+  /// A user's props, such as their custom status changed here.
+  Future<void> applyUserProps(String userId, Map<String, Object?>? props) =>
       (db.update(db.users)..where((u) => u.id.equals(userId))).write(
-        UsersCompanion(propsJson: Value(json)),
+        UsersCompanion(props: Value(props)),
       );
 
   Future<void> applyUsers(Iterable<api.User> users) => db.batch((b) {
@@ -407,10 +407,12 @@ class ServerStore {
         .insertOnConflictUpdate(myChannelCompanion(member));
   }
 
-  /// The user's notification settings for a channel, as JSON.
-  Future<void> applyNotifyProps(String channelId, String? json) =>
-      (db.update(db.myChannels)..where((m) => m.channelId.equals(channelId)))
-          .write(MyChannelsCompanion(notifyPropsJson: Value(json)));
+  /// The user's notification settings for a channel.
+  Future<void> applyNotifyProps(
+    String channelId,
+    api.ChannelNotifyProps? props,
+  ) => (db.update(db.myChannels)..where((m) => m.channelId.equals(channelId)))
+      .write(MyChannelsCompanion(notifyProps: Value(props)));
 
   /// Archives the channel, or restores it when [at] is null.
   Future<void> applyChannelArchived(String channelId, DateTime? at) =>
@@ -552,9 +554,7 @@ class ServerStore {
           db.posts,
           PostsCompanion(
             replyCount: Value(t.replyCount ?? 0),
-            participantIdsJson: Value(
-              jsonEncode([for (final u in t.participants) ?u.id]),
-            ),
+            participantIds: Value([for (final u in t.participants) ?u.id]),
           ),
           where: (p) => p.id.equals(t.id!),
         );

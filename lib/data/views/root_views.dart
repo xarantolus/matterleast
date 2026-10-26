@@ -197,7 +197,7 @@ class RootViews {
         await (db.select(db.drafts)..where(
               (d) =>
                   d.channelId.isIn(channels.keys) &
-                  (d.message.equals('').not() | d.filesJson.equals('[]').not()),
+                  (d.message.equals('').not() | d.files.equals('[]').not()),
             ))
             .get();
     final crt = await db.collapsedThreads();
