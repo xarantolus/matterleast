@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/websocket/dialog.dart';
@@ -17,6 +18,7 @@ import 'package:matterleast/domain/typing.dart';
 import '../support/fake_server.dart';
 import '../support/fake_socket_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 void main() {
   late FakeServer server;
@@ -299,7 +301,7 @@ void main() {
       final seen = <List<String>>[];
       final sub = session.connection.typing.watch(channelId).listen(seen.add);
       await receive('typing', {'user_id': 'u9', 'parent_id': ''});
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await eventually(() => seen.isNotEmpty && seen.last.isNotEmpty);
       expect(seen.last, ['u9']);
       await session.users.ensure(['u9']);
       final user = await (session.db.select(
@@ -307,8 +309,7 @@ void main() {
       )..where((u) => u.id.equals('u9'))).getSingleOrNull();
       expect(user?.username, 'nadia', reason: 'unknown typers are fetched');
 
-      await Future<void>.delayed(const Duration(milliseconds: 400));
-      expect(seen.last, isEmpty, reason: 'expired');
+      await eventually(() => seen.last.isEmpty, reason: 'expired');
 
       await receive('typing', {'user_id': 'u9', 'parent_id': ''});
       await receive('posted', {
@@ -335,13 +336,21 @@ void main() {
       );
     });
 
-    test('the tracker expires on its own', () async {
-      final tracker = TypingTracker(expiry: const Duration(milliseconds: 20))
-        ..typing('c', '', 'u');
-      expect(await tracker.watch('c').first, ['u']);
-      await Future<void>.delayed(const Duration(milliseconds: 40));
-      expect(await tracker.watch('c').first, isEmpty);
-      tracker.close();
+    test('someone shown typing goes after the expiry, not before', () {
+      fakeAsync((time) {
+        final tracker = TypingTracker(expiry: const Duration(seconds: 5))
+          ..typing('c', '', 'u');
+        final seen = <List<String>>[];
+        tracker.watch('c').listen(seen.add);
+        time.elapse(const Duration(milliseconds: 4900));
+        expect(seen.last, ['u']);
+        tracker.typing('c', '', 'u');
+        time.elapse(const Duration(milliseconds: 4900));
+        expect(seen.last, ['u'], reason: 'typing again starts over');
+        time.elapse(const Duration(milliseconds: 200));
+        expect(seen.last, isEmpty);
+        tracker.close();
+      });
     });
 
     test('sending is throttled by the server interval and turned off for '

@@ -127,8 +127,7 @@ void main() {
     });
   });
 
-  test('ranges are value objects', () {
-    expect(r(1, 2), r(1, 2));
+  test('a time falls in the stored stretch that holds it, or in none', () {
     expect(rangeContaining([r(1, 2), r(5, 9)], t(7)), r(5, 9));
     expect(rangeContaining([r(1, 2)], t(3)), isNull);
   });

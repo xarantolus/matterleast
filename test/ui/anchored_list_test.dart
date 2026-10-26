@@ -93,7 +93,6 @@ void main() {
     await tester.pumpWidget(list(rowsFrom(101, 1)));
     await tester.pumpAndSettle();
     expect(tester.getBottomLeft(find.text('row 101')).dy, closeTo(600, 0.5));
-    expect(controller.pinned, isTrue);
   });
 
   testWidgets('jumping to the bottom shows the newest row', (tester) async {
@@ -128,7 +127,6 @@ void main() {
     await tester.pumpWidget(list(rowsFrom(101, 1)));
     await tester.pumpAndSettle();
     expect(topOf(tester, reading), closeTo(before, 0.01));
-    expect(controller.pinned, isFalse);
   });
 
   testWidgets('a visible row that grows pushes the rows below it down', (

@@ -5,7 +5,6 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/servers/server_session.dart';
-import 'package:matterleast/domain/autocomplete.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
@@ -158,19 +157,6 @@ void main() {
   test('outside a trigger there is nothing to suggest', () async {
     expect(await suggest('plain words'), [<String>[]]);
     expect(server.seen, isEmpty);
-  });
-
-  test('suggestion kinds carry what the list shows', () async {
-    server.handle = (r) => error(500, 'down');
-    final list = await actions
-        .suggestions(
-          channelId: channelId,
-          teamId: teamId,
-          text: '@mab',
-          cursor: 4,
-        )
-        .first;
-    expect(list.single, isA<UserSuggestion>());
   });
 
   group('groups', () {

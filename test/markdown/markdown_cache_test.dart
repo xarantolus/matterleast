@@ -19,7 +19,7 @@ void main() {
 
   const options = ParseOptions();
 
-  test('a message is parsed once per version', () {
+  test('a message is not parsed again while scrolling, only after an edit', () {
     cache.get('a', null, 'one', options);
     cache.get('a', null, 'one', options);
     cache.get('a', DateTime(2026), 'two', options);
