@@ -265,3 +265,82 @@ final class CustomEmojiResolverFamily extends $Family
   @override
   String toString() => r'customEmojiResolverProvider';
 }
+
+/// Every custom emoji of the server, stored for the picker.
+
+@ProviderFor(customEmojiCatalog)
+final customEmojiCatalogProvider = CustomEmojiCatalogFamily._();
+
+/// Every custom emoji of the server, stored for the picker.
+
+final class CustomEmojiCatalogProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  /// Every custom emoji of the server, stored for the picker.
+  CustomEmojiCatalogProvider._({
+    required CustomEmojiCatalogFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'customEmojiCatalogProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customEmojiCatalogHash();
+
+  @override
+  String toString() {
+    return r'customEmojiCatalogProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as String;
+    return customEmojiCatalog(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomEmojiCatalogProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customEmojiCatalogHash() =>
+    r'6182b70a0cd832b4468dc8f73f32983da9fbe8ab';
+
+/// Every custom emoji of the server, stored for the picker.
+
+final class CustomEmojiCatalogFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, String> {
+  CustomEmojiCatalogFamily._()
+    : super(
+        retry: null,
+        name: r'customEmojiCatalogProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Every custom emoji of the server, stored for the picker.
+
+  CustomEmojiCatalogProvider call(String url) =>
+      CustomEmojiCatalogProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'customEmojiCatalogProvider';
+}

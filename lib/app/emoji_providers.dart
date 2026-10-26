@@ -23,3 +23,10 @@ Stream<Set<String>> customEmojiMissing(Ref ref, String url) async* {
 @riverpod
 Future<CustomEmojiResolver> customEmojiResolver(Ref ref, String url) async =>
     (await ref.watch(serverSessionProvider(url).future)).emoji;
+
+/// Every custom emoji of the server, stored for the picker.
+@riverpod
+Future<void> customEmojiCatalog(Ref ref, String url) async {
+  final resolver = await ref.watch(customEmojiResolverProvider(url).future);
+  await resolver.loadAll();
+}

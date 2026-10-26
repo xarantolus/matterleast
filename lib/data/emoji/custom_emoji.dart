@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
@@ -223,6 +224,52 @@ class CustomEmojiResolver {
       }
     }
     return found;
+  }
+
+  Future<void>? _catalog;
+
+  /// Stores every custom emoji of the server, a page at a time, for the
+  /// picker. Runs once per session; a failed run is tried again on the next
+  /// call.
+  Future<void> loadAll() => _catalog ??= _loadAll().catchError((Object e) {
+    _catalog = null;
+    Log.warn('emoji', 'Loading the custom emoji failed', e);
+  });
+
+  static const catalogPageSize = 200;
+
+  Future<void> _loadAll() async {
+    if (!(await store.db.features()).customEmoji) return;
+    for (var page = 0; !_closed; page++) {
+      final List<Object?> items;
+      try {
+        final response = await server.call(
+          () => server.dio.get<List<Object?>>(
+            '/api/v4/emoji',
+            queryParameters: {
+              'page': page,
+              'per_page': catalogPageSize,
+              'sort': 'name',
+            },
+            options: Options(responseType: ResponseType.json),
+          ),
+        );
+        items = response.data ?? const [];
+      } on ApiError catch (e) {
+        if (endpointUnavailable(e)) {
+          await store.turnOff(OptionalFeature.customEmoji);
+          return;
+        }
+        rethrow;
+      }
+      if (_closed) return;
+      await store.applyCustomEmoji([
+        for (final item in items)
+          if (item is Map<String, Object?>)
+            ?decodeOrSkip(item, api.Emoji.fromJson),
+      ]);
+      if (items.length < catalogPageSize) return;
+    }
   }
 
   void close() {

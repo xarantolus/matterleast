@@ -231,4 +231,31 @@ void main() {
     expect(event, isA<EmojiAddedEvent>());
     expect((event as EmojiAddedEvent).emoji!.name, 'shipit');
   });
+
+  test('the picker gets every custom emoji, page by page, once', () async {
+    final all = [
+      for (var i = 0; i < CustomEmojiResolver.catalogPageSize + 3; i++)
+        'emoji${i.toString().padLeft(4, '0')}',
+    ];
+    server.handle = (r) {
+      if (r.path != '/api/v4/emoji') return error(404, 'not_found');
+      final page = int.parse(r.raw.uri.queryParameters['page']!);
+      final size = int.parse(r.raw.uri.queryParameters['per_page']!);
+      final slice = all.skip(page * size).take(size);
+      return ok([
+        for (final n in slice) emojiJson(n),
+        if (page == 1) {'id': 7, 'name': false},
+      ]);
+    };
+    await Future.wait([resolver.loadAll(), resolver.loadAll()]);
+    await resolver.loadAll();
+    expect((await stored()).keys.toSet(), all.toSet());
+    expect(server.paths.where((p) => p == '/api/v4/emoji'), hasLength(2));
+  });
+
+  test('a server without custom emoji is not asked for the list', () async {
+    await store.applyConfig('client_config', {'EnableCustomEmoji': 'false'});
+    await resolver.loadAll();
+    expect(server.seen, isEmpty);
+  });
 }
