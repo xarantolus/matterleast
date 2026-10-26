@@ -2,6 +2,21 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui';
 
+/// Where a server's colours come from, stored per server by name.
+enum ThemeSource {
+  brand,
+
+  /// The user's Mattermost theme on that server.
+  server,
+
+  /// The phone's wallpaper colours (Material You); the brand where the
+  /// phone has none.
+  wallpaper;
+
+  static ThemeSource of(String? name) =>
+      values.where((s) => s.name == name).firstOrNull ?? brand;
+}
+
 /// The colours of a Mattermost theme preference the app uses.
 class MattermostTheme {
   const MattermostTheme({

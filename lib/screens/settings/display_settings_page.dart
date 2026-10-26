@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/app/theme_providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
@@ -22,17 +24,11 @@ enum _Clock {
   static _Clock of(bool? use24) => values.firstWhere((c) => c.use24 == use24);
 }
 
-enum _ThemeMode {
-  brand('brand', 'Matterleast colours'),
-  server('server', 'My theme on the server');
-
-  const _ThemeMode(this.value, this.label);
-  final String value;
-  final String label;
-
-  static _ThemeMode of(String? value) =>
-      values.where((m) => m.value == value).firstOrNull ?? brand;
-}
+String _themeLabel(ThemeSource source) => switch (source) {
+  ThemeSource.brand => 'Matterleast colours',
+  ThemeSource.server => 'My theme on the server',
+  ThemeSource.wallpaper => 'Wallpaper colours (Material You)',
+};
 
 /// How messages and people look: the app-wide clock and images, and the
 /// account's theme, threads and names on one server.
@@ -112,23 +108,31 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
 
   List<Widget> _serverTiles(BuildContext context, ServerEntry server) {
     final url = server.url;
-    final theme = _ThemeMode.of(ref.watch(themeModeProvider(url)).value);
+    final theme = ref.watch(themeModeProvider(url)).value ?? ThemeSource.brand;
+    final noWallpaper =
+        theme == ThemeSource.wallpaper &&
+        ref.watch(wallpaperPaletteProvider).value == null;
     final prefs = ref.watch(displayPrefsProvider(url)).value;
     return [
       SettingsHeader('On ${server.displayName}'),
       ListTile(
         title: const Text('Colours'),
-        subtitle: Text(theme.label),
+        subtitle: Text(
+          noWallpaper
+              ? '${_themeLabel(theme)}. This phone has none, so the app uses '
+                    'Matterleast colours.'
+              : _themeLabel(theme),
+        ),
         onTap: () async {
           final picked = await pickOne(
             context,
             title: 'Colours',
-            options: _ThemeMode.values,
+            options: ThemeSource.values,
             current: theme,
-            label: (m) => m.label,
+            label: _themeLabel,
           );
           if (picked != null) {
-            await ref.read(appDatabaseProvider).setThemeMode(url, picked.value);
+            await ref.read(appDatabaseProvider).setThemeMode(url, picked);
           }
         },
       ),

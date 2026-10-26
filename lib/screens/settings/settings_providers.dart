@@ -8,6 +8,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
@@ -86,9 +87,8 @@ Stream<DisplayPrefs> displayPrefs(Ref ref, String url) async* {
   }
 }
 
-/// `brand` or `server`.
 @riverpod
-Stream<String> themeMode(Ref ref, String url) =>
+Stream<ThemeSource> themeMode(Ref ref, String url) =>
     ref.watch(appDatabaseProvider).watchThemeMode(url);
 
 @riverpod

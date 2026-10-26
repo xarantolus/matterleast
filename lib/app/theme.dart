@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/wallpaper_colours.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -54,6 +55,46 @@ AppTokens serverTokens(ServerPalette palette) {
   );
 }
 
+/// The theme from the phone's wallpaper colours (Material You).
+ThemeData buildWallpaperTheme(WallpaperColours colours, Brightness brightness) {
+  final scheme = colours.scheme(brightness);
+  final onPrimary = readableOn(scheme.primary, scheme.onPrimary);
+  return _build(
+    brightness: brightness,
+    tokens: wallpaperTokens(scheme),
+    primary: scheme.primary,
+    onPrimary: onPrimary,
+    bar: scheme.primary,
+    onBar: onPrimary,
+    scheme: scheme,
+  );
+}
+
+/// Surface tokens from a wallpaper scheme, each text pair kept readable.
+AppTokens wallpaperTokens(ColorScheme scheme) {
+  final base = scheme.brightness == Brightness.dark
+      ? AppTokens.dark
+      : AppTokens.light;
+  final page = scheme.surface;
+  final panel = scheme.surfaceContainerHighest;
+  final code = scheme.surfaceContainer;
+  final wash = scheme.primaryContainer;
+  Color readOnAll(Color colour, List<Color> backgrounds) =>
+      backgrounds.fold(colour, adjustToRead);
+  return base.copyWith(
+    page: page,
+    text: readOnAll(scheme.onSurface, [code, page]),
+    muted: readOnAll(scheme.onSurfaceVariant, [panel, code, page]),
+    hairline: scheme.outlineVariant,
+    divider: scheme.outline,
+    accent: readOnAll(scheme.primary, [panel, wash, page]),
+    accentWash: wash,
+    codeBackground: code,
+    panel: panel,
+    unread: readOnAll(scheme.onSurface, [page]),
+  );
+}
+
 ThemeData _build({
   required Brightness brightness,
   required AppTokens tokens,
@@ -61,18 +102,21 @@ ThemeData _build({
   required Color onPrimary,
   required Color bar,
   required Color onBar,
+  ColorScheme? scheme,
 }) {
-  final scheme =
-      ColorScheme.fromSeed(seedColor: primary, brightness: brightness).copyWith(
-        primary: primary,
-        onPrimary: onPrimary,
-        surface: tokens.page,
-        onSurface: tokens.text,
-        onSurfaceVariant: tokens.muted,
-        outline: tokens.divider,
-        outlineVariant: tokens.hairline,
-      );
-  final base = ThemeData(colorScheme: scheme, brightness: brightness);
+  final colours =
+      (scheme ??
+              ColorScheme.fromSeed(seedColor: primary, brightness: brightness))
+          .copyWith(
+            primary: primary,
+            onPrimary: onPrimary,
+            surface: tokens.page,
+            onSurface: tokens.text,
+            onSurfaceVariant: tokens.muted,
+            outline: tokens.divider,
+            outlineVariant: tokens.hairline,
+          );
+  final base = ThemeData(colorScheme: colours, brightness: brightness);
   return base.copyWith(
     extensions: [tokens],
     scaffoldBackgroundColor: tokens.page,

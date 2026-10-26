@@ -3,6 +3,7 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:matterleast/data/app_db/app_database.steps.dart';
 import 'package:matterleast/data/app_db/tables.dart';
 import 'package:matterleast/data/db/millis.dart';
+import 'package:matterleast/domain/server_theme.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -63,16 +64,15 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteServer(String url) =>
       (delete(servers)..where((s) => s.url.equals(url))).go();
 
-  /// `brand` or `server`.
-  Stream<String> watchThemeMode(String url) =>
+  Stream<ThemeSource> watchThemeMode(String url) =>
       (select(servers)..where((s) => s.url.equals(url)))
           .watchSingleOrNull()
-          .map((row) => row?.themeMode ?? 'brand')
+          .map((row) => ThemeSource.of(row?.themeMode))
           .distinct();
 
-  Future<void> setThemeMode(String url, String mode) =>
+  Future<void> setThemeMode(String url, ThemeSource mode) =>
       (update(servers)..where((s) => s.url.equals(url))).write(
-        ServersCompanion(themeMode: Value(mode)),
+        ServersCompanion(themeMode: Value(mode.name)),
       );
 
   Future<Map<String, String>> allSettings() async => {

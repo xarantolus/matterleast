@@ -14,11 +14,11 @@ class MatterleastApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final use24 = ref.watch(use24HourClockProvider).value;
-    final server = ref.watch(serverPalettesProvider).value;
+    final themes = ref.watch(appThemesProvider).value;
     return MaterialApp(
       title: 'Matterleast',
-      theme: server == null ? lightTheme : buildServerTheme(server.light),
-      darkTheme: server == null ? darkTheme : buildServerTheme(server.dark),
+      theme: themes?.light ?? lightTheme,
+      darkTheme: themes?.dark ?? darkTheme,
       debugShowCheckedModeBanner: false,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(

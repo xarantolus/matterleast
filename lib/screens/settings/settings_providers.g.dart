@@ -375,17 +375,17 @@ final class DisplayPrefsFamily extends $Family
   String toString() => r'displayPrefsProvider';
 }
 
-/// `brand` or `server`.
-
 @ProviderFor(themeMode)
 final themeModeProvider = ThemeModeFamily._();
 
-/// `brand` or `server`.
-
 final class ThemeModeProvider
-    extends $FunctionalProvider<AsyncValue<String>, String, Stream<String>>
-    with $FutureModifier<String>, $StreamProvider<String> {
-  /// `brand` or `server`.
+    extends
+        $FunctionalProvider<
+          AsyncValue<ThemeSource>,
+          ThemeSource,
+          Stream<ThemeSource>
+        >
+    with $FutureModifier<ThemeSource>, $StreamProvider<ThemeSource> {
   ThemeModeProvider._({
     required ThemeModeFamily super.from,
     required String super.argument,
@@ -409,11 +409,12 @@ final class ThemeModeProvider
 
   @$internal
   @override
-  $StreamProviderElement<String> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
+  $StreamProviderElement<ThemeSource> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
 
   @override
-  Stream<String> create(Ref ref) {
+  Stream<ThemeSource> create(Ref ref) {
     final argument = this.argument as String;
     return themeMode(ref, argument);
   }
@@ -429,12 +430,10 @@ final class ThemeModeProvider
   }
 }
 
-String _$themeModeHash() => r'ae605ea22339af0d811dac3da21414442d10736a';
-
-/// `brand` or `server`.
+String _$themeModeHash() => r'68ae4b51ab0b4a2f6bf0ebfb185261e3b5a57fc5';
 
 final class ThemeModeFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<String>, String> {
+    with $FunctionalFamilyOverride<Stream<ThemeSource>, String> {
   ThemeModeFamily._()
     : super(
         retry: null,
@@ -443,8 +442,6 @@ final class ThemeModeFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
-
-  /// `brand` or `server`.
 
   ThemeModeProvider call(String url) =>
       ThemeModeProvider._(argument: url, from: this);

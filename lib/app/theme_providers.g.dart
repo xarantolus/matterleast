@@ -8,42 +8,191 @@ part of 'theme_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// The themes for the light and dark system setting from the colours the
+/// server in use is set to; null keeps the brand.
 
-@ProviderFor(serverPalettes)
-final serverPalettesProvider = ServerPalettesProvider._();
+@ProviderFor(appThemes)
+final appThemesProvider = AppThemesProvider._();
 
-final class ServerPalettesProvider
+/// The themes for the light and dark system setting from the colours the
+/// server in use is set to; null keeps the brand.
+
+final class AppThemesProvider
     extends
         $FunctionalProvider<
-          AsyncValue<ServerPalettes?>,
-          ServerPalettes?,
-          Stream<ServerPalettes?>
+          AsyncValue<AppThemes?>,
+          AppThemes?,
+          FutureOr<AppThemes?>
         >
-    with $FutureModifier<ServerPalettes?>, $StreamProvider<ServerPalettes?> {
-  ServerPalettesProvider._()
+    with $FutureModifier<AppThemes?>, $FutureProvider<AppThemes?> {
+  /// The themes for the light and dark system setting from the colours the
+  /// server in use is set to; null keeps the brand.
+  AppThemesProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'serverPalettesProvider',
+        name: r'appThemesProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$serverPalettesHash();
+  String debugGetCreateSourceHash() => _$appThemesHash();
 
   @$internal
   @override
-  $StreamProviderElement<ServerPalettes?> $createElement(
+  $FutureProviderElement<AppThemes?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<AppThemes?> create(Ref ref) {
+    return appThemes(ref);
+  }
+}
+
+String _$appThemesHash() => r'ad9a5c5545fa72c241da4141fefaea1d45736042';
+
+/// The user's Mattermost theme on the server at [url].
+
+@ProviderFor(serverPalettes)
+final serverPalettesProvider = ServerPalettesFamily._();
+
+/// The user's Mattermost theme on the server at [url].
+
+final class ServerPalettesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ServerPalettes>,
+          ServerPalettes,
+          Stream<ServerPalettes>
+        >
+    with $FutureModifier<ServerPalettes>, $StreamProvider<ServerPalettes> {
+  /// The user's Mattermost theme on the server at [url].
+  ServerPalettesProvider._({
+    required ServerPalettesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'serverPalettesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverPalettesHash();
+
+  @override
+  String toString() {
+    return r'serverPalettesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<ServerPalettes> $createElement(
     $ProviderPointer pointer,
   ) => $StreamProviderElement(pointer);
 
   @override
-  Stream<ServerPalettes?> create(Ref ref) {
-    return serverPalettes(ref);
+  Stream<ServerPalettes> create(Ref ref) {
+    final argument = this.argument as String;
+    return serverPalettes(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ServerPalettesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
   }
 }
 
-String _$serverPalettesHash() => r'3925f77cedf8e881af709ae433bc96bc33664032';
+String _$serverPalettesHash() => r'e66a44f0d1195222da342cc1479d84c913d57f4c';
+
+/// The user's Mattermost theme on the server at [url].
+
+final class ServerPalettesFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<ServerPalettes>, String> {
+  ServerPalettesFamily._()
+    : super(
+        retry: null,
+        name: r'serverPalettesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The user's Mattermost theme on the server at [url].
+
+  ServerPalettesProvider call(String url) =>
+      ServerPalettesProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'serverPalettesProvider';
+}
+
+/// The phone's wallpaper colours, read again when the app comes back, since
+/// the wallpaper may have changed meanwhile. Null where the phone has none
+/// (before Android 12).
+
+@ProviderFor(WallpaperPalette)
+final wallpaperPaletteProvider = WallpaperPaletteProvider._();
+
+/// The phone's wallpaper colours, read again when the app comes back, since
+/// the wallpaper may have changed meanwhile. Null where the phone has none
+/// (before Android 12).
+final class WallpaperPaletteProvider
+    extends $AsyncNotifierProvider<WallpaperPalette, WallpaperColours?> {
+  /// The phone's wallpaper colours, read again when the app comes back, since
+  /// the wallpaper may have changed meanwhile. Null where the phone has none
+  /// (before Android 12).
+  WallpaperPaletteProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wallpaperPaletteProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$wallpaperPaletteHash();
+
+  @$internal
+  @override
+  WallpaperPalette create() => WallpaperPalette();
+}
+
+String _$wallpaperPaletteHash() => r'83017289030a2391305e59ab895742e2231ca313';
+
+/// The phone's wallpaper colours, read again when the app comes back, since
+/// the wallpaper may have changed meanwhile. Null where the phone has none
+/// (before Android 12).
+
+abstract class _$WallpaperPalette extends $AsyncNotifier<WallpaperColours?> {
+  FutureOr<WallpaperColours?> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<WallpaperColours?>, WallpaperColours?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<WallpaperColours?>, WallpaperColours?>,
+              AsyncValue<WallpaperColours?>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

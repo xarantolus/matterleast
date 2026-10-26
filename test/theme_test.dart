@@ -2,11 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/theme.dart';
+import 'package:matterleast/app/theme_providers.dart';
+import 'package:matterleast/app/wallpaper_colours.dart';
+import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
+import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 void main() {
@@ -144,6 +149,117 @@ void main() {
     }
   });
 
+  group('wallpaper colours', () {
+    const seeds = {
+      'violet': Color(0xFF6750A4),
+      'pale yellow': Color(0xFFF2C94C),
+      'bright green': Color(0xFF00E676),
+      'red': Color(0xFFB3261E),
+      'grey': Color(0xFF8A8A8A),
+    };
+
+    test('Android\'s tones become the scheme, tone 40 the light primary', () {
+      final colours = WallpaperColours.fromSeed(seeds['violet']!);
+      expect(colours.tones, hasLength(65));
+      final light = buildWallpaperTheme(colours, Brightness.light);
+      expect(light.colorScheme.primary, Color(colours.tones[4]));
+      expect(light.appBarTheme.backgroundColor, Color(colours.tones[4]));
+      expect(
+        light.colorScheme.primary,
+        isNot(MatterleastApp.lightTheme.colorScheme.primary),
+      );
+      expect(
+        buildWallpaperTheme(colours, Brightness.dark).brightness,
+        Brightness.dark,
+      );
+      expect(() => WallpaperColours([1, 2, 3]), throwsFormatException);
+    });
+
+    for (final MapEntry(key: name, value: seed) in seeds.entries) {
+      for (final brightness in Brightness.values) {
+        test('every pair clears 4.5:1 from a $name wallpaper, '
+            '${brightness.name}', () {
+          final theme = buildWallpaperTheme(
+            WallpaperColours.fromSeed(seed),
+            brightness,
+          );
+          expect(theme.brightness, brightness);
+          final bar = theme.appBarTheme;
+          expect(
+            contrast(bar.foregroundColor!, bar.backgroundColor!),
+            greaterThanOrEqualTo(4.5),
+          );
+          expect(
+            contrast(theme.colorScheme.onPrimary, theme.colorScheme.primary),
+            greaterThanOrEqualTo(4.5),
+          );
+          final tokens = theme.extension<AppTokens>()!;
+          for (final entry in tokens.textPairs.entries) {
+            final (fg, bg) = entry.value;
+            expect(
+              contrast(fg, bg),
+              greaterThanOrEqualTo(4.5),
+              reason: entry.key,
+            );
+          }
+        });
+      }
+    }
+
+    Future<AppThemes?> themesFor(
+      ThemeSource source,
+      WallpaperColours? wallpaper,
+    ) async {
+      const url = 'https://chat.example.test';
+      final container = ProviderContainer(
+        overrides: [
+          settingsServerProvider.overrideWithValue(
+            const ServerEntry(
+              url: url,
+              displayName: 'Example',
+              siteName: null,
+              serverVersion: null,
+              diagnosticId: null,
+              lastActiveAt: null,
+              ssoScheme: null,
+            ),
+          ),
+          themeModeProvider(url).overrideWith((ref) => Stream.value(source)),
+          wallpaperPaletteProvider.overrideWith(
+            () => _FixedWallpaper(wallpaper),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.listen(appThemesProvider, (_, _) {});
+      return container.read(appThemesProvider.future);
+    }
+
+    test('the wallpaper theme follows the wallpaper', () async {
+      final colours = WallpaperColours.fromSeed(seeds['red']!);
+      final themes = await themesFor(ThemeSource.wallpaper, colours);
+      expect(
+        themes?.light.colorScheme.primary,
+        colours.scheme(Brightness.light).primary,
+      );
+      expect(
+        themes?.dark.colorScheme.primary,
+        colours.scheme(Brightness.dark).primary,
+      );
+    });
+
+    test('a phone without wallpaper colours keeps the brand', () async {
+      expect(await themesFor(ThemeSource.wallpaper, null), isNull);
+      expect(
+        await themesFor(
+          ThemeSource.brand,
+          WallpaperColours.fromSeed(seeds['red']!),
+        ),
+        isNull,
+      );
+    });
+  });
+
   test('pages use the predictive back transition on Android', () {
     for (final theme in themes) {
       expect(
@@ -152,6 +268,15 @@ void main() {
       );
     }
   });
+}
+
+class _FixedWallpaper extends WallpaperPalette {
+  _FixedWallpaper(this.colours);
+
+  final WallpaperColours? colours;
+
+  @override
+  Future<WallpaperColours?> build() async => colours;
 }
 
 /// WCAG relative contrast between two opaque colours.
