@@ -116,6 +116,10 @@ jobs:
 
       - name: Run tests
         run: flutter test
+        env:
+          # A zone with summer time, so date labels are tested across
+          # clock changes.
+          TZ: Europe/Berlin
 
       - name: Read the version
         run: |
