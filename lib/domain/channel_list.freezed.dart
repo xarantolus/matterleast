@@ -318,7 +318,8 @@ as int?,
 /// @nodoc
 mixin _$CategorySection {
 
- String get id; String get title; CategoryKind get kind; bool get collapsed; List<ChannelItem> get rows;
+ String get id; String get title; CategoryKind get kind; bool get collapsed;/// Every visible channel, also while [collapsed].
+ List<ChannelItem> get rows;
 /// Create a copy of CategorySection
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -518,15 +519,17 @@ return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.rows);case
 /// @nodoc
 
 
-class _CategorySection implements CategorySection {
-  const _CategorySection({required this.id, required this.title, required this.kind, required this.collapsed, required  List<ChannelItem> rows}): _rows = rows;
+class _CategorySection extends CategorySection {
+  const _CategorySection({required this.id, required this.title, required this.kind, required this.collapsed, required  List<ChannelItem> rows}): _rows = rows,super._();
   
 
 @override final  String id;
 @override final  String title;
 @override final  CategoryKind kind;
 @override final  bool collapsed;
+/// Every visible channel, also while [collapsed].
  final  List<ChannelItem> _rows;
+/// Every visible channel, also while [collapsed].
 @override List<ChannelItem> get rows {
   if (_rows is EqualUnmodifiableListView) return _rows;
   // ignore: implicit_dynamic_type

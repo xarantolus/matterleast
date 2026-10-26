@@ -9,6 +9,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/views/switch_views.dart';
+import 'package:matterleast/domain/category_moves.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/log.dart';
@@ -80,10 +81,174 @@ class ChannelActions {
     String channelId, {
     required bool favorite,
   }) async {
+    final team = await _teamCategories(teamId);
+    final channel = await (_db.select(
+      _db.channels,
+    )..where((c) => c.id.equals(channelId))).getSingle();
+    final current = team.categories.firstWhere(
+      (c) => team.idsOf(c).contains(channelId),
+    );
+    final targetType = favorite
+        ? 'favorites'
+        : (channel.type == 'D' || channel.type == 'G')
+        ? 'direct_messages'
+        : 'channels';
+    final target = team.categories.firstWhere((c) => c.type == targetType);
+    if (target.id == current.id) return;
+    final updated = await session.api.call(
+      () => _client.channels.updateSidebarCategoriesForTeamForUser(
+        userId: 'me',
+        teamId: teamId,
+        body: [
+          team.body(current, [
+            for (final id in team.idsOf(current))
+              if (id != channelId) id,
+          ]),
+          team.body(target, [channelId, ...team.idsOf(target)]),
+        ],
+      ),
+    );
+    await session.store.applyCategoryUpdates(updated);
+  }
+
+  /// Puts a channel at the dropped place among the [shown] channels of its
+  /// new category, which from then on keeps the user's order. Shows at once
+  /// and is put back when the server refuses it.
+  Future<void> moveChannel(
+    String teamId,
+    ChannelDrop drop, {
+    required List<String> shown,
+  }) async {
+    final team = await _teamCategories(teamId);
+    final from = team.byId(drop.fromCategory);
+    final to = team.byId(drop.toCategory);
+    if (from == null || to == null) return;
+    final before = [
+      team.body(from, team.idsOf(from)),
+      if (to.id != from.id) team.body(to, team.idsOf(to)),
+    ];
+    final after = [
+      if (to.id != from.id)
+        team.body(from, [
+          for (final id in team.idsOf(from))
+            if (id != drop.channelId) id,
+        ]),
+      team.body(
+        to,
+        placeChannel(
+          stored: team.idsOf(to),
+          shown: shown,
+          channelId: drop.channelId,
+          index: drop.index,
+        ),
+        sorting: 'manual',
+      ),
+    ];
+    await _updateCategories(teamId, before: before, after: after);
+  }
+
+  /// Moves a category to where the user dropped it among the shown ones.
+  Future<void> moveCategory(String teamId, CategoryDrop drop) async {
+    final team = await _teamCategories(teamId);
+    final stored = [for (final c in team.categories) c.id];
+    final order = placeCategory(
+      stored: stored,
+      shown: drop.shownOrder,
+      categoryId: drop.categoryId,
+    );
+    await session.store.applyCategoryOrder(order);
+    try {
+      final saved = await session.api.call(
+        () => _client.channels.updateSidebarCategoryOrderForTeamForUser(
+          userId: 'me',
+          teamId: teamId,
+          body: order,
+        ),
+      );
+      await session.store.applyCategoryOrder(saved);
+    } on Object {
+      await session.store.applyCategoryOrder(stored);
+      rethrow;
+    }
+  }
+
+  /// A new empty custom category; the server puts it at the top.
+  Future<void> createCategory(String teamId, String name) async {
     final me = await _db.syncText(SyncKeys.currentUserId);
-    final categories = await (_db.select(
-      _db.categories,
-    )..where((c) => c.teamId.equals(teamId))).get();
+    await session.api.call(
+      () => _client.channels.createSidebarCategoryForTeamForUser(
+        userId: 'me',
+        teamId: teamId,
+        body: api.SidebarCategory(
+          userId: me,
+          teamId: teamId,
+          displayName: name,
+          type: api.SidebarCategoryType.custom,
+        ),
+      ),
+    );
+    await session.connection.entry.refreshTeam(teamId);
+  }
+
+  Future<void> renameCategory(
+    String teamId,
+    String categoryId,
+    String name,
+  ) async {
+    final team = await _teamCategories(teamId);
+    final category = team.byId(categoryId);
+    if (category == null) return;
+    final updated = await session.api.call(
+      () => _client.channels.updateSidebarCategoriesForTeamForUser(
+        userId: 'me',
+        teamId: teamId,
+        body: [team.body(category, team.idsOf(category), displayName: name)],
+      ),
+    );
+    await session.store.applyCategoryUpdates(updated);
+  }
+
+  /// Deletes a custom category; the server moves its channels back to
+  /// Channels and Direct Messages.
+  Future<void> deleteCategory(String teamId, String categoryId) async {
+    await session.api.call(
+      () => _client.channels.removeSidebarCategoryForTeamForUser(
+        userId: 'me',
+        teamId: teamId,
+        categoryId: categoryId,
+      ),
+    );
+    await session.connection.entry.refreshTeam(teamId);
+  }
+
+  Future<void> _updateCategories(
+    String teamId, {
+    required List<api.SidebarCategoryWithChannels> before,
+    required List<api.SidebarCategoryWithChannels> after,
+  }) async {
+    await session.store.applyCategoryUpdates(after);
+    try {
+      final updated = await session.api.call(
+        () => _client.channels.updateSidebarCategoriesForTeamForUser(
+          userId: 'me',
+          teamId: teamId,
+          body: after,
+        ),
+      );
+      await session.store.applyCategoryUpdates(updated);
+    } on Object {
+      await session.store.applyCategoryUpdates(before);
+      rethrow;
+    }
+  }
+
+  Future<_TeamCategories> _teamCategories(String teamId) async {
+    final me = await _db.syncText(SyncKeys.currentUserId);
+    final categories =
+        await (_db.select(_db.categories)
+              ..where((c) => c.teamId.equals(teamId))
+              ..orderBy([(c) => OrderingTerm.asc(c.sortOrder)]))
+            .get();
     final links =
         await (_db.select(_db.categoryChannels)
               ..where(
@@ -91,48 +256,7 @@ class ChannelActions {
               )
               ..orderBy([(cc) => OrderingTerm.asc(cc.sortOrder)]))
             .get();
-    final channel = await (_db.select(
-      _db.channels,
-    )..where((c) => c.id.equals(channelId))).getSingle();
-    List<String> idsOf(CategoryRow c) => [
-      for (final l in links)
-        if (l.categoryId == c.id) l.channelId,
-    ];
-    final current = categories.firstWhere((c) => idsOf(c).contains(channelId));
-    final targetType = favorite
-        ? 'favorites'
-        : (channel.type == 'D' || channel.type == 'G')
-        ? 'direct_messages'
-        : 'channels';
-    final target = categories.firstWhere((c) => c.type == targetType);
-    if (target.id == current.id) return;
-
-    api.SidebarCategoryWithChannels body(CategoryRow c, List<String> ids) =>
-        api.SidebarCategoryWithChannels(
-          id: c.id,
-          userId: me,
-          teamId: c.teamId,
-          displayName: c.displayName,
-          type: api.SidebarCategoryWithChannelsType.fromJson(c.type),
-          sorting: c.sorting,
-          muted: c.muted,
-          collapsed: c.collapsed,
-          channelIds: ids,
-        );
-    final updated = await session.api.call(
-      () => _client.channels.updateSidebarCategoriesForTeamForUser(
-        userId: 'me',
-        teamId: teamId,
-        body: [
-          body(current, [
-            for (final id in idsOf(current))
-              if (id != channelId) id,
-          ]),
-          body(target, [channelId, ...idsOf(target)]),
-        ],
-      ),
-    );
-    await session.store.applyCategoryUpdates(updated);
+    return _TeamCategories(me, categories, links);
   }
 
   /// Hides a direct or group message from the list without leaving it, as
@@ -465,4 +589,38 @@ Future<void> setConversationShown(
     ),
   );
   await store.applyPreferences([preference]);
+}
+
+/// A team's stored categories and their channels, as the server takes them.
+class _TeamCategories {
+  _TeamCategories(this.me, this.categories, this.links);
+
+  final String? me;
+  final List<CategoryRow> categories;
+  final List<CategoryChannelRow> links;
+
+  CategoryRow? byId(String id) =>
+      categories.where((c) => c.id == id).firstOrNull;
+
+  List<String> idsOf(CategoryRow c) => [
+    for (final l in links)
+      if (l.categoryId == c.id) l.channelId,
+  ];
+
+  api.SidebarCategoryWithChannels body(
+    CategoryRow c,
+    List<String> ids, {
+    String? sorting,
+    String? displayName,
+  }) => api.SidebarCategoryWithChannels(
+    id: c.id,
+    userId: me,
+    teamId: c.teamId,
+    displayName: displayName ?? c.displayName,
+    type: api.SidebarCategoryWithChannelsType.fromJson(c.type),
+    sorting: sorting ?? c.sorting,
+    muted: c.muted,
+    collapsed: c.collapsed,
+    channelIds: ids,
+  );
 }

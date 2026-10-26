@@ -10,15 +10,19 @@ class ChannelTile extends StatelessWidget {
   const ChannelTile({
     required this.serverUrl,
     required this.item,
-    required this.onTap,
-    required this.onLongPress,
+    this.onTap,
+    this.onLongPress,
+    this.trailing,
     super.key,
   });
 
   final String serverUrl;
   final ChannelItem item;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+
+  /// In place of the draft, muted and mention markers.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +49,7 @@ class ChannelTile extends StatelessWidget {
               : FontWeight.w400,
         ),
       ),
-      trailing: _Markers(item: item),
+      trailing: trailing ?? _Markers(item: item),
       onTap: onTap,
       onLongPress: onLongPress,
     );

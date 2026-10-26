@@ -209,8 +209,14 @@ void main() {
         ],
         categories: [category('c', collapsed: true)],
       );
-      expect(titles(list), ['mention', 'unread']);
-      expect(list.sections.single.collapsed, isTrue);
+      final section = list.sections.single;
+      expect([for (final r in section.shown) r.title], ['mention', 'unread']);
+      expect(section.collapsed, isTrue);
+      expect(titles(list), [
+        'mention',
+        'read',
+        'unread',
+      ], reason: 'reordering still sees every channel');
     });
 
     test('an empty favourites category is left out, favourites are marked', () {

@@ -39,8 +39,20 @@ abstract class CategorySection with _$CategorySection {
     required String title,
     required CategoryKind kind,
     required bool collapsed,
+
+    /// Every visible channel, also while [collapsed].
     required List<ChannelItem> rows,
   }) = _CategorySection;
+
+  const CategorySection._();
+
+  /// The rows the list shows: only unread ones while [collapsed].
+  List<ChannelItem> get shown => collapsed
+      ? [
+          for (final item in rows)
+            if (item.unread || item.mentions > 0) item,
+        ]
+      : rows;
 }
 
 /// Everything the channel list of one team shows.
@@ -199,10 +211,7 @@ ChannelList buildChannelList(ChannelListSource source) {
       rows.retainWhere((row) => visible.contains(row.$1.id));
     }
     _sort(rows, category.sorting, source.collapsedThreads);
-    final items = [
-      for (final (item, _, _) in rows)
-        if (!category.collapsed || item.unread || item.mentions > 0) item,
-    ];
+    final items = [for (final (item, _, _) in rows) item];
     if (kind == CategoryKind.favorites && rows.isEmpty) continue;
     sections.add(
       CategorySection(
@@ -427,3 +436,33 @@ List<CategorySection> keepOrder(
 
 /// Whose initials a direct message avatar shows.
 String avatarName(String title) => title.replaceAll(' (you)', '');
+
+/// Pure: the nearest unread channel above and below what the reader sees.
+/// [rows] are the list's channels in order; [placed] holds the rows laid
+/// out now, by id, with their top and bottom relative to the top of the
+/// visible part, which is [height] tall. Rows not laid out are further
+/// away than every laid-out one, on the side their place in [rows] says.
+({String? above, String? below}) unreadOutside({
+  required List<({String id, bool unread})> rows,
+  required Map<String, ({double top, double bottom})> placed,
+  required double height,
+}) {
+  final firstPlaced = rows.indexWhere((r) => placed.containsKey(r.id));
+  String? above;
+  String? below;
+  for (final (i, row) in rows.indexed) {
+    if (!row.unread) continue;
+    final at = placed[row.id];
+    final isAbove = at == null
+        ? firstPlaced >= 0 && i < firstPlaced
+        : at.bottom <= 0;
+    final isBelow = at == null
+        ? firstPlaced < 0 || i > firstPlaced
+        : at.top >= height;
+    if (isAbove) above = row.id;
+    if (isBelow) {
+      below ??= row.id;
+    }
+  }
+  return (above: above, below: below);
+}

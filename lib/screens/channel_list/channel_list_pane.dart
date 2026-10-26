@@ -1,16 +1,22 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/screens/channel_list/category_menu.dart';
 import 'package:matterleast/screens/channel_list/channel_actions_sheet.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/channel_list/channel_tile.dart';
+import 'package:matterleast/screens/channel_list/reorder_view.dart';
 import 'package:matterleast/screens/drafts/drafts_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
+import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -85,11 +91,41 @@ class _ChannelListView extends ConsumerStatefulWidget {
 class _ChannelListViewState extends ConsumerState<_ChannelListView> {
   late List<CategorySection> _shown = widget.list.sections;
   var _atRest = true;
+  var _reordering = false;
+
+  /// The conversation last closed after opening it from this list; a left
+  /// swipe brings it back.
+  ChannelItem? _last;
+  var _swipe = 0.0;
+
+  final _scroll = ScrollController();
+  final _rows = <String, BuildContext>{};
+  final _unread = ValueNotifier<({String? above, String? below})>((
+    above: null,
+    below: null,
+  ));
+  var _checkPending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUnread();
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    _unread.dispose();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(_ChannelListView old) {
     super.didUpdateWidget(old);
-    if (old.list.sections != widget.list.sections) _refreshShown();
+    if (old.list.sections != widget.list.sections) {
+      _refreshShown();
+      _checkUnread();
+    }
   }
 
   /// Rows only move while the list rests at the top; otherwise they keep
@@ -102,6 +138,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
 
   bool _onScroll(ScrollNotification n) {
     if (n.depth != 0) return false;
+    _checkUnread();
     final atRest = n is ScrollEndNotification && n.metrics.pixels <= 0;
     if (atRest != _atRest) {
       _atRest = atRest;
@@ -112,20 +149,143 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     return false;
   }
 
-  Future<void> _open(ChannelItem item) => openConversation(
-    Navigator.of(context),
+  /// Works out after the next frame whether unread channels lie above or
+  /// below the visible part, once per frame however often it is asked.
+  void _checkUnread() {
+    if (_checkPending) return;
+    _checkPending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPending = false;
+      if (!mounted || _reordering) return;
+      final viewport = context.findRenderObject();
+      if (viewport is! RenderBox || !viewport.hasSize) return;
+      final placed = <String, ({double top, double bottom})>{};
+      for (final MapEntry(key: id, value: row) in _rows.entries) {
+        final box = row.findRenderObject();
+        if (box is! RenderBox || !box.attached || !box.hasSize) continue;
+        final top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+        placed[id] = (top: top, bottom: top + box.size.height);
+      }
+      final next = unreadOutside(
+        rows: [
+          for (final section in _shown)
+            for (final row in section.shown)
+              (id: row.id, unread: row.unread || row.mentions > 0),
+        ],
+        placed: placed,
+        height: viewport.size.height,
+      );
+      if (next != _unread.value) _unread.value = next;
+    });
+  }
+
+  /// Brings the channel [id] into view: at once when its row is laid out,
+  /// else first close by, from the rows' average height.
+  Future<void> _reveal(String id) async {
+    final row = _rows[id];
+    if (row != null && row.mounted) {
+      await Scrollable.ensureVisible(
+        row,
+        alignment: 0.3,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+      return;
+    }
+    final order = [
+      for (final section in _shown)
+        for (final r in section.shown) r.id,
+    ];
+    final known = _rows.entries.where((e) => e.value.mounted).toList();
+    if (known.isEmpty || !_scroll.hasClients) return;
+    final anchor = known.first;
+    final box = anchor.value.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return;
+    final rows = order.indexOf(id) - order.indexOf(anchor.key);
+    final position = _scroll.position;
+    final target = (position.pixels + rows * box.size.height).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    await _scroll.animateTo(
+      target,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+    );
+    if (!mounted) return;
+    final now = _rows[id];
+    if (now != null && now.mounted) {
+      await Scrollable.ensureVisible(
+        now,
+        alignment: 0.3,
+        duration: const Duration(milliseconds: 150),
+      );
+    }
+  }
+
+  Future<void> _open(ChannelItem item) async {
+    await openConversation(
+      Navigator.of(context),
+      url: widget.url,
+      channelId: item.id,
+      title: item.title,
+      teamId: widget.teamId,
+    );
+    if (mounted) _last = item;
+  }
+
+  void _swipeUpdate(DragUpdateDetails d) {
+    final next = _swipe + d.delta.dx;
+    if (_swipe > -_reopenDistance && next <= -_reopenDistance) {
+      unawaited(HapticFeedback.mediumImpact());
+    }
+    _swipe = next;
+  }
+
+  void _swipeEnd(DragEndDetails d) {
+    final last = _last;
+    final far =
+        _swipe <= -_reopenDistance || d.velocity.pixelsPerSecond.dx < -800;
+    _swipe = 0;
+    if (far && last != null && mounted) unawaited(_open(last));
+  }
+
+  static const _reopenDistance = 64.0;
+
+  void _setReordering(bool on) {
+    setState(() => _reordering = on);
+    if (!on) _checkUnread();
+  }
+
+  Future<void> _showMenu(CategorySection section) => showCategoryMenu(
+    context,
     url: widget.url,
-    channelId: item.id,
-    title: item.title,
     teamId: widget.teamId,
+    section: section,
+    onReorder: () => _setReordering(true),
   );
 
   @override
   Widget build(BuildContext context) {
+    if (_reordering) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _setReordering(false);
+        },
+        child: ReorderView(
+          url: widget.url,
+          teamId: widget.teamId,
+          sections: widget.list.sections,
+          onDone: () => _setReordering(false),
+        ),
+      );
+    }
     final list = widget.list;
-    return NotificationListener<ScrollNotification>(
+    final scrollView = NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: CustomScrollView(
+        controller: _scroll,
         slivers: [
           SliverToBoxAdapter(child: PaneLabel(widget.label)),
           SliverPadding(
@@ -180,51 +340,204 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                     'direct messages, show up here.',
               ),
             ),
-          for (final section in _shown)
-            SliverMainAxisGroup(
-              key: ValueKey(section.id),
-              slivers: [
-                PinnedHeaderSliver(
-                  child: _CategoryHeader(
-                    section: section,
-                    onToggle: () async {
-                      final actions = await ref.read(
-                        channelActionsProvider(widget.url).future,
-                      );
-                      await actions.setCollapsed(
-                        section.id,
-                        collapsed: !section.collapsed,
-                      );
-                    },
-                  ),
-                ),
-                SliverList.builder(
-                  itemCount: section.rows.length,
-                  findChildIndexCallback: (key) {
-                    final id = (key as ValueKey<String>).value;
-                    final i = section.rows.indexWhere((r) => r.id == id);
-                    return i < 0 ? null : i;
-                  },
-                  itemBuilder: (context, i) {
-                    final item = section.rows[i];
-                    return ChannelTile(
-                      key: ValueKey(item.id),
-                      serverUrl: widget.url,
-                      item: item,
-                      onTap: () => _open(item),
-                      onLongPress: () => showChannelActions(
-                        context,
-                        url: widget.url,
-                        teamId: widget.teamId,
-                        item: item,
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+          for (final section in _shown) _section(section),
           const SliverToBoxAdapter(child: SizedBox(height: Spacing.lg)),
         ],
+      ),
+    );
+    return RawGestureDetector(
+      gestures: {
+        OneWayDragRecognizer:
+            GestureRecognizerFactoryWithHandlers<OneWayDragRecognizer>(
+              () => OneWayDragRecognizer(rightward: false, debugOwner: this),
+              (r) => r
+                ..onStart = (_) {
+                  _swipe = 0;
+                }
+                ..onUpdate = _swipeUpdate
+                ..onEnd = _swipeEnd
+                ..onCancel = () {
+                  _swipe = 0;
+                },
+            ),
+      },
+      child: Stack(
+        children: [
+          // A resized viewport moves rows without scrolling.
+          NotificationListener<ScrollMetricsNotification>(
+            onNotification: (n) {
+              if (n.depth == 0) _checkUnread();
+              return false;
+            },
+            child: scrollView,
+          ),
+          _UnreadChips(unread: _unread, onJump: (id) => unawaited(_reveal(id))),
+        ],
+      ),
+    );
+  }
+
+  Widget _section(CategorySection section) {
+    final rows = section.shown;
+    return SliverMainAxisGroup(
+      key: ValueKey(section.id),
+      slivers: [
+        PinnedHeaderSliver(
+          child: _CategoryHeader(
+            section: section,
+            onMenu: () => unawaited(_showMenu(section)),
+            onToggle: () async {
+              final actions = await ref.read(
+                channelActionsProvider(widget.url).future,
+              );
+              await actions.setCollapsed(
+                section.id,
+                collapsed: !section.collapsed,
+              );
+            },
+          ),
+        ),
+        SliverList.builder(
+          itemCount: rows.length,
+          findChildIndexCallback: (key) {
+            final id = (key as ValueKey<String>).value;
+            final i = rows.indexWhere((r) => r.id == id);
+            return i < 0 ? null : i;
+          },
+          itemBuilder: (context, i) {
+            final item = rows[i];
+            return _PlacedRow(
+              key: ValueKey(item.id),
+              id: item.id,
+              rows: _rows,
+              child: ChannelTile(
+                serverUrl: widget.url,
+                item: item,
+                onTap: () => _open(item),
+                onLongPress: () => showChannelActions(
+                  context,
+                  url: widget.url,
+                  teamId: widget.teamId,
+                  item: item,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// Keeps its row's context in [rows] while it is built, so the list can
+/// tell where the row is.
+class _PlacedRow extends StatefulWidget {
+  const _PlacedRow({
+    required this.id,
+    required this.rows,
+    required this.child,
+    super.key,
+  });
+
+  final String id;
+  final Map<String, BuildContext> rows;
+  final Widget child;
+
+  @override
+  State<_PlacedRow> createState() => _PlacedRowState();
+}
+
+class _PlacedRowState extends State<_PlacedRow> {
+  @override
+  void initState() {
+    super.initState();
+    widget.rows[widget.id] = context;
+  }
+
+  @override
+  void dispose() {
+    if (widget.rows[widget.id] == context) widget.rows.remove(widget.id);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// "Unread" chips at the top and bottom edge while unread channels are
+/// out of view there; a tap brings the nearest one into view.
+class _UnreadChips extends StatelessWidget {
+  const _UnreadChips({required this.unread, required this.onJump});
+
+  final ValueListenable<({String? above, String? below})> unread;
+  final ValueChanged<String> onJump;
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder(
+    valueListenable: unread,
+    builder: (context, value, _) => Stack(
+      children: [
+        if (value.above case final id?)
+          Positioned(
+            top: Spacing.sm,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: _UnreadChip(
+                icon: Icons.arrow_upward,
+                label: 'Unread above',
+                onPressed: () => onJump(id),
+              ),
+            ),
+          ),
+        if (value.below case final id?)
+          Positioned(
+            bottom: Spacing.md,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: _UnreadChip(
+                icon: Icons.arrow_downward,
+                label: 'Unread below',
+                onPressed: () => onJump(id),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+class _UnreadChip extends StatelessWidget {
+  const _UnreadChip({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      label: label,
+      button: true,
+      excludeSemantics: true,
+      child: ActionChip(
+        avatar: Icon(icon, size: 18, color: scheme.onPrimaryContainer),
+        label: const Text('Unread'),
+        labelStyle: TextStyle(
+          color: scheme.onPrimaryContainer,
+          fontWeight: FontWeight.w600,
+        ),
+        backgroundColor: scheme.primaryContainer,
+        side: BorderSide.none,
+        elevation: 3,
+        shape: const StadiumBorder(),
+        onPressed: onPressed,
       ),
     );
   }
@@ -283,10 +596,15 @@ class _ShortcutTile extends StatelessWidget {
 }
 
 class _CategoryHeader extends StatelessWidget {
-  const _CategoryHeader({required this.section, required this.onToggle});
+  const _CategoryHeader({
+    required this.section,
+    required this.onToggle,
+    required this.onMenu,
+  });
 
   final CategorySection section;
   final VoidCallback onToggle;
+  final VoidCallback onMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -295,16 +613,12 @@ class _CategoryHeader extends StatelessWidget {
       color: Theme.of(context).scaffoldBackgroundColor,
       child: InkWell(
         onTap: onToggle,
+        onLongPress: onMenu,
         child: Semantics(
           expanded: !section.collapsed,
           button: true,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Spacing.md,
-              Spacing.md,
-              Spacing.lg,
-              Spacing.xs,
-            ),
+            padding: const EdgeInsets.only(left: Spacing.md, top: Spacing.xs),
             child: Row(
               children: [
                 AnimatedRotation(
@@ -321,6 +635,14 @@ class _CategoryHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                ),
+                IconButton(
+                  tooltip: '${section.title} options',
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 18,
+                  color: tokens.muted,
+                  icon: const Icon(Icons.more_horiz),
+                  onPressed: onMenu,
                 ),
               ],
             ),

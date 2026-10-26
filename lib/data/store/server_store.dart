@@ -608,6 +608,17 @@ class ServerStore {
     CategoriesCompanion(collapsed: Value(collapsed)),
   );
 
+  /// A team's categories in the user's [order].
+  Future<void> applyCategoryOrder(List<String> order) => db.batch((b) {
+    for (final (i, id) in order.indexed) {
+      b.update(
+        db.categories,
+        CategoriesCompanion(sortOrder: Value(i)),
+        where: (c) => c.id.equals(id),
+      );
+    }
+  });
+
   /// Replaces the id list [list] (`mentions`, `saved`) with [page]'s order
   /// and stores its posts. They stay outside any channel range, so they
   /// never show up as channel history.
