@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
@@ -10,6 +11,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/dialog_dates.dart';
 import 'package:matterleast/domain/dialog_rules.dart';
+import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/typing.dart';
 
 import '../support/fake_server.dart';
@@ -113,6 +115,49 @@ void main() {
       session.db.posts,
     )..where((p) => p.id.equals('eph1'))).getSingle();
     expect(row.type, ephemeralType);
+  });
+
+  test('acknowledgements from others arrive and leave live', () async {
+    await session.store.applyEdit(
+      api.Post.fromJson({
+        'id': 'ack1',
+        'channel_id': channelId,
+        'user_id': meId,
+        'create_at': DateTime.utc(2026, 10, 25, 10).millisecondsSinceEpoch,
+        'message': 'Please confirm',
+        'metadata': {
+          'priority': {'priority': 'important', 'requested_ack': true},
+        },
+      }),
+    );
+    Future<List<String>> acknowledged() async {
+      final row = await (session.db.select(
+        session.db.posts,
+      )..where((p) => p.id.equals('ack1'))).getSingle();
+      return [
+        for (final a in PostDetails.decode(
+          row.propsJson,
+          row.metadataJson,
+        ).acknowledgements)
+          a.userId,
+      ];
+    }
+
+    final ack = jsonEncode({
+      'user_id': 'u9',
+      'post_id': 'ack1',
+      'acknowledged_at': DateTime.utc(
+        2026,
+        10,
+        25,
+        10,
+        1,
+      ).millisecondsSinceEpoch,
+    });
+    await receive('post_acknowledgement_added', {'acknowledgement': ack});
+    expect(await acknowledged(), ['u9']);
+    await receive('post_acknowledgement_removed', {'acknowledgement': ack});
+    expect(await acknowledged(), isEmpty);
   });
 
   test('a dialog decodes with its fields and is offered for the trigger '
