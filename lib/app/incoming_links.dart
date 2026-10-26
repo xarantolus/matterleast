@@ -30,5 +30,6 @@ Future<void> openIncomingLink(
     navigator,
     ref,
     uri.replace(scheme: link.server.scheme, port: link.server.port),
+    fromOutside: true,
   );
 }

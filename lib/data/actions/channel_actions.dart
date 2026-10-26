@@ -191,10 +191,14 @@ class ChannelActions {
     await session.store.removeChannel(channelId);
   }
 
+  /// The stored direct message with [userId], if the user is in one.
+  Future<String?> storedDirectChannel(String userId) =>
+      directChannelWith(_db, userId);
+
   /// The direct message with [userId], created on the server when there is
   /// none yet; returns its channel id.
   Future<String> directChannel(String userId) async {
-    final known = await directChannelWith(_db, userId);
+    final known = await storedDirectChannel(userId);
     if (known != null) return known;
     final me = await _myId();
     final channel = await session.api.call(

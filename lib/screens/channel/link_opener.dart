@@ -11,15 +11,18 @@ import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Opens [uri] from a message: in the app when it points into a server the
-/// user is signed in to, else in the browser.
+/// user is signed in to, else in the browser. A link [fromOutside] the app
+/// asks before it starts a conversation.
 Future<void> openLinkFromMessage(
   NavigatorState navigator,
   WidgetRef ref,
-  Uri uri,
-) async {
+  Uri uri, {
+  bool fromOutside = false,
+}) async {
   final servers = ref.read(serversProvider).value ?? const [];
   final signedIn = {
     for (final s in servers)
@@ -38,7 +41,13 @@ Future<void> openLinkFromMessage(
       case ChannelNameLink(:final team, :final name):
         await _openChannelNamed(navigator, ref, url, team, name);
       case DirectMessageLink(:final username):
-        await _openDirectMessage(navigator, ref, url, username);
+        await _openDirectMessage(
+          navigator,
+          ref,
+          url,
+          username,
+          fromOutside: fromOutside,
+        );
       case ServerHomeLink():
         ref.read(railSelectionProvider.notifier).select(RailTarget(url: url));
         navigator.popUntil((route) => route.isFirst);
@@ -151,8 +160,9 @@ Future<void> _openDirectMessage(
   NavigatorState navigator,
   WidgetRef ref,
   String url,
-  String username,
-) async {
+  String username, {
+  required bool fromOutside,
+}) async {
   final links = await ref.read(messageLinksProvider(url).future);
   final userId = await links.userIdNamed(username);
   if (userId == null) {
@@ -160,6 +170,21 @@ Future<void> _openDirectMessage(
     return;
   }
   final actions = await ref.read(channelActionsProvider(url).future);
+  // A link alone never starts a conversation; another app or a web page
+  // could aim it at anyone.
+  if (fromOutside &&
+      await actions.storedDirectChannel(userId) == null &&
+      (!navigator.mounted ||
+          !await confirm(
+            navigator.context,
+            title: 'Message @$username?',
+            body:
+                'A link from outside the app opens a conversation with '
+                "@$username. You haven't messaged them yet.",
+            action: 'Message',
+          ))) {
+    return;
+  }
   final channelId = await actions.directChannel(userId);
   if (!navigator.mounted) return;
   await openChannel(
