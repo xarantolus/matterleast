@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Where the reader is in an [AnchoredList], reported after each scroll and
@@ -124,7 +125,33 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
   static const pinTolerance = 48.0;
 
   late final ScrollController _scroll;
-  final _centerKey = UniqueKey();
+  final _centerKey = GlobalKey();
+  final _edgeKey = GlobalKey();
+  late final _physics = _KeepInRangePhysics(oldestTop: _oldestTop);
+
+  /// The offset at which the oldest content's top edge meets the top of the
+  /// screen. The viewport never reports a maximum below zero, so when less
+  /// than a screen of content lies above the anchor it would let the reader
+  /// scroll on until that content sits at the bottom of an empty list.
+  double? _oldestTop() {
+    if (!_scroll.hasClients) return null;
+    final p = _scroll.position;
+    if (!p.hasContentDimensions) return null;
+    double extentOf(BuildContext? context) {
+      final sliver = context?.findRenderObject() as RenderSliver?;
+      return sliver?.geometry?.scrollExtent ?? 0;
+    }
+
+    final above =
+        extentOf(_centerKey.currentContext) + extentOf(_edgeKey.currentContext);
+    return math.max(p.minScrollExtent, above - p.viewportDimension);
+  }
+
+  double get _maxPixels {
+    final p = _scroll.position;
+    return math.min(p.maxScrollExtent, _oldestTop() ?? p.maxScrollExtent);
+  }
+
   final _viewportKey = GlobalKey();
   final _built = <Object, BuildContext>{};
   var _indexOf = <Object, int>{};
@@ -450,7 +477,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     if (!mounted || !_scroll.hasClients) return;
     final p = _scroll.position;
     if (!p.hasContentDimensions) return;
-    final inRange = p.pixels.clamp(p.minScrollExtent, p.maxScrollExtent);
+    final inRange = p.pixels.clamp(p.minScrollExtent, _maxPixels);
     if (inRange != p.pixels) {
       _moved('back into range after a jump', inRange);
       p.jumpTo(inRange);
@@ -531,13 +558,13 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     final p = _scroll.position;
     if (!p.hasContentDimensions) return;
     if (!p.isScrollingNotifier.value &&
-        (p.pixels < p.minScrollExtent || p.pixels > p.maxScrollExtent)) {
+        (p.pixels < p.minScrollExtent || p.pixels > _maxPixels)) {
       // An anchor placed past the content (a jump near the newest row).
       _moved(
         'clamped into range',
-        p.pixels.clamp(p.minScrollExtent, p.maxScrollExtent),
+        p.pixels.clamp(p.minScrollExtent, _maxPixels),
       );
-      p.jumpTo(p.pixels.clamp(p.minScrollExtent, p.maxScrollExtent));
+      p.jumpTo(p.pixels.clamp(p.minScrollExtent, _maxPixels));
     }
     final viewport = _viewportBox;
     final height = viewport?.size.height ?? p.viewportDimension;
@@ -552,7 +579,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     }
     final view = AnchoredListView(
       pinned: _isPinned(),
-      nearOlderEnd: p.maxScrollExtent - p.pixels < p.viewportDimension * 1.5,
+      nearOlderEnd: _maxPixels - p.pixels < p.viewportDimension * 1.5,
       newestVisible: newest,
       oldestVisible: oldest,
     );
@@ -591,7 +618,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
         controller: _scroll,
         reverse: true,
         center: _centerKey,
-        physics: const _KeepInRangePhysics(),
+        physics: _physics,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: [
           SliverList(
@@ -612,21 +639,40 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
             ),
           ),
           if (widget.olderEdge case final edge?)
-            SliverToBoxAdapter(child: edge),
+            SliverToBoxAdapter(key: _edgeKey, child: edge),
         ],
       ),
     );
   }
 }
 
-/// Keeps the offset inside the content after rows change while nothing
-/// scrolls, instead of springing back into range over several frames.
+/// Keeps the offset inside the content: after rows change while nothing
+/// scrolls (instead of springing back over several frames), and at the
+/// oldest content's real top edge, which the viewport doesn't report.
 class _KeepInRangePhysics extends ScrollPhysics {
-  const _KeepInRangePhysics({super.parent});
+  const _KeepInRangePhysics({required this.oldestTop, super.parent});
+
+  final double? Function() oldestTop;
 
   @override
   _KeepInRangePhysics applyTo(ScrollPhysics? ancestor) =>
-      _KeepInRangePhysics(parent: buildParent(ancestor));
+      _KeepInRangePhysics(oldestTop: oldestTop, parent: buildParent(ancestor));
+
+  ScrollMetrics _withTop(ScrollMetrics position) {
+    final top = oldestTop();
+    if (top == null || top >= position.maxScrollExtent) return position;
+    return position.copyWith(maxScrollExtent: top);
+  }
+
+  @override
+  double applyBoundaryConditions(ScrollMetrics position, double value) =>
+      super.applyBoundaryConditions(_withTop(position), value);
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) => super.createBallisticSimulation(_withTop(position), velocity);
 
   @override
   double adjustPositionForNewDimensions({
@@ -642,10 +688,8 @@ class _KeepInRangePhysics extends ScrollPhysics {
       velocity: velocity,
     );
     if (isScrolling || velocity != 0) return pixels;
-    return pixels.clamp(
-      newPosition.minScrollExtent,
-      newPosition.maxScrollExtent,
-    );
+    final range = _withTop(newPosition);
+    return pixels.clamp(range.minScrollExtent, range.maxScrollExtent);
   }
 }
 

@@ -166,4 +166,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.getBottomLeft(find.text('row 100')).dy, closeTo(600, 0.5));
   });
+
+  testWidgets('scrolling up stops with the oldest row at the top', (
+    tester,
+  ) async {
+    await tester.pumpWidget(list(rowsFrom(30, 1)));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 8; i++) {
+      await tester.fling(find.byType(Scrollable), const Offset(0, 600), 3000);
+      await tester.pumpAndSettle();
+    }
+    expect(topOf(tester, 1), closeTo(0, 0.5));
+  });
 }
