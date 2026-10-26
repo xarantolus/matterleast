@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
+import 'package:matterleast/data/actions/agent_actions.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
@@ -84,6 +85,7 @@ class ServerSession {
   late final channels = ChannelActions(this);
   late final profiles = ProfileActions(this);
   late final settings = SettingsActions(this);
+  late final agents = AgentActions(this);
 
   /// A socket that connects again means the server is reachable again.
   void _onSocketState() {

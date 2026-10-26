@@ -154,7 +154,7 @@ final class AgentActionsProvider
   }
 }
 
-String _$agentActionsHash() => r'6b977b03b45055d32684bad17f6b0e9533dda294';
+String _$agentActionsHash() => r'634b42e6bc55efdb483a613d9075c3e42afa328f';
 
 final class AgentActionsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<AgentActions>, String> {

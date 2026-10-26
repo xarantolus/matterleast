@@ -1,6 +1,5 @@
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/json/agents.dart';
-import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 
 const _route = '/plugins/mattermost-ai';
@@ -15,17 +14,13 @@ class AgentActions {
 
   /// The agents the user may talk to.
   Future<List<AgentBot>> bots() async {
-    final json = await session.api.coalesced(
-      'agents/bots',
-      () => session.api.getJsonObject('$_route/ai_bots'),
-    );
+    final json = await session.api.getJsonObject('$_route/ai_bots');
     return json == null ? const [] : AgentBotsAnswer.fromJson(json).bots;
   }
 
   /// The user's conversations with agents, newest first.
   Future<List<AgentThread>> threads() async {
-    final response = await session.api.coalesced(
-      'agents/threads',
+    final response = await session.api.call(
       () => session.api.dio.get<Object?>('$_route/ai_threads'),
     );
     final threads = decodeAgentThreads(response.data)
@@ -43,7 +38,7 @@ class AgentActions {
     AgentBot bot,
     String message,
   ) async {
-    final channelId = await ChannelActions(session).directChannel(bot.id);
+    final channelId = await session.channels.directChannel(bot.id);
     final post = await session.api.call(
       () => session.api.client.posts.createPost(
         body: api.ApiV4PostsRequestBody(channelId: channelId, message: message),

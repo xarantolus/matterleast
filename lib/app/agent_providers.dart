@@ -19,7 +19,7 @@ bool agentsAvailable(Ref ref, String url) =>
 
 @riverpod
 Future<AgentActions> agentActions(Ref ref, String url) async =>
-    AgentActions(await ref.watch(serverSessionProvider(url).future));
+    (await ref.watch(serverSessionProvider(url).future)).agents;
 
 /// The agents the user may talk to; none when the plugin is gone.
 @riverpod
