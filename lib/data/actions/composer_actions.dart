@@ -115,6 +115,18 @@ class ComposerActions {
   Future<void> clearDraft(String channelId, {String rootId = ''}) =>
       _drafts.clear(channelId, rootId);
 
+  /// Deletes a draft from the drafts list; [restoreDraft] with the answer
+  /// undoes it.
+  Future<DraftRow?> removeDraft(String channelId, {String rootId = ''}) async {
+    await _drafts.flush();
+    final row = await _store.draft(channelId, rootId);
+    await _drafts.clear(channelId, rootId);
+    return row;
+  }
+
+  Future<void> restoreDraft(DraftRow row) =>
+      _store.saveDraft(row.toCompanion(false));
+
   /// Writes waiting drafts now, e.g. when the app goes to the background.
   Future<void> flushDrafts() => _drafts.flush();
 

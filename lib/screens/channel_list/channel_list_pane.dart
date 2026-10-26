@@ -324,7 +324,11 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 count: list.drafts,
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => DraftsScreen(teamName: list.teamName),
+                    builder: (_) => DraftsScreen(
+                      url: widget.url,
+                      teamId: widget.teamId,
+                      teamName: list.teamName,
+                    ),
                   ),
                 ),
               ),
