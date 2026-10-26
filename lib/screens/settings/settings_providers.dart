@@ -35,7 +35,7 @@ ServerEntry? settingsServer(Ref ref) {
 
 @riverpod
 Future<SettingsActions> settingsActions(Ref ref, String url) async =>
-    SettingsActions(await ref.watch(serverSessionProvider(url).future));
+    (await ref.watch(serverSessionProvider(url).future)).settings;
 
 /// The account's notification settings as stored; empty until the first
 /// sign-in data arrived.

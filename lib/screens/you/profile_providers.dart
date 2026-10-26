@@ -10,7 +10,7 @@ part 'profile_providers.g.dart';
 
 @Riverpod(keepAlive: true)
 Future<ProfileActions> profileActions(Ref ref, String url) async =>
-    ProfileActions(await ref.watch(serverSessionProvider(url).future));
+    (await ref.watch(serverSessionProvider(url).future)).profiles;
 
 @riverpod
 Stream<UserProfile?> userProfile(Ref ref, String url, String userId) async* {

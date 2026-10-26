@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
-import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/file_upload.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:path/path.dart' as p;
@@ -54,6 +53,5 @@ Future<void> sendShared(
   }
   running = null;
   if (cancelled) throw const Cancelled();
-  await ComposerActions(session)
-      .send(channelId, message: message, files: uploaded);
+  await session.composer.send(channelId, message: message, files: uploaded);
 }

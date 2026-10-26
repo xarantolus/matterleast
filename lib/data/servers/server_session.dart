@@ -2,6 +2,11 @@ import 'dart:async';
 
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
+import 'package:matterleast/data/actions/channel_actions.dart';
+import 'package:matterleast/data/actions/composer_actions.dart';
+import 'package:matterleast/data/actions/post_actions.dart';
+import 'package:matterleast/data/actions/profile_actions.dart';
+import 'package:matterleast/data/actions/settings_actions.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/local_copies.dart';
@@ -71,6 +76,15 @@ class ServerSession {
   );
   late final OutboxSender outbox;
 
+  // The user's actions on this server, one of each for the session's
+  // lifetime, so every screen and the background share their state (such
+  // as drafts waiting to be written).
+  late final composer = ComposerActions(this);
+  late final posts = PostActions(this);
+  late final channels = ChannelActions(this);
+  late final profiles = ProfileActions(this);
+  late final settings = SettingsActions(this);
+
   /// A socket that connects again means the server is reachable again.
   void _onSocketState() {
     if (connection.state.value == SocketState.connected) {
@@ -117,6 +131,7 @@ class ServerSession {
 
   Future<void> close() async {
     connection.state.removeListener(_onSocketState);
+    await composer.dispose().catchError((Object _) {});
     await outbox.close();
     await connection.close();
     emoji.close();

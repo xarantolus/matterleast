@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
-import 'package:matterleast/data/actions/settings_actions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -157,8 +156,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final session = await ref.read(serverSessionProvider(widget.url).future);
-      await SettingsActions(session)
-          .savePreference(Prefs.skinTone, skinToneCode(tone));
+      await session.settings.savePreference(Prefs.skinTone, skinToneCode(tone));
     } on Object catch (e) {
       messenger.showSnackBar(
         SnackBar(

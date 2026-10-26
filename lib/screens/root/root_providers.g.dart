@@ -327,7 +327,7 @@ final class ChannelActionsProvider
   }
 }
 
-String _$channelActionsHash() => r'de2a4501674ef24833b7f3d29d82eb1d32c99ca8';
+String _$channelActionsHash() => r'927b1c312c1d3ec66ef7988ff5d8a80c69952f0f';
 
 /// Kept while the app runs, like the session it wraps, so the rail can use
 /// it.

@@ -74,7 +74,7 @@ final class ComposerActionsProvider
   }
 }
 
-String _$composerActionsHash() => r'ce5e21d5eaef594af23a5802a2fb651044228c57';
+String _$composerActionsHash() => r'25cd5c61b4420d6d1dee29259a66c77942a089dd';
 
 /// Kept while the app runs, like the session it wraps, so a draft save
 /// outlives the screen that started it. Waiting drafts are written when the
@@ -427,7 +427,7 @@ final class PostActionsProvider
   }
 }
 
-String _$postActionsHash() => r'5fcdb6425d59d018c1526b18502091b51b148e64';
+String _$postActionsHash() => r'3d59ac1bbcd0de29a42717f69620efeaf7517290';
 
 /// What the message menu does to a post.
 

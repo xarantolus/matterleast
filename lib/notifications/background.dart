@@ -3,8 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:matterleast/data/actions/channel_actions.dart';
-import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/secure/token_store.dart';
@@ -125,20 +123,15 @@ Future<void> onNoticeAction(NotificationResponse response) async {
       case NoticeActions.reply:
         final text = response.input?.trim() ?? '';
         if (text.isEmpty) return;
-        final composer = ComposerActions(session);
-        try {
-          await composer.send(
-            target.channelId,
-            rootId: target.rootId,
-            message: text,
-          );
-          // The session may still be starting its outbox; this waits for
-          // the post to be tried before the engine goes away.
-          await session.outbox.start();
-          await session.outbox.kick();
-        } finally {
-          await composer.dispose();
-        }
+        await session.composer.send(
+          target.channelId,
+          rootId: target.rootId,
+          message: text,
+        );
+        // The session may still be starting its outbox; this waits for
+        // the post to be tried before the engine goes away.
+        await session.outbox.start();
+        await session.outbox.kick();
       case NoticeActions.read when target.rootId.isNotEmpty:
         final team = target.teamId.isNotEmpty
             ? target.teamId
@@ -146,7 +139,7 @@ Future<void> onNoticeAction(NotificationResponse response) async {
         if (team == null) return;
         await ConversationActions(session).markThreadRead(team, target.rootId);
       case NoticeActions.read:
-        await ChannelActions(session).markRead(target.channelId);
+        await session.channels.markRead(target.channelId);
     }
   });
 }

@@ -16,16 +16,11 @@ part 'composer_providers.g.dart';
 /// app is hidden.
 @Riverpod(keepAlive: true)
 Future<ComposerActions> composerActions(Ref ref, String url) async {
-  final actions = ComposerActions(
-    await ref.watch(serverSessionProvider(url).future),
-  );
+  final actions = (await ref.watch(serverSessionProvider(url).future)).composer;
   final lifecycle = AppLifecycleListener(
     onHide: () => unawaited(actions.flushDrafts()),
   );
-  ref.onDispose(() {
-    lifecycle.dispose();
-    unawaited(actions.dispose().catchError((Object _) {}));
-  });
+  ref.onDispose(lifecycle.dispose);
   return actions;
 }
 
@@ -85,4 +80,4 @@ Stream<OpenDialog> openDialogs(Ref ref, String url) async* {
 /// What the message menu does to a post.
 @Riverpod(keepAlive: true)
 Future<PostActions> postActions(Ref ref, String url) async =>
-    PostActions(await ref.watch(serverSessionProvider(url).future));
+    (await ref.watch(serverSessionProvider(url).future)).posts;

@@ -112,7 +112,7 @@ final class SettingsActionsProvider
   }
 }
 
-String _$settingsActionsHash() => r'6b5249ee682e7c44cc37a00efdb6039ab80f1131';
+String _$settingsActionsHash() => r'2b0f7b29a527ef90aff223f025f29a3153d88c06';
 
 final class SettingsActionsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<SettingsActions>, String> {

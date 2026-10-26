@@ -46,7 +46,7 @@ Stream<SyncStatus> syncStatus(Ref ref, String url) async* {
 /// it.
 @Riverpod(keepAlive: true)
 Future<ChannelActions> channelActions(Ref ref, String url) async =>
-    ChannelActions(await ref.watch(serverSessionProvider(url).future));
+    (await ref.watch(serverSessionProvider(url).future)).channels;
 
 /// Fetches a server's channels, teams and Home lists again; the outcome
 /// shows in [syncStatus].
