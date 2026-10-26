@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/file_providers.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/file_handoff.dart';
 import 'package:matterleast/domain/post_files.dart';
@@ -387,6 +388,18 @@ Future<void> _runFileAction(
   final navigator = Navigator.of(context);
   void say(String message) =>
       messenger.showSnackBar(SnackBar(content: Text(message)));
+  final features = await ref.read(featuresProvider(url).future);
+  final inApp =
+      action == _FileAction.view &&
+      (file.kind == FileKind.pdf ||
+          (file.kind == FileKind.text && file.size <= _textViewerLimit));
+  if (!features.fileDownloads && !inApp) {
+    say(
+      "This server doesn't allow taking files out of the app, so "
+      '${file.name} can only be shown here.',
+    );
+    return;
+  }
   final downloads = ref.read(fileDownloadsProvider(url).future)..ignore();
   File? local;
   try {
@@ -472,23 +485,28 @@ class FileActionsMenu extends ConsumerWidget {
   final Color? color;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) =>
-      PopupMenuButton<MediaAction>(
-        tooltip: 'More',
-        iconColor: color,
-        onSelected: (action) => runMediaAction(context, ref, url, file, action),
-        itemBuilder: (_) => [
-          PopupMenuItem(
-            value: MediaAction.save,
-            child: Text('Save to ${_folderOf(file)}'),
-          ),
-          const PopupMenuItem(value: MediaAction.share, child: Text('Share')),
-          const PopupMenuItem(
-            value: MediaAction.openWith,
-            child: Text('Open with…'),
-          ),
-        ],
-      );
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Each action hands the file out of the app.
+    if (!(ref.watch(featuresProvider(url)).value?.fileDownloads ?? true)) {
+      return const SizedBox.shrink();
+    }
+    return PopupMenuButton<MediaAction>(
+      tooltip: 'More',
+      iconColor: color,
+      onSelected: (action) => runMediaAction(context, ref, url, file, action),
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: MediaAction.save,
+          child: Text('Save to ${_folderOf(file)}'),
+        ),
+        const PopupMenuItem(value: MediaAction.share, child: Text('Share')),
+        const PopupMenuItem(
+          value: MediaAction.openWith,
+          child: Text('Open with…'),
+        ),
+      ],
+    );
+  }
 }
 
 String _folderOf(PostFile file) => switch (file.kind) {

@@ -6,6 +6,7 @@ import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/profile_locks.dart';
 import 'package:matterleast/domain/user_profile.dart';
 
 /// People's profiles from one server database.
@@ -26,6 +27,20 @@ class ProfileViews {
       ]),
     ),
     () => _profile(userId),
+    interval: const Duration(milliseconds: 300),
+  ).distinct();
+
+  /// The profile fields the signed-in user can't change here.
+  Stream<ProfileLocks> locks() => throttledWatch(
+    db.tableUpdates(TableUpdateQuery.onAllTables([db.syncState, db.config])),
+    () async {
+      final features = await db.features();
+      return profileLocks(
+        await db.syncText(SyncKeys.currentUserAuthService) ?? '',
+        ldap: features.ldapFields,
+        saml: features.samlFields,
+      );
+    },
     interval: const Duration(milliseconds: 300),
   ).distinct();
 
@@ -66,7 +81,9 @@ class ProfileViews {
         automatic: zone?.automaticTimezone,
         manual: zone?.manualTimezone,
       ),
-      customStatus: customStatusOf(_object(u.propsJson), _clock()),
+      customStatus: (await db.features()).customStatus
+          ? customStatusOf(_object(u.propsJson), _clock())
+          : null,
       isBot: u.isBot,
       isMe: await db.syncText(SyncKeys.currentUserId) == u.id,
     );

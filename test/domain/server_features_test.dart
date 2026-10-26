@@ -150,4 +150,78 @@ void main() {
       expect(endpointUnavailable(const Unreachable()), isFalse);
     },
   );
+
+  test('uploads follow the attachment switch and, under compliance, the '
+      'mobile switch', () {
+    expect(features({}).fileUploads, isTrue);
+    expect(features({'EnableFileAttachments': 'false'}).fileUploads, isFalse);
+    final mobileOff = {'EnableMobileFileUpload': 'false'};
+    expect(features(mobileOff).fileUploads, isTrue);
+    expect(
+      features(
+        mobileOff,
+        license: {'IsLicensed': 'true', 'Compliance': 'true'},
+      ).fileUploads,
+      isFalse,
+    );
+    expect(
+      features({}, turnedOff: {OptionalFeature.fileUploads}).fileUploads,
+      isFalse,
+    );
+  });
+
+  test('downloads stop under compliance or secure preview', () {
+    expect(features({}).fileDownloads, isTrue);
+    expect(
+      features(
+        {'EnableMobileFileDownload': 'false'},
+        license: {'IsLicensed': 'true', 'Compliance': 'true'},
+      ).fileDownloads,
+      isFalse,
+    );
+    final secure = {'MobileEnableSecureFilePreview': 'true'};
+    expect(features(secure).fileDownloads, isTrue);
+    expect(
+      features(
+        secure,
+        license: {'IsLicensed': 'true', 'SkuShortName': 'advanced'},
+      ).fileDownloads,
+      isFalse,
+    );
+  });
+
+  test('previews, overrides and cross-team search only when switched on', () {
+    final none = features({});
+    expect(none.linkPreviews, isFalse);
+    expect(none.usernameOverride, isFalse);
+    expect(none.iconOverride, isFalse);
+    expect(none.crossTeamSearch, isFalse);
+    final all = features({
+      'EnableLinkPreviews': 'true',
+      'EnablePostUsernameOverride': 'true',
+      'EnablePostIconOverride': 'true',
+      'EnableCrossTeamSearch': 'true',
+    });
+    expect(all.linkPreviews, isTrue);
+    expect(all.usernameOverride, isTrue);
+    expect(all.iconOverride, isTrue);
+    expect(all.crossTeamSearch, isTrue);
+  });
+
+  test('the edit window is the server limit, none at -1', () {
+    expect(features({'PostEditTimeLimit': '-1'}).editTimeLimit, isNull);
+    expect(
+      features({'PostEditTimeLimit': '300'}).editTimeLimit,
+      const Duration(minutes: 5),
+    );
+  });
+
+  test('the read-only default channel needs a licence', () {
+    final config = {'ExperimentalTownSquareIsReadOnly': 'true'};
+    expect(features(config).townSquareReadOnly, isFalse);
+    expect(
+      features(config, license: {'IsLicensed': 'true'}).townSquareReadOnly,
+      isTrue,
+    );
+  });
 }

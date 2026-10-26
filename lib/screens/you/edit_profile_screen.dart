@@ -143,17 +143,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     int maxLength = 64,
     String? error,
     String? helper,
+    String? lockedBy,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: Spacing.md),
     child: TextField(
       controller: controller,
-      enabled: !_saving,
+      enabled: !_saving && lockedBy == null,
       maxLength: maxLength,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
         errorText: error,
-        helperText: helper,
+        helperText: lockedBy == null ? helper : 'Set by $lockedBy',
+        helperMaxLines: 2,
+        suffixIcon: lockedBy == null ? null : const Icon(Icons.lock_outline),
       ),
     ),
   );
@@ -161,6 +164,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final picture = _picture;
+    final locks = ref.watch(myProfileLocksProvider(widget.url)).value;
+    String? by(bool? locked) => (locked ?? false) ? locks!.source : null;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit profile'),
@@ -194,29 +199,41 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                   ),
                 ),
-                PositionedDirectional(
-                  end: 0,
-                  bottom: 0,
-                  child: IconButton.filledTonal(
-                    tooltip: 'Change picture',
-                    onPressed: _saving ? null : _pick,
-                    icon: const Icon(Icons.photo_camera_outlined),
+                if (!(locks?.picture ?? false))
+                  PositionedDirectional(
+                    end: 0,
+                    bottom: 0,
+                    child: IconButton.filledTonal(
+                      tooltip: 'Change picture',
+                      onPressed: _saving ? null : _pick,
+                      icon: const Icon(Icons.photo_camera_outlined),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
           const SizedBox(height: Spacing.xl),
-          _field(_first, 'First name'),
-          _field(_last, 'Last name'),
-          _field(_nickname, 'Nickname', maxLength: 22),
-          _field(_position, 'Position', maxLength: 128),
+          _field(_first, 'First name', lockedBy: by(locks?.firstName)),
+          _field(_last, 'Last name', lockedBy: by(locks?.lastName)),
+          _field(
+            _nickname,
+            'Nickname',
+            maxLength: 22,
+            lockedBy: by(locks?.nickname),
+          ),
+          _field(
+            _position,
+            'Position',
+            maxLength: 128,
+            lockedBy: by(locks?.position),
+          ),
           _field(
             _username,
             'Username',
             maxLength: 22,
             error: _usernameError,
             helper: 'Letters, digits, dots, dashes and underscores.',
+            lockedBy: by(locks?.username),
           ),
           if (_error case final error?)
             Padding(
@@ -226,17 +243,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.password),
-            label: const Text('Change password'),
-            onPressed: _saving
-                ? null
-                : () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => ChangePasswordScreen(url: widget.url),
+          if (!(locks?.password ?? false))
+            OutlinedButton.icon(
+              icon: const Icon(Icons.password),
+              label: const Text('Change password'),
+              onPressed: _saving
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ChangePasswordScreen(url: widget.url),
+                      ),
                     ),
-                  ),
-          ),
+            ),
         ],
       ),
     );

@@ -6,6 +6,7 @@ import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/views/permission_views.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/log.dart';
@@ -43,7 +44,9 @@ class SuggestionSource {
         yield const [];
       case UserTrigger(:final prefix):
         final local = await _localUsers(prefix);
-        yield rankUsers(prefix, local);
+        final special = (await PermissionViews(_db).channel(channelId))
+            .channelMentions;
+        yield rankUsers(prefix, local, specialMentions: special);
         final remote = await _ask(
           'users:$teamId:$channelId:$prefix',
           () => server.client.users.autocompleteUsers(
@@ -62,7 +65,7 @@ class SuggestionSource {
               _candidate(u, inChannel: !outside.contains(u.id)),
           for (final u in local)
             if (!outside.contains(u.id)) u,
-        ]);
+        ], specialMentions: special);
       case ChannelTrigger(:final prefix):
         final local = await _localChannels(teamId, prefix);
         yield rankChannels(prefix, local);

@@ -6,6 +6,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/views/channel_input.dart';
+import 'package:matterleast/data/views/permission_views.dart';
 import 'package:matterleast/data/views/switch_views.dart';
 import 'package:matterleast/domain/channel_info.dart';
 import 'package:matterleast/domain/channel_list.dart';
@@ -101,13 +102,7 @@ class ChannelViews {
                   db.categories.type.equals('favorites'),
             ))
             .get();
-    final granted = {
-      for (final r in await db.select(db.roles).get())
-        r.name: {
-          for (final p in jsonDecode(r.permissionsJson) as List<Object?>)
-            if (p is String) p,
-        },
-    };
+    final granted = await PermissionViews(db).roleGrants();
     final rights = channelRights(
       channel.type,
       roles: roleNames([
@@ -165,13 +160,7 @@ class ChannelViews {
       await db.syncText(SyncKeys.currentUserRoles) ?? '',
       myTeam?.roles ?? '',
     ]);
-    final granted = {
-      for (final r in await db.select(db.roles).get())
-        r.name: {
-          for (final p in jsonDecode(r.permissionsJson) as List<Object?>)
-            if (p is String) p,
-        },
-    };
+    final granted = await PermissionViews(db).roleGrants();
     bool can(String p) => hasPermission(p, roles: roles, granted: granted);
     return (
       public: can(Permission.createPublicChannel),

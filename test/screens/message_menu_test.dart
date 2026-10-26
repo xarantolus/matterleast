@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
@@ -16,13 +17,39 @@ PostItem _post(String userId) => PostItem(
   message: 'Hello',
 );
 
-Future<void> _open(WidgetTester tester, PostItem post) async {
+const _all = (
+  react: true,
+  reply: true,
+  pin: true,
+  edit: true,
+  delete: true,
+  markUnread: true,
+);
+const _readOnly = (
+  react: false,
+  reply: false,
+  pin: false,
+  edit: false,
+  delete: false,
+  markUnread: false,
+);
+
+Future<void> _open(
+  WidgetTester tester,
+  PostItem post, {
+  MessageRights rights = _all,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         postMenuFactsProvider(_url, post, 'team1').overrideWith(
-          (ref) async =>
-              (myId: 'me', saved: false, following: false, teamName: 'crew'),
+          (ref) async => (
+            myId: 'me',
+            saved: false,
+            following: false,
+            teamName: 'crew',
+            rights: rights,
+          ),
         ),
         recentEmojiProvider(_url).overrideWith((ref) async => const []),
       ],
@@ -50,22 +77,25 @@ Future<void> _open(WidgetTester tester, PostItem post) async {
 }
 
 void main() {
-  testWidgets('the menu offers Edit and Delete on the user own message', (
-    tester,
-  ) async {
+  testWidgets('the menu offers what the rights allow', (tester) async {
     await _open(tester, _post('me'));
     expect(find.text('Edit'), findsOneWidget);
     expect(find.text('Delete'), findsOneWidget);
-    expect(find.text('Mark as unread'), findsNothing);
+    expect(find.text('Reply'), findsOneWidget);
+    expect(find.text('Pin to channel'), findsOneWidget);
+    expect(find.byTooltip('More reactions'), findsOneWidget);
   });
 
-  testWidgets("the menu offers no Edit or Delete on someone else's message", (
+  testWidgets('where nothing may be written only reading actions remain', (
     tester,
   ) async {
-    await _open(tester, _post('other'));
+    await _open(tester, _post('other'), rights: _readOnly);
     expect(find.text('Edit'), findsNothing);
     expect(find.text('Delete'), findsNothing);
-    expect(find.text('Mark as unread'), findsOneWidget);
-    expect(find.text('Reply'), findsOneWidget);
+    expect(find.text('Reply'), findsNothing);
+    expect(find.text('Pin to channel'), findsNothing);
+    expect(find.text('Mark as unread'), findsNothing);
+    expect(find.byTooltip('More reactions'), findsNothing);
+    expect(find.text('Copy text'), findsOneWidget);
   });
 }

@@ -9,6 +9,9 @@ import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/data/views/permission_views.dart';
+import 'package:matterleast/domain/permissions.dart';
+import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -29,6 +32,7 @@ typedef PostMenuFacts = ({
 
   /// For permalinks; empty when no team is known.
   String teamName,
+  MessageRights rights,
 });
 
 @riverpod
@@ -60,11 +64,27 @@ Future<PostMenuFacts> postMenuFacts(
   final teamRow = await (db.select(
     db.teams,
   )..where((t) => t.id.equals(team))).getSingleOrNull();
+  final channelId = (await (db.select(
+    db.posts,
+  )..where((p) => p.id.equals(post.id))).getSingleOrNull())?.channelId;
+  final channel = channelId == null
+      ? noChannelRights
+      : await PermissionViews(db).channel(channelId);
   return (
     myId: me,
     saved: saved != null && saved.value == 'true',
     following: following,
     teamName: teamRow?.name ?? '',
+    rights: messageRights(
+      channel,
+      mine: post.userId == me,
+      system: post.isSystem,
+      fromWebhook: PostDetails.decode(post.propsJson, null).fromWebhook,
+      createAt: post.createAt,
+      now: DateTime.now().toUtc(),
+      editTimeLimit: (await db.features()).editTimeLimit,
+      distinctReactions: post.reactions.length,
+    ),
   );
 }
 
@@ -137,7 +157,7 @@ class MessageMenu extends ConsumerWidget {
       );
     }
     final quick = {...recent, ..._defaultQuickReactions}.take(6).toList();
-    final mine = post.userId == facts.myId;
+    final rights = facts.rights;
     final unsent = post.sendState != null;
     final permalink = facts.teamName.isEmpty
         ? null
@@ -151,7 +171,7 @@ class MessageMenu extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!unsent && !post.isEphemeral)
+          if (!unsent && !post.isEphemeral && rights.react)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
               child: Row(
@@ -197,7 +217,7 @@ class MessageMenu extends ConsumerWidget {
                 ],
               ),
             ),
-          if (onReply != null && !unsent)
+          if (onReply != null && !unsent && rights.reply)
             ListTile(
               leading: const Icon(Icons.reply),
               title: const Text('Reply'),
@@ -244,26 +264,28 @@ class MessageMenu extends ConsumerWidget {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(
-                post.pinned ? Icons.push_pin : Icons.push_pin_outlined,
+            if (rights.pin)
+              ListTile(
+                leading: Icon(
+                  post.pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                ),
+                title: Text(post.pinned ? 'Unpin' : 'Pin to channel'),
+                onTap: () {
+                  close();
+                  unawaited(
+                    _run(
+                      ref.read(postActionsProvider(url).future),
+                      (a) => post.pinned
+                          ? a.unpinPost(post.id)
+                          : a.pinPost(post.id),
+                      post.pinned
+                          ? "Couldn't unpin the message."
+                          : "Couldn't pin the message.",
+                    ),
+                  );
+                },
               ),
-              title: Text(post.pinned ? 'Unpin' : 'Pin to channel'),
-              onTap: () {
-                close();
-                unawaited(
-                  _run(
-                    ref.read(postActionsProvider(url).future),
-                    (a) =>
-                        post.pinned ? a.unpinPost(post.id) : a.pinPost(post.id),
-                    post.pinned
-                        ? "Couldn't unpin the message."
-                        : "Couldn't pin the message.",
-                  ),
-                );
-              },
-            ),
-            if (!mine)
+            if (rights.markUnread)
               ListTile(
                 leading: const Icon(Icons.mark_chat_unread_outlined),
                 title: const Text('Mark as unread'),
@@ -300,7 +322,7 @@ class MessageMenu extends ConsumerWidget {
                   );
                 },
               ),
-            if (mine && onEdit != null && !post.isSystem)
+            if (onEdit != null && rights.edit)
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
                 title: const Text('Edit'),
@@ -309,7 +331,7 @@ class MessageMenu extends ConsumerWidget {
                   onEdit!();
                 },
               ),
-            if (mine)
+            if (rights.delete)
               ListTile(
                 leading: Icon(
                   Icons.delete_outline,

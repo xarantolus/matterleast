@@ -10,16 +10,19 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/app/permission_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/autocomplete.dart';
+import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/screens/channel/posting_rules.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/message_display.dart';
@@ -56,8 +59,8 @@ Stream<int> maxPostSize(Ref ref, String url) async* {
 const _counterFrom = 0.9;
 
 /// Where a message is written: suggestions above the field, then the field
-/// and the send button. Archived channels show a notice instead.
-class Composer extends StatelessWidget {
+/// and the send button. Where the user can't post, a notice says why.
+class Composer extends ConsumerWidget {
   const Composer({
     required this.url,
     required this.channelId,
@@ -76,29 +79,16 @@ class Composer extends StatelessWidget {
   final bool archived;
 
   @override
-  Widget build(BuildContext context) {
-    if (!archived) {
-      return _ComposerField(
-        url: url,
-        channelId: channelId,
-        rootId: rootId,
-        teamId: teamId,
-        hint: hint,
-      );
-    }
-    final tokens = context.tokens;
-    return Container(
-      width: double.infinity,
-      color: tokens.panel,
-      padding: const EdgeInsets.all(Spacing.lg),
-      child: SafeArea(
-        top: false,
-        child: Text(
-          'This channel is archived. You can read it but not post in it.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: tokens.muted),
-        ),
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rights = ref.watch(channelRightsProvider(url, channelId)).value;
+    final block = archived ? PostingBlock.archived : rights?.block;
+    if (block != null) return PostingNotice(block: block);
+    return _ComposerField(
+      url: url,
+      channelId: channelId,
+      rootId: rootId,
+      teamId: teamId,
+      hint: hint,
     );
   }
 }
@@ -184,6 +174,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final editing = value.editing;
     final files = value.attachments;
     final options = ref.watch(postPriorityOptionsProvider(widget.url)).value;
+    final uploads =
+        ref.watch(featuresProvider(widget.url)).value?.fileUploads ?? true;
     final canSend =
         (value.text.text.trim().isNotEmpty ||
             files.any((a) => a.info != null)) &&
@@ -239,7 +231,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  if (editing == null)
+                  if (editing == null && uploads)
                     IconButton(
                       tooltip: 'Attach',
                       onPressed: files.length >= maxAttachments
@@ -434,6 +426,10 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
             await openLinkFromMessage(navigator, ref, uri);
           }
         }
+        return;
+      }
+      if (!mounted ||
+          !await confirmChannelMention(context, ref, url, channelId, message)) {
         return;
       }
       final files = [for (final a in value.attachments) ?a.info];

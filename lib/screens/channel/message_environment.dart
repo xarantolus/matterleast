@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart' show TableUpdateQuery;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/message_links.dart';
+import 'package:matterleast/data/db/throttled_watch.dart';
+import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
@@ -28,6 +31,36 @@ Stream<ParseOptions> parseOptions(Ref ref, String url) async* {
   yield* links.parseOptions();
 }
 
+/// What message rows show of what integrations and links bring: preview
+/// cards when the server and the user's setting allow them, names and
+/// pictures integrations chose only when the server allows overriding.
+typedef PostDisplay = ({
+  bool linkPreviews,
+  bool usernameOverride,
+  bool iconOverride,
+});
+
+@riverpod
+Stream<PostDisplay> postDisplay(Ref ref, String url) async* {
+  final db = (await ref.watch(serverSessionProvider(url).future)).db;
+  yield* throttledWatch(
+    db.tableUpdates(TableUpdateQuery.onAllTables([db.config, db.preferences])),
+    () async {
+      final features = await db.features();
+      final mine = await db.preference(
+        Prefs.linkPreviews.$1,
+        Prefs.linkPreviews.$2,
+      );
+      return (
+        linkPreviews: features.linkPreviews && mine != 'false',
+        usernameOverride: features.usernameOverride,
+        iconOverride: features.iconOverride,
+      );
+    },
+    interval: const Duration(milliseconds: 300),
+  ).distinct();
+}
+
 /// Gives the message bodies below it the server's parse options and what
 /// taps on mentions, channel links and links do.
 class MessageEnvironment extends ConsumerWidget {
@@ -49,6 +82,7 @@ class MessageEnvironment extends ConsumerWidget {
     final me = ref.watch(currentUserProvider(url)).value;
     final emoji = ref.watch(customEmojiProvider(url)).value ?? const {};
     final resolver = ref.watch(customEmojiResolverProvider(url)).value;
+    final display = ref.watch(postDisplayProvider(url)).value;
     return PostEnvironment(
       server: Uri.parse(url),
       options: options,
@@ -69,6 +103,9 @@ class MessageEnvironment extends ConsumerWidget {
         width: size.width,
         height: size.height,
       ),
+      linkPreviews: display?.linkPreviews ?? true,
+      usernameOverride: display?.usernameOverride ?? false,
+      iconOverride: display?.iconOverride ?? false,
       child: child,
     );
   }

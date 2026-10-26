@@ -94,6 +94,65 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
     json['ExperimentalViewArchivedChannels'],
   ),
   pluginsEnabled: const LenientBool().fromJson(json['PluginsEnabled']),
+  enableFileAttachments: const LenientBool().fromJson(
+    json['EnableFileAttachments'],
+  ),
+  enableMobileFileUpload: const LenientBool().fromJson(
+    json['EnableMobileFileUpload'],
+  ),
+  enableMobileFileDownload: const LenientBool().fromJson(
+    json['EnableMobileFileDownload'],
+  ),
+  mobileEnableSecureFilePreview: const LenientBool().fromJson(
+    json['MobileEnableSecureFilePreview'],
+  ),
+  enableLinkPreviews: const LenientBool().fromJson(json['EnableLinkPreviews']),
+  enablePostUsernameOverride: const LenientBool().fromJson(
+    json['EnablePostUsernameOverride'],
+  ),
+  enablePostIconOverride: const LenientBool().fromJson(
+    json['EnablePostIconOverride'],
+  ),
+  enableCrossTeamSearch: const LenientBool().fromJson(
+    json['EnableCrossTeamSearch'],
+  ),
+  postEditTimeLimit: const LenientInt().fromJson(json['PostEditTimeLimit']),
+  enableConfirmNotificationsToChannel: const LenientBool().fromJson(
+    json['EnableConfirmNotificationsToChannel'],
+  ),
+  experimentalTownSquareIsReadOnly: const LenientBool().fromJson(
+    json['ExperimentalTownSquareIsReadOnly'],
+  ),
+  ldapFirstNameAttributeSet: const LenientBool().fromJson(
+    json['LdapFirstNameAttributeSet'],
+  ),
+  ldapLastNameAttributeSet: const LenientBool().fromJson(
+    json['LdapLastNameAttributeSet'],
+  ),
+  ldapNicknameAttributeSet: const LenientBool().fromJson(
+    json['LdapNicknameAttributeSet'],
+  ),
+  ldapPositionAttributeSet: const LenientBool().fromJson(
+    json['LdapPositionAttributeSet'],
+  ),
+  ldapPictureAttributeSet: const LenientBool().fromJson(
+    json['LdapPictureAttributeSet'],
+  ),
+  samlFirstNameAttributeSet: const LenientBool().fromJson(
+    json['SamlFirstNameAttributeSet'],
+  ),
+  samlLastNameAttributeSet: const LenientBool().fromJson(
+    json['SamlLastNameAttributeSet'],
+  ),
+  samlNicknameAttributeSet: const LenientBool().fromJson(
+    json['SamlNicknameAttributeSet'],
+  ),
+  samlPositionAttributeSet: const LenientBool().fromJson(
+    json['SamlPositionAttributeSet'],
+  ),
+  buildEnterpriseReady: const LenientBool().fromJson(
+    json['BuildEnterpriseReady'],
+  ),
   featureFlags: _featureFlags(json, 'FeatureFlags') == null
       ? const {}
       : const _StringMap().fromJson(_featureFlags(json, 'FeatureFlags')),
@@ -108,4 +167,5 @@ ClientLicense _$ClientLicenseFromJson(Map<String, dynamic> json) =>
       lockTeammateNameDisplay: const LenientBool().fromJson(
         json['LockTeammateNameDisplay'],
       ),
+      compliance: const LenientBool().fromJson(json['Compliance']),
     );

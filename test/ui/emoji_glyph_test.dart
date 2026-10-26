@@ -109,8 +109,20 @@ void main() {
         overrides: [
           ..._server(recent: ['partyblob', 'thumbsup']),
           postMenuFactsProvider(_url, post, 'team1').overrideWith(
-            (ref) async =>
-                (myId: 'me', saved: false, following: false, teamName: ''),
+            (ref) async => (
+              myId: 'me',
+              saved: false,
+              following: false,
+              teamName: '',
+              rights: (
+                react: true,
+                reply: true,
+                pin: true,
+                edit: true,
+                delete: true,
+                markUnread: false,
+              ),
+            ),
           ),
         ],
         child: MaterialApp(

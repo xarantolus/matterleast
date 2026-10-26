@@ -159,6 +159,90 @@ final class UserProfileFamily extends $Family
   String toString() => r'userProfileProvider';
 }
 
+/// The profile fields the signed-in user can't change on [url].
+
+@ProviderFor(myProfileLocks)
+final myProfileLocksProvider = MyProfileLocksFamily._();
+
+/// The profile fields the signed-in user can't change on [url].
+
+final class MyProfileLocksProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ProfileLocks>,
+          ProfileLocks,
+          Stream<ProfileLocks>
+        >
+    with $FutureModifier<ProfileLocks>, $StreamProvider<ProfileLocks> {
+  /// The profile fields the signed-in user can't change on [url].
+  MyProfileLocksProvider._({
+    required MyProfileLocksFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'myProfileLocksProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myProfileLocksHash();
+
+  @override
+  String toString() {
+    return r'myProfileLocksProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<ProfileLocks> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<ProfileLocks> create(Ref ref) {
+    final argument = this.argument as String;
+    return myProfileLocks(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyProfileLocksProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myProfileLocksHash() => r'1200b437b359687f20666b711a60550c48551290';
+
+/// The profile fields the signed-in user can't change on [url].
+
+final class MyProfileLocksFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<ProfileLocks>, String> {
+  MyProfileLocksFamily._()
+    : super(
+        retry: null,
+        name: r'myProfileLocksProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The profile fields the signed-in user can't change on [url].
+
+  MyProfileLocksProvider call(String url) =>
+      MyProfileLocksProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'myProfileLocksProvider';
+}
+
 /// The custom statuses the user set lately on [url], newest first.
 
 @ProviderFor(recentCustomStatuses)

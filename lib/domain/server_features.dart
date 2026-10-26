@@ -13,7 +13,12 @@ enum OptionalFeature {
   acknowledgements,
   fileSearch,
   commandSuggestions,
+  fileUploads,
 }
+
+/// Profile fields a directory (LDAP or SAML) can fill in, which the user
+/// then can't change.
+enum ProfileField { firstName, lastName, nickname, position, picture }
 
 /// What one server offers, from its client config, licence, version,
 /// feature flags and plugins. The one place the app asks.
@@ -45,6 +50,32 @@ abstract class ServerFeatures with _$ServerFeatures {
     @Default(true) bool archivedChannels,
     @Default(true) bool fileSearch,
     @Default(true) bool commandSuggestions,
+
+    /// Files can be attached to messages from this app.
+    @Default(true) bool fileUploads,
+
+    /// Files can be saved, shared and opened in other apps; without it
+    /// they are only shown here.
+    @Default(true) bool fileDownloads,
+    @Default(true) bool linkPreviews,
+
+    /// Integrations may post under another name or picture.
+    @Default(false) bool usernameOverride,
+    @Default(false) bool iconOverride,
+    @Default(false) bool crossTeamSearch,
+
+    /// How long after posting a message can be edited; null for always.
+    Duration? editTimeLimit,
+
+    /// Ask before @all, @channel or @here notify a larger channel.
+    @Default(false) bool confirmChannelMentions,
+
+    /// The default channel takes posts from admins only.
+    @Default(false) bool townSquareReadOnly,
+
+    /// Fields that sign-in through LDAP or SAML fills in.
+    @Default({}) Set<ProfileField> ldapFields,
+    @Default({}) Set<ProfileField> samlFields,
 
     /// Whether the server runs plugins at all.
     @Default(true) bool pluginsAllowed,
@@ -99,6 +130,13 @@ ServerFeatures serverFeatures({
 }) {
   bool on(OptionalFeature f, bool? value) =>
       value == true && !turnedOff.contains(f);
+  final licensed = license.isLicensed == true;
+  final compliance = licensed && license.compliance == true;
+  final advanced =
+      licensed &&
+      config.buildEnterpriseReady != false &&
+      const {'advanced', 'entry'}.contains(license.skuShortName);
+  final editLimit = config.postEditTimeLimit;
   final proxyType = config.imageProxyType;
   final maxFileSize = config.maxFileSize;
   final typingMs = config.timeBetweenUserTypingUpdatesMilliseconds;
@@ -140,6 +178,36 @@ ServerFeatures serverFeatures({
     archivedChannels: config.experimentalViewArchivedChannels != false,
     fileSearch: !turnedOff.contains(OptionalFeature.fileSearch),
     commandSuggestions: !turnedOff.contains(OptionalFeature.commandSuggestions),
+    fileUploads:
+        config.enableFileAttachments != false &&
+        (!compliance || config.enableMobileFileUpload != false) &&
+        !turnedOff.contains(OptionalFeature.fileUploads),
+    fileDownloads:
+        (!compliance || config.enableMobileFileDownload != false) &&
+        !(advanced && config.mobileEnableSecureFilePreview == true),
+    linkPreviews: config.enableLinkPreviews == true,
+    usernameOverride: config.enablePostUsernameOverride == true,
+    iconOverride: config.enablePostIconOverride == true,
+    crossTeamSearch: config.enableCrossTeamSearch == true,
+    editTimeLimit: editLimit != null && editLimit >= 0
+        ? Duration(seconds: editLimit)
+        : null,
+    confirmChannelMentions: config.enableConfirmNotificationsToChannel == true,
+    townSquareReadOnly:
+        licensed && config.experimentalTownSquareIsReadOnly == true,
+    ldapFields: {
+      if (config.ldapFirstNameAttributeSet == true) ProfileField.firstName,
+      if (config.ldapLastNameAttributeSet == true) ProfileField.lastName,
+      if (config.ldapNicknameAttributeSet == true) ProfileField.nickname,
+      if (config.ldapPositionAttributeSet == true) ProfileField.position,
+      if (config.ldapPictureAttributeSet == true) ProfileField.picture,
+    },
+    samlFields: {
+      if (config.samlFirstNameAttributeSet == true) ProfileField.firstName,
+      if (config.samlLastNameAttributeSet == true) ProfileField.lastName,
+      if (config.samlNicknameAttributeSet == true) ProfileField.nickname,
+      if (config.samlPositionAttributeSet == true) ProfileField.position,
+    },
     featureFlags: config.featureFlags,
     pluginsAllowed: config.pluginsEnabled != false,
     plugins: {

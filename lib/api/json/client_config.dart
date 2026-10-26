@@ -52,6 +52,27 @@ class ClientConfig {
     this.restrictDirectMessage,
     this.experimentalViewArchivedChannels,
     this.pluginsEnabled,
+    this.enableFileAttachments,
+    this.enableMobileFileUpload,
+    this.enableMobileFileDownload,
+    this.mobileEnableSecureFilePreview,
+    this.enableLinkPreviews,
+    this.enablePostUsernameOverride,
+    this.enablePostIconOverride,
+    this.enableCrossTeamSearch,
+    this.postEditTimeLimit,
+    this.enableConfirmNotificationsToChannel,
+    this.experimentalTownSquareIsReadOnly,
+    this.ldapFirstNameAttributeSet,
+    this.ldapLastNameAttributeSet,
+    this.ldapNicknameAttributeSet,
+    this.ldapPositionAttributeSet,
+    this.ldapPictureAttributeSet,
+    this.samlFirstNameAttributeSet,
+    this.samlLastNameAttributeSet,
+    this.samlNicknameAttributeSet,
+    this.samlPositionAttributeSet,
+    this.buildEnterpriseReady,
     this.featureFlags = const {},
   });
 
@@ -149,6 +170,51 @@ class ClientConfig {
   final bool? experimentalViewArchivedChannels;
   @LenientBool()
   final bool? pluginsEnabled;
+  @LenientBool()
+  final bool? enableFileAttachments;
+  @LenientBool()
+  final bool? enableMobileFileUpload;
+  @LenientBool()
+  final bool? enableMobileFileDownload;
+  @LenientBool()
+  final bool? mobileEnableSecureFilePreview;
+  @LenientBool()
+  final bool? enableLinkPreviews;
+  @LenientBool()
+  final bool? enablePostUsernameOverride;
+  @LenientBool()
+  final bool? enablePostIconOverride;
+  @LenientBool()
+  final bool? enableCrossTeamSearch;
+
+  /// Seconds after posting that a message can still be edited; -1 for no
+  /// limit.
+  @LenientInt()
+  final int? postEditTimeLimit;
+  @LenientBool()
+  final bool? enableConfirmNotificationsToChannel;
+  @LenientBool()
+  final bool? experimentalTownSquareIsReadOnly;
+  @LenientBool()
+  final bool? ldapFirstNameAttributeSet;
+  @LenientBool()
+  final bool? ldapLastNameAttributeSet;
+  @LenientBool()
+  final bool? ldapNicknameAttributeSet;
+  @LenientBool()
+  final bool? ldapPositionAttributeSet;
+  @LenientBool()
+  final bool? ldapPictureAttributeSet;
+  @LenientBool()
+  final bool? samlFirstNameAttributeSet;
+  @LenientBool()
+  final bool? samlLastNameAttributeSet;
+  @LenientBool()
+  final bool? samlNicknameAttributeSet;
+  @LenientBool()
+  final bool? samlPositionAttributeSet;
+  @LenientBool()
+  final bool? buildEnterpriseReady;
 
   /// Every `FeatureFlag…` key, without the prefix.
   @JsonKey(readValue: _featureFlags)
@@ -184,6 +250,7 @@ class ClientLicense {
     this.ldap,
     this.saml,
     this.lockTeammateNameDisplay,
+    this.compliance,
   });
 
   factory ClientLicense.fromJson(Map<String, Object?> json) =>
@@ -202,4 +269,6 @@ class ClientLicense {
   final bool? saml;
   @LenientBool()
   final bool? lockTeammateNameDisplay;
+  @LenientBool()
+  final bool? compliance;
 }

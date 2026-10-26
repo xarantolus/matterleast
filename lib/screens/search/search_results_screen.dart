@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/message_search.dart';
@@ -264,6 +265,8 @@ class _ScopeChips extends ConsumerWidget {
     final teams = ref.watch(railTeamsProvider(url)).value ?? const [];
     final team = teams.where((t) => t.id == scope.teamId).firstOrNull;
     final items = ref.watch(switchItemsProvider(url)).value ?? const [];
+    final crossTeam =
+        ref.watch(featuresProvider(url)).value?.crossTeamSearch ?? false;
     String day(DateTime d) => dateLabel(d, DateTime.now());
 
     Future<DateTime?> pickDay(DateTime? current) => showDatePicker(
@@ -311,12 +314,13 @@ class _ScopeChips extends ConsumerWidget {
                   title: 'Search in team',
                   hint: 'Find a team',
                   items: [
-                    SwitchItem(
-                      serverUrl: url,
-                      kind: SwitchKind.channel,
-                      id: '',
-                      title: 'All teams',
-                    ),
+                    if (crossTeam)
+                      SwitchItem(
+                        serverUrl: url,
+                        kind: SwitchKind.channel,
+                        id: '',
+                        title: 'All teams',
+                      ),
                     for (final t in teams)
                       SwitchItem(
                         serverUrl: url,

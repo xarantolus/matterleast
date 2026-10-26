@@ -15,6 +15,9 @@ class PostEnvironment extends InheritedWidget {
     required super.child,
     this.customEmoji,
     this.image,
+    this.linkPreviews = true,
+    this.usernameOverride = false,
+    this.iconOverride = false,
     super.key,
   });
 
@@ -32,6 +35,14 @@ class PostEnvironment extends InheritedWidget {
   /// An image from a message, filling [size].
   final Widget Function(String url, Size size)? image;
 
+  /// Link preview cards show.
+  final bool linkPreviews;
+
+  /// Integration posts may show another name or picture than their
+  /// creator's; otherwise they could pass for someone else.
+  final bool usernameOverride;
+  final bool iconOverride;
+
   static PostEnvironment? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<PostEnvironment>();
 
@@ -41,5 +52,8 @@ class PostEnvironment extends InheritedWidget {
       options != old.options ||
       myUsername != old.myUsername ||
       customEmoji != old.customEmoji ||
-      image != old.image;
+      image != old.image ||
+      linkPreviews != old.linkPreviews ||
+      usernameOverride != old.usernameOverride ||
+      iconOverride != old.iconOverride;
 }

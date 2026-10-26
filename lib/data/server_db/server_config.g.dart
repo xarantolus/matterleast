@@ -42,4 +42,5 @@ const _$OptionalFeatureEnumMap = {
   OptionalFeature.acknowledgements: 'acknowledgements',
   OptionalFeature.fileSearch: 'fileSearch',
   OptionalFeature.commandSuggestions: 'commandSuggestions',
+  OptionalFeature.fileUploads: 'fileUploads',
 };

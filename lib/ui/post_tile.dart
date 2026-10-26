@@ -62,9 +62,13 @@ class PostTile extends StatelessWidget {
       return _SystemLine(post: post, combined: combined);
     }
     final details = detailsOf(post);
+    final env = PostEnvironment.maybeOf(context);
     final webhook = details.fromWebhook;
     final override = details.props.overrideUsername;
-    final name = webhook && (override?.isNotEmpty ?? false)
+    final name =
+        webhook &&
+            (override?.isNotEmpty ?? false) &&
+            (env?.usernameOverride ?? false)
         ? override!
         : post.authorName;
     final bot = post.authorIsBot || webhook || details.props.fromBot == 'true';
@@ -123,7 +127,7 @@ class PostTile extends StatelessWidget {
             keyPrefix: '${post.id}:${post.editAt?.millisecondsSinceEpoch}:$i',
             imageSizes: details.imageSizes,
           ),
-        if (details.preview case final preview?)
+        if (details.preview case final preview? when env?.linkPreviews ?? true)
           LinkPreviewCard(preview: preview),
         if (post.reactions.isNotEmpty && !post.deleted)
           ReactionsBar(
@@ -217,7 +221,10 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final env = PostEnvironment.maybeOf(context);
     final icon = details.props.overrideIconUrl;
-    final webhookIcon = details.fromWebhook && (icon?.isNotEmpty ?? false);
+    final webhookIcon =
+        details.fromWebhook &&
+        (icon?.isNotEmpty ?? false) &&
+        (env?.iconOverride ?? false);
     // A webhook post without its own icon is not the creator's to show.
     if (env == null || (details.fromWebhook && !webhookIcon)) {
       return InitialsBadge(name: name, size: _avatarSize, round: true);

@@ -158,3 +158,78 @@ final class ParseOptionsFamily extends $Family
   @override
   String toString() => r'parseOptionsProvider';
 }
+
+@ProviderFor(postDisplay)
+final postDisplayProvider = PostDisplayFamily._();
+
+final class PostDisplayProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<PostDisplay>,
+          PostDisplay,
+          Stream<PostDisplay>
+        >
+    with $FutureModifier<PostDisplay>, $StreamProvider<PostDisplay> {
+  PostDisplayProvider._({
+    required PostDisplayFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'postDisplayProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$postDisplayHash();
+
+  @override
+  String toString() {
+    return r'postDisplayProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<PostDisplay> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<PostDisplay> create(Ref ref) {
+    final argument = this.argument as String;
+    return postDisplay(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PostDisplayProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$postDisplayHash() => r'5f523adc8464124b95232cfef98e415c40c50c9e';
+
+final class PostDisplayFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<PostDisplay>, String> {
+  PostDisplayFamily._()
+    : super(
+        retry: null,
+        name: r'postDisplayProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  PostDisplayProvider call(String url) =>
+      PostDisplayProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'postDisplayProvider';
+}
