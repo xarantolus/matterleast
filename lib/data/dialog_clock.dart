@@ -10,10 +10,11 @@ DialogClock clockForElement(DialogElement element) =>
 /// The clock for a dialog at [now]: in the IANA [zone] the integration
 /// named, or the phone's when it named none or one the database lacks.
 DialogClock dialogClock(String? zone, DateTime now) {
-  if (zone == null || zone.isEmpty || wallTimeIn(zone, now) == null) {
-    return DialogClock(now: now);
-  }
-  final location = tz.getLocation(zone);
+  if (zone == null || zone.isEmpty) return DialogClock(now: now);
+  // The zone database names it Etc/UTC; integrations often send UTC.
+  final utc = zone.toUpperCase() == 'UTC';
+  if (!utc && wallTimeIn(zone, now) == null) return DialogClock(now: now);
+  final location = utc ? tz.UTC : tz.getLocation(zone);
   return DialogClock(
     now: now,
     zone: zone,
