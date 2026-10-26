@@ -154,7 +154,12 @@ class MessageMenu extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   for (final name in quick)
-                    IconButton(
+                    IconButton.outlined(
+                      style: IconButton.styleFrom(
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
                       tooltip: ':$name:',
                       onPressed: () {
                         close();
