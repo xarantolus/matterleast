@@ -134,7 +134,9 @@ notes, and they win over this summary.
   app through `tool/lane.sh up [user]` (debug build signed in to the local
   test server, hot reload on every change under `lib/`; `lane.sh reload`
   prints compile errors, `lane.sh shot <label>` saves a screenshot,
-  `lane.sh adb …` drives the device, `lane.sh down` at the end). Iterate
+  `lane.sh adb …` drives the device, `lane.sh down` at the end; the
+  mobile MCP tools work too, with the lane's AVD name `matterleast-<port>`
+  as the device id, and read the screen as labelled elements). Iterate
   by looking at the running app; run only the affected tests while
   working.
 - Agents read only what the brief names, not the whole plan, reviews or
