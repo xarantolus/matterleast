@@ -26,12 +26,13 @@ class _NotificationSettingsPageState
 
   String get _url => widget.server.url;
 
-  Future<void> _save(NotifyProps props) async {
+  Future<void> _save(NotifyProps shown, NotifyProps edited) async {
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
     try {
-      await ref.read(notifySettingsProvider(_url).notifier).save(props);
+      final actions = await ref.read(settingsActionsProvider(_url).future);
+      await actions.saveNotifyProps(shown, edited);
     } on Object catch (e) {
       showProblem(
         messenger,
@@ -44,27 +45,29 @@ class _NotificationSettingsPageState
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(notifySettingsProvider(_url));
+    final props = ref.watch(notifySettingsProvider(_url)).value;
+    final refresh = ref.watch(notifySettingsRefreshProvider(_url));
     final me = ref.watch(currentUserProvider(_url)).value;
-    final props = settings.value;
+    final shown = props != null && !props.isEmpty;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
-        bottom: ProgressSlot(active: _saving || settings.isLoading),
+        bottom: ProgressSlot(active: _saving || (shown && refresh.isLoading)),
       ),
-      body: props != null
+      body: shown
           ? _list(context, props, me?.username ?? '')
-          : settings.hasError && !settings.isLoading
+          : refresh.hasError && !refresh.isLoading
           ? EmptyState(
               icon: Icons.cloud_off_outlined,
               title: "Couldn't load your notification settings",
-              body: requestProblemText(settings.error!, widget.server.address),
+              body: requestProblemText(refresh.error!, widget.server.address),
               action: FilledButton(
-                onPressed: () => ref.invalidate(notifySettingsProvider(_url)),
+                onPressed: () =>
+                    ref.invalidate(notifySettingsRefreshProvider(_url)),
                 child: const Text('Retry'),
               ),
             )
-          : const SizedBox.shrink(),
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -87,14 +90,14 @@ class _NotificationSettingsPageState
               current: props.push,
               label: (l) => l.label,
             );
-            if (level != null) await _save(props.withPush(level));
+            if (level != null) await _save(props, props.withPush(level));
           },
         ),
         SwitchListTile(
           title: const Text('Replies in threads I follow'),
           value: props.threadReplies,
           onChanged: enabled
-              ? (on) => _save(props.withThreadReplies(on))
+              ? (on) => _save(props, props.withThreadReplies(on))
               : null,
         ),
         ListTile(
@@ -109,19 +112,25 @@ class _NotificationSettingsPageState
               current: props.pushTrigger,
               label: (t) => t.label,
             );
-            if (trigger != null) await _save(props.withPushTrigger(trigger));
+            if (trigger != null) {
+              await _save(props, props.withPushTrigger(trigger));
+            }
           },
         ),
         const SettingsHeader('Mentions'),
         SwitchListTile(
           title: const Text('My first name'),
           value: props.firstName,
-          onChanged: enabled ? (on) => _save(props.withFirstName(on)) : null,
+          onChanged: enabled
+              ? (on) => _save(props, props.withFirstName(on))
+              : null,
         ),
         SwitchListTile(
           title: const Text('@channel, @all and @here'),
           value: props.channelWide,
-          onChanged: enabled ? (on) => _save(props.withChannelWide(on)) : null,
+          onChanged: enabled
+              ? (on) => _save(props, props.withChannelWide(on))
+              : null,
         ),
         ListTile(
           enabled: enabled,
@@ -136,6 +145,7 @@ class _NotificationSettingsPageState
             );
             if (text == null) return;
             await _save(
+              props,
               props.withMentionKeys(username, parseMentionKeys(text)),
             );
           },

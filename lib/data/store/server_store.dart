@@ -7,6 +7,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/mappers.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/inbox.dart';
+import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/outbox.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/preference_keys.dart';
@@ -56,30 +57,37 @@ class ServerStore {
 
   final ServerDatabase db;
 
-  Future<void> applyMe(api.User me) => db.transaction(() async {
-    await db.into(db.users).insertOnConflictUpdate(userCompanion(me));
-    await db.setSyncText(SyncKeys.currentUserId, me.id);
-    if (me.roles case final roles?) {
-      await db.setSyncText(SyncKeys.currentUserRoles, roles);
-    }
-    if (me.notifyProps case final props?) {
-      await db.setSyncText(
-        SyncKeys.accountNotifyProps,
-        jsonEncode(props.toJson()),
-      );
-    }
-    if (me.username case final username? when username.isNotEmpty) {
-      await db.setSyncText(
-        SyncKeys.mentionTerms,
-        mentionTerms(
-          username: username,
-          firstName: me.firstName ?? '',
-          mentionKeys: me.notifyProps?.mentionKeys,
-          firstNameKey: me.notifyProps?.firstName,
-        ),
-      );
-    }
-  });
+  /// The signed-in user. Their account notification settings are kept in
+  /// one place: [notifyProps] when the server's whole map is at hand,
+  /// otherwise the keys the typed user carries over the ones stored.
+  Future<void> applyMe(api.User me, {Map<String, String>? notifyProps}) =>
+      db.transaction(() async {
+        await db.into(db.users).insertOnConflictUpdate(userCompanion(me));
+        await db.setSyncText(SyncKeys.currentUserId, me.id);
+        if (me.roles case final roles?) {
+          await db.setSyncText(SyncKeys.currentUserRoles, roles);
+        }
+        final props =
+            notifyProps ??
+            {
+              ...NotifyProps.fromJsonText(
+                await db.syncText(SyncKeys.accountNotifyProps),
+              ).raw,
+              ...NotifyProps.fromJson(me.notifyProps?.toJson()).raw,
+            };
+        await db.setSyncText(SyncKeys.accountNotifyProps, jsonEncode(props));
+        if (me.username case final username? when username.isNotEmpty) {
+          await db.setSyncText(
+            SyncKeys.mentionTerms,
+            mentionTerms(
+              username: username,
+              firstName: me.firstName ?? '',
+              mentionKeys: props['mention_keys'],
+              firstNameKey: props['first_name'],
+            ),
+          );
+        }
+      });
 
   /// A user's props as JSON, such as their custom status changed here.
   Future<void> applyUserProps(String userId, String? json) =>

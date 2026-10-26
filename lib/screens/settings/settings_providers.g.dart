@@ -132,18 +132,25 @@ final class SettingsActionsFamily extends $Family
   String toString() => r'settingsActionsProvider';
 }
 
-/// The account's notification settings, fetched from the server when the
-/// page opens, since the server is the only place they live.
+/// The account's notification settings as stored; empty until the first
+/// sign-in data arrived.
 
-@ProviderFor(NotifySettings)
+@ProviderFor(notifySettings)
 final notifySettingsProvider = NotifySettingsFamily._();
 
-/// The account's notification settings, fetched from the server when the
-/// page opens, since the server is the only place they live.
+/// The account's notification settings as stored; empty until the first
+/// sign-in data arrived.
+
 final class NotifySettingsProvider
-    extends $AsyncNotifierProvider<NotifySettings, NotifyProps> {
-  /// The account's notification settings, fetched from the server when the
-  /// page opens, since the server is the only place they live.
+    extends
+        $FunctionalProvider<
+          AsyncValue<NotifyProps>,
+          NotifyProps,
+          Stream<NotifyProps>
+        >
+    with $FutureModifier<NotifyProps>, $StreamProvider<NotifyProps> {
+  /// The account's notification settings as stored; empty until the first
+  /// sign-in data arrived.
   NotifySettingsProvider._({
     required NotifySettingsFamily super.from,
     required String super.argument,
@@ -167,7 +174,15 @@ final class NotifySettingsProvider
 
   @$internal
   @override
-  NotifySettings create() => NotifySettings();
+  $StreamProviderElement<NotifyProps> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<NotifyProps> create(Ref ref) {
+    final argument = this.argument as String;
+    return notifySettings(ref, argument);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -180,20 +195,13 @@ final class NotifySettingsProvider
   }
 }
 
-String _$notifySettingsHash() => r'e5d0f7b641b8245ec11edecdbff9562907bb01a8';
+String _$notifySettingsHash() => r'a6b11b73b7767f14972ddfe637008bd9c51a1d57';
 
-/// The account's notification settings, fetched from the server when the
-/// page opens, since the server is the only place they live.
+/// The account's notification settings as stored; empty until the first
+/// sign-in data arrived.
 
 final class NotifySettingsFamily extends $Family
-    with
-        $ClassFamilyOverride<
-          NotifySettings,
-          AsyncValue<NotifyProps>,
-          NotifyProps,
-          FutureOr<NotifyProps>,
-          String
-        > {
+    with $FunctionalFamilyOverride<Stream<NotifyProps>, String> {
   NotifySettingsFamily._()
     : super(
         retry: null,
@@ -203,8 +211,8 @@ final class NotifySettingsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// The account's notification settings, fetched from the server when the
-  /// page opens, since the server is the only place they live.
+  /// The account's notification settings as stored; empty until the first
+  /// sign-in data arrived.
 
   NotifySettingsProvider call(String url) =>
       NotifySettingsProvider._(argument: url, from: this);
@@ -213,28 +221,83 @@ final class NotifySettingsFamily extends $Family
   String toString() => r'notifySettingsProvider';
 }
 
-/// The account's notification settings, fetched from the server when the
-/// page opens, since the server is the only place they live.
+/// Fetched when the notification settings open, so they show every key.
 
-abstract class _$NotifySettings extends $AsyncNotifier<NotifyProps> {
-  late final _$args = ref.$arg as String;
-  String get url => _$args;
+@ProviderFor(notifySettingsRefresh)
+final notifySettingsRefreshProvider = NotifySettingsRefreshFamily._();
 
-  FutureOr<NotifyProps> build(String url);
-  @$mustCallSuper
+/// Fetched when the notification settings open, so they show every key.
+
+final class NotifySettingsRefreshProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  /// Fetched when the notification settings open, so they show every key.
+  NotifySettingsRefreshProvider._({
+    required NotifySettingsRefreshFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: noRetry,
+         name: r'notifySettingsRefreshProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
   @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<NotifyProps>, NotifyProps>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<AsyncValue<NotifyProps>, NotifyProps>,
-              AsyncValue<NotifyProps>,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, () => build(_$args));
+  String debugGetCreateSourceHash() => _$notifySettingsRefreshHash();
+
+  @override
+  String toString() {
+    return r'notifySettingsRefreshProvider'
+        ''
+        '($argument)';
   }
+
+  @$internal
+  @override
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as String;
+    return notifySettingsRefresh(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NotifySettingsRefreshProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$notifySettingsRefreshHash() =>
+    r'9980fe67f2a14b2195362eb1c4a186b1a6407ab8';
+
+/// Fetched when the notification settings open, so they show every key.
+
+final class NotifySettingsRefreshFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, String> {
+  NotifySettingsRefreshFamily._()
+    : super(
+        retry: noRetry,
+        name: r'notifySettingsRefreshProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetched when the notification settings open, so they show every key.
+
+  NotifySettingsRefreshProvider call(String url) =>
+      NotifySettingsRefreshProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'notifySettingsRefreshProvider';
 }
 
 @ProviderFor(displayPrefs)

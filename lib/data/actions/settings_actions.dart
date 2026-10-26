@@ -18,21 +18,38 @@ class SettingsActions {
     return me;
   }
 
-  /// The notification settings as the server has them now.
-  Future<NotifyProps> notifyProps() async {
-    final me = await session.api.getJsonObject('/api/v4/users/me');
-    return NotifyProps.fromJson(me?['notify_props']);
-  }
+  /// Fetches the account's notification settings, every key the server
+  /// has, into the store.
+  Future<void> refreshNotifyProps() =>
+      session.api.coalesced('me:notify_props', () async {
+        final me = await session.api.getJsonObject('/api/v4/users/me');
+        if (me != null) await _applyMe(me);
+      });
 
-  Future<NotifyProps> saveNotifyProps(NotifyProps props) async {
+  /// Saves what [edited] changes against [shown]. The server replaces the
+  /// whole map on a patch, so the changes go onto what it has now.
+  Future<void> saveNotifyProps(NotifyProps shown, NotifyProps edited) async {
+    final changes = shown.changesIn(edited);
+    if (changes.isEmpty) return;
+    final me = await session.api.getJsonObject('/api/v4/users/me');
     final response = await session.api.call(
       () => session.api.dio.put<Map<String, Object?>>(
         '/api/v4/users/me/patch',
-        data: {'notify_props': props.raw},
+        data: {
+          'notify_props': {
+            ...NotifyProps.fromJson(me?['notify_props']).raw,
+            ...changes,
+          },
+        },
       ),
     );
-    return NotifyProps.fromJson(response.data?['notify_props']);
+    if (response.data case final user?) await _applyMe(user);
   }
+
+  Future<void> _applyMe(Map<String, Object?> json) => session.store.applyMe(
+    api.User.fromJson(json),
+    notifyProps: NotifyProps.fromJson(json['notify_props']).raw,
+  );
 
   /// Saves a display preference. Turning collapsed reply threads on or off
   /// fetches channels and threads again in the new shape.

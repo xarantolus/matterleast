@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// When the user's devices are notified, from the server's `push` value.
 enum PushLevel {
   all('all', 'All new messages'),
@@ -32,7 +34,25 @@ class NotifyProps {
         if (key is String && value is String) key: value,
   });
 
+  /// As stored: a JSON object, or nothing.
+  factory NotifyProps.fromJsonText(String? text) {
+    if (text == null || text.isEmpty) return const NotifyProps({});
+    try {
+      return NotifyProps.fromJson(jsonDecode(text));
+    } on FormatException {
+      return const NotifyProps({});
+    }
+  }
+
   final Map<String, String> raw;
+
+  bool get isEmpty => raw.isEmpty;
+
+  /// The settings in [edited] that differ from these.
+  Map<String, String> changesIn(NotifyProps edited) => {
+    for (final MapEntry(:key, :value) in edited.raw.entries)
+      if (raw[key] != value) key: value,
+  };
 
   PushLevel get push =>
       PushLevel.values.where((l) => l.value == raw['push']).firstOrNull ??

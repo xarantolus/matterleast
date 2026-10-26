@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/settings_actions.dart';
+import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/notify_props.dart';
 
@@ -26,10 +28,12 @@ void main() {
     server.handle = (r) => switch (r.path) {
       '/api/v4/users/me' => ok({
         'id': meId,
-        'notify_props': {...stored, 'auto_responder_active': false},
+        'username': 'river',
+        'notify_props': stored,
       }),
       '/api/v4/users/me/patch' => ok({
         'id': meId,
+        'username': 'river',
         'notify_props': r.body['notify_props'],
       }),
       _ => ok({'status': 'OK'}),
@@ -43,12 +47,19 @@ void main() {
     await server.close();
   });
 
+  Future<NotifyProps> storedProps() async => NotifyProps.fromJsonText(
+    await session.db.syncText(SyncKeys.accountNotifyProps),
+  );
+
   test('a changed notification setting keeps every other one', () async {
-    final props = await actions.notifyProps();
+    await actions.refreshNotifyProps();
+    final props = await storedProps();
     expect(props.push, PushLevel.mention);
+    expect(props.pushTrigger, PushTrigger.away);
     expect(props.mentionKeys('river'), ['anchor']);
 
-    final saved = await actions.saveNotifyProps(
+    await actions.saveNotifyProps(
+      props,
       props
           .withPush(PushLevel.all)
           .withMentionKeys('river', parseMentionKeys('anchor, buoy')),
@@ -60,13 +71,47 @@ void main() {
     expect(sent['email'], 'true');
     expect(sent['push_status'], 'away');
     expect(sent['mention_keys'], 'river,@river,anchor,buoy');
-    expect(saved.push, PushLevel.all);
+    expect((await storedProps()).push, PushLevel.all);
+  });
+
+  test('saved mention words reach the Mentions search at once', () async {
+    await actions.refreshNotifyProps();
+    expect(
+      await session.db.syncText(SyncKeys.mentionTerms),
+      isNot(contains('buoy')),
+    );
+    final props = await storedProps();
+    await actions.saveNotifyProps(
+      props,
+      props.withMentionKeys('river', ['anchor', 'buoy']),
+    );
+    expect(
+      (await session.db.syncText(SyncKeys.mentionTerms))!.split(' '),
+      containsAll(['anchor', 'buoy', '@river']),
+    );
+  });
+
+  test('a sign-in refresh keeps the keys only the full map has', () async {
+    await actions.refreshNotifyProps();
+    await session.store.applyMe(
+      api.User.fromJson({
+        'id': meId,
+        'username': 'river',
+        'notify_props': {'push': 'none'},
+      }),
+    );
+    final props = await storedProps();
+    expect(props.push, PushLevel.none);
+    expect(props.pushTrigger, PushTrigger.away);
   });
 
   test('a refused save passes the server error on', () async {
     server.handle = (r) => error(400, 'api.user.patch.invalid');
     await expectLater(
-      actions.saveNotifyProps(const NotifyProps({'push': 'all'})),
+      actions.saveNotifyProps(
+        const NotifyProps({}),
+        const NotifyProps({'push': 'all'}),
+      ),
       throwsA(isA<ServerError>()),
     );
   });

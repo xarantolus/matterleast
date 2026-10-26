@@ -1,13 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/settings_actions.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/cache_usage.dart';
+import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
+import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'settings_providers.g.dart';
@@ -33,20 +36,22 @@ ServerEntry? settingsServer(Ref ref) {
 Future<SettingsActions> settingsActions(Ref ref, String url) async =>
     SettingsActions(await ref.watch(serverSessionProvider(url).future));
 
-/// The account's notification settings, fetched from the server when the
-/// page opens, since the server is the only place they live.
+/// The account's notification settings as stored; empty until the first
+/// sign-in data arrived.
 @riverpod
-class NotifySettings extends _$NotifySettings {
-  @override
-  Future<NotifyProps> build(String url) async =>
-      (await ref.watch(settingsActionsProvider(url).future)).notifyProps();
-
-  /// Saves [props]; the shown values change only once the server agreed.
-  Future<void> save(NotifyProps props) async {
-    final actions = await ref.read(settingsActionsProvider(url).future);
-    state = AsyncData(await actions.saveNotifyProps(props));
-  }
+Stream<NotifyProps> notifySettings(Ref ref, String url) async* {
+  final db = (await ref.watch(serverSessionProvider(url).future)).db;
+  yield* (db.select(db.syncState)
+        ..where((s) => s.key.equals(SyncKeys.accountNotifyProps)))
+      .watchSingleOrNull()
+      .map((row) => NotifyProps.fromJsonText(row?.valueText))
+      .distinct((a, b) => mapEquals(a.raw, b.raw));
 }
+
+/// Fetched when the notification settings open, so they show every key.
+@Riverpod(retry: noRetry)
+Future<void> notifySettingsRefresh(Ref ref, String url) async =>
+    (await ref.watch(settingsActionsProvider(url).future)).refreshNotifyProps();
 
 /// What the Display page shows for one server.
 typedef DisplayPrefs = ({
