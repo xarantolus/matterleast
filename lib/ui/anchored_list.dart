@@ -107,11 +107,13 @@ class AnchoredList<T> extends StatefulWidget {
 
   /// Keeps the top edge of the row around [context] in place through its
   /// next change of height, so it grows or shrinks downwards. Call it just
-  /// before the change.
-  static void keepTopOf(BuildContext context) {
+  /// before the change. With [unlessAbove], a row whose top is above the
+  /// screen keeps its bottom edge instead, so a shrinking row comes into
+  /// view from above.
+  static void keepTopOf(BuildContext context, {bool unlessAbove = false}) {
     final probe = context.findAncestorStateOfType<_RowProbeState>();
     if (probe == null) return;
-    probe.widget.list._keepTop(probe.widget.rowKey);
+    probe.widget.list._keepTop(probe.widget.rowKey, unlessAbove: unlessAbove);
   }
 }
 
@@ -330,19 +332,25 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     if (_readingAnchor() case final to?) _setAnchor(to);
   }
 
-  void _keepTop(Object key) {
+  void _keepTop(Object key, {required bool unlessAbove}) {
     if (!mounted || !_scroll.hasClients) return;
-    if (key == _newestKey && _isPinned()) return;
     final height = _viewportHeight;
     final row = _rowAt(key);
     if (height == null || row == null) return;
-    if (_aboveOf(key, row.top - height) case final to?) _setAnchor(to);
+    // The reader asked for this row to change; what moves below is wanted.
+    _resizingUntil = DateTime.now().add(const Duration(milliseconds: 400));
+    if (unlessAbove && row.top < 0) {
+      _setAnchor((key: key, pixels: row.bottom - height));
+    } else if (_aboveOf(key, row.top - height) case final to?) {
+      _setAnchor(to);
+    }
   }
 
   // Debug only: every programmatic move of the list, and any frame in which
   // what the reader sees moved without a scroll, go to the log.
   var _jumps = 0;
   var _intended = false;
+  var _resizingUntil = DateTime(0);
   ({Object key, double top})? _lastTop;
 
   void _moved(String reason, double to, {bool shifts = true}) {
@@ -365,7 +373,12 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       final scrolling =
           _scroll.hasClients && _scroll.position.isScrollingNotifier.value;
       final last = _lastTop;
-      if (!scrolling && !_intended && last != null && !_isPinned()) {
+      final resizing = DateTime.now().isBefore(_resizingUntil);
+      if (!scrolling &&
+          !_intended &&
+          !resizing &&
+          last != null &&
+          !_isPinned()) {
         final now = _rowAt(last.key);
         if (now != null && (now.top - last.top).abs() > 0.5) {
           _jumps++;

@@ -83,7 +83,7 @@ class PostBody extends StatelessWidget {
         channelNames: channelNames,
       ),
     };
-    return collapsible ? ShowMore(child: content) : content;
+    return collapsible ? ShowMore(id: postId, child: content) : content;
   }
 }
 

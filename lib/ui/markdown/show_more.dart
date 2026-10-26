@@ -1,5 +1,6 @@
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Space the "Show more" control needs; collapsing saves less than this is
@@ -13,22 +14,50 @@ double? collapsedHeight(double contentHeight, double screenHeight) {
   return contentHeight > limit + showMoreAllowance ? limit : null;
 }
 
+/// The messages a conversation shows expanded, kept above the rows so a
+/// row that is built again stays expanded.
+class ShowMoreMemory extends InheritedWidget {
+  const ShowMoreMemory({
+    required this.expanded,
+    required super.child,
+    super.key,
+  });
+
+  final Set<String> expanded;
+
+  static Set<String>? of(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<ShowMoreMemory>()?.expanded;
+
+  @override
+  bool updateShouldNotify(ShowMoreMemory old) => expanded != old.expanded;
+}
+
 /// Shows [child] whole, or cut at half the screen with "Show more" over a
 /// fade at the bottom. The cut height is decided in layout, so the row
-/// never changes height after it is first laid out; expanding grows it
-/// downwards only.
+/// never changes height after it is first laid out. Expanding and
+/// collapsing animate and keep the message's top edge in place.
 class ShowMore extends StatefulWidget {
-  const ShowMore({required this.child, super.key});
+  const ShowMore({required this.id, required this.child, super.key});
 
+  /// Remembers the expanded state under this name in [ShowMoreMemory].
+  final String id;
   final Widget child;
 
   @override
   State<ShowMore> createState() => _ShowMoreState();
 }
 
-class _ShowMoreState extends State<ShowMore> {
-  var _expanded = false;
+class _ShowMoreState extends State<ShowMore>
+    with SingleTickerProviderStateMixin {
+  late var _expanded = ShowMoreMemory.of(context)?.contains(widget.id) ?? false;
   var _cut = false;
+  AnimationController? _opening;
+
+  @override
+  void dispose() {
+    _opening?.dispose();
+    super.dispose();
+  }
 
   void _onCut(bool cut) {
     if (cut == _cut) return;
@@ -37,60 +66,86 @@ class _ShowMoreState extends State<ShowMore> {
     });
   }
 
+  void _toggle() {
+    final expand = !_expanded;
+    AnchoredList.keepTopOf(context, unlessAbove: !expand);
+    final memory = ShowMoreMemory.of(context);
+    if (expand) {
+      memory?.add(widget.id);
+    } else {
+      memory?.remove(widget.id);
+    }
+    final opening = _opening ??= AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      value: _expanded ? 1 : 0,
+    )..addListener(() => setState(() {}));
+    if (MediaQuery.disableAnimationsOf(context)) {
+      opening.value = expand ? 1 : 0;
+    } else if (expand) {
+      opening.forward();
+    } else {
+      opening.reverse();
+    }
+    setState(() => _expanded = expand);
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_expanded) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          widget.child,
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TextButton.icon(
-              onPressed: () => setState(() => _expanded = false),
-              icon: const Icon(Icons.expand_less),
-              label: const Text('Show less'),
-            ),
-          ),
-        ],
-      );
-    }
     final page = Theme.of(context).scaffoldBackgroundColor;
-    return Stack(
+    final open = Curves.easeOutCubic.transform(
+      _opening?.value ?? (_expanded ? 1 : 0),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _CutToHeight(
-          screenHeight: MediaQuery.sizeOf(context).height,
-          onCut: _onCut,
-          child: widget.child,
-        ),
-        if (_cut)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [page.withValues(alpha: 0), page, page],
-                  stops: const [0, 0.55, 1],
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(top: Spacing.xl),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(
-                      foregroundColor: context.tokens.accent,
+        Stack(
+          children: [
+            _CutToHeight(
+              screenHeight: MediaQuery.sizeOf(context).height,
+              open: open,
+              onCut: _onCut,
+              child: widget.child,
+            ),
+            if (_cut && !_expanded)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [page.withValues(alpha: 0), page, page],
+                      stops: const [0, 0.55, 1],
                     ),
-                    onPressed: () => setState(() => _expanded = true),
-                    icon: const Icon(Icons.expand_more),
-                    label: const Text('Show more'),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: Spacing.xl),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: context.tokens.accent,
+                        ),
+                        onPressed: _toggle,
+                        icon: const Icon(Icons.expand_more),
+                        label: const Text('Show more'),
+                      ),
+                    ),
                   ),
                 ),
               ),
+          ],
+        ),
+        if (_expanded)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: _toggle,
+              icon: const Icon(Icons.expand_less),
+              label: const Text('Show less'),
             ),
           ),
       ],
@@ -101,16 +156,20 @@ class _ShowMoreState extends State<ShowMore> {
 class _CutToHeight extends SingleChildRenderObjectWidget {
   const _CutToHeight({
     required this.screenHeight,
+    required this.open,
     required this.onCut,
     required super.child,
   });
 
   final double screenHeight;
+
+  /// 0 cut, 1 whole, between while it opens or closes.
+  final double open;
   final ValueChanged<bool> onCut;
 
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderCutToHeight(screenHeight, onCut);
+      _RenderCutToHeight(screenHeight, open, onCut);
 
   @override
   void updateRenderObject(
@@ -119,20 +178,28 @@ class _CutToHeight extends SingleChildRenderObjectWidget {
   ) {
     renderObject
       ..screenHeight = screenHeight
+      ..open = open
       ..onCut = onCut;
   }
 }
 
 class _RenderCutToHeight extends RenderProxyBox {
-  _RenderCutToHeight(this._screenHeight, this.onCut);
+  _RenderCutToHeight(this._screenHeight, this._open, this.onCut);
 
   double _screenHeight;
+  double _open;
   ValueChanged<bool> onCut;
   var _clipped = false;
 
   set screenHeight(double value) {
     if (value == _screenHeight) return;
     _screenHeight = value;
+    markNeedsLayout();
+  }
+
+  set open(double value) {
+    if (value == _open) return;
+    _open = value;
     markNeedsLayout();
   }
 
@@ -146,12 +213,12 @@ class _RenderCutToHeight extends RenderProxyBox {
       ),
       parentUsesSize: true,
     );
-    final cut = collapsedHeight(child.size.height, _screenHeight);
-    _clipped = cut != null;
-    size = constraints.constrain(
-      Size(child.size.width, cut ?? child.size.height),
-    );
-    onCut(_clipped);
+    final full = child.size.height;
+    final cut = collapsedHeight(full, _screenHeight);
+    final height = cut == null ? full : cut + (full - cut) * _open;
+    _clipped = height < full;
+    size = constraints.constrain(Size(child.size.width, height));
+    onCut(cut != null);
   }
 
   @override
