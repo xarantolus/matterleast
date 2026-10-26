@@ -89,6 +89,37 @@ void main() {
     expect(rows[2].key, newMessagesKey);
   });
 
+  test('joins after the last visit and live messages draw no line', () {
+    final opened = morning.add(const Duration(minutes: 5));
+    final rows = buildRows(
+      [
+        post('live', opened.add(const Duration(minutes: 1))),
+        post(
+          'joined',
+          morning.add(const Duration(minutes: 3)),
+          type: 'system_join_channel',
+        ),
+        post('seen', morning),
+      ],
+      lastViewedAt: morning.add(const Duration(minutes: 1)).toUtc(),
+      myUserId: 'alice',
+      unreadUntil: opened.toUtc(),
+    );
+    expect(rows.whereType<NewMessagesLine>(), isEmpty);
+  });
+
+  test('unchanged rows stay the same objects across updates', () {
+    final before = rowsOf([post('a', morning), post('b', morning)]);
+    final after = reuseRows(
+      before,
+      rowsOf([post('a', morning), post('b', morning, editAt: morning)]),
+    );
+    final a = before.firstWhere((r) => r.key == 'a');
+    final b = before.firstWhere((r) => r.key == 'b');
+    expect(after.any((r) => identical(r, a)), isTrue);
+    expect(after.any((r) => identical(r, b)), isFalse);
+  });
+
   test('no line when everything was seen', () {
     final rows = rowsOf([
       post('a', morning),

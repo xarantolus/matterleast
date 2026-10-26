@@ -198,11 +198,14 @@ const _groupWindow = Duration(minutes: 5);
 
 /// The rows for [posts] (newest first), newest first: date separators,
 /// grouping of consecutive messages, and the new-messages line before the
-/// first message from someone else after [lastViewedAt].
+/// first message from someone else after [lastViewedAt]. System messages
+/// such as joins don't start the line, and nor do messages created after
+/// [unreadUntil], which arrived while the conversation was open.
 List<ListRow> buildRows(
   List<PostItem> posts, {
   required DateTime? lastViewedAt,
   required String? myUserId,
+  DateTime? unreadUntil,
 }) {
   final rows = <ListRow>[];
   PostItem? previous;
@@ -220,7 +223,9 @@ List<ListRow> buildRows(
     if (lineAt < 0 &&
         lastViewedAt != null &&
         post.createAt.isAfter(lastViewedAt) &&
+        (unreadUntil == null || !post.createAt.isAfter(unreadUntil)) &&
         post.userId != myUserId &&
+        !post.isSystem &&
         !post.deleted) {
       lineAt = rows.length;
       rows.add(const ListRow.newMessages(count: 0));
@@ -259,4 +264,16 @@ List<ListRow> buildRows(
     );
   }
   return rows.reversed.toList();
+}
+
+/// Pure: [next] with every row that equals the row of the same key in
+/// [previous] replaced by that instance, so unchanged rows stay identical
+/// from one update to the next and their widgets aren't built again.
+List<ListRow> reuseRows(List<ListRow> previous, List<ListRow> next) {
+  if (previous.isEmpty) return next;
+  final old = {for (final row in previous) row.key: row};
+  return [
+    for (final row in next)
+      if (old[row.key] case final same? when same == row) same else row,
+  ];
 }

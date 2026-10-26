@@ -39,6 +39,13 @@ class Conversation extends _$Conversation {
   var _loadingNewer = false;
   final _openedAt = DateTime.now().toUtc();
 
+  /// Only messages created before this start the new-messages line: what
+  /// arrives while the reader watches is not unread. Lifted by Mark unread.
+  late DateTime? _unreadUntil = _openedAt;
+
+  /// A bigger window is on its way; the reader's next moves don't ask again.
+  var _growing = false;
+
   /// Messages in the first answer of a new watch, or stored by a fetch,
   /// are history, not live arrivals.
   var _historyOnly = true;
@@ -147,6 +154,7 @@ class Conversation extends _$Conversation {
 
   void _onWindow(ConversationWindow window) {
     if (!ref.mounted) return;
+    _growing = false;
     final before = state.window;
     final arrived = {...state.arrived};
     var fromOthers = false;
@@ -173,11 +181,7 @@ class Conversation extends _$Conversation {
       window: window,
       arrived: arrived,
       generation: moved ? state.generation + 1 : state.generation,
-      rows: buildRows(
-        [...window.posts, ?window.root],
-        lastViewedAt: _lastViewedAt,
-        myUserId: _me,
-      ),
+      rows: _rows(window),
     );
     final lifecycle = WidgetsBinding.instance.lifecycleState;
     if (fromOthers && lifecycle == AppLifecycleState.resumed) {
@@ -185,18 +189,23 @@ class Conversation extends _$Conversation {
     }
   }
 
+  List<ListRow> _rows(ConversationWindow window) => reuseRows(
+    state.rows,
+    buildRows(
+      [...window.posts, ?window.root],
+      lastViewedAt: _lastViewedAt,
+      myUserId: _me,
+      unreadUntil: _unreadUntil,
+    ),
+  );
+
   /// The user marked [post] unread: the new-messages line moves above it.
   void markedUnread(PostItem post) {
     _lastViewedAt = post.createAt.subtract(const Duration(milliseconds: 1));
+    _unreadUntil = null;
     final window = state.window;
     if (window == null) return;
-    state = state.copyWith(
-      rows: buildRows(
-        [...window.posts, ?window.root],
-        lastViewedAt: _lastViewedAt,
-        myUserId: _me,
-      ),
-    );
+    state = state.copyWith(rows: _rows(window));
   }
 
   Future<void> _markRead() async {
@@ -316,8 +325,11 @@ class Conversation extends _$Conversation {
     if (window == null || _actions == null) return;
     if (view.nearOlderEnd) {
       if (window.moreStored) {
-        _limit += _step;
-        _watch();
+        if (!_growing && window.posts.length >= _limit) {
+          _growing = true;
+          _limit += _step;
+          _watch();
+        }
       } else if (!window.reachesStart &&
           !state.loadingOlder &&
           state.olderFailure == null) {
