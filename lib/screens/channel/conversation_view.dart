@@ -421,6 +421,13 @@ extension on _ConversationViewState {
       null => null,
     },
     onMarkedUnread: () => _controller.markedUnread(post),
+    onQuote: switch (widget.composer) {
+      final composer? =>
+        (permalink) => ref
+            .read(composer.notifier)
+            .quote(post.message, permalink: permalink),
+      null => null,
+    },
   );
 
   Future<void> _toggleReaction(PostItem post, String name) async {

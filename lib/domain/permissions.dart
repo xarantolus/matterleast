@@ -16,11 +16,17 @@ abstract final class Permission {
   static const deleteOthersPosts = 'delete_others_posts';
   static const addReaction = 'add_reaction';
   static const useChannelMentions = 'use_channel_mentions';
+  static const useGroupMentions = 'use_group_mentions';
 }
 
 /// The system role whose holders the default channel's read-only mode
 /// doesn't apply to.
 const systemAdminRole = 'system_admin';
+
+/// Pure: whether a user's space-separated system [roles] make them a
+/// guest account.
+bool isGuest(String? roles) =>
+    roleNames([roles ?? '']).contains('system_guest');
 
 /// The server keeps at most this many different emoji on one message.
 const maxDistinctReactions = 40;
@@ -91,6 +97,9 @@ typedef ChannelPermissions = ({
 
   /// @all, @channel and @here notify everyone.
   bool channelMentions,
+
+  /// @group notifies the group's members.
+  bool groupMentions,
 });
 
 /// For a channel that isn't stored: nothing beyond reading.
@@ -102,6 +111,7 @@ const ChannelPermissions noChannelRights = (
   deleteOwn: false,
   deleteOthers: false,
   channelMentions: false,
+  groupMentions: false,
 );
 
 /// Pure: the user's rights in a channel from its state and the permissions
@@ -129,6 +139,7 @@ ChannelPermissions channelPermissions({
     deleteOwn: canDelete && granted.contains(Permission.deletePost),
     deleteOthers: canDelete && granted.contains(Permission.deleteOthersPosts),
     channelMentions: granted.contains(Permission.useChannelMentions),
+    groupMentions: granted.contains(Permission.useGroupMentions),
   );
 }
 

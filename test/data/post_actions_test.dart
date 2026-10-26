@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/post_actions.dart';
+import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
@@ -244,5 +245,46 @@ void main() {
       throwsA(isA<ServerError>()),
     );
     expect(await following(), isTrue);
+  });
+
+  Future<void> serverVersion(String version) =>
+      session.store.applyConfig(ConfigKeys.clientConfig, {'Version': version});
+
+  test('reminders need a server from 7.2 on', () async {
+    await serverVersion('7.1.0');
+    expect((await session.db.features()).postReminders, isFalse);
+    await serverVersion('7.2.0');
+    expect((await session.db.features()).postReminders, isTrue);
+  });
+
+  test('a reminder asks the server for that moment in seconds', () async {
+    await serverVersion('12.0.1');
+    final at = DateTime.utc(2026, 11, 2, 8);
+    await actions.remind('old1', at);
+    final sent = server.seen.single;
+    expect(sent.method, 'POST');
+    expect(sent.path, '/api/v4/users/$meId/posts/old1/reminder');
+    expect(sent.body['target_time'], at.millisecondsSinceEpoch ~/ 1000);
+    expect((await session.db.features()).postReminders, isTrue);
+  });
+
+  test('a server without reminders turns them off', () async {
+    await serverVersion('12.0.1');
+    answer = error(404, 'api.context.404.app_error');
+    await expectLater(
+      actions.remind('old1', DateTime.utc(2026, 11, 2, 8)),
+      throwsA(isA<ServerError>()),
+    );
+    expect((await session.db.features()).postReminders, isFalse);
+  });
+
+  test('a missing post leaves reminders on', () async {
+    await serverVersion('12.0.1');
+    answer = error(404, 'app.post.get.app_error');
+    await expectLater(
+      actions.remind('old1', DateTime.utc(2026, 11, 2, 8)),
+      throwsA(isA<ServerError>()),
+    );
+    expect((await session.db.features()).postReminders, isTrue);
   });
 }

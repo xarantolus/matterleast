@@ -84,6 +84,21 @@ void main() {
     },
   );
 
+  test('people stored before roles were kept are fetched again', () async {
+    await db
+        .into(db.users)
+        .insert(UsersCompanion.insert(id: 'u1', username: 'name-u1'));
+    await store.applyUsers([api.User.fromJson(_user('u2'))]);
+    await users.ensure(['u1', 'u2']);
+    expect(asked('/api/v4/users/ids'), [
+      ['u1'],
+    ]);
+    final row = await (db.select(
+      db.users,
+    )..where((u) => u.id.equals('u1'))).getSingle();
+    expect(row.roles, isNotNull);
+  });
+
   test('a person already on the way is not asked for again', () async {
     final handle = server.handle;
     server.handle = (r) async {

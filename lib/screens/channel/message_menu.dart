@@ -14,7 +14,10 @@ import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/reminders.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/domain/today.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -33,6 +36,9 @@ typedef PostMenuFacts = ({
   /// For permalinks; empty when no team is known.
   String teamName,
   MessageRights rights,
+
+  /// The server can remind the user of the message later.
+  bool reminders,
 });
 
 @riverpod
@@ -70,6 +76,7 @@ Future<PostMenuFacts> postMenuFacts(
   final channel = channelId == null
       ? noChannelRights
       : await PermissionViews(db).channel(channelId);
+  final features = await db.features();
   return (
     myId: me,
     saved: saved != null && saved.value == 'true',
@@ -82,9 +89,10 @@ Future<PostMenuFacts> postMenuFacts(
       fromWebhook: PostDetails.decode(post.propsJson, null).fromWebhook,
       createAt: post.createAt,
       now: DateTime.now().toUtc(),
-      editTimeLimit: (await db.features()).editTimeLimit,
+      editTimeLimit: features.editTimeLimit,
       distinctReactions: post.reactions.length,
     ),
+    reminders: features.postReminders && !post.isSystem,
   );
 }
 
@@ -108,6 +116,7 @@ Future<void> showMessageMenu(
   VoidCallback? onReply,
   VoidCallback? onEdit,
   VoidCallback? onMarkedUnread,
+  ValueChanged<String?>? onQuote,
 }) => showModalBottomSheet<void>(
   context: context,
   showDragHandle: true,
@@ -121,6 +130,7 @@ Future<void> showMessageMenu(
     onReply: onReply,
     onEdit: onEdit,
     onMarkedUnread: onMarkedUnread,
+    onQuote: onQuote,
   ),
 );
 
@@ -133,6 +143,7 @@ class MessageMenu extends ConsumerWidget {
     this.onReply,
     this.onEdit,
     this.onMarkedUnread,
+    this.onQuote,
     super.key,
   });
 
@@ -145,6 +156,10 @@ class MessageMenu extends ConsumerWidget {
   final VoidCallback? onReply;
   final VoidCallback? onEdit;
   final VoidCallback? onMarkedUnread;
+
+  /// Puts a quote of the message, with its permalink when known, into the
+  /// conversation's composer.
+  final ValueChanged<String?>? onQuote;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -243,7 +258,26 @@ class MessageMenu extends ConsumerWidget {
                 unawaited(Clipboard.setData(ClipboardData(text: permalink)));
               },
             ),
+          if (onQuote != null &&
+              !unsent &&
+              !post.isEphemeral &&
+              !post.isSystem &&
+              post.message.trim().isNotEmpty)
+            ListTile(
+              leading: const Icon(Icons.format_quote_outlined),
+              title: const Text('Quote'),
+              onTap: () {
+                close();
+                onQuote!(permalink);
+              },
+            ),
           if (!unsent && !post.isEphemeral) ...[
+            if (facts.reminders)
+              ListTile(
+                leading: const Icon(Icons.alarm_outlined),
+                title: const Text('Remind me'),
+                onTap: () => _remind(context, ref),
+              ),
             ListTile(
               leading: Icon(
                 facts.saved ? Icons.bookmark_remove : Icons.bookmark_border,
@@ -361,6 +395,35 @@ class MessageMenu extends ConsumerWidget {
     );
   }
 
+  /// Asks when, with the menu still open beneath, then closes it.
+  Future<void> _remind(BuildContext context, WidgetRef ref) async {
+    final navigator = Navigator.of(context);
+    final actions = ref.read(postActionsProvider(url).future);
+    final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
+    final at = await askReminderTime(context);
+    navigator.pop();
+    if (at == null) return;
+    final now = DateTime.now();
+    if (!at.isAfter(now)) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('That time has passed; pick a later one.'),
+        ),
+      );
+      return;
+    }
+    await _run(actions, (a) async {
+      await a.remind(post.id, at);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Reminder set for ${untilLabel(at, now, use24: use24)}',
+          ),
+        ),
+      );
+    }, "Couldn't set the reminder.");
+  }
+
   Future<void> _run(
     Future<PostActions> actions,
     Future<void> Function(PostActions actions) action,
@@ -401,6 +464,60 @@ Future<bool> confirmDelete(BuildContext context) async =>
       ),
     ) ??
     false;
+
+/// When to be reminded, local time: a ready-made time, or a date and a
+/// time picked one after the other; null when the user backs out.
+Future<DateTime?> askReminderTime(BuildContext context) async {
+  final now = DateTime.now();
+  final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
+  final choice = await showModalBottomSheet<({ReminderChoice? preset})>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheet) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (choice, label) in const [
+            (ReminderChoice.thirtyMinutes, 'In 30 minutes'),
+            (ReminderChoice.oneHour, 'In 1 hour'),
+            (ReminderChoice.twoHours, 'In 2 hours'),
+            (ReminderChoice.tomorrow, 'Tomorrow'),
+          ])
+            ListTile(
+              title: Text(label),
+              trailing: Text(
+                untilLabel(reminderTime(choice, now), now, use24: use24),
+              ),
+              onTap: () => Navigator.of(sheet).pop((preset: choice)),
+            ),
+          ListTile(
+            title: const Text('Custom'),
+            trailing: const Icon(Icons.calendar_month_outlined),
+            onTap: () => Navigator.of(sheet).pop((preset: null)),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (choice == null || !context.mounted) return null;
+  if (choice.preset case final preset?) {
+    return reminderTime(preset, DateTime.now());
+  }
+  final later = DateTime.now().add(const Duration(hours: 1));
+  final day = await showDatePicker(
+    context: context,
+    initialDate: later,
+    firstDate: localDay(now),
+    lastDate: localDay(now).add(const Duration(days: 365)),
+  );
+  if (day == null || !context.mounted) return null;
+  final time = await showTimePicker(
+    context: context,
+    initialTime: TimeOfDay.fromDateTime(later),
+  );
+  if (time == null) return null;
+  return DateTime(day.year, day.month, day.day, time.hour, time.minute);
+}
 
 /// A message that couldn't be sent: send it again or throw it away.
 Future<void> showFailedPostSheet(

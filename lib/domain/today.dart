@@ -12,3 +12,10 @@ Duration untilNextDay(DateTime now) {
   final next = DateTime(local.year, local.month, local.day + 1);
   return next.difference(local);
 }
+
+/// Pure: 9:00 local time on the day after [now], what "Tomorrow" means for
+/// do not disturb and reminders, as on the web.
+DateTime tomorrowMorning(DateTime now) {
+  final local = now.toLocal();
+  return DateTime(local.year, local.month, local.day + 1, 9);
+}

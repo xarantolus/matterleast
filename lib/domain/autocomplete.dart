@@ -120,6 +120,22 @@ final class SpecialMention extends Suggestion {
   String get replacement => '@$handle';
 }
 
+/// A user group; mentioning it notifies its members.
+final class GroupSuggestion extends Suggestion {
+  const GroupSuggestion({
+    required this.id,
+    required this.name,
+    required this.displayName,
+  });
+
+  final String id;
+  final String name;
+  final String displayName;
+
+  @override
+  String get replacement => '@$name';
+}
+
 final class ChannelSuggestion extends Suggestion {
   const ChannelSuggestion({
     required this.id,
@@ -186,6 +202,8 @@ typedef UserCandidate = ({
   bool? inChannel,
 });
 
+typedef GroupCandidate = ({String id, String name, String displayName});
+
 const _listLimit = 25;
 
 bool _startsWithWord(String text, String prefix) {
@@ -196,12 +214,14 @@ bool _startsWithWord(String text, String prefix) {
 
 /// Pure: people matching [prefix] by username, first or last name or
 /// nickname: those in the channel (or not known to be outside it) first,
-/// then the special mentions, then people outside the channel. Username
-/// matches lead within each group.
+/// then [groups] matching by name or display name, then the special
+/// mentions, then people outside the channel. Name matches lead within
+/// each part.
 List<Suggestion> rankUsers(
   String prefix,
   Iterable<UserCandidate> candidates, {
   bool specialMentions = true,
+  Iterable<GroupCandidate> groups = const [],
 }) {
   final p = prefix.toLowerCase();
   int? score(UserCandidate u) {
@@ -242,8 +262,25 @@ List<Suggestion> rankUsers(
     ];
   }
 
+  final seenGroups = <String>{};
+  final matchingGroups =
+      [
+        for (final g in groups)
+          if (seenGroups.add(g.id))
+            if (g.name.toLowerCase().startsWith(p))
+              (g, 0)
+            else if (_startsWithWord(g.displayName, p))
+              (g, 1),
+      ]..sort(
+        (a, b) => a.$2 != b.$2
+            ? a.$2.compareTo(b.$2)
+            : a.$1.name.compareTo(b.$1.name),
+      );
+
   return [
     ...group(false),
+    for (final (g, _) in matchingGroups.take(_listLimit))
+      GroupSuggestion(id: g.id, name: g.name, displayName: g.displayName),
     if (specialMentions)
       for (final handle in SpecialMention.handles)
         if (handle.startsWith(p)) SpecialMention(handle),

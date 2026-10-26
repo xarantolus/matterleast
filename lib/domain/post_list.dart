@@ -41,6 +41,7 @@ abstract class PostItem with _$PostItem {
     @Default(<PostPerson>[]) List<PostPerson> participants,
     @Default('') String authorUsername,
     @Default(false) bool authorIsBot,
+    @Default(false) bool authorIsGuest,
     int? authorPictureAt,
 
     /// The post's props and metadata as the server sent them; decoded when

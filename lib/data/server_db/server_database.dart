@@ -87,7 +87,7 @@ class ServerDatabase extends _$ServerDatabase {
   );
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,6 +98,9 @@ class ServerDatabase extends _$ServerDatabase {
       },
       from2To3: (m, schema) async {
         await m.addColumn(schema.posts, schema.posts.decodeProblem);
+      },
+      from3To4: (m, schema) async {
+        await m.addColumn(schema.users, schema.users.roles);
       },
     ),
   );

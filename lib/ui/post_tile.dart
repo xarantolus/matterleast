@@ -88,7 +88,10 @@ class PostTile extends StatelessWidget {
                   style: text.titleSmall?.copyWith(color: tokens.text),
                 ),
               ),
-              if (bot) const _Tag('BOT'),
+              if (bot)
+                const _Tag('BOT')
+              else if (post.authorIsGuest)
+                const _Tag('GUEST'),
               Text(
                 _time(context, post.createAt),
                 style: text.bodySmall?.copyWith(color: tokens.muted),

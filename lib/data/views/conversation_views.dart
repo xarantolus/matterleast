@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/teams.dart';
@@ -243,6 +244,7 @@ class ConversationViews {
           nickname: u.nickname,
           status: u.status,
           isBot: u.isBot,
+          isGuest: isGuest(u.roles),
           pictureAt: u.lastPictureUpdate,
         ),
     };
@@ -270,6 +272,7 @@ class ConversationViews {
           nickname: u.nickname,
           status: u.status,
           isBot: u.isBot,
+          isGuest: isGuest(u.roles),
           pictureAt: u.lastPictureUpdate,
         );
       }
@@ -331,6 +334,7 @@ class ConversationViews {
           lastReplyAt: p.lastReplyAt,
           authorUsername: people[p.userId]?.username ?? '',
           authorIsBot: people[p.userId]?.isBot ?? false,
+          authorIsGuest: people[p.userId]?.isGuest ?? false,
           authorPictureAt: people[p.userId]?.pictureAt,
           propsJson: p.propsJson,
           metadataJson: p.metadataJson,

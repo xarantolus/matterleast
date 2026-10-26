@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/domain/today.dart';
 
 part 'user_profile.freezed.dart';
 part 'user_profile.g.dart';
@@ -118,7 +119,7 @@ DateTime? dndEnd(DndLength length, DateTime now) {
     DndLength.thirtyMinutes => local.add(const Duration(minutes: 30)),
     DndLength.oneHour => local.add(const Duration(hours: 1)),
     DndLength.twoHours => local.add(const Duration(hours: 2)),
-    DndLength.tomorrow => DateTime(local.year, local.month, local.day + 1, 9),
+    DndLength.tomorrow => tomorrowMorning(now),
   };
 }
 
@@ -138,6 +139,7 @@ abstract class UserProfile with _$UserProfile {
     String? timezone,
     CustomStatus? customStatus,
     required bool isBot,
+    @Default(false) bool isGuest,
     required bool isMe,
   }) = _UserProfile;
 }

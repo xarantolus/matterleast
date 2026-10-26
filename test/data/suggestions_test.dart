@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/composer_actions.dart';
+import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 
@@ -169,5 +170,68 @@ void main() {
         )
         .first;
     expect(list.single, isA<UserSuggestion>());
+  });
+
+  group('groups', () {
+    Future<void> groupsAllowed({required bool licensed}) async {
+      await session.store.applyConfig(ConfigKeys.license, {
+        'IsLicensed': '$licensed',
+      });
+      await session.store.applyMyRoles('system_user');
+      await session.store.applyRoles([
+        api.Role.fromJson({
+          'name': 'system_user',
+          'permissions': ['use_group_mentions'],
+        }),
+      ]);
+    }
+
+    Reply answer(SeenRequest r) => switch (r.path) {
+      '/api/v4/users/autocomplete' => ok({
+        'users': [person('u1', 'mabel')],
+        'out_of_channel': <Object?>[],
+      }),
+      '/api/v4/groups' => ok([
+        {'id': 'g1', 'name': 'makers', 'display_name': 'Makers'},
+      ]),
+      _ => error(404, 'not_found'),
+    };
+
+    test('a licensed server suggests groups the user may mention', () async {
+      await groupsAllowed(licensed: true);
+      server.handle = answer;
+      final lists = await suggest('@ma');
+      expect(lists.last, ['@mabel', '@makers']);
+      final asked = server.seen
+          .firstWhere((r) => r.path == '/api/v4/groups')
+          .raw
+          .uri
+          .queryParameters;
+      expect(asked['q'], 'ma');
+      expect(asked['filter_allow_reference'], 'true');
+    });
+
+    test('without a licence or the permission no group is asked', () async {
+      await groupsAllowed(licensed: false);
+      server.handle = answer;
+      expect((await suggest('@ma')).last, ['@mabel']);
+      await groupsAllowed(licensed: true);
+      await session.store.applyRoles([
+        api.Role.fromJson({'name': 'system_user', 'permissions': <String>[]}),
+      ]);
+      expect((await suggest('@ma')).last, ['@mabel']);
+      expect(server.paths, isNot(contains('/api/v4/groups')));
+    });
+
+    test('a server without groups turns them off quietly', () async {
+      await groupsAllowed(licensed: true);
+      server.handle = (r) => r.path == '/api/v4/groups'
+          ? error(501, 'api.ldap_groups.license_error')
+          : answer(r);
+      expect((await suggest('@ma')).last, ['@mabel']);
+      expect((await session.db.features()).groupMentions, isFalse);
+      await suggest('@mab');
+      expect(server.paths.where((p) => p == '/api/v4/groups'), hasLength(1));
+    });
   });
 }

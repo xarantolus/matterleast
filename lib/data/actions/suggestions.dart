@@ -44,9 +44,23 @@ class SuggestionSource {
         yield const [];
       case UserTrigger(:final prefix):
         final local = await _localUsers(prefix);
-        final special = (await PermissionViews(_db).channel(channelId))
-            .channelMentions;
+        final rights = await PermissionViews(_db).channel(channelId);
+        final special = rights.channelMentions;
         yield rankUsers(prefix, local, specialMentions: special);
+        final groupsAsked =
+            prefix.isNotEmpty &&
+                rights.groupMentions &&
+                (await _db.features()).groupMentions
+            ? _ask(
+                'groups:$prefix',
+                () => server.client.groups.getGroups(
+                  q: prefix,
+                  filterAllowReference: true,
+                  perPage: 25,
+                ),
+                feature: OptionalFeature.groupMentions,
+              )
+            : Future<List<api.Group>?>.value();
         final remote = await _ask(
           'users:$teamId:$channelId:$prefix',
           () => server.client.users.autocompleteUsers(
@@ -56,16 +70,31 @@ class SuggestionSource {
             inChannel: channelId,
           ),
         );
-        if (remote == null) return;
-        await store.applyUsers([...remote.users, ...remote.outOfChannel]);
-        final outside = {for (final u in remote.outOfChannel) ?u.id};
-        yield rankUsers(prefix, [
-          for (final u in [...remote.users, ...remote.outOfChannel])
-            if (u.id != null && u.username != null && u.deleteAt == null)
-              _candidate(u, inChannel: !outside.contains(u.id)),
-          for (final u in local)
-            if (!outside.contains(u.id)) u,
-        ], specialMentions: special);
+        final groups = [
+          for (final g in await groupsAsked ?? const <api.Group>[])
+            if (g.id != null && g.name != null && g.deleteAt == null)
+              (id: g.id!, name: g.name!, displayName: g.displayName ?? g.name!),
+        ];
+        if (remote == null && groups.isEmpty) return;
+        final found = remote == null
+            ? const <api.User>[]
+            : [...remote.users, ...remote.outOfChannel];
+        await store.applyUsers(found);
+        final outside = {
+          for (final u in remote?.outOfChannel ?? const <api.User>[]) ?u.id,
+        };
+        yield rankUsers(
+          prefix,
+          [
+            for (final u in found)
+              if (u.id != null && u.username != null && u.deleteAt == null)
+                _candidate(u, inChannel: !outside.contains(u.id)),
+            for (final u in local)
+              if (!outside.contains(u.id)) u,
+          ],
+          specialMentions: special,
+          groups: groups,
+        );
       case ChannelTrigger(:final prefix):
         final local = await _localChannels(teamId, prefix);
         yield rankChannels(prefix, local);
@@ -182,7 +211,9 @@ class SuggestionSource {
       if (feature != null &&
           endpointUnavailable(
             e,
-            refusalMeansAbsent: feature == OptionalFeature.commandSuggestions,
+            refusalMeansAbsent:
+                feature == OptionalFeature.commandSuggestions ||
+                feature == OptionalFeature.groupMentions,
           )) {
         await store.turnOff(feature);
       }

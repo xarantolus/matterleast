@@ -98,6 +98,15 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserRow> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _rolesMeta = const VerificationMeta('roles');
+  @override
+  late final GeneratedColumn<String> roles = GeneratedColumn<String>(
+    'roles',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   late final GeneratedColumnWithTypeConverter<DateTime?, int> updateAt =
       GeneratedColumn<int>(
@@ -178,6 +187,7 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserRow> {
     position,
     locale,
     isBot,
+    roles,
     updateAt,
     deleteAt,
     lastPictureUpdate,
@@ -245,6 +255,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserRow> {
       context.handle(
         _isBotMeta,
         isBot.isAcceptableOrUnknown(data['is_bot']!, _isBotMeta),
+      );
+    }
+    if (data.containsKey('roles')) {
+      context.handle(
+        _rolesMeta,
+        roles.isAcceptableOrUnknown(data['roles']!, _rolesMeta),
       );
     }
     if (data.containsKey('last_picture_update')) {
@@ -318,6 +334,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserRow> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_bot'],
       )!,
+      roles: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}roles'],
+      ),
       updateAt: $UsersTable.$converterupdateAtn.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.int,
@@ -381,6 +401,10 @@ class UserRow extends DataClass implements Insertable<UserRow> {
   final String position;
   final String? locale;
   final bool isBot;
+
+  /// Space-separated system roles; null for a row stored before they were
+  /// kept, which the user loader fetches again.
+  final String? roles;
   final DateTime? updateAt;
   final DateTime? deleteAt;
   final int? lastPictureUpdate;
@@ -397,6 +421,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     required this.position,
     this.locale,
     required this.isBot,
+    this.roles,
     this.updateAt,
     this.deleteAt,
     this.lastPictureUpdate,
@@ -418,6 +443,9 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       map['locale'] = Variable<String>(locale);
     }
     map['is_bot'] = Variable<bool>(isBot);
+    if (!nullToAbsent || roles != null) {
+      map['roles'] = Variable<String>(roles);
+    }
     if (!nullToAbsent || updateAt != null) {
       map['update_at'] = Variable<int>(
         $UsersTable.$converterupdateAtn.toSql(updateAt),
@@ -458,6 +486,9 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           ? const Value.absent()
           : Value(locale),
       isBot: Value(isBot),
+      roles: roles == null && nullToAbsent
+          ? const Value.absent()
+          : Value(roles),
       updateAt: updateAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updateAt),
@@ -494,6 +525,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       position: serializer.fromJson<String>(json['position']),
       locale: serializer.fromJson<String?>(json['locale']),
       isBot: serializer.fromJson<bool>(json['isBot']),
+      roles: serializer.fromJson<String?>(json['roles']),
       updateAt: serializer.fromJson<DateTime?>(json['updateAt']),
       deleteAt: serializer.fromJson<DateTime?>(json['deleteAt']),
       lastPictureUpdate: serializer.fromJson<int?>(json['lastPictureUpdate']),
@@ -515,6 +547,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       'position': serializer.toJson<String>(position),
       'locale': serializer.toJson<String?>(locale),
       'isBot': serializer.toJson<bool>(isBot),
+      'roles': serializer.toJson<String?>(roles),
       'updateAt': serializer.toJson<DateTime?>(updateAt),
       'deleteAt': serializer.toJson<DateTime?>(deleteAt),
       'lastPictureUpdate': serializer.toJson<int?>(lastPictureUpdate),
@@ -534,6 +567,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     String? position,
     Value<String?> locale = const Value.absent(),
     bool? isBot,
+    Value<String?> roles = const Value.absent(),
     Value<DateTime?> updateAt = const Value.absent(),
     Value<DateTime?> deleteAt = const Value.absent(),
     Value<int?> lastPictureUpdate = const Value.absent(),
@@ -550,6 +584,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     position: position ?? this.position,
     locale: locale.present ? locale.value : this.locale,
     isBot: isBot ?? this.isBot,
+    roles: roles.present ? roles.value : this.roles,
     updateAt: updateAt.present ? updateAt.value : this.updateAt,
     deleteAt: deleteAt.present ? deleteAt.value : this.deleteAt,
     lastPictureUpdate: lastPictureUpdate.present
@@ -572,6 +607,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       position: data.position.present ? data.position.value : this.position,
       locale: data.locale.present ? data.locale.value : this.locale,
       isBot: data.isBot.present ? data.isBot.value : this.isBot,
+      roles: data.roles.present ? data.roles.value : this.roles,
       updateAt: data.updateAt.present ? data.updateAt.value : this.updateAt,
       deleteAt: data.deleteAt.present ? data.deleteAt.value : this.deleteAt,
       lastPictureUpdate: data.lastPictureUpdate.present
@@ -599,6 +635,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           ..write('position: $position, ')
           ..write('locale: $locale, ')
           ..write('isBot: $isBot, ')
+          ..write('roles: $roles, ')
           ..write('updateAt: $updateAt, ')
           ..write('deleteAt: $deleteAt, ')
           ..write('lastPictureUpdate: $lastPictureUpdate, ')
@@ -620,6 +657,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     position,
     locale,
     isBot,
+    roles,
     updateAt,
     deleteAt,
     lastPictureUpdate,
@@ -640,6 +678,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           other.position == this.position &&
           other.locale == this.locale &&
           other.isBot == this.isBot &&
+          other.roles == this.roles &&
           other.updateAt == this.updateAt &&
           other.deleteAt == this.deleteAt &&
           other.lastPictureUpdate == this.lastPictureUpdate &&
@@ -658,6 +697,7 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
   final Value<String> position;
   final Value<String?> locale;
   final Value<bool> isBot;
+  final Value<String?> roles;
   final Value<DateTime?> updateAt;
   final Value<DateTime?> deleteAt;
   final Value<int?> lastPictureUpdate;
@@ -675,6 +715,7 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     this.position = const Value.absent(),
     this.locale = const Value.absent(),
     this.isBot = const Value.absent(),
+    this.roles = const Value.absent(),
     this.updateAt = const Value.absent(),
     this.deleteAt = const Value.absent(),
     this.lastPictureUpdate = const Value.absent(),
@@ -693,6 +734,7 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     this.position = const Value.absent(),
     this.locale = const Value.absent(),
     this.isBot = const Value.absent(),
+    this.roles = const Value.absent(),
     this.updateAt = const Value.absent(),
     this.deleteAt = const Value.absent(),
     this.lastPictureUpdate = const Value.absent(),
@@ -712,6 +754,7 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     Expression<String>? position,
     Expression<String>? locale,
     Expression<bool>? isBot,
+    Expression<String>? roles,
     Expression<int>? updateAt,
     Expression<int>? deleteAt,
     Expression<int>? lastPictureUpdate,
@@ -730,6 +773,7 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
       if (position != null) 'position': position,
       if (locale != null) 'locale': locale,
       if (isBot != null) 'is_bot': isBot,
+      if (roles != null) 'roles': roles,
       if (updateAt != null) 'update_at': updateAt,
       if (deleteAt != null) 'delete_at': deleteAt,
       if (lastPictureUpdate != null) 'last_picture_update': lastPictureUpdate,
@@ -750,6 +794,7 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     Value<String>? position,
     Value<String?>? locale,
     Value<bool>? isBot,
+    Value<String?>? roles,
     Value<DateTime?>? updateAt,
     Value<DateTime?>? deleteAt,
     Value<int?>? lastPictureUpdate,
@@ -768,6 +813,7 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
       position: position ?? this.position,
       locale: locale ?? this.locale,
       isBot: isBot ?? this.isBot,
+      roles: roles ?? this.roles,
       updateAt: updateAt ?? this.updateAt,
       deleteAt: deleteAt ?? this.deleteAt,
       lastPictureUpdate: lastPictureUpdate ?? this.lastPictureUpdate,
@@ -805,6 +851,9 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
     }
     if (isBot.present) {
       map['is_bot'] = Variable<bool>(isBot.value);
+    }
+    if (roles.present) {
+      map['roles'] = Variable<String>(roles.value);
     }
     if (updateAt.present) {
       map['update_at'] = Variable<int>(
@@ -850,6 +899,7 @@ class UsersCompanion extends UpdateCompanion<UserRow> {
           ..write('position: $position, ')
           ..write('locale: $locale, ')
           ..write('isBot: $isBot, ')
+          ..write('roles: $roles, ')
           ..write('updateAt: $updateAt, ')
           ..write('deleteAt: $deleteAt, ')
           ..write('lastPictureUpdate: $lastPictureUpdate, ')
@@ -11502,6 +11552,7 @@ typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
   Value<String> position,
   Value<String?> locale,
   Value<bool> isBot,
+  Value<String?> roles,
   Value<DateTime?> updateAt,
   Value<DateTime?> deleteAt,
   Value<int?> lastPictureUpdate,
@@ -11520,6 +11571,7 @@ typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
   Value<String> position,
   Value<String?> locale,
   Value<bool> isBot,
+  Value<String?> roles,
   Value<DateTime?> updateAt,
   Value<DateTime?> deleteAt,
   Value<int?> lastPictureUpdate,
@@ -11576,6 +11628,11 @@ class $$UsersTableFilterComposer
 
   ColumnFilters<bool> get isBot => $composableBuilder(
     column: $table.isBot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get roles => $composableBuilder(
+    column: $table.roles,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11667,6 +11724,11 @@ class $$UsersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get roles => $composableBuilder(
+    column: $table.roles,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get updateAt => $composableBuilder(
     column: $table.updateAt,
     builder: (column) => ColumnOrderings(column),
@@ -11736,6 +11798,9 @@ class $$UsersTableAnnotationComposer
   GeneratedColumn<bool> get isBot =>
       $composableBuilder(column: $table.isBot, builder: (column) => column);
 
+  GeneratedColumn<String> get roles =>
+      $composableBuilder(column: $table.roles, builder: (column) => column);
+
   GeneratedColumnWithTypeConverter<DateTime?, int> get updateAt =>
       $composableBuilder(column: $table.updateAt, builder: (column) => column);
 
@@ -11801,6 +11866,7 @@ class $$UsersTableTableManager
                 Value<String> position = const Value.absent(),
                 Value<String?> locale = const Value.absent(),
                 Value<bool> isBot = const Value.absent(),
+                Value<String?> roles = const Value.absent(),
                 Value<DateTime?> updateAt = const Value.absent(),
                 Value<DateTime?> deleteAt = const Value.absent(),
                 Value<int?> lastPictureUpdate = const Value.absent(),
@@ -11818,6 +11884,7 @@ class $$UsersTableTableManager
                 position: position,
                 locale: locale,
                 isBot: isBot,
+                roles: roles,
                 updateAt: updateAt,
                 deleteAt: deleteAt,
                 lastPictureUpdate: lastPictureUpdate,
@@ -11837,6 +11904,7 @@ class $$UsersTableTableManager
                 Value<String> position = const Value.absent(),
                 Value<String?> locale = const Value.absent(),
                 Value<bool> isBot = const Value.absent(),
+                Value<String?> roles = const Value.absent(),
                 Value<DateTime?> updateAt = const Value.absent(),
                 Value<DateTime?> deleteAt = const Value.absent(),
                 Value<int?> lastPictureUpdate = const Value.absent(),
@@ -11854,6 +11922,7 @@ class $$UsersTableTableManager
                 position: position,
                 locale: locale,
                 isBot: isBot,
+                roles: roles,
                 updateAt: updateAt,
                 deleteAt: deleteAt,
                 lastPictureUpdate: lastPictureUpdate,

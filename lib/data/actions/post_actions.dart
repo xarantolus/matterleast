@@ -1,9 +1,11 @@
 import 'package:drift/drift.dart';
+import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/server_features.dart';
 
 /// What the user does to an existing post from its menu. Changes show at
 /// once and are put back when the server refuses, rethrowing its error for
@@ -235,4 +237,32 @@ class PostActions {
     ),
     () => _store.applyThreadFollow(rootId, following: !following),
   );
+
+  /// Asks the server to have its system bot remind the user of the post
+  /// at [at]. A server without reminders turns them off.
+  Future<void> remind(String postId, DateTime at) async {
+    final me = await _me();
+    try {
+      // Not in the generated client: one tiny body and an OK answer.
+      await _call(
+        () => session.api.dio.post<Object?>(
+          '/api/v4/users/$me/posts/$postId/reminder',
+          data: {'target_time': at.toUtc().millisecondsSinceEpoch ~/ 1000},
+        ),
+      );
+    } on Object catch (e) {
+      if (remindersUnavailable(e)) {
+        await _store.turnOff(OptionalFeature.postReminders);
+      }
+      rethrow;
+    }
+  }
 }
+
+/// Pure: whether a failed reminder says the server has none: not built
+/// in, or no such route (a 404 for the post itself means only that post).
+bool remindersUnavailable(Object error) =>
+    endpointUnavailable(error) ||
+    (error is ServerError &&
+        error.statusCode == 404 &&
+        error.id == 'api.context.404.app_error');

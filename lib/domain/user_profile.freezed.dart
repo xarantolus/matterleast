@@ -298,7 +298,7 @@ as DateTime?,
 /// @nodoc
 mixin _$UserProfile {
 
- String get id; String get name; String get username; String get nickname; String get firstName; String get lastName; String get position; String get status; int? get pictureUpdate; String? get timezone; CustomStatus? get customStatus; bool get isBot; bool get isMe;
+ String get id; String get name; String get username; String get nickname; String get firstName; String get lastName; String get position; String get status; int? get pictureUpdate; String? get timezone; CustomStatus? get customStatus; bool get isBot; bool get isGuest; bool get isMe;
 /// Create a copy of UserProfile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -310,20 +310,20 @@ $UserProfileCopyWith<UserProfile> get copyWith => _$UserProfileCopyWithImpl<User
 @override
 bool operator ==(Object other) {
   final _this = this as UserProfile;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserProfile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.nickname, _this.nickname) || other.nickname == _this.nickname)&&(identical(other.firstName, _this.firstName) || other.firstName == _this.firstName)&&(identical(other.lastName, _this.lastName) || other.lastName == _this.lastName)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.pictureUpdate, _this.pictureUpdate) || other.pictureUpdate == _this.pictureUpdate)&&(identical(other.timezone, _this.timezone) || other.timezone == _this.timezone)&&(identical(other.customStatus, _this.customStatus) || other.customStatus == _this.customStatus)&&(identical(other.isBot, _this.isBot) || other.isBot == _this.isBot)&&(identical(other.isMe, _this.isMe) || other.isMe == _this.isMe));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserProfile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.nickname, _this.nickname) || other.nickname == _this.nickname)&&(identical(other.firstName, _this.firstName) || other.firstName == _this.firstName)&&(identical(other.lastName, _this.lastName) || other.lastName == _this.lastName)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.pictureUpdate, _this.pictureUpdate) || other.pictureUpdate == _this.pictureUpdate)&&(identical(other.timezone, _this.timezone) || other.timezone == _this.timezone)&&(identical(other.customStatus, _this.customStatus) || other.customStatus == _this.customStatus)&&(identical(other.isBot, _this.isBot) || other.isBot == _this.isBot)&&(identical(other.isGuest, _this.isGuest) || other.isGuest == _this.isGuest)&&(identical(other.isMe, _this.isMe) || other.isMe == _this.isMe));
 }
 
 
 @override
 int get hashCode {
   final _this = this as UserProfile;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.username,_this.nickname,_this.firstName,_this.lastName,_this.position,_this.status,_this.pictureUpdate,_this.timezone,_this.customStatus,_this.isBot,_this.isMe);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.username,_this.nickname,_this.firstName,_this.lastName,_this.position,_this.status,_this.pictureUpdate,_this.timezone,_this.customStatus,_this.isBot,_this.isGuest,_this.isMe);
 }
 
 @override
 String toString() {
   final _this = this as UserProfile;
-  return 'UserProfile(id: ${_this.id}, name: ${_this.name}, username: ${_this.username}, nickname: ${_this.nickname}, firstName: ${_this.firstName}, lastName: ${_this.lastName}, position: ${_this.position}, status: ${_this.status}, pictureUpdate: ${_this.pictureUpdate}, timezone: ${_this.timezone}, customStatus: ${_this.customStatus}, isBot: ${_this.isBot}, isMe: ${_this.isMe})';
+  return 'UserProfile(id: ${_this.id}, name: ${_this.name}, username: ${_this.username}, nickname: ${_this.nickname}, firstName: ${_this.firstName}, lastName: ${_this.lastName}, position: ${_this.position}, status: ${_this.status}, pictureUpdate: ${_this.pictureUpdate}, timezone: ${_this.timezone}, customStatus: ${_this.customStatus}, isBot: ${_this.isBot}, isGuest: ${_this.isGuest}, isMe: ${_this.isMe})';
 }
 
 
@@ -334,7 +334,7 @@ abstract mixin class $UserProfileCopyWith<$Res>  {
   factory $UserProfileCopyWith(UserProfile value, $Res Function(UserProfile) _then) = _$UserProfileCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String username, String nickname, String firstName, String lastName, String position, String status, int? pictureUpdate, String? timezone, CustomStatus? customStatus, bool isBot, bool isMe
+ String id, String name, String username, String nickname, String firstName, String lastName, String position, String status, int? pictureUpdate, String? timezone, CustomStatus? customStatus, bool isBot, bool isGuest, bool isMe
 });
 
 
@@ -351,7 +351,7 @@ class _$UserProfileCopyWithImpl<$Res>
 
 /// Create a copy of UserProfile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? username = null,Object? nickname = null,Object? firstName = null,Object? lastName = null,Object? position = null,Object? status = null,Object? pictureUpdate = freezed,Object? timezone = freezed,Object? customStatus = freezed,Object? isBot = null,Object? isMe = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? username = null,Object? nickname = null,Object? firstName = null,Object? lastName = null,Object? position = null,Object? status = null,Object? pictureUpdate = freezed,Object? timezone = freezed,Object? customStatus = freezed,Object? isBot = null,Object? isGuest = null,Object? isMe = null,}) {
   return _then(UserProfile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -365,6 +365,7 @@ as String,pictureUpdate: freezed == pictureUpdate ? _self.pictureUpdate : pictur
 as int?,timezone: freezed == timezone ? _self.timezone : timezone // ignore: cast_nullable_to_non_nullable
 as String?,customStatus: freezed == customStatus ? _self.customStatus : customStatus // ignore: cast_nullable_to_non_nullable
 as CustomStatus?,isBot: null == isBot ? _self.isBot : isBot // ignore: cast_nullable_to_non_nullable
+as bool,isGuest: null == isGuest ? _self.isGuest : isGuest // ignore: cast_nullable_to_non_nullable
 as bool,isMe: null == isMe ? _self.isMe : isMe // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -463,10 +464,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String username,  String nickname,  String firstName,  String lastName,  String position,  String status,  int? pictureUpdate,  String? timezone,  CustomStatus? customStatus,  bool isBot,  bool isMe)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String username,  String nickname,  String firstName,  String lastName,  String position,  String status,  int? pictureUpdate,  String? timezone,  CustomStatus? customStatus,  bool isBot,  bool isGuest,  bool isMe)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserProfile() when $default != null:
-return $default(_that.id,_that.name,_that.username,_that.nickname,_that.firstName,_that.lastName,_that.position,_that.status,_that.pictureUpdate,_that.timezone,_that.customStatus,_that.isBot,_that.isMe);case _:
+return $default(_that.id,_that.name,_that.username,_that.nickname,_that.firstName,_that.lastName,_that.position,_that.status,_that.pictureUpdate,_that.timezone,_that.customStatus,_that.isBot,_that.isGuest,_that.isMe);case _:
   return orElse();
 
 }
@@ -484,10 +485,10 @@ return $default(_that.id,_that.name,_that.username,_that.nickname,_that.firstNam
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String username,  String nickname,  String firstName,  String lastName,  String position,  String status,  int? pictureUpdate,  String? timezone,  CustomStatus? customStatus,  bool isBot,  bool isMe)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String username,  String nickname,  String firstName,  String lastName,  String position,  String status,  int? pictureUpdate,  String? timezone,  CustomStatus? customStatus,  bool isBot,  bool isGuest,  bool isMe)  $default,) {final _that = this;
 switch (_that) {
 case _UserProfile():
-return $default(_that.id,_that.name,_that.username,_that.nickname,_that.firstName,_that.lastName,_that.position,_that.status,_that.pictureUpdate,_that.timezone,_that.customStatus,_that.isBot,_that.isMe);case _:
+return $default(_that.id,_that.name,_that.username,_that.nickname,_that.firstName,_that.lastName,_that.position,_that.status,_that.pictureUpdate,_that.timezone,_that.customStatus,_that.isBot,_that.isGuest,_that.isMe);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -504,10 +505,10 @@ return $default(_that.id,_that.name,_that.username,_that.nickname,_that.firstNam
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String username,  String nickname,  String firstName,  String lastName,  String position,  String status,  int? pictureUpdate,  String? timezone,  CustomStatus? customStatus,  bool isBot,  bool isMe)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String username,  String nickname,  String firstName,  String lastName,  String position,  String status,  int? pictureUpdate,  String? timezone,  CustomStatus? customStatus,  bool isBot,  bool isGuest,  bool isMe)?  $default,) {final _that = this;
 switch (_that) {
 case _UserProfile() when $default != null:
-return $default(_that.id,_that.name,_that.username,_that.nickname,_that.firstName,_that.lastName,_that.position,_that.status,_that.pictureUpdate,_that.timezone,_that.customStatus,_that.isBot,_that.isMe);case _:
+return $default(_that.id,_that.name,_that.username,_that.nickname,_that.firstName,_that.lastName,_that.position,_that.status,_that.pictureUpdate,_that.timezone,_that.customStatus,_that.isBot,_that.isGuest,_that.isMe);case _:
   return null;
 
 }
@@ -519,7 +520,7 @@ return $default(_that.id,_that.name,_that.username,_that.nickname,_that.firstNam
 
 
 class _UserProfile implements UserProfile {
-  const _UserProfile({required this.id, required this.name, required this.username, required this.nickname, required this.firstName, required this.lastName, required this.position, required this.status, this.pictureUpdate, this.timezone, this.customStatus, required this.isBot, required this.isMe});
+  const _UserProfile({required this.id, required this.name, required this.username, required this.nickname, required this.firstName, required this.lastName, required this.position, required this.status, this.pictureUpdate, this.timezone, this.customStatus, required this.isBot, this.isGuest = false, required this.isMe});
   
 
 @override final  String id;
@@ -534,6 +535,7 @@ class _UserProfile implements UserProfile {
 @override final  String? timezone;
 @override final  CustomStatus? customStatus;
 @override final  bool isBot;
+@override@JsonKey() final  bool isGuest;
 @override final  bool isMe;
 
 /// Create a copy of UserProfile
@@ -546,18 +548,18 @@ _$UserProfileCopyWith<_UserProfile> get copyWith => __$UserProfileCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.username, username) || other.username == username)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.position, position) || other.position == position)&&(identical(other.status, status) || other.status == status)&&(identical(other.pictureUpdate, pictureUpdate) || other.pictureUpdate == pictureUpdate)&&(identical(other.timezone, timezone) || other.timezone == timezone)&&(identical(other.customStatus, customStatus) || other.customStatus == customStatus)&&(identical(other.isBot, isBot) || other.isBot == isBot)&&(identical(other.isMe, isMe) || other.isMe == isMe));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.username, username) || other.username == username)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.position, position) || other.position == position)&&(identical(other.status, status) || other.status == status)&&(identical(other.pictureUpdate, pictureUpdate) || other.pictureUpdate == pictureUpdate)&&(identical(other.timezone, timezone) || other.timezone == timezone)&&(identical(other.customStatus, customStatus) || other.customStatus == customStatus)&&(identical(other.isBot, isBot) || other.isBot == isBot)&&(identical(other.isGuest, isGuest) || other.isGuest == isGuest)&&(identical(other.isMe, isMe) || other.isMe == isMe));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,username,nickname,firstName,lastName,position,status,pictureUpdate,timezone,customStatus,isBot,isMe);
+    return Object.hash(runtimeType,id,name,username,nickname,firstName,lastName,position,status,pictureUpdate,timezone,customStatus,isBot,isGuest,isMe);
 }
 
 @override
 String toString() {
-    return 'UserProfile(id: $id, name: $name, username: $username, nickname: $nickname, firstName: $firstName, lastName: $lastName, position: $position, status: $status, pictureUpdate: $pictureUpdate, timezone: $timezone, customStatus: $customStatus, isBot: $isBot, isMe: $isMe)';
+    return 'UserProfile(id: $id, name: $name, username: $username, nickname: $nickname, firstName: $firstName, lastName: $lastName, position: $position, status: $status, pictureUpdate: $pictureUpdate, timezone: $timezone, customStatus: $customStatus, isBot: $isBot, isGuest: $isGuest, isMe: $isMe)';
 }
 
 
@@ -568,7 +570,7 @@ abstract mixin class _$UserProfileCopyWith<$Res> implements $UserProfileCopyWith
   factory _$UserProfileCopyWith(_UserProfile value, $Res Function(_UserProfile) _then) = __$UserProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String username, String nickname, String firstName, String lastName, String position, String status, int? pictureUpdate, String? timezone, CustomStatus? customStatus, bool isBot, bool isMe
+ String id, String name, String username, String nickname, String firstName, String lastName, String position, String status, int? pictureUpdate, String? timezone, CustomStatus? customStatus, bool isBot, bool isGuest, bool isMe
 });
 
 
@@ -585,7 +587,7 @@ class __$UserProfileCopyWithImpl<$Res>
 
 /// Create a copy of UserProfile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? username = null,Object? nickname = null,Object? firstName = null,Object? lastName = null,Object? position = null,Object? status = null,Object? pictureUpdate = freezed,Object? timezone = freezed,Object? customStatus = freezed,Object? isBot = null,Object? isMe = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? username = null,Object? nickname = null,Object? firstName = null,Object? lastName = null,Object? position = null,Object? status = null,Object? pictureUpdate = freezed,Object? timezone = freezed,Object? customStatus = freezed,Object? isBot = null,Object? isGuest = null,Object? isMe = null,}) {
   return _then(_UserProfile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -599,6 +601,7 @@ as String,pictureUpdate: freezed == pictureUpdate ? _self.pictureUpdate : pictur
 as int?,timezone: freezed == timezone ? _self.timezone : timezone // ignore: cast_nullable_to_non_nullable
 as String?,customStatus: freezed == customStatus ? _self.customStatus : customStatus // ignore: cast_nullable_to_non_nullable
 as CustomStatus?,isBot: null == isBot ? _self.isBot : isBot // ignore: cast_nullable_to_non_nullable
+as bool,isGuest: null == isGuest ? _self.isGuest : isGuest // ignore: cast_nullable_to_non_nullable
 as bool,isMe: null == isMe ? _self.isMe : isMe // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

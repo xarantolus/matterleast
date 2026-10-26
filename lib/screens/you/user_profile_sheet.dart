@@ -91,6 +91,7 @@ class UserProfileSheet extends ConsumerWidget {
             [
               '@${profile.username}',
               if (profile.isBot) 'Bot',
+              if (profile.isGuest) 'Guest',
               presenceLabel(profile.status),
             ].join(' · '),
             style: text.bodyMedium?.copyWith(color: tokens.muted),

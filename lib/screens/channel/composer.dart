@@ -127,6 +127,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     _text.addListener(_typed);
   }
 
+  /// After the message menu has closed, which would take the focus back.
+  void _focusSoon() {
+    _focusLater?.cancel();
+    _focusLater = Timer(const Duration(milliseconds: 350), _focus.requestFocus);
+  }
+
   void _typed() {
     if (_text.value != ref.read(_provider).text) {
       ref.read(_provider.notifier).changed(_text.value);
@@ -155,13 +161,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   Widget build(BuildContext context) {
     ref.listen(_provider, (before, next) {
       if (_text.value != next.text) _text.value = next.text;
-      if (next.editing != null && before?.editing != next.editing) {
-        // The message menu is still closing and would take the focus back.
-        _focusLater?.cancel();
-        _focusLater = Timer(
-          const Duration(milliseconds: 350),
-          _focus.requestFocus,
-        );
+      if ((next.editing != null && before?.editing != next.editing) ||
+          next.quotes > (before?.quotes ?? 0)) {
+        _focusSoon();
       }
     });
     final value = ref.watch(_provider);
@@ -854,6 +856,11 @@ class SuggestionList extends ConsumerWidget {
                 s.onlineOnly
                     ? 'Notifies everyone online in this channel'
                     : 'Notifies everyone in this channel',
+              ),
+              GroupSuggestion() => row(
+                const Icon(Icons.groups_outlined),
+                '@${s.name}',
+                s.displayName == s.name ? '' : s.displayName,
               ),
               ChannelSuggestion() => row(
                 Icon(s.type == 'P' ? Icons.lock_outline : Icons.tag),

@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 
-/// Fetches people the database doesn't have yet, by id or by username.
+/// Fetches people the database doesn't have yet, by id or by username,
+/// and those stored before their roles were kept.
 /// Requests arriving within [window] are asked together in chunks of
 /// [chunkSize], and a person already being fetched is not asked for again.
 class UserLoader {
@@ -47,7 +49,7 @@ class UserLoader {
     final column = byUsername ? _db.users.username : _db.users.id;
     final query = _db.selectOnly(_db.users)
       ..addColumns([column])
-      ..where(column.isIn(keys));
+      ..where(column.isIn(keys) & _db.users.roles.isNotNull());
     final known = {for (final row in await query.get()) row.read(column)};
     final missing = [
       for (final key in keys)

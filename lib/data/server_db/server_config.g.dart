@@ -43,4 +43,6 @@ const _$OptionalFeatureEnumMap = {
   OptionalFeature.fileSearch: 'fileSearch',
   OptionalFeature.commandSuggestions: 'commandSuggestions',
   OptionalFeature.fileUploads: 'fileUploads',
+  OptionalFeature.postReminders: 'postReminders',
+  OptionalFeature.groupMentions: 'groupMentions',
 };

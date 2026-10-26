@@ -14,6 +14,8 @@ enum OptionalFeature {
   fileSearch,
   commandSuggestions,
   fileUploads,
+  postReminders,
+  groupMentions,
 }
 
 /// Profile fields a directory (LDAP or SAML) can fill in, which the user
@@ -63,6 +65,13 @@ abstract class ServerFeatures with _$ServerFeatures {
     @Default(false) bool usernameOverride,
     @Default(false) bool iconOverride,
     @Default(false) bool crossTeamSearch,
+
+    /// The system bot can remind the user of a message later.
+    @Default(false) bool postReminders,
+
+    /// User groups (custom or synced from a directory) can be @mentioned;
+    /// each channel's permissions decide who may.
+    @Default(false) bool groupMentions,
 
     /// How long after posting a message can be edited; null for always.
     Duration? editTimeLimit,
@@ -189,6 +198,11 @@ ServerFeatures serverFeatures({
     usernameOverride: config.enablePostUsernameOverride == true,
     iconOverride: config.enablePostIconOverride == true,
     crossTeamSearch: config.enableCrossTeamSearch == true,
+    postReminders:
+        (compareVersions(config.version ?? '', (7, 2, 0)) ?? -1) >= 0 &&
+        !turnedOff.contains(OptionalFeature.postReminders),
+    groupMentions:
+        licensed && !turnedOff.contains(OptionalFeature.groupMentions),
     editTimeLimit: editLimit != null && editLimit >= 0
         ? Duration(seconds: editLimit)
         : null,

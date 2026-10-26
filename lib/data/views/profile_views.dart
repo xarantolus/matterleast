@@ -5,6 +5,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/profile_locks.dart';
 import 'package:matterleast/domain/user_profile.dart';
@@ -85,6 +86,7 @@ class ProfileViews {
           ? customStatusOf(_object(u.propsJson), _clock())
           : null,
       isBot: u.isBot,
+      isGuest: isGuest(u.roles),
       isMe: await db.syncText(SyncKeys.currentUserId) == u.id,
     );
   }

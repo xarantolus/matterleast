@@ -38,6 +38,8 @@ Future<void> _open(
   WidgetTester tester,
   PostItem post, {
   MessageRights rights = _all,
+  bool reminders = false,
+  ValueChanged<String?>? onQuote,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -49,6 +51,7 @@ Future<void> _open(
             following: false,
             teamName: 'crew',
             rights: rights,
+            reminders: reminders,
           ),
         ),
         recentEmojiProvider(_url).overrideWith((ref) async => const []),
@@ -64,6 +67,7 @@ Future<void> _open(
                 post: post,
                 onEdit: () {},
                 onReply: () {},
+                onQuote: onQuote,
               ),
               child: const Text('open'),
             ),
@@ -97,5 +101,30 @@ void main() {
     expect(find.text('Mark as unread'), findsNothing);
     expect(find.byTooltip('More reactions'), findsNothing);
     expect(find.text('Copy text'), findsOneWidget);
+  });
+
+  testWidgets('Remind me shows only where the server has reminders', (
+    tester,
+  ) async {
+    await _open(tester, _post('other'));
+    expect(find.text('Remind me'), findsNothing);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    await _open(tester, _post('other'), reminders: true);
+    expect(find.text('Remind me'), findsOneWidget);
+    await tester.tap(find.text('Remind me'));
+    await tester.pumpAndSettle();
+    expect(find.text('In 30 minutes'), findsOneWidget);
+    expect(find.text('Tomorrow'), findsOneWidget);
+    expect(find.text('Custom'), findsOneWidget);
+  });
+
+  testWidgets('Quote hands the message link to the composer', (tester) async {
+    String? quoted;
+    await _open(tester, _post('other'), onQuote: (link) => quoted = link);
+    await tester.tap(find.text('Quote'));
+    await tester.pumpAndSettle();
+    expect(quoted, '$_url/crew/pl/post1');
+    expect(find.text('Quote'), findsNothing);
   });
 }

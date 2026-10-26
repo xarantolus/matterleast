@@ -42,6 +42,7 @@ UsersCompanion userCompanion(api.User u) => UsersCompanion(
   position: _opt(u.position),
   locale: _opt(u.locale),
   isBot: Value(u.isBot ?? false),
+  roles: Value(u.roles ?? ''),
   updateAt: _opt(u.updateAt),
   deleteAt: Value(u.deleteAt),
   lastPictureUpdate: _opt(u.lastPictureUpdate?.millisecondsSinceEpoch),

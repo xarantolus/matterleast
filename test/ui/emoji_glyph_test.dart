@@ -122,6 +122,7 @@ void main() {
                 delete: true,
                 markUnread: false,
               ),
+              reminders: false,
             ),
           ),
         ],

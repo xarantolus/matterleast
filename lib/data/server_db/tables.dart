@@ -11,6 +11,10 @@ class Users extends Table {
   TextColumn get position => text().withDefault(const Constant(''))();
   TextColumn get locale => text().nullable()();
   BoolColumn get isBot => boolean().withDefault(const Constant(false))();
+
+  /// Space-separated system roles; null for a row stored before they were
+  /// kept, which the user loader fetches again.
+  TextColumn get roles => text().nullable()();
   IntColumn get updateAt => integer().map(const Millis()).nullable()();
   IntColumn get deleteAt => integer().map(const Millis()).nullable()();
   IntColumn get lastPictureUpdate => integer().nullable()();

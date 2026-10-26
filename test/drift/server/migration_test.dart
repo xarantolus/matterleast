@@ -6,6 +6,8 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
+import 'generated/schema_v3.dart' as v3;
+import 'generated/schema_v4.dart' as v4;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -44,6 +46,25 @@ void main() {
         final row = await newDb.select(newDb.drafts).getSingle();
         expect(row.channelId, 'channel-1');
         expect(row.message, 'half a thought');
+      },
+    );
+  });
+
+  test('keeps the people when going from v3 to v4, roles unknown', () async {
+    await verifier.testWithDataIntegrity(
+      oldVersion: 3,
+      newVersion: 4,
+      createOld: v3.DatabaseAtV3.new,
+      createNew: v4.DatabaseAtV4.new,
+      openTestedDatabase: ServerDatabase.new,
+      createItems: (batch, oldDb) => batch.insert(
+        oldDb.users,
+        const v3.UsersCompanion(id: Value('u1'), username: Value('wren')),
+      ),
+      validateItems: (newDb) async {
+        final row = await newDb.select(newDb.users).getSingle();
+        expect(row.username, 'wren');
+        expect(row.roles, isNull);
       },
     );
   });

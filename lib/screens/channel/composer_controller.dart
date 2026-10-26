@@ -10,6 +10,7 @@ import 'package:matterleast/data/actions/drafts.dart';
 import 'package:matterleast/data/actions/file_upload.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/quote.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -71,9 +72,13 @@ class ComposerValue {
     this.suggestions = const [],
     this.attachments = const [],
     this.priority,
+    this.quotes = 0,
   });
 
   final TextEditingValue text;
+
+  /// How many quotes were put in; the field takes the focus when it grows.
+  final int quotes;
 
   /// Important or urgent, with acknowledgement asked for; null for a
   /// standard message.
@@ -116,6 +121,7 @@ class ComposerDraft extends _$ComposerDraft {
     if (!ref.mounted || draft == null || state.text.text.isNotEmpty) return;
     final length = draft.message.length;
     state = ComposerValue(
+      quotes: state.quotes,
       attachments: [
         for (final f in draft.files)
           Attachment(
@@ -143,6 +149,7 @@ class ComposerDraft extends _$ComposerDraft {
     final typed = value.text != state.text.text;
     final editing = state.editing;
     state = ComposerValue(
+      quotes: state.quotes,
       text: value,
       editing: editing,
       suggestions: state.suggestions,
@@ -181,6 +188,7 @@ class ComposerDraft extends _$ComposerDraft {
   void _setAttachments(List<Attachment> attachments) {
     if (!ref.mounted) return;
     state = ComposerValue(
+      quotes: state.quotes,
       text: state.text,
       editing: state.editing,
       suggestions: state.suggestions,
@@ -287,6 +295,7 @@ class ComposerDraft extends _$ComposerDraft {
   void _setSuggestions(List<Suggestion> found) {
     if (!ref.mounted) return;
     state = ComposerValue(
+      quotes: state.quotes,
       text: state.text,
       editing: state.editing,
       suggestions: found,
@@ -329,9 +338,33 @@ class ComposerDraft extends _$ComposerDraft {
     );
   }
 
+  /// Adds [message] as a quote, with its [permalink], after what is
+  /// written, and puts the cursor after it.
+  void quote(String message, {String? permalink}) {
+    if (state.editing != null) stopEditing();
+    final text = withQuote(
+      state.text.text,
+      quoteOf(message, permalink: permalink),
+    );
+    changed(
+      TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      ),
+    );
+    state = ComposerValue(
+      text: state.text,
+      suggestions: state.suggestions,
+      attachments: state.attachments,
+      priority: state.priority,
+      quotes: state.quotes + 1,
+    );
+  }
+
   void startEditing(PostItem post) {
     _draftWhileEditing ??= state.text;
     state = ComposerValue(
+      quotes: state.quotes,
       text: TextEditingValue(
         text: post.message,
         selection: TextSelection.collapsed(offset: post.message.length),
@@ -344,6 +377,7 @@ class ComposerDraft extends _$ComposerDraft {
 
   void stopEditing() {
     state = ComposerValue(
+      quotes: state.quotes,
       text: _draftWhileEditing ?? TextEditingValue.empty,
       attachments: state.attachments,
       priority: state.priority,
@@ -352,6 +386,7 @@ class ComposerDraft extends _$ComposerDraft {
   }
 
   void setPriority(api.PostPriority? priority) => state = ComposerValue(
+    quotes: state.quotes,
     text: state.text,
     editing: state.editing,
     suggestions: state.suggestions,
