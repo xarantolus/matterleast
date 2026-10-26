@@ -76,6 +76,10 @@ class RootViews {
       for (final row in teams)
         row.readTable(db.myTeams).teamId: row.readTable(db.myTeams),
     };
+    final iconUpdates = {
+      for (final row in teams)
+        row.readTable(db.teams).id: row.readTable(db.teams).lastTeamIconUpdate,
+    };
     return [
       for (final team in ordered)
         () {
@@ -107,6 +111,7 @@ class RootViews {
             displayName: team.displayName,
             unread: badge.unread,
             mentions: badge.mentions,
+            iconUpdate: iconUpdates[team.id],
           );
         }(),
     ];

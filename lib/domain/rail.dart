@@ -11,6 +11,9 @@ abstract class RailTeam with _$RailTeam {
     required String displayName,
     required bool unread,
     required int mentions,
+
+    /// The team's `last_team_icon_update`; null or 0 when it has no icon.
+    int? iconUpdate,
   }) = _RailTeam;
 }
 

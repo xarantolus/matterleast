@@ -8,6 +8,7 @@ import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/you_page.dart';
 import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/ui/team_icon.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
@@ -116,7 +117,11 @@ class _ServerTeams extends ConsumerWidget {
             selected: team.id == selectedTeam,
             onPressed: () =>
                 selection.select(RailTarget(url: server.url, teamId: team.id)),
-            child: _TeamBadge(team: team, selected: team.id == selectedTeam),
+            child: _TeamBadge(
+              serverUrl: server.url,
+              team: team,
+              selected: team.id == selectedTeam,
+            ),
           ),
       ],
     );
@@ -124,14 +129,25 @@ class _ServerTeams extends ConsumerWidget {
 }
 
 class _TeamBadge extends StatelessWidget {
-  const _TeamBadge({required this.team, required this.selected});
+  const _TeamBadge({
+    required this.serverUrl,
+    required this.team,
+    required this.selected,
+  });
 
+  final String serverUrl;
   final RailTeam team;
   final bool selected;
 
   @override
   Widget build(BuildContext context) {
-    final icon = InitialsBadge(name: team.displayName, selected: selected);
+    final icon = TeamIcon(
+      serverUrl: serverUrl,
+      teamId: team.id,
+      name: team.displayName,
+      iconUpdate: team.iconUpdate,
+      selected: selected,
+    );
     // The open team's counts are in its list already.
     if (selected) return icon;
     if (team.mentions > 0) {
