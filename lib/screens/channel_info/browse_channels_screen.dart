@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/domain/paged_search.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_info/edit_channel_screen.dart';
+import 'package:matterleast/screens/channel_info/paged_search_controller.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
@@ -33,14 +35,13 @@ class BrowseChannelsScreen extends ConsumerStatefulWidget {
 
 class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
   var _archived = false;
-  final _items = <SwitchItem>[];
-  var _page = 0;
-  var _done = false;
-  var _loading = false;
-  Object? _error;
-  var _term = '';
-  List<SwitchItem>? _found;
-  Timer? _debounce;
+  // Joined channels are left out, so a page can show little or nothing.
+  late final _list = PagedSearchController<SwitchItem>(
+    loadPage: _loadPage,
+    search: _search,
+    keyOf: (c) => c.id,
+    keepLoadingBelow: 10,
+  )..addListener(_listed);
   var _working = false;
 
   String get _host => Uri.parse(widget.url).host;
@@ -48,80 +49,33 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
   @override
   void initState() {
     super.initState();
-    unawaited(_more());
+    unawaited(_list.more());
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
+    _list.dispose();
     super.dispose();
   }
 
-  Future<void> _more() async {
-    if (_loading || _done) return;
+  void _listed() => setState(() {});
+
+  Future<ServerPage<SwitchItem>> _loadPage(int page) async {
     final archived = _archived;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final directory = await ref.read(directoryProvider(widget.url).future);
-      final page = await directory.channels(
-        widget.teamId,
-        archived: archived,
-        page: _page,
-      );
-      if (!mounted || archived != _archived) return;
-      setState(() {
-        _items.addAll(
-          page.items.where((c) => !_items.any((i) => i.id == c.id)),
-        );
-        _page++;
-        _done = !page.more;
-        _loading = false;
-      });
-      // Joined channels are left out, so a page can show little or nothing.
-      if (page.more && page.items.length < 10) unawaited(_more());
-    } on Object catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = e;
-      });
-    }
+    final directory = await ref.read(directoryProvider(widget.url).future);
+    return directory.channels(widget.teamId, archived: archived, page: page);
+  }
+
+  Future<List<SwitchItem>> _search(String term) async {
+    final directory = await ref.read(directoryProvider(widget.url).future);
+    return directory.searchChannels(widget.teamId, term);
   }
 
   void _switch(bool archived) {
-    setState(() {
-      _archived = archived;
-      _items.clear();
-      _page = 0;
-      _done = false;
-      _loading = false;
-      _found = null;
-    });
-    if (_term.isNotEmpty) _typed(_term);
-    unawaited(_more());
-  }
-
-  void _typed(String text) {
-    _debounce?.cancel();
-    final term = text.trim();
-    setState(() {
-      _term = term;
-      _found = null;
-    });
+    setState(() => _archived = archived);
     // Archived channels are few; the loaded ones are narrowed locally.
-    if (term.isEmpty || _archived) return;
-    _debounce = Timer(const Duration(milliseconds: 400), () async {
-      try {
-        final directory = await ref.read(directoryProvider(widget.url).future);
-        final found = await directory.searchChannels(widget.teamId, term);
-        if (mounted && term == _term) setState(() => _found = found);
-      } on Object catch (e) {
-        if (mounted && term == _term) setState(() => _error = e);
-      }
-    });
+    _list.search = archived ? null : _search;
+    unawaited(_list.restart());
   }
 
   Future<void> _open(SwitchItem item) async {
@@ -174,10 +128,14 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
         ref.watch(featuresProvider(widget.url)).value?.archivedChannels ?? true;
     final canCreate =
         (rights.value?.public ?? false) || (rights.value?.private ?? false);
+    final list = _list.value;
+    final term = list.term;
     final shown =
-        _found ??
-        (_term.isEmpty ? _items : rankSwitchItems(_term, _items, limit: 200));
-    final busy = _loading || _working;
+        list.found ??
+        (term.isEmpty
+            ? list.items
+            : rankSwitchItems(term, list.items, limit: 200));
+    final busy = list.busy || _working;
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
       appBar: AppBar(
@@ -209,7 +167,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                 hintText: 'Search channels',
                 leading: const Icon(Icons.search),
                 elevation: const WidgetStatePropertyAll(0),
-                onChanged: _typed,
+                onChanged: _list.typed,
               ),
             ),
             if (archivedShown)
@@ -236,15 +194,18 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
             ),
             Expanded(
               child: shown.isEmpty
-                  ? busy || (_term.isNotEmpty && _found == null && !_archived)
+                  ? busy ||
+                            (term.isNotEmpty &&
+                                list.found == null &&
+                                !_archived)
                         ? const Center(child: CircularProgressIndicator())
-                        : _error != null
+                        : list.error != null
                         ? EmptyState(
                             icon: Icons.cloud_off,
                             title: "Couldn't load channels",
-                            body: requestProblemText(_error!, _host),
+                            body: requestProblemText(list.error!, _host),
                             action: FilledButton.tonal(
-                              onPressed: _more,
+                              onPressed: _list.retry,
                               child: const Text('Retry'),
                             ),
                           )
@@ -252,8 +213,8 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                             icon: _archived
                                 ? Icons.archive_outlined
                                 : Icons.travel_explore,
-                            title: _term.isNotEmpty
-                                ? 'No channels match "$_term"'
+                            title: term.isNotEmpty
+                                ? 'No channels match "$term"'
                                 : _archived
                                 ? 'No archived channels'
                                 : 'No more channels to join',
@@ -263,7 +224,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                                 : "You're in every public channel of this "
                                       'team. Create one to start something '
                                       'new.',
-                            action: canCreate && !_archived && _term.isEmpty
+                            action: canCreate && !_archived && term.isEmpty
                                 ? FilledButton.tonal(
                                     onPressed: _create,
                                     child: const Text('Create channel'),
@@ -272,8 +233,8 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                           )
                   : NotificationListener<ScrollNotification>(
                       onNotification: (n) {
-                        if (_found == null && n.metrics.extentAfter < 600) {
-                          unawaited(_more());
+                        if (n.metrics.extentAfter < 600) {
+                          unawaited(_list.more());
                         }
                         return false;
                       },
@@ -282,7 +243,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                         itemCount: shown.length,
                         itemBuilder: (context, i) => SwitchTile(
                           item: shown[i],
-                          markJoinable: false,
+                          markKind: false,
                           onTap: busy ? () {} : () => _open(shown[i]),
                         ),
                       ),

@@ -388,16 +388,16 @@ class SwitchTile extends StatelessWidget {
     required this.onTap,
     this.serverName,
     this.trailing,
-    this.markJoinable = true,
+    this.markKind = true,
     super.key,
   });
 
   final SwitchItem item;
   final VoidCallback onTap;
 
-  /// Says "Not joined" on channels the user isn't in; pointless in a list
+  /// Says "Not joined" or "Archived" on such channels; pointless in a list
   /// of nothing else.
-  final bool markJoinable;
+  final bool markKind;
   final String? serverName;
 
   /// Replaces the unread badge, such as a checkbox in a picker.
@@ -408,9 +408,9 @@ class SwitchTile extends StatelessWidget {
     final tokens = context.tokens;
     final details = [
       ?serverName,
-      if (markJoinable && item.kind == SwitchKind.joinable) 'Not joined',
-      if (item.kind == SwitchKind.archived) 'Archived',
-      ?item.subtitle,
+      if (markKind && item.kind == SwitchKind.joinable) 'Not joined',
+      if (markKind && item.kind == SwitchKind.archived) 'Archived',
+      if (item.subtitle case final subtitle? when subtitle.isNotEmpty) subtitle,
     ];
     final strong = (item.unread && !item.muted) || item.mentions > 0;
     if (item.kind == SwitchKind.person && item.userId != null) {

@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/domain/paged_search.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
+import 'package:matterleast/screens/channel_info/paged_search_controller.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -27,8 +29,8 @@ class PeopleList extends ConsumerStatefulWidget {
 
   final String url;
 
-  /// Ids of one page; fewer than a full page means there is no more.
-  final Future<List<String>> Function(int page) loadPage;
+  /// Ids of one page, and whether more may follow.
+  final Future<ServerPage<String>> Function(int page) loadPage;
   final Future<List<String>> Function(String term) search;
   final ValueChanged<SwitchItem> onTap;
   final String emptyTitle;
@@ -43,109 +45,61 @@ class PeopleList extends ConsumerStatefulWidget {
 }
 
 class _PeopleListState extends ConsumerState<PeopleList> {
-  final _ids = <String>[];
-  var _page = 0;
-  var _done = false;
-  var _loading = false;
-  Object? _error;
-
-  var _term = '';
-  List<String>? _found;
-  var _searching = false;
-  Timer? _debounce;
+  late final _list = PagedSearchController<String>(
+    loadPage: widget.loadPage,
+    search: widget.search,
+    keyOf: (id) => id,
+  )..addListener(_listed);
   void Function()? _unshow;
   var _rows = const <SwitchItem>[];
-
-  static const _pageSize = 60;
+  var _shownIds = const <String>[];
 
   @override
   void initState() {
     super.initState();
-    unawaited(_more());
+    unawaited(_list.more());
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
+    _list.dispose();
     _unshow?.call();
     super.dispose();
   }
 
-  Future<void> _more() async {
-    if (_loading || _done) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final ids = await widget.loadPage(_page);
-      if (!mounted) return;
-      setState(() {
-        _ids.addAll(ids.where((id) => !_ids.contains(id)));
-        _page++;
-        _done = ids.length < _pageSize;
-        _loading = false;
-      });
+  void _listed() {
+    final ids = _list.value.found ?? _list.value.items;
+    if (!identical(ids, _shownIds)) {
+      _shownIds = ids;
       unawaited(_showPresence());
-    } on Object catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = e;
-      });
     }
-  }
-
-  void _typed(String text) {
-    _debounce?.cancel();
-    final term = text.trim();
-    setState(() => _term = term);
-    if (term.isEmpty) {
-      setState(() => _found = null);
-      return;
-    }
-    _debounce = Timer(const Duration(milliseconds: 400), () async {
-      setState(() => _searching = true);
-      try {
-        final ids = await widget.search(term);
-        if (!mounted || term != _term) return;
-        setState(() {
-          _found = ids;
-          _searching = false;
-        });
-        unawaited(_showPresence());
-      } on Object catch (e) {
-        if (!mounted || term != _term) return;
-        setState(() {
-          _searching = false;
-          _found = const [];
-          _error = e;
-        });
-      }
-    });
+    setState(() {});
   }
 
   /// Keeps the presence of the people shown fresh while the list is open.
   Future<void> _showPresence() async {
     final session = await ref.read(serverSessionProvider(widget.url).future);
     if (!mounted) return;
-    final next = session.connection.presence.show({..._ids, ...?_found});
+    final v = _list.value;
+    final next = session.connection.presence.show({...v.items, ...?v.found});
     _unshow?.call();
     _unshow = next;
   }
 
   @override
   Widget build(BuildContext context) {
-    final shownIds = _found ?? _ids;
+    final list = _list.value;
+    final shownIds = list.found ?? list.items;
+    final term = list.term;
     // A new page is a new query; the rows shown stay until it answers.
     final rows = _rows =
         ref.watch(peopleRowsProvider(widget.url, shownIds.join(','))).value ??
         _rows;
     // Typing narrows what is loaded at once; the server's answer follows.
-    final local = _term.isEmpty || _found != null
+    final local = term.isEmpty || list.found != null
         ? rows
-        : rankSwitchItems(_term, rows, limit: 200);
-    final busy = _loading || _searching;
+        : rankSwitchItems(term, rows, limit: 200);
+    final busy = list.busy;
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Column(
       children: [
@@ -161,7 +115,7 @@ class _PeopleListState extends ConsumerState<PeopleList> {
             hintText: 'Search people',
             leading: const Icon(Icons.search),
             elevation: const WidgetStatePropertyAll(0),
-            onChanged: _typed,
+            onChanged: _list.typed,
           ),
         ),
         SizedBox(
@@ -174,35 +128,31 @@ class _PeopleListState extends ConsumerState<PeopleList> {
           child: local.isEmpty
               ? busy
                     ? const Center(child: CircularProgressIndicator())
-                    : _error != null
+                    : list.error != null
                     ? EmptyState(
                         icon: Icons.cloud_off,
                         title: "Couldn't load people",
                         body: requestProblemText(
-                          _error!,
+                          list.error!,
                           Uri.parse(widget.url).host,
                         ),
                         action: FilledButton.tonal(
-                          onPressed: _more,
+                          onPressed: _list.retry,
                           child: const Text('Retry'),
                         ),
                       )
                     : EmptyState(
                         icon: Icons.person_search_outlined,
-                        title: _term.isEmpty
+                        title: term.isEmpty
                             ? widget.emptyTitle
-                            : 'Nobody matches "$_term"',
-                        body: _term.isEmpty
+                            : 'Nobody matches "$term"',
+                        body: term.isEmpty
                             ? widget.emptyBody
                             : 'Check the spelling or try part of a name.',
                       )
               : NotificationListener<ScrollNotification>(
                   onNotification: (n) {
-                    if (_found == null &&
-                        n.metrics.extentAfter < 600 &&
-                        !_loading) {
-                      unawaited(_more());
-                    }
+                    if (n.metrics.extentAfter < 600) unawaited(_list.more());
                     return false;
                   },
                   child: ListView.builder(

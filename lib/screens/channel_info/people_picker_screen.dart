@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/domain/paged_search.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
@@ -33,7 +34,7 @@ class PeoplePickerScreen extends ConsumerStatefulWidget {
 
   /// The button's label, such as "Add".
   final String action;
-  final Future<List<String>> Function(int page) loadPage;
+  final Future<ServerPage<String>> Function(int page) loadPage;
   final Future<List<String>> Function(String term) search;
 
   /// Does the work for the picked people; the screen closes itself first

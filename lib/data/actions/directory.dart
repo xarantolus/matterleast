@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/domain/paged_search.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 
 /// Pages of people and channels from one server, for member lists, pickers
@@ -23,6 +24,11 @@ class Directory {
   Future<T> _search<T>(String key, Future<T> Function() request) =>
       session.api.coalesced(key, request);
 
+  /// One page of people, stored; deactivated people and bots are left out,
+  /// so a short page doesn't mean the last one.
+  Future<ServerPage<String>> _page(List<api.User> users) async =>
+      (items: await _stored(users), more: users.length >= pageSize);
+
   Future<List<String>> _stored(List<api.User> users) async {
     await session.store.applyUsers(users);
     return [
@@ -32,8 +38,8 @@ class Directory {
   }
 
   /// Members of a channel, admins first.
-  Future<List<String>> members(String channelId, {int page = 0}) async =>
-      _stored(
+  Future<ServerPage<String>> members(String channelId, {int page = 0}) async =>
+      _page(
         await session.api.call(
           () => _client.users.getUsers(
             inChannel: channelId,
@@ -46,11 +52,11 @@ class Directory {
       );
 
   /// People in [teamId] who are not in [channelId], to add.
-  Future<List<String>> nonMembers(
+  Future<ServerPage<String>> nonMembers(
     String teamId,
     String channelId, {
     int page = 0,
-  }) async => _stored(
+  }) async => _page(
     await session.api.call(
       () => _client.users.getUsers(
         inTeam: teamId,
@@ -64,9 +70,9 @@ class Directory {
 
   /// Everyone the user may message: the team's people when the server
   /// restricts direct messages to teams, else everyone.
-  Future<List<String>> people({String? teamId, int page = 0}) async {
+  Future<ServerPage<String>> people({String? teamId, int page = 0}) async {
     final restricted = await _restricted();
-    return _stored(
+    return _page(
       await session.api.call(
         () => _client.users.getUsers(
           inTeam: restricted ? teamId : null,
@@ -110,7 +116,7 @@ class Directory {
 
   /// Public channels of [teamId] the user is not in, or archived ones with
   /// [archived]; [more] says whether another page may follow.
-  Future<({List<SwitchItem> items, bool more})> channels(
+  Future<ServerPage<SwitchItem>> channels(
     String teamId, {
     bool archived = false,
     int page = 0,
