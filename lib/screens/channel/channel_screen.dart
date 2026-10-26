@@ -64,26 +64,46 @@ class ChannelScreen extends ConsumerWidget {
       channelId: channelId,
       teamId: window?.teamId ?? '',
     );
+    void openInfo() => Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ChannelInfoScreen(url: url, channelId: channelId),
+      ),
+    );
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => ChannelInfoScreen(url: url, channelId: channelId),
-            ),
+        title: Semantics(
+          button: true,
+          hint: 'Shows details',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: openInfo,
+            child: switch (typingText(typing ?? const [])) {
+              final typing? => ConversationTitle(
+                title: name,
+                subtitle: typing,
+                opensDetails: true,
+              ),
+              null => ConversationTitle(
+                title: name,
+                subtitle: conversationSubtitle(state, partner: partner),
+                subtitleEmoji: conversationSubtitleEmoji(
+                  state,
+                  partner: partner,
+                ),
+                url: url,
+                opensDetails: true,
+              ),
+            },
           ),
-          child: switch (typingText(typing ?? const [])) {
-            final typing? => ConversationTitle(title: name, subtitle: typing),
-            null => ConversationTitle(
-              title: name,
-              subtitle: conversationSubtitle(state, partner: partner),
-              subtitleEmoji: conversationSubtitleEmoji(state, partner: partner),
-              url: url,
-            ),
-          },
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Details',
+            icon: const Icon(Icons.info_outline),
+            onPressed: openInfo,
+          ),
+        ],
         bottom: ProgressSlot(
           active: state.refreshing && state.window?.posts.isNotEmpty == true,
         ),
@@ -135,10 +155,14 @@ class ConversationTitle extends StatelessWidget {
     this.subtitle,
     this.subtitleEmoji,
     this.url,
+    this.opensDetails = false,
     super.key,
   });
 
   final String title;
+
+  /// Shows a small chevron after the title, which opens the details.
+  final bool opensDetails;
   final String? subtitle;
 
   /// An emoji before the subtitle, from the server at [url].
@@ -154,7 +178,22 @@ class ConversationTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        if (opensDetails)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Icon(Icons.chevron_right, size: 20),
+            ],
+          )
+        else
+          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
         if (subtitle case final subtitle?)
           Text.rich(
             TextSpan(
