@@ -16,7 +16,7 @@ fi
 keystore=$(realpath "$1")
 apk=build/app/outputs/flutter-apk/app-release.apk
 rm -f "$apk"
-X_KEYSTORE_PATH=$keystore flutter build apk --release
+X_KEYSTORE_PATH=$keystore flutter build apk --release --target-platform android-arm,android-arm64
 apksigner=$(find "${ANDROID_HOME:?}/build-tools" -name apksigner | sort -V | tail -n 1)
 "$apksigner" verify --print-certs "$apk" | grep -E 'certificate (DN|SHA-256)'
 du -h "$apk"
