@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/dev_sign_in.dart';
 import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/shortcuts.dart';
@@ -86,7 +87,13 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     final manager = ref.read(serverManagerProvider);
     // After the first frame, so the token read never delays painting.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(manager.checkTokens().then((_) => manager.setForeground(true)));
+      final servers = ref.read(serversProvider.future);
+      unawaited(
+        servers
+            .then((all) => devSignIn(manager, [for (final s in all) s.url]))
+            .then((_) => manager.checkTokens())
+            .then((_) => manager.setForeground(true)),
+      );
       if (!mounted) return;
       final navigator = Navigator.of(context);
       _links = AppLinks().uriLinkStream.listen(
