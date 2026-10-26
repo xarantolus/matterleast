@@ -143,4 +143,42 @@ void main() {
       DateTime(2026, 4, 30, 12),
     ]);
   });
+
+  group(
+    'the time zone of the picked day',
+    skip: _berlin ? false : 'needs TZ=Europe/Berlin',
+    () {
+      final winter = DateTime(2026, 11, 2, 9);
+
+      test('a summer day is read in summer time from winter', () {
+        expect(
+          searchTimeZoneOffset('crane on:2026-07-01', now: winter),
+          const Duration(hours: 2),
+        );
+        expect(
+          searchTimeZoneOffset(
+            'crane after:2026-03-30 before:2026-12-01',
+            now: winter,
+          ),
+          const Duration(hours: 2),
+        );
+      });
+
+      test("without a day, or on a winter day, the offset is today's", () {
+        expect(
+          searchTimeZoneOffset('crane', now: winter),
+          const Duration(hours: 1),
+        );
+        expect(
+          searchTimeZoneOffset('crane on:2026-12-24', now: winter),
+          const Duration(hours: 1),
+        );
+      });
+    },
+  );
 }
+
+/// Whether the tests run in Central European time.
+final _berlin =
+    DateTime(2026, 3, 28, 12).timeZoneOffset == const Duration(hours: 1) &&
+    DateTime(2026, 7, 1).timeZoneOffset == const Duration(hours: 2);

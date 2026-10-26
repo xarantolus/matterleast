@@ -139,6 +139,22 @@ String fileSearchTerms(String query, SearchScope scope) => [
   for (final ext in scope.fileKind?.extensions ?? const <String>[]) 'ext:$ext',
 ].where((part) => part.isNotEmpty).join(' ');
 
+final _dayModifier = RegExp(r'\b(?:on|before|after):(\d{4})-(\d{2})-(\d{2})\b');
+
+/// Pure: the UTC offset the server should read the date modifiers in
+/// [terms] with, which is that of the first named day in local time (a day
+/// across a clock change from [now] has another offset); [now]'s offset
+/// when no day is named.
+Duration searchTimeZoneOffset(String terms, {required DateTime now}) {
+  final m = _dayModifier.firstMatch(terms);
+  if (m == null) return now.timeZoneOffset;
+  return DateTime(
+    int.parse(m[1]!),
+    int.parse(m[2]!),
+    int.parse(m[3]!),
+  ).timeZoneOffset;
+}
+
 /// A calendar day as the server's date modifiers write it.
 String dayTerm(DateTime day) =>
     '${day.year.toString().padLeft(4, '0')}-'

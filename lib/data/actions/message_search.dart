@@ -19,7 +19,8 @@ class MessageSearch {
   ServerDatabase get _db => session.db;
   api.MattermostClient get _client => session.api.client;
 
-  int get _offsetSeconds => DateTime.now().timeZoneOffset.inSeconds;
+  static int _offsetSeconds(String terms) =>
+      searchTimeZoneOffset(terms, now: DateTime.now()).inSeconds;
 
   /// Ids of the posts found, newest first. A null [teamId] searches every
   /// team.
@@ -31,7 +32,7 @@ class MessageSearch {
                   body: api.ApiV4PostsSearchRequestBody(
                     terms: terms,
                     isOrSearch: false,
-                    timeZoneOffset: _offsetSeconds,
+                    timeZoneOffset: _offsetSeconds(terms),
                     includeDeletedChannels: true,
                   ),
                 )
@@ -40,7 +41,7 @@ class MessageSearch {
                   body: api.ApiV4TeamsTeamIdPostsSearchRequestBody(
                     terms: terms,
                     isOrSearch: false,
-                    timeZoneOffset: _offsetSeconds,
+                    timeZoneOffset: _offsetSeconds(terms),
                     includeDeletedChannels: true,
                   ),
                 ),
@@ -68,7 +69,7 @@ class MessageSearch {
                     body: api.ApiV4FilesSearchRequestBody(
                       terms: terms,
                       isOrSearch: false,
-                      timeZoneOffset: _offsetSeconds,
+                      timeZoneOffset: _offsetSeconds(terms),
                       includeDeletedChannels: true,
                     ),
                   )
@@ -77,7 +78,7 @@ class MessageSearch {
                     body: api.ApiV4TeamsTeamIdFilesSearchRequestBody(
                       terms: terms,
                       isOrSearch: false,
-                      timeZoneOffset: _offsetSeconds,
+                      timeZoneOffset: _offsetSeconds(terms),
                       includeDeletedChannels: true,
                     ),
                   ),
