@@ -141,7 +141,8 @@ void main() {
   test('only an unreachable server reads as offline', () {
     final table = <ApiError, String>{
       const Unreachable(): 'Offline · showing saved data',
-      const RequestTimeout(): 'Offline · showing saved data',
+      const RequestTimeout():
+          "Couldn't update: the server didn't answer in time",
       const ServerError(statusCode: 500): "Couldn't update: server error 500",
       const ServerError(statusCode: 403): "Couldn't update: server error 403",
       const UnexpectedFailure('TypeError'): "Couldn't read the server's reply",

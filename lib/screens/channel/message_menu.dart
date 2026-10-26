@@ -11,6 +11,7 @@ import 'package:matterleast/data/actions/post_actions.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -345,9 +346,13 @@ class MessageMenu extends ConsumerWidget {
   ) async {
     try {
       await action(await actions);
-    } on ApiError {
+    } on ApiError catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('$failure Check the connection and try again.')),
+        SnackBar(
+          content: Text(
+            '$failure ${requestProblemText(e, Uri.parse(url).host)}',
+          ),
+        ),
       );
     }
   }

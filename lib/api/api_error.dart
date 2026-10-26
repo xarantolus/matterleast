@@ -30,6 +30,7 @@ sealed class ApiError implements Exception {
       DioExceptionType.receiveTimeout => const RequestTimeout(),
       DioExceptionType.cancel => const Cancelled(),
       DioExceptionType.badCertificate => const UntrustedCertificate(),
+      _ when _refusedHandshake(e.error) => const UntrustedCertificate(),
       _ when e.error is SocketException => const Unreachable(),
       DioExceptionType.connectionError => Unreachable(
         detail: e.error?.runtimeType.toString(),
@@ -42,6 +43,12 @@ sealed class ApiError implements Exception {
     };
   }
 }
+
+/// A TLS handshake the server's certificate or setup failed, as opposed to
+/// one a dropped connection cut short.
+bool _refusedHandshake(Object? error) =>
+    error is HandshakeException &&
+    !error.message.contains('terminated during handshake');
 
 /// The server answered with an error status; [id] is Mattermost's error id,
 /// such as `api.user.login.invalid_credentials_email_username`.

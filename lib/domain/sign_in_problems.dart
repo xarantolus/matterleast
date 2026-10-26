@@ -21,8 +21,7 @@ const mfaSetupNeededText =
 String connectionProblemText(ApiError error, String host) => switch (error) {
   Unreachable() =>
     "Couldn't reach $host. Check the address and your connection.",
-  RequestTimeout() =>
-    "$host didn't answer in time. Check your connection and try again.",
+  RequestTimeout() => "$host didn't answer in time. Try again.",
   UntrustedCertificate() =>
     "$host's certificate isn't trusted, so the app didn't connect. Check the "
         "address, or ask the server's admin about the certificate.",
@@ -35,10 +34,11 @@ String connectionProblemText(ApiError error, String host) => switch (error) {
         : '$host said: $message',
 };
 
-/// The notice over saved data after a failed refresh: offline only when the
-/// server could not be reached, else what went wrong in a few words.
+/// The notice over saved data after a failed refresh: offline only when no
+/// answer arrived, else what went wrong in a few words.
 String staleDataNotice(ApiError error) => switch (error) {
-  Unreachable() || RequestTimeout() => 'Offline · showing saved data',
+  Unreachable() => 'Offline · showing saved data',
+  RequestTimeout() => "Couldn't update: the server didn't answer in time",
   ServerError(:final statusCode) => "Couldn't update: server error $statusCode",
   UnexpectedFailure() => "Couldn't read the server's reply",
   UntrustedCertificate() => "Couldn't update: untrusted certificate",

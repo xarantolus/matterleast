@@ -7,6 +7,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/message_links.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_link.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
@@ -52,10 +53,10 @@ Future<void> openLinkFromMessage(
         ref.read(railSelectionProvider.notifier).select(RailTarget(url: url));
         navigator.popUntil((route) => route.isFirst);
     }
-  } on ApiError {
+  } on ApiError catch (e) {
     _say(
       navigator,
-      "Couldn't open the link. Check the connection and try again.",
+      "Couldn't open the link. ${requestProblemText(e, link.server.host)}",
     );
   }
 }
@@ -114,10 +115,10 @@ Future<void> openChannelNamed(
 ) async {
   try {
     await _openChannelNamed(navigator, ref, url, teamName, name);
-  } on ApiError {
+  } on ApiError catch (e) {
     _say(
       navigator,
-      "Couldn't open ~$name. Check the connection and try again.",
+      "Couldn't open ~$name. ${requestProblemText(e, Uri.parse(url).host)}",
     );
   }
 }

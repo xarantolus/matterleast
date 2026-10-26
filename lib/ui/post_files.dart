@@ -9,6 +9,7 @@ import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/file_handoff.dart';
 import 'package:matterleast/domain/post_files.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
@@ -395,8 +396,11 @@ Future<void> _runFileAction(
       'server allows.',
     );
     return;
-  } on ApiError {
-    say("Couldn't download ${file.name}. Check the connection and try again.");
+  } on ApiError catch (e) {
+    say(
+      "Couldn't download ${file.name}. "
+      '${requestProblemText(e, Uri.parse(url).host)}',
+    );
     return;
   }
   if (local == null) return;

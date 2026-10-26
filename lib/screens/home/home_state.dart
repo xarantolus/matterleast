@@ -63,7 +63,9 @@ HomeState homeState(InboxFilter filter, List<HomeServer> servers) {
       '${_capitalised(problem(first.status))} · showing saved data',
     [final only] =>
       '${only.server.name} ${problem(only.status)} · showing saved data',
-    _ => 'Some servers are offline · showing saved data',
+    _ when failed.every((f) => f.status.offline) =>
+      'Some servers are offline · showing saved data',
+    _ => "Some servers couldn't refresh · showing saved data",
   };
   return HomeState.ready(
     items,

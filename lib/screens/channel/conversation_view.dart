@@ -6,6 +6,7 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
@@ -336,11 +337,12 @@ extension on _ConversationViewState {
       } else {
         await actions.addReaction(post.id, name);
       }
-    } on ApiError {
+    } on ApiError catch (e) {
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Couldn't change the reaction. Check the connection and try again.",
+            "Couldn't change the reaction. "
+            '${requestProblemText(e, Uri.parse(widget.url).host)}',
           ),
         ),
       );

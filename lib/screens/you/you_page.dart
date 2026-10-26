@@ -376,7 +376,7 @@ class _ServerTile extends ConsumerWidget {
     if (!done && context.mounted) {
       final anyway = await _confirm(
         context,
-        title: "Couldn't reach ${server.address}",
+        title: "Couldn't sign out on ${server.address}",
         body:
             'Sign out on this device anyway? The session stays valid on the '
             'server until it expires.',

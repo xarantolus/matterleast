@@ -31,7 +31,8 @@ final class SyncFailed extends SyncStatus {
   final DateTime at;
   final DateTime? lastSuccess;
 
-  bool get offline => cause is Unreachable || cause is RequestTimeout;
+  /// No answer arrived at all; a slow or failing server is not offline.
+  bool get offline => cause is Unreachable;
 }
 
 class SyncJob {

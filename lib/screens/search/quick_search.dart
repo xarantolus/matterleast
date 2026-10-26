@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/browse_channels_screen.dart';
 import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
@@ -138,11 +139,12 @@ class QuickSearchAnchor extends ConsumerWidget {
         title: item.title,
         teamId: item.teamId,
       );
-    } on Object {
+    } on Object catch (e) {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            "Couldn't open ${item.title}. Check the connection and try again.",
+            "Couldn't open ${item.title}. "
+            '${requestProblemText(e, Uri.parse(item.serverUrl).host)}',
           ),
         ),
       );

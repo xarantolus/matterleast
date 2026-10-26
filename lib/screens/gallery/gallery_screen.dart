@@ -1,13 +1,17 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chewie/chewie.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/post_files.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/ui/legacy_material.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -354,7 +358,10 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
   @override
   Widget build(BuildContext context) {
     final player = _player;
-    if (_error != null) {
+    if (_error case final error?) {
+      final cause = error is ApiError || error is TimeoutException
+          ? requestProblemText(error, Uri.parse(widget.url).host)
+          : 'Try again.';
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(Spacing.xl),
@@ -362,8 +369,7 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                "The video didn't load. Check the connection and try "
-                'again, or use Open with.',
+                "The video didn't load. $cause You can also use Open with.",
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge
                     ?.copyWith(color: Colors.white),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 
@@ -38,11 +39,13 @@ class _ChannelActionsSheet extends ConsumerWidget {
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
       ref.read(channelActionsProvider(url).future).then(action).catchError((
-        Object _,
+        Object e,
       ) {
         messenger.showSnackBar(
           SnackBar(
-            content: Text('$failure Check the connection and try again.'),
+            content: Text(
+              '$failure ${requestProblemText(e, Uri.parse(url).host)}',
+            ),
           ),
         );
       });

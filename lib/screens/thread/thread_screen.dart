@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/typing.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/composer.dart';
@@ -42,7 +43,7 @@ class ThreadScreen extends ConsumerWidget {
     );
     final state = ref.watch(conversation);
     final following = ref.watch(threadFollowingProvider(url, rootId)).value;
-    final offline = state.refreshFailure != null && !state.refreshing;
+    final failure = state.refreshing ? null : state.refreshFailure;
     final typing = ref.watch(typingNamesProvider(url, channelId, rootId)).value;
     listenForRejectedPosts(context, ref, url, channelId);
     listenForDialogs(
@@ -65,7 +66,8 @@ class ThreadScreen extends ConsumerWidget {
                   name
                 else
                   channelName,
-                if (offline && window?.root != null) 'Offline',
+                if (failure != null && window?.root != null)
+                  staleDataNotice(failure),
               ].join(' · '),
         ),
         actions: [
@@ -128,15 +130,13 @@ class ThreadScreen extends ConsumerWidget {
             ).notifier,
           )
           .setFollowing(following: following);
-    } on ApiError {
+    } on ApiError catch (e) {
+      final what = following
+          ? "Couldn't follow the thread."
+          : "Couldn't stop following the thread.";
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            following
-                ? "Couldn't follow the thread. Check the connection and try again."
-                : "Couldn't stop following the thread. Check the connection "
-                      'and try again.',
-          ),
+          content: Text('$what ${requestProblemText(e, Uri.parse(url).host)}'),
         ),
       );
     }
