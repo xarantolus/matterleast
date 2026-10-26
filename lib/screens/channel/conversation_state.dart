@@ -35,6 +35,9 @@ abstract class ConversationState with _$ConversationState {
     @Default(OpenIntent.usual) OpenIntent intent,
     SavedPlace? saved,
     String? highlightKey,
+
+    /// The signed-in user, once the database answered.
+    String? myUserId,
   }) = _ConversationState;
 }
 
@@ -133,9 +136,9 @@ ApiError? staleFailure(ConversationState s) =>
 /// user's own messages that failed to go out.
 List<String> conversationNews(
   ConversationState before,
-  ConversationState after, {
-  required String? myUserId,
-}) {
+  ConversationState after,
+) {
+  final myUserId = after.myUserId;
   final posts = after.window?.posts ?? const <PostItem>[];
   final arrived = [
     for (final p in posts)

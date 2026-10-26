@@ -22,7 +22,8 @@ mixin _$ConversationState {
  Map<Object, DateTime> get arrived;/// Grows when the list moves to another stretch of history, so it
 /// opens anew there.
  int get generation;/// How this [generation] opens, once its rows are there.
- OpenIntent get intent; SavedPlace? get saved; String? get highlightKey;
+ OpenIntent get intent; SavedPlace? get saved; String? get highlightKey;/// The signed-in user, once the database answered.
+ String? get myUserId;
 /// Create a copy of ConversationState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -34,20 +35,20 @@ $ConversationStateCopyWith<ConversationState> get copyWith => _$ConversationStat
 @override
 bool operator ==(Object other) {
   final _this = this as ConversationState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationState&&(identical(other.window, _this.window) || other.window == _this.window)&&const DeepCollectionEquality().equals(other.rows, _this.rows)&&(identical(other.refreshing, _this.refreshing) || other.refreshing == _this.refreshing)&&(identical(other.refreshFailure, _this.refreshFailure) || other.refreshFailure == _this.refreshFailure)&&(identical(other.loadingOlder, _this.loadingOlder) || other.loadingOlder == _this.loadingOlder)&&(identical(other.olderFailure, _this.olderFailure) || other.olderFailure == _this.olderFailure)&&const DeepCollectionEquality().equals(other.arrived, _this.arrived)&&(identical(other.generation, _this.generation) || other.generation == _this.generation)&&(identical(other.intent, _this.intent) || other.intent == _this.intent)&&(identical(other.saved, _this.saved) || other.saved == _this.saved)&&(identical(other.highlightKey, _this.highlightKey) || other.highlightKey == _this.highlightKey));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationState&&(identical(other.window, _this.window) || other.window == _this.window)&&const DeepCollectionEquality().equals(other.rows, _this.rows)&&(identical(other.refreshing, _this.refreshing) || other.refreshing == _this.refreshing)&&(identical(other.refreshFailure, _this.refreshFailure) || other.refreshFailure == _this.refreshFailure)&&(identical(other.loadingOlder, _this.loadingOlder) || other.loadingOlder == _this.loadingOlder)&&(identical(other.olderFailure, _this.olderFailure) || other.olderFailure == _this.olderFailure)&&const DeepCollectionEquality().equals(other.arrived, _this.arrived)&&(identical(other.generation, _this.generation) || other.generation == _this.generation)&&(identical(other.intent, _this.intent) || other.intent == _this.intent)&&(identical(other.saved, _this.saved) || other.saved == _this.saved)&&(identical(other.highlightKey, _this.highlightKey) || other.highlightKey == _this.highlightKey)&&(identical(other.myUserId, _this.myUserId) || other.myUserId == _this.myUserId));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ConversationState;
-  return Object.hash(runtimeType,_this.window,const DeepCollectionEquality().hash(_this.rows),_this.refreshing,_this.refreshFailure,_this.loadingOlder,_this.olderFailure,const DeepCollectionEquality().hash(_this.arrived),_this.generation,_this.intent,_this.saved,_this.highlightKey);
+  return Object.hash(runtimeType,_this.window,const DeepCollectionEquality().hash(_this.rows),_this.refreshing,_this.refreshFailure,_this.loadingOlder,_this.olderFailure,const DeepCollectionEquality().hash(_this.arrived),_this.generation,_this.intent,_this.saved,_this.highlightKey,_this.myUserId);
 }
 
 @override
 String toString() {
   final _this = this as ConversationState;
-  return 'ConversationState(window: ${_this.window}, rows: ${_this.rows}, refreshing: ${_this.refreshing}, refreshFailure: ${_this.refreshFailure}, loadingOlder: ${_this.loadingOlder}, olderFailure: ${_this.olderFailure}, arrived: ${_this.arrived}, generation: ${_this.generation}, intent: ${_this.intent}, saved: ${_this.saved}, highlightKey: ${_this.highlightKey})';
+  return 'ConversationState(window: ${_this.window}, rows: ${_this.rows}, refreshing: ${_this.refreshing}, refreshFailure: ${_this.refreshFailure}, loadingOlder: ${_this.loadingOlder}, olderFailure: ${_this.olderFailure}, arrived: ${_this.arrived}, generation: ${_this.generation}, intent: ${_this.intent}, saved: ${_this.saved}, highlightKey: ${_this.highlightKey}, myUserId: ${_this.myUserId})';
 }
 
 
@@ -58,7 +59,7 @@ abstract mixin class $ConversationStateCopyWith<$Res>  {
   factory $ConversationStateCopyWith(ConversationState value, $Res Function(ConversationState) _then) = _$ConversationStateCopyWithImpl;
 @useResult
 $Res call({
- ConversationWindow? window, List<ListRow> rows, bool refreshing, ApiError? refreshFailure, bool loadingOlder, ApiError? olderFailure, Map<Object, DateTime> arrived, int generation, OpenIntent intent, SavedPlace? saved, String? highlightKey
+ ConversationWindow? window, List<ListRow> rows, bool refreshing, ApiError? refreshFailure, bool loadingOlder, ApiError? olderFailure, Map<Object, DateTime> arrived, int generation, OpenIntent intent, SavedPlace? saved, String? highlightKey, String? myUserId
 });
 
 
@@ -75,7 +76,7 @@ class _$ConversationStateCopyWithImpl<$Res>
 
 /// Create a copy of ConversationState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? window = freezed,Object? rows = null,Object? refreshing = null,Object? refreshFailure = freezed,Object? loadingOlder = null,Object? olderFailure = freezed,Object? arrived = null,Object? generation = null,Object? intent = null,Object? saved = freezed,Object? highlightKey = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? window = freezed,Object? rows = null,Object? refreshing = null,Object? refreshFailure = freezed,Object? loadingOlder = null,Object? olderFailure = freezed,Object? arrived = null,Object? generation = null,Object? intent = null,Object? saved = freezed,Object? highlightKey = freezed,Object? myUserId = freezed,}) {
   return _then(ConversationState(
 window: freezed == window ? _self.window : window // ignore: cast_nullable_to_non_nullable
 as ConversationWindow?,rows: null == rows ? _self.rows : rows // ignore: cast_nullable_to_non_nullable
@@ -88,6 +89,7 @@ as Map<Object, DateTime>,generation: null == generation ? _self.generation : gen
 as int,intent: null == intent ? _self.intent : intent // ignore: cast_nullable_to_non_nullable
 as OpenIntent,saved: freezed == saved ? _self.saved : saved // ignore: cast_nullable_to_non_nullable
 as SavedPlace?,highlightKey: freezed == highlightKey ? _self.highlightKey : highlightKey // ignore: cast_nullable_to_non_nullable
+as String?,myUserId: freezed == myUserId ? _self.myUserId : myUserId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -185,10 +187,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ConversationWindow? window,  List<ListRow> rows,  bool refreshing,  ApiError? refreshFailure,  bool loadingOlder,  ApiError? olderFailure,  Map<Object, DateTime> arrived,  int generation,  OpenIntent intent,  SavedPlace? saved,  String? highlightKey)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ConversationWindow? window,  List<ListRow> rows,  bool refreshing,  ApiError? refreshFailure,  bool loadingOlder,  ApiError? olderFailure,  Map<Object, DateTime> arrived,  int generation,  OpenIntent intent,  SavedPlace? saved,  String? highlightKey,  String? myUserId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ConversationState() when $default != null:
-return $default(_that.window,_that.rows,_that.refreshing,_that.refreshFailure,_that.loadingOlder,_that.olderFailure,_that.arrived,_that.generation,_that.intent,_that.saved,_that.highlightKey);case _:
+return $default(_that.window,_that.rows,_that.refreshing,_that.refreshFailure,_that.loadingOlder,_that.olderFailure,_that.arrived,_that.generation,_that.intent,_that.saved,_that.highlightKey,_that.myUserId);case _:
   return orElse();
 
 }
@@ -206,10 +208,10 @@ return $default(_that.window,_that.rows,_that.refreshing,_that.refreshFailure,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ConversationWindow? window,  List<ListRow> rows,  bool refreshing,  ApiError? refreshFailure,  bool loadingOlder,  ApiError? olderFailure,  Map<Object, DateTime> arrived,  int generation,  OpenIntent intent,  SavedPlace? saved,  String? highlightKey)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ConversationWindow? window,  List<ListRow> rows,  bool refreshing,  ApiError? refreshFailure,  bool loadingOlder,  ApiError? olderFailure,  Map<Object, DateTime> arrived,  int generation,  OpenIntent intent,  SavedPlace? saved,  String? highlightKey,  String? myUserId)  $default,) {final _that = this;
 switch (_that) {
 case _ConversationState():
-return $default(_that.window,_that.rows,_that.refreshing,_that.refreshFailure,_that.loadingOlder,_that.olderFailure,_that.arrived,_that.generation,_that.intent,_that.saved,_that.highlightKey);case _:
+return $default(_that.window,_that.rows,_that.refreshing,_that.refreshFailure,_that.loadingOlder,_that.olderFailure,_that.arrived,_that.generation,_that.intent,_that.saved,_that.highlightKey,_that.myUserId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -226,10 +228,10 @@ return $default(_that.window,_that.rows,_that.refreshing,_that.refreshFailure,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ConversationWindow? window,  List<ListRow> rows,  bool refreshing,  ApiError? refreshFailure,  bool loadingOlder,  ApiError? olderFailure,  Map<Object, DateTime> arrived,  int generation,  OpenIntent intent,  SavedPlace? saved,  String? highlightKey)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ConversationWindow? window,  List<ListRow> rows,  bool refreshing,  ApiError? refreshFailure,  bool loadingOlder,  ApiError? olderFailure,  Map<Object, DateTime> arrived,  int generation,  OpenIntent intent,  SavedPlace? saved,  String? highlightKey,  String? myUserId)?  $default,) {final _that = this;
 switch (_that) {
 case _ConversationState() when $default != null:
-return $default(_that.window,_that.rows,_that.refreshing,_that.refreshFailure,_that.loadingOlder,_that.olderFailure,_that.arrived,_that.generation,_that.intent,_that.saved,_that.highlightKey);case _:
+return $default(_that.window,_that.rows,_that.refreshing,_that.refreshFailure,_that.loadingOlder,_that.olderFailure,_that.arrived,_that.generation,_that.intent,_that.saved,_that.highlightKey,_that.myUserId);case _:
   return null;
 
 }
@@ -241,7 +243,7 @@ return $default(_that.window,_that.rows,_that.refreshing,_that.refreshFailure,_t
 
 
 class _ConversationState implements ConversationState {
-  const _ConversationState({this.window,  List<ListRow> rows = const <ListRow>[], this.refreshing = false, this.refreshFailure, this.loadingOlder = false, this.olderFailure,  Map<Object, DateTime> arrived = const <Object, DateTime>{}, this.generation = 0, this.intent = OpenIntent.usual, this.saved, this.highlightKey}): _rows = rows,_arrived = arrived;
+  const _ConversationState({this.window,  List<ListRow> rows = const <ListRow>[], this.refreshing = false, this.refreshFailure, this.loadingOlder = false, this.olderFailure,  Map<Object, DateTime> arrived = const <Object, DateTime>{}, this.generation = 0, this.intent = OpenIntent.usual, this.saved, this.highlightKey, this.myUserId}): _rows = rows,_arrived = arrived;
   
 
 /// Null until the database answered once.
@@ -276,6 +278,8 @@ class _ConversationState implements ConversationState {
 @override@JsonKey() final  OpenIntent intent;
 @override final  SavedPlace? saved;
 @override final  String? highlightKey;
+/// The signed-in user, once the database answered.
+@override final  String? myUserId;
 
 /// Create a copy of ConversationState
 /// with the given fields replaced by the non-null parameter values.
@@ -287,18 +291,18 @@ _$ConversationStateCopyWith<_ConversationState> get copyWith => __$ConversationS
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConversationState&&(identical(other.window, window) || other.window == window)&&const DeepCollectionEquality().equals(other.rows, _rows)&&(identical(other.refreshing, refreshing) || other.refreshing == refreshing)&&(identical(other.refreshFailure, refreshFailure) || other.refreshFailure == refreshFailure)&&(identical(other.loadingOlder, loadingOlder) || other.loadingOlder == loadingOlder)&&(identical(other.olderFailure, olderFailure) || other.olderFailure == olderFailure)&&const DeepCollectionEquality().equals(other.arrived, _arrived)&&(identical(other.generation, generation) || other.generation == generation)&&(identical(other.intent, intent) || other.intent == intent)&&(identical(other.saved, saved) || other.saved == saved)&&(identical(other.highlightKey, highlightKey) || other.highlightKey == highlightKey));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConversationState&&(identical(other.window, window) || other.window == window)&&const DeepCollectionEquality().equals(other.rows, _rows)&&(identical(other.refreshing, refreshing) || other.refreshing == refreshing)&&(identical(other.refreshFailure, refreshFailure) || other.refreshFailure == refreshFailure)&&(identical(other.loadingOlder, loadingOlder) || other.loadingOlder == loadingOlder)&&(identical(other.olderFailure, olderFailure) || other.olderFailure == olderFailure)&&const DeepCollectionEquality().equals(other.arrived, _arrived)&&(identical(other.generation, generation) || other.generation == generation)&&(identical(other.intent, intent) || other.intent == intent)&&(identical(other.saved, saved) || other.saved == saved)&&(identical(other.highlightKey, highlightKey) || other.highlightKey == highlightKey)&&(identical(other.myUserId, myUserId) || other.myUserId == myUserId));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,window,const DeepCollectionEquality().hash(_rows),refreshing,refreshFailure,loadingOlder,olderFailure,const DeepCollectionEquality().hash(_arrived),generation,intent,saved,highlightKey);
+    return Object.hash(runtimeType,window,const DeepCollectionEquality().hash(_rows),refreshing,refreshFailure,loadingOlder,olderFailure,const DeepCollectionEquality().hash(_arrived),generation,intent,saved,highlightKey,myUserId);
 }
 
 @override
 String toString() {
-    return 'ConversationState(window: $window, rows: $rows, refreshing: $refreshing, refreshFailure: $refreshFailure, loadingOlder: $loadingOlder, olderFailure: $olderFailure, arrived: $arrived, generation: $generation, intent: $intent, saved: $saved, highlightKey: $highlightKey)';
+    return 'ConversationState(window: $window, rows: $rows, refreshing: $refreshing, refreshFailure: $refreshFailure, loadingOlder: $loadingOlder, olderFailure: $olderFailure, arrived: $arrived, generation: $generation, intent: $intent, saved: $saved, highlightKey: $highlightKey, myUserId: $myUserId)';
 }
 
 
@@ -309,7 +313,7 @@ abstract mixin class _$ConversationStateCopyWith<$Res> implements $ConversationS
   factory _$ConversationStateCopyWith(_ConversationState value, $Res Function(_ConversationState) _then) = __$ConversationStateCopyWithImpl;
 @override @useResult
 $Res call({
- ConversationWindow? window, List<ListRow> rows, bool refreshing, ApiError? refreshFailure, bool loadingOlder, ApiError? olderFailure, Map<Object, DateTime> arrived, int generation, OpenIntent intent, SavedPlace? saved, String? highlightKey
+ ConversationWindow? window, List<ListRow> rows, bool refreshing, ApiError? refreshFailure, bool loadingOlder, ApiError? olderFailure, Map<Object, DateTime> arrived, int generation, OpenIntent intent, SavedPlace? saved, String? highlightKey, String? myUserId
 });
 
 
@@ -326,7 +330,7 @@ class __$ConversationStateCopyWithImpl<$Res>
 
 /// Create a copy of ConversationState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? window = freezed,Object? rows = null,Object? refreshing = null,Object? refreshFailure = freezed,Object? loadingOlder = null,Object? olderFailure = freezed,Object? arrived = null,Object? generation = null,Object? intent = null,Object? saved = freezed,Object? highlightKey = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? window = freezed,Object? rows = null,Object? refreshing = null,Object? refreshFailure = freezed,Object? loadingOlder = null,Object? olderFailure = freezed,Object? arrived = null,Object? generation = null,Object? intent = null,Object? saved = freezed,Object? highlightKey = freezed,Object? myUserId = freezed,}) {
   return _then(_ConversationState(
 window: freezed == window ? _self.window : window // ignore: cast_nullable_to_non_nullable
 as ConversationWindow?,rows: null == rows ? _self._rows : rows // ignore: cast_nullable_to_non_nullable
@@ -339,6 +343,7 @@ as Map<Object, DateTime>,generation: null == generation ? _self.generation : gen
 as int,intent: null == intent ? _self.intent : intent // ignore: cast_nullable_to_non_nullable
 as OpenIntent,saved: freezed == saved ? _self.saved : saved // ignore: cast_nullable_to_non_nullable
 as SavedPlace?,highlightKey: freezed == highlightKey ? _self.highlightKey : highlightKey // ignore: cast_nullable_to_non_nullable
+as String?,myUserId: freezed == myUserId ? _self.myUserId : myUserId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

@@ -32,9 +32,6 @@ class Conversation extends _$Conversation {
   DateTime? _rangeAt;
   DateTime? _lastViewedAt;
   String? _me;
-
-  /// The signed-in user, once the database answered.
-  String? get myUserId => _me;
   var _loadingNewer = false;
   final _openedAt = DateTime.now().toUtc();
 
@@ -81,6 +78,8 @@ class Conversation extends _$Conversation {
     final facts = await ConversationViews(session.db)
         .openFacts(channelId, rootId: rootId);
     _me = facts.me;
+    if (!ref.mounted) return;
+    state = state.copyWith(myUserId: _me);
     _lastViewedAt = facts.lastViewedAt;
     if (!_isThread) {
       // Stay in the stretch of history stored now, even if the refresh

@@ -164,11 +164,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   /// Tells a screen reader what arrived or failed; nothing without one.
   void _announce(ConversationState before, ConversationState after) {
     if (!MediaQuery.accessibleNavigationOf(context)) return;
-    final news = conversationNews(
-      before,
-      after,
-      myUserId: _controller.myUserId,
-    );
+    final news = conversationNews(before, after);
     if (news.isEmpty) return;
     unawaited(
       SemanticsService.sendAnnouncement(

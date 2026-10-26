@@ -256,6 +256,7 @@ void main() {
       List<PostItem> posts, {
       Iterable<String> arrived = const [],
     }) => ConversationState(
+      myUserId: 'me',
       window: ConversationWindow(posts: posts, loaded: true),
       arrived: {for (final key in arrived) key: DateTime.utc(2026)},
     );
@@ -263,15 +264,13 @@ void main() {
     test('a message from someone else that arrives live', () {
       final before = state([message]);
       final after = state([post('p2'), message], arrived: ['p2']);
-      expect(conversationNews(before, after, myUserId: 'me'), [
-        'New message from bob',
-      ]);
+      expect(conversationNews(before, after), ['New message from bob']);
     });
 
     test("nothing for history or for the user's own messages", () {
       final before = state([message]);
       expect(
-        conversationNews(before, state([post('p0'), message]), myUserId: 'me'),
+        conversationNews(before, state([post('p0'), message])),
         isEmpty,
         reason: 'loaded, not arrived',
       );
@@ -279,7 +278,6 @@ void main() {
         conversationNews(
           before,
           state([post('p2', user: 'me'), message], arrived: ['p2']),
-          myUserId: 'me',
         ),
         isEmpty,
       );
@@ -288,10 +286,8 @@ void main() {
     test("a message of the user's that failed, once", () {
       final pending = state([post('p2', user: 'me', sendState: 'pending')]);
       final failed = state([post('p2', user: 'me', sendState: 'failed')]);
-      expect(conversationNews(pending, failed, myUserId: 'me'), [
-        'Your message was not sent',
-      ]);
-      expect(conversationNews(failed, failed, myUserId: 'me'), isEmpty);
+      expect(conversationNews(pending, failed), ['Your message was not sent']);
+      expect(conversationNews(failed, failed), isEmpty);
     });
 
     test('sending is told apart from other changes', () {
