@@ -12,6 +12,12 @@ const _convertersImport = 'package:$_package/api/json/lenient_models.dart';
 
 final _classPattern = RegExp(r'^class (\w+) \{', multiLine: true);
 
+/// Models decoded by a hand-written function instead of being skipped when
+/// they don't parse, with the library that defines it.
+const _ownDecoders = {
+  'Post': ('decodePost', 'package:$_package/api/json/broken_posts.dart'),
+};
+
 void main(List<String> args) {
   if (args.length != 3) {
     stderr.writeln(
@@ -43,6 +49,9 @@ void main(List<String> args) {
   for (final (_, file) in classes) {
     dart.writeln("import '$_modelsImport/$file';");
   }
+  for (final (_, library) in _ownDecoders.values) {
+    dart.writeln("import '$library';");
+  }
   dart.writeln("import 'package:$_package/api/json/lenient.dart';");
   final yaml = StringBuffer();
   for (final (name, _) in classes) {
@@ -61,6 +70,11 @@ String _parser(String type, String name) =>
     '- {apply_to_type: "$type", parser_name: $name, '
     'parser_absolute_path: "$_convertersImport"}';
 
+String _decode(String c, String json) => switch (_ownDecoders[c]) {
+  (final decode, _) => '$decode($json)',
+  null => 'decodeOrSkip($json, $c.fromJson)',
+};
+
 String _converters(String c) =>
     '''
 
@@ -68,7 +82,7 @@ class Lenient$c implements JsonConverter<$c?, Object?> {
   const Lenient$c();
   @override
   $c? fromJson(Object? json) =>
-      json is Map<String, Object?> ? decodeOrSkip(json, $c.fromJson) : null;
+      json is Map<String, Object?> ? ${_decode(c, 'json')} : null;
   @override
   Object? toJson($c? object) => object?.toJson();
 }
@@ -79,7 +93,7 @@ class LenientListOf$c implements JsonConverter<List<$c>, Object?> {
   List<$c> fromJson(Object? json) => json is List
       ? [
           for (final e in json)
-            if (e is Map<String, Object?>) ?decodeOrSkip(e, $c.fromJson),
+            if (e is Map<String, Object?>) ?${_decode(c, 'e')},
         ]
       : const [];
   @override
@@ -93,7 +107,7 @@ class LenientMapOf$c implements JsonConverter<Map<String, $c>?, Object?> {
       ? {
           for (final e in json.entries)
             if (e.value case final Map<String, Object?> m)
-              e.key: ?decodeOrSkip(m, $c.fromJson),
+              e.key: ?${_decode(c, 'm')},
         }
       : null;
   @override
