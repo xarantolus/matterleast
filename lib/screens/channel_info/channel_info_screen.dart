@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/domain/channel_info.dart';
 import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/screens/agents/ask_agents_sheet.dart';
 import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/channel_info/channel_missing.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
@@ -168,6 +170,17 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
                             !info.archived &&
                             !info.conversation,
                       ),
+                    ),
+                  ),
+                if (ref.watch(agentsAvailableProvider(widget.url)) &&
+                    !info.archived)
+                  ListTile(
+                    leading: const Icon(Icons.auto_awesome_outlined),
+                    title: const Text('Ask Agents'),
+                    onTap: () => showAskAgentsSheet(
+                      context,
+                      url: widget.url,
+                      channelId: info.id,
                     ),
                   ),
                 ListTile(

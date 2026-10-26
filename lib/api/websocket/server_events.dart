@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/api/websocket/encoded.dart';
@@ -523,6 +524,19 @@ final class PluginsChangedEvent extends ServerEvent {
   const PluginsChangedEvent();
 }
 
+/// `custom_mattermost-ai_postupdate` and
+/// `custom_mattermost-ai_tool_call_status_updated`: an agent answer streams.
+final class AgentPostEvent extends ServerEvent {
+  const AgentPostEvent(this.update);
+  final AgentPostUpdate update;
+}
+
+/// `custom_mattermost-ai_conversation_updated`.
+final class AgentConversationEvent extends ServerEvent {
+  const AgentConversationEvent(this.conversationId);
+  final String conversationId;
+}
+
 final class UnknownEvent extends ServerEvent {
   const UnknownEvent(this.name);
   final String name;
@@ -613,6 +627,13 @@ ServerEvent decodeEvent(SocketFrame frame) {
     'plugin_enabled' ||
     'plugin_disabled' ||
     'plugin_statuses_changed' => const PluginsChangedEvent(),
+    'custom_mattermost-ai_postupdate' ||
+    'custom_mattermost-ai_tool_call_status_updated' => AgentPostEvent(
+      AgentPostUpdate.fromJson(frame.data),
+    ),
+    'custom_mattermost-ai_conversation_updated' => AgentConversationEvent(
+      const LenientString().fromJson(frame.data['conversation_id']) ?? '',
+    ),
     final name => UnknownEvent(name ?? ''),
   };
 }

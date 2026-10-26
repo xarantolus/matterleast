@@ -6,7 +6,9 @@ import 'package:matterleast/markdown/post_doc.dart';
 typedef _Key = (String postId, int editAt, ParseOptions options);
 
 /// Parsed messages, most recently used last. A message is parsed once per
-/// version and options; rebuilding a row reuses the result.
+/// version and options; rebuilding a row reuses the result. Text that
+/// changes without a new version (an answer streaming in) replaces the
+/// entry.
 class MarkdownCache {
   MarkdownCache({
     this.capacity = 3000,
@@ -15,7 +17,7 @@ class MarkdownCache {
 
   final int capacity;
   final PostDoc Function(String, ParseOptions) _parse;
-  final _entries = <_Key, PostDoc>{};
+  final _entries = <_Key, (String, PostDoc)>{};
 
   int _parsed = 0;
   int _micros = 0;
@@ -30,14 +32,14 @@ class MarkdownCache {
   ) {
     final key = (postId, editAt?.millisecondsSinceEpoch ?? 0, options);
     final hit = _entries.remove(key);
-    if (hit != null) {
+    if (hit != null && hit.$1 == text) {
       _entries[key] = hit;
-      return hit;
+      return hit.$2;
     }
     final watch = Stopwatch()..start();
     final doc = _parse(text, options);
     _record(watch.elapsedMicroseconds);
-    _entries[key] = doc;
+    _entries[key] = (text, doc);
     if (_entries.length > capacity) _entries.remove(_entries.keys.first);
     return doc;
   }

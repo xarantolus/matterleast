@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
+import 'package:matterleast/data/live/agent_live.dart';
 import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/store/server_store.dart';
@@ -62,11 +64,22 @@ class ServerConnection {
       serverUrl: url,
       token: token,
       pingInterval: pingInterval,
-      onEvent: (event) => unawaited(
-        events.add(event).then((_) {
-          if (!_applied.isClosed) _applied.add(event);
-        }),
-      ),
+      onEvent: (event) {
+        switch (event) {
+          // Streamed answers live in memory only; they skip the queue so
+          // text keeps flowing while the database is busy.
+          case AgentPostEvent(:final update):
+            agents.apply(update);
+          case AgentConversationEvent(:final conversationId):
+            agents.conversationUpdated(conversationId);
+          default:
+            unawaited(
+              events.add(event).then((_) {
+                if (!_applied.isClosed) _applied.add(event);
+              }),
+            );
+        }
+      },
       onResync: refreshAll,
       onClosed: (failCount) {
         // REST may work where the socket doesn't; try once per outage.
@@ -86,6 +99,15 @@ class ServerConnection {
   late final EventApplier events;
   final typing = TypingTracker();
   final dialogs = DialogInbox();
+  late final agents = AgentLive(
+    fetchConversation: (id) async {
+      final json = await server.getJsonObject(
+        '/plugins/mattermost-ai/conversations/${Uri.encodeComponent(id)}',
+      );
+      if (json == null) throw const FormatException('not a conversation');
+      return AgentConversation.fromJson(json);
+    },
+  );
   late final PresencePoller presence;
   late final ServerSocket socket;
 
@@ -151,6 +173,7 @@ class ServerConnection {
     await socket.dispose();
     typing.close();
     dialogs.close();
+    agents.close();
     await _caughtUp.close();
     await _applied.close();
   }

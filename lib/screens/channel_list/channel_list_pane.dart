@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/screens/agents/agents_screen.dart';
 import 'package:matterleast/screens/channel_info/browse_channels_screen.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_list/category_menu.dart';
@@ -352,6 +354,19 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                       teamId: widget.teamId,
                       teamName: list.teamName,
                     ),
+                  ),
+                ),
+              ),
+            ),
+          if (ref.watch(agentsAvailableProvider(widget.url)))
+            SliverToBoxAdapter(
+              child: _ShortcutTile(
+                icon: Icons.smart_toy_outlined,
+                title: 'Agents',
+                count: 0,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => AgentsScreen(url: widget.url),
                   ),
                 ),
               ),
