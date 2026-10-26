@@ -62,6 +62,12 @@ actions:
       expire_at: {type: integer, format: int64}
       recipients: {type: array, items: {type: string}}
       redacted_file_count: {type: integer}
+  # Embed types newer servers send (server/public/model/post_embed.go).
+  - target: "$.components.schemas.PostMetadata.properties.embeds.items.properties.type.enum"
+    remove: true
+  - target: "$.components.schemas.PostMetadata.properties.embeds.items.properties.type"
+    update:
+      enum: [image, message_attachment, opengraph, link, permalink, boards]
   - target: "$.components.schemas.PostList.properties"
     update:
       first_inaccessible_post_time: {type: integer, format: int64}

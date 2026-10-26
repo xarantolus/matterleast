@@ -14,6 +14,10 @@ enum Type2 {
   opengraph('opengraph'),
   @JsonValue('link')
   link('link'),
+  @JsonValue('permalink')
+  permalink('permalink'),
+  @JsonValue('boards')
+  boards('boards'),
 
   $unknown(null);
 
