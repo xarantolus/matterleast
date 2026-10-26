@@ -32,13 +32,11 @@ class OutboxSender {
   OutboxSender({
     required this.server,
     required this.store,
-    this.requestTimeout = const Duration(seconds: 30),
     DateTime Function()? clock,
   }) : _clock = clock ?? (() => DateTime.now().toUtc());
 
   final ServerApi server;
   final ServerStore store;
-  final Duration requestTimeout;
   final DateTime Function() _clock;
 
   final _rejected = StreamController<PostRejected>.broadcast();
@@ -119,28 +117,22 @@ class OutboxSender {
     final metadata = _metadata(post.metadataJson);
     final api.Post created;
     try {
-      created = await server
-          .call(
-            () => server.client.posts.createPost(
-              body: api.ApiV4PostsRequestBody(
-                channelId: post.channelId,
-                message: post.message,
-                rootId: post.rootId.isEmpty ? null : post.rootId,
-                fileIds: [
-                  for (final f in metadata?.files ?? const <api.FileInfo>[])
-                    ?f.id,
-                ],
-                metadata: metadata?.priority == null
-                    ? null
-                    : api.Metadata(priority: metadata!.priority),
-                pendingPostId: id,
-              ),
-            ),
-          )
-          .timeout(
-            requestTimeout,
-            onTimeout: () => throw const RequestTimeout(),
-          );
+      created = await server.call(
+        () => server.client.posts.createPost(
+          body: api.ApiV4PostsRequestBody(
+            channelId: post.channelId,
+            message: post.message,
+            rootId: post.rootId.isEmpty ? null : post.rootId,
+            fileIds: [
+              for (final f in metadata?.files ?? const <api.FileInfo>[]) ?f.id,
+            ],
+            metadata: metadata?.priority == null
+                ? null
+                : api.Metadata(priority: metadata!.priority),
+            pendingPostId: id,
+          ),
+        ),
+      );
     } on ApiError catch (e) {
       await _failed(row, e);
       return;

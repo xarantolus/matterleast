@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/foundation.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/log.dart';
 
 /// Lower runs first. P0 is what the user is looking at, P3 is housekeeping.
@@ -141,10 +143,18 @@ class SyncRunner {
 
   Future<void> _execute(_Queued queued) async {
     final job = queued.job;
+    final cancel = CancelToken();
+    final run = cancellable(cancel, job.run);
     try {
-      await job.run().timeout(
+      await run.timeout(
         job.timeout,
-        onTimeout: () => throw const RequestTimeout(),
+        onTimeout: () async {
+          cancel.cancel();
+          // Its requests stop now; let it unwind before the key is free
+          // again, so a second run never overlaps the first one's writes.
+          await run.timeout(_unwind, onTimeout: () {}).catchError((_) {});
+          throw const RequestTimeout();
+        },
       );
       if (job.visible) {
         _lastSuccess = _clock();
@@ -163,6 +173,8 @@ class SyncRunner {
       _pump();
     }
   }
+
+  static const _unwind = Duration(seconds: 5);
 
   ApiError? _failed;
 

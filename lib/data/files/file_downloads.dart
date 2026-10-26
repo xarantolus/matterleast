@@ -100,6 +100,7 @@ class FileDownloads {
             onProgress?.call(total > 0 ? received / total : null);
           },
         ),
+        deadline: ServerApi.transferDeadline,
       );
       if (limit != null && await partial.length() > limit) tooLarge = true;
       if (tooLarge) throw FileTooLargeException(limit!);

@@ -16,13 +16,11 @@ class SuggestionSource {
   SuggestionSource({
     required this.server,
     required this.store,
-    this.timeout = const Duration(seconds: 15),
     DateTime Function()? clock,
   }) : _clock = clock ?? (() => DateTime.now().toUtc());
 
   final ServerApi server;
   final ServerStore store;
-  final Duration timeout;
   final DateTime Function() _clock;
 
   static const _commandsFor = Duration(seconds: 60);
@@ -165,9 +163,7 @@ class SuggestionSource {
 
   Future<T?> _ask<T>(String key, Future<T> Function() request) async {
     try {
-      return await server
-          .coalesced('autocomplete:$key', request)
-          .timeout(timeout);
+      return await server.coalesced('autocomplete:$key', request);
     } on Object catch (e) {
       Log.info('autocomplete', 'Server suggestions failed: ${e.runtimeType}');
       return null;

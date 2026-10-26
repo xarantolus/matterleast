@@ -42,6 +42,7 @@ class FileUpload {
               if (total > 0 && !progress.isClosed) progress.add(sent / total);
             },
           ),
+          deadline: ServerApi.transferDeadline,
         );
         final body = response.data;
         final infos = body is Map<String, Object?> ? body['file_infos'] : null;

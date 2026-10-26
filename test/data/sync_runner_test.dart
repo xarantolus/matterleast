@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+
+import '../support/fake_server.dart';
 
 void main() {
   test('higher priority runs first and parallelism is bounded', () async {
@@ -109,6 +112,33 @@ void main() {
     );
     runner.close();
   });
+
+  test(
+    'a timed-out job stops its requests and frees its key at once',
+    () async {
+      final server = await FakeServer.start();
+      server.handle = (_) => null;
+      final api = ServerApi(baseUrl: server.url, token: () => 't');
+      final runner = SyncRunner();
+      var runs = 0;
+      SyncJob job() => SyncJob(
+        key: 'hangs',
+        timeout: const Duration(milliseconds: 200),
+        run: () async {
+          runs++;
+          await api.call(() => api.client.users.getUser(userId: 'me'));
+        },
+      );
+      final watch = Stopwatch()..start();
+      await expectLater(runner.enqueue(job()), throwsA(isA<RequestTimeout>()));
+      expect(watch.elapsed, lessThan(const Duration(seconds: 3)));
+      await expectLater(runner.enqueue(job()), throwsA(isA<RequestTimeout>()));
+      expect(runs, 2);
+      runner.close();
+      api.close();
+      await server.close();
+    },
+  );
 
   test('cancelling an owner drops its queued work only', () async {
     final runner = SyncRunner(maxParallel: 1);

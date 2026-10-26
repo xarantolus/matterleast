@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/user_profile.dart';
@@ -12,8 +13,6 @@ class ProfileActions {
   ProfileActions(this.session);
 
   final ServerSession session;
-
-  static const timeout = Duration(seconds: 15);
 
   ServerDatabase get _db => session.db;
   api.MattermostClient get _client => session.api.client;
@@ -27,12 +26,12 @@ class ProfileActions {
   /// Someone's profile and presence, fresh from the server.
   Future<void> refresh(String userId) =>
       session.api.coalesced('profile:$userId', () async {
-        final user = session.api
-            .call(() => _client.users.getUser(userId: userId))
-            .timeout(timeout);
-        final status = session.api
-            .call(() => _client.status.getUserStatus(userId: userId))
-            .timeout(timeout);
+        final user = session.api.call(
+          () => _client.users.getUser(userId: userId),
+        );
+        final status = session.api.call(
+          () => _client.status.getUserStatus(userId: userId),
+        );
         await session.store.applyUsers([await user]);
         if ((await status).status case final s?) {
           await session.store.applyStatuses({userId: s});
@@ -47,20 +46,18 @@ class ProfileActions {
     )..where((u) => u.id.equals(me))).getSingle()).status;
     await session.store.applyStatuses({me: status});
     try {
-      await session.api
-          .call(
-            () => _client.status.updateUserStatus(
-              userId: me,
-              body: api.ApiV4UsersUserIdStatusRequestBody(
-                userId: me,
-                status: status,
-                dndEndTime: dndEnd == null
-                    ? null
-                    : dndEnd.millisecondsSinceEpoch ~/ 1000,
-              ),
-            ),
-          )
-          .timeout(timeout);
+      await session.api.call(
+        () => _client.status.updateUserStatus(
+          userId: me,
+          body: api.ApiV4UsersUserIdStatusRequestBody(
+            userId: me,
+            status: status,
+            dndEndTime: dndEnd == null
+                ? null
+                : dndEnd.millisecondsSinceEpoch ~/ 1000,
+          ),
+        ),
+      );
     } on Object {
       await session.store.applyStatuses({me: before});
       rethrow;
@@ -82,21 +79,19 @@ class ProfileActions {
     }
     await session.store.applyUserProps(me, jsonEncode(props));
     try {
-      await session.api
-          .call(
-            () => status == null
-                ? _client.status.unsetUserCustomStatus(userId: me)
-                : _client.status.updateUserCustomStatus(
-                    userId: me,
-                    body: api.ApiV4UsersUserIdStatusCustomRequestBody(
-                      emoji: status.emoji,
-                      text: status.text,
-                      duration: status.duration,
-                      expiresAt: status.expiresAt?.toUtc().toIso8601String(),
-                    ),
-                  ),
-          )
-          .timeout(timeout);
+      await session.api.call(
+        () => status == null
+            ? _client.status.unsetUserCustomStatus(userId: me)
+            : _client.status.updateUserCustomStatus(
+                userId: me,
+                body: api.ApiV4UsersUserIdStatusCustomRequestBody(
+                  emoji: status.emoji,
+                  text: status.text,
+                  duration: status.duration,
+                  expiresAt: status.expiresAt?.toUtc().toIso8601String(),
+                ),
+              ),
+      );
     } on Object {
       await session.store.applyUserProps(me, before);
       rethrow;
@@ -112,29 +107,28 @@ class ProfileActions {
     String? position,
     String? username,
   }) async {
-    final user = await session.api
-        .call(
-          () => _client.users.patchUser(
-            userId: 'me',
-            body: api.ApiV4UsersUserIdPatchRequestBody(
-              firstName: firstName,
-              lastName: lastName,
-              nickname: nickname,
-              position: position,
-              username: username,
-            ),
-          ),
-        )
-        .timeout(timeout);
+    final user = await session.api.call(
+      () => _client.users.patchUser(
+        userId: 'me',
+        body: api.ApiV4UsersUserIdPatchRequestBody(
+          firstName: firstName,
+          lastName: lastName,
+          nickname: nickname,
+          position: position,
+          username: username,
+        ),
+      ),
+    );
     await session.store.applyMe(user);
   }
 
   /// Uploads a new profile picture.
   Future<void> setPicture(File image) async {
     final me = await _myId();
-    await session.api
-        .call(() => _client.users.setProfileImage(userId: me, image: image))
-        .timeout(const Duration(minutes: 3));
+    await session.api.call(
+      () => _client.users.setProfileImage(userId: me, image: image),
+      deadline: ServerApi.transferDeadline,
+    );
     await session.store.applyMe(
       await session.api.call(() => _client.users.getUser(userId: 'me')),
     );
@@ -145,17 +139,15 @@ class ProfileActions {
     required String next,
   }) async {
     final me = await _myId();
-    await session.api
-        .call(
-          () => _client.users.updateUserPassword(
-            userId: me,
-            body: api.ApiV4UsersUserIdPasswordRequestBody(
-              currentPassword: current,
-              newPassword: next,
-            ),
-          ),
-        )
-        .timeout(timeout);
+    await session.api.call(
+      () => _client.users.updateUserPassword(
+        userId: me,
+        body: api.ApiV4UsersUserIdPasswordRequestBody(
+          currentPassword: current,
+          newPassword: next,
+        ),
+      ),
+    );
   }
 
   static Map<String, Object?>? _object(String? json) {

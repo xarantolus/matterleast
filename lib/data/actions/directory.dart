@@ -14,14 +14,13 @@ class Directory {
   final ServerSession session;
   final String serverUrl;
 
-  static const timeout = Duration(seconds: 15);
   static const pageSize = 60;
 
   ServerDatabase get _db => session.db;
   api.MattermostClient get _client => session.api.client;
 
   Future<T> _get<T>(String key, Future<T> Function() request) =>
-      session.api.coalesced(key, () => request().timeout(timeout));
+      session.api.coalesced(key, request);
 
   Future<List<String>> _stored(List<api.User> users) async {
     await session.store.applyUsers(users);

@@ -82,7 +82,7 @@ class ServerProbe {
   }
 
   ServerApi _api(Uri url) =>
-      ServerApi(baseUrl: url, token: () => null, receiveTimeout: timeout);
+      ServerApi(baseUrl: url, token: () => null, deadline: timeout);
 
   /// Pings the server, following redirects (e.g. a bare domain that moved to
   /// a sub-path), and returns the base URL that answered.

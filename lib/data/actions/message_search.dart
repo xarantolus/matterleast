@@ -14,8 +14,6 @@ class MessageSearch {
   final SearchViews views;
   final DateTime Function() _clock;
 
-  static const timeout = Duration(seconds: 30);
-
   ServerDatabase get _db => session.db;
   api.MattermostClient get _client => session.api.client;
 
@@ -25,28 +23,26 @@ class MessageSearch {
   /// team.
   Future<List<String>> posts(String? teamId, String terms) =>
       session.api.coalesced('search:posts:$teamId:$terms', () async {
-        final found = await session.api
-            .call(
-              () => teamId == null
-                  ? _client.posts.searchPostsInAllTeams(
-                      body: api.ApiV4PostsSearchRequestBody(
-                        terms: terms,
-                        isOrSearch: false,
-                        timeZoneOffset: _offsetSeconds,
-                        includeDeletedChannels: true,
-                      ),
-                    )
-                  : _client.posts.searchPosts(
-                      teamId: teamId,
-                      body: api.ApiV4TeamsTeamIdPostsSearchRequestBody(
-                        terms: terms,
-                        isOrSearch: false,
-                        timeZoneOffset: _offsetSeconds,
-                        includeDeletedChannels: true,
-                      ),
-                    ),
-            )
-            .timeout(timeout);
+        final found = await session.api.call(
+          () => teamId == null
+              ? _client.posts.searchPostsInAllTeams(
+                  body: api.ApiV4PostsSearchRequestBody(
+                    terms: terms,
+                    isOrSearch: false,
+                    timeZoneOffset: _offsetSeconds,
+                    includeDeletedChannels: true,
+                  ),
+                )
+              : _client.posts.searchPosts(
+                  teamId: teamId,
+                  body: api.ApiV4TeamsTeamIdPostsSearchRequestBody(
+                    terms: terms,
+                    isOrSearch: false,
+                    timeZoneOffset: _offsetSeconds,
+                    includeDeletedChannels: true,
+                  ),
+                ),
+        );
         final posts = (found.posts ?? const <String, api.Post>{}).values;
         await session.store.applySearchResults(
           posts,
@@ -60,28 +56,26 @@ class MessageSearch {
 
   Future<List<FileHit>> files(String? teamId, String terms) =>
       session.api.coalesced('search:files:$teamId:$terms', () async {
-        final found = await session.api
-            .call(
-              () => teamId == null
-                  ? _client.files.searchFilesAllTeams(
-                      body: api.ApiV4FilesSearchRequestBody(
-                        terms: terms,
-                        isOrSearch: false,
-                        timeZoneOffset: _offsetSeconds,
-                        includeDeletedChannels: true,
-                      ),
-                    )
-                  : _client.teams.searchFiles(
-                      teamId: teamId,
-                      body: api.ApiV4TeamsTeamIdFilesSearchRequestBody(
-                        terms: terms,
-                        isOrSearch: false,
-                        timeZoneOffset: _offsetSeconds,
-                        includeDeletedChannels: true,
-                      ),
-                    ),
-            )
-            .timeout(timeout);
+        final found = await session.api.call(
+          () => teamId == null
+              ? _client.files.searchFilesAllTeams(
+                  body: api.ApiV4FilesSearchRequestBody(
+                    terms: terms,
+                    isOrSearch: false,
+                    timeZoneOffset: _offsetSeconds,
+                    includeDeletedChannels: true,
+                  ),
+                )
+              : _client.teams.searchFiles(
+                  teamId: teamId,
+                  body: api.ApiV4TeamsTeamIdFilesSearchRequestBody(
+                    terms: terms,
+                    isOrSearch: false,
+                    timeZoneOffset: _offsetSeconds,
+                    includeDeletedChannels: true,
+                  ),
+                ),
+        );
         final infos = [
           for (final id in found.order)
             if (found.fileInfos?[id] case final api.FileInfo f
@@ -128,7 +122,6 @@ class MessageSearch {
       for (final id in ids.difference(known))
         session.api
             .call(() => _client.channels.getChannel(channelId: id))
-            .timeout(timeout)
             .then<api.Channel?>((c) => c)
             // A channel that can't be read leaves its results unnamed.
             .catchError((Object _) => null),
@@ -145,8 +138,6 @@ class MessageSearch {
     };
     final missing = ids.difference(known).toList();
     if (missing.isEmpty) return const [];
-    return session.api
-        .call(() => _client.users.getUsersByIds(body: missing))
-        .timeout(timeout);
+    return session.api.call(() => _client.users.getUsersByIds(body: missing));
   }
 }

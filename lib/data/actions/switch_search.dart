@@ -15,8 +15,6 @@ class SwitchSearch {
   final ServerSession session;
   final String serverUrl;
 
-  static const timeout = Duration(seconds: 15);
-
   ServerDatabase get _db => session.db;
 
   Future<List<SwitchItem>> search(String term) {
@@ -33,30 +31,26 @@ class SwitchSearch {
     required bool peopleOnly,
   }) async {
     final team = await _db.syncText(SyncKeys.currentTeamId);
-    final users = session.api
-        .call(
-          () => session.api.client.users.searchUsers(
-            body: api.ApiV4UsersSearchRequestBody(
-              term: query,
-              allowInactive: false,
-              limit: 20,
-            ),
-          ),
-        )
-        .timeout(timeout);
+    final users = session.api.call(
+      () => session.api.client.users.searchUsers(
+        body: api.ApiV4UsersSearchRequestBody(
+          term: query,
+          allowInactive: false,
+          limit: 20,
+        ),
+      ),
+    );
     final teamIds = peopleOnly
         ? const <String>[]
         : [for (final t in await _db.select(_db.myTeams).get()) t.teamId];
     final channels = Future.wait([
       for (final teamId in teamIds)
-        session.api
-            .call(
-              () => session.api.client.channels.autocompleteChannelsForTeam(
-                teamId: teamId,
-                name: query,
-              ),
-            )
-            .timeout(timeout),
+        session.api.call(
+          () => session.api.client.channels.autocompleteChannelsForTeam(
+            teamId: teamId,
+            name: query,
+          ),
+        ),
     ]).then((lists) => lists.expand((l) => l));
     final found = await users;
     await session.store.applyUsers(found);

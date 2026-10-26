@@ -9,21 +9,28 @@ import 'package:matterleast/api/server_paths.dart';
 
 typedef TokenProvider = FutureOr<String?> Function();
 
-/// One HTTP client per server: base URL, auth header, timeouts, error mapping
-/// and coalescing of identical in-flight requests. The generated
+const _cancelKey = #matterleast.requestCancel;
+
+/// Runs [body] so that every request it makes through a [ServerApi] stops
+/// when [cancel] fires, such as a sync job that ran out of time.
+Future<T> cancellable<T>(CancelToken cancel, Future<T> Function() body) =>
+    runZoned(body, zoneValues: {_cancelKey: cancel});
+
+/// One HTTP client per server: base URL, auth header, deadlines, error
+/// mapping and coalescing of identical in-flight requests. The generated
 /// [MattermostClient] sits on top; nothing above the data layer touches Dio.
 class ServerApi {
   ServerApi({
     required this.baseUrl,
     required this._token,
     String? preAuthSecret,
-    Duration receiveTimeout = const Duration(seconds: 30),
+    this.deadline = defaultDeadline,
     Dio? dio,
   }) : dio = dio ?? Dio() {
     this.dio.options = BaseOptions(
       baseUrl: baseUrl.toString(),
       connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: receiveTimeout,
+      receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),
       followRedirects: false,
       responseType: ResponseType.json,
@@ -34,6 +41,14 @@ class ServerApi {
     this.dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          if (Zone.current[_cancelKey] case final CancelToken cancel) {
+            final own = options.cancelToken;
+            if (own == null) {
+              options.cancelToken = cancel;
+            } else {
+              unawaited(cancel.whenCancel.then((_) => own.cancel()));
+            }
+          }
           if (preAuthSecret != null && options.uri.origin == baseUrl.origin) {
             options.headers['X-Mattermost-Preauth-Secret'] = preAuthSecret;
           }
@@ -57,7 +72,16 @@ class ServerApi {
     client = MattermostClient(this.dio);
   }
 
+  /// How long [call] lets a request run in total, unless the call says
+  /// otherwise.
+  static const defaultDeadline = Duration(seconds: 30);
+
+  /// For file uploads and downloads, which stop on a stall through the
+  /// transport timeouts instead.
+  static const transferDeadline = Duration(hours: 1);
+
   final Uri baseUrl;
+  final Duration deadline;
   final Dio dio;
   final TokenProvider _token;
   late final MattermostClient client;
@@ -104,13 +128,31 @@ class ServerApi {
     );
   }
 
-  /// Runs [request] and turns transport failures into [ApiError]s.
-  Future<T> call<T>(Future<T> Function() request) async {
+  /// Runs [request] and turns transport failures into [ApiError]s. The
+  /// requests it makes are cancelled after [deadline] (a [RequestTimeout])
+  /// or when the surrounding [cancellable] scope is.
+  Future<T> call<T>(Future<T> Function() request, {Duration? deadline}) async {
+    final cancel = CancelToken();
+    if (Zone.current[_cancelKey] case final CancelToken outer) {
+      if (outer.isCancelled) throw const Cancelled();
+      unawaited(outer.whenCancel.then((_) => cancel.cancel()));
+    }
+    var late = false;
+    final timer = Timer(deadline ?? this.deadline, () {
+      late = true;
+      cancel.cancel();
+    });
     try {
-      return await request();
+      return await cancellable(cancel, request);
     } on DioException catch (e) {
+      if (late) throw const RequestTimeout();
       final error = e.error;
       throw error is ApiError ? error : ApiError.from(e);
+    } on Cancelled {
+      if (late) throw const RequestTimeout();
+      rethrow;
+    } finally {
+      timer.cancel();
     }
   }
 
@@ -138,12 +180,14 @@ class ServerApi {
   );
 
   /// Like [call], but callers asking for the same [key] while a request is
-  /// running share its result instead of starting another.
+  /// running share its result instead of starting another. The shared
+  /// request keeps only its deadline, so one caller giving up doesn't stop
+  /// it for the others.
   Future<T> coalesced<T>(String key, Future<T> Function() request) =>
       coalesce<Object?>(
         _inFlight,
         key,
-        () => call(request),
+        () => runZoned(() => call(request), zoneValues: {_cancelKey: null}),
       ).then((v) => v as T);
 
   void close() {

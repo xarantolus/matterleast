@@ -184,4 +184,29 @@ void main() {
     expect(seen, hasLength(1));
     api.close();
   });
+
+  test('a server that never answers fails as a timeout at the deadline, '
+      'and a cancelled scope stops its requests', () async {
+    respond = (_) => Completer<void>().future;
+    final api = ServerApi(baseUrl: base(), token: () => 't');
+    final watch = Stopwatch()..start();
+    await expectLater(
+      api.call(
+        () => api.client.users.getUser(userId: 'me'),
+        deadline: const Duration(milliseconds: 200),
+      ),
+      throwsA(isA<RequestTimeout>()),
+    );
+    expect(watch.elapsed, lessThan(const Duration(seconds: 5)));
+
+    final scope = CancelToken();
+    final stopped = cancellable(
+      scope,
+      () => api.call(() => api.client.users.getUser(userId: 'me')),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    scope.cancel();
+    await expectLater(stopped, throwsA(isA<Cancelled>()));
+    api.close();
+  });
 }
