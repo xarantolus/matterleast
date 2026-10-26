@@ -32,6 +32,9 @@ class Conversation extends _$Conversation {
   DateTime? _rangeAt;
   DateTime? _lastViewedAt;
   String? _me;
+
+  /// The signed-in user, once the database answered.
+  String? get myUserId => _me;
   var _loadingNewer = false;
   final _openedAt = DateTime.now().toUtc();
 

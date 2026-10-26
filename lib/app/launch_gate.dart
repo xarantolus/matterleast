@@ -100,7 +100,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       final navigator = Navigator.of(context);
       unawaited(startNotifications(ref, navigator));
       _links = AppLinks().uriLinkStream.listen(
-        (uri) => unawaited(openIncomingLink(navigator, ref, uri)),
+        (uri) => unawaited(openIncomingLink(navigator, uri)),
       );
       final shares = ReceiveSharingIntent.instance;
       final cacheDir = LocalCopies.cacheDirectory();

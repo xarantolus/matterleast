@@ -137,6 +137,7 @@ Future<void> deleteCategory(
         'Its channels go back to Channels and Direct Messages. '
         'You stay in all of them.',
     action: 'Delete',
+    destructive: true,
   );
   if (!sure || !context.mounted) return;
   await runCategoryAction(

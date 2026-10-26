@@ -204,7 +204,8 @@ class _CodeScreenState extends State<CodeScreen> {
           ...widget.actions,
         ],
       ),
-      backgroundColor: tokens.codeBackground,
+      // Plain text reads like any other page; code keeps its panel.
+      backgroundColor: widget.language.isEmpty ? null : tokens.codeBackground,
       body: SafeArea(
         top: false,
         // The content is at least as large as the viewport, so a drag

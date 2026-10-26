@@ -4,6 +4,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/views/permission_views.dart';
 import 'package:matterleast/domain/channel_mentions.dart';
 import 'package:matterleast/domain/permissions.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Pure: what the composer's place says when the user can't post.
@@ -64,22 +65,10 @@ Future<bool> confirmChannelMention(
   );
   if (question == null) return true;
   if (!context.mounted) return false;
-  return await showDialog<bool>(
-        context: context,
-        builder: (dialog) => AlertDialog(
-          title: const Text('Notify the entire channel?'),
-          content: Text(question),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialog).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialog).pop(true),
-              child: const Text('Send'),
-            ),
-          ],
-        ),
-      ) ??
-      false;
+  return confirm(
+    context,
+    title: 'Notify the entire channel?',
+    body: question,
+    action: 'Send',
+  );
 }

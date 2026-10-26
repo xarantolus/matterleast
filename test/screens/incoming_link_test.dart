@@ -57,7 +57,7 @@ void main() {
                 ref.watch(serversProvider);
                 return TextButton(
                   onPressed: () =>
-                      openIncomingLink(Navigator.of(context), ref, link),
+                      openIncomingLink(Navigator.of(context), link),
                   child: const Text('open'),
                 );
               },

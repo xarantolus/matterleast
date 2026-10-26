@@ -1,20 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/post_list.dart';
-import 'package:matterleast/screens/channel/composer.dart';
-import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
+import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
-import 'package:matterleast/screens/channel/conversation_view.dart';
-import 'package:matterleast/screens/channel/dialog_screen.dart';
-import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
-import 'package:matterleast/ui/conversation_route.dart';
-import 'package:matterleast/ui/emoji_glyph.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 
 /// A channel's messages, opened at the new-messages line, a message asked
 /// for, or where the reader left off.
@@ -55,192 +47,48 @@ class ChannelScreen extends ConsumerWidget {
     final partner = partnerId == null
         ? null
         : ref.watch(userProfileProvider(url, partnerId)).value;
-    listenForRejectedPosts(context, ref, url, channelId);
-    listenForDialogs(
-      context,
-      ref,
-      url: url,
-      channelId: channelId,
-      teamId: window?.teamId ?? '',
-    );
     void openInfo() => Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ChannelInfoScreen(url: url, channelId: channelId),
       ),
     );
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Semantics(
-          button: true,
-          hint: 'Shows details',
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: openInfo,
-            child: ConversationTitle(
-              title: name,
-              subtitle: conversationSubtitle(state, partner: partner),
-              subtitleEmoji: conversationSubtitleEmoji(state, partner: partner),
-              url: url,
-              opensDetails: true,
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Details',
-            icon: const Icon(Icons.info_outline),
-            onPressed: openInfo,
-          ),
-        ],
-        bottom: ProgressSlot(
-          active: state.refreshing && state.window?.posts.isNotEmpty == true,
-        ),
-      ),
-      body: ConversationPane(
-        child: SafeArea(
-          top: false,
-          bottom: window == null,
-          child: Column(
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: ConversationView(
-                        url: url,
-                        conversation: conversation,
-                        composer: window == null || window.archived
-                            ? null
-                            : composerDraftProvider(url, channelId, ''),
-                        startText: 'This is the start of $name.',
-                        onOpenThread: (post) => openConversation(
-                          Navigator.of(context),
-                          url: url,
-                          channelId: channelId,
-                          title: name,
-                          teamId: window?.teamId,
-                          rootId: post.isReply ? post.rootId : post.id,
-                          highlightPostId: post.isReply ? post.id : null,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: TypingLine(url: url, channelId: channelId),
-                    ),
-                  ],
-                ),
-              ),
-              if (window != null)
-                Composer(
-                  url: url,
-                  channelId: channelId,
-                  teamId: window.teamId,
-                  hint: 'Write to $name',
-                  archived: window.archived,
-                ),
-            ],
+    return ConversationScaffold(
+      url: url,
+      channelId: channelId,
+      conversation: conversation,
+      title: Semantics(
+        button: true,
+        hint: 'Shows details',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: openInfo,
+          child: ConversationTitle(
+            title: name,
+            subtitle: conversationSubtitle(state, partner: partner),
+            subtitleEmoji: conversationSubtitleEmoji(state, partner: partner),
+            url: url,
+            opensDetails: true,
           ),
         ),
       ),
-    );
-  }
-}
-
-/// A title with a quiet line under it.
-class ConversationTitle extends StatelessWidget {
-  const ConversationTitle({
-    required this.title,
-    this.subtitle,
-    this.subtitleEmoji,
-    this.url,
-    this.opensDetails = false,
-    super.key,
-  });
-
-  final String title;
-
-  /// Shows a small chevron after the title, which opens the details.
-  final bool opensDetails;
-  final String? subtitle;
-
-  /// An emoji before the subtitle, from the server at [url].
-  final String? subtitleEmoji;
-  final String? url;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodySmall
-        ?.copyWith(color: Theme.of(context).appBarTheme.foregroundColor);
-    final emoji = subtitleEmoji;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (opensDetails)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Icon(Icons.chevron_right, size: 20),
-            ],
-          )
-        else
-          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        if (subtitle case final subtitle?)
-          Text.rich(
-            TextSpan(
-              children: [
-                if (emoji != null) ...[
-                  WidgetSpan(
-                    alignment: PlaceholderAlignment.middle,
-                    child: EmojiGlyph(
-                      name: emoji,
-                      size: (style?.fontSize ?? 12) * 1.25,
-                      serverUrl: url,
-                    ),
-                  ),
-                  const TextSpan(text: ' '),
-                ],
-                TextSpan(text: subtitle),
-              ],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: style,
-          ),
+      actions: [
+        IconButton(
+          tooltip: 'Details',
+          icon: const Icon(Icons.info_outline),
+          onPressed: openInfo,
+        ),
       ],
+      composerHint: 'Write to $name',
+      startText: 'This is the start of $name.',
+      onOpenThread: (post) => openConversation(
+        Navigator.of(context),
+        url: url,
+        channelId: channelId,
+        title: name,
+        teamId: window?.teamId,
+        rootId: post.isReply ? post.rootId : post.id,
+        highlightPostId: post.isReply ? post.id : null,
+      ),
     );
   }
 }
-
-/// Tells the user when the server refused one of their posts in
-/// [channelId] for good.
-void listenForRejectedPosts(
-  BuildContext context,
-  WidgetRef ref,
-  String url,
-  String channelId,
-) => ref.listen(rejectedPostsProvider(url), (_, next) {
-  final rejected = next.value;
-  if (rejected == null || rejected.channelId != channelId) return;
-  final reason = rejected.message;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        reason == null || reason.isEmpty
-            ? "The server didn't accept your message."
-            : "The server didn't accept your message: $reason",
-      ),
-    ),
-  );
-});

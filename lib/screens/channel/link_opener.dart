@@ -20,10 +20,12 @@ import 'package:url_launcher/url_launcher.dart';
 /// asks before it starts a conversation.
 Future<void> openLinkFromMessage(
   NavigatorState navigator,
-  WidgetRef ref,
   Uri uri, {
   bool fromOutside = false,
 }) async {
+  if (!navigator.mounted) return;
+  // The app's container outlives the screen the link was tapped on.
+  final ref = ProviderScope.containerOf(navigator.context, listen: false);
   final servers = ref.read(serversProvider).value ?? const [];
   final signedIn = {
     for (final s in servers)
@@ -63,7 +65,7 @@ Future<void> openLinkFromMessage(
 
 Future<void> _openPost(
   NavigatorState navigator,
-  WidgetRef ref,
+  ProviderContainer ref,
   String url,
   String postId,
 ) async {
@@ -107,11 +109,12 @@ Future<void> _openPost(
 /// the user is not in, like a channel link.
 Future<void> openChannelNamed(
   NavigatorState navigator,
-  WidgetRef ref,
   String url,
   String teamName,
   String name,
 ) async {
+  if (!navigator.mounted) return;
+  final ref = ProviderScope.containerOf(navigator.context, listen: false);
   try {
     await _openChannelNamed(navigator, ref, url, teamName, name);
   } on ApiError catch (e) {
@@ -124,7 +127,7 @@ Future<void> openChannelNamed(
 
 Future<void> _openChannelNamed(
   NavigatorState navigator,
-  WidgetRef ref,
+  ProviderContainer ref,
   String url,
   String teamName,
   String name,
@@ -157,7 +160,7 @@ Future<void> _openChannelNamed(
 
 Future<void> _openDirectMessage(
   NavigatorState navigator,
-  WidgetRef ref,
+  ProviderContainer ref,
   String url,
   String username, {
   required bool fromOutside,
@@ -194,34 +197,15 @@ Future<void> _openDirectMessage(
   );
 }
 
-Future<bool> _askJoin(
-  NavigatorState navigator,
-  LinkedPostNeedsJoin join,
-) async =>
-    await showDialog<bool>(
-      context: navigator.context,
-      builder: (context) => AlertDialog(
-        title: Text('Join ${join.channelName}?'),
-        content: Text(
-          join.inTeam
-              ? "The message is in a channel you're not in. Join it to read "
-                    'the message there.'
-              : "The message is in ${join.teamName}, a team you're not in. "
-                    'Join the team and the channel to read it.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Join'),
-          ),
-        ],
-      ),
-    ) ??
-    false;
+Future<bool> _askJoin(NavigatorState navigator, LinkedPostNeedsJoin join) =>
+    confirmJoin(
+      navigator.context,
+      join.channelName,
+      why: join.inTeam
+          ? "The message is in a channel you're not in."
+          : "The message is in ${join.teamName}, a team you're not in, so "
+                'you join the team too.',
+    );
 
 void _notFound(NavigatorState navigator) {
   if (!navigator.mounted) return;

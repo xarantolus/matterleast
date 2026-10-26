@@ -10,6 +10,7 @@ import 'package:matterleast/screens/channel_info/edit_channel_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -132,6 +133,9 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
       final actions = await ref.read(channelActionsProvider(widget.url).future);
       if (!_archived) await actions.join(item.id);
       if (!mounted) return;
+      setState(() => _working = false);
+      // This screen goes first, so the conversation opens over the list.
+      navigator.pop();
       unawaited(
         openConversation(
           navigator,
@@ -141,7 +145,6 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
           teamId: widget.teamId,
         ),
       );
-      navigator.pop();
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _working = false);
@@ -269,6 +272,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                         itemCount: shown.length,
                         itemBuilder: (context, i) => SwitchTile(
                           item: shown[i],
+                          markJoinable: false,
                           onTap: busy ? () {} : () => _open(shown[i]),
                         ),
                       ),

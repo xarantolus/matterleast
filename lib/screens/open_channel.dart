@@ -54,27 +54,3 @@ Future<void> openConversation(
     ),
   );
 }
-
-/// Asks before joining a channel; nothing is joined silently.
-Future<bool> confirmJoin(BuildContext context, String name) async =>
-    await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Join $name?'),
-        content: const Text(
-          'You will see its messages and be able to post. You can leave it '
-          'again from the channel list.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Join'),
-          ),
-        ],
-      ),
-    ) ??
-    false;

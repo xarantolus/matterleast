@@ -36,6 +36,7 @@ class PdfScreen extends StatelessWidget {
     body: PdfViewer.file(
       local.path,
       params: PdfViewerParams(
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         scrollPhysics: PdfViewerParams.getScrollPhysics(context),
       ),
     ),

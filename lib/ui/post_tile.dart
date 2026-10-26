@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -39,6 +40,7 @@ class PostTile extends StatelessWidget {
     this.onToggleReaction,
     this.onAddReaction,
     this.onAcknowledge,
+    this.actions = const {},
     super.key,
   });
 
@@ -61,6 +63,9 @@ class PostTile extends StatelessWidget {
 
   /// Acknowledges the message, or takes the acknowledgement back.
   final VoidCallback? onAcknowledge;
+
+  /// What a screen reader offers on the message, such as Reply.
+  final Map<CustomSemanticsAction, VoidCallback> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +90,9 @@ class PostTile extends StatelessWidget {
         details.ackRequested &&
         !post.deleted &&
         post.sendState == null;
+    final time = _time(context, post.createAt);
+    final status = sendStatusLabel(post.sendState);
+    final failed = post.sendState == 'failed';
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -93,36 +101,50 @@ class PostTile extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: Spacing.sm,
             children: [
-              _ToProfile(
-                post: post,
-                details: details,
-                child: Text(
-                  name,
-                  style: text.titleSmall?.copyWith(color: tokens.text),
-                ),
-              ),
-              if (bot)
-                const _Tag('BOT')
-              else if (post.authorIsGuest)
-                const _Tag('GUEST'),
-              Text(
-                _time(context, post.createAt),
-                style: text.bodySmall?.copyWith(color: tokens.muted),
-              ),
-              if (details.priority case final priority?)
-                _PriorityLabel(priority: priority),
-              if (post.isEphemeral)
-                Text(
-                  '(Only visible to you)',
-                  style: text.bodySmall?.copyWith(color: tokens.muted),
-                ),
-              if (post.isEphemeral && onDismiss != null)
-                InkWell(
-                  onTap: onDismiss,
-                  child: Text(
-                    'Dismiss',
-                    style: text.bodySmall?.copyWith(color: tokens.accent),
+              // Who, when and how urgent, as one stop for a screen reader.
+              MergeSemantics(
+                child: Semantics(
+                  label: status,
+                  customSemanticsActions: actions,
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: Spacing.sm,
+                    children: [
+                      _ToProfile(
+                        post: post,
+                        details: details,
+                        child: Text(
+                          name,
+                          style: text.titleSmall?.copyWith(color: tokens.text),
+                        ),
+                      ),
+                      if (bot)
+                        const _Tag('BOT')
+                      else if (post.authorIsGuest)
+                        const _Tag('GUEST'),
+                      Text(
+                        time,
+                        style: text.bodySmall?.copyWith(color: tokens.muted),
+                      ),
+                      if (details.priority case final priority?)
+                        _PriorityLabel(priority: priority),
+                      if (post.isEphemeral)
+                        Text(
+                          '(Only visible to you)',
+                          style: text.bodySmall?.copyWith(color: tokens.muted),
+                        ),
+                    ],
                   ),
+                ),
+              ),
+              if (post.isEphemeral && onDismiss != null)
+                TextButton(
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    textStyle: text.bodySmall,
+                  ),
+                  onPressed: onDismiss,
+                  child: const Text('Dismiss'),
                 ),
             ],
           ),
@@ -167,6 +189,13 @@ class PostTile extends StatelessWidget {
           ),
         if (onOpenThread != null && !post.isReply && post.replyCount > 0)
           _ThreadBar(post: post, onPressed: onOpenThread!),
+        if (failed)
+          Text(
+            'Not sent · Tap to try again',
+            style: text.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
       ],
     );
     final marked = (post.pinned || post.saved) && !post.deleted;
@@ -174,12 +203,19 @@ class PostTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (compact)
-          const SizedBox(width: _gutter)
+          // A continued message still says who wrote it, to a screen reader.
+          Semantics(
+            label: [name, time, ?status].join(', '),
+            customSemanticsActions: actions,
+            child: const SizedBox(width: _gutter, height: 1),
+          )
         else ...[
-          _ToProfile(
-            post: post,
-            details: details,
-            child: _Avatar(post: post, name: name, details: details),
+          ExcludeSemantics(
+            child: _ToProfile(
+              post: post,
+              details: details,
+              child: _Avatar(post: post, name: name, details: details),
+            ),
           ),
           const SizedBox(width: Spacing.md),
         ],
@@ -187,7 +223,7 @@ class PostTile extends StatelessWidget {
       ],
     );
     return Opacity(
-      opacity: post.sendState == null ? 1 : 0.5,
+      opacity: post.sendState == null || failed ? 1 : 0.5,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
         color: highlighted
@@ -253,6 +289,13 @@ class PostTile extends StatelessWidget {
           sizes: details.imageSizes,
         );
 }
+
+/// What a screen reader adds for a message that hasn't gone out.
+String? sendStatusLabel(String? sendState) => switch (sendState) {
+  'pending' => 'Sending',
+  'failed' => 'Not sent',
+  _ => null,
+};
 
 /// The light tint of a pinned or saved message.
 Color markedTint(AppTokens tokens) => tokens.accent.withValues(alpha: 0.08);
@@ -393,7 +436,7 @@ class _ToProfile extends StatelessWidget {
     }
     return Semantics(
       button: true,
-      label: 'Profile',
+      hint: 'Shows the profile',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => showUserProfile(
@@ -698,25 +741,31 @@ class DaySeparatorTile extends ConsumerWidget {
   final DateTime day;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Padding(
-    padding: const EdgeInsets.symmetric(
-      horizontal: Spacing.lg,
-      vertical: Spacing.sm,
-    ),
-    child: Row(
-      children: [
-        const Expanded(child: Divider()),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-          child: Text(
-            dayLabel(day, ref.watch(todayProvider)).toUpperCase(),
-            style: context.tokens.smallCaps,
-          ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final label = dayLabel(day, ref.watch(todayProvider));
+    // Read in words, not as the capitals shown.
+    return Semantics(
+      header: true,
+      label: label,
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.lg,
+          vertical: Spacing.sm,
         ),
-        const Expanded(child: Divider()),
-      ],
-    ),
-  );
+        child: Row(
+          children: [
+            const Expanded(child: Divider()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+              child: Text(label.toUpperCase(), style: context.tokens.smallCaps),
+            ),
+            const Expanded(child: Divider()),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Marks where the messages the reader hasn't seen begin.

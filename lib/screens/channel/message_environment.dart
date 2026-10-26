@@ -136,7 +136,7 @@ class MessageEnvironment extends ConsumerStatefulWidget {
     if (channel == null) {
       final team = await links.teamName(teamId);
       if (team != null) {
-        await openChannelNamed(navigator, ref, url, team, name);
+        await openChannelNamed(navigator, url, team, name);
         return;
       }
     }
@@ -167,7 +167,7 @@ class MessageEnvironment extends ConsumerStatefulWidget {
       case UriLink(:final uri):
         // Nothing may take focus back when the reader returns.
         FocusManager.instance.primaryFocus?.unfocus();
-        await openLinkFromMessage(Navigator.of(context), ref, uri);
+        await openLinkFromMessage(Navigator.of(context), uri);
       case NoLink():
         return;
     }
@@ -187,7 +187,7 @@ class MessageEnvironment extends ConsumerStatefulWidget {
       if (location == null || !navigator.mounted) return;
       if (classifyLink(location, server) case UriLink(:final uri)) {
         FocusManager.instance.primaryFocus?.unfocus();
-        await openLinkFromMessage(navigator, ref, uri);
+        await openLinkFromMessage(navigator, uri);
       }
     } on Object catch (e) {
       messenger.showSnackBar(

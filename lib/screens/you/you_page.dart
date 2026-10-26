@@ -14,6 +14,7 @@ import 'package:matterleast/screens/you/edit_profile_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/screens/you/status_sheet.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
@@ -368,7 +369,7 @@ class _ServerTile extends ConsumerWidget {
     final manager = ref.read(serverManagerProvider);
     final db = ref.read(appDatabaseProvider);
     final navigator = Navigator.of(context);
-    final confirmed = await _confirm(
+    final confirmed = await confirm(
       context,
       title: remove
           ? 'Remove ${server.displayName}?'
@@ -379,6 +380,7 @@ class _ServerTile extends ConsumerWidget {
           : 'Messages saved from this server are removed from this device. '
                 'The server stays in your list.',
       action: remove ? 'Remove' : 'Sign out',
+      destructive: true,
     );
     if (!confirmed) return;
     Future<bool> run({bool force = false}) => remove
@@ -386,7 +388,7 @@ class _ServerTile extends ConsumerWidget {
         : manager.signOut(server.url, force: force);
     var done = await run();
     if (!done && context.mounted) {
-      final anyway = await _confirm(
+      final anyway = await confirm(
         context,
         title: "Couldn't sign out on ${server.address}",
         body:
@@ -461,28 +463,3 @@ class _RenameDialogState extends State<_RenameDialog> {
     ],
   );
 }
-
-Future<bool> _confirm(
-  BuildContext context, {
-  required String title,
-  required String body,
-  required String action,
-}) async =>
-    await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(body),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(action),
-          ),
-        ],
-      ),
-    ) ??
-    false;

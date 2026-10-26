@@ -2,24 +2,20 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_android/image_picker_android.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
-import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/permission_providers.dart';
 import 'package:matterleast/app/providers.dart';
-import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/server_features.dart';
-import 'package:matterleast/domain/sign_in_problems.dart';
-import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/channel/posting_rules.dart';
@@ -125,6 +121,15 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     super.initState();
     _text.value = ref.read(_provider).text;
     _text.addListener(_typed);
+    ref.read(_provider.notifier).inTeam(widget.teamId);
+  }
+
+  @override
+  void didUpdateWidget(_ComposerField old) {
+    super.didUpdateWidget(old);
+    if (old.teamId != widget.teamId) {
+      ref.read(_provider.notifier).inTeam(widget.teamId);
+    }
   }
 
   /// After the message menu has closed, which would take the focus back.
@@ -167,7 +172,6 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       }
     });
     final value = ref.watch(_provider);
-    ref.read(_provider.notifier).inTeam(widget.teamId);
     final tokens = context.tokens;
     final limit =
         ref.watch(maxPostSizeProvider(widget.url)).value ??
@@ -179,11 +183,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final uploads =
         ref.watch(featuresProvider(widget.url)).value?.fileUploads ?? true;
     final canPrioritize = widget.rootId.isEmpty && (options?.priority ?? false);
-    final canSend =
-        (value.text.text.trim().isNotEmpty ||
-            files.any((a) => a.info != null)) &&
-        !files.any((a) => a.uploading) &&
-        length <= limit;
+    final sendable = canSend(value, limit);
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainer,
       child: SafeArea(
@@ -291,31 +291,50 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                   Expanded(
                     child: Stack(
                       children: [
-                        TextField(
-                          controller: _text,
-                          focusNode: _focus,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.forMessages(context, fallbackSize: 16),
-                          minLines: 1,
-                          maxLines: 6,
-                          keyboardType: TextInputType.multiline,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: InputDecoration(
-                            hintText: widget.hint,
-                            hintMaxLines: 1,
-                            filled: true,
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
+                        // A hardware keyboard sends with Ctrl+Enter and
+                        // leaves editing with Escape.
+                        CallbackShortcuts(
+                          bindings: {
+                            const SingleActivator(
+                              LogicalKeyboardKey.enter,
+                              control: true,
+                            ): () {
+                              if (sendable) unawaited(_send());
+                            },
+                            const SingleActivator(
+                              LogicalKeyboardKey.escape,
+                            ): () {
+                              if (editing != null) {
+                                ref.read(_provider.notifier).stopEditing();
+                              }
+                            },
+                          },
+                          child: TextField(
+                            controller: _text,
+                            focusNode: _focus,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.forMessages(context, fallbackSize: 16),
+                            minLines: 1,
+                            maxLines: 6,
+                            keyboardType: TextInputType.multiline,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: InputDecoration(
+                              hintText: widget.hint,
+                              hintMaxLines: 1,
+                              filled: true,
+                              isDense: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding:
+                                  const EdgeInsetsDirectional.fromSTEB(
+                                    Spacing.lg,
+                                    Spacing.md,
+                                    48,
+                                    Spacing.md,
+                                  ),
                             ),
-                            contentPadding:
-                                const EdgeInsetsDirectional.fromSTEB(
-                                  Spacing.lg,
-                                  Spacing.md,
-                                  48,
-                                  Spacing.md,
-                                ),
                           ),
                         ),
                         // At the bottom like send, so a long message keeps
@@ -335,7 +354,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                   const SizedBox(width: Spacing.xs),
                   IconButton.filled(
                     tooltip: editing != null ? 'Save' : 'Send',
-                    onPressed: canSend ? _send : null,
+                    onPressed: sendable ? _send : null,
                     icon: Icon(editing != null ? Icons.check : Icons.send),
                   ),
                 ],
@@ -453,58 +472,26 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   Future<void> _send() async {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    final url = widget.url;
-    final channelId = widget.channelId;
-    final rootId = widget.rootId;
-    final draft = ref.read(_provider.notifier);
-    final value = ref.read(_provider);
-    final message = value.text.text.trim();
-    final editing = value.editing;
-    try {
-      if (editing != null) {
-        draft.stopEditing();
-        final posts = await ref.read(postActionsProvider(url).future);
-        await posts.editPost(editing.id, message);
-        return;
-      }
-      final actions = await ref.read(composerActionsProvider(url).future);
-      if (message.startsWith('/')) {
-        final outcome = await actions.executeCommand(
-          channelId,
+    final outcome = await ref
+        .read(_provider.notifier)
+        .submit(
           teamId: widget.teamId,
-          rootId: rootId,
-          text: message,
+          confirmMention: (message) async =>
+              mounted &&
+              await confirmChannelMention(
+                context,
+                ref,
+                widget.url,
+                widget.channelId,
+                message,
+              ),
         );
-        if (!mounted) return;
-        draft.sent();
-        await actions.clearDraft(channelId, rootId: rootId);
-        if (outcome case CommandGoto(:final location)) {
-          if (classifyLink(location, Uri.parse(url)) case UriLink(:final uri)
-              when mounted) {
-            await openLinkFromMessage(navigator, ref, uri);
-          }
-        }
-        return;
-      }
-      if (!mounted ||
-          !await confirmChannelMention(context, ref, url, channelId, message)) {
-        return;
-      }
-      final files = [for (final a in value.attachments) ?a.info];
-      draft.sent();
-      await actions.send(
-        channelId,
-        rootId: rootId,
-        message: message,
-        files: files,
-        priority: value.priority,
-      );
-    } on ApiError catch (e) {
-      final text = switch (e) {
-        ServerError(:final message?) when message.isNotEmpty => message,
-        _ => connectionProblemText(e, Uri.parse(url).host),
-      };
-      messenger.showSnackBar(SnackBar(content: Text(text)));
+    switch (outcome) {
+      case SubmitOpenLink(:final uri):
+        await openLinkFromMessage(navigator, uri);
+      case SubmitFailed(:final text):
+        messenger.showSnackBar(SnackBar(content: Text(text)));
+      case SubmitDone():
     }
   }
 }
@@ -681,8 +668,10 @@ class AttachmentStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
+    // The file cards hold two lines of text, which grow with the font.
+    final scale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
     return SizedBox(
-      height: 96,
+      height: 96 + 40 * (scale - 1),
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(
@@ -695,83 +684,93 @@ class AttachmentStrip extends StatelessWidget {
           for (final a in attachments)
             Padding(
               padding: const EdgeInsets.only(right: Spacing.sm),
-              child: SizedBox(
-                width: a.isImage && a.path != null ? 88 : 180,
-                child: Card.outlined(
-                  margin: EdgeInsets.zero,
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (a.isImage && a.path != null)
-                        Image.file(
-                          File(a.path!),
-                          fit: BoxFit.cover,
-                          cacheWidth: 264,
-                        )
-                      else
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            Spacing.sm,
-                            Spacing.sm,
-                            Spacing.xl,
-                            Spacing.sm,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.insert_drive_file_outlined,
-                                color: tokens.muted,
+              child: Semantics(
+                container: true,
+                label: [
+                  a.name,
+                  a.error ?? (a.uploading ? 'uploading' : 'attached'),
+                ].join(', '),
+                child: SizedBox(
+                  width: a.isImage && a.path != null ? 88 : 180,
+                  child: Card.outlined(
+                    margin: EdgeInsets.zero,
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (a.isImage && a.path != null)
+                          ExcludeSemantics(
+                            child: Image.file(
+                              File(a.path!),
+                              fit: BoxFit.cover,
+                              cacheWidth: 264,
+                            ),
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              Spacing.sm,
+                              Spacing.sm,
+                              Spacing.xl,
+                              Spacing.sm,
+                            ),
+                            child: ExcludeSemantics(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.insert_drive_file_outlined,
+                                    color: tokens.muted,
+                                  ),
+                                  Text(
+                                    a.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: text.labelMedium,
+                                  ),
+                                  Text(
+                                    a.error ?? fileSizeText(a.size),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: text.bodySmall?.copyWith(
+                                      color: a.error != null
+                                          ? Theme.of(context).colorScheme.error
+                                          : tokens.muted,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                a.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: text.labelMedium,
-                              ),
-                              Text(
-                                a.error ?? fileSizeText(a.size),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: text.bodySmall?.copyWith(
-                                  color: a.error != null
-                                      ? Theme.of(context).colorScheme.error
-                                      : tokens.muted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (a.error != null && a.isImage && a.path != null)
-                        ColoredBox(
-                          color: Theme.of(context).colorScheme.errorContainer
-                              .withValues(alpha: 0.85),
-                          child: Center(
-                            child: Icon(
-                              Icons.error_outline,
-                              color: Theme.of(context).colorScheme.error,
                             ),
                           ),
-                        ),
-                      if (a.uploading)
+                        if (a.error != null && a.isImage && a.path != null)
+                          ColoredBox(
+                            color: Theme.of(context).colorScheme.errorContainer
+                                .withValues(alpha: 0.85),
+                            child: Center(
+                              child: Icon(
+                                Icons.error_outline,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ),
+                        if (a.uploading)
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: LinearProgressIndicator(
+                              value: a.progress > 0 ? a.progress : null,
+                            ),
+                          ),
                         Align(
-                          alignment: Alignment.bottomCenter,
-                          child: LinearProgressIndicator(
-                            value: a.progress > 0 ? a.progress : null,
+                          alignment: Alignment.topRight,
+                          child: IconButton.filledTonal(
+                            iconSize: 16,
+                            tooltip: a.uploading ? 'Cancel upload' : 'Remove',
+                            onPressed: () => onRemove(a.clientId),
+                            icon: const Icon(Icons.close),
                           ),
                         ),
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: IconButton.filledTonal(
-                          visualDensity: VisualDensity.compact,
-                          iconSize: 16,
-                          tooltip: a.uploading ? 'Cancel upload' : 'Remove',
-                          onPressed: () => onRemove(a.clientId),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -812,6 +811,10 @@ class SuggestionList extends ConsumerWidget {
       ),
       child: Material(
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        // An edge, so a single suggestion doesn't read as a message.
+        shape: Border(
+          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
         child: ListView.builder(
           shrinkWrap: true,
           padding: EdgeInsets.zero,

@@ -8,6 +8,8 @@ import 'package:matterleast/domain/channel_info.dart';
 import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/screens/channel/message_environment.dart';
+import 'package:matterleast/screens/channel_info/channel_missing.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_info/edit_channel_screen.dart';
 import 'package:matterleast/screens/channel_info/members_screen.dart';
@@ -66,13 +68,10 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
 
   Future<void> _leave(ChannelInfo info) async {
     final navigator = Navigator.of(context);
-    final ok = await confirm(
+    final ok = await confirmLeave(
       context,
-      title: 'Leave ${info.title}?',
-      body: info.type == 'P'
-          ? "It's private, so you'll need an invite to come back."
-          : 'You can join it again from Browse channels.',
-      action: 'Leave',
+      info.title,
+      private: info.type == 'P',
     );
     if (!ok || !mounted) return;
     if (await _run("Couldn't leave ${info.title}.", (a) => a.leave(info.id))) {
@@ -88,6 +87,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
           'Nobody can post in it any more. Its messages stay readable and '
           'searchable, and an admin can bring it back.',
       action: 'Archive',
+      destructive: true,
     );
     if (!ok || !mounted) return;
     await _run("Couldn't archive ${info.title}.", (a) => a.archive(info.id));
@@ -95,9 +95,10 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final info = ref
-        .watch(channelInfoProvider(widget.url, widget.channelId))
-        .value;
+    final infoState = ref.watch(
+      channelInfoProvider(widget.url, widget.channelId),
+    );
+    final info = infoState.value;
     final stats = ref
         .watch(channelStatsProvider(widget.url, widget.channelId))
         .value;
@@ -119,7 +120,13 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
         ),
       ),
       body: info == null
-          ? const Center(child: CircularProgressIndicator())
+          ? ChannelMissing(
+              state: infoState,
+              host: _host,
+              onRetry: () => ref.invalidate(
+                channelInfoProvider(widget.url, widget.channelId),
+              ),
+            )
           : ListView(
               padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
               children: [
@@ -133,6 +140,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
                       Spacing.md,
                     ),
                     child: Card.filled(
+                      margin: EdgeInsets.zero,
                       child: ListTile(
                         leading: const Icon(Icons.archive_outlined),
                         title: const Text('This channel is archived'),
@@ -263,6 +271,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
       _ActionButton(
         icon: info.favorite ? Icons.star : Icons.star_border,
         label: info.favorite ? 'Favourited' : 'Favourite',
+        selected: info.favorite,
         onPressed: () => _run(
           "Couldn't change favourites.",
           (a) => a.setFavorite(info.teamId, info.id, favorite: !info.favorite),
@@ -273,6 +282,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
             ? Icons.notifications_off
             : Icons.notifications_outlined,
         label: info.muted ? 'Muted' : 'Mute',
+        selected: info.muted,
         onPressed: () => _run(
           "Couldn't ${info.muted ? 'unmute' : 'mute'} ${info.title}.",
           (a) => a.setMuted(info.id, muted: !info.muted),
@@ -411,9 +421,13 @@ class _Header extends StatelessWidget {
             Text('HEADER', style: tokens.smallCaps),
             const SizedBox(height: Spacing.xs),
             // Keyed by the text, so an edited header is parsed again.
-            PostBody(
-              postId: 'header:${info.id}:${info.header.hashCode}',
-              message: info.header,
+            MessageEnvironment(
+              url: url,
+              teamId: info.teamId,
+              child: PostBody(
+                postId: 'header:${info.id}:${info.header.hashCode}',
+                message: info.header,
+              ),
             ),
           ],
           if (!info.conversation && info.createAt != null) ...[
@@ -439,29 +453,36 @@ class _ActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.selected = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
 
+  /// Drawn filled, for a setting that is on.
+  final bool selected;
+
   @override
-  Widget build(BuildContext context) => FilledButton.tonal(
-    style: FilledButton.styleFrom(
-      padding: const EdgeInsets.symmetric(
-        vertical: Spacing.md,
-        horizontal: Spacing.xs,
+  Widget build(BuildContext context) => Semantics(
+    toggled: selected,
+    child: (selected ? FilledButton.new : FilledButton.tonal)(
+      style: FilledButton.styleFrom(
+        padding: const EdgeInsets.symmetric(
+          vertical: Spacing.md,
+          horizontal: Spacing.xs,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    ),
-    onPressed: onPressed,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon),
-        const SizedBox(height: Spacing.xs),
-        Text(label, textAlign: TextAlign.center, maxLines: 2),
-      ],
+      onPressed: onPressed,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon),
+          const SizedBox(height: Spacing.xs),
+          Text(label, textAlign: TextAlign.center, maxLines: 2),
+        ],
+      ),
     ),
   );
 }
@@ -474,5 +495,9 @@ class _Count extends StatelessWidget {
   @override
   Widget build(BuildContext context) => count == null
       ? const SizedBox.shrink()
-      : Text('$count', style: TextStyle(color: context.tokens.muted));
+      : Text(
+          '$count',
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: context.tokens.muted),
+        );
 }

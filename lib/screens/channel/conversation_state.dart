@@ -85,7 +85,7 @@ ConversationBody conversationBody(ConversationState s, {required String host}) {
 /// else the partner's presence and custom status for a direct message,
 /// the members' names for a group message, the member count otherwise.
 String? conversationSubtitle(ConversationState s, {UserProfile? partner}) {
-  if (_staleFailure(s) case final cause?) return staleDataNotice(cause);
+  if (staleFailure(s) case final cause?) return staleDataNotice(cause);
   switch (s.window?.channelType) {
     case 'D':
       if (partner == null) return null;
@@ -104,13 +104,58 @@ String? conversationSubtitle(ConversationState s, {UserProfile? partner}) {
 /// The partner's custom status emoji, shown before the subtitle while it
 /// tells their status.
 String? conversationSubtitleEmoji(ConversationState s, {UserProfile? partner}) {
-  if (s.window?.channelType != 'D' || _staleFailure(s) != null) return null;
+  if (s.window?.channelType != 'D' || staleFailure(s) != null) return null;
   final emoji = partner?.customStatus?.emoji ?? '';
   return emoji.isEmpty ? null : emoji;
 }
 
-ApiError? _staleFailure(ConversationState s) {
-  final hasData =
-      (s.window?.posts.isNotEmpty ?? false) || s.window?.root != null;
-  return hasData && !s.refreshing ? s.refreshFailure : null;
+/// The thread's subtitle: its channel, and why the shown replies may be
+/// stale.
+String threadSubtitle(ConversationState s, {required String channelName}) {
+  final stored = s.window?.channelName ?? '';
+  final name = stored.isNotEmpty ? stored : channelName;
+  return switch (staleFailure(s)) {
+    final cause? => '$name · ${staleDataNotice(cause)}',
+    null => name,
+  };
+}
+
+/// Messages are on screen, stored or fetched.
+bool showsMessages(ConversationState s) =>
+    (s.window?.posts.isNotEmpty ?? false) || s.window?.root != null;
+
+/// Why the last refresh failed, while messages from before are shown.
+ApiError? staleFailure(ConversationState s) =>
+    showsMessages(s) && !s.refreshing ? s.refreshFailure : null;
+
+/// What a screen reader is told when the conversation changes from
+/// [before] to [after]: messages from others that arrived live, and the
+/// user's own messages that failed to go out.
+List<String> conversationNews(
+  ConversationState before,
+  ConversationState after, {
+  required String? myUserId,
+}) {
+  final posts = after.window?.posts ?? const <PostItem>[];
+  final arrived = [
+    for (final p in posts)
+      if (after.arrived.containsKey(p.key) &&
+          !before.arrived.containsKey(p.key) &&
+          p.userId != myUserId &&
+          !p.isSystem)
+        p,
+  ];
+  final wasFailed = {
+    for (final p in before.window?.posts ?? const <PostItem>[])
+      if (p.sendState == 'failed') p.key,
+  };
+  final failed = posts
+      .where((p) => p.sendState == 'failed' && !wasFailed.contains(p.key))
+      .length;
+  return [
+    if (arrived.length == 1) 'New message from ${arrived.single.authorName}',
+    if (arrived.length > 1) '${arrived.length} new messages',
+    if (failed == 1) 'Your message was not sent',
+    if (failed > 1) '$failed of your messages were not sent',
+  ];
 }

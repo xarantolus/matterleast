@@ -24,49 +24,57 @@ class ReactionsBar extends StatelessWidget {
   final ValueChanged<String>? onToggle;
   final VoidCallback? onAdd;
 
+  // Each chip keeps a 48 dp tap target, which is the gap between rows.
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: Spacing.xs),
-    child: Wrap(
-      spacing: Spacing.xs,
-      runSpacing: Spacing.xs,
-      children: [
-        ?leading,
-        for (final group in reactions)
-          GestureDetector(
-            onLongPress: () => showReactions(context, reactions, group),
-            child: FilterChip(
-              showCheckmark: false,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              selected: group.mine,
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              label: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  EmojiGlyph(name: group.emojiName, size: 18),
-                  const SizedBox(width: Spacing.xs),
-                  Text('${group.count}'),
-                ],
-              ),
-              onSelected: (_) => onToggle != null
-                  ? onToggle!(group.emojiName)
-                  : showReactions(context, reactions, group),
-            ),
-          ),
-        if (onAdd != null)
-          ActionChip(
-            tooltip: 'Add reaction',
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  Widget build(BuildContext context) => Wrap(
+    spacing: Spacing.xs,
+    children: [
+      ?leading,
+      for (final group in reactions)
+        GestureDetector(
+          onLongPress: () => showReactions(context, reactions, group),
+          child: FilterChip(
+            showCheckmark: false,
+            selected: group.mine,
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.symmetric(horizontal: 2),
-            label: const Icon(Icons.add_reaction_outlined, size: 18),
-            onPressed: onAdd,
+            label: Semantics(
+              label: reactionLabel(group),
+              child: ExcludeSemantics(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    EmojiGlyph(name: group.emojiName, size: 18),
+                    const SizedBox(width: Spacing.xs),
+                    Text('${group.count}'),
+                  ],
+                ),
+              ),
+            ),
+            onSelected: (_) => onToggle != null
+                ? onToggle!(group.emojiName)
+                : showReactions(context, reactions, group),
           ),
-      ],
-    ),
+        ),
+      if (onAdd != null)
+        ActionChip(
+          tooltip: 'Add reaction',
+          visualDensity: VisualDensity.compact,
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          label: const Icon(Icons.add_reaction_outlined, size: 18),
+          onPressed: onAdd,
+        ),
+    ],
   );
 }
+
+/// What a screen reader says for a reaction chip: the emoji's name, how
+/// many reacted and whether the user is one of them.
+String reactionLabel(ReactionGroup group) => [
+  group.emojiName.replaceAll('_', ' '),
+  '${group.count}',
+  if (group.mine) 'including you',
+].join(', ');
 
 /// Who reacted, one tab per emoji, starting at [initial].
 void showReactions(

@@ -40,15 +40,17 @@ class InitialsBadge extends StatelessWidget {
         ),
         child: icon != null
             ? Icon(icon, color: foreground, size: size * 0.55)
-            : Text(
-                initialsOf(name),
-                // The badge has a fixed size, so its letters don't follow the
-                // system text size; the name is in the tooltip and semantics.
-                textScaler: TextScaler.noScaling,
-                style: TextStyle(
-                  color: foreground,
-                  fontWeight: FontWeight.w600,
-                  fontSize: size * 0.38,
+            : ExcludeSemantics(
+                child: Text(
+                  initialsOf(name),
+                  // The badge has a fixed size, so its letters don't follow the
+                  // system text size; the name is in the tooltip and semantics.
+                  textScaler: TextScaler.noScaling,
+                  style: TextStyle(
+                    color: foreground,
+                    fontWeight: FontWeight.w600,
+                    fontSize: size * 0.38,
+                  ),
                 ),
               ),
       ),

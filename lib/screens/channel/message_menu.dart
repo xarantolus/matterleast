@@ -13,6 +13,7 @@ import 'package:matterleast/domain/reminders.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/today.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -97,15 +98,39 @@ class MessageMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final facts = ref.watch(postMenuFactsProvider(url, post, teamId)).value;
+    final factsState = ref.watch(postMenuFactsProvider(url, post, teamId));
+    final facts = factsState.value;
     final recent = ref.watch(recentEmojiProvider(url)).value ?? const [];
     if (facts == null) {
-      return const SizedBox(
+      return SizedBox(
         height: 120,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(
+          child: factsState.hasError
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("Couldn't load the options."),
+                    TextButton(
+                      onPressed: () => ref.invalidate(
+                        postMenuFactsProvider(url, post, teamId),
+                      ),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                )
+              : const CircularProgressIndicator(
+                  semanticsLabel: 'Loading options',
+                ),
+        ),
       );
     }
-    final quick = {...recent, ..._defaultQuickReactions}.take(6).toList();
+    // Six recent emoji where they fit next to "More reactions", fewer on
+    // a narrow phone.
+    final room = (MediaQuery.sizeOf(context).width - 2 * Spacing.lg) ~/ 48 - 1;
+    final quick = {
+      ...recent,
+      ..._defaultQuickReactions,
+    }.take(room.clamp(3, 6)).toList();
     final rights = facts.rights;
     final unsent = post.sendState != null;
     final permalink = facts.teamName.isEmpty
@@ -377,27 +402,13 @@ class MessageMenu extends ConsumerWidget {
   }
 }
 
-Future<bool> confirmDelete(BuildContext context) async =>
-    await showDialog<bool>(
-      context: context,
-      builder: (dialog) => AlertDialog(
-        title: const Text('Delete message?'),
-        content: const Text(
-          'The message and its replies are deleted for everyone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialog).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialog).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    ) ??
-    false;
+Future<bool> confirmDelete(BuildContext context) => confirm(
+  context,
+  title: 'Delete message?',
+  body: 'The message and its replies are deleted for everyone.',
+  action: 'Delete',
+  destructive: true,
+);
 
 /// When to be reminded, local time: a ready-made time, or a date and a
 /// time picked one after the other; null when the user backs out.

@@ -12,6 +12,7 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/person_tile.dart';
@@ -387,11 +388,16 @@ class SwitchTile extends StatelessWidget {
     required this.onTap,
     this.serverName,
     this.trailing,
+    this.markJoinable = true,
     super.key,
   });
 
   final SwitchItem item;
   final VoidCallback onTap;
+
+  /// Says "Not joined" on channels the user isn't in; pointless in a list
+  /// of nothing else.
+  final bool markJoinable;
   final String? serverName;
 
   /// Replaces the unread badge, such as a checkbox in a picker.
@@ -402,7 +408,7 @@ class SwitchTile extends StatelessWidget {
     final tokens = context.tokens;
     final details = [
       ?serverName,
-      if (item.kind == SwitchKind.joinable) 'Not joined',
+      if (markJoinable && item.kind == SwitchKind.joinable) 'Not joined',
       if (item.kind == SwitchKind.archived) 'Archived',
       ?item.subtitle,
     ];

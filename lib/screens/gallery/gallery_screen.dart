@@ -154,6 +154,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                           cacheManager: caches.media,
                         ),
                         fit: BoxFit.contain,
+                        semanticLabel: item.name,
                         mode: ExtendedImageMode.gesture,
                         enableSlideOutPage: true,
                         gaplessPlayback: true,

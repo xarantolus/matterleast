@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
@@ -70,8 +71,8 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   static const _arrivalAnimation = Duration(milliseconds: 250);
 
   /// Room between the newest message and the composer, which also holds
-  /// the typing line.
-  static const _bottomGap = Spacing.xxl;
+  /// the typing line, and keeps the way back down off the newest message.
+  static const _bottomGap = Spacing.xxl + Spacing.lg;
 
   @override
   void initState() {
@@ -151,6 +152,24 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     }
   }
 
+  /// Tells a screen reader what arrived or failed; nothing without one.
+  void _announce(ConversationState? before, ConversationState after) {
+    if (before == null || !MediaQuery.accessibleNavigationOf(context)) return;
+    final news = conversationNews(
+      before,
+      after,
+      myUserId: _controller.myUserId,
+    );
+    if (news.isEmpty) return;
+    unawaited(
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        news.join('. '),
+        Directionality.of(context),
+      ),
+    );
+  }
+
   void _showLatest(ConversationState state) {
     _controller.showLatest();
     if (!(state.window?.newerApart ?? false)) {
@@ -160,6 +179,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(widget.conversation, _announce);
     final state = ref.watch(widget.conversation);
     _state = state;
     final host = Uri.parse(widget.url).host;
@@ -334,7 +354,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
           )
         else if (scrolledUp)
           Positioned(
-            bottom: Spacing.lg,
+            bottom: Spacing.sm,
             right: Spacing.lg,
             child: Badge.count(
               count: newBelow,
@@ -351,6 +371,10 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     );
   }
 }
+
+const _replyAction = CustomSemanticsAction(label: 'Reply');
+const _reactAction = CustomSemanticsAction(label: 'Add reaction');
+const _menuAction = CustomSemanticsAction(label: 'Message options');
 
 typedef _BuiltRow = ({
   ListRow row,
@@ -373,6 +397,11 @@ extension on _ConversationViewState {
     final reacts =
         post.sendState == null && !(_state.window?.archived ?? false);
     void openThread() => widget.onOpenThread?.call(post);
+    void open() {
+      FocusManager.instance.primaryFocus?.unfocus();
+      unawaited(_menu(post, _state.window?.teamId ?? ''));
+    }
+
     final tile = PostTile(
       post: post,
       compact: compact,
@@ -387,6 +416,13 @@ extension on _ConversationViewState {
       onToggleReaction: reacts ? (name) => _toggleReaction(post, name) : null,
       onAddReaction: reacts ? () => _pickReaction(post) : null,
       onAcknowledge: reacts ? () => _toggleAcknowledged(post) : null,
+      actions: usable && post.sendState == null
+          ? {
+              if (threads) _replyAction: openThread,
+              if (reacts) _reactAction: () => _pickReaction(post),
+              _menuAction: open,
+            }
+          : const {},
     );
     if (post.sendState == 'failed') {
       return InkWell(
@@ -395,11 +431,6 @@ extension on _ConversationViewState {
       );
     }
     if (!usable) return tile;
-    void open() {
-      FocusManager.instance.primaryFocus?.unfocus();
-      unawaited(_menu(post, _state.window?.teamId ?? ''));
-    }
-
     return SwipeToOpen(
       onOpen: open,
       child: InkWell(
@@ -542,7 +573,10 @@ class _OlderEdge extends StatelessWidget {
       child: Center(
         child: SizedBox.square(
           dimension: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            semanticsLabel: 'Loading older messages',
+          ),
         ),
       ),
     );

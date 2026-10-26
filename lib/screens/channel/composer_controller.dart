@@ -12,6 +12,7 @@ import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/quote.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/markdown/links.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'composer_controller.g.dart';
@@ -61,6 +62,37 @@ class Attachment {
 
 /// A message holds at most this many files.
 const maxAttachments = 10;
+
+/// Pure: whether [value] can go out, with text or uploaded files, nothing
+/// still uploading and no more than [limit] characters.
+bool canSend(ComposerValue value, int limit) {
+  final files = value.attachments;
+  return (value.text.text.trim().isNotEmpty ||
+          files.any((a) => a.info != null)) &&
+      !files.any((a) => a.uploading) &&
+      value.text.text.length <= limit;
+}
+
+/// How sending from the composer ended.
+sealed class SubmitOutcome {
+  const SubmitOutcome();
+}
+
+/// Sent, saved or run, or the user backed out.
+final class SubmitDone extends SubmitOutcome {
+  const SubmitDone();
+}
+
+/// A command answered with a place to go.
+final class SubmitOpenLink extends SubmitOutcome {
+  const SubmitOpenLink(this.uri);
+  final Uri uri;
+}
+
+final class SubmitFailed extends SubmitOutcome {
+  const SubmitFailed(this.text);
+  final String text;
+}
 
 /// What the composer shows: the text with its cursor, the post being
 /// edited and the suggestions for the word at the cursor.
@@ -393,6 +425,62 @@ class ComposerDraft extends _$ComposerDraft {
     attachments: state.attachments,
     priority: priority,
   );
+
+  /// Sends what was written: saves the message being edited, runs a
+  /// command, or posts once [confirmMention] agreed to a channel-wide
+  /// mention.
+  Future<SubmitOutcome> submit({
+    required String teamId,
+    required Future<bool> Function(String message) confirmMention,
+  }) async {
+    final value = state;
+    final message = value.text.text.trim();
+    final editing = value.editing;
+    try {
+      if (editing != null) {
+        stopEditing();
+        final posts = await ref.read(postActionsProvider(url).future);
+        await posts.editPost(editing.id, message);
+        return const SubmitDone();
+      }
+      final actions = await _actions;
+      if (message.startsWith('/')) {
+        final outcome = await actions.executeCommand(
+          channelId,
+          teamId: teamId,
+          rootId: rootId,
+          text: message,
+        );
+        if (!ref.mounted) return const SubmitDone();
+        sent();
+        await actions.clearDraft(channelId, rootId: rootId);
+        if (outcome case CommandGoto(:final location)) {
+          if (classifyLink(location, Uri.parse(url)) case UriLink(:final uri)) {
+            return SubmitOpenLink(uri);
+          }
+        }
+        return const SubmitDone();
+      }
+      if (!await confirmMention(message) || !ref.mounted) {
+        return const SubmitDone();
+      }
+      final files = [for (final a in value.attachments) ?a.info];
+      sent();
+      await actions.send(
+        channelId,
+        rootId: rootId,
+        message: message,
+        files: files,
+        priority: value.priority,
+      );
+      return const SubmitDone();
+    } on ApiError catch (e) {
+      return SubmitFailed(switch (e) {
+        ServerError(:final message?) when message.isNotEmpty => message,
+        _ => connectionProblemText(e, Uri.parse(url).host),
+      });
+    }
+  }
 
   /// Empties the field once its message went out.
   void sent() {

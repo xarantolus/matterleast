@@ -7,6 +7,7 @@ import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 
 /// The long-press sheet of a channel row.
 Future<void> showChannelActions(
@@ -132,28 +133,12 @@ class _ChannelActionsSheet extends ConsumerWidget {
               title: const Text('Leave channel'),
               onTap: () async {
                 final navigator = Navigator.of(context);
-                final leave = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text('Leave ${item.title}?'),
-                    content: Text(
-                      item.kind == ChannelKind.private
-                          ? "It's private, so you'll need an invite to come back."
-                          : 'You can join it again from Browse channels.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('Leave'),
-                      ),
-                    ],
-                  ),
+                final leave = await confirmLeave(
+                  context,
+                  item.title,
+                  private: item.kind == ChannelKind.private,
                 );
-                if (leave != true) {
+                if (!leave) {
                   navigator.pop();
                   return;
                 }

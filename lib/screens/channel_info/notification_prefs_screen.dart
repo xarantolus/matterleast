@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/domain/channel_info.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/screens/channel_info/channel_missing.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/pane_label.dart';
@@ -22,7 +23,8 @@ class NotificationPrefsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final info = ref.watch(channelInfoProvider(url, channelId)).value;
+    final infoState = ref.watch(channelInfoProvider(url, channelId));
+    final info = infoState.value;
     final bottom = MediaQuery.paddingOf(context).bottom;
     Future<void> save(Future<void> Function(ChannelActions) change) async {
       final messenger = ScaffoldMessenger.of(context);
@@ -42,7 +44,12 @@ class NotificationPrefsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Notifications')),
       body: info == null
-          ? const Center(child: CircularProgressIndicator())
+          ? ChannelMissing(
+              state: infoState,
+              host: Uri.parse(url).host,
+              onRetry: () =>
+                  ref.invalidate(channelInfoProvider(url, channelId)),
+            )
           : ListView(
               padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
               children: [

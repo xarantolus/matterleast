@@ -205,4 +205,39 @@ void main() {
       isNull,
     );
   });
+
+  test('a thread names its channel and says when replies may be stale', () {
+    final thread = ConversationWindow(
+      posts: const [],
+      root: message,
+      loaded: true,
+      channelName: 'Town Square',
+    );
+    expect(
+      threadSubtitle(
+        ConversationState(window: thread),
+        channelName: 'from the link',
+      ),
+      'Town Square',
+    );
+    expect(
+      threadSubtitle(
+        ConversationState(
+          window: thread,
+          refreshFailure: const ServerError(statusCode: 500),
+        ),
+        channelName: 'from the link',
+      ),
+      allOf(startsWith('Town Square · '), isNot(contains('Offline'))),
+      reason: 'a server error is not the connection',
+    );
+    expect(
+      threadSubtitle(
+        const ConversationState(refreshFailure: Unreachable()),
+        channelName: 'from the link',
+      ),
+      'from the link',
+      reason: 'nothing shown yet, so nothing is stale',
+    );
+  });
 }

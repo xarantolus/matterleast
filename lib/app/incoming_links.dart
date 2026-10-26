@@ -7,12 +7,12 @@ import 'package:matterleast/screens/channel/link_opener.dart';
 
 /// Opens a link another app handed over, only when it points into a server
 /// the user is signed in to; anything else is refused, never forwarded.
-Future<void> openIncomingLink(
-  NavigatorState navigator,
-  WidgetRef ref,
-  Uri uri,
-) async {
-  final servers = await ref.read(serversProvider.future);
+Future<void> openIncomingLink(NavigatorState navigator, Uri uri) async {
+  if (!navigator.mounted) return;
+  final servers = await ProviderScope.containerOf(
+    navigator.context,
+    listen: false,
+  ).read(serversProvider.future);
   final signedIn = [
     for (final s in servers)
       if (s.signedIn) Uri.parse(s.url),
@@ -42,7 +42,6 @@ Future<void> openIncomingLink(
   }
   await openLinkFromMessage(
     navigator,
-    ref,
     uri.replace(scheme: link.server.scheme, port: link.server.port),
     fromOutside: true,
   );
