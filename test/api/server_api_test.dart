@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/server_api.dart';
@@ -47,6 +48,37 @@ void main() {
     await api.dio.get<void>('http://127.0.0.1:${other.port}/image.png');
     expect(otherRequests.single.headers.value('authorization'), isNull);
     await other.close(force: true);
+    api.close();
+  });
+
+  test('a server below a sub-path gets the token for its API and plugins '
+      'only, not for other apps on the host', () async {
+    final api = ServerApi(
+      baseUrl: base().replace(path: '/chat'),
+      token: () => 'secret',
+    );
+    for (final path in [
+      '/chat/api/v4/users/me',
+      '/chat/plugins/playbooks/api/v0/runs',
+      '/other-app/pixel.png',
+      '/chat/static/logo.png',
+      '/api/v4/users/me',
+    ]) {
+      await api.dio.get<void>(
+        base().replace(path: path).toString(),
+        options: Options(validateStatus: (_) => true),
+      );
+    }
+    expect(
+      {for (final r in seen) r.uri.path: r.headers.value('authorization')},
+      {
+        '/chat/api/v4/users/me': 'Bearer secret',
+        '/chat/plugins/playbooks/api/v0/runs': 'Bearer secret',
+        '/other-app/pixel.png': null,
+        '/chat/static/logo.png': null,
+        '/api/v4/users/me': null,
+      },
+    );
     api.close();
   });
 

@@ -7,6 +7,7 @@ import 'package:file/file.dart' as f;
 import 'package:file/local.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:matterleast/api/server_api.dart';
+import 'package:matterleast/api/server_paths.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:path/path.dart' as p;
 
@@ -198,9 +199,9 @@ class ImageTooLargeException implements Exception {
 }
 
 /// Downloads images through the server's own HTTP client, so the token
-/// goes only to that server's origin, with its timeouts, and stops at
-/// [maxBytes]. Redirects are followed only for other hosts, which never
-/// get the token.
+/// goes only to that server's API, with its timeouts, and stops at
+/// [maxBytes]. Redirects are followed only for requests that never carry
+/// the token.
 class ServerFileService extends FileService {
   ServerFileService(
     this._api, {
@@ -218,7 +219,7 @@ class ServerFileService extends FileService {
     Map<String, String>? headers,
   }) async {
     final uri = Uri.parse(url);
-    final own = uri.origin == _api.baseUrl.origin;
+    final own = carriesToken(uri, _api.baseUrl);
     final cancel = CancelToken();
     final response = await _api.dio.getUri<ResponseBody>(
       uri,

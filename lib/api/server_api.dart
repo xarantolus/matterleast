@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/coalesce.dart';
 import 'package:matterleast/api/generated/export.dart';
+import 'package:matterleast/api/server_paths.dart';
 
 typedef TokenProvider = FutureOr<String?> Function();
 
@@ -27,18 +28,16 @@ class ServerApi {
       responseType: ResponseType.json,
       // Dio only implies JSON for maps; id lists would go out as toString().
       contentType: Headers.jsonContentType,
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-Mattermost-Preauth-Secret': ?preAuthSecret,
-      },
+      headers: {'X-Requested-With': 'XMLHttpRequest'},
     );
     this.dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // The token goes to this server only, never to other hosts that a
-          // link preview or an external image might point at.
+          if (preAuthSecret != null && options.uri.origin == baseUrl.origin) {
+            options.headers['X-Mattermost-Preauth-Secret'] = preAuthSecret;
+          }
           final token = await _token();
-          if (token != null && options.uri.origin == baseUrl.origin) {
+          if (token != null && carriesToken(options.uri, baseUrl)) {
             options.headers['Authorization'] = 'Bearer $token';
           }
           handler.next(options);

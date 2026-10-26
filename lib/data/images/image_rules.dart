@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:matterleast/api/server_paths.dart';
 
 /// One file in an image cache, as eviction sees it.
 typedef CachedImage = ({int id, int bytes, DateTime lastUsed});
@@ -25,20 +26,6 @@ Set<int> imagesToEvict(
     if (budgetBytes != null && kept > budgetBytes) evict.add(image.id);
   }
   return evict;
-}
-
-/// The segments after `api/v4/` when [url] points at [server]'s API, which
-/// may live below a sub-path.
-List<String>? apiSegments(Uri url, Uri server) {
-  if (url.origin != server.origin) return null;
-  final base = server.pathSegments.where((s) => s.isNotEmpty).toList();
-  final path = url.pathSegments;
-  if (path.length < base.length + 2) return null;
-  for (final (i, segment) in base.indexed) {
-    if (path[i] != segment) return null;
-  }
-  final rest = path.sublist(base.length);
-  return rest[0] == 'api' && rest[1] == 'v4' ? rest.sublist(2) : null;
 }
 
 /// Pure: whether the bytes behind [url] never change. File and emoji ids
