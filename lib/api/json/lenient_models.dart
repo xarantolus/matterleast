@@ -1759,7 +1759,7 @@ class LenientApiV4FilesSearchRequestBody
   @override
   ApiV4FilesSearchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4FilesSearchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4FilesSearchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4FilesSearchRequestBody? object) => object?.toJson();
@@ -1773,7 +1773,7 @@ class LenientListOfApiV4FilesSearchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4FilesSearchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4FilesSearchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -1791,10 +1791,8 @@ class LenientMapOfApiV4FilesSearchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4FilesSearchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4FilesSearchRequestBody.fromJson),
         }
       : null;
   @override
@@ -2063,7 +2061,7 @@ class LenientApiV4PostsSearchRequestBody
   @override
   ApiV4PostsSearchRequestBody? fromJson(Object? json) =>
       json is Map<String, Object?>
-      ? ApiV4PostsSearchRequestBody.fromJson(json)
+      ? decodeOrSkip(json, ApiV4PostsSearchRequestBody.fromJson)
       : null;
   @override
   Object? toJson(ApiV4PostsSearchRequestBody? object) => object?.toJson();
@@ -2077,7 +2075,7 @@ class LenientListOfApiV4PostsSearchRequestBody
       ? [
           for (final e in json)
             if (e is Map<String, Object?>)
-              ApiV4PostsSearchRequestBody.fromJson(e),
+              ?decodeOrSkip(e, ApiV4PostsSearchRequestBody.fromJson),
         ]
       : const [];
   @override
@@ -2095,10 +2093,8 @@ class LenientMapOfApiV4PostsSearchRequestBody
       json is Map<String, Object?>
       ? {
           for (final e in json.entries)
-            if (e.value is Map<String, Object?>)
-              e.key: ApiV4PostsSearchRequestBody.fromJson(
-                e.value! as Map<String, Object?>,
-              ),
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4PostsSearchRequestBody.fromJson),
         }
       : null;
   @override

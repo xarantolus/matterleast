@@ -12,6 +12,9 @@ _$ApiV4ChannelsMembersUserIdViewRequestBodyFromJson(
 ) => ApiV4ChannelsMembersUserIdViewRequestBody(
   channelId: json['channel_id'] as String,
   prevChannelId: const LenientString().fromJson(json['prev_channel_id']),
+  collapsedThreadsSupported: const LenientBool().fromJson(
+    json['collapsed_threads_supported'],
+  ),
 );
 
 Map<String, dynamic> _$ApiV4ChannelsMembersUserIdViewRequestBodyToJson(
@@ -19,4 +22,7 @@ Map<String, dynamic> _$ApiV4ChannelsMembersUserIdViewRequestBodyToJson(
 ) => <String, dynamic>{
   'channel_id': instance.channelId,
   'prev_channel_id': const LenientString().toJson(instance.prevChannelId),
+  'collapsed_threads_supported': const LenientBool().toJson(
+    instance.collapsedThreadsSupported,
+  ),
 };

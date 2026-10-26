@@ -308,3 +308,7 @@ actions:
   # --- channel management (M5): with user_ids present (even empty) the server answers a list, not the member ---
   - target: "$.paths['/api/v4/channels/{channel_id}/members'].post.requestBody.content['application/json'].schema.properties.user_ids"
     remove: true
+  # --- mark read: like the official app, say the client supports collapsed threads (model/channel_view.go) ---
+  - target: "$.paths['/api/v4/channels/members/{user_id}/view'].post.requestBody.content['application/json'].schema.properties"
+    update:
+      collapsed_threads_supported: {type: boolean}

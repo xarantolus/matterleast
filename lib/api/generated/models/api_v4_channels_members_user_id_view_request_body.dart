@@ -12,6 +12,7 @@ class ApiV4ChannelsMembersUserIdViewRequestBody {
   const ApiV4ChannelsMembersUserIdViewRequestBody({
     required this.channelId,
     this.prevChannelId,
+    this.collapsedThreadsSupported,
   });
 
   factory ApiV4ChannelsMembersUserIdViewRequestBody.fromJson(
@@ -24,6 +25,9 @@ class ApiV4ChannelsMembersUserIdViewRequestBody {
   @LenientString()
   @JsonKey(name: 'prev_channel_id')
   final String? prevChannelId;
+  @LenientBool()
+  @JsonKey(name: 'collapsed_threads_supported')
+  final bool? collapsedThreadsSupported;
 
   Map<String, Object?> toJson() =>
       _$ApiV4ChannelsMembersUserIdViewRequestBodyToJson(this);

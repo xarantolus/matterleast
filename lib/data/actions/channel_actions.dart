@@ -57,8 +57,11 @@ class ChannelActions {
               run: () => session.api.call(
                 () => _client.channels.viewChannel(
                   userId: 'me',
+                  // Without the flag the server treats the client as not
+                  // knowing threads and marks the channel's threads read.
                   body: api.ApiV4ChannelsMembersUserIdViewRequestBody(
                     channelId: channelId,
+                    collapsedThreadsSupported: true,
                   ),
                 ),
               ),
