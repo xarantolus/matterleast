@@ -88,11 +88,24 @@ String? timezoneName({
   return (name == null || name.isEmpty) ? null : name;
 }
 
+/// The custom status duration that clears at a chosen moment.
+const customStatusDateAndTime = 'date_and_time';
+
+/// Pure: whether a custom status can be set to clear at [chosen]: only a
+/// moment still ahead of [now].
+bool customStatusEndValid(DateTime? chosen, DateTime now) =>
+    chosen != null && chosen.isAfter(now);
+
 /// When a custom status set now with [duration] clears, in the user's local
 /// time; null for "don't clear" (an empty duration). "Today" and "this
 /// week" end at the last moment of the day and of Sunday, the way the
 /// official apps send them, so other clients read them the same.
-DateTime? customStatusExpiry(String duration, DateTime now) {
+/// `date_and_time` clears at [chosen].
+DateTime? customStatusExpiry(
+  String duration,
+  DateTime now, {
+  DateTime? chosen,
+}) {
   final local = now.toLocal();
   DateTime endOfDay(int day) =>
       DateTime(local.year, local.month, day, 23, 59, 59, 999);
@@ -102,6 +115,7 @@ DateTime? customStatusExpiry(String duration, DateTime now) {
     'four_hours' => local.add(const Duration(hours: 4)),
     'today' => endOfDay(local.day),
     'this_week' => endOfDay(local.day + DateTime.sunday - local.weekday),
+    customStatusDateAndTime => chosen?.toLocal(),
     _ => null,
   };
 }

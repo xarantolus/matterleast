@@ -97,6 +97,17 @@ void main() {
     test('never when it should not clear', () {
       expect(customStatusExpiry('', monday), isNull);
     });
+
+    test('at the moment the user chose, which must still be ahead', () {
+      final friday = DateTime(2026, 5, 8, 17, 30);
+      expect(
+        customStatusExpiry(customStatusDateAndTime, monday, chosen: friday),
+        friday,
+      );
+      expect(customStatusEndValid(friday, monday), isTrue);
+      expect(customStatusEndValid(DateTime(2026, 5, 4, 15), monday), isFalse);
+      expect(customStatusEndValid(null, monday), isFalse);
+    });
   });
 
   test('do not disturb ends after its length, or tomorrow at nine', () {

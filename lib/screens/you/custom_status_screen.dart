@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
@@ -26,6 +27,7 @@ String durationLabel(String duration) => switch (duration) {
   'four_hours' => '4 hours',
   'today' => 'Today',
   'this_week' => 'This week',
+  customStatusDateAndTime => 'Choose date and time',
   _ => "Don't clear",
 };
 
@@ -44,6 +46,9 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
   late final _text = TextEditingController(text: widget.current?.text);
   late String _emoji = widget.current?.emoji ?? '';
   late String _duration = widget.current?.duration ?? 'today';
+  late DateTime? _chosenEnd = _duration == customStatusDateAndTime
+      ? widget.current?.expiresAt?.toLocal()
+      : null;
   var _saving = false;
 
   @override
@@ -60,6 +65,47 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
 
   bool get _empty => _text.text.trim().isEmpty && _emoji.isEmpty;
 
+  bool get _endMissing =>
+      !_empty &&
+      _duration == customStatusDateAndTime &&
+      !customStatusEndValid(_chosenEnd, DateTime.now());
+
+  void _apply(String emoji, String text, String duration) => setState(() {
+    _emoji = emoji;
+    _text.text = text;
+    _duration = duration;
+    // A past status's own moment has passed; a new one has to be picked.
+    _chosenEnd = null;
+  });
+
+  Future<void> _pickEnd() async {
+    final now = DateTime.now();
+    final start = _chosenEnd ?? now.add(const Duration(hours: 1));
+    final day = await showDatePicker(
+      context: context,
+      initialDate: start,
+      firstDate: DateUtils.dateOnly(now),
+      lastDate: DateTime(now.year + 1, now.month, now.day),
+    );
+    if (day == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(start),
+    );
+    if (time == null || !mounted) return;
+    final end = DateTime(day.year, day.month, day.day, time.hour, time.minute);
+    if (!customStatusEndValid(end, DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pick a time in the future.')),
+      );
+      return;
+    }
+    setState(() {
+      _duration = customStatusDateAndTime;
+      _chosenEnd = end;
+    });
+  }
+
   Future<void> _done() async {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -75,7 +121,11 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                 // Newlines would not show in one-line places.
                 text: _text.text.trim().replaceAll(RegExp(r'\s*\n\s*'), ' '),
                 duration: _duration,
-                expiresAt: customStatusExpiry(_duration, DateTime.now()),
+                expiresAt: customStatusExpiry(
+                  _duration,
+                  DateTime.now(),
+                  chosen: _chosenEnd,
+                ),
               ),
       );
       navigator.pop();
@@ -104,7 +154,8 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
         actions: [
           TextButton(
             style: context.barButtonStyle,
-            onPressed: _saving || (_empty && widget.current == null)
+            onPressed:
+                _saving || _endMissing || (_empty && widget.current == null)
                 ? null
                 : _done,
             child: Text(_empty && widget.current != null ? 'Clear' : 'Done'),
@@ -172,6 +223,20 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                     selected: _duration == d,
                     onSelected: (_) => setState(() => _duration = d),
                   ),
+                ChoiceChip(
+                  avatar: const Icon(Icons.event_outlined),
+                  label: Text(
+                    _duration == customStatusDateAndTime && _chosenEnd != null
+                        ? untilLabel(
+                            _chosenEnd!,
+                            DateTime.now(),
+                            use24: MediaQuery.alwaysUse24HourFormatOf(context),
+                          )
+                        : durationLabel(customStatusDateAndTime),
+                  ),
+                  selected: _duration == customStatusDateAndTime,
+                  onSelected: _saving ? null : (_) => _pickEnd(),
+                ),
               ],
             ),
           ),
@@ -192,11 +257,7 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                 ),
                 title: Text(s.text),
                 subtitle: Text(durationLabel(s.duration)),
-                onTap: () => setState(() {
-                  _emoji = s.emoji;
-                  _text.text = s.text;
-                  _duration = s.duration;
-                }),
+                onTap: () => _apply(s.emoji, s.text, s.duration),
               ),
           ],
           const PaneLabel('Suggestions'),
@@ -215,11 +276,7 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                 ),
                 title: Text(s.text),
                 subtitle: Text(durationLabel(s.duration)),
-                onTap: () => setState(() {
-                  _emoji = s.emoji;
-                  _text.text = s.text;
-                  _duration = s.duration;
-                }),
+                onTap: () => _apply(s.emoji, s.text, s.duration),
               ),
         ],
       ),
