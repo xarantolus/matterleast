@@ -104,4 +104,53 @@ void main() {
     expect(uploads, lessThanOrEqualTo(1));
     expect(queued, isEmpty);
   });
+
+  test("one refused file sends nothing, keeps the files and says the server's "
+      'reason', () async {
+    server.handle = (r) {
+      if (r.path != '/api/v4/files') return error(404, 'not_found');
+      if (r.text.contains('chart.txt')) {
+        return (
+          status: 413,
+          json: {
+            'id': 'api.file.upload_file.too_large_detailed.app_error',
+            'message':
+                'Unable to upload file chart.txt. 100 bytes exceeds the '
+                'maximum allowed file size of 10 bytes.',
+            'status_code': 413,
+          },
+          headers: const <String, String>{},
+        );
+      }
+      return ok({
+        'file_infos': [
+          {'id': 'file1', 'name': 'tide.txt', 'channel_id': channelId},
+        ],
+      });
+    };
+    await expectLater(
+      sendShared(
+        session,
+        channelId: channelId,
+        message: 'For the crew',
+        files: files,
+      ),
+      throwsA(
+        isA<ServerError>().having(
+          (e) => e.message,
+          'message',
+          contains('maximum allowed file size'),
+        ),
+      ),
+    );
+    final db = session.db;
+    final queued = await (db.select(
+      db.posts,
+    )..where((p) => p.message.equals('For the crew'))).get();
+    expect(queued, isEmpty);
+    expect(await db.select(db.outbox).get(), isEmpty);
+    for (final path in files) {
+      expect(File(path).existsSync(), isTrue, reason: path);
+    }
+  });
 }
