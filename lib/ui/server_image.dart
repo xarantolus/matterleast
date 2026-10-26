@@ -59,10 +59,11 @@ class _ServerImageState extends ConsumerState<ServerImage> {
       );
     }
     final url = imageRequestUri(
-      Uri.parse(widget.url),
+      widget.url,
       Uri.parse(widget.serverUrl),
       proxy: proxy,
     );
+    if (url == null) return _unavailable;
     final pixels = (widget.width * MediaQuery.devicePixelRatioOf(context))
         .round();
     final placeholder =
@@ -79,14 +80,16 @@ class _ServerImageState extends ConsumerState<ServerImage> {
       semanticLabel: widget.semanticLabel,
       frameBuilder: (context, child, frame, synchronous) =>
           frame == null && !synchronous ? placeholder : child,
-      errorBuilder: (context, error, stack) => _Box(
-        width: widget.width,
-        height: widget.height,
-        icon: Icons.broken_image_outlined,
-        label: 'Image not available',
-      ),
+      errorBuilder: (context, error, stack) => _unavailable,
     );
   }
+
+  Widget get _unavailable => _Box(
+    width: widget.width,
+    height: widget.height,
+    icon: Icons.broken_image_outlined,
+    label: 'Image not available',
+  );
 }
 
 /// A neutral tonal box the size of the image.

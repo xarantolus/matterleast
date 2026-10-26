@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/post_extras.dart';
+import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -41,7 +42,8 @@ Size? imageBox({
 }
 
 /// An image written in a message, in a box reserved from its known size.
-/// Images the server did not measure are not shown, as in Mattermost's apps.
+/// Images the server did not measure are not shown, as in Mattermost's apps;
+/// an address no image can come from shows its alt text.
 class MessageImage extends StatelessWidget {
   const MessageImage({required this.image, required this.measured, super.key});
 
@@ -50,6 +52,9 @@ class MessageImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!canLoadImage(image.url)) {
+      return image.alt.isEmpty ? const SizedBox.shrink() : Text(image.alt);
+    }
     final measured = this.measured;
     if (measured == null) return const SizedBox.shrink();
     return LayoutBuilder(

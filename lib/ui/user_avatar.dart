@@ -43,7 +43,9 @@ class UserAvatar extends ConsumerWidget {
     if (override != null && override.isNotEmpty) {
       final proxy = ref.watch(imageProxyProvider(serverUrl)).value;
       if (proxy == null) return badge;
-      url = imageRequestUri(Uri.parse(override), server, proxy: proxy);
+      final icon = imageRequestUri(override, server, proxy: proxy);
+      if (icon == null) return badge;
+      url = icon;
     } else {
       url = serverUri(server, 'api/v4/users/$userId/image', {
         '_': '${lastPictureUpdate ?? 0}',

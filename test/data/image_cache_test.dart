@@ -126,23 +126,35 @@ void main() {
 
     test('relative paths resolve under the server\'s sub-path', () {
       expect(
-        imageRequestUri(
-          Uri.parse('/static/bot.png'),
-          server,
-          proxy: true,
-        ).toString(),
+        imageRequestUri('/static/bot.png', server, proxy: true).toString(),
         'https://chat.example.test/team/static/bot.png',
       );
     });
 
     test('other hosts go through the image proxy only when it is on', () {
-      final external = Uri.parse('https://pics.example.test/cat.png?s=1');
-      expect(imageRequestUri(external, server, proxy: false), external);
-      final proxied = imageRequestUri(external, server, proxy: true);
+      const external = 'https://pics.example.test/cat.png?s=1';
+      expect(
+        imageRequestUri(external, server, proxy: false),
+        Uri.parse(external),
+      );
+      final proxied = imageRequestUri(external, server, proxy: true)!;
       expect(proxied.path, '/team/api/v4/image');
-      expect(proxied.queryParameters['url'], external.toString());
-      final own = Uri.parse('https://chat.example.test/team/api/v4/files/f1');
-      expect(imageRequestUri(own, server, proxy: true), own);
+      expect(proxied.queryParameters['url'], external);
+      const own = 'https://chat.example.test/team/api/v4/files/f1';
+      expect(imageRequestUri(own, server, proxy: true), Uri.parse(own));
+    });
+
+    test('addresses no image can come from are refused, not thrown', () {
+      for (final odd in [
+        'file:///x',
+        'data:image/png;base64,AAAA',
+        'javascript:alert(1)',
+        'http:///nohost.png',
+        'http://[broken',
+      ]) {
+        expect(imageRequestUri(odd, server, proxy: true), isNull, reason: odd);
+        expect(imageRequestUri(odd, server, proxy: false), isNull, reason: odd);
+      }
     });
 
     test('the client config switches the proxy', () {

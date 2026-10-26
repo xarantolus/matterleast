@@ -76,10 +76,22 @@ Uri serverUri(Uri server, String path, [Map<String, String>? query]) {
   );
 }
 
-/// Pure: where to fetch [image] from. Server-relative paths resolve
-/// against [server]. Other hosts go through the server's image proxy when
-/// it has one, so they don't learn the reader's address.
-Uri imageRequestUri(Uri image, Uri server, {required bool proxy}) {
+/// Pure: whether [url] is an address an image can be fetched from: http,
+/// https or relative to the server. Messages may hold anything.
+bool canLoadImage(String url) {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return false;
+  if (!uri.hasScheme) return true;
+  return (uri.isScheme('http') || uri.isScheme('https')) && uri.host.isNotEmpty;
+}
+
+/// Pure: where to fetch [url] from, or null when it is no image address.
+/// Server-relative paths resolve against [server]. Other hosts go through
+/// the server's image proxy when it has one, so they don't learn the
+/// reader's address.
+Uri? imageRequestUri(String url, Uri server, {required bool proxy}) {
+  if (!canLoadImage(url)) return null;
+  final image = Uri.parse(url);
   final resolved = image.hasScheme
       ? image
       : serverUri(

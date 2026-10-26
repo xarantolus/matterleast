@@ -8,6 +8,7 @@ import 'package:matterleast/ui/attachment_card.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
+import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
 
 void main() {
@@ -112,5 +113,44 @@ void main() {
     );
     expect(tester.takeException(), isNull);
     expect(find.text('Pipeline passed'), findsOneWidget);
+  });
+
+  testWidgets('an image at an address no image comes from shows its alt '
+      'text and is never fetched', (tester) async {
+    final fetched = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: MatterleastApp.lightTheme,
+        home: Scaffold(
+          body: PostEnvironment(
+            server: Uri.parse('https://chat.example.test'),
+            options: const ParseOptions(),
+            myUsername: 'river',
+            onMention: (_) {},
+            onChannel: (_) {},
+            onLink: (_) {},
+            image: (url, size) {
+              fetched.add(url);
+              return SizedBox.fromSize(size: size);
+            },
+            child: const Column(
+              children: [
+                MessageImage(
+                  image: ImagePart('file:///etc/hosts', alt: 'a lighthouse'),
+                  measured: ImageSize(width: 100, height: 50),
+                ),
+                MessageImage(
+                  image: ImagePart('https://pics.example.test/boat.png'),
+                  measured: ImageSize(width: 100, height: 50),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('a lighthouse'), findsOneWidget);
+    expect(fetched, ['https://pics.example.test/boat.png']);
   });
 }
