@@ -58,31 +58,47 @@ class ReactionsBar extends StatelessWidget {
     );
   }
 
-  Widget _chip(BuildContext context, ReactionGroup group) => GestureDetector(
-    onLongPress: () => showReactions(context, reactions, group),
-    child: FilterChip(
-      showCheckmark: false,
-      selected: group.mine,
-      visualDensity: VisualDensity.compact,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      label: Semantics(
-        label: reactionLabel(group),
-        child: ExcludeSemantics(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              EmojiGlyph(name: group.emojiName, size: 18),
-              const SizedBox(width: Spacing.xs),
-              Text('${group.count}'),
-            ],
+  Widget _chip(BuildContext context, ReactionGroup group) {
+    final scheme = Theme.of(context).colorScheme;
+    final mine = group.mine;
+    return GestureDetector(
+      onLongPress: () => showReactions(context, reactions, group),
+      child: FilterChip(
+        showCheckmark: false,
+        selected: mine,
+        // A clear outline, so a lone own reaction reads as yours.
+        side: BorderSide(
+          color: mine ? scheme.primary : scheme.outlineVariant,
+          width: mine ? 1.5 : 1,
+        ),
+        selectedColor: scheme.primaryContainer,
+        labelStyle: mine
+            ? TextStyle(
+                color: scheme.onPrimaryContainer,
+                fontWeight: FontWeight.w600,
+              )
+            : null,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        label: Semantics(
+          label: reactionLabel(group),
+          child: ExcludeSemantics(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                EmojiGlyph(name: group.emojiName, size: 18),
+                const SizedBox(width: Spacing.xs),
+                Text('${group.count}'),
+              ],
+            ),
           ),
         ),
+        onSelected: (_) => onToggle != null
+            ? onToggle!(group.emojiName)
+            : showReactions(context, reactions, group),
       ),
-      onSelected: (_) => onToggle != null
-          ? onToggle!(group.emojiName)
-          : showReactions(context, reactions, group),
-    ),
-  );
+    );
+  }
 }
 
 /// What a screen reader says for a reaction chip: the emoji's name, how
