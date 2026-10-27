@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -61,13 +61,25 @@ class Conversation extends _$Conversation {
     String? rootId,
     String? highlightPostId,
   }) {
+    DesktopShell.focus.addListener(_focusChanged);
     ref.onDispose(() {
+      DesktopShell.focus.removeListener(_focusChanged);
       unawaited(_subscription?.cancel());
       unawaited(_caughtUp?.cancel());
       _session?.runner.cancelOwner(this);
     });
     unawaited(_start());
     return ConversationState(highlightKey: highlightPostId);
+  }
+
+  /// Messages from others arrived while the desktop window was in the
+  /// background; they are read once it has the focus again.
+  var _unseen = false;
+
+  void _focusChanged() {
+    if (!_unseen || _session == null || !appInFront()) return;
+    _unseen = false;
+    unawaited(_markRead(seen: true));
   }
 
   Future<void> _start() async {
@@ -157,9 +169,12 @@ class Conversation extends _$Conversation {
       generation: moved ? state.generation + 1 : state.generation,
       rows: _rows(window),
     );
-    final lifecycle = WidgetsBinding.instance.lifecycleState;
-    if (fromOthers && lifecycle == AppLifecycleState.resumed) {
-      unawaited(_markRead(seen: true));
+    if (fromOthers) {
+      if (appInFront()) {
+        unawaited(_markRead(seen: true));
+      } else {
+        _unseen = true;
+      }
     }
   }
 
@@ -282,9 +297,7 @@ class Conversation extends _$Conversation {
     if (!ref.mounted || state.refreshing) return;
     await _refresh();
     if (!ref.mounted || state.refreshFailure != null) return;
-    if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
-      await _markRead(seen: true);
-    }
+    if (appInFront()) await _markRead(seen: true);
   }
 
   /// Follows the reader: more of the stored window, then older pages, near

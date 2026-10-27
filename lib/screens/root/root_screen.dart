@@ -22,6 +22,7 @@ import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/slide_route.dart';
+import 'package:matterleast/ui/update_indicator.dart';
 
 /// The rail of teams beside Home or the picked team's channel list.
 class RootScreen extends ConsumerStatefulWidget {
@@ -174,7 +175,7 @@ class _RootLayout extends ConsumerWidget {
     list: Scaffold(
       appBar: AppBar(
         title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: actions,
+        actions: [...actions, const UpdateIndicator()],
         bottom: ProgressSlot(active: refreshing),
       ),
       body: SafeArea(

@@ -15,6 +15,7 @@ import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/notifications/app_visibility.dart';
+import 'package:matterleast/notifications/desktop_notifications.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
@@ -157,10 +158,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         AppVisibility.set(visible: true);
         unawaited(manager.setForeground(true));
       },
-      onHide: () {
-        AppVisibility.set(visible: false);
-        unawaited(manager.setForeground(false));
-      },
+      onHide: () => unawaited(appHidden(manager)),
     );
   }
 
@@ -221,6 +219,9 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     ref.listen(serversProvider, (_, next) {
       if (next case AsyncData(:final value)) {
         unawaited(followSignedIn(value));
+        if (isDesktop) {
+          unawaited(ref.read(desktopNotificationsProvider).follow(value));
+        }
         if (value.any((s) => s.signedIn)) {
           unawaited(askForNotificationsOnce(context, ref));
         }

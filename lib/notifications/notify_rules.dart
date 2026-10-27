@@ -1,5 +1,6 @@
 import 'package:matterleast/domain/channel_mentions.dart';
 import 'package:matterleast/domain/notify_props.dart';
+import 'package:matterleast/domain/panes.dart';
 
 /// Which Android channel a message notification goes to. The order is the
 /// importance: a conversation with a mention in it is a mention.
@@ -293,3 +294,26 @@ List<ShownConversation> readSince(
         case final viewed? when !viewed.isBefore(s.newestAt))
       s,
 ];
+
+/// Pure: whether the user is looking at the conversation [key] of [url]
+/// now, so it needs no notification (Mattermost web's rule): the window
+/// has the focus and the conversation is open in it. A thread is open in
+/// its own pane or route; anything else in its channel's.
+bool conversationInView(
+  String url,
+  ConversationKey key, {
+  required bool focused,
+  required Panes open,
+}) {
+  if (!focused) return false;
+  if (key.rootId.isNotEmpty) {
+    return switch (open.thread) {
+      final t? => t.url == url && t.rootId == key.rootId,
+      null => false,
+    };
+  }
+  return switch (open.channel) {
+    final c? => c.url == url && c.channelId == key.channelId,
+    null => false,
+  };
+}

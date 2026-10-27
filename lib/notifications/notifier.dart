@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/log.dart';
@@ -185,6 +185,9 @@ class Notifier {
 
   final FlutterLocalNotificationsPlugin _plugin;
 
+  /// Desktop: the toasts shown by this process, by tag.
+  final _shownHere = <String, ShownConversation>{};
+
   AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
       .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin
@@ -273,8 +276,42 @@ class Notifier {
       teamId: notice.teamId ?? '',
       newestAt: notice.newestAt,
     );
+    final tag = tagOf(notice.serverUrl, notice.key);
+    if (isDesktop) {
+      final newest = notice.messages.last;
+      final text = toastText(
+        title: notice.title,
+        group: notice.group,
+        sender: newest.senderName,
+        text: newest.text,
+        subText: noticeSubText(
+          serverName: notice.serverName,
+          teamName: notice.teamName,
+        ),
+      );
+      _shownHere[tag] = ShownConversation(
+        serverUrl: notice.serverUrl,
+        key: notice.key,
+        newestAt: notice.newestAt,
+      );
+      await _plugin.show(
+        id: idOf(tag),
+        title: text.title,
+        // Linux notification servers read the body as markup.
+        body: defaultTargetPlatform == TargetPlatform.linux
+            ? const HtmlEscape(HtmlEscapeMode.element).convert(text.body)
+            : text.body,
+        payload: target.encode(),
+        notificationDetails: const NotificationDetails(
+          linux: LinuxNotificationDetails(
+            category: LinuxNotificationCategory.imReceived,
+          ),
+        ),
+      );
+      return;
+    }
     await _plugin.show(
-      id: idOf(tagOf(notice.serverUrl, notice.key)),
+      id: idOf(tag),
       title: notice.title,
       body: notice.messages.last.text,
       payload: target.encode(),
@@ -350,8 +387,16 @@ class Notifier {
     );
   }
 
-  /// Message notifications of [serverUrl] on screen now.
+  /// Message notifications of [serverUrl] on screen now. Desktops can't
+  /// list them (Linux has no call for it, Windows only for packaged apps),
+  /// so there it is what this process showed and didn't clear.
   Future<List<ShownConversation>> shown(String serverUrl) async {
+    if (isDesktop) {
+      return [
+        for (final s in _shownHere.values)
+          if (s.serverUrl == serverUrl) s,
+      ];
+    }
     final List<ActiveNotification> active;
     try {
       active = await _plugin.getActiveNotifications();
@@ -371,8 +416,11 @@ class Notifier {
     ];
   }
 
+  /// Withdraws the notification of [key]. An unpackaged Windows app can't:
+  /// its toasts stay in the Action Center until the user dismisses them.
   Future<void> clear(String serverUrl, ConversationKey key) {
     final tag = tagOf(serverUrl, key);
+    _shownHere.remove(tag);
     return _plugin.cancel(id: idOf(tag), tag: tag);
   }
 
