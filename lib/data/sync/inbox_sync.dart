@@ -34,16 +34,18 @@ class InboxSync {
   ServerDatabase get _db => store.db;
   api.MattermostClient get _client => server.client;
 
-  /// All three lists; with [force] even when they are fresh.
+  /// All three lists; with [force] even when they are fresh, with [quiet]
+  /// without showing as refreshing.
   Future<void> refresh({
     bool force = false,
+    bool quiet = false,
     SyncPriority priority = SyncPriority.p2,
   }) async {
     final jobs = <Future<void>>[];
     Future<void> maybe(String list, Future<void> Function() run) async {
       if (!force && !await _stale(list)) return;
       await runner.enqueue(
-        SyncJob(key: 'list:$list', priority: priority, run: run),
+        SyncJob(key: 'list:$list', priority: priority, quiet: quiet, run: run),
       );
     }
 

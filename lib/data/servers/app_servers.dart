@@ -1,3 +1,4 @@
+import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/files/local_copies.dart';
@@ -19,6 +20,7 @@ ServerManager appServerManager({
   void Function(String url, ReadMark mark)? onRead,
   Future<void> Function(String url)? onWiped,
   Future<void> Function(ServerSession session)? onHidden,
+  NetworkState? network,
 }) {
   final settings = SettingsStore(db);
   return ServerManager(
@@ -37,5 +39,6 @@ ServerManager appServerManager({
     onRead: onRead ?? (_, _) {},
     onWiped: onWiped ?? (_) async {},
     onHidden: onHidden ?? (_) async {},
+    network: network,
   );
 }

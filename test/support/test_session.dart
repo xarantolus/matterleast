@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart' hide isNotNull, isNull;
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -18,21 +19,28 @@ const teamId = 'tm000000000000000000000t01';
 
 /// A session on an in-memory database talking to [server], with the user,
 /// one team and one channel (with one stored post) as an entry sync would
-/// leave them. [interceptor] sees every statement the database runs.
+/// leave them. [interceptor] sees every statement the database runs;
+/// [network] is wired in as [ServerSession.open] does.
 Future<ServerSession> testSession(
   FakeServer server, {
   ServerDatabase? db,
   QueryInterceptor? interceptor,
+  NetworkState? network,
 }) async {
   var connection = DatabaseConnection(NativeDatabase.memory());
   if (interceptor != null) connection = connection.interceptWith(interceptor);
   final database = db ?? ServerDatabase(connection);
-  final http = ServerApi(baseUrl: server.url, token: () => 'token');
+  final http = ServerApi(
+    baseUrl: server.url,
+    token: () => 'token',
+    network: network,
+  );
   final session = ServerSession(
     url: server.url,
     api: http,
     db: database,
-    runner: SyncRunner(),
+    network: network,
+    runner: SyncRunner(offline: () => network?.offline ?? false),
     dbPath: '',
     images: ServerImageCaches(
       directory: '',

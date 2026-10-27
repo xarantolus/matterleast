@@ -45,6 +45,7 @@ class SyncJob {
     this.timeout = const Duration(seconds: 30),
     this.owner,
     this.visible = true,
+    this.quiet = false,
   });
 
   /// Jobs with the same key coalesce: a second enqueue while one is queued
@@ -62,23 +63,40 @@ class SyncJob {
   /// for small periodic work such as presence, so the progress bar doesn't
   /// blink every minute.
   final bool visible;
+
+  /// A [visible] job that reports its failure but doesn't show as
+  /// refreshing: a retry nobody asked for, which may wait for a timeout.
+  final bool quiet;
 }
 
 class _Queued {
-  _Queued(this.job, this.sequence) : completer = Completer<void>();
+  _Queued(this.job, this.sequence)
+    : completer = Completer<void>(),
+      shown = job.visible && !job.quiet;
   final SyncJob job;
   final int sequence;
   final Completer<void> completer;
+
+  /// Shows as refreshing; a shown job joining a quiet one makes it shown.
+  bool shown;
 }
 
 /// Runs sync work by priority with bounded parallelism. Foreground and
-/// background triggers enqueue here; nothing else fetches on its own.
+/// background triggers enqueue here; nothing else fetches on its own. While
+/// [offline] says so, jobs fail at once without showing as refreshing.
 class SyncRunner {
-  SyncRunner({this.maxParallel = 2, DateTime Function()? clock})
-    : _clock = clock ?? (() => DateTime.now().toUtc());
+  SyncRunner({
+    this.maxParallel = 2,
+    DateTime Function()? clock,
+    bool Function()? offline,
+  }) : _clock = clock ?? (() => DateTime.now().toUtc()),
+       _offline = offline ?? _never;
+
+  static bool _never() => false;
 
   final int maxParallel;
   final DateTime Function() _clock;
+  final bool Function() _offline;
   final _status = ValueNotifier<SyncStatus>(const SyncIdle());
   final _queue = <_Queued>[];
   final _running = HashMap<String, _Queued>();
@@ -95,8 +113,22 @@ class SyncRunner {
   /// Failures are reported through [status] and rethrown to the caller.
   Future<void> enqueue(SyncJob job) {
     if (_closed) return Future.value();
+    if (_offline()) {
+      const cause = Unreachable(noNetwork: true);
+      if (job.visible) {
+        _failed = cause;
+        _publish();
+      }
+      return Future.error(cause);
+    }
     final existing = _running[job.key] ?? _queuedByKey[job.key];
-    if (existing != null) return existing.completer.future;
+    if (existing != null) {
+      if (job.visible && !job.quiet && !existing.shown) {
+        existing.shown = true;
+        _publish();
+      }
+      return existing.completer.future;
+    }
     final queued = _Queued(job, _sequence++);
     _queue.add(queued);
     _queuedByKey[job.key] = queued;
@@ -180,8 +212,8 @@ class SyncRunner {
 
   void _publish() {
     if (_closed) return;
-    final running = _running.values.where((q) => q.job.visible).length;
-    final queued = _queue.where((q) => q.job.visible).length;
+    final running = _running.values.where((q) => q.shown).length;
+    final queued = _queue.where((q) => q.shown).length;
     if (running + queued > 0) {
       _status.value = SyncRefreshing(running: running, queued: queued);
     } else if (_failed case final cause?) {

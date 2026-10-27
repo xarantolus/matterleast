@@ -218,6 +218,92 @@ final class KeyringUnavailableProvider
 String _$keyringUnavailableHash() =>
     r'27d1522cf15cfb0e24e4fd50849e60b94954d245';
 
+@ProviderFor(networkState)
+final networkStateProvider = NetworkStateProvider._();
+
+final class NetworkStateProvider
+    extends $FunctionalProvider<NetworkState, NetworkState, NetworkState>
+    with $Provider<NetworkState> {
+  NetworkStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'networkStateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$networkStateHash();
+
+  @$internal
+  @override
+  $ProviderElement<NetworkState> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  NetworkState create(Ref ref) {
+    return networkState(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NetworkState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NetworkState>(value),
+    );
+  }
+}
+
+String _$networkStateHash() => r'd94b31057357d41faff4af0531da6185cf15dbf0';
+
+/// True while the device has no network, so nothing shows as loading.
+
+@ProviderFor(offline)
+final offlineProvider = OfflineProvider._();
+
+/// True while the device has no network, so nothing shows as loading.
+
+final class OfflineProvider extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// True while the device has no network, so nothing shows as loading.
+  OfflineProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'offlineProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$offlineHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return offline(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$offlineHash() => r'469732fd3047a6abeeb4bf7ae90a145e1ecdfaf9';
+
 @ProviderFor(serverManager)
 final serverManagerProvider = ServerManagerProvider._();
 
@@ -257,7 +343,7 @@ final class ServerManagerProvider
   }
 }
 
-String _$serverManagerHash() => r'285e913c2c50f805fdeecccec801c497f45d14a8';
+String _$serverManagerHash() => r'079c701e06279794fd4b74446a0f74507ed11754';
 
 /// Message notifications of this isolate; [Notifier.init] runs at launch.
 

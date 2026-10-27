@@ -22,9 +22,9 @@ Stream<bool> imageProxy(Ref ref, String url) async* {
 
 @Riverpod(keepAlive: true)
 Stream<List<ConnectivityResult>> connection(Ref ref) async* {
-  final connectivity = Connectivity();
-  yield await connectivity.checkConnectivity();
-  yield* connectivity.onConnectivityChanged;
+  final network = ref.watch(networkStateProvider);
+  if (network.last case final last?) yield last;
+  yield* network.reports;
 }
 
 @Riverpod(keepAlive: true)

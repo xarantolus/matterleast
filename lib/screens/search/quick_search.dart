@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -251,7 +252,9 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
       );
     }
     final local = rankSwitchItems(term, items);
-    var searching = _remoteTerm.trim() != term;
+    final offline = ref.watch(offlineProvider);
+    // Waiting to send the term only counts when it can be sent.
+    var searching = !offline && _remoteTerm.trim() != term;
     final remote = <SwitchItem>[];
     String? failedHost;
     for (final s in widget.servers) {
@@ -285,6 +288,11 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
                     failedHost,
                     local.isEmpty && extra.isEmpty,
                   )) {
+                    (_?, true) when offline =>
+                      "You're offline, and nothing saved on this phone "
+                          'matches “$term”.',
+                    (_?, false) when offline =>
+                      "You're offline · showing saved matches",
                     (final host?, true) =>
                       "Couldn't search $host, and nothing saved on this "
                           'phone matches “$term”.',

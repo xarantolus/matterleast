@@ -43,11 +43,12 @@ class EntrySync {
 
   /// Resolves when the entry data and the current team are stored; the
   /// deferred work keeps running behind it.
-  Future<void> run() => runner.enqueue(
+  Future<void> run({bool quiet = false}) => runner.enqueue(
     SyncJob(
       key: 'entry',
       priority: SyncPriority.p0,
       timeout: const Duration(seconds: 60),
+      quiet: quiet,
       run: _entry,
     ),
   );
