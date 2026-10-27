@@ -112,6 +112,26 @@ void main() {
     expect(tester.getBottomLeft(find.text('row 100')).dy, closeTo(600, 0.5));
   });
 
+  testWidgets('a row that comes with a jump down from far up shows', (
+    tester,
+  ) async {
+    await tester.pumpWidget(list(rowsFrom(100, 1)));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 6; i++) {
+      await scrollUpAndSettle(tester);
+    }
+    expect(find.text('row 100'), findsNothing);
+    // Sending: the conversation asks for the bottom as it hears of the new
+    // row, and the list gets that row in the next frame.
+    controller.jumpToBottom();
+    await tester.pumpWidget(list(rowsFrom(101, 1)));
+    await tester.pumpAndSettle();
+    expect(tester.getBottomLeft(find.text('row 101')).dy, closeTo(600, 0.5));
+    await tester.pumpWidget(list(rowsFrom(102, 1)));
+    await tester.pumpAndSettle();
+    expect(tester.getBottomLeft(find.text('row 102')).dy, closeTo(600, 0.5));
+  });
+
   int topVisible(WidgetTester tester, List<Item> rows) => rows
       .map((r) => r.id)
       .where((id) => find.text('row $id').evaluate().isNotEmpty)
