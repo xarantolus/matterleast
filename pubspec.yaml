@@ -30,6 +30,7 @@ dependencies:
   # ("Aw, Snap") on the mmauth:// redirect with Chrome 141 on a real phone.
   flutter_web_auth_2: ^4.1.0
   freezed_annotation: ^3.1.0
+  image: ^4.12.0
   image_picker: ^1.2.4
   image_picker_android: ^0.8.13+25
   image_picker_platform_interface: ^2.11.2

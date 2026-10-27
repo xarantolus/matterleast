@@ -9,11 +9,13 @@ import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/data/views/channel_input.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/preview_text.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/log.dart';
+import 'package:matterleast/notifications/notice_format.dart';
 import 'package:matterleast/notifications/notifier.dart';
 import 'package:matterleast/notifications/notify_rules.dart';
 
@@ -335,9 +337,13 @@ class NotificationCheck {
     Map<String, api.Post> posts,
     String myId,
   ) async {
-    final channel = await (_db.select(
-      _db.channels,
-    )..where((c) => c.id.equals(update.key.channelId))).getSingle();
+    final row = await (_db.select(_db.channels).join([
+      innerJoin(
+        _db.myChannels,
+        _db.myChannels.channelId.equalsExp(_db.channels.id),
+      ),
+    ])..where(_db.channels.id.equals(update.key.channelId))).getSingle();
+    final channel = row.readTable(_db.channels);
     final senders = {for (final p in update.posts) p.userId};
     final partner = channel.type == 'D'
         ? directPartnerId(channel.name, myId)
@@ -346,55 +352,61 @@ class NotificationCheck {
     final users = {
       for (final u in await (_db.select(
         _db.users,
-      )..where((u) => u.id.isIn({...senders, ?partner}))).get())
+      )..where((u) => u.id.isIn({...senders, ?partner, myId}))).get())
         u.id: u,
     };
+    final people = <String, PersonInput>{
+      for (final u in users.values)
+        u.id: (
+          username: u.username,
+          nickname: u.nickname,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          status: u.status,
+        ),
+    };
     final format = await _db.nameFormat();
-    String nameOf(String id) => switch (users[id]) {
-      final u? => personName((
-        username: u.username,
-        nickname: u.nickname,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        status: u.status,
-      ), format),
+    String nameOf(String id) => switch (people[id]) {
+      final p? => personName(p, format),
       null => 'Someone',
     };
-    final channelTitle = switch (channel.type) {
-      'D' when partner != null => nameOf(partner),
-      _ => channel.displayName.isEmpty ? channel.name : channel.displayName,
-    };
-    final rootText = update.key.rootId.isEmpty
-        ? null
-        : previewText(posts[update.key.rootId]?.message ?? '');
-    final title = update.key.rootId.isEmpty
-        ? channelTitle
-        : (rootText?.isNotEmpty ?? false)
-        ? 'Thread: $rootText'
-        : 'Thread in $channelTitle';
+    final heading = noticeHeading(
+      channelType: channel.type,
+      name: conversationName(
+        channelInputOf(channel, row.readTable(_db.myChannels)),
+        myId: myId,
+        people: people,
+        nameFormat: format,
+      ).title,
+      thread: update.key.rootId.isNotEmpty,
+    );
     final avatars = <String, Uint8List?>{};
-    for (final id in senders) {
+    for (final id in {...senders, ?partner}) {
       avatars[id] = await _avatar(id, users[id]?.lastPictureUpdate);
     }
     return ConversationNotice(
       serverUrl: _url,
       key: update.key,
       kind: update.kind,
-      title: title,
-      group: channel.type != 'D' || update.key.rootId.isNotEmpty,
+      title: heading.title,
+      group: heading.group,
+      largeIcon: avatars[partner],
       teamId: channel.teamId,
+      teamName: await _teamName(channel),
       serverName: serverName,
       newestPostId: update.newest.id,
       newestAt: update.newest.createAt,
       messages: [
         for (final p in update.posts)
-          NoticeMessage(
-            senderId: p.userId,
-            senderName: _senderName(posts[p.id], nameOf(p.userId)),
-            text: _text(posts[p.id], p.message),
-            at: p.createAt,
-            avatar: avatars[p.userId],
-          ),
+          if (_overrideName(posts[p.id]) case final override)
+            NoticeMessage(
+              // Android puts consecutive messages of one key under one name.
+              senderId: override == null ? p.userId : '${p.userId}/$override',
+              senderName: override ?? nameOf(p.userId),
+              text: _text(posts[p.id], p.message),
+              at: p.createAt,
+              avatar: avatars[p.userId],
+            ),
       ],
     );
   }
@@ -402,13 +414,13 @@ class NotificationCheck {
   static final _shortcode = RegExp(r':([a-z0-9_+-]+):');
 
   /// Webhooks and bots may post under another name.
-  static String _senderName(api.Post? post, String fallback) {
+  static String? _overrideName(api.Post? post) {
     final override = post?.props?['override_username'];
     return post?.props?['from_webhook'] == 'true' &&
             override is String &&
             override.isNotEmpty
         ? override
-        : fallback;
+        : null;
   }
 
   static String _text(api.Post? post, String message) {
@@ -438,9 +450,23 @@ class NotificationCheck {
         deadline: const Duration(seconds: 5),
       );
       final bytes = response.data;
-      return bytes == null ? null : Uint8List.fromList(bytes);
+      return bytes == null ? null : roundAvatar(Uint8List.fromList(bytes));
     } on Object {
       return null;
     }
+  }
+
+  /// A channel's team, named only when the user is in more than one.
+  Future<String?> _teamName(ChannelRow channel) async {
+    if (channel.teamId.isEmpty) return null;
+    final count = _db.myTeams.teamId.count();
+    final teams = await (_db.selectOnly(
+      _db.myTeams,
+    )..addColumns([count])).map((r) => r.read(count)).getSingle();
+    if ((teams ?? 0) < 2) return null;
+    final team = await (_db.select(
+      _db.teams,
+    )..where((t) => t.id.equals(channel.teamId))).getSingleOrNull();
+    return team?.displayName;
   }
 }

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:matterleast/log.dart';
+import 'package:matterleast/notifications/notice_format.dart';
 import 'package:matterleast/notifications/notify_rules.dart';
 
 /// One message line in a notification.
@@ -37,6 +38,8 @@ class ConversationNotice {
     required this.newestAt,
     this.teamId,
     this.serverName,
+    this.teamName,
+    this.largeIcon,
   });
 
   final String serverUrl;
@@ -44,15 +47,24 @@ class ConversationNotice {
   final NotifyKind kind;
   final String title;
 
-  /// More than two people talk here (a channel or group message).
+  /// Each message shows under its sender, below [title] (a channel, group
+  /// message or thread); otherwise [title] is the sender.
   final bool group;
+
+  /// Oldest first.
   final List<NoticeMessage> messages;
   final String newestPostId;
   final DateTime newestAt;
   final String? teamId;
 
-  /// Shown under the title when the user has more than one server.
+  /// Shown next to the app name when the user has more than one server.
   final String? serverName;
+
+  /// Shown next to the app name when the user is in more than one team.
+  final String? teamName;
+
+  /// The other person's picture, for a direct message.
+  final Uint8List? largeIcon;
 }
 
 /// Where a notification leads, carried in its payload.
@@ -116,6 +128,9 @@ class NoticeTarget {
 }
 
 /// The fixed Android channels; the user tunes each in the system settings.
+/// The message channels start at one importance: Android orders by
+/// importance before time, which would put a new channel message below
+/// older direct messages.
 abstract final class NoticeChannels {
   static const direct = AndroidNotificationChannel(
     'direct',
@@ -130,11 +145,15 @@ abstract final class NoticeChannels {
     importance: Importance.high,
   );
   static const other = AndroidNotificationChannel(
-    'other',
+    'other_messages',
     'Other messages',
     description: 'Messages in channels set to notify about everything',
-    importance: Importance.defaultImportance,
+    importance: Importance.high,
   );
+
+  /// Created at default importance before; Android keeps a channel's
+  /// importance, so it went for [other].
+  static const _replaced = ['other'];
 
   /// The same id the Kotlin service creates for its persistent notification.
   static const sync = AndroidNotificationChannel(
@@ -191,6 +210,9 @@ class Notifier {
     ]) {
       await android.createNotificationChannel(channel);
     }
+    for (final id in NoticeChannels._replaced) {
+      await android.deleteNotificationChannel(channelId: id);
+    }
   }
 
   /// The notification the app was opened from, if any.
@@ -223,8 +245,6 @@ class Notifier {
   }
 
   Future<void> show(ConversationNotice notice) async {
-    final channel = NoticeChannels.of(notice.kind);
-    final tag = tagOf(notice.serverUrl, notice.key);
     final target = NoticeTarget(
       serverUrl: notice.serverUrl,
       channelId: notice.key.channelId,
@@ -233,63 +253,80 @@ class Notifier {
       teamId: notice.teamId ?? '',
       newestAt: notice.newestAt,
     );
-    final style = MessagingStyleInformation(
-      const Person(name: 'You', key: 'me'),
-      conversationTitle: notice.group ? notice.title : null,
-      groupConversation: notice.group,
-      messages: [
-        for (final m in notice.messages)
-          Message(
-            m.text,
-            m.at.toLocal(),
-            Person(
-              key: m.senderId,
-              name: m.senderName,
-              icon: m.avatar == null ? null : ByteArrayAndroidIcon(m.avatar!),
-            ),
-          ),
-      ],
-    );
     await _plugin.show(
-      id: idOf(tag),
+      id: idOf(tagOf(notice.serverUrl, notice.key)),
       title: notice.title,
       body: notice.messages.last.text,
       payload: target.encode(),
       notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(
-          channel.id,
-          channel.name,
-          channelDescription: channel.description,
-          importance: channel.importance,
-          priority: notice.kind == NotifyKind.other
-              ? Priority.defaultPriority
-              : Priority.high,
-          icon: 'ic_notification',
-          tag: tag,
-          category: AndroidNotificationCategory.message,
-          visibility: NotificationVisibility.private,
-          styleInformation: style,
-          subText: notice.serverName,
-          when: notice.newestAt.millisecondsSinceEpoch,
-          showWhen: true,
-          autoCancel: true,
-          onlyAlertOnce: false,
-          actions: const [
-            AndroidNotificationAction(
-              NoticeActions.reply,
-              'Reply',
-              inputs: [AndroidNotificationActionInput(label: 'Reply')],
-              semanticAction: SemanticAction.reply,
-              allowGeneratedReplies: true,
-            ),
-            AndroidNotificationAction(
-              NoticeActions.read,
-              'Mark as read',
-              semanticAction: SemanticAction.markAsRead,
-            ),
-          ],
-        ),
+        android: detailsOf(notice, now: DateTime.now().toUtc()),
       ),
+    );
+  }
+
+  /// How Android shows [notice]: a conversation in the messaging style,
+  /// dated by its newest message.
+  static AndroidNotificationDetails detailsOf(
+    ConversationNotice notice, {
+    required DateTime now,
+  }) {
+    final channel = NoticeChannels.of(notice.kind);
+    final largeIcon = notice.largeIcon;
+    return AndroidNotificationDetails(
+      channel.id,
+      channel.name,
+      channelDescription: channel.description,
+      importance: channel.importance,
+      priority: Priority.high,
+      icon: 'ic_notification',
+      largeIcon: notice.group || largeIcon == null
+          ? null
+          : ByteArrayAndroidBitmap(largeIcon),
+      tag: tagOf(notice.serverUrl, notice.key),
+      category: AndroidNotificationCategory.message,
+      visibility: NotificationVisibility.private,
+      styleInformation: MessagingStyleInformation(
+        const Person(name: 'You', key: 'me'),
+        conversationTitle: notice.group ? notice.title : null,
+        groupConversation: notice.group,
+        messages: [
+          for (final m in notice.messages)
+            Message(
+              m.text,
+              m.at,
+              Person(
+                key: m.senderId,
+                name: m.senderName,
+                icon: switch (m.avatar) {
+                  final avatar? => ByteArrayAndroidIcon(avatar),
+                  null => null,
+                },
+              ),
+            ),
+        ],
+      ),
+      subText: noticeSubText(
+        serverName: notice.serverName,
+        teamName: notice.teamName,
+      ),
+      when: noticeWhen(notice.newestAt, now).millisecondsSinceEpoch,
+      showWhen: true,
+      autoCancel: true,
+      onlyAlertOnce: false,
+      actions: const [
+        AndroidNotificationAction(
+          NoticeActions.reply,
+          'Reply',
+          inputs: [AndroidNotificationActionInput(label: 'Reply')],
+          semanticAction: SemanticAction.reply,
+          allowGeneratedReplies: true,
+        ),
+        AndroidNotificationAction(
+          NoticeActions.read,
+          'Mark as read',
+          semanticAction: SemanticAction.markAsRead,
+        ),
+      ],
     );
   }
 
