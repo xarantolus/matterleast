@@ -21,6 +21,8 @@ import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/user_profile.dart';
+import 'package:matterleast/notifications/notification_launch.dart';
+import 'package:matterleast/notifications/notifier.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
@@ -99,6 +101,40 @@ void main() {
       ),
     );
   }
+
+  /// The server signed in and its channel list, [channelId] in it as
+  /// [kind].
+  List<Override> Function(String url) known({
+    SwitchKind kind = SwitchKind.channel,
+  }) =>
+      (url) => [
+        serversProvider.overrideWith((ref) {
+          ref.keepAlive();
+          return Stream.value([
+            ServerEntry(
+              url: url,
+              displayName: 'Test',
+              siteName: null,
+              serverVersion: null,
+              diagnosticId: null,
+              lastActiveAt: DateTime(2026),
+              ssoScheme: null,
+            ),
+          ]);
+        }),
+        switchItemsProvider(url).overrideWith((ref) {
+          ref.keepAlive();
+          return Stream.value([
+            SwitchItem(
+              serverUrl: url,
+              kind: kind,
+              id: channelId,
+              title: 'Boats',
+              teamId: teamId,
+            ),
+          ]);
+        }),
+      ];
 
   Future<void> settle(WidgetTester tester) async {
     for (var i = 0; i < 20; i++) {
@@ -315,7 +351,7 @@ void main() {
   testWidgets('a left swipe brings back the conversation just closed', (
     tester,
   ) async {
-    await start(tester);
+    await start(tester, more: known());
     unawaited(
       openConversation(
         navigator(tester),
@@ -337,6 +373,76 @@ void main() {
     expect(screen.highlightPostId, isNull);
     navigator(tester).pop();
     await settle(tester);
+    await finish(tester);
+  });
+
+  testWidgets('a tapped notification opens its conversation', (tester) async {
+    await start(tester, more: known());
+    final opening = openNotice(
+      navigator(tester),
+      widgetRef,
+      NoticeTarget(
+        serverUrl: server.url.toString(),
+        channelId: channelId,
+        postId: 'old1',
+        newestAt: DateTime(2026),
+      ),
+    );
+    await settle(tester);
+    expect(
+      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
+      'old1',
+    );
+    navigator(tester).pop();
+    await settle(tester);
+    await opening;
+    await finish(tester);
+  });
+
+  testWidgets("a left swipe doesn't bring back a channel the user left", (
+    tester,
+  ) async {
+    await start(tester, more: known(kind: SwitchKind.joinable));
+    await open(tester);
+    await back(tester);
+    await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
+    await settle(tester);
+    expect(conversations(), findsNothing);
+    await finish(tester);
+  });
+
+  testWidgets('leaving a channel closes it and its thread in the panes', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1800, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await start(tester);
+    await open(tester);
+    await open(tester, rootId: 'old1');
+    expect(container.read(openPanesProvider).isEmpty, isFalse);
+    closeChannel(
+      navigator(tester),
+      url: server.url.toString(),
+      channelId: channelId,
+    );
+    expect(container.read(openPanesProvider).isEmpty, isTrue);
+    await finish(tester);
+  });
+
+  testWidgets('leaving a channel closes its routes and its threads', (
+    tester,
+  ) async {
+    await start(tester);
+    await open(tester);
+    await open(tester, rootId: 'old1');
+    closeChannel(
+      navigator(tester),
+      url: server.url.toString(),
+      channelId: channelId,
+    );
+    await settle(tester);
+    expect(conversations(), findsNothing);
     await finish(tester);
   });
 

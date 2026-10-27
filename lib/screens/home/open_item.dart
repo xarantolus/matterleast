@@ -12,7 +12,7 @@ Future<void> openInboxItem(BuildContext context, InboxItem item) {
     Navigator.of(context),
     url: item.serverUrl,
     channelId: item.channelId,
-    title: item.place ?? item.title,
+    title: (item.place ?? item.title).replaceFirst(RegExp('^#'), ''),
     teamId: item.teamId,
     rootId: thread ? rootId : null,
     highlightPostId: item.postId,

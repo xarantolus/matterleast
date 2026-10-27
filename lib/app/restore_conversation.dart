@@ -44,18 +44,29 @@ Future<List<ConversationTarget>> _stackOf(
   bool launchedByIntent,
 ) async {
   if (saved == null || launchedByIntent) return const [];
-  final servers = await ref.read(serversProvider.future);
+  return openableStack(ref, saved);
+}
+
+/// The conversations that open [saved] again, its channel first when it is
+/// a thread; none when its server is signed out or its channel left, gone
+/// or archived since.
+Future<List<ConversationTarget>> openableStack(
+  WidgetRef ref,
+  SavedConversation saved,
+) async {
+  final servers = await readOnce(ref, serversProvider.future);
   final signedIn = {
     for (final s in servers)
       if (s.signedIn) s.url,
   };
   if (!signedIn.contains(saved.url)) return const [];
-  final items = await ref
-      .read(switchItemsProvider(saved.url).future)
-      .timeout(const Duration(seconds: 5));
+  final items = await readOnce(
+    ref,
+    switchItemsProvider(saved.url).future,
+  ).timeout(const Duration(seconds: 5));
   return conversationsToRestore(
     saved: saved,
-    launchedByIntent: launchedByIntent,
+    launchedByIntent: false,
     signedInUrls: signedIn,
     channels: {
       for (final i in items)

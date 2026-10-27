@@ -18,6 +18,9 @@ class OpenPanes extends _$OpenPanes {
 
   void back() => state = state.back();
 
+  void close(String url, String channelId) =>
+      state = state.without(url, channelId);
+
   void set(Panes panes) => state = panes;
 }
 

@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
-import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
@@ -57,15 +57,7 @@ class PinnedScreen extends ConsumerWidget {
           for (final item in items)
             MessagePreviewTile(
               item: item,
-              onTap: () => openConversation(
-                Navigator.of(context),
-                url: url,
-                channelId: channelId,
-                title: title,
-                teamId: item.teamId,
-                highlightPostId: item.postId,
-                rootId: item.rootId,
-              ),
+              onTap: () => openInboxItem(context, item),
             ),
         ],
       );
