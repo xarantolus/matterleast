@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
@@ -113,7 +114,7 @@ class _SwitchPickerState extends ConsumerState<SwitchPicker> {
       ], limit: 100);
       final remote = <SwitchItem>[];
       if (people) {
-        searching = _remoteTerm.trim() != term;
+        searching = !ref.watch(offlineProvider) && _remoteTerm.trim() != term;
         final answer = ref.watch(switchRemoteProvider(url, _remoteTerm));
         if (answer.isLoading) searching = true;
         for (final item in answer.value ?? const <SwitchItem>[]) {

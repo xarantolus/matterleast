@@ -22,7 +22,8 @@ import 'package:matterleast/domain/agent_stream.dart';
 
 /// Keeps one server's database current while the app is in the foreground:
 /// the WebSocket, the entry sync it triggers and presence polling. It goes
-/// quiet 15 s after the app goes to the background.
+/// quiet 15 s after the app goes to the background. When the device's
+/// network comes back it reconnects and refreshes at once.
 class ServerConnection {
   ServerConnection({
     required Uri url,
@@ -32,6 +33,7 @@ class ServerConnection {
     required this.users,
     required String? Function() token,
     Duration pingInterval = const Duration(seconds: 30),
+    this.online,
   }) {
     drafts = DraftSync(server: server, store: store);
     scheduled = ScheduledSync(server: server, store: store);
@@ -70,16 +72,22 @@ class ServerConnection {
       token: token,
       pingInterval: pingInterval,
       onEvent: receive,
+      online: online,
       onResync: () {
         agents.reconnected();
         refreshAll();
       },
       onClosed: (failCount) {
-        // REST may work where the socket doesn't; try once per outage.
-        if (failCount == 1) refreshAll();
+        // REST may work where the socket doesn't; try once per outage,
+        // without the progress bar, since it may only wait for a timeout.
+        if (failCount == 1) refreshAll(quiet: true);
       },
     );
+    online?.addListener(_networkChanged);
   }
+
+  /// False while the device has no network.
+  final ValueListenable<bool>? online;
 
   final ServerApi server;
   final ServerStore store;
@@ -176,15 +184,20 @@ class ServerConnection {
 
   /// Events may have been missed: the entry data first, then Home's lists,
   /// which only a fresh fetch brings up to date, and open conversations.
-  void refreshAll() => unawaited(
+  /// [quiet]: failures report, but nothing shows as refreshing.
+  void refreshAll({bool quiet = false}) => unawaited(
     entry
-        .run()
+        .run(quiet: quiet)
         .then((_) {
           if (!_caughtUp.isClosed) _caughtUp.add(null);
-          return inbox.refresh(force: true);
+          return inbox.refresh(force: true, quiet: quiet);
         })
         .catchError((Object _) {}),
   );
+
+  void _networkChanged() {
+    if (_active && online!.value) refreshAll();
+  }
 
   Future<void> _stop() async {
     _active = false;
@@ -193,6 +206,7 @@ class ServerConnection {
   }
 
   Future<void> close() async {
+    online?.removeListener(_networkChanged);
     _startTimer?.cancel();
     _stopTimer?.cancel();
     await _stop();

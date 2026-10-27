@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/data/actions/agent_actions.dart';
@@ -36,6 +37,7 @@ class ServerSession {
     required this.dbPath,
     required this.images,
     required String? Function() token,
+    this.network,
   }) : store = ServerStore(db) {
     users = UserLoader(server: api, store: store);
     connection = ServerConnection(
@@ -45,9 +47,15 @@ class ServerSession {
       runner: runner,
       users: users,
       token: token,
+      online: network?.online,
     );
-    outbox = OutboxSender(server: api, store: store);
+    outbox = OutboxSender(
+      server: api,
+      store: store,
+      offline: () => network?.offline ?? false,
+    );
     connection.state.addListener(_onSocketState);
+    network?.online.addListener(_onNetwork);
   }
 
   final Uri url;
@@ -55,6 +63,9 @@ class ServerSession {
   final ServerDatabase db;
   final ServerStore store;
   final SyncRunner runner;
+
+  /// The device's network; null where it isn't watched (tests).
+  final NetworkState? network;
 
   /// The database file, for its size on the status page.
   final String dbPath;
@@ -96,8 +107,13 @@ class ServerSession {
   /// A socket that connects again means the server is reachable again.
   void _onSocketState() {
     if (connection.state.value == SocketState.connected) {
+      network?.reachable();
       unawaited(outbox.wake());
     }
+  }
+
+  void _onNetwork() {
+    if (network?.offline == false) unawaited(outbox.wake());
   }
 
   /// Opens the session without waiting for the Keystore, so stored data
@@ -110,16 +126,22 @@ class ServerSession {
     required Future<int> Function() mediaBudget,
     required Future<int> Function() filesBudget,
     required TokenStore tokens,
+    NetworkState? network,
   }) {
     final key = url.toString();
     // A keyring that doesn't answer fails each request with its reason.
     unawaited(tokens.read(key).then((_) {}, onError: (Object _) {}));
-    final api = ServerApi(baseUrl: url, token: () => tokens.read(key));
+    final api = ServerApi(
+      baseUrl: url,
+      token: () => tokens.read(key),
+      network: network,
+    );
     final session = ServerSession(
       url: url,
       api: api,
       db: db,
-      runner: SyncRunner(),
+      network: network,
+      runner: SyncRunner(offline: () => network?.offline ?? false),
       dbPath: dbPath,
       images: ServerImageCaches(
         directory: imagesDirectory,
@@ -139,6 +161,7 @@ class ServerSession {
   }
 
   Future<void> close() async {
+    network?.online.removeListener(_onNetwork);
     connection.state.removeListener(_onSocketState);
     await composer.dispose().catchError((Object _) {});
     await outbox.close();

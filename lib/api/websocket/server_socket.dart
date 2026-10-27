@@ -12,7 +12,9 @@ enum SocketState { disconnected, connecting, connected }
 
 /// One server's WebSocket: connects with the token, keeps the connection
 /// alive with JSON pings, reconnects with backoff and tells [onResync] when
-/// events were lost so the caller fetches again over REST.
+/// events were lost so the caller fetches again over REST. While [online]
+/// is false it waits instead of retrying, and connects again as soon as it
+/// turns true.
 class ServerSocket {
   ServerSocket({
     required this.serverUrl,
@@ -22,7 +24,10 @@ class ServerSocket {
     this.onClosed,
     this.pingInterval = const Duration(seconds: 30),
     this.retryDelayOf = jitteredRetryDelay,
-  });
+    this.online,
+  }) {
+    online?.addListener(_networkChanged);
+  }
 
   final Uri serverUrl;
   final String? Function() token;
@@ -33,6 +38,9 @@ class ServerSocket {
   final void Function(int failCount)? onClosed;
   final Duration pingInterval;
   final Duration Function(int failCount) retryDelayOf;
+  final ValueListenable<bool>? online;
+
+  bool get _offline => !(online?.value ?? true);
 
   final _state = ValueNotifier(SocketState.disconnected);
   ValueListenable<SocketState> get state => _state;
@@ -67,6 +75,7 @@ class ServerSocket {
   }
 
   Future<void> dispose() async {
+    online?.removeListener(_networkChanged);
     await stop();
     _state.dispose();
   }
@@ -192,11 +201,25 @@ class ServerSocket {
     _state.value = SocketState.disconnected;
     _failCount++;
     onClosed?.call(_failCount);
-    if (!_running) return;
+    if (!_running || _offline) return;
     _retryTimer?.cancel();
     _retryTimer = Timer(retryDelayOf(_failCount), () {
       if (_running) unawaited(_open());
     });
+  }
+
+  void _networkChanged() {
+    if (!_running) return;
+    if (_offline) {
+      _retryTimer?.cancel();
+      if (_state.value != SocketState.disconnected) unawaited(_reconnect());
+      return;
+    }
+    if (_state.value != SocketState.disconnected) return;
+    // A fresh network: the backoff from the outage no longer applies.
+    _retryTimer?.cancel();
+    _failCount = 0;
+    unawaited(_open());
   }
 
   Future<void> _drop() async {
