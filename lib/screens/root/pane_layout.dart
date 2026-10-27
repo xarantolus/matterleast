@@ -7,6 +7,7 @@ import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/screens/channel/reading_places.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/screens/root/resizable_panes.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/update_indicator.dart';
@@ -119,41 +120,35 @@ class _PaneLayoutState extends ConsumerState<PaneLayout> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) notifier.back();
       },
-      child: Row(
-        children: [
-          SizedBox(
-            width: 72 + 1 + listPaneWidth(windowClass) + padding.left,
-            child: MediaQuery.removePadding(
-              context: context,
-              removeRight: true,
-              child: WindowCorner(here: false, child: widget.list),
-            ),
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            child: MediaQuery.removePadding(
-              context: context,
-              removeLeft: true,
-              removeRight: side != null,
-              child: WindowCorner(
-                here: side == null,
-                child: switch (shown.main) {
-                  final main? => InPane(
-                    onClose: main is ThreadTarget ? notifier.back : null,
-                    closeIcon: Icons.arrow_back,
-                    closeTooltip: 'Back to the channel',
-                    child: _pane(main),
-                  ),
-                  null => const _NothingOpen(),
-                },
+      child: ResizablePanes(
+        defaultListWidth: listPaneWidth(windowClass),
+        listInset: railWidth + 1 + padding.left,
+        sideInset: padding.right,
+        list: MediaQuery.removePadding(
+          context: context,
+          removeRight: true,
+          child: WindowCorner(here: false, child: widget.list),
+        ),
+        main: MediaQuery.removePadding(
+          context: context,
+          removeLeft: true,
+          removeRight: side != null,
+          child: WindowCorner(
+            here: side == null,
+            child: switch (shown.main) {
+              final main? => InPane(
+                onClose: main is ThreadTarget ? notifier.back : null,
+                closeIcon: Icons.arrow_back,
+                closeTooltip: 'Back to the channel',
+                child: _pane(main),
               ),
-            ),
+              null => const _NothingOpen(),
+            },
           ),
-          if (side != null) ...[
-            const VerticalDivider(width: 1),
-            SizedBox(
-              width: threadPaneWidth + padding.right,
-              child: MediaQuery.removePadding(
+        ),
+        side: side == null
+            ? null
+            : MediaQuery.removePadding(
                 context: context,
                 removeLeft: true,
                 child: WindowCorner(
@@ -165,9 +160,6 @@ class _PaneLayoutState extends ConsumerState<PaneLayout> {
                   ),
                 ),
               ),
-            ),
-          ],
-        ],
       ),
     );
   }

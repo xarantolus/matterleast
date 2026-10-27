@@ -5,6 +5,7 @@ import 'package:matterleast/domain/app_update.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/desktop_window.dart';
 import 'package:matterleast/domain/message_text_size.dart';
+import 'package:matterleast/domain/pane_widths.dart';
 import 'package:matterleast/domain/rail.dart';
 
 /// One typed setting: its key, default and text encoding. Settings are
@@ -156,6 +157,14 @@ abstract final class Settings {
     _encodeOptionalText,
   );
 
+  /// The side pane widths of the wide layout, the same on every server.
+  static const paneWidths = Setting<PaneWidths>(
+    'paneWidths',
+    PaneWidths(),
+    _decodePaneWidths,
+    _encodePaneWidths,
+  );
+
   static const all = <Setting<Object?>>[
     imagesOnMobileData,
     mediaCacheBytes,
@@ -173,6 +182,7 @@ abstract final class Settings {
     lastUpdateCheck,
     latestRelease,
     dismissedRelease,
+    paneWidths,
   ];
 
   static bool _decodeBool(String raw) => switch (raw) {
@@ -245,6 +255,20 @@ abstract final class Settings {
     }
     throw FormatException('window placement', raw);
   }
+
+  static PaneWidths _decodePaneWidths(String raw) {
+    try {
+      if (jsonDecode(raw) case final Map<String, Object?> json) {
+        return PaneWidths.fromJson(json);
+      }
+    } on Object {
+      // Falls through to the format error below.
+    }
+    throw FormatException('pane widths', raw);
+  }
+
+  static String _encodePaneWidths(PaneWidths value) =>
+      jsonEncode(value.toJson());
 
   static String _encodeWindowPlacement(WindowPlacement? value) =>
       value == null ? '' : jsonEncode(value.toJson());

@@ -15,6 +15,7 @@ import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
 import 'package:matterleast/domain/message_text_size.dart';
+import 'package:matterleast/domain/pane_widths.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_features.dart';
@@ -176,6 +177,11 @@ Stream<MessageTextSize> messageTextSize(Ref ref) =>
 @Riverpod(keepAlive: true)
 Stream<bool> wrapCode(Ref ref) =>
     ref.watch(settingsStoreProvider).watch(Settings.wrapCode);
+
+/// Watched from launch, so the wide layout opens at the stored widths.
+@Riverpod(keepAlive: true)
+Stream<PaneWidths> paneWidths(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.paneWidths);
 
 @riverpod
 Stream<bool> closeToTray(Ref ref) =>

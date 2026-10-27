@@ -1041,6 +1041,49 @@ final class WrapCodeProvider
 
 String _$wrapCodeHash() => r'29d6ee002f5e077605648ad91b2d08edd0583605';
 
+/// Watched from launch, so the wide layout opens at the stored widths.
+
+@ProviderFor(paneWidths)
+final paneWidthsProvider = PaneWidthsProvider._();
+
+/// Watched from launch, so the wide layout opens at the stored widths.
+
+final class PaneWidthsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<PaneWidths>,
+          PaneWidths,
+          Stream<PaneWidths>
+        >
+    with $FutureModifier<PaneWidths>, $StreamProvider<PaneWidths> {
+  /// Watched from launch, so the wide layout opens at the stored widths.
+  PaneWidthsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paneWidthsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$paneWidthsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<PaneWidths> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<PaneWidths> create(Ref ref) {
+    return paneWidths(ref);
+  }
+}
+
+String _$paneWidthsHash() => r'55020151dca2fc434494d263627fa588a172236f';
+
 @ProviderFor(closeToTray)
 final closeToTrayProvider = CloseToTrayProvider._();
 
