@@ -62,6 +62,15 @@ This needs `/dev/kvm` inside the container, which `run-container.sh` passes
 through; the host user needs to be in the `kvm` group. AVDs are
 stored on a volume so extra API levels persist.
 
+## Linux desktop
+
+The image also builds the Linux desktop app (CMake, Ninja, GTK, libsecret,
+WebKitGTK, Ayatana AppIndicator) and has what a virtual desktop session
+needs: Xvfb, openbox, xfce4-panel (task list and tray), dunst, a D-Bus
+session with gnome-keyring, xdotool and ImageMagick. `tool/desktop.sh up`
+starts such a session and runs the app in it; the desktop app reaches the
+test server at `http://127.0.0.1:8065`.
+
 ## Local Mattermost server
 
 `server/server.sh start` runs a throwaway Mattermost server with podman inside
