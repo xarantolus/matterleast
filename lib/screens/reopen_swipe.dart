@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/restore_conversation.dart';
+import 'package:matterleast/domain/conversation_restore.dart';
+import 'package:matterleast/domain/panes.dart';
+import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/ui/slide_route.dart';
@@ -36,7 +40,24 @@ class _ReopenSwipeState extends ConsumerState<ReopenSwipe> {
     _swipe = 0;
     final last = ref.read(lastClosedProvider);
     if (!far || last == null || !mounted) return;
-    unawaited(reopenConversation(Navigator.of(context), last));
+    unawaited(_reopen(Navigator.of(context), last));
+  }
+
+  /// Only while it can still be opened: not after the user left the
+  /// channel, it was archived or the server signed out.
+  Future<void> _reopen(
+    NavigatorState navigator,
+    ConversationTarget last,
+  ) async {
+    final saved = conversationToSave(Panes.fromStack([last]));
+    if (saved == null) return;
+    try {
+      final stack = await openableStack(ref, saved);
+      if (stack.isEmpty || !navigator.mounted) return;
+      await reopenConversation(navigator, stack.last);
+    } on Object catch (e) {
+      Log.warn('launch', 'Bringing back the closed conversation failed', e);
+    }
   }
 
   @override
