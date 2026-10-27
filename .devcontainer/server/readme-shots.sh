@@ -153,8 +153,14 @@ shots() {
         # shellcheck disable=SC2086
         "$lane" adb shell am broadcast -a com.android.systemui.demo $c >/dev/null
     done
-    # A fresh install asks about notifications first.
+    # A fresh install asks about notifications first, and a relaunch reopens
+    # the last conversation over the list.
     if python3 "$ui" "$lane adb" has 'Not now'; then tap 'Not now'; fi
+    for _ in 1 2 3; do
+        python3 "$ui" "$lane adb" has 'Home' && break
+        "$lane" adb shell input keyevent 4
+        sleep 2
+    done
     for mode in d:yes l:no; do
         "$lane" adb shell cmd uimode night "${mode##*:}" >/dev/null
         sleep 3
