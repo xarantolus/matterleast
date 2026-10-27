@@ -125,4 +125,50 @@ void main() {
     await store.applyLivePost(event.post!, fromSelf: true, mentionsMe: false);
     expect(await storedIds(), ['p9']);
   });
+
+  test('the old text of an edited post is not stored as a message', () async {
+    final copy = {
+      ...plain('old1', 1500),
+      'original_id': 'p1',
+      'delete_at': 2500,
+    };
+    final page = api.PostList.fromJson({
+      'order': ['p1', 'old1'],
+      'posts': {'p1': plain('p1', 1000), 'old1': copy},
+    });
+    await store.applyChannelPage(
+      channelId: 'c1',
+      page: page,
+      kind: PageKind.page,
+    );
+    expect(await storedIds(), ['p1']);
+  });
+
+  test(
+    'an edit-history copy stored earlier is removed when seen again',
+    () async {
+      await db
+          .into(db.posts)
+          .insert(
+            PostsCompanion.insert(
+              id: 'old1',
+              channelId: 'c1',
+              userId: 'u2',
+              createAt: DateTime.fromMillisecondsSinceEpoch(1500),
+            ),
+          );
+      final page = api.PostList.fromJson({
+        'order': ['old1'],
+        'posts': {
+          'old1': {...plain('old1', 1500), 'original_id': 'p1'},
+        },
+      });
+      await store.applyChannelPage(
+        channelId: 'c1',
+        page: page,
+        kind: PageKind.page,
+      );
+      expect(await storedIds(), isEmpty);
+    },
+  );
 }

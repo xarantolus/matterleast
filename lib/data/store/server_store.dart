@@ -930,7 +930,21 @@ class ServerStore {
         .write(MyChannelsCompanion(postsFetchedAt: Value(newest)));
   }
 
-  Future<void> _upsertPosts(List<api.Post> posts) async {
+  /// Edit history (a deleted copy of the old text, `original_id` set) is
+  /// not a message: it is never stored, and a copy stored by an earlier
+  /// version is removed when the server sends it again.
+  Future<void> _upsertPosts(List<api.Post> all) async {
+    final copies = [
+      for (final p in all)
+        if (p.id != null && (p.originalId?.isNotEmpty ?? false)) p.id!,
+    ];
+    if (copies.isNotEmpty) {
+      await (db.delete(db.posts)..where((p) => p.id.isIn(copies))).go();
+    }
+    final posts = [
+      for (final p in all)
+        if (p.originalId?.isNotEmpty != true) p,
+    ];
     if (posts.isEmpty) return;
     await _upsertPostRows(posts);
     await _raiseLastPostTimes(posts);
