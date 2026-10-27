@@ -4,6 +4,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/sheet_header.dart';
 
@@ -16,7 +17,7 @@ Future<void> showStatusSheet(
   required String current,
 }) async {
   final messenger = ScaffoldMessenger.of(context);
-  final status = await showModalBottomSheet<String>(
+  final status = await showAppSheet<String>(
     context: context,
     showDragHandle: true,
     builder: (context) => SafeArea(
@@ -66,7 +67,7 @@ Future<void> showStatusSheet(
 
 Future<DndLength?> _askDndLength(
   BuildContext context,
-) => showModalBottomSheet<DndLength>(
+) => showAppSheet<DndLength>(
   context: context,
   showDragHandle: true,
   builder: (context) => SafeArea(

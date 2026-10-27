@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -78,7 +79,7 @@ void _showAcknowledgements(
   final env = PostEnvironment.maybeOf(context);
   final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
   final now = DateTime.now();
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,

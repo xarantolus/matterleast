@@ -11,6 +11,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/schedule_picker.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
@@ -59,7 +60,7 @@ class ScheduledList extends ConsumerWidget {
     ScheduledItem item,
   ) async {
     final error = Theme.of(context).colorScheme.error;
-    final choice = await showModalBottomSheet<_Choice>(
+    final choice = await showAppSheet<_Choice>(
       context: context,
       showDragHandle: true,
       builder: (sheet) => SafeArea(

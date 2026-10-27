@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -21,7 +22,7 @@ Future<SwitchItem?> pickSwitchItem(
   String? serverUrl,
   Set<SwitchKind> kinds = const {},
   bool findPeople = false,
-}) => showModalBottomSheet<SwitchItem>(
+}) => showAppSheet<SwitchItem>(
   context: context,
   showDragHandle: true,
   isScrollControlled: true,

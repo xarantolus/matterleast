@@ -14,6 +14,7 @@ import 'package:matterleast/domain/reminders.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/today.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
@@ -53,7 +54,7 @@ Future<void> showMessageMenu(
   VoidCallback? onEdit,
   VoidCallback? onMarkedUnread,
   ValueChanged<String?>? onQuote,
-}) => showModalBottomSheet<void>(
+}) => showAppSheet<void>(
   context: context,
   showDragHandle: true,
   isScrollControlled: true,
@@ -456,7 +457,7 @@ Future<bool> confirmDelete(BuildContext context) => confirm(
 Future<DateTime?> askReminderTime(BuildContext context) async {
   final now = DateTime.now();
   final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
-  final choice = await showModalBottomSheet<({ReminderChoice? preset})>(
+  final choice = await showAppSheet<({ReminderChoice? preset})>(
     context: context,
     showDragHandle: true,
     builder: (sheet) => SafeArea(
@@ -510,7 +511,7 @@ Future<void> showFailedPostSheet(
   BuildContext context, {
   required String url,
   required PostItem post,
-}) => showModalBottomSheet<void>(
+}) => showAppSheet<void>(
   context: context,
   showDragHandle: true,
   builder: (sheet) => Consumer(

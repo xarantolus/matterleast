@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ConversationTarget {
 
- String get url; String get channelId; String? get teamId; String? get highlightPostId;
+ String get url; String get channelId; String? get teamId; String? get highlightPostId;/// The composer takes the keyboard when it shows, as after Reply.
+ bool get focusComposer;
 /// Create a copy of ConversationTarget
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +28,20 @@ $ConversationTargetCopyWith<ConversationTarget> get copyWith => _$ConversationTa
 @override
 bool operator ==(Object other) {
   final _this = this as ConversationTarget;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationTarget&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.highlightPostId, _this.highlightPostId) || other.highlightPostId == _this.highlightPostId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationTarget&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.highlightPostId, _this.highlightPostId) || other.highlightPostId == _this.highlightPostId)&&(identical(other.focusComposer, _this.focusComposer) || other.focusComposer == _this.focusComposer));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ConversationTarget;
-  return Object.hash(runtimeType,_this.url,_this.channelId,_this.teamId,_this.highlightPostId);
+  return Object.hash(runtimeType,_this.url,_this.channelId,_this.teamId,_this.highlightPostId,_this.focusComposer);
 }
 
 @override
 String toString() {
   final _this = this as ConversationTarget;
-  return 'ConversationTarget(url: ${_this.url}, channelId: ${_this.channelId}, teamId: ${_this.teamId}, highlightPostId: ${_this.highlightPostId})';
+  return 'ConversationTarget(url: ${_this.url}, channelId: ${_this.channelId}, teamId: ${_this.teamId}, highlightPostId: ${_this.highlightPostId}, focusComposer: ${_this.focusComposer})';
 }
 
 
@@ -51,7 +52,7 @@ abstract mixin class $ConversationTargetCopyWith<$Res>  {
   factory $ConversationTargetCopyWith(ConversationTarget value, $Res Function(ConversationTarget) _then) = _$ConversationTargetCopyWithImpl;
 @useResult
 $Res call({
- String url, String channelId, String? teamId, String? highlightPostId
+ String url, String channelId, String? teamId, String? highlightPostId, bool focusComposer
 });
 
 
@@ -68,13 +69,14 @@ class _$ConversationTargetCopyWithImpl<$Res>
 
 /// Create a copy of ConversationTarget
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? url = null,Object? channelId = null,Object? teamId = freezed,Object? highlightPostId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? url = null,Object? channelId = null,Object? teamId = freezed,Object? highlightPostId = freezed,Object? focusComposer = null,}) {
   return _then(_self.copyWith(
 url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,channelId: null == channelId ? _self.channelId : channelId // ignore: cast_nullable_to_non_nullable
 as String,teamId: freezed == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String?,highlightPostId: freezed == highlightPostId ? _self.highlightPostId : highlightPostId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,focusComposer: null == focusComposer ? _self.focusComposer : focusComposer // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -159,11 +161,11 @@ return thread(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String url,  String channelId,  String title,  String? teamId,  String? highlightPostId)?  channel,TResult Function( String url,  String channelId,  String rootId,  String channelName,  String? teamId,  String? highlightPostId)?  thread,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String url,  String channelId,  String title,  String? teamId,  String? highlightPostId,  bool focusComposer)?  channel,TResult Function( String url,  String channelId,  String rootId,  String channelName,  String? teamId,  String? highlightPostId,  bool focusComposer)?  thread,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ChannelTarget() when channel != null:
-return channel(_that.url,_that.channelId,_that.title,_that.teamId,_that.highlightPostId);case ThreadTarget() when thread != null:
-return thread(_that.url,_that.channelId,_that.rootId,_that.channelName,_that.teamId,_that.highlightPostId);case _:
+return channel(_that.url,_that.channelId,_that.title,_that.teamId,_that.highlightPostId,_that.focusComposer);case ThreadTarget() when thread != null:
+return thread(_that.url,_that.channelId,_that.rootId,_that.channelName,_that.teamId,_that.highlightPostId,_that.focusComposer);case _:
   return orElse();
 
 }
@@ -181,11 +183,11 @@ return thread(_that.url,_that.channelId,_that.rootId,_that.channelName,_that.tea
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String url,  String channelId,  String title,  String? teamId,  String? highlightPostId)  channel,required TResult Function( String url,  String channelId,  String rootId,  String channelName,  String? teamId,  String? highlightPostId)  thread,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String url,  String channelId,  String title,  String? teamId,  String? highlightPostId,  bool focusComposer)  channel,required TResult Function( String url,  String channelId,  String rootId,  String channelName,  String? teamId,  String? highlightPostId,  bool focusComposer)  thread,}) {final _that = this;
 switch (_that) {
 case ChannelTarget():
-return channel(_that.url,_that.channelId,_that.title,_that.teamId,_that.highlightPostId);case ThreadTarget():
-return thread(_that.url,_that.channelId,_that.rootId,_that.channelName,_that.teamId,_that.highlightPostId);}
+return channel(_that.url,_that.channelId,_that.title,_that.teamId,_that.highlightPostId,_that.focusComposer);case ThreadTarget():
+return thread(_that.url,_that.channelId,_that.rootId,_that.channelName,_that.teamId,_that.highlightPostId,_that.focusComposer);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -199,11 +201,11 @@ return thread(_that.url,_that.channelId,_that.rootId,_that.channelName,_that.tea
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String url,  String channelId,  String title,  String? teamId,  String? highlightPostId)?  channel,TResult? Function( String url,  String channelId,  String rootId,  String channelName,  String? teamId,  String? highlightPostId)?  thread,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String url,  String channelId,  String title,  String? teamId,  String? highlightPostId,  bool focusComposer)?  channel,TResult? Function( String url,  String channelId,  String rootId,  String channelName,  String? teamId,  String? highlightPostId,  bool focusComposer)?  thread,}) {final _that = this;
 switch (_that) {
 case ChannelTarget() when channel != null:
-return channel(_that.url,_that.channelId,_that.title,_that.teamId,_that.highlightPostId);case ThreadTarget() when thread != null:
-return thread(_that.url,_that.channelId,_that.rootId,_that.channelName,_that.teamId,_that.highlightPostId);case _:
+return channel(_that.url,_that.channelId,_that.title,_that.teamId,_that.highlightPostId,_that.focusComposer);case ThreadTarget() when thread != null:
+return thread(_that.url,_that.channelId,_that.rootId,_that.channelName,_that.teamId,_that.highlightPostId,_that.focusComposer);case _:
   return null;
 
 }
@@ -215,7 +217,7 @@ return thread(_that.url,_that.channelId,_that.rootId,_that.channelName,_that.tea
 
 
 class ChannelTarget implements ConversationTarget {
-  const ChannelTarget({required this.url, required this.channelId, required this.title, this.teamId, this.highlightPostId});
+  const ChannelTarget({required this.url, required this.channelId, required this.title, this.teamId, this.highlightPostId, this.focusComposer = false});
   
 
 @override final  String url;
@@ -223,6 +225,8 @@ class ChannelTarget implements ConversationTarget {
  final  String title;
 @override final  String? teamId;
 @override final  String? highlightPostId;
+/// The composer takes the keyboard when it shows, as after Reply.
+@override@JsonKey() final  bool focusComposer;
 
 /// Create a copy of ConversationTarget
 /// with the given fields replaced by the non-null parameter values.
@@ -234,18 +238,18 @@ $ChannelTargetCopyWith<ChannelTarget> get copyWith => _$ChannelTargetCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChannelTarget&&(identical(other.url, url) || other.url == url)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.title, title) || other.title == title)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.highlightPostId, highlightPostId) || other.highlightPostId == highlightPostId));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChannelTarget&&(identical(other.url, url) || other.url == url)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.title, title) || other.title == title)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.highlightPostId, highlightPostId) || other.highlightPostId == highlightPostId)&&(identical(other.focusComposer, focusComposer) || other.focusComposer == focusComposer));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,url,channelId,title,teamId,highlightPostId);
+    return Object.hash(runtimeType,url,channelId,title,teamId,highlightPostId,focusComposer);
 }
 
 @override
 String toString() {
-    return 'ConversationTarget.channel(url: $url, channelId: $channelId, title: $title, teamId: $teamId, highlightPostId: $highlightPostId)';
+    return 'ConversationTarget.channel(url: $url, channelId: $channelId, title: $title, teamId: $teamId, highlightPostId: $highlightPostId, focusComposer: $focusComposer)';
 }
 
 
@@ -256,7 +260,7 @@ abstract mixin class $ChannelTargetCopyWith<$Res> implements $ConversationTarget
   factory $ChannelTargetCopyWith(ChannelTarget value, $Res Function(ChannelTarget) _then) = _$ChannelTargetCopyWithImpl;
 @override @useResult
 $Res call({
- String url, String channelId, String title, String? teamId, String? highlightPostId
+ String url, String channelId, String title, String? teamId, String? highlightPostId, bool focusComposer
 });
 
 
@@ -273,14 +277,15 @@ class _$ChannelTargetCopyWithImpl<$Res>
 
 /// Create a copy of ConversationTarget
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? url = null,Object? channelId = null,Object? title = null,Object? teamId = freezed,Object? highlightPostId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? url = null,Object? channelId = null,Object? title = null,Object? teamId = freezed,Object? highlightPostId = freezed,Object? focusComposer = null,}) {
   return _then(ChannelTarget(
 url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,channelId: null == channelId ? _self.channelId : channelId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,teamId: freezed == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String?,highlightPostId: freezed == highlightPostId ? _self.highlightPostId : highlightPostId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,focusComposer: null == focusComposer ? _self.focusComposer : focusComposer // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -291,7 +296,7 @@ as String?,
 
 
 class ThreadTarget implements ConversationTarget {
-  const ThreadTarget({required this.url, required this.channelId, required this.rootId, required this.channelName, this.teamId, this.highlightPostId});
+  const ThreadTarget({required this.url, required this.channelId, required this.rootId, required this.channelName, this.teamId, this.highlightPostId, this.focusComposer = false});
   
 
 @override final  String url;
@@ -300,6 +305,7 @@ class ThreadTarget implements ConversationTarget {
  final  String channelName;
 @override final  String? teamId;
 @override final  String? highlightPostId;
+@override@JsonKey() final  bool focusComposer;
 
 /// Create a copy of ConversationTarget
 /// with the given fields replaced by the non-null parameter values.
@@ -311,18 +317,18 @@ $ThreadTargetCopyWith<ThreadTarget> get copyWith => _$ThreadTargetCopyWithImpl<T
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is ThreadTarget&&(identical(other.url, url) || other.url == url)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.highlightPostId, highlightPostId) || other.highlightPostId == highlightPostId));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ThreadTarget&&(identical(other.url, url) || other.url == url)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.rootId, rootId) || other.rootId == rootId)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.highlightPostId, highlightPostId) || other.highlightPostId == highlightPostId)&&(identical(other.focusComposer, focusComposer) || other.focusComposer == focusComposer));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,url,channelId,rootId,channelName,teamId,highlightPostId);
+    return Object.hash(runtimeType,url,channelId,rootId,channelName,teamId,highlightPostId,focusComposer);
 }
 
 @override
 String toString() {
-    return 'ConversationTarget.thread(url: $url, channelId: $channelId, rootId: $rootId, channelName: $channelName, teamId: $teamId, highlightPostId: $highlightPostId)';
+    return 'ConversationTarget.thread(url: $url, channelId: $channelId, rootId: $rootId, channelName: $channelName, teamId: $teamId, highlightPostId: $highlightPostId, focusComposer: $focusComposer)';
 }
 
 
@@ -333,7 +339,7 @@ abstract mixin class $ThreadTargetCopyWith<$Res> implements $ConversationTargetC
   factory $ThreadTargetCopyWith(ThreadTarget value, $Res Function(ThreadTarget) _then) = _$ThreadTargetCopyWithImpl;
 @override @useResult
 $Res call({
- String url, String channelId, String rootId, String channelName, String? teamId, String? highlightPostId
+ String url, String channelId, String rootId, String channelName, String? teamId, String? highlightPostId, bool focusComposer
 });
 
 
@@ -350,7 +356,7 @@ class _$ThreadTargetCopyWithImpl<$Res>
 
 /// Create a copy of ConversationTarget
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? url = null,Object? channelId = null,Object? rootId = null,Object? channelName = null,Object? teamId = freezed,Object? highlightPostId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? url = null,Object? channelId = null,Object? rootId = null,Object? channelName = null,Object? teamId = freezed,Object? highlightPostId = freezed,Object? focusComposer = null,}) {
   return _then(ThreadTarget(
 url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,channelId: null == channelId ? _self.channelId : channelId // ignore: cast_nullable_to_non_nullable
@@ -358,7 +364,8 @@ as String,rootId: null == rootId ? _self.rootId : rootId // ignore: cast_nullabl
 as String,channelName: null == channelName ? _self.channelName : channelName // ignore: cast_nullable_to_non_nullable
 as String,teamId: freezed == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String?,highlightPostId: freezed == highlightPostId ? _self.highlightPostId : highlightPostId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,focusComposer: null == focusComposer ? _self.focusComposer : focusComposer // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

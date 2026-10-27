@@ -10,6 +10,7 @@ import 'package:matterleast/notifications/app_visibility.dart';
 import 'package:matterleast/notifications/background.dart';
 import 'package:matterleast/notifications/notifier.dart';
 import 'package:matterleast/notifications/stay_connected.dart';
+import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 
@@ -52,6 +53,8 @@ Future<void> followSignedIn(List<ServerEntry> servers) async {
 }
 
 /// Opens the conversation a notification is about, at its newest message.
+/// A channel not stored yet, such as a new direct message, is looked up on
+/// the server by that message.
 Future<void> openNotice(
   NavigatorState navigator,
   WidgetRef ref,
@@ -64,8 +67,17 @@ Future<void> openNotice(
     switchItemsProvider(target.serverUrl).future,
   );
   final channel = items.where((i) => i.id == target.channelId).firstOrNull;
-  if (channel == null || !navigator.mounted) return;
-  navigator.popUntil((route) => route.isFirst);
+  if (!navigator.mounted) return;
+  if (channel == null) {
+    if (target.postId.isEmpty) return;
+    await openPost(
+      navigator,
+      target.serverUrl,
+      target.postId,
+      fromOutside: true,
+    );
+    return;
+  }
   await openConversation(
     navigator,
     url: target.serverUrl,
@@ -74,6 +86,7 @@ Future<void> openNotice(
     teamId: channel.teamId,
     rootId: target.rootId.isEmpty ? null : target.rootId,
     highlightPostId: target.postId,
+    fromOutside: true,
   );
 }
 

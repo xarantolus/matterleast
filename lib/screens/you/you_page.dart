@@ -15,6 +15,7 @@ import 'package:matterleast/screens/you/edit_profile_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/screens/you/status_sheet.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/initials_badge.dart';
@@ -289,7 +290,7 @@ class _ServerTile extends ConsumerWidget {
   Future<void> _showMenu(BuildContext context, WidgetRef ref) async {
     final address = Uri.parse(server.url);
     final trusted = TrustedAuthorities.instance.pemFor(address) != null;
-    final action = await showModalBottomSheet<_ServerAction>(
+    final action = await showAppSheet<_ServerAction>(
       context: context,
       showDragHandle: true,
       useSafeArea: true,

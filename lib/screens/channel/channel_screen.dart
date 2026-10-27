@@ -18,6 +18,7 @@ class ChannelScreen extends ConsumerWidget {
     required this.channelId,
     required this.title,
     this.highlightPostId,
+    this.focusComposer = false,
     super.key,
   });
 
@@ -27,6 +28,9 @@ class ChannelScreen extends ConsumerWidget {
 
   /// The message to show centred and highlighted.
   final String? highlightPostId;
+
+  /// The composer takes the keyboard when it shows.
+  final bool focusComposer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -86,8 +90,9 @@ class ChannelScreen extends ConsumerWidget {
       ],
       header: BookmarkBar(url: url, channelId: channelId),
       composerHint: 'Write to $name',
+      focusComposer: focusComposer,
       startText: 'This is the start of $name.',
-      onOpenThread: (post) => openConversation(
+      onOpenThread: (post, {reply = false}) => openConversation(
         Navigator.of(context),
         url: url,
         channelId: channelId,
@@ -95,6 +100,7 @@ class ChannelScreen extends ConsumerWidget {
         teamId: window?.teamId,
         rootId: post.isReply ? post.rootId : post.id,
         highlightPostId: post.isReply ? post.id : null,
+        focusComposer: reply,
       ),
     );
   }

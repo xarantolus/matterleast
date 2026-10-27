@@ -42,6 +42,9 @@ sealed class ConversationTarget with _$ConversationTarget {
     required String title,
     String? teamId,
     String? highlightPostId,
+
+    /// The composer takes the keyboard when it shows, as after Reply.
+    @Default(false) bool focusComposer,
   }) = ChannelTarget;
 
   const factory ConversationTarget.thread({
@@ -51,6 +54,7 @@ sealed class ConversationTarget with _$ConversationTarget {
     required String channelName,
     String? teamId,
     String? highlightPostId,
+    @Default(false) bool focusComposer,
   }) = ThreadTarget;
 }
 

@@ -5,6 +5,7 @@ import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/domain/agent_stream.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/agent_post.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// "Ask Agents" for a channel: an agent writes a summary into its direct
@@ -14,7 +15,7 @@ Future<void> showAskAgentsSheet(
   required String url,
   required String channelId,
   DateTime? unreadSince,
-}) => showModalBottomSheet<void>(
+}) => showAppSheet<void>(
   context: context,
   showDragHandle: true,
   isScrollControlled: true,
