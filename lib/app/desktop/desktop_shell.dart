@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'package:matterleast/app/desktop/launcher_badge.dart';
 import 'package:matterleast/app/desktop/taskbar.dart';
 import 'package:matterleast/app/desktop/tray_host.dart';
 import 'package:matterleast/app/platform.dart';
@@ -28,6 +29,7 @@ class DesktopShell with WindowListener {
 
   final SettingsStore _settings;
   final TrayHost _host;
+  final _launcher = LauncherBadge();
   WindowPlacement? _placement;
   var _closeToTray = Settings.closeToTray.defaultValue;
   StreamSubscription<bool>? _closeSetting;
@@ -154,9 +156,15 @@ class DesktopShell with WindowListener {
       }
       unawaited(Taskbar.setOverlay(badge.overlay));
     }
-    if (flashesTaskbar(before: before, now: count, focused: _focus.value)) {
-      unawaited(Taskbar.flash());
+    final flash = flashesTaskbar(
+      before: before,
+      now: count,
+      focused: _focus.value,
+    );
+    if (before != count) {
+      unawaited(_launcher.show(launcherEntry(count, urgent: flash)));
     }
+    if (flash) unawaited(Taskbar.flash());
   }
 
   /// Shows and focuses the window, wherever it went.
@@ -204,6 +212,7 @@ class DesktopShell with WindowListener {
     _tray = null;
     _menu.clear();
     await _host.close();
+    await _launcher.close();
     await windowManager.setPreventClose(false);
     await windowManager.destroy();
   }

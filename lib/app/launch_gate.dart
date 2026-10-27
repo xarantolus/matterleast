@@ -240,7 +240,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       for (final s in servers)
         if (s.signedIn) s,
     ];
-    return _KeyringNotice(
+    return KeyringNotice(
       shown: ref.watch(keyringUnavailableProvider).value ?? false,
       onRetry: _retryKeyring,
       child: signedIn.isEmpty
@@ -252,8 +252,9 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
 
 /// One banner over the whole window while the token storage doesn't
 /// answer; the saved data stays readable below it.
-class _KeyringNotice extends StatelessWidget {
-  const _KeyringNotice({
+class KeyringNotice extends StatelessWidget {
+  const KeyringNotice({
+    super.key,
     required this.shown,
     required this.onRetry,
     required this.child,
