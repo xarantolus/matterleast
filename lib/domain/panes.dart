@@ -79,6 +79,17 @@ abstract class Panes with _$Panes {
   };
 
   /// Back: the thread closes first, then the channel.
+  /// Without what shows the channel [channelId] of [url], which the user
+  /// left.
+  Panes without(String url, String channelId) {
+    bool shows(ConversationTarget? t) =>
+        t != null && t.url == url && t.channelId == channelId;
+    return Panes(
+      channel: shows(channel) ? null : channel,
+      thread: shows(thread) ? null : thread,
+    );
+  }
+
   Panes back() => thread != null ? Panes(channel: channel) : none;
 
   /// What the conversation routes stacked on a narrow screen, oldest

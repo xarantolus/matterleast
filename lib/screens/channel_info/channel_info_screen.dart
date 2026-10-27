@@ -20,6 +20,7 @@ import 'package:matterleast/screens/channel_info/members_screen.dart';
 import 'package:matterleast/screens/channel_info/notification_prefs_screen.dart';
 import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/channel_info/pinned_screen.dart';
+import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
@@ -86,6 +87,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
     if (!ok || !mounted) return;
     if (await _run("Couldn't leave ${info.title}.", (a) => a.leave(info.id))) {
       navigator.popUntil((route) => route.isFirst);
+      closeChannel(navigator, url: widget.url, channelId: info.id);
     }
   }
 

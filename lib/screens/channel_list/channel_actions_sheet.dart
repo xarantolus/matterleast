@@ -6,6 +6,7 @@ import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
+import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/sheet_header.dart';
@@ -137,10 +138,10 @@ class _ChannelActionsSheet extends ConsumerWidget {
                   return;
                 }
                 if (!context.mounted) return;
-                run(
-                  "Couldn't leave ${item.title}.",
-                  (actions) => actions.leave(item.id),
-                );
+                run("Couldn't leave ${item.title}.", (actions) async {
+                  await actions.leave(item.id);
+                  closeChannel(navigator, url: url, channelId: item.id);
+                });
               },
             ),
         ],
