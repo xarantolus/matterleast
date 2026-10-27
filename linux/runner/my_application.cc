@@ -37,6 +37,19 @@ static void my_application_activate(GApplication* application) {
 
   gtk_window_set_default_size(window, 1280, 720);
 
+  // Windows takes the exe's icon; a GTK window has none unless it is given
+  // one. At a window icon's size: X11 drops an icon as large as the asset.
+  g_autofree gchar* exe = g_file_read_link("/proc/self/exe", nullptr);
+  if (exe != nullptr) {
+    g_autofree gchar* dir = g_path_get_dirname(exe);
+    g_autofree gchar* icon_path =
+        g_build_filename(dir, "data", "flutter_assets", "assets", "icon",
+                         "legacy.png", nullptr);
+    g_autoptr(GdkPixbuf) icon =
+        gdk_pixbuf_new_from_file_at_size(icon_path, 128, 128, nullptr);
+    if (icon != nullptr) gtk_window_set_icon(window, icon);
+  }
+
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
