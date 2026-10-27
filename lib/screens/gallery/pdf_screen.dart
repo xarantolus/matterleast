@@ -85,6 +85,8 @@ class _PdfScreenState extends State<PdfScreen> {
 
   void _startSearch() {
     if (_searcher == null) return;
+    // Its menu would stay over the matches.
+    unawaited(_controller.textSelectionDelegate.clearTextSelection());
     setState(() => _searching = true);
     _queryFocus.requestFocus();
     _query.selection = TextSelection(
