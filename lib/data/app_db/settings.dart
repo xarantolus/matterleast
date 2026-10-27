@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
+import 'package:matterleast/domain/desktop_window.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/rail.dart';
 
@@ -113,6 +114,22 @@ abstract final class Settings {
     _encodeConversation,
   );
 
+  /// Closing the desktop window keeps the app running in the tray.
+  static const closeToTray = Setting<bool>(
+    'closeToTray',
+    true,
+    _decodeBool,
+    _encodeBool,
+  );
+
+  /// Where the desktop window was when last moved or resized.
+  static const windowPlacement = Setting<WindowPlacement?>(
+    'windowPlacement',
+    null,
+    _decodeWindowPlacement,
+    _encodeWindowPlacement,
+  );
+
   static const all = <Setting<Object?>>[
     imagesOnMobileData,
     mediaCacheBytes,
@@ -125,6 +142,8 @@ abstract final class Settings {
     notificationsAsked,
     lastRailTarget,
     lastConversation,
+    closeToTray,
+    windowPlacement,
   ];
 
   static bool _decodeBool(String raw) => switch (raw) {
@@ -165,6 +184,21 @@ abstract final class Settings {
     }
     throw FormatException('conversation', raw);
   }
+
+  static WindowPlacement? _decodeWindowPlacement(String raw) {
+    if (raw.isEmpty) return null;
+    try {
+      if (jsonDecode(raw) case final Map<String, Object?> json) {
+        return WindowPlacement.fromJson(json);
+      }
+    } on Object {
+      // Falls through to the format error below.
+    }
+    throw FormatException('window placement', raw);
+  }
+
+  static String _encodeWindowPlacement(WindowPlacement? value) =>
+      value == null ? '' : jsonEncode(value.toJson());
 
   static String _encodeConversation(SavedConversation? value) =>
       value == null ? '' : jsonEncode(value.toJson());

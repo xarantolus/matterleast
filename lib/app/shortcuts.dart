@@ -1,4 +1,6 @@
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/quick_switch.dart';
+import 'package:quick_actions/quick_actions.dart';
 
 /// How many recent conversations the launcher icon offers.
 const shortcutCount = 4;
@@ -27,4 +29,27 @@ String shortcutType(SwitchItem item) => '${item.serverUrl}\n${item.id}';
   final parts = type.split('\n');
   if (parts.length != 2 || parts.any((p) => p.isEmpty)) return null;
   return (url: parts[0], channelId: parts[1]);
+}
+
+/// The launcher icon's shortcuts to recent conversations. Android only;
+/// desktops have none.
+class LauncherShortcuts {
+  const LauncherShortcuts([this._actions = const QuickActions()]);
+
+  final QuickActions _actions;
+
+  /// [onOpen] gets the [shortcutType] of the shortcut the app opened from.
+  Future<void> initialize(void Function(String type) onOpen) async {
+    if (isDesktop) return;
+    await _actions.initialize(onOpen);
+  }
+
+  /// Offers [recent], titled by their conversation names.
+  Future<void> show(List<SwitchItem> recent) async {
+    if (isDesktop) return;
+    await _actions.setShortcutItems([
+      for (final item in recent)
+        ShortcutItem(type: shortcutType(item), localizedTitle: item.title),
+    ]);
+  }
 }

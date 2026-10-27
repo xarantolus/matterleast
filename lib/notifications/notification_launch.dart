@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/server_entry.dart';
@@ -91,11 +92,12 @@ Future<void> openNotice(
 }
 
 /// Once after the first sign-in: says what notifications do, then lets
-/// Android ask. Later changes go through the settings.
+/// Android ask. Later changes go through the settings. Desktops don't ask.
 Future<void> askForNotificationsOnce(
   BuildContext context,
   WidgetRef ref,
 ) async {
+  if (isDesktop) return;
   final settings = ref.read(settingsStoreProvider);
   if (await settings.read(Settings.notificationsAsked)) return;
   final notifier = ref.read(notifierProvider);

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/notifications/stay_connected.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 
@@ -99,6 +100,36 @@ class _PhoneNotificationsState extends ConsumerState<PhoneNotifications> {
           ),
           value: _stayConnected ?? false,
           onChanged: _stayConnected == null ? null : _setStayConnected,
+        ),
+      ],
+    );
+  }
+}
+
+/// Notifications on this computer: they come while the app runs, also
+/// with its window closed into the tray.
+class ComputerNotifications extends ConsumerWidget {
+  const ComputerNotifications({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final store = ref.watch(settingsStoreProvider);
+    final closeToTray = ref.watch(closeToTrayProvider).value;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SettingsHeader('On this computer'),
+        SwitchListTile(
+          secondary: const Icon(Icons.move_to_inbox_outlined),
+          title: const Text('Close to tray'),
+          subtitle: const Text(
+            'Closing the window keeps Matterleast running in the tray, so '
+            'notifications keep coming. Otherwise closing quits.',
+          ),
+          value: closeToTray ?? Settings.closeToTray.defaultValue,
+          onChanged: closeToTray == null
+              ? null
+              : (on) => store.write(Settings.closeToTray, on),
         ),
       ],
     );

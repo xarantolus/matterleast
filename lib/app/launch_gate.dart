@@ -5,12 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/dev_sign_in.dart';
 import 'package:matterleast/app/incoming_links.dart';
+import 'package:matterleast/app/incoming_shares.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/app/shortcuts.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/notifications/app_visibility.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
@@ -21,7 +24,6 @@ import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/share/share_screen.dart';
 import 'package:matterleast/ui/slide_route.dart';
-import 'package:quick_actions/quick_actions.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 /// Picks the first screen from the server list on disk: the root with the
@@ -39,11 +41,12 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   StreamSubscription<Uri>? _links;
   StreamSubscription<List<SharedMediaFile>>? _shares;
   GoneChannels? _gone;
-  final _quickActions = const QuickActions();
+  final _shortcuts = const LauncherShortcuts();
   String? _shortcutsShown;
   ProviderSubscription<AsyncValue<List<SwitchItem>>>? _shortcutSource;
 
   void _followShortcuts(String? url) {
+    if (isDesktop) return;
     _shortcutSource?.close();
     _shortcutSource = null;
     if (url == null) {
@@ -79,12 +82,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         .join('\n');
     if (key == _shortcutsShown) return;
     _shortcutsShown = key;
-    unawaited(
-      _quickActions.setShortcutItems([
-        for (final item in recent)
-          ShortcutItem(type: shortcutType(item), localizedTitle: item.title),
-      ]),
-    );
+    unawaited(_shortcuts.show(recent));
   }
 
   @override
@@ -108,8 +106,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       _links = links.uriLinkStream.listen(
         (uri) => unawaited(openIncomingLink(navigator, uri)),
       );
-      final shares = ReceiveSharingIntent.instance;
-      final initialMedia = shares.getInitialMedia();
+      final initialMedia = IncomingShares.initial();
       unawaited(
         restoreConversation(
           ref,
@@ -138,15 +135,15 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       }
 
       unawaited(
-        _quickActions.initialize(
+        _shortcuts.initialize(
           (type) => unawaited(_openShortcut(navigator, type)),
         ),
       );
-      _shares = shares.getMediaStream().listen((m) => unawaited(open(m)));
+      _shares = IncomingShares.later().listen((m) => unawaited(open(m)));
       unawaited(
         initialMedia.then((media) async {
           await open(media);
-          return shares.reset();
+          return IncomingShares.reset();
         }),
       );
     });
@@ -175,6 +172,12 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     _gone?.dispose();
     _lifecycle.dispose();
     super.dispose();
+  }
+
+  void _retryKeyring() {
+    final manager = ref.read(serverManagerProvider);
+    ref.read(tokenStoreProvider).retry();
+    unawaited(manager.checkTokens().then((_) => manager.setForeground(true)));
   }
 
   void _showSignedOut(ServerEntry server) {
@@ -230,8 +233,53 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       for (final s in servers)
         if (s.signedIn) s,
     ];
-    return signedIn.isEmpty
-        ? const AddServerScreen(isRoot: true)
-        : RootScreen(servers: signedIn);
+    return _KeyringNotice(
+      shown: ref.watch(keyringUnavailableProvider).value ?? false,
+      onRetry: _retryKeyring,
+      child: signedIn.isEmpty
+          ? const AddServerScreen(isRoot: true)
+          : RootScreen(servers: signedIn),
+    );
   }
+}
+
+/// One banner over the whole window while the token storage doesn't
+/// answer; the saved data stays readable below it.
+class _KeyringNotice extends StatelessWidget {
+  const _KeyringNotice({
+    required this.shown,
+    required this.onRetry,
+    required this.child,
+  });
+
+  final bool shown;
+  final VoidCallback onRetry;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      if (shown)
+        Material(
+          child: SafeArea(
+            bottom: false,
+            child: MaterialBanner(
+              leading: const Icon(Icons.key_off_outlined),
+              content: const Text(keyringUnavailableText),
+              actions: [
+                TextButton(onPressed: onRetry, child: const Text('Try again')),
+              ],
+            ),
+          ),
+        ),
+      Expanded(
+        key: const ValueKey('app'),
+        child: MediaQuery.removePadding(
+          context: context,
+          removeTop: shown,
+          child: child,
+        ),
+      ),
+    ],
+  );
 }
