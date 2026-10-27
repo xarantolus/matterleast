@@ -56,6 +56,21 @@ void main() {
     expect(find.text('Threads'), findsOneWidget);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
+  testWidgets('on desktop Esc closes the page', (tester) async {
+    await openPage(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.text('Threads'), findsNothing);
+    expect(find.text('List'), findsOneWidget);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+  testWidgets('on a phone Esc leaves the page open', (tester) async {
+    await openPage(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.text('Threads'), findsOneWidget);
+  });
+
   testWidgets('a short slow swipe springs back', (tester) async {
     await openPage(tester);
     await tester.timedDrag(

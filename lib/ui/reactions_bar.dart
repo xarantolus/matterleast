@@ -24,7 +24,9 @@ class ReactionsBar extends StatelessWidget {
   /// Comes first in the row, such as the acknowledge button.
   final Widget? leading;
   final ValueChanged<String>? onToggle;
-  final VoidCallback? onAdd;
+
+  /// Opens the picker; it gets the add button's global rect.
+  final ValueChanged<Rect?>? onAdd;
 
   // Each chip keeps a 48 dp tap target, which is the gap between rows.
   @override
@@ -32,12 +34,14 @@ class ReactionsBar extends StatelessWidget {
     final chips = [for (final group in reactions) _chip(context, group)];
     final add = onAdd == null
         ? null
-        : ActionChip(
-            tooltip: 'Add reaction',
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            label: const Icon(Icons.add_reaction_outlined, size: 18),
-            onPressed: onAdd,
+        : Builder(
+            builder: (chip) => ActionChip(
+              tooltip: 'Add reaction',
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              label: const Icon(Icons.add_reaction_outlined, size: 18),
+              onPressed: () => onAdd!(globalRectOf(chip)),
+            ),
           );
     return Wrap(
       spacing: Spacing.xs,

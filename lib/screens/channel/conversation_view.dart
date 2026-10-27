@@ -443,7 +443,9 @@ extension on _ConversationViewState {
           ? (name) => unawaited(toggleReaction(context, widget.url, post, name))
           : null,
       onAddReaction: reacts
-          ? () => unawaited(pickReaction(context, widget.url, post))
+          ? (anchor) => unawaited(
+              pickReaction(context, widget.url, post, anchor: anchor),
+            )
           : null,
       onAcknowledge: reacts ? () => _toggleAcknowledged(post) : null,
       onTap: failed

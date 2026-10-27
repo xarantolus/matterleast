@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
@@ -14,6 +13,7 @@ import 'package:matterleast/screens/home/home_pane.dart';
 import 'package:matterleast/screens/root/pane_layout.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/root/root_shortcuts.dart';
 import 'package:matterleast/screens/root/team_rail.dart';
 import 'package:matterleast/screens/root/team_screens.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
@@ -40,14 +40,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
   final _search = SearchController();
 
   @override
-  void initState() {
-    super.initState();
-    HardwareKeyboard.instance.addHandler(_onKey);
-  }
-
-  @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_onKey);
     _search.dispose();
     super.dispose();
   }
@@ -56,21 +49,11 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     if (!_search.isOpen) _search.openView();
   }
 
-  /// Ctrl+K opens the search view while the root is on top, wherever the
-  /// focus happens to be, as a key binding on a focused widget would not.
-  bool _onKey(KeyEvent event) {
-    if (event is! KeyDownEvent ||
-        event.logicalKey != LogicalKeyboardKey.keyK ||
-        !HardwareKeyboard.instance.isControlPressed ||
-        !(ModalRoute.of(context)?.isCurrent ?? false)) {
-      return false;
-    }
-    _openSearch();
-    return true;
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      RootShortcuts(onSwitcher: _openSearch, child: _layout(context));
+
+  Widget _layout(BuildContext context) {
     final servers = widget.servers;
     for (final s in servers) {
       ref.listen(serverNoticesProvider(s.url), (_, next) {

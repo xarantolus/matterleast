@@ -13,6 +13,7 @@ import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
+import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/update_indicator.dart';
 import 'package:matterleast/ui/window_bar.dart';
@@ -115,14 +116,21 @@ class ConversationScaffold extends ConsumerWidget {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: ConversationView(
-                            url: url,
-                            conversation: conversation,
-                            composer: window == null || window.archived
-                                ? null
-                                : composerDraftProvider(url, channelId, rootId),
-                            startText: startText,
-                            onOpenThread: onOpenThread,
+                          child: FocusRegion(
+                            entry: RegionEntry.self,
+                            child: ConversationView(
+                              url: url,
+                              conversation: conversation,
+                              composer: window == null || window.archived
+                                  ? null
+                                  : composerDraftProvider(
+                                      url,
+                                      channelId,
+                                      rootId,
+                                    ),
+                              startText: startText,
+                              onOpenThread: onOpenThread,
+                            ),
                           ),
                         ),
                         Positioned(
@@ -139,18 +147,21 @@ class ConversationScaffold extends ConsumerWidget {
                     ),
                   ),
                   if (window != null)
-                    Composer(
-                      url: url,
-                      channelId: channelId,
-                      rootId: rootId,
-                      teamId: window.teamId,
-                      hint: composerHint,
-                      archived: window.archived,
-                      autofocus: focusComposer,
-                      lastOwnPost: () {
-                        final now = ref.read(conversation);
-                        return lastOwnPost(now.rows, now.myUserId);
-                      },
+                    FocusRegion(
+                      entry: RegionEntry.textField,
+                      child: Composer(
+                        url: url,
+                        channelId: channelId,
+                        rootId: rootId,
+                        teamId: window.teamId,
+                        hint: composerHint,
+                        archived: window.archived,
+                        autofocus: focusComposer,
+                        lastOwnPost: () {
+                          final now = ref.read(conversation);
+                          return lastOwnPost(now.rows, now.myUserId);
+                        },
+                      ),
                     ),
                 ],
               ),

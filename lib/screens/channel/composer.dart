@@ -558,10 +558,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                         PositionedDirectional(
                           end: 0,
                           bottom: 0,
-                          child: IconButton(
-                            tooltip: 'Emoji',
-                            onPressed: _pickEmoji,
-                            icon: const Icon(Icons.mood),
+                          child: Builder(
+                            builder: (button) => IconButton(
+                              tooltip: 'Emoji',
+                              onPressed: () => _pickEmoji(globalRectOf(button)),
+                              icon: const Icon(Icons.mood),
+                            ),
                           ),
                         ),
                       ],
@@ -589,9 +591,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     );
   }
 
-  Future<void> _pickEmoji() async {
+  Future<void> _pickEmoji(Rect? anchor) async {
     final draft = ref.read(_provider.notifier);
-    final name = await showEmojiPicker(context, widget.url);
+    final name = await showEmojiPicker(context, widget.url, anchor: anchor);
     if (name == null) return;
     final unicode = unicodeForName(name);
     draft.insert(unicode ?? ':$name: ');

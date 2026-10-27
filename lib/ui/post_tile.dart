@@ -71,7 +71,7 @@ class PostTile extends StatelessWidget {
 
   /// Adds or removes the user's reaction with that emoji.
   final ValueChanged<String>? onToggleReaction;
-  final VoidCallback? onAddReaction;
+  final ValueChanged<Rect?>? onAddReaction;
 
   /// Acknowledges the message, or takes the acknowledgement back.
   final VoidCallback? onAcknowledge;

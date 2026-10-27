@@ -7,7 +7,8 @@ import 'package:matterleast/ui/motion.dart';
 /// A full-screen page, the one route every page but a viewer or a dialog
 /// opens in. It slides in from the right over the screen below it. A
 /// rightward drag anywhere on it that no inner widget claims, the system
-/// back gesture and the back button slide it away again.
+/// back gesture and the back button slide it away again. On desktop it
+/// fades in and out instead, Esc closes it and a drag selects text.
 class SlideRoute<T> extends PageRoute<T> {
   SlideRoute({required this.builder, this.instant = false, super.settings});
 
@@ -33,7 +34,7 @@ class SlideRoute<T> extends PageRoute<T> {
 
   @override
   Duration get transitionDuration {
-    const duration = Duration(milliseconds: 250);
+    final duration = Duration(milliseconds: isDesktop ? 150 : 250);
     final context = navigator?.context;
     return context == null ? duration : motion(context, duration);
   }
@@ -46,6 +47,14 @@ class SlideRoute<T> extends PageRoute<T> {
 
   @override
   String? get barrierLabel => null;
+
+  /// Lets Esc close it through the route's dismiss action.
+  @override
+  bool get barrierDismissible => isDesktop;
+
+  // The page covers its barrier; a click while it fades must not close it.
+  @override
+  Widget buildModalBarrier() => const ModalBarrier(dismissible: false);
 
   @override
   Widget buildPage(
@@ -60,10 +69,15 @@ class SlideRoute<T> extends PageRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => _SlideToPop(
-    route: this,
-    child: slidesItself ? child : SlidingPart(route: this, child: child),
-  );
+  ) => isDesktop
+      ? FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: child,
+        )
+      : _SlideToPop(
+          route: this,
+          child: slidesItself ? child : SlidingPart(route: this, child: child),
+        );
 
   Animation<Offset> get _slide =>
       (navigator!.userGestureInProgress
@@ -122,17 +136,19 @@ class SlidingPart extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => ValueListenableBuilder(
-    valueListenable: route.navigator!.userGestureInProgressNotifier,
-    builder: (context, _, child) =>
-        SlideTransition(position: route._slide, child: child),
-    child: DecoratedBox(
-      decoration: const BoxDecoration(
-        boxShadow: [BoxShadow(blurRadius: 12, color: Color(0x33000000))],
-      ),
-      child: child,
-    ),
-  );
+  Widget build(BuildContext context) => isDesktop
+      ? child
+      : ValueListenableBuilder(
+          valueListenable: route.navigator!.userGestureInProgressNotifier,
+          builder: (context, _, child) =>
+              SlideTransition(position: route._slide, child: child),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              boxShadow: [BoxShadow(blurRadius: 12, color: Color(0x33000000))],
+            ),
+            child: child,
+          ),
+        );
 }
 
 class _SlideToPop extends StatefulWidget {
@@ -191,8 +207,6 @@ class _SlideToPopState extends State<_SlideToPop> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // With a mouse a drag selects text; Esc and the back button close.
-    if (isDesktop) return widget.child;
     final width = MediaQuery.sizeOf(context).width;
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
