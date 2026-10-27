@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:file_picker/file_picker.dart';
@@ -30,15 +31,20 @@ abstract final class FileHandoff {
     );
   }
 
-  /// Asks where to save the file (desktop), then writes it there; the path,
-  /// or null when the person cancelled.
-  static Future<String?> saveAs(File cached, PostFile file) async {
-    final uri = await FilePicker.saveFile(
-      fileName: _safeName(file),
-      bytes: await cached.readAsBytes(),
-      mimeType: _mime(file) ?? 'application/octet-stream',
+  /// Asks where to save the file (desktop), then copies it there; the path,
+  /// or null when the person cancelled. [pick] is the Save As dialog.
+  static Future<String?> saveAs(
+    File cached,
+    PostFile file, {
+    Future<String?> Function(String name, String mimeType) pick = _pickPath,
+  }) async {
+    final path = await pick(
+      _safeName(file),
+      _mime(file) ?? 'application/octet-stream',
     );
-    return uri?.toFilePath();
+    if (path == null) return null;
+    await cached.copy(path);
+    return path;
   }
 
   static Future<void> share(
@@ -70,6 +76,17 @@ abstract final class FileHandoff {
       mimeType: _mime(file),
     );
   }
+}
+
+/// The plugin requires bytes and writes them itself after the person has
+/// confirmed an overwrite; none are passed, the file is copied over them.
+Future<String?> _pickPath(String name, String mimeType) async {
+  final uri = await FilePicker.saveFile(
+    fileName: name,
+    bytes: Uint8List(0),
+    mimeType: mimeType,
+  );
+  return uri?.toFilePath();
 }
 
 String? _mime(PostFile file) => file.mimeType.isEmpty ? null : file.mimeType;
