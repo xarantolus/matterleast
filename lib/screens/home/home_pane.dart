@@ -175,30 +175,30 @@ class _HomePaneState extends ConsumerState<HomePane> {
                 ),
               ],
               HomeReady(:final items) => [
-                SliverList.builder(
-                  itemCount: items.length,
-                  findChildIndexCallback: (key) {
-                    final id = (key as ValueKey<String>).value;
-                    final i = items.indexWhere((item) => item.key == id);
-                    return i < 0 ? null : i;
-                  },
-                  itemBuilder: (context, i) {
-                    final item = items[i];
-                    return MessagePreviewTile(
-                      key: ValueKey(item.key),
-                      item: item,
-                      serverName: names[item.serverUrl],
-                      onTap: () => openInboxItem(context, item),
-                    );
-                  },
+                SliverPadding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
+                  ),
+                  sliver: SliverList.builder(
+                    itemCount: items.length,
+                    findChildIndexCallback: (key) {
+                      final id = (key as ValueKey<String>).value;
+                      final i = items.indexWhere((item) => item.key == id);
+                      return i < 0 ? null : i;
+                    },
+                    itemBuilder: (context, i) {
+                      final item = items[i];
+                      return MessagePreviewTile(
+                        key: ValueKey(item.key),
+                        item: item,
+                        serverName: names[item.serverUrl],
+                        onTap: () => openInboxItem(context, item),
+                      );
+                    },
+                  ),
                 ),
               ],
             },
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: MediaQuery.paddingOf(context).bottom + Spacing.lg,
-              ),
-            ),
           ],
         ),
       ),
