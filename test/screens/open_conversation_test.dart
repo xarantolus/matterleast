@@ -21,6 +21,8 @@ import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/user_profile.dart';
+import 'package:matterleast/notifications/notification_launch.dart';
+import 'package:matterleast/notifications/notifier.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
@@ -371,6 +373,29 @@ void main() {
     expect(screen.highlightPostId, isNull);
     navigator(tester).pop();
     await settle(tester);
+    await finish(tester);
+  });
+
+  testWidgets('a tapped notification opens its conversation', (tester) async {
+    await start(tester, more: known());
+    final opening = openNotice(
+      navigator(tester),
+      widgetRef,
+      NoticeTarget(
+        serverUrl: server.url.toString(),
+        channelId: channelId,
+        postId: 'old1',
+        newestAt: DateTime(2026),
+      ),
+    );
+    await settle(tester);
+    expect(
+      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
+      'old1',
+    );
+    navigator(tester).pop();
+    await settle(tester);
+    await opening;
     await finish(tester);
   });
 

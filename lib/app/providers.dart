@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/secure/token_store.dart';
@@ -120,3 +121,18 @@ Stream<MessageTextSize> messageTextSize(Ref ref) =>
 @Riverpod(keepAlive: true)
 Stream<bool> wrapCode(Ref ref) =>
     ref.watch(settingsStoreProvider).watch(Settings.wrapCode);
+
+/// Reads [provider] (a `.future`) once from outside a build, held until it
+/// answers: an auto-disposed provider nothing else listens to would be
+/// disposed before then.
+Future<T> readOnce<T>(
+  WidgetRef ref,
+  ProviderListenable<Future<T>> provider,
+) async {
+  final held = ref.listenManual(provider, (_, _) {});
+  try {
+    return await held.read();
+  } finally {
+    held.close();
+  }
+}
