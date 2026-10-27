@@ -14,10 +14,15 @@ licensed under the MIT License.
 
 Matterleast is an independent rebuild of the behaviour of Mattermost Mobile
 (https://github.com/mattermost/mattermost-mobile), Copyright 2015-present
-Mattermost, Inc., licensed under the Apache License 2.0. No source code,
-assets or translations from Mattermost Mobile are included. Its NOTICE file
-lists the JavaScript packages that app bundles; Matterleast bundles none of
-them.
+Mattermost, Inc., licensed under the Apache License 2.0. No source code
+or assets from Mattermost Mobile are included; a few short interface texts
+use the same English wording as that app. Its NOTICE file lists the
+JavaScript packages that app bundles; Matterleast bundles none of them.
+
+The REST client in lib/api/generated/ is generated from the structure
+(paths, fields and types) of Mattermost's published API description at
+https://github.com/mattermost/mattermost/tree/master/api. None of that
+description's documentation text is included.
 
 Mattermost is a trademark of Mattermost, Inc. Matterleast is not affiliated
 with or endorsed by Mattermost, Inc.
