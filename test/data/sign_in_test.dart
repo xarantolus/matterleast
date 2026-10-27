@@ -128,7 +128,7 @@ void main() {
     server.handle = me;
     Uri? opened;
     final signIn = SignIn(
-      openAuthSession: (url, scheme, _) async {
+      openAuthSession: (url, scheme) async {
         opened = url;
         return Uri.parse(
           '$scheme://callback?MMAUTHTOKEN=s3ss10n&MMCSRF=x'
@@ -145,7 +145,7 @@ void main() {
 
   test('SSO refuses a callback naming another server', () async {
     final signIn = SignIn(
-      openAuthSession: (url, scheme, _) async => Uri.parse(
+      openAuthSession: (url, scheme) async => Uri.parse(
         '$scheme://callback?MMAUTHTOKEN=planted&srv=https://evil.example.test',
       ),
     );
@@ -158,7 +158,7 @@ void main() {
 
   test('closing the SSO page is not an error', () async {
     final signIn = SignIn(
-      openAuthSession: (url, scheme, _) async =>
+      openAuthSession: (url, scheme) async =>
           throw PlatformException(code: 'CANCELED'),
     );
     expect(await signIn.withSso(probed, gitlab), isNull);

@@ -16,6 +16,7 @@ class ClientConfig {
     this.sendEmailNotifications,
     this.experimentalEnableAutomaticReplies,
     this.siteName,
+    this.siteUrl,
     this.diagnosticId,
     this.enableSignInWithEmail,
     this.enableSignInWithUsername,
@@ -98,6 +99,9 @@ class ClientConfig {
   final bool? experimentalEnableAutomaticReplies;
   @LenientString()
   final String? siteName;
+  @JsonKey(name: 'SiteURL')
+  @LenientString()
+  final String? siteUrl;
   @LenientString()
   final String? diagnosticId;
 

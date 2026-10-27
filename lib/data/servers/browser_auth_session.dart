@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
-import 'package:matterleast/domain/sso_callback.dart';
 import 'package:matterleast/log.dart';
 
 const browserSignInTimeout = Duration(minutes: 10);
@@ -13,23 +12,28 @@ const browserSignInTimedOutText =
 /// Desktop SSO: opens the provider's login in the system browser and waits
 /// for the `<scheme>://callback` the browser hands back through the protocol
 /// handler. Any web page can launch such a link, so one only counts while a
-/// sign-in started here is waiting, once, and when its `accepts` check (the
-/// same one the Android redirect goes through) passes.
+/// sign-in started here is waiting, and only once: the first one ends the
+/// wait, and the sign-in checks it like the Android redirect, so a callback
+/// that fails those checks says why instead of leaving the user waiting.
 class BrowserAuthSession {
   BrowserAuthSession({
     required this.launch,
+    this.onReturn,
     this.timeout = browserSignInTimeout,
   });
 
   final Future<bool> Function(Uri url) launch;
+
+  /// Called when a callback ends the wait, to bring the window back.
+  final void Function()? onReturn;
   final Duration timeout;
   _Waiting? _waiting;
 
   /// Matches `OpenAuthSession`. Throws a `CANCELED` [PlatformException] when
   /// [cancel] is called and a [LoginRejected] after [timeout].
-  Future<Uri> open(Uri url, String scheme, bool Function(Uri) accepts) async {
+  Future<Uri> open(Uri url, String scheme) async {
     cancel();
-    final waiting = _Waiting(scheme, accepts);
+    final waiting = _Waiting();
     _waiting = waiting;
     final result = waiting.result.future.timeout(
       timeout,
@@ -45,23 +49,18 @@ class BrowserAuthSession {
     }
   }
 
-  /// Hands over a callback link that reached the app; anything that doesn't
-  /// finish the waiting sign-in is dropped.
+  /// Hands over a callback link that reached the app. It ends a waiting
+  /// sign-in; with none waiting it is dropped.
   void deliver(Uri link) {
     final waiting = _waiting;
     if (waiting == null) {
       Log.warn('sso', 'Ignored a sign-in callback: no sign-in is waiting');
-    } else if (!isSsoCallbackFor(link, waiting.scheme)) {
-      Log.warn('sso', 'Ignored a malformed sign-in callback');
-    } else if (!waiting.accepts(link)) {
-      Log.warn(
-        'sso',
-        'Ignored a sign-in callback naming another server or none',
-      );
-    } else {
-      _waiting = null;
-      waiting.result.complete(link);
+      return;
     }
+    Log.info('sso', 'A sign-in callback arrived');
+    _waiting = null;
+    waiting.result.complete(link);
+    onReturn?.call();
   }
 
   void cancel() {
@@ -73,8 +72,5 @@ class BrowserAuthSession {
 }
 
 class _Waiting {
-  _Waiting(this.scheme, this.accepts);
-  final String scheme;
-  final bool Function(Uri) accepts;
   final result = Completer<Uri>();
 }

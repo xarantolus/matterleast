@@ -16,11 +16,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   if (::GetLastError() == ERROR_ALREADY_EXISTS) {
     HWND running =
         ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", L"Matterleast");
-    if (running != nullptr) {
-      SendAppLink(running);
-      ::ShowWindow(running, ::IsIconic(running) ? SW_RESTORE : SW_SHOW);
-      ::SetForegroundWindow(running);
+    // Seen with DebugView; the link itself carries a token, so never it.
+    if (running == nullptr) {
+      ::OutputDebugStringW(L"Matterleast: no running window for the link\n");
+      return EXIT_SUCCESS;
     }
+    ::OutputDebugStringW(SendAppLink(running)
+                             ? L"Matterleast: link handed to the window\n"
+                             : L"Matterleast: the window didn't take the link\n");
+    ::ShowWindow(running, ::IsIconic(running) ? SW_RESTORE : SW_SHOW);
+    ::SetForegroundWindow(running);
     return EXIT_SUCCESS;
   }
 

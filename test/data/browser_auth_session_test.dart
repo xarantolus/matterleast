@@ -71,24 +71,66 @@ void main() {
     expect(await result, isNull);
   });
 
-  test('callbacks for another server or malformed ones are ignored while the '
-      'sign-in keeps waiting', () async {
+  test('a callback naming the server by its site URL, not the entered '
+      'address, finishes the sign-in', () async {
+    // The fixture's SiteURL names another host than the fake server's.
+    final siteUrl = fixtureMap('client_config')['SiteURL']! as String;
+    expect(Uri.parse(siteUrl).authority, isNot(server.url.authority));
     final result = signIn.withSso(probed, gitlab);
     await settle();
-    final planted = callback(token: 'planted').toString();
-    Uri reshaped(String prefix) =>
-        Uri.parse(planted.replaceFirst('mmauth://callback?', prefix));
-    browser
-      ..deliver(callback(token: 'planted', srv: 'https://evil.example.test'))
-      ..deliver(Uri.parse('mmauth://callback?MMAUTHTOKEN=planted'))
-      ..deliver(reshaped('mmauth://callback/x?'))
-      ..deliver(reshaped('mmauth://evil@callback?'))
-      ..deliver(reshaped('other://callback?'));
-    await settle();
-    expect(server.seen, isEmpty);
-    browser.deliver(callback());
+    browser.deliver(callback(srv: siteUrl));
     expect((await result)!.token, 's3ss10n');
     expect(server.paths, ['/api/v4/users/me']);
+  });
+
+  test('a callback for another server ends the wait with a message naming '
+      'both hosts and never uses its token', () async {
+    final result = signIn.withSso(probed, gitlab);
+    await settle();
+    browser.deliver(
+      callback(token: 'planted', srv: 'https://chat.example.test/'),
+    );
+    await expectLater(
+      result,
+      throwsA(
+        isA<LoginRejected>().having(
+          (e) => e.message,
+          'message',
+          'The sign-in came back from chat.example.test, but this server is '
+              '${server.url.authority}. Try again.',
+        ),
+      ),
+    );
+    expect(server.seen, isEmpty);
+  });
+
+  test('a malformed callback ends the wait with a message too', () async {
+    for (final link in [
+      'mmauth://callback?MMAUTHTOKEN=planted',
+      'mmauth://callback/x?MMAUTHTOKEN=planted',
+      'mmauth://evil@callback?MMAUTHTOKEN=planted',
+      'other://callback?MMAUTHTOKEN=planted',
+    ]) {
+      final result = signIn.withSso(probed, gitlab);
+      await settle();
+      browser.deliver(Uri.parse(link));
+      await expectLater(result, throwsA(isA<LoginRejected>()), reason: link);
+    }
+    expect(server.seen, isEmpty);
+  });
+
+  test('the window comes back when a callback ends the wait', () async {
+    var returned = 0;
+    final waiting = BrowserAuthSession(
+      launch: (_) async => true,
+      onReturn: () => returned++,
+    );
+    final result = waiting.open(Uri.parse('https://a.test'), 'mmauth');
+    await settle();
+    waiting.deliver(callback());
+    await result;
+    waiting.deliver(callback());
+    expect(returned, 1);
   });
 
   test('a callback counts once: a replay does not finish the next sign-in', () {
@@ -97,7 +139,7 @@ void main() {
       Uri? first;
       unawaited(
         waiting
-            .open(Uri.parse('https://a.test'), 'mmauth', (_) => true)
+            .open(Uri.parse('https://a.test'), 'mmauth')
             .then((uri) => first = uri),
       );
       async.flushMicrotasks();
@@ -110,7 +152,7 @@ void main() {
       Uri? second;
       unawaited(
         waiting
-            .open(Uri.parse('https://a.test'), 'mmauth', (_) => true)
+            .open(Uri.parse('https://a.test'), 'mmauth')
             .then((uri) => second = uri, onError: (_) {}),
       );
       async.elapse(const Duration(minutes: 5));
@@ -136,7 +178,7 @@ void main() {
       Object? failure;
       unawaited(
         waiting
-            .open(Uri.parse('https://a.test'), 'mmauth', (_) => true)
+            .open(Uri.parse('https://a.test'), 'mmauth')
             .then<void>((_) {}, onError: (Object e) => failure = e),
       );
       async.elapse(browserSignInTimeout - const Duration(seconds: 1));

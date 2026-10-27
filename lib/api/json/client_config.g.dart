@@ -16,6 +16,7 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
     json['ExperimentalEnableAutomaticReplies'],
   ),
   siteName: const LenientString().fromJson(json['SiteName']),
+  siteUrl: const LenientString().fromJson(json['SiteURL']),
   diagnosticId: const LenientString().fromJson(json['DiagnosticId']),
   enableSignInWithEmail: const LenientBool().fromJson(
     json['EnableSignInWithEmail'],

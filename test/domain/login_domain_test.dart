@@ -187,12 +187,18 @@ void main() {
       expect(saml.queryParameters['action'], 'mobile');
     });
 
-    SsoResult parse(String callback, {Uri? on, String version = '12.0.1'}) =>
-        parseSsoCallback(
-          Uri.parse(callback),
-          server: on ?? server,
-          serverVersion: version,
-        );
+    SsoResult parse(
+      String callback, {
+      Uri? on,
+      Uri? siteUrl,
+      String version = '12.0.1',
+    }) => parseSsoCallback(
+      Uri.parse(callback),
+      scheme: 'mmauth',
+      server: on ?? server,
+      siteUrl: siteUrl,
+      serverVersion: version,
+    );
 
     test('accepts the server\'s own callback', () {
       expect(
@@ -238,6 +244,100 @@ void main() {
         parse('mmauth://callback?srv=http://10.0.2.2:8065'),
         isA<SsoRejected>(),
       );
+    });
+
+    test('accepts the site URL the server reports when it names another '
+        'host than the entered address', () {
+      const callback =
+          'mmauth://callback?MMAUTHTOKEN=abc&srv=https%3A%2F%2Fchat.example.test';
+      final entered = Uri.parse('https://mm.example.test');
+      expect(parse(callback, on: entered), isA<SsoRejected>());
+      expect(
+        parse(
+          callback,
+          on: entered,
+          siteUrl: Uri.parse('https://chat.example.test'),
+        ),
+        const SsoResult.token('abc'),
+      );
+      expect(
+        parse(
+          callback,
+          on: entered,
+          siteUrl: Uri.parse('https://other.example.test'),
+        ),
+        isA<SsoRejected>(),
+      );
+    });
+
+    test('a trailing slash, an uppercase host or an explicit default port '
+        'still name the same server', () {
+      final entered = Uri.parse('https://chat.example.test/team');
+      for (final srv in [
+        'https://chat.example.test/team/',
+        'https://CHAT.Example.TEST/team',
+        'https://chat.example.test:443/team',
+        'http://chat.example.test:80/team/',
+      ]) {
+        expect(
+          parse(
+            'mmauth://callback?MMAUTHTOKEN=abc&srv=${Uri.encodeComponent(srv)}',
+            on: Uri.parse('https://mm.example.test'),
+            siteUrl: entered,
+          ),
+          const SsoResult.token('abc'),
+          reason: srv,
+        );
+      }
+      expect(
+        parse(
+          'mmauth://callback?MMAUTHTOKEN=abc&srv=https://chat.example.test/other',
+          on: entered,
+        ),
+        isA<SsoRejected>(),
+      );
+    });
+
+    test('a rejected callback says which host it came from, never the '
+        'token', () {
+      final result = parse(
+        'mmauth://callback?MMAUTHTOKEN=secret123&srv=https://evil.example.test:8443/x',
+        on: Uri.parse('https://chat.example.test'),
+        siteUrl: Uri.parse('https://chat.example.test'),
+      );
+      expect(
+        result,
+        const SsoResult.rejected(
+          'The sign-in came back from evil.example.test:8443, but this '
+          'server is chat.example.test.',
+        ),
+      );
+    });
+
+    test('a callback in another shape is rejected, not read', () {
+      for (final callback in [
+        'mmauth://callback/?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8065',
+        'mmauthbeta://callback?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8065',
+        'mmauth://callback?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8065#x',
+      ]) {
+        expect(parse(callback), isA<SsoRejected>(), reason: callback);
+      }
+    });
+
+    test('the site URL is read from the client config', () {
+      expect(
+        _loginOptions({
+          'SiteURL': 'https://chat.example.test/team',
+        }, const {}).siteUrl,
+        Uri.parse('https://chat.example.test/team'),
+      );
+      for (final bad in ['', 'chat.example.test', 'ftp://chat.example.test']) {
+        expect(
+          _loginOptions({'SiteURL': bad}, const {}).siteUrl,
+          isNull,
+          reason: bad,
+        );
+      }
     });
   });
 }
