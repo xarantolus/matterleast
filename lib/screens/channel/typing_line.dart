@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/typing.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Who is writing, drawn in the gap the message list keeps above the
@@ -26,9 +27,7 @@ class TypingLine extends ConsumerWidget {
     return IgnorePointer(
       child: AnimatedOpacity(
         opacity: text == null ? 0 : 1,
-        duration: MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : const Duration(milliseconds: 150),
+        duration: motion(context, const Duration(milliseconds: 150)),
         child: SizedBox(
           height: Spacing.xl,
           child: Padding(

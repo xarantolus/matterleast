@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:extended_image/extended_image.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/ui/full_screen.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:video_player/video_player.dart';
 
@@ -131,9 +132,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
   @override
   Widget build(BuildContext context) {
     final video = widget.video;
-    final fade = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 200);
+    final fade = motion(context, const Duration(milliseconds: 200));
     return PopScope(
       canPop: !_fullScreen,
       onPopInvokedWithResult: (didPop, _) {

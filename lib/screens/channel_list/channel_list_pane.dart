@@ -20,6 +20,7 @@ import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -191,7 +192,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
       await Scrollable.ensureVisible(
         row,
         alignment: 0.3,
-        duration: const Duration(milliseconds: 250),
+        duration: motion(context, const Duration(milliseconds: 250)),
         curve: Curves.easeOutCubic,
       );
       return;
@@ -213,7 +214,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     );
     await _scroll.animateTo(
       target,
-      duration: const Duration(milliseconds: 250),
+      duration: motion(context, const Duration(milliseconds: 250)),
       curve: Curves.easeOutCubic,
     );
     if (!mounted) return;
@@ -222,7 +223,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
       await Scrollable.ensureVisible(
         now,
         alignment: 0.3,
-        duration: const Duration(milliseconds: 150),
+        duration: motion(context, const Duration(milliseconds: 150)),
       );
     }
   }
