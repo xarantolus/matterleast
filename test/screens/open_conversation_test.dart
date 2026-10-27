@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
@@ -13,6 +14,8 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
+import 'package:matterleast/screens/channel/composer.dart';
+import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
@@ -213,6 +216,54 @@ void main() {
     final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
     expect(screen.channelId, channelId);
     expect(screen.highlightPostId, isNull);
+    navigator(tester).pop();
+    await settle(tester);
+    await finish(tester);
+  });
+
+  testWidgets('suggestions float above the composer; the list keeps its size', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.runAsync(() async {
+      await session.db.setSyncText(SyncKeys.currentUserRoles, 'system_user');
+      await session.store.applyRoles([
+        api.Role.fromJson({
+          'id': 'rl000000000000000000000r01',
+          'name': 'system_user',
+          'permissions': ['create_post'],
+        }),
+      ]);
+    });
+    unawaited(
+      openConversation(
+        navigator(tester),
+        url: server.url.toString(),
+        channelId: channelId,
+        title: 'Boats',
+        teamId: teamId,
+      ),
+    );
+    await settle(tester);
+    final list = find.byType(ConversationView);
+    final field = find.byType(TextField);
+    final before = tester.getRect(list);
+
+    await tester.enterText(field, ':smil');
+    await settle(tester);
+
+    final suggestions = find.byType(SuggestionList);
+    expect(suggestions, findsOneWidget);
+    expect(tester.getRect(list), before);
+    expect(
+      tester.getBottomLeft(suggestions).dy,
+      lessThanOrEqualTo(tester.getTopLeft(field).dy),
+    );
+    await tester.tap(find.textContaining(':smile:').first);
+    await settle(tester);
+    expect(suggestions, findsNothing);
+    // The pick replaced the typed word.
+    expect(tester.widget<TextField>(field).controller!.text, isNot(':smil'));
     navigator(tester).pop();
     await settle(tester);
     await finish(tester);
