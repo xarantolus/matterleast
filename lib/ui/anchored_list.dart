@@ -239,18 +239,8 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     if (height == null || row == null) return;
     _moved('kept row ${_indexOf[key]} in place', 0, shifts: false);
     _anchor = key;
-    final p = _scroll.position;
-    p.correctPixels(row.bottom - height);
-    // A fling runs on from where it would have been without the correction.
-    if (p is ScrollPositionWithSingleContext &&
-        p.activity is BallisticScrollActivity) {
-      final velocity = p.activity!.velocity;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && p.activity is BallisticScrollActivity) {
-          p.goBallistic(velocity);
-        }
-      });
-    }
+    // A running fling goes on from here: it restarts on the new extents.
+    _scroll.position.correctPixels(row.bottom - height);
   }
 
   @override
