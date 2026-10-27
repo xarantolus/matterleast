@@ -10,8 +10,6 @@ Matterleast is an unofficial Android client for [Mattermost](https://mattermost.
 
 Other (obvious) features that exist: threads, reactions, file previews, sharing, search, custom emojis, bots, channel management and more.
 
-[**Click here to download the latest APK**](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast.apk) (Android 7.0 or newer, ARM phones). There are no update notifications; watch this repository's releases to hear about new versions.
-
 ### Screenshots (dark/light mode)
 |                  Channel list                   |                  Conversation                   |                  Home inbox                   |
 | :---------------------------------------------: | :---------------------------------------------: | :-------------------------------------------: |
@@ -20,6 +18,25 @@ Other (obvious) features that exist: threads, reactions, file previews, sharing,
 |                  Channel list                   |                  Conversation                   |                  Home inbox                   |
 | :---------------------------------------------: | :---------------------------------------------: | :-------------------------------------------: |
 | ![Channel list](.github/screenshots/l-list.jpg) | ![Conversation](.github/screenshots/l-chat.jpg) | ![Home inbox](.github/screenshots/l-home.jpg) |
+
+### Installation & updates
+If you have [F-Droid](https://f-droid.org/) installed, you can add [my repository](https://github.com/xarantolus/fdroid). Make sure you have "Include anti-feature apps" enabled in settings. Then just search for "matterleast" in the F-Droid client to download. You will receive update notifications.
+
+To add my repo, copy the following [link](https://raw.githubusercontent.com/xarantolus/fdroid/main/fdroid/repo?fingerprint=080898ae4309aeceb58915e43a4b7c4a3e2cda40c91738e2c02f58339ab2fbd7), then add this repository to your F-Droid client:
+
+```
+https://raw.githubusercontent.com/xarantolus/fdroid/main/fdroid/repo?fingerprint=080898ae4309aeceb58915e43a4b7c4a3e2cda40c91738e2c02f58339ab2fbd7
+```
+
+Alternatively, you can also scan this QR code:
+
+<p align="center">
+	<img src="https://github.com/xarantolus/fdroid/raw/refs/heads/main/.github/qrcode.png?raw=true" height="250" alt="F-Droid repo QR code"/>
+</p>
+
+
+Alternatively, you can [download the APK file](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast.apk), and install the app manually. Please note that you will not receive any update notifications when going this route. You can also watch this repository to get notified for releases.
+
 
 ### Development
 Matterleast is a Flutter app. [Install Flutter](https://docs.flutter.dev/get-started/install) with the Android toolchain, then:
