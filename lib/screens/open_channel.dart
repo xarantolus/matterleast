@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/domain/conversation_stack.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
@@ -15,7 +16,10 @@ import 'package:matterleast/ui/conversation_route.dart';
 /// its server and team in the rail, then the channel, or the thread of
 /// [rootId], at [highlightPostId] when given. Opening a channel (not a
 /// thread) remembers it as the team's last one and marks it viewed. With
-/// [instant] it is there at once instead of sliding in.
+/// [instant] it is there at once instead of sliding in. On a narrow screen
+/// it goes back to the conversation when it is already open, and takes the
+/// place of other conversations rather than piling up on them
+/// ([stackStepFor]); on a wide one it opens in the panes.
 Future<void> openConversation(
   NavigatorState navigator, {
   required String url,
@@ -60,7 +64,31 @@ Future<void> openConversation(
     container.read(openPanesProvider.notifier).open(target);
     return;
   }
-  await navigator.push(conversationRoute(target, instant: instant));
+  final open = [
+    for (final route in container.read(conversationRoutesProvider).live)
+      if (route.navigator == navigator) route,
+  ];
+  final step = stackStepFor([for (final r in open) r.target], target);
+  final route = conversationRoute(
+    target,
+    instant: instant || step is ReturnToStep,
+  );
+  switch (step) {
+    case PushStep():
+      unawaited(navigator.push(route));
+    case ReturnToStep(:final index):
+      navigator.popUntil((r) => r == open[index]);
+      if (target.highlightPostId == null) return;
+      // In place, as a pane would, so it opens at the message.
+      navigator.replace(oldRoute: open[index], newRoute: route);
+    case PushOverStep(:final index):
+      navigator.popUntil((r) => r == open[index]);
+      unawaited(navigator.push(route));
+    case ReplaceStep(:final index):
+      navigator.popUntil((r) => r == open[index]);
+      unawaited(navigator.pushReplacement(route));
+  }
+  await route.popped;
   // Brought back at the reading position, not at the message it opened at.
   container
       .read(lastClosedProvider.notifier)

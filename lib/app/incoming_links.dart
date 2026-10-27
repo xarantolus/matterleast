@@ -4,6 +4,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/server_link.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/ui/slide_route.dart';
 
 /// Opens a link another app handed over, only when it points into a server
 /// the user is signed in to; anything else is refused, never forwarded.
@@ -30,7 +31,7 @@ Future<void> openIncomingLink(NavigatorState navigator, Uri uri) async {
             ? SnackBarAction(
                 label: 'Add server',
                 onPressed: () => navigator.push(
-                  MaterialPageRoute<void>(
+                  SlideRoute<void>(
                     builder: (_) => AddServerScreen(initialUrl: uri.toString()),
                   ),
                 ),

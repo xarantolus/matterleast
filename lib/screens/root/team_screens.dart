@@ -7,6 +7,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'team_screens.g.dart';
@@ -207,9 +208,8 @@ class TeamMenu extends ConsumerWidget {
     menuChildren: [
       MenuItemButton(
         leadingIcon: const Icon(Icons.group_add_outlined),
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => JoinTeamScreen(url: url)),
-        ),
+        onPressed: () => Navigator.of(context)
+            .push(SlideRoute<void>(builder: (_) => JoinTeamScreen(url: url))),
         child: const Text('Join another team'),
       ),
       MenuItemButton(

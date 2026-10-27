@@ -14,6 +14,7 @@ import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/settings/time_zone_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/slide_route.dart';
 
 enum _Clock {
   system(null, 'Like the phone'),
@@ -182,9 +183,7 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
           title: const Text('Time zone'),
           subtitle: Text(zoneSettingLabel(zone)),
           onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => TimeZonePage(server: server),
-            ),
+            SlideRoute<void>(builder: (_) => TimeZonePage(server: server)),
           ),
         ),
       if (prefs != null) ...[

@@ -22,6 +22,7 @@ import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/pane_label.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// One team's channels by category, with Threads and Drafts on top.
@@ -325,7 +326,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 title: 'Threads',
                 count: unread,
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
+                  SlideRoute<void>(
                     builder: (_) => TeamThreadsScreen(
                       url: widget.url,
                       teamId: widget.teamId,
@@ -342,7 +343,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 title: 'Drafts',
                 count: list.drafts + scheduled,
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
+                  SlideRoute<void>(
                     builder: (_) => DraftsScreen(
                       url: widget.url,
                       teamId: widget.teamId,
@@ -359,7 +360,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 title: 'Agents',
                 count: 0,
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
+                  SlideRoute<void>(
                     builder: (_) => AgentsScreen(url: widget.url),
                   ),
                 ),
@@ -384,7 +385,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                         true
                     ? FilledButton.tonal(
                         onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
+                          SlideRoute<void>(
                             builder: (_) => BrowseChannelsScreen(
                               url: widget.url,
                               teamId: widget.teamId,

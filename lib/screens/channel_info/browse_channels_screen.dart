@@ -14,6 +14,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The team's public channels the user is not in, or its archived ones,
@@ -114,7 +115,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
 
   void _create() => unawaited(
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
+      SlideRoute<void>(
         builder: (_) =>
             EditChannelScreen(url: widget.url, teamId: widget.teamId),
       ),

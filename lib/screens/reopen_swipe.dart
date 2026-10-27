@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
-import 'package:matterleast/ui/conversation_route.dart';
+import 'package:matterleast/ui/slide_route.dart';
 
 /// A left swipe anywhere on [child] brings back the conversation the user
 /// last closed, as Discord does after swiping a chat away.

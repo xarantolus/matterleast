@@ -4,6 +4,7 @@ import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_info/people_list.dart';
 import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/slide_route.dart';
 
 /// Who is in a channel, admins first, with search and presence.
 class MembersScreen extends ConsumerWidget {
@@ -33,7 +34,7 @@ class MembersScreen extends ConsumerWidget {
               tooltip: 'Add people',
               icon: const Icon(Icons.person_add_alt),
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
+                SlideRoute<void>(
                   builder: (_) => addMembersScreen(
                     url: url,
                     teamId: teamId,

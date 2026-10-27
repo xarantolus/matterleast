@@ -8,6 +8,7 @@ import 'package:matterleast/screens/login/login_screen.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/trust_authority.dart';
 
@@ -66,7 +67,7 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
       if (!await _confirmReplace(old, target) || !mounted) return;
     }
     await navigator.push(
-      MaterialPageRoute<void>(builder: (_) => LoginScreen(target: target)),
+      SlideRoute<void>(builder: (_) => LoginScreen(target: target)),
     );
   }
 

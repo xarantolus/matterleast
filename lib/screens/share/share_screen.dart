@@ -16,6 +16,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:path/path.dart' as p;
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -221,9 +222,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                     'until you send it or go back.',
                 action: FilledButton.tonal(
                   onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const AddServerScreen(),
-                    ),
+                    SlideRoute<void>(builder: (_) => const AddServerScreen()),
                   ),
                   child: const Text('Add server'),
                 ),

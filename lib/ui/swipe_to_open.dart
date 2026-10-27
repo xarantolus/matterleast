@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/ui/conversation_route.dart';
+import 'package:matterleast/ui/slide_route.dart';
 
 /// Lets [child] be pulled to the left; past a threshold it clicks and,
 /// once let go, calls [onOpen]. Vertical scrolling wins over small

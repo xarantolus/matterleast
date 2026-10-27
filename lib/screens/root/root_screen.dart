@@ -21,6 +21,7 @@ import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/slide_route.dart';
 
 /// The rail of teams beside Home or the picked team's channel list.
 class RootScreen extends ConsumerStatefulWidget {
@@ -205,9 +206,8 @@ class _NoTeam extends ConsumerWidget {
       alignment: WrapAlignment.center,
       children: [
         FilledButton(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => JoinTeamScreen(url: url)),
-          ),
+          onPressed: () => Navigator.of(context)
+              .push(SlideRoute<void>(builder: (_) => JoinTeamScreen(url: url))),
           child: const Text('Join a team'),
         ),
         FilledButton.tonal(
@@ -231,8 +231,7 @@ class _NewMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rights = ref.watch(teamRightsProvider(url, teamId)).value;
     void open(Widget screen) =>
-        Navigator.of(context)
-            .push(MaterialPageRoute<void>(builder: (_) => screen));
+        Navigator.of(context).push(SlideRoute<void>(builder: (_) => screen));
     return MenuAnchor(
       menuChildren: [
         if (rights?.join ?? true)
