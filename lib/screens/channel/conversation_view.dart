@@ -575,14 +575,19 @@ class _OlderEdge extends StatelessWidget {
       index: window.reachesStart ? 1 : 0,
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        const Padding(
-          padding: EdgeInsets.all(Spacing.md),
-          child: Center(
-            child: SizedBox.square(
-              dimension: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                semanticsLabel: 'Loading older messages',
+        // The edge is built even far off screen; it only spins, asking for
+        // a frame each time, while a page is on its way.
+        TickerMode(
+          enabled: state.loadingOlder && !window.reachesStart,
+          child: const Padding(
+            padding: EdgeInsets.all(Spacing.md),
+            child: Center(
+              child: SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  semanticsLabel: 'Loading older messages',
+                ),
               ),
             ),
           ),
