@@ -14,6 +14,7 @@ import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
@@ -66,7 +67,9 @@ void main() {
           home: Consumer(
             builder: (context, ref, _) {
               container = ProviderScope.containerOf(context);
-              return const Scaffold();
+              return const Scaffold(
+                body: ReopenSwipe(child: SizedBox.expand()),
+              );
             },
           ),
         ),
@@ -182,6 +185,34 @@ void main() {
       tester.widget<ChannelScreen>(find.byType(ChannelScreen)).channelId,
       _directId,
     );
+    navigator(tester).pop();
+    await settle(tester);
+    await finish(tester);
+  });
+
+  testWidgets('a left swipe brings back the conversation just closed', (
+    tester,
+  ) async {
+    await start(tester);
+    unawaited(
+      openConversation(
+        navigator(tester),
+        url: server.url.toString(),
+        channelId: channelId,
+        title: 'Boats',
+        teamId: teamId,
+        highlightPostId: 'old1',
+      ),
+    );
+    await settle(tester);
+    navigator(tester).pop();
+    await settle(tester);
+    expect(find.byType(ChannelScreen), findsNothing);
+    await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
+    await settle(tester);
+    final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
+    expect(screen.channelId, channelId);
+    expect(screen.highlightPostId, isNull);
     navigator(tester).pop();
     await settle(tester);
     await finish(tester);

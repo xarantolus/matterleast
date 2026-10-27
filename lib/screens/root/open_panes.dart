@@ -21,6 +21,16 @@ class OpenPanes extends _$OpenPanes {
   void set(Panes panes) => state = panes;
 }
 
+/// The conversation the user last closed on a narrow screen; a left swipe
+/// on the channel list or Home brings it back.
+@Riverpod(keepAlive: true)
+class LastClosed extends _$LastClosed {
+  @override
+  ConversationTarget? build() => null;
+
+  void set(ConversationTarget target) => state = target;
+}
+
 /// The conversation routes on the app's navigator, oldest first.
 @Riverpod(keepAlive: true)
 ConversationRoutes conversationRoutes(Ref ref) {

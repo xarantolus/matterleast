@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/agent_providers.dart';
@@ -17,9 +16,9 @@ import 'package:matterleast/screens/channel_list/reorder_view.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/drafts_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
-import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -101,11 +100,6 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
   var _atRest = true;
   var _unreadsOnly = false;
   var _reordering = false;
-
-  /// The conversation last closed after opening it from this list; a left
-  /// swipe brings it back.
-  ChannelItem? _last;
-  var _swipe = 0.0;
 
   final _scroll = ScrollController();
   final _rows = <String, BuildContext>{};
@@ -233,34 +227,13 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     }
   }
 
-  Future<void> _open(ChannelItem item) async {
-    await openConversation(
-      Navigator.of(context),
-      url: widget.url,
-      channelId: item.id,
-      title: item.title,
-      teamId: widget.teamId,
-    );
-    if (mounted) _last = item;
-  }
-
-  void _swipeUpdate(DragUpdateDetails d) {
-    final next = _swipe + d.delta.dx;
-    if (_swipe > -_reopenDistance && next <= -_reopenDistance) {
-      unawaited(HapticFeedback.mediumImpact());
-    }
-    _swipe = next;
-  }
-
-  void _swipeEnd(DragEndDetails d) {
-    final last = _last;
-    final far =
-        _swipe <= -_reopenDistance || d.velocity.pixelsPerSecond.dx < -800;
-    _swipe = 0;
-    if (far && last != null && mounted) unawaited(_open(last));
-  }
-
-  static const _reopenDistance = 64.0;
+  Future<void> _open(ChannelItem item) => openConversation(
+    Navigator.of(context),
+    url: widget.url,
+    channelId: item.id,
+    title: item.title,
+    teamId: widget.teamId,
+  );
 
   void _setReordering(bool on) {
     setState(() => _reordering = on);
@@ -438,22 +411,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
         ],
       ),
     );
-    return RawGestureDetector(
-      gestures: {
-        OneWayDragRecognizer:
-            GestureRecognizerFactoryWithHandlers<OneWayDragRecognizer>(
-              () => OneWayDragRecognizer(rightward: false, debugOwner: this),
-              (r) => r
-                ..onStart = (_) {
-                  _swipe = 0;
-                }
-                ..onUpdate = _swipeUpdate
-                ..onEnd = _swipeEnd
-                ..onCancel = () {
-                  _swipe = 0;
-                },
-            ),
-      },
+    return ReopenSwipe(
       child: Stack(
         children: [
           // A resized viewport moves rows without scrolling.

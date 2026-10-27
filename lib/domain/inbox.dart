@@ -362,3 +362,12 @@ String mentionTerms({
   if (!keys.contains(own)) keys.add(own);
   return keys.toSet().join(' ');
 }
+
+/// Unread conversations whose newest message isn't stored, so their row
+/// can only count messages instead of showing the newest one.
+Iterable<String> conversationsWithoutPreview(ServerInbox inbox) => [
+  for (final item in inbox.unread)
+    if ((item.kind == InboxKind.direct || item.kind == InboxKind.group) &&
+        item.postId == null)
+      item.channelId,
+];

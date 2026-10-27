@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/server_entry.dart';
@@ -11,6 +12,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/home/home_state.dart';
 import 'package:matterleast/screens/home/open_item.dart';
+import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
@@ -32,11 +34,38 @@ class HomePane extends ConsumerStatefulWidget {
 }
 
 class _HomePaneState extends ConsumerState<HomePane> {
+  /// Conversations already asked for their newest messages, per server.
+  final _previewed = <String, Set<String>>{};
+
+  /// Fetches the newest messages of unread conversations that only have a
+  /// count to show, the same way opening them would.
+  Future<void> _fillPreviews(String url, ServerInbox? inbox) async {
+    if (inbox == null) return;
+    final asked = _previewed.putIfAbsent(url, () => {});
+    final ids = conversationsWithoutPreview(inbox).where(asked.add).toList();
+    if (ids.isEmpty) return;
+    final actions = ConversationActions(
+      await ref.read(serverSessionProvider(url).future),
+    );
+    for (final id in ids) {
+      try {
+        await actions.refreshChannel(id);
+      } on ApiError {
+        // The row keeps its count.
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) unawaited(_refresh(force: false));
+      if (!mounted) return;
+      unawaited(_refresh(force: false));
+      for (final s in widget.servers) {
+        final inbox = ref.read(serverInboxProvider(s.url)).value;
+        unawaited(_fillPreviews(s.url, inbox));
+      }
     });
   }
 
@@ -80,6 +109,12 @@ class _HomePaneState extends ConsumerState<HomePane> {
   Widget build(BuildContext context) {
     final filter = ref.watch(homeFilterSelectionProvider);
     final servers = widget.servers;
+    for (final s in servers) {
+      ref.listen(
+        serverInboxProvider(s.url),
+        (_, next) => unawaited(_fillPreviews(s.url, next.value)),
+      );
+    }
     final state = homeState(filter, [
       for (final s in servers)
         (
@@ -93,75 +128,79 @@ class _HomePaneState extends ConsumerState<HomePane> {
       if (servers.length > 1)
         for (final s in servers) s.url: s.displayName,
     };
-    return RefreshIndicator(
-      onRefresh: _pull,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: _FilterChips(
-              selected: filter,
-              onSelected: ref.read(homeFilterSelectionProvider.notifier).select,
-              notice: switch (state) {
-                HomeReady(:final notice) => notice,
-                _ => null,
-              },
-              onRetry: () => unawaited(_pull()),
-            ),
-          ),
-          ...switch (state) {
-            HomeLoading() => const [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator()),
+    return ReopenSwipe(
+      child: RefreshIndicator(
+        onRefresh: _pull,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: _FilterChips(
+                selected: filter,
+                onSelected: ref
+                    .read(homeFilterSelectionProvider.notifier)
+                    .select,
+                notice: switch (state) {
+                  HomeReady(:final notice) => notice,
+                  _ => null,
+                },
+                onRetry: () => unawaited(_pull()),
               ),
-            ],
-            HomeFailed(:final title, :final detail) => [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: EmptyState(
-                  icon: Icons.cloud_off,
-                  title: title,
-                  body: detail,
-                  action: FilledButton.tonal(
-                    onPressed: () => unawaited(_refresh(force: true)),
-                    child: const Text('Retry'),
+            ),
+            ...switch (state) {
+              HomeLoading() => const [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ],
+              HomeFailed(:final title, :final detail) => [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: EmptyState(
+                    icon: Icons.cloud_off,
+                    title: title,
+                    body: detail,
+                    action: FilledButton.tonal(
+                      onPressed: () => unawaited(_refresh(force: true)),
+                      child: const Text('Retry'),
+                    ),
                   ),
                 ),
+              ],
+              HomeReady(:final items) when items.isEmpty => [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _Empty(filter: filter, onSearch: widget.onSearch),
+                ),
+              ],
+              HomeReady(:final items) => [
+                SliverList.builder(
+                  itemCount: items.length,
+                  findChildIndexCallback: (key) {
+                    final id = (key as ValueKey<String>).value;
+                    final i = items.indexWhere((item) => item.key == id);
+                    return i < 0 ? null : i;
+                  },
+                  itemBuilder: (context, i) {
+                    final item = items[i];
+                    return MessagePreviewTile(
+                      key: ValueKey(item.key),
+                      item: item,
+                      serverName: names[item.serverUrl],
+                      onTap: () => openInboxItem(context, item),
+                    );
+                  },
+                ),
+              ],
+            },
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MediaQuery.paddingOf(context).bottom + Spacing.lg,
               ),
-            ],
-            HomeReady(:final items) when items.isEmpty => [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _Empty(filter: filter, onSearch: widget.onSearch),
-              ),
-            ],
-            HomeReady(:final items) => [
-              SliverList.builder(
-                itemCount: items.length,
-                findChildIndexCallback: (key) {
-                  final id = (key as ValueKey<String>).value;
-                  final i = items.indexWhere((item) => item.key == id);
-                  return i < 0 ? null : i;
-                },
-                itemBuilder: (context, i) {
-                  final item = items[i];
-                  return MessagePreviewTile(
-                    key: ValueKey(item.key),
-                    item: item,
-                    serverName: names[item.serverUrl],
-                    onTap: () => openInboxItem(context, item),
-                  );
-                },
-              ),
-            ],
-          },
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: MediaQuery.paddingOf(context).bottom + Spacing.lg,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

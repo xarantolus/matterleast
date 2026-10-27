@@ -59,7 +59,33 @@ Future<void> openConversation(
     return;
   }
   await navigator.push(conversationRoute(target));
+  // Brought back at the reading position, not at the message it opened at.
+  container
+      .read(lastClosedProvider.notifier)
+      .set(target.copyWith(highlightPostId: null));
 }
+
+/// Opens [target] again the way [openConversation] first did.
+Future<void> reopenConversation(
+  NavigatorState navigator,
+  ConversationTarget target,
+) => switch (target) {
+  ChannelTarget() => openConversation(
+    navigator,
+    url: target.url,
+    channelId: target.channelId,
+    title: target.title,
+    teamId: target.teamId,
+  ),
+  ThreadTarget() => openConversation(
+    navigator,
+    url: target.url,
+    channelId: target.channelId,
+    title: target.channelName,
+    teamId: target.teamId,
+    rootId: target.rootId,
+  ),
+};
 
 /// The route of [target] on a narrow screen.
 ConversationRoute<void> conversationRoute(
