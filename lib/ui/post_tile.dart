@@ -209,7 +209,9 @@ class PostTile extends StatelessWidget {
                 : null,
           ),
         if (onOpenThread != null && !post.isReply && post.replyCount > 0)
-          _ThreadBar(post: post, onPressed: onOpenThread!),
+          _ThreadBar(post: post, onPressed: onOpenThread!)
+        else if (onOpenThread != null && !post.isReply && post.hasDraftReply)
+          _DraftMarker(onPressed: onOpenThread!),
         if (failed)
           Text(
             'Not sent · Tap to try again',
@@ -688,6 +690,11 @@ class _ThreadBar extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (post.hasDraftReply)
+                    const Padding(
+                      padding: EdgeInsets.only(left: Spacing.sm),
+                      child: _DraftLabel(),
+                    ),
                   if (unread > 0)
                     Padding(
                       padding: const EdgeInsets.only(left: Spacing.sm),
@@ -702,6 +709,47 @@ class _ThreadBar extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Says an unsent reply waits in the thread.
+class _DraftLabel extends StatelessWidget {
+  const _DraftLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.tokens.accent;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.edit_outlined, size: 14, color: color),
+        const SizedBox(width: Spacing.xs),
+        Text(
+          'Draft',
+          style: Theme.of(context).textTheme.labelMedium
+              ?.copyWith(color: color),
+        ),
+      ],
+    );
+  }
+}
+
+class _DraftMarker extends StatelessWidget {
+  const _DraftMarker({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.centerLeft,
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44),
+        child: const _DraftLabel(),
+      ),
+    ),
+  );
 }
 
 /// Up to three people who replied, overlapping like a stack of cards.

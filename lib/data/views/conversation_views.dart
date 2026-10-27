@@ -231,6 +231,7 @@ class ConversationViews {
       db.config,
       db.threads,
       db.reactions,
+      db.drafts,
     ]),
   );
 
@@ -477,6 +478,16 @@ class ConversationViews {
       )..where((t) => t.rootId.isIn(roots))).get())
         t.rootId: t.unreadReplies,
     };
+    final draftRoots = {
+      for (final d
+          in await (db.select(db.drafts)..where(
+                (d) =>
+                    d.rootId.isIn([for (final p in posts) p.id]) &
+                    (d.message.equals('').not() | d.files.equals('[]').not()),
+              ))
+              .get())
+        d.rootId,
+    };
     String nameOf(String id) {
       final person = people[id];
       if (person == null) return 'Someone';
@@ -547,6 +558,7 @@ class ConversationViews {
             personOf: personOf,
           ),
           unreadReplies: unread[p.id] ?? 0,
+          hasDraftReply: draftRoots.contains(p.id),
           participants: [
             for (final id in participants[p.id]!)
               if (people.containsKey(id)) personOf(id),

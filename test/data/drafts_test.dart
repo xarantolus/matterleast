@@ -3,6 +3,8 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/drafts.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/data/views/root_views.dart';
 
 import '../support/fake_server.dart';
@@ -131,5 +133,41 @@ void main() {
     await actions.flushDrafts();
     final list = await RootViews(session.db).channelList(teamId).first;
     expect(list.drafts, 1);
+  });
+
+  test('a reply draft in a thread does not mark the channel', () async {
+    actions.saveDraft(
+      const Draft(channelId: channelId, rootId: 'root1', message: 'reply'),
+    );
+    await actions.flushDrafts();
+    final list = await RootViews(session.db).channelList(teamId).first;
+    expect(list.drafts, 0);
+  });
+
+  test('a post whose thread has a draft reply says so', () async {
+    final at = DateTime.utc(2026, 10, 26, 9);
+    await session.store.applyEphemeralPost(
+      api.Post.fromJson({
+        'id': 'root1',
+        'channel_id': channelId,
+        'user_id': meId,
+        'create_at': at.millisecondsSinceEpoch,
+        'type': ephemeralType,
+        'message': 'Lunch?',
+      }),
+    );
+    Future<bool> marked() async {
+      final window = await ConversationViews(session.db)
+          .channel(channelId, limit: 10, openedAt: at)
+          .first;
+      return window.posts.firstWhere((p) => p.id == 'root1').hasDraftReply;
+    }
+
+    expect(await marked(), isFalse);
+    actions.saveDraft(
+      const Draft(channelId: channelId, rootId: 'root1', message: 'reply'),
+    );
+    await actions.flushDrafts();
+    expect(await marked(), isTrue);
   });
 }
