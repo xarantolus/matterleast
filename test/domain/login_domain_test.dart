@@ -231,6 +231,30 @@ void main() {
       }
     });
 
+    test('accepts the callback with a slash after the host, as Windows '
+        'delivers it', () {
+      expect(
+        parse(
+          'mmauth://callback/?MMAUTHTOKEN=abc&MMCSRF=x&srv=https%3A%2F%2Fchat.example.test',
+          on: Uri.parse('https://chat.example.test'),
+        ),
+        const SsoResult.token('abc'),
+      );
+    });
+
+    test('names the shape of a callback it rejects, never its query', () {
+      final result = parse(
+        'mmauth://callback/x?MMAUTHTOKEN=secret-token&MMCSRF=secret-csrf'
+        '&srv=https%3A%2F%2Fchat.example.test',
+        on: Uri.parse('https://chat.example.test'),
+      );
+      final reason = (result as SsoRejected).reason;
+      expect(reason, contains('mmauth://callback/x'));
+      for (final leak in ['secret', 'MMAUTHTOKEN', 'MMCSRF', 'srv', '?']) {
+        expect(reason, isNot(contains(leak)), reason: leak);
+      }
+    });
+
     test('rejects another server and a missing token', () {
       expect(
         parse('mmauth://callback?MMAUTHTOKEN=abc&srv=https://evil.test'),
@@ -316,7 +340,7 @@ void main() {
 
     test('a callback in another shape is rejected, not read', () {
       for (final callback in [
-        'mmauth://callback/?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8065',
+        'mmauth://callback/x?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8065',
         'mmauthbeta://callback?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8065',
         'mmauth://callback?MMAUTHTOKEN=abc&srv=http://10.0.2.2:8065#x',
       ]) {
