@@ -181,6 +181,17 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('a conversation meets the tap target, label and contrast '
+      'guidelines', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await open(tester);
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    semantics.dispose();
+    await close(tester);
+  });
+
   testWidgets('a list at rest asks for no frames', (tester) async {
     await open(tester);
     expect(find.text('message 59'), findsOneWidget);

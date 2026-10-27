@@ -43,24 +43,27 @@ class MessagePreviewTile extends ConsumerWidget {
     return ListTile(
       contentPadding: Spacing.row,
       onTap: onTap,
-      leading: Stack(
-        children: [
-          if (item.avatarUserId case final userId?)
-            UserAvatar(
-              serverUrl: item.serverUrl,
-              userId: userId,
-              name: item.avatarName,
-              lastPictureUpdate: item.avatarPictureUpdate,
-            )
-          else
-            InitialsBadge(name: item.avatarName, round: true),
-          if (item.kind == InboxKind.direct)
-            PositionedDirectional(
-              end: 0,
-              bottom: 0,
-              child: PresenceDot(status: item.status, size: 12),
-            ),
-        ],
+      // Pictures are decoration here; presence is read after the name.
+      leading: ExcludeSemantics(
+        child: Stack(
+          children: [
+            if (item.avatarUserId case final userId?)
+              UserAvatar(
+                serverUrl: item.serverUrl,
+                userId: userId,
+                name: item.avatarName,
+                lastPictureUpdate: item.avatarPictureUpdate,
+              )
+            else
+              InitialsBadge(name: item.avatarName, round: true),
+            if (item.kind == InboxKind.direct)
+              PositionedDirectional(
+                end: 0,
+                bottom: 0,
+                child: PresenceDot(status: item.status, size: 12),
+              ),
+          ],
+        ),
       ),
       title: Row(
         children: [
@@ -87,27 +90,36 @@ class MessagePreviewTile extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (item.kind == InboxKind.direct)
+            Semantics(label: presenceLabel(item.status).toLowerCase()),
           if (!large) ...[
             const SizedBox(width: Spacing.sm),
             Text(when, style: text.bodySmall?.copyWith(color: tokens.muted)),
           ],
         ],
       ),
-      subtitle: Text.rich(
-        TextSpan(
-          children: [
-            if (large) TextSpan(text: '$when · '),
-            if (item.author case final author?)
-              TextSpan(
-                text: '$author: ',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            TextSpan(text: item.preview),
-          ],
-        ),
-        maxLines: large ? 2 : 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: item.unread ? tokens.text : tokens.muted),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // At large sizes the time takes a line of its own, so the
+          // message keeps two lines instead of a few letters after it.
+          if (large) Text(when, style: TextStyle(color: tokens.muted)),
+          Text.rich(
+            TextSpan(
+              children: [
+                if (item.author case final author?)
+                  TextSpan(
+                    text: '$author: ',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                TextSpan(text: item.preview),
+              ],
+            ),
+            maxLines: large ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: item.unread ? tokens.text : tokens.muted),
+          ),
+        ],
       ),
       trailing: marker,
     );

@@ -1,11 +1,13 @@
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/post_extras.dart';
+import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/markdown/markdown_cache.dart';
 import 'package:matterleast/markdown/post_doc.dart';
+import 'package:matterleast/markdown/spoken_post.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
@@ -94,6 +96,30 @@ class PostBody extends StatelessWidget {
     };
     return collapsible ? ShowMore(id: postId, child: content) : content;
   }
+}
+
+final _spoken = Expando<SpokenPost>();
+
+/// A message's text as a screen reader says it, worked out once per
+/// parsed version.
+SpokenPost spokenMessage(
+  BuildContext context, {
+  required String postId,
+  required String message,
+  DateTime? editAt,
+  bool unsafeLinks = false,
+  Map<String, String> channelNames = const {},
+}) {
+  var options =
+      context.getInheritedWidgetOfExactType<PostEnvironment>()?.options ??
+      const ParseOptions();
+  if (unsafeLinks) options = options.copyWith(unsafeLinks: true);
+  final doc = markdownCache.get(postId, editAt, message, options);
+  return _spoken[doc] ??= spokenPost(
+    doc,
+    unicode: unicodeForName,
+    channelNames: channelNames,
+  );
 }
 
 /// The pictures written into a message's text, in reading order, as the

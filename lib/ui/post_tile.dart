@@ -12,6 +12,8 @@ import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/markdown/links.dart';
+import 'package:matterleast/markdown/spoken_post.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/acknowledge_button.dart';
 import 'package:matterleast/ui/agent_post.dart';
@@ -25,6 +27,7 @@ import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/permalink_card.dart';
 import 'package:matterleast/ui/post_files.dart';
+import 'package:matterleast/ui/post_semantics.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -45,6 +48,9 @@ class PostTile extends StatelessWidget {
     this.onToggleReaction,
     this.onAddReaction,
     this.onAcknowledge,
+    this.onTap,
+    this.tapHint,
+    this.onLongPress,
     this.actions = const {},
     super.key,
   });
@@ -68,6 +74,14 @@ class PostTile extends StatelessWidget {
 
   /// Acknowledges the message, or takes the acknowledgement back.
   final VoidCallback? onAcknowledge;
+
+  final VoidCallback? onTap;
+
+  /// What a tap does, in words for a screen reader: "open thread".
+  final String? tapHint;
+
+  /// Opens the message's options.
+  final VoidCallback? onLongPress;
 
   /// What a screen reader offers on the message, such as Reply.
   final Map<CustomSemanticsAction, VoidCallback> actions;
@@ -98,67 +112,145 @@ class PostTile extends StatelessWidget {
     final time = _time(context, post.createAt);
     final status = sendStatusLabel(post.sendState);
     final failed = post.sendState == 'failed';
+    final header = // The whole line, so a tap between name and time opens the
+        // profile instead of the thread.
+        _ToProfile(
+          post: post,
+          details: details,
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: Spacing.sm,
+            children: [
+              Text(name, style: text.titleSmall?.copyWith(color: tokens.text)),
+              if (bot)
+                const _Tag('BOT')
+              else if (post.authorIsGuest)
+                const _Tag('GUEST'),
+              Text(time, style: text.bodySmall?.copyWith(color: tokens.muted)),
+              if (details.priority case final priority?)
+                _PriorityLabel(priority: priority),
+              if (post.isEphemeral)
+                Text(
+                  '(Only visible to you)',
+                  style: text.bodySmall?.copyWith(color: tokens.muted),
+                ),
+            ],
+          ),
+        );
+    final textBody =
+        !post.unreadable &&
+        !(post.type == burnOnReadType && !post.deleted) &&
+        !(agentPostTypes.contains(post.type) && !post.deleted) &&
+        !(post.type == agentMentionReminderType && !post.deleted);
+    final spoken = textBody && !post.deleted && post.message.isNotEmpty
+        ? spokenMessage(
+            context,
+            postId: post.id,
+            message: post.message,
+            editAt: post.editAt,
+            unsafeLinks: details.unsafeLinks,
+            channelNames: details.props.channelMentions,
+          )
+        : null;
+    // Text with an integration's buttons in it stays readable piece by
+    // piece; everything else is told in the message's one stop.
+    final mergedText = textBody && !(spoken?.inlineActions ?? false);
+    final images = mergedText
+        ? _textImages(context, details)
+        : const <PostFile>[];
+    final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
+    final editAt = post.editAt;
+    final reactions = post.deleted ? const <ReactionGroup>[] : post.reactions;
+    final threadShown =
+        onOpenThread != null &&
+        !post.isReply &&
+        (post.replyCount > 0 || post.hasDraftReply);
+    final lastReply = post.lastReplyAt;
+    final preview = (env?.linkPreviews ?? true) && !post.deleted
+        ? details.preview
+        : null;
+    final label = messageLabel(
+      author: name,
+      time: time,
+      tag: bot ? 'bot' : (post.authorIsGuest ? 'guest' : null),
+      priority: switch (details.priority) {
+        PostPriorityLabel.urgent => 'urgent',
+        PostPriorityLabel.important => 'important',
+        null => null,
+      },
+      ephemeral: post.isEphemeral,
+      pinned: post.pinned && !post.deleted,
+      saved: post.saved && !post.deleted,
+      text: post.deleted
+          ? 'message deleted'
+          : post.unreadable
+          ? "This message couldn't be shown"
+          : mergedText
+          ? spoken?.text ?? ''
+          : '',
+      edited: post.edited && editAt != null && mergedText
+          ? momentLabel(editAt, DateTime.now(), use24: use24)
+          : null,
+      files: post.deleted ? 0 : details.files.length,
+      preview: preview == null
+          ? null
+          : [
+              preview.siteName,
+              preview.title,
+            ].where((t) => t.isNotEmpty).join(': '),
+      linked: post.deleted ? null : post.linked,
+      reactions: reactions,
+      acknowledged: acknowledge && post.acknowledgedAt != null,
+      replies: threadShown
+          ? repliesWords(
+              count: post.replyCount,
+              unread: post.unreadReplies,
+              draft: post.hasDraftReply,
+              lastReply: lastReply == null
+                  ? null
+                  : whenLabel(lastReply, DateTime.now(), use24: use24),
+            )
+          : null,
+      sendState: status,
+    );
+    final semanticActions = {
+      ...actions,
+      ..._ownActions(
+        context,
+        env: env,
+        details: details,
+        name: name,
+        spoken: mergedText ? spoken : null,
+        images: images,
+        preview: preview,
+        reactions: reactions,
+        acknowledge: acknowledge,
+      ),
+    };
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (!compact)
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: Spacing.sm,
-            children: [
-              // Who, when and how urgent, as one stop for a screen reader.
-              MergeSemantics(
-                child: Semantics(
-                  label: status,
-                  customSemanticsActions: actions,
-                  // The whole line, so a tap between name and time opens
-                  // the profile instead of the thread.
-                  child: _ToProfile(
-                    post: post,
-                    details: details,
-                    child: Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: Spacing.sm,
-                      children: [
-                        Text(
-                          name,
-                          style: text.titleSmall?.copyWith(color: tokens.text),
-                        ),
-                        if (bot)
-                          const _Tag('BOT')
-                        else if (post.authorIsGuest)
-                          const _Tag('GUEST'),
-                        Text(
-                          time,
-                          style: text.bodySmall?.copyWith(color: tokens.muted),
-                        ),
-                        if (details.priority case final priority?)
-                          _PriorityLabel(priority: priority),
-                        if (post.isEphemeral)
-                          Text(
-                            '(Only visible to you)',
-                            style: text.bodySmall?.copyWith(
-                              color: tokens.muted,
-                            ),
-                          ),
-                      ],
+          ExcludeSemantics(
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: Spacing.sm,
+              children: [
+                header,
+                if (post.isEphemeral && onDismiss != null)
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      textStyle: text.bodySmall,
                     ),
+                    onPressed: onDismiss,
+                    child: const Text('Dismiss'),
                   ),
-                ),
-              ),
-              if (post.isEphemeral && onDismiss != null)
-                TextButton(
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    textStyle: text.bodySmall,
-                  ),
-                  onPressed: onDismiss,
-                  child: const Text('Dismiss'),
-                ),
-            ],
+              ],
+            ),
           ),
         if (post.unreadable)
-          _Unreadable(post: post)
+          ExcludeSemantics(child: _Unreadable(post: post))
         else if (post.type == burnOnReadType && !post.deleted)
           BurnOnReadView(
             post: post,
@@ -176,14 +268,18 @@ class PostTile extends StatelessWidget {
         else if (post.type == agentMentionReminderType && !post.deleted)
           AgentMentionReminder(post: post)
         else
-          MessageImageOpener(
-            open: (url) => _openImage(context, url, details, name),
-            child: PostTextActions(
-              post: post,
-              details: details,
-              child: PostText(post: post, details: details),
+          ExcludeSemantics(
+            excluding: mergedText,
+            child: MessageImageOpener(
+              open: (url) => _openImage(context, url, details, name),
+              child: PostTextActions(
+                post: post,
+                details: details,
+                child: PostText(post: post, details: details),
+              ),
             ),
           ),
+        // Files keep their own stops: each has a menu of its own.
         if (details.files.isNotEmpty && !post.deleted)
           PostFiles(
             files: details.files,
@@ -193,36 +289,45 @@ class PostTile extends StatelessWidget {
             leading: () => _textImages(context, details),
           ),
         PostIntegration(post: post, details: details),
-        if (details.preview case final preview? when env?.linkPreviews ?? true)
-          LinkPreviewCard(preview: preview),
-        if (post.linked case final linked? when !post.deleted)
-          PermalinkCard(linked: linked),
-        if ((post.reactions.isNotEmpty && !post.deleted) || acknowledge)
-          ReactionsBar(
-            reactions: post.deleted ? const [] : post.reactions,
-            onToggle: onToggleReaction,
-            onAdd: post.reactions.isEmpty ? null : onAddReaction,
-            leading: acknowledge
-                ? AcknowledgeButton(
-                    post: post,
-                    times: {
-                      for (final a in details.acknowledgements) a.userId: a.at,
-                    },
-                    onToggle: onAcknowledge,
-                  )
-                : null,
+        ExcludeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (preview != null) LinkPreviewCard(preview: preview),
+              if (post.linked case final linked? when !post.deleted)
+                PermalinkCard(linked: linked),
+              if (reactions.isNotEmpty || acknowledge)
+                ReactionsBar(
+                  reactions: reactions,
+                  onToggle: onToggleReaction,
+                  onAdd: post.reactions.isEmpty ? null : onAddReaction,
+                  leading: acknowledge
+                      ? AcknowledgeButton(
+                          post: post,
+                          times: {
+                            for (final a in details.acknowledgements)
+                              a.userId: a.at,
+                          },
+                          onToggle: onAcknowledge,
+                        )
+                      : null,
+                ),
+              if (onOpenThread != null && !post.isReply && post.replyCount > 0)
+                _ThreadBar(post: post, onPressed: onOpenThread!)
+              else if (onOpenThread != null &&
+                  !post.isReply &&
+                  post.hasDraftReply)
+                _DraftMarker(onPressed: onOpenThread!),
+              if (failed)
+                Text(
+                  'Not sent · Tap to try again',
+                  style: text.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+            ],
           ),
-        if (onOpenThread != null && !post.isReply && post.replyCount > 0)
-          _ThreadBar(post: post, onPressed: onOpenThread!)
-        else if (onOpenThread != null && !post.isReply && post.hasDraftReply)
-          _DraftMarker(onPressed: onOpenThread!),
-        if (failed)
-          Text(
-            'Not sent · Tap to try again',
-            style: text.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.error,
-            ),
-          ),
+        ),
       ],
     );
     final marked = (post.pinned || post.saved) && !post.deleted;
@@ -230,12 +335,7 @@ class PostTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (compact)
-          // A continued message still says who wrote it, to a screen reader.
-          Semantics(
-            label: [name, time, ?status].join(', '),
-            customSemanticsActions: actions,
-            child: const SizedBox(width: _gutter, height: 1),
-          )
+          const SizedBox(width: _gutter)
         else ...[
           ExcludeSemantics(
             child: _ToProfile(
@@ -249,7 +349,7 @@ class PostTile extends StatelessWidget {
         Expanded(child: body),
       ],
     );
-    return Opacity(
+    final tile = Opacity(
       opacity: post.sendState == null || failed ? 1 : 0.5,
       child: AnimatedContainer(
         duration: motion(context, const Duration(milliseconds: 400)),
@@ -268,13 +368,117 @@ class PostTile extends StatelessWidget {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Marks(pinned: post.pinned, saved: post.saved),
+                  ExcludeSemantics(
+                    child: _Marks(pinned: post.pinned, saved: post.saved),
+                  ),
                   row,
                 ],
               )
             : row,
       ),
     );
+    // One stop per message: what it says and what can be done with it.
+    // Files and an integration's controls follow as stops of their own.
+    return Semantics(
+      container: true,
+      label: label,
+      onTap: onTap,
+      onTapHint: onTap == null ? null : tapHint,
+      onLongPress: onLongPress,
+      onLongPressHint: onLongPress == null ? null : 'message options',
+      customSemanticsActions: semanticActions,
+      child: onTap == null && onLongPress == null
+          ? tile
+          : InkWell(
+              // Links, images, files, reactions and names take their own
+              // taps.
+              onTap: onTap,
+              onLongPress: onLongPress,
+              excludeFromSemantics: true,
+              child: tile,
+            ),
+    );
+  }
+
+  /// What a screen reader offers besides [actions]: what the message's
+  /// own controls do, which aren't stops of their own.
+  Map<CustomSemanticsAction, VoidCallback> _ownActions(
+    BuildContext context, {
+    required PostEnvironment? env,
+    required PostDetails details,
+    required String name,
+    required SpokenPost? spoken,
+    required List<PostFile> images,
+    required LinkPreview? preview,
+    required List<ReactionGroup> reactions,
+    required bool acknowledge,
+  }) {
+    CustomSemanticsAction action(String label) =>
+        CustomSemanticsAction(label: label);
+    final server = env?.server;
+    final links = {
+      for (final t in spoken?.targets ?? const <SpokenTarget>[])
+        if (t is SpokenLink) t.url,
+    };
+    return {
+      if (onToggleReaction case final toggle?)
+        for (final r in reactions)
+          action(
+            r.mine
+                ? 'Remove your ${emojiWords(r.emojiName)}'
+                : 'React with ${emojiWords(r.emojiName)}',
+          ): () =>
+              toggle(r.emojiName),
+      if (reactions.isNotEmpty)
+        action('Who reacted'): () =>
+            showReactions(context, reactions, reactions.first),
+      if (acknowledge && onAcknowledge != null)
+        action(
+          post.acknowledgedAt == null
+              ? 'Acknowledge'
+              : 'Remove acknowledgement',
+        ): onAcknowledge!,
+      if (post.isEphemeral && onDismiss != null) action('Dismiss'): onDismiss!,
+      if (env != null && server != null)
+        for (final target in spoken?.targets ?? const <SpokenTarget>[])
+          ...switch (target) {
+            SpokenLink(:final text, :final url) => {
+              action('Open $text'): () => env.onLink(classifyLink(url, server)),
+            },
+            SpokenMention(:final name) => {
+              action('Show @$name'): () => env.onMention(name),
+            },
+            SpokenChannel(:final name, :final shown) => {
+              action('Open ~$shown'): () => env.onChannel(name),
+            },
+          },
+      for (final (i, image) in images.indexed)
+        action(
+          images.length == 1 ? 'Open picture' : 'Open picture ${i + 1}',
+        ): () =>
+            _openImage(context, image.link!, details, name),
+      if (env != null && server != null)
+        if (preview != null &&
+            preview.url.isNotEmpty &&
+            !links.contains(preview.url))
+          action(
+            'Open ${preview.title.isEmpty ? 'link' : preview.title}',
+          ): () =>
+              env.onLink(classifyLink(preview.url, server)),
+      if (env != null)
+        if (post.linked case final linked? when !post.deleted)
+          action('Open quoted message'): () => openLinkedPost(env, linked),
+      if (env != null && !details.fromWebhook && post.userId.isNotEmpty)
+        action('Show profile of $name'): () => showUserProfile(
+          context,
+          url: env.server.toString(),
+          userId: post.userId,
+        ),
+      if (post.unreadable)
+        action('Copy details'): () => unawaited(
+          Clipboard.setData(ClipboardData(text: unreadableDetails(post))),
+        ),
+    };
   }
 
   /// Opens a picture from the message's text in the gallery, with the
@@ -461,18 +665,16 @@ class _ToProfile extends StatelessWidget {
     if (env == null || details.fromWebhook || post.userId.isEmpty) {
       return child;
     }
-    return Semantics(
-      button: true,
-      hint: 'Shows the profile',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => showUserProfile(
-          context,
-          url: env.server.toString(),
-          userId: post.userId,
-        ),
-        child: child,
+    // A screen reader finds this among the message's actions.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      excludeFromSemantics: true,
+      onTap: () => showUserProfile(
+        context,
+        url: env.server.toString(),
+        userId: post.userId,
       ),
+      child: child,
     );
   }
 }
@@ -610,6 +812,31 @@ class _SystemLine extends StatelessWidget {
         : systemMessageText(post.type, detailsOf(post).props, post.message);
     final style = Theme.of(context).textTheme.bodySmall
         ?.copyWith(color: tokens.muted);
+    final id = '${post.id}:system:${combined.length}';
+    final time = _time(context, post.createAt);
+    final spoken = spokenMessage(
+      context,
+      postId: id,
+      message: line,
+      editAt: post.editAt,
+    );
+    final env = PostEnvironment.maybeOf(context);
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label: '${spoken.text}\n$time',
+      customSemanticsActions: {
+        if (env != null)
+          for (final target in spoken.targets)
+            if (target case SpokenMention(:final name))
+              CustomSemanticsAction(label: 'Show @$name'): () =>
+                  env.onMention(name),
+      },
+      child: _systemRow(id, line, style, time),
+    );
+  }
+
+  Widget _systemRow(String id, String line, TextStyle? style, String time) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         Spacing.lg + _gutter,
@@ -622,7 +849,7 @@ class _SystemLine extends StatelessWidget {
         children: [
           Expanded(
             child: PostBody(
-              postId: '${post.id}:system:${combined.length}',
+              postId: id,
               message: line,
               editAt: post.editAt,
               collapsible: false,
@@ -630,7 +857,7 @@ class _SystemLine extends StatelessWidget {
             ),
           ),
           const SizedBox(width: Spacing.sm),
-          Text(_time(context, post.createAt), style: style),
+          Text(time, style: style),
         ],
       ),
     );

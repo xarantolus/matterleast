@@ -127,4 +127,15 @@ void main() {
     final badge = tester.getRect(find.byType(Badge));
     expect(tile.right - badge.right, 12);
   });
+
+  testWidgets('Home meets the tap target, label and contrast guidelines', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await _show(tester, inbox: _inbox([_item()]));
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    semantics.dispose();
+  });
 }

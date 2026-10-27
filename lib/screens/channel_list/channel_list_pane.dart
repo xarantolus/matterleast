@@ -697,7 +697,7 @@ class _CategoryHeader extends StatelessWidget {
               children: [
                 AnimatedRotation(
                   turns: section.collapsed ? -0.25 : 0,
-                  duration: const Duration(milliseconds: 200),
+                  duration: motion(context, const Duration(milliseconds: 200)),
                   curve: Curves.easeInOut,
                   child: Icon(Icons.expand_more, size: 18, color: tokens.muted),
                 ),

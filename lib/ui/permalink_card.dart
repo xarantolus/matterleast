@@ -22,6 +22,14 @@ String linkedExcerpt(String message) {
   return '${text.substring(0, _maxCharacters).trimRight()}…';
 }
 
+/// Opens the message [linked] points to in its conversation.
+void openLinkedPost(PostEnvironment env, LinkedPostPreview linked) {
+  final team = linked.teamName.isEmpty ? '_' : linked.teamName;
+  env.onLink(
+    LinkTarget.uri(serverUri(env.server, '$team/pl/${linked.postId}')),
+  );
+}
+
 /// A card of the message a link in this one points to: who wrote it, when
 /// and where, and how it starts. A tap opens it in its conversation.
 class PermalinkCard extends ConsumerStatefulWidget {
@@ -55,7 +63,6 @@ class _PermalinkCardState extends ConsumerState<PermalinkCard> {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
     final env = PostEnvironment.maybeOf(context);
-    final team = linked.teamName.isEmpty ? '_' : linked.teamName;
     final excerpt = linkedExcerpt(linked.message);
     return Padding(
       padding: const EdgeInsets.only(top: Spacing.xs),
@@ -63,13 +70,7 @@ class _PermalinkCardState extends ConsumerState<PermalinkCard> {
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: env == null
-              ? null
-              : () => env.onLink(
-                  LinkTarget.uri(
-                    serverUri(env.server, '$team/pl/${linked.postId}'),
-                  ),
-                ),
+          onTap: env == null ? null : () => openLinkedPost(env, linked),
           child: Padding(
             padding: const EdgeInsets.all(Spacing.md),
             child: Column(

@@ -3,6 +3,7 @@ import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/person_tile.dart';
+import 'package:matterleast/ui/post_semantics.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The emoji people reacted with, each with how many; the user's own are
@@ -104,7 +105,7 @@ class ReactionsBar extends StatelessWidget {
 /// What a screen reader says for a reaction chip: the emoji's name, how
 /// many reacted and whether the user is one of them.
 String reactionLabel(ReactionGroup group) => [
-  group.emojiName.replaceAll('_', ' '),
+  emojiWords(group.emojiName),
   '${group.count}',
   if (group.mine) 'including you',
 ].join(', ');

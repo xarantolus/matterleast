@@ -212,7 +212,12 @@ class _MediaTile extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return Semantics(
       button: true,
-      label: file.kind == FileKind.video ? 'Video ${file.name}' : file.name,
+      label: [
+        if (file.kind == FileKind.video) 'Video ${file.name}' else file.name,
+        if (more > 0) '$more more',
+      ].join(', '),
+      excludeSemantics: true,
+      onTap: onTap,
       child: SizedBox.fromSize(
         size: size,
         child: ClipRRect(

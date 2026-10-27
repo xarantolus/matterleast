@@ -192,9 +192,12 @@ class _RailButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-    child: Semantics(
-      selected: selected,
-      child: IconButton(tooltip: tooltip, onPressed: onPressed, icon: child),
+    // Merged, so the button itself is the selected one.
+    child: MergeSemantics(
+      child: Semantics(
+        selected: selected,
+        child: IconButton(tooltip: tooltip, onPressed: onPressed, icon: child),
+      ),
     ),
   );
 }

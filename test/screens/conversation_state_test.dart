@@ -264,6 +264,7 @@ void main() {
     test('a message from someone else that arrives live', () {
       final before = state([message]);
       final after = state([post('p2'), message], arrived: ['p2']);
+      // Who wrote, not what: the reader moves to the message to hear it.
       expect(conversationNews(before, after), ['New message from bob']);
     });
 

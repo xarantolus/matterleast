@@ -305,6 +305,77 @@ void main() {
     });
   }
 
+  for (final MapEntry(key: name, value: theme) in themes.entries) {
+    testWidgets('selected chips read and disabled controls stay visible in '
+        '$name', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            body: Column(
+              children: [
+                FilterChip(
+                  selected: true,
+                  label: const Text('Unread'),
+                  onSelected: (_) {},
+                ),
+                FilterChip(
+                  selected: true,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primaryContainer,
+                  labelStyle: TextStyle(
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                  label: const Text('Mine'),
+                  onSelected: (_) {},
+                ),
+                const TextButton(onPressed: null, child: Text('Off')),
+                const IconButton(onPressed: null, icon: Icon(Icons.send)),
+              ],
+            ),
+          ),
+        ),
+      );
+      Color chipFill(String label) {
+        final chip = tester.widget<FilterChip>(
+          find.ancestor(
+            of: find.text(label),
+            matching: find.byType(FilterChip),
+          ),
+        );
+        return chip.selectedColor ??
+            theme.chipTheme.selectedColor ??
+            theme.colorScheme.secondaryContainer;
+      }
+
+      final page = theme.scaffoldBackgroundColor;
+      for (final label in ['Unread', 'Mine']) {
+        final fill = Color.alphaBlend(chipFill(label), page);
+        expect(
+          contrast(
+            Color.alphaBlend(drawnColour(tester, find.text(label)), fill),
+            fill,
+          ),
+          greaterThanOrEqualTo(4.5),
+          reason: 'selected chip $label',
+        );
+      }
+      // Disabled controls are exempt from 4.5:1 but must still be seen.
+      final off = Color.alphaBlend(drawnColour(tester, find.text('Off')), page);
+      expect(contrast(off, page), greaterThanOrEqualTo(1.8), reason: 'Off');
+      final icon = tester.widget<IconTheme>(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.send),
+              matching: find.byType(IconTheme),
+            )
+            .first,
+      );
+      final send = Color.alphaBlend(icon.data.color!, page);
+      expect(contrast(send, page), greaterThanOrEqualTo(1.8), reason: 'Send');
+    });
+  }
+
   test('presence dots stand out from the page (3:1)', () {
     for (final MapEntry(key: name, value: theme) in themes.entries) {
       final t = theme.extension<AppTokens>()!;
