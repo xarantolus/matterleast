@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:extended_image/extended_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -10,6 +11,7 @@ import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
+import 'package:matterleast/data/files/file_handoff.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -316,11 +318,40 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
   VideoPlayerController? _video;
   var _ready = false;
   Object? _error;
+  String? _notice;
+
+  // video_player has no Linux implementation.
+  bool get _system => defaultTargetPlatform == TargetPlatform.linux;
 
   @override
   void initState() {
     super.initState();
-    _open();
+    _system ? _openExternally() : _open();
+  }
+
+  Future<void> _openExternally() async {
+    setState(() {
+      _error = null;
+      _notice = null;
+    });
+    try {
+      final local = await ref
+          .read(fileTransfersProvider(widget.url).notifier)
+          .fetch(widget.file);
+      if (local == null || !mounted) return;
+      final handoff = (await ref.read(fileDownloadsProvider(widget.url).future))
+          .handoffDirectory;
+      final opened = await FileHandoff.open(local, widget.file, handoff);
+      if (!mounted) return;
+      setState(
+        () => _notice = opened
+            ? 'Opened ${widget.file.name} in your video player.'
+            : 'No video player on this computer opens ${widget.file.name}. '
+                  'Use Save as to keep it.',
+      );
+    } on Object catch (e) {
+      if (mounted) setState(() => _error = e);
+    }
   }
 
   Future<void> _open() async {
@@ -368,27 +399,21 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
   @override
   Widget build(BuildContext context) {
     final video = _video;
+    if (_notice case final notice?) {
+      return _Message(
+        text: notice,
+        action: 'Open again',
+        onPressed: _openExternally,
+      );
+    }
     if (_error case final error?) {
       final cause = error is ApiError || error is TimeoutException
           ? requestProblemText(error, Uri.parse(widget.url).host)
           : 'Try again.';
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "The video didn't load. $cause You can also use Open with.",
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge
-                    ?.copyWith(color: Colors.white),
-              ),
-              const SizedBox(height: Spacing.md),
-              FilledButton(onPressed: _open, child: const Text('Retry')),
-            ],
-          ),
-        ),
+      return _Message(
+        text: "The video didn't load. $cause You can also use Open with.",
+        action: 'Retry',
+        onPressed: _system ? _openExternally : _open,
       );
     }
     if (!_ready || video == null) {
@@ -397,6 +422,40 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
     return VideoPlayerView(
       video: video,
       onControlsChanged: widget.onControlsChanged,
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
+  const _Message({
+    required this.text,
+    required this.action,
+    required this.onPressed,
+  });
+
+  final String text;
+  final String action;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge
+                  ?.copyWith(color: Colors.white),
+            ),
+            const SizedBox(height: Spacing.md),
+            FilledButton(onPressed: onPressed, child: Text(action)),
+          ],
+        ),
+      ),
     );
   }
 }

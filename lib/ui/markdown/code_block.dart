@@ -4,6 +4,7 @@ import 'package:matterleast/ui/markdown/code_highlight.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 const _previewLines = 4;
 
@@ -189,7 +190,7 @@ class _CodeScreenState extends State<CodeScreen> {
       softWrap: wrap,
     );
     return Scaffold(
-      appBar: AppBar(
+      appBar: WindowAppBar(
         title: Text(widget.title ?? (label.isEmpty ? 'Code' : '$label code')),
         actions: [
           WrapToggle(wrap: wrap, onChanged: (on) => setState(() => _wrap = on)),

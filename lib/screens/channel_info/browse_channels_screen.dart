@@ -16,6 +16,7 @@ import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// The team's public channels the user is not in, or its archived ones,
 /// a page at a time; joining asks first.
@@ -139,7 +140,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
     final busy = list.busy || _working;
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
-      appBar: AppBar(
+      appBar: WindowAppBar(
         title: const Text('Browse channels'),
         actions: [
           if (canCreate)

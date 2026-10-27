@@ -18,6 +18,7 @@ import 'package:matterleast/screens/threads/thread_options_sheet.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
+import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Unread conversations, mentions, followed threads and saved messages
@@ -132,7 +133,7 @@ class _HomePaneState extends ConsumerState<HomePane> {
     };
     return ReopenSwipe(
       child: FocusRegion(
-        child: RefreshIndicator(
+        child: RefreshArea(
           onRefresh: _pull,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),

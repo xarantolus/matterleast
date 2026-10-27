@@ -54,6 +54,18 @@ END
 // remains consistent on all systems.
 IDI_APP_ICON            ICON                    "resources\\app_icon.ico"
 
+// Taskbar overlays with the unread mention count.
+IDI_BADGE_1             ICON                    "resources\\badge_1.ico"
+IDI_BADGE_2             ICON                    "resources\\badge_2.ico"
+IDI_BADGE_3             ICON                    "resources\\badge_3.ico"
+IDI_BADGE_4             ICON                    "resources\\badge_4.ico"
+IDI_BADGE_5             ICON                    "resources\\badge_5.ico"
+IDI_BADGE_6             ICON                    "resources\\badge_6.ico"
+IDI_BADGE_7             ICON                    "resources\\badge_7.ico"
+IDI_BADGE_8             ICON                    "resources\\badge_8.ico"
+IDI_BADGE_9             ICON                    "resources\\badge_9.ico"
+IDI_BADGE_MORE          ICON                    "resources\\badge_9_more.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

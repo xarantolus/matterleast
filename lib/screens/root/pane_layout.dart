@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/screens/channel/reading_places.dart';
 import 'package:matterleast/screens/open_channel.dart';
@@ -9,6 +10,7 @@ import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/update_indicator.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// The rail and channel list ([list]) alone on a narrow window, where
 /// conversations are routes over it, or with the open conversation (and on
@@ -124,7 +126,7 @@ class _PaneLayoutState extends ConsumerState<PaneLayout> {
             child: MediaQuery.removePadding(
               context: context,
               removeRight: true,
-              child: widget.list,
+              child: WindowCorner(here: false, child: widget.list),
             ),
           ),
           const VerticalDivider(width: 1),
@@ -178,28 +180,40 @@ class _NothingOpen extends StatelessWidget {
   const _NothingOpen();
 
   @override
-  Widget build(BuildContext context) => const Scaffold(
-    body: Stack(
-      children: [
-        EmptyState(
-          icon: Icons.forum_outlined,
-          title: 'No conversation open',
-          body: 'Pick a channel or a direct message from the list.',
-        ),
-        // Where an app bar's last action would be.
-        SafeArea(
-          child: SizedBox(
-            height: kToolbarHeight,
-            child: Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Padding(
-                padding: EdgeInsetsDirectional.only(end: 4),
-                child: UpdateIndicator(),
+  Widget build(BuildContext context) => isDesktop
+      ? Scaffold(
+          appBar: WindowAppBar(actions: const [UpdateIndicator()]),
+          body: const _NothingOpenText(),
+        )
+      : const Scaffold(
+          body: Stack(
+            children: [
+              _NothingOpenText(),
+              // Where an app bar's last action would be.
+              SafeArea(
+                child: SizedBox(
+                  height: kToolbarHeight,
+                  child: Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Padding(
+                      padding: EdgeInsetsDirectional.only(end: 4),
+                      child: UpdateIndicator(),
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ),
-      ],
-    ),
+        );
+}
+
+class _NothingOpenText extends StatelessWidget {
+  const _NothingOpenText();
+
+  @override
+  Widget build(BuildContext context) => const EmptyState(
+    icon: Icons.forum_outlined,
+    title: 'No conversation open',
+    body: 'Pick a channel or a direct message from the list.',
   );
 }

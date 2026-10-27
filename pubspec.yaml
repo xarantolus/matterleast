@@ -13,6 +13,7 @@ dependencies:
   connectivity_plus: ^7.3.2
   crypto: ^3.0.8
   dbus: ^0.8.0
+  desktop_drop: ^0.8.0
   dio: ^5.11.1
   drift: ^2.35.3
   drift_flutter: ^0.3.1
@@ -40,6 +41,7 @@ dependencies:
   material_color_utilities: ^0.13.0
   material_ui: ^1.8.0
   package_info_plus: ^10.2.2
+  pasteboard: ^0.6.0
   path: ^1.9.1
   path_provider: ^2.1.6
   pdfrx: ^2.10.1
@@ -56,6 +58,7 @@ dependencies:
   tray_manager: ^0.8.0
   url_launcher: ^6.3.3
   video_player: ^2.14.1
+  video_player_win: ^3.3.1
   web_socket_channel: ^3.0.3
   window_manager: ^0.5.2
   workmanager: ^0.10.10
@@ -82,6 +85,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon/legacy.png
+    - assets/icon/tray_unread.png
 
 flutter_launcher_icons:
   android: true

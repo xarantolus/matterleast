@@ -321,6 +321,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.8.0"
+  desktop_drop:
+    dependency: "direct main"
+    description:
+      name: desktop_drop
+      sha256: "8b07a8b4db47e0768c2a3a9433eb29160478be5f80905643fc0f79a4ae188e1e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.0"
   desktop_webview_window:
     dependency: transitive
     description:
@@ -1085,6 +1093,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.0"
+  pasteboard:
+    dependency: "direct main"
+    description:
+      name: pasteboard
+      sha256: e0535da36124e6f2ca9d17424102ce5de34e72acc39f05a1d942b974b48e5eea
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.0"
   path:
     dependency: "direct main"
     description:
@@ -1666,6 +1682,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  universal_platform:
+    dependency: transitive
+    description:
+      name: universal_platform
+      sha256: "64e16458a0ea9b99260ceb5467a214c1f298d647c659af1bff6d3bf82536b1ec"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   url_launcher:
     dependency: "direct main"
     description:
@@ -1810,6 +1834,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
+  video_player_win:
+    dependency: "direct main"
+    description:
+      name: video_player_win
+      sha256: "1616be414376aa142ca1b6360f5e1de2568c479bb14bed3d8e5011d92b112a8c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.1"
   vm_service:
     dependency: transitive
     description:

@@ -24,6 +24,7 @@ import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/trust_authority.dart';
 import 'package:matterleast/ui/user_avatar.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// The user's own page: who they are on the server picked in the rail,
 /// their saved messages, settings, and the servers with sign in,
@@ -48,7 +49,7 @@ class YouPage extends ConsumerWidget {
               ));
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
-      appBar: AppBar(title: const Text('You')),
+      appBar: WindowAppBar(title: const Text('You')),
       body: ListView(
         padding: EdgeInsets.only(top: Spacing.lg, bottom: bottom + Spacing.lg),
         children: [

@@ -8,6 +8,7 @@ import 'package:matterleast/app/theme_providers.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/ui/message_display.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 class MatterleastApp extends ConsumerWidget {
   const MatterleastApp({super.key});
@@ -26,15 +27,17 @@ class MatterleastApp extends ConsumerWidget {
       theme: themes?.light ?? lightTheme,
       darkTheme: themes?.dark ?? darkTheme,
       debugShowCheckedModeBanner: false,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          alwaysUse24HourFormat:
-              use24 ?? MediaQuery.alwaysUse24HourFormatOf(context),
-        ),
-        child: MessageDisplay(
-          textScale: (textSize ?? MessageTextSize.normal).scale,
-          wrapCode: wrapCode,
-          child: AppShortcuts(child: child!),
+      builder: (context, child) => WindowEdges(
+        child: MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            alwaysUse24HourFormat:
+                use24 ?? MediaQuery.alwaysUse24HourFormatOf(context),
+          ),
+          child: MessageDisplay(
+            textScale: (textSize ?? MessageTextSize.normal).scale,
+            wrapCode: wrapCode,
+            child: AppShortcuts(child: child!),
+          ),
         ),
       ),
       navigatorObservers: [ref.watch(conversationRoutesProvider)],
