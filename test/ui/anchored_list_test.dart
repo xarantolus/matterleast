@@ -7,7 +7,11 @@ typedef Item = ({int id, double height});
 void main() {
   final controller = AnchoredListController();
 
-  Widget list(List<Item> rows) => MaterialApp(
+  Widget list(
+    List<Item> rows, {
+    Widget? olderEdge,
+    ValueChanged<AnchoredListView>? onView,
+  }) => MaterialApp(
     home: Scaffold(
       body: SizedBox(
         height: 600,
@@ -15,6 +19,8 @@ void main() {
           rows: rows,
           keyOf: (r) => r.id,
           controller: controller,
+          olderEdge: olderEdge,
+          onViewChanged: onView,
           itemBuilder: (_, r) =>
               SizedBox(height: r.height, child: Text('row ${r.id}')),
         ),
@@ -175,5 +181,88 @@ void main() {
       await tester.pumpAndSettle();
     }
     expect(topOf(tester, 1), closeTo(0, 0.5));
+  });
+
+  Future<void> toTheTop(WidgetTester tester) async {
+    for (var i = 0; i < 8; i++) {
+      await tester.fling(find.byType(Scrollable), const Offset(0, 600), 3000);
+      await tester.pumpAndSettle();
+    }
+  }
+
+  List<int> onScreen(WidgetTester tester, Iterable<int> ids) => [
+    for (final id in ids)
+      if (find.text('row $id').evaluate().isNotEmpty &&
+          tester.getBottomLeft(find.text('row $id')).dy > 0 &&
+          topOf(tester, id) < 600)
+        id,
+  ];
+
+  testWidgets('older rows arriving at the top leave the reader in place', (
+    tester,
+  ) async {
+    final views = <AnchoredListView>[];
+    await tester.pumpWidget(list(rowsFrom(30, 1), onView: views.add));
+    await tester.pumpAndSettle();
+    await toTheTop(tester);
+    expect(topOf(tester, 1), closeTo(0, 0.5));
+    final shown = onScreen(tester, [for (var id = 1; id <= 30; id++) id]);
+    final before = {for (final id in shown) id: topOf(tester, id)};
+
+    await tester.pumpWidget(list(rowsFrom(30, -30), onView: views.add));
+    await tester.pumpAndSettle();
+
+    for (final id in shown) {
+      expect(topOf(tester, id), closeTo(before[id]!, 0.01), reason: 'row $id');
+    }
+    expect(onScreen(tester, [for (var id = -30; id <= 0; id++) id]), isEmpty);
+    expect(views.last.nearOlderEnd, isFalse);
+  });
+
+  testWidgets('a row that moves above older rows arriving moves nothing', (
+    tester,
+  ) async {
+    // Like a day separator, the oldest row stays the oldest.
+    const day = (id: 1000, height: 30.0);
+    await tester.pumpWidget(list([...rowsFrom(30, 1), day]));
+    await tester.pumpAndSettle();
+    await toTheTop(tester);
+    final shown = onScreen(tester, [for (var id = 1; id <= 30; id++) id]);
+    final before = {for (final id in shown) id: topOf(tester, id)};
+
+    await tester.pumpWidget(list([...rowsFrom(30, -30), day]));
+    await tester.pumpAndSettle();
+
+    for (final id in shown) {
+      expect(topOf(tester, id), closeTo(before[id]!, 0.01), reason: 'row $id');
+    }
+  });
+
+  testWidgets('the oldest row losing its header keeps the rows below still', (
+    tester,
+  ) async {
+    final rows = rowsFrom(30, 1);
+    await tester.pumpWidget(list(rows));
+    await tester.pumpAndSettle();
+    await toTheTop(tester);
+    final shown = onScreen(tester, [for (var id = 2; id <= 30; id++) id]);
+    final before = {for (final id in shown) id: topOf(tester, id)};
+    final bottomOfOldest = tester.getBottomLeft(find.text('row 1')).dy;
+
+    await tester.pumpWidget(
+      list([
+        for (final r in rows) r.id == 1 ? (id: 1, height: r.height - 30) : r,
+        ...rowsFrom(0, -30),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    for (final id in shown) {
+      expect(topOf(tester, id), closeTo(before[id]!, 0.01), reason: 'row $id');
+    }
+    expect(
+      tester.getBottomLeft(find.text('row 1')).dy,
+      closeTo(bottomOfOldest, 0.01),
+    );
   });
 }
