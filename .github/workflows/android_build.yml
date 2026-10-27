@@ -1,8 +1,10 @@
 name: Build for Android
 
 on:
-  # Push only: a pull request from a branch in this repo fires both events.
   push:
+  # Pull requests from forks; a branch in this repo is already checked on
+  # push.
+  pull_request:
   workflow_dispatch:
 
 # A cancelled release run is safe: the next run on main still finds the
@@ -11,89 +13,50 @@ concurrency:
   group: android-build-${{ github.ref }}
   cancel-in-progress: true
 
-# The release step creates a tag and a release.
+# Jobs ask for more themselves; only the release job can write.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build:
-    name: Check, and build the APK when releasing
+  check:
+    name: Check
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     runs-on: ubuntu-26.04
+    outputs:
+      release: ${{ steps.release.outputs.release }}
 
     steps:
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          # Tags and history, for the release notes.
+          # Tags, to tell whether this version was released already.
           fetch-depth: 0
+          persist-credentials: false
 
-      # The APK is built only for a release: a version on main without its
-      # tag yet. Every other run checks the code and stops there.
+      # A release is a version on main without its tag yet; every other run
+      # stops after the checks.
       - name: Decide whether this run releases
-        id: notes
+        id: release
         run: |
-          # "version: 1.2.3+4" -> 1.2.3
-          APP_VERSION=$(grep -m1 '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)
-          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
-          # Artifact names cannot contain a slash, branch names can.
-          echo "SAFE_REF=${GITHUB_REF_NAME//\//-}" >> $GITHUB_ENV
-          if [ "$GITHUB_REF" != refs/heads/main ] || git rev-parse -q --verify "refs/tags/v$APP_VERSION" > /dev/null; then
+          version=$(grep -m1 '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)
+          if [ "$GITHUB_EVENT_NAME" = pull_request ] || [ "$GITHUB_REF" != refs/heads/main ] \
+              || git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
             echo "release=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
           fi
-          previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
-          # Outside the checkout, so the generated-code check sees no new file.
-          git log --no-merges --format='- %s' ${previous:+"$previous"..HEAD} > "$RUNNER_TEMP/release-notes.md"
-          echo "release=true" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Java and the Gradle cache
-        if: steps.notes.outputs.release == 'true'
-        uses: actions/setup-java@v6
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'gradle'
-
-      # The inputs of R8 and lint, the slowest Gradle tasks, rarely change
-      # between commits.
-      - name: Enable the Gradle build cache
-        if: steps.notes.outputs.release == 'true'
-        run: mkdir -p ~/.gradle && echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
-
-      - name: Restore the Gradle build cache
-        if: steps.notes.outputs.release == 'true'
-        uses: actions/cache@v6
-        with:
-          path: ~/.gradle/caches/build-cache-1
-          key: gradle-build-cache-${{ github.sha }}
-          restore-keys: gradle-build-cache-
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
           flutter-version: 3.47.8
           cache: true
 
-      # Gradle installs the NDK Flutter pins when the runner image lacks it.
-      - name: Find the NDK version
-        if: steps.notes.outputs.release == 'true'
-        run: |
-          version=$(grep -oP "ndkVersion = '\K[^']+" "$FLUTTER_ROOT/packages/flutter_tools/lib/src/android/gradle_utils.dart")
-          echo "NDK_VERSION=$version" >> $GITHUB_ENV
-          echo "NDK_DIR=$ANDROID_HOME/ndk/$version" >> $GITHUB_ENV
-
-      - name: Restore the NDK
-        if: steps.notes.outputs.release == 'true'
-        uses: actions/cache@v6
-        with:
-          path: ${{ env.NDK_DIR }}
-          key: ndk-${{ env.NDK_VERSION }}
-
       # The native build hooks (PDFium, SQLite) download and compile
       # libraries; they rerun by themselves when their inputs differ.
       - name: Restore the native build hook outputs
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .dart_tool/hooks_runner
           key: build-hooks-${{ hashFiles('pubspec.lock') }}
@@ -106,7 +69,7 @@ jobs:
       # that differ, so an older cache only saves work and never hides a
       # stale generated file.
       - name: Restore the build_runner cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .dart_tool/build
           key: build-runner-${{ hashFiles('pubspec.lock', 'build.yaml') }}-${{ github.sha }}
@@ -125,7 +88,7 @@ jobs:
 
       # Entries are keyed by content, so an older cache is safe to reuse.
       - name: Restore the analyzer cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.dartServer
           key: dart-analyzer-${{ hashFiles('pubspec.lock') }}-${{ github.sha }}
@@ -145,42 +108,115 @@ jobs:
           # clock changes.
           TZ: Europe/Berlin
 
+  # The only job that uses the signing secrets or can write to the repo.
+  # The secrets live in the release environment, which admits main alone,
+  # so no other branch, fork or pull request can reach them.
+  release:
+    name: Build and release the APK
+    needs: check
+    if: needs.check.outputs.release == 'true'
+    runs-on: ubuntu-26.04
+    environment: release
+    permissions:
+      # Creates the tag and the release.
+      contents: write
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Tags and history, for the release notes.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Read the version and write the release notes
+        run: |
+          # "version: 1.2.3+4" -> 1.2.3
+          echo "APP_VERSION=$(grep -m1 '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> $GITHUB_ENV
+          previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          git log --no-merges --format='- %s' ${previous:+"$previous"..HEAD} > "$RUNNER_TEMP/release-notes.md"
+
+      - name: Set up Java and the Gradle cache
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      # The inputs of R8 and lint, the slowest Gradle tasks, rarely change
+      # between commits.
+      - name: Enable the Gradle build cache
+        run: mkdir -p ~/.gradle && echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
+
+      - name: Restore the Gradle build cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.gradle/caches/build-cache-1
+          key: gradle-build-cache-${{ github.sha }}
+          restore-keys: gradle-build-cache-
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+
+      # Gradle installs the NDK Flutter pins when the runner image lacks it.
+      - name: Find the NDK version
+        run: |
+          version=$(grep -oP "ndkVersion = '\K[^']+" "$FLUTTER_ROOT/packages/flutter_tools/lib/src/android/gradle_utils.dart")
+          echo "NDK_VERSION=$version" >> $GITHUB_ENV
+          echo "NDK_DIR=$ANDROID_HOME/ndk/$version" >> $GITHUB_ENV
+
+      - name: Restore the NDK
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.NDK_DIR }}
+          key: ndk-${{ env.NDK_VERSION }}
+
+      - name: Restore the native build hook outputs
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .dart_tool/hooks_runner
+          key: build-hooks-${{ hashFiles('pubspec.lock') }}
+          restore-keys: build-hooks-
+
+      - name: Get packages
+        run: flutter pub get
+
       - name: Set up signing
-        if: steps.notes.outputs.release == 'true'
         env:
           SIGNING_KEYSTORE_CONTENT: ${{ secrets.SIGNING_KEYSTORE_CONTENT }}
           SIGNING_PROPERTIES_CONTENT: ${{ secrets.SIGNING_PROPERTIES_CONTENT }}
         run: |
-          echo "$SIGNING_KEYSTORE_CONTENT" | base64 -d - > upload-keystore.jks
-          echo "X_KEYSTORE_PATH=$(pwd)/upload-keystore.jks" >> $GITHUB_ENV
+          echo "$SIGNING_KEYSTORE_CONTENT" | base64 -d - > "$RUNNER_TEMP/upload-keystore.jks"
+          echo "X_KEYSTORE_PATH=$RUNNER_TEMP/upload-keystore.jks" >> $GITHUB_ENV
           echo "$SIGNING_PROPERTIES_CONTENT" > android/key.properties
 
       - name: Build the release APK
-        if: steps.notes.outputs.release == 'true'
         # Releases are for phones; emulators run local debug builds.
         run: flutter build apk --release --target-platform android-arm,android-arm64
-        env:
-          X_KEYSTORE_PATH: ${{ env.X_KEYSTORE_PATH }}
 
-      - name: Show APK hashes
-        if: steps.notes.outputs.release == 'true'
-        run: find build/app/outputs -type f -name "*.apk" | xargs -L1 sha256sum
+      # One stable name, so the README can link to the latest release's
+      # download directly.
+      - name: Name the APK
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk "$RUNNER_TEMP/matterleast.apk"
+          sha256sum "$RUNNER_TEMP/matterleast.apk"
 
       - name: Upload the APK
-        if: steps.notes.outputs.release == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: matterleast-apk-${{ env.APP_VERSION }}-${{ env.SAFE_REF }}-${{ github.sha }}
-          path: build/app/outputs/flutter-apk/*.apk
+          name: matterleast-apk-${{ env.APP_VERSION }}-${{ github.sha }}
+          path: ${{ runner.temp }}/matterleast.apk
           if-no-files-found: error
           retention-days: 30
 
       - name: Publish the release
-        if: steps.notes.outputs.release == 'true'
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
-          files: |
-            build/app/outputs/flutter-apk/*-release.apk
+          files: ${{ runner.temp }}/matterleast.apk
           tag_name: v${{ env.APP_VERSION }}
           target_commitish: ${{ github.sha }}
           name: v${{ env.APP_VERSION }}
