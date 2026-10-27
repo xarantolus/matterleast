@@ -48,6 +48,50 @@ class AgentLive {
     }
   }
 
+  /// The server stored [message] in agent post [postId].
+  void postEdited(String postId, String message) {
+    if (_closed) return;
+    _replace(postId, agentStreamAfterEdit(_streams[postId], message: message));
+  }
+
+  /// The socket is back after events may have been missed. A stream with
+  /// streamed content keeps it until its conversation shows a newer answer,
+  /// so one still running doesn't lose what it showed.
+  void reconnected() {
+    if (_closed) return;
+    for (final postId in [..._streams.keys]) {
+      final before = _streams[postId];
+      _replace(postId, agentStreamAfterReconnect(before));
+      final conversationId = _conversationOfPost[postId];
+      if (_streams[postId] != null &&
+          conversationId != null &&
+          _conversations.containsKey(conversationId)) {
+        unawaited(_settleAfterReconnect(postId, conversationId));
+      }
+    }
+  }
+
+  Future<void> _settleAfterReconnect(String postId, String id) async {
+    final before = _conversations[id]?.conversation;
+    final baseline = before == null ? -1 : anchorSequence(before, postId);
+    await refresh(id);
+    final after = _conversations[id]?.conversation;
+    if (after != null &&
+        anchorSequence(after, postId) > baseline &&
+        !(_streams[postId]?.busy ?? false)) {
+      clear(postId);
+    }
+  }
+
+  void _replace(String postId, AgentStream? after) {
+    if (identical(_streams[postId], after)) return;
+    if (after == null) {
+      clear(postId);
+    } else {
+      _setStream(postId, after);
+    }
+  }
+
   /// The user tapped Stop: late text is ignored from now.
   void stop(String postId) =>
       _setStream(postId, stopAgentStream(_streams[postId]));

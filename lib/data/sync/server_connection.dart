@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
@@ -17,6 +18,7 @@ import 'package:matterleast/data/sync/presence.dart';
 import 'package:matterleast/data/sync/scheduled_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
+import 'package:matterleast/domain/agent_stream.dart';
 
 /// Keeps one server's database current while the app is in the foreground:
 /// the WebSocket, the entry sync it triggers and presence polling. It goes
@@ -67,23 +69,11 @@ class ServerConnection {
       serverUrl: url,
       token: token,
       pingInterval: pingInterval,
-      onEvent: (event) {
-        switch (event) {
-          // Streamed answers live in memory only; they skip the queue so
-          // text keeps flowing while the database is busy.
-          case AgentPostEvent(:final update):
-            agents.apply(update);
-          case AgentConversationEvent(:final conversationId):
-            agents.conversationUpdated(conversationId);
-          default:
-            unawaited(
-              events.add(event).then((_) {
-                if (!_applied.isClosed) _applied.add(event);
-              }),
-            );
-        }
+      onEvent: receive,
+      onResync: () {
+        agents.reconnected();
+        refreshAll();
       },
-      onResync: refreshAll,
       onClosed: (failCount) {
         // REST may work where the socket doesn't; try once per outage.
         if (failCount == 1) refreshAll();
@@ -139,6 +129,34 @@ class ServerConnection {
     _startTimer?.cancel();
     _stopTimer?.cancel();
     _stopTimer = Timer(backgroundGrace, () => unawaited(_stop()));
+  }
+
+  /// One event from the socket, in the order it arrived.
+  void receive(ServerEvent event) {
+    switch (event) {
+      // Streamed answers live in memory only; they skip the queue so text
+      // keeps flowing while the database is busy.
+      case AgentPostEvent(:final update):
+        agents.apply(update);
+        return;
+      case AgentConversationEvent(:final conversationId):
+        agents.conversationUpdated(conversationId);
+        return;
+      default:
+    }
+    unawaited(
+      events.add(event).then((_) {
+        // After the edit is stored, so the post's own text is there to show.
+        if (event
+            case PostEditedEvent(
+              post: api.Post(:final id?, :final type?, :final message),
+            )
+            when agentPostTypes.contains(type)) {
+          agents.postEdited(id, message ?? '');
+        }
+        if (!_applied.isClosed) _applied.add(event);
+      }),
+    );
   }
 
   final _caughtUp = StreamController<void>.broadcast();

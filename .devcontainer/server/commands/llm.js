@@ -9,6 +9,13 @@
 //                                 with what the tool returned
 //   a message containing "think"  streams a reasoning summary first
 //   a message containing "long"   streams a long answer, slow enough to Stop
+//   a message containing "slow"   waits 8 s before the first word, like a
+//                                 provider that is slow to connect
+//   a message containing "fail"   answers HTTP 500 (the plugin shows its
+//                                 "error occurred" text); "fail midway"
+//                                 streams a few words, then drops the stream;
+//                                 "fail hang up" closes the connection
+//                                 without an answer; "fail auth" answers 401
 //   anything else                 a short canned answer, streamed word by word
 
 const SHORT = 'Here is a short answer from the **local echo** agent. ' +
@@ -85,7 +92,13 @@ function plan(body) {
         '- Someone asked who reviews the release notes.\n- No decisions are open.',
     };
   }
+  if (asked.includes('fail')) {
+    if (asked.includes('midway')) return { text: SHORT, dropAfter: 6 };
+    if (asked.includes('hang up')) return { hangUp: true };
+    return { status: asked.includes('auth') ? 401 : 500 };
+  }
   return {
+    delay: asked.includes('slow') ? 8000 : 0,
     text: asked.includes('long') ? LONG : SHORT,
     reasoning: asked.includes('think') ? REASONING : null,
     pace: asked.includes('long') ? 120 : 60,
@@ -103,6 +116,7 @@ function chunk(res, model, delta, finish = null) {
 }
 
 async function stream(res, model, answer) {
+  if (answer.delay) await sleep(answer.delay);
   res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' });
   let closed = false;
   res.on('close', () => { closed = true; });
@@ -120,8 +134,12 @@ async function stream(res, model, answer) {
         await sleep(40);
       }
     }
-    for (const word of answer.text.split(/(?<= )/)) {
+    for (const [i, word] of answer.text.split(/(?<= )/).entries()) {
       if (closed) return;
+      if (i === answer.dropAfter) {
+        res.destroy();
+        return;
+      }
       chunk(res, model, { content: word });
       await sleep(answer.pace || 30);
     }
@@ -156,6 +174,15 @@ async function handleLlm(path, body, res) {
   }
   if (path === '/llm/v1/chat/completions') {
     const answer = plan(body);
+    if (answer.hangUp) {
+      res.socket.destroy();
+      return true;
+    }
+    if (answer.status) {
+      res.writeHead(answer.status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: { message: 'the local echo model failed on purpose' } }));
+      return true;
+    }
     const model = body.model || 'local-echo';
     if (body.stream) await stream(res, model, answer);
     else complete(res, model, answer);
