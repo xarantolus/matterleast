@@ -50,19 +50,26 @@ class FakeSocketServer {
     socket.listen((message) {
       final json = jsonDecode(message as String) as Map<String, Object?>;
       _actions.add(json);
-      if (json['action'] == 'ping' &&
-          answerPings &&
-          !_closing &&
-          socket.readyState == WebSocket.open) {
-        socket.add(
-          jsonEncode({
-            'status': 'OK',
-            'seq_reply': json['seq'],
-            'data': {'text': 'pong'},
-          }),
-        );
+      if (json['action'] == 'ping' && answerPings && !_closing) {
+        _reply(socket, json['seq']);
       }
     });
+  }
+
+  /// A ping can arrive while the server is closing the connection; the client
+  /// is gone by then, so the pong is dropped like on a real server.
+  void _reply(WebSocket socket, Object? seq) {
+    try {
+      socket.add(
+        jsonEncode({
+          'status': 'OK',
+          'seq_reply': seq,
+          'data': {'text': 'pong'},
+        }),
+      );
+    } on StateError {
+      return;
+    }
   }
 
   void send(Map<String, Object?> frame) =>

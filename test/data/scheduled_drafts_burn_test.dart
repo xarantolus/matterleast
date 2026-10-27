@@ -12,6 +12,7 @@ import 'package:matterleast/domain/preference_keys.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 void main() {
   late FakeServer server;
@@ -95,13 +96,18 @@ void main() {
       composer.saveDraft(
         const Draft(channelId: channelId, message: 'half a thought'),
       );
-      await settle();
+      await eventually(() => requests('POST', '/api/v4/drafts').isNotEmpty);
       final sent = requests('POST', '/api/v4/drafts').single;
       expect(sent.body['message'], 'half a thought');
       expect(sent.body['channel_id'], channelId);
 
       await composer.clearDraft(channelId);
-      await settle();
+      await eventually(
+        () => requests(
+          'DELETE',
+          '/api/v4/users/me/channels/$channelId/drafts',
+        ).isNotEmpty,
+      );
       expect(
         requests('DELETE', '/api/v4/users/me/channels/$channelId/drafts'),
         hasLength(1),

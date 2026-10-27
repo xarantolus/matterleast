@@ -301,8 +301,8 @@ void main() {
       final seen = <List<String>>[];
       final sub = session.connection.typing.watch(channelId).listen(seen.add);
       await receive('typing', {'user_id': 'u9', 'parent_id': ''});
-      await eventually(() => seen.isNotEmpty && seen.last.isNotEmpty);
-      expect(seen.last, ['u9']);
+      await eventually(() => seen.any((names) => names.isNotEmpty));
+      expect(seen.firstWhere((names) => names.isNotEmpty), ['u9']);
       await session.users.ensure(['u9']);
       final user = await (session.db.select(
         session.db.users,
@@ -311,7 +311,12 @@ void main() {
 
       await eventually(() => seen.last.isEmpty, reason: 'expired');
 
+      await session.store.applyConfig('client_config', {
+        'TimeBetweenUserTypingUpdatesMilliseconds': '60000',
+      });
+      seen.clear();
       await receive('typing', {'user_id': 'u9', 'parent_id': ''});
+      await eventually(() => seen.isNotEmpty && seen.last.isNotEmpty);
       await receive('posted', {
         'post': jsonEncode({
           'id': 'p9',
@@ -321,7 +326,10 @@ void main() {
           'message': 'done',
         }),
       });
-      expect(seen.last, isEmpty, reason: 'their post ends it');
+      await eventually(
+        () => seen.last.isEmpty,
+        reason: 'their post ends it, long before the expiry',
+      );
       await sub.cancel();
     });
 
