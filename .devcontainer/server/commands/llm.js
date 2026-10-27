@@ -75,8 +75,10 @@ function plan(body) {
     }
     return { tool: { name: tool.function.name, arguments: JSON.stringify(args) } };
   }
-  // Conversation titles are asked for without streaming.
-  if (!body.stream) return { text: 'Lighthouse chat' };
+  // Conversation titles; plugin 2.x asks for them streamed.
+  if (!body.stream || asked.startsWith('write a short title')) {
+    return { text: 'Lighthouse chat' };
+  }
   if (asked.includes('summar')) {
     return {
       text: '**Summary**\n\n- The crew talked about the evening shift.\n' +
