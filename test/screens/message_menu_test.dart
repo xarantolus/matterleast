@@ -62,12 +62,14 @@ Future<void> _open(
             builder: (context) => TextButton(
               onPressed: () => showMessageMenu(
                 context,
-                url: _url,
-                teamId: 'team1',
-                post: post,
-                onEdit: () {},
-                onReply: () {},
-                onQuote: onQuote,
+                MessageTarget(
+                  url: _url,
+                  teamId: 'team1',
+                  post: post,
+                  onEdit: () {},
+                  onReply: () {},
+                  onQuote: onQuote,
+                ),
               ),
               child: const Text('open'),
             ),
@@ -109,12 +111,11 @@ void main() {
                 alignment: Alignment.topLeft,
                 child: SizedBox(
                   width: 240,
-                  child: Builder(
-                    builder: (context) => MessageMenu(
+                  child: MessageMenu(
+                    target: MessageTarget(
                       url: _url,
                       teamId: 'team1',
                       post: post,
-                      messenger: ScaffoldMessenger.of(context),
                     ),
                   ),
                 ),
@@ -140,7 +141,7 @@ void main() {
     expect(find.text('Delete'), findsOneWidget);
     expect(find.text('Reply'), findsOneWidget);
     expect(find.text('Pin to channel'), findsOneWidget);
-    expect(find.byTooltip('More reactions'), findsOneWidget);
+    expect(find.byTooltip('Add reaction'), findsOneWidget);
   });
 
   testWidgets('where nothing may be written only reading actions remain', (
@@ -152,7 +153,7 @@ void main() {
     expect(find.text('Reply'), findsNothing);
     expect(find.text('Pin to channel'), findsNothing);
     expect(find.text('Mark as unread'), findsNothing);
-    expect(find.byTooltip('More reactions'), findsNothing);
+    expect(find.byTooltip('Add reaction'), findsNothing);
     expect(find.text('Copy text'), findsOneWidget);
   });
 
@@ -180,4 +181,89 @@ void main() {
     expect(quoted, '$_url/crew/pl/post1');
     expect(find.text('Quote'), findsNothing);
   });
+
+  for (final (name, rights) in [('all', _all), ('read-only', _readOnly)]) {
+    testWidgets('a right click offers what the sheet offers ($name rights)', (
+      tester,
+    ) async {
+      final post = _post('me');
+      final target = MessageTarget(
+        url: _url,
+        teamId: 'team1',
+        post: post,
+        onEdit: () {},
+        onReply: () {},
+        onQuote: (_) {},
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            postMenuFactsProvider(_url, post, 'team1').overrideWith(
+              (ref) async => (
+                myId: 'me',
+                saved: false,
+                following: false,
+                teamName: 'crew',
+                rights: rights,
+                reminders: true,
+              ),
+            ),
+            recentEmojiProvider(_url).overrideWith((ref) async => const []),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => Column(
+                  children: [
+                    TextButton(
+                      onPressed: () => showMessageMenu(context, target),
+                      child: const Text('sheet'),
+                    ),
+                    TextButton(
+                      onPressed: () => showMessageContextMenu(
+                        context,
+                        target,
+                        const Offset(200, 300),
+                      ),
+                      child: const Text('popup'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('sheet'));
+      await tester.pumpAndSettle();
+      final sheet = [
+        if (find.byTooltip('Add reaction').evaluate().isNotEmpty)
+          'Add reaction',
+        for (final tile in tester.widgetList<ListTile>(find.byType(ListTile)))
+          (tile.title! as Text).data!,
+      ];
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('popup'));
+      await tester.pumpAndSettle();
+      final popup = [
+        for (final item in tester.widgetList<PopupMenuItem<Object?>>(
+          find.byWidgetPredicate((w) => w is PopupMenuItem),
+        ))
+          tester
+              .widget<Text>(
+                find.descendant(
+                  of: find.byWidget(item),
+                  matching: find.byType(Text),
+                ),
+              )
+              .data!,
+      ];
+
+      expect(sheet, contains('Copy text'));
+      expect(popup, sheet);
+    });
+  }
 }

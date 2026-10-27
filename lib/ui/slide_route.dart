@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/ui/motion.dart';
 
 /// A full-screen page, the one route every page but a viewer or a dialog
@@ -190,6 +191,8 @@ class _SlideToPopState extends State<_SlideToPop> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    // With a mouse a drag selects text; Esc and the back button close.
+    if (isDesktop) return widget.child;
     final width = MediaQuery.sizeOf(context).width;
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,

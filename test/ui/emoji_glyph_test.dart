@@ -132,9 +132,7 @@ void main() {
               builder: (context) => TextButton(
                 onPressed: () => showMessageMenu(
                   context,
-                  url: _url,
-                  teamId: 'team1',
-                  post: post,
+                  MessageTarget(url: _url, teamId: 'team1', post: post),
                 ),
                 child: const Text('open'),
               ),

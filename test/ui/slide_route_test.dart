@@ -49,6 +49,13 @@ void main() {
     expect(find.text('List'), findsOneWidget);
   });
 
+  testWidgets('on desktop a drag leaves the page where it is', (tester) async {
+    await openPage(tester);
+    await tester.fling(find.text('A thread'), const Offset(300, 0), 1000);
+    await tester.pumpAndSettle();
+    expect(find.text('Threads'), findsOneWidget);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
   testWidgets('a short slow swipe springs back', (tester) async {
     await openPage(tester);
     await tester.timedDrag(
