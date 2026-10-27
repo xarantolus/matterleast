@@ -40,7 +40,10 @@ Future<ServerSession> testSession(
     api: http,
     db: database,
     network: network,
-    runner: SyncRunner(offline: () => network?.offline ?? false),
+    runner: SyncRunner(
+      offline: () => network?.offline ?? false,
+      reachable: http.reach.reachable,
+    ),
     dbPath: '',
     images: ServerImageCaches(
       directory: '',

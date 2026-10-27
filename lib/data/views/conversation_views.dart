@@ -282,31 +282,36 @@ class ConversationViews {
       memberCount: channel?.memberCount,
       archived: channel?.deleteAt != null,
     );
-    if (range == null) {
-      return ConversationWindow(
-        posts: const [],
-        loaded: false,
-        channelName: header.channelName,
-        channelType: header.channelType,
-        partnerId: header.partnerId,
-        teamId: header.teamId,
-        memberCount: header.memberCount,
-        archived: header.archived,
-      );
-    }
     final crt = await db.collapsedThreads();
-    Expression<bool> inRange($PostsTable p) =>
-        p.channelId.equals(channelId) &
-        p.createAt.isBetweenValues(
-          range.earliest.millisecondsSinceEpoch,
-          range.latest.millisecondsSinceEpoch,
-        ) &
+    Expression<bool> topLevel($PostsTable p) =>
         // An integration's ephemeral answer to an action names the post
         // as its root; it must show where the action was taken.
-        (crt
-            ? p.rootId.equals('') | p.type.equals(ephemeralType)
-            : const Constant(true)) &
-        _notDeletedBefore(p, openedAt);
+        crt
+        ? p.rootId.equals('') | p.type.equals(ephemeralType)
+        : const Constant(true);
+    // Our own posts made here and not yet part of fetched history: queued
+    // ones, and sent ones while nothing around them was fetched. They are
+    // the newest, so they belong to the newest stretch, loaded or not.
+    final showsNewest = range == null || range == newest;
+    Expression<bool> ownLocal($PostsTable p) => showsNewest
+        ? p.pendingPostId.equals('').not() &
+              (range == null
+                  ? const Constant(true)
+                  : p.createAt.isBiggerThanValue(
+                      range.latest.millisecondsSinceEpoch,
+                    ))
+        : const Constant(false);
+    Expression<bool> inRange($PostsTable p) =>
+        p.channelId.equals(channelId) &
+        topLevel(p) &
+        _notDeletedBefore(p, openedAt) &
+        ((range == null
+                ? const Constant(false)
+                : p.createAt.isBetweenValues(
+                    range.earliest.millisecondsSinceEpoch,
+                    range.latest.millisecondsSinceEpoch,
+                  )) |
+            ownLocal(p));
 
     var window = limit;
     if (unreadAfter != null) {
@@ -333,10 +338,13 @@ class ConversationViews {
     final shown = rows.take(window).toList();
     return ConversationWindow(
       posts: await _items(shown),
-      loaded: true,
-      reachesStart: range.reachesStart && rows.length <= window,
+      loaded: range != null,
+      reachesStart: (range?.reachesStart ?? false) && rows.length <= window,
       moreStored: rows.length > window,
-      newerApart: newest != null && newest.latest.isAfter(range.latest),
+      newerApart:
+          range != null &&
+          newest != null &&
+          newest.latest.isAfter(range.latest),
       channelName: header.channelName,
       channelType: header.channelType,
       partnerId: header.partnerId,
@@ -364,21 +372,29 @@ class ConversationViews {
             db.channels,
           )..where((c) => c.id.equals(root.channelId))).getSingleOrNull();
     final range = newestRange(await _ranges('thread', rootId));
-    final rows = range == null
-        ? <PostRow>[]
-        : await (db.select(db.posts)
-                ..where(
-                  (p) =>
-                      p.rootId.equals(rootId) &
-                      _notDeletedBefore(p, openedAt) &
-                      p.createAt.isBetweenValues(
-                        range.earliest.millisecondsSinceEpoch,
-                        range.latest.millisecondsSinceEpoch,
-                      ),
-                )
-                ..orderBy([(p) => OrderingTerm.desc(p.createAt)])
-                ..limit(limit + 1))
-              .get();
+    final rows =
+        await (db.select(db.posts)
+              ..where(
+                (p) =>
+                    p.rootId.equals(rootId) &
+                    _notDeletedBefore(p, openedAt) &
+                    ((range == null
+                            ? const Constant(false)
+                            : p.createAt.isBetweenValues(
+                                range.earliest.millisecondsSinceEpoch,
+                                range.latest.millisecondsSinceEpoch,
+                              )) |
+                        // Our own replies made here, as in a channel.
+                        (p.pendingPostId.equals('').not() &
+                            (range == null
+                                ? const Constant(true)
+                                : p.createAt.isBiggerThanValue(
+                                    range.latest.millisecondsSinceEpoch,
+                                  )))),
+              )
+              ..orderBy([(p) => OrderingTerm.desc(p.createAt)])
+              ..limit(limit + 1))
+            .get();
     final shown = rows.take(limit).toList();
     final items = await _items([?root, ...shown]);
     return ConversationWindow(

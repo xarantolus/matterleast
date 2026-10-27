@@ -316,7 +316,12 @@ class Conversation extends _$Conversation {
   }
 
   Future<void> _loadOlder() async {
-    final oldest = state.window?.posts.lastOrNull;
+    // Before any history is loaded only our own unsent posts can show,
+    // which the server doesn't know; the first page comes from a refresh.
+    final window = state.window;
+    final oldest = window != null && window.loaded
+        ? window.posts.lastOrNull
+        : null;
     state = state.copyWith(loadingOlder: true, olderFailure: null);
     try {
       if (oldest == null) {

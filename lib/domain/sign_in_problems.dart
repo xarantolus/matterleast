@@ -42,6 +42,8 @@ const keyringUnavailableText =
 String connectionProblemText(ApiError error, String host) => switch (error) {
   Unreachable(noNetwork: true) =>
     "You're offline. The app updates when the connection is back.",
+  Unreachable(serverDown: true) =>
+    "Can't reach $host right now. The app updates when it answers again.",
   Unreachable() =>
     "Couldn't reach $host. Check the address and your connection.",
   RequestTimeout() => "$host didn't answer in time. Try again.",
@@ -74,6 +76,7 @@ String shortProblemText(ApiError error) => switch (error) {
   ServerError(statusCode: 501) => 'Turned off on this server',
   ServerError(:final statusCode) => 'Server error $statusCode',
   Unreachable(noNetwork: true) => 'Offline',
+  Unreachable(serverDown: true) => 'Server not answering',
   Unreachable() => 'No connection',
   RequestTimeout() => 'No answer in time',
   UntrustedCertificate() => 'Untrusted certificate',
@@ -85,6 +88,8 @@ String shortProblemText(ApiError error) => switch (error) {
 /// The notice over saved data after a failed refresh: offline only when no
 /// answer arrived, else what went wrong in a few words.
 String staleDataNotice(ApiError error) => switch (error) {
+  Unreachable(serverDown: true) =>
+    "Can't reach the server · showing saved data",
   Unreachable() => 'Offline · showing saved data',
   RequestTimeout() => "Couldn't update: the server didn't answer in time",
   ServerError(:final statusCode) => "Couldn't update: server error $statusCode",

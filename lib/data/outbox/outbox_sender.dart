@@ -29,7 +29,8 @@ class PostRejected {
 
 /// Sends one server's queued posts, one at a time, first in first out per
 /// channel, retrying with backoff while the server can't be reached. While
-/// [offline] says so it waits for [wake] without using up attempts. The
+/// [offline] says so, or while its server is known not to answer, it waits
+/// for [wake] without using up attempts. The
 /// queue lives in the database, so it survives the app being stopped.
 class OutboxSender {
   OutboxSender({
@@ -41,6 +42,10 @@ class OutboxSender {
        _offline = offline ?? _never;
 
   static bool _never() => false;
+
+  /// How soon a post refused because its server doesn't answer is tried
+  /// again; each try costs one short ping.
+  static const serverDownRetry = Duration(seconds: 15);
 
   final ServerApi server;
   final ServerStore store;
@@ -167,6 +172,16 @@ class OutboxSender {
         id,
         attempts: row.attempts,
         nextAttemptAt: _clock(),
+      );
+      return;
+    }
+    if (error case Unreachable(serverDown: true)) {
+      // Not an attempt: nothing was sent. Ask again later, cheaply; the
+      // server answering again wakes the queue sooner.
+      await store.markSendRetry(
+        id,
+        attempts: row.attempts,
+        nextAttemptAt: _clock().add(serverDownRetry),
       );
       return;
     }
