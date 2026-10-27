@@ -37,14 +37,14 @@ Future<void> markSeen(ServerDatabase db, DateTime at) async {
 
 /// Finds what is new on one server and shows or removes its message
 /// notifications. The same code runs from the periodic background work
-/// (which refreshes unread counts first) and from the stay-connected
-/// service (whose WebSocket keeps them current), as one job on the
-/// server's sync runner.
+/// (which refreshes unread counts first) and from the live connection of
+/// the stay-connected service or the desktop window (whose WebSocket keeps
+/// them current), as one job on the server's sync runner.
 class NotificationCheck {
   NotificationCheck(
     this.session,
     this.notifier, {
-    required this.appVisible,
+    required this.shownNow,
     this.serverName,
     DateTime Function()? clock,
   }) : _clock = clock ?? (() => DateTime.now().toUtc());
@@ -52,8 +52,9 @@ class NotificationCheck {
   final ServerSession session;
   final Notifier notifier;
 
-  /// While the app is on screen it shows new messages itself.
-  final bool Function() appVisible;
+  /// Whether the user sees the conversation in the app now, which then
+  /// gets no notification.
+  final bool Function(ConversationKey key) shownNow;
   final String? serverName;
   final DateTime Function() _clock;
 
@@ -148,13 +149,12 @@ class NotificationCheck {
       collapsedThreads: user.collapsedThreads,
       threadsViewedAt: threads.viewedAt,
     );
-    if (!appVisible()) {
-      for (final update in updates) {
-        try {
-          await notifier.show(await _notice(update, posts, myId));
-        } on Object catch (e) {
-          Log.warn('notify', 'Showing a notification failed', e);
-        }
+    for (final update in updates) {
+      if (shownNow(update.key)) continue;
+      try {
+        await notifier.show(await _notice(update, posts, myId));
+      } on Object catch (e) {
+        Log.warn('notify', 'Showing a notification failed', e);
       }
     }
     await _db.setSyncText(

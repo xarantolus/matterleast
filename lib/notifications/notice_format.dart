@@ -27,6 +27,21 @@ String? noticeSubText({String? serverName, String? teamName}) {
   return parts.isEmpty ? null : parts.join(' · ');
 }
 
+/// A desktop toast's two lines, for a conversation whose newest message
+/// is [text] from [sender]: the same heading as on Android, with the
+/// server or team after it, and the message under it, preceded by its
+/// sender where the heading does not name them.
+({String title, String body}) toastText({
+  required String title,
+  required bool group,
+  required String sender,
+  required String text,
+  String? subText,
+}) => (
+  title: subText == null ? title : '$title · $subText',
+  body: group ? '$sender: $text' : text,
+);
+
 /// The time a notification is dated and ranked by: its newest message, but
 /// never later than [now]. Android ranks a notification dated in the future
 /// (a server clock ahead of the phone's) by when it was first posted, so an

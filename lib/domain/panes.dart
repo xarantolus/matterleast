@@ -114,6 +114,13 @@ abstract class Panes with _$Panes {
     };
   }
 
+  /// What is open now: the conversation routes when a narrow window
+  /// stacked any, else the panes.
+  static Panes openNow({
+    required List<ConversationTarget> routes,
+    required Panes panes,
+  }) => routes.isEmpty ? panes : fromStack(routes);
+
   /// The routes that show these panes on a narrow screen, bottom first.
   List<ConversationTarget> get stack => [?channel, ?thread];
 

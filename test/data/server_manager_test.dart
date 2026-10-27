@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
@@ -14,6 +15,7 @@ import 'package:matterleast/data/servers/server_manager.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
 import 'package:matterleast/domain/login_options.dart';
+import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:path/path.dart' as p;
 
 import '../support/fake_server.dart';
@@ -28,9 +30,11 @@ void main() {
   late ServerManager manager;
   late String url;
   late int sharesCleared;
+  late List<String> hidden;
 
   setUp(() async {
     sharesCleared = 0;
+    hidden = [];
     server = await FakeServer.start();
     url = server.url.toString();
     server.handle = (r) => switch (r.path) {
@@ -49,6 +53,7 @@ void main() {
       openDatabase: (path) => ServerDatabase(NativeDatabase(File(path))),
       clock: () => DateTime.utc(2026, 10, 25, 12),
       clearShared: () async => sharesCleared++,
+      onHidden: (session) async => hidden.add(session.url.toString()),
     );
   });
 
@@ -227,6 +232,26 @@ void main() {
       expect(await tokens.read(url), isNull);
     },
   );
+
+  group('hiding the app', () {
+    tearDown(() => debugDefaultTargetPlatformOverride = null);
+
+    test('on a phone, the connections go quiet', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      await addServer();
+      await appHidden(manager);
+      expect(hidden, [url]);
+    });
+
+    test('on a desktop, in the tray or minimised, they stay up', () async {
+      for (final platform in [TargetPlatform.linux, TargetPlatform.windows]) {
+        debugDefaultTargetPlatformOverride = platform;
+        await addServer();
+        await appHidden(manager);
+        expect(hidden, isEmpty, reason: '$platform');
+      }
+    });
+  });
 
   test('the same server under another address replaces the old row only when '
       'the user agreed', () async {

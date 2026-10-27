@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:matterleast/app/desktop/tray_host.dart';
 import 'package:matterleast/app/platform.dart';
@@ -9,6 +11,12 @@ import 'package:matterleast/log.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:tray_manager/tray_manager.dart' as tray;
 import 'package:window_manager/window_manager.dart';
+
+/// Whether the user is looking at the app: it is on screen and, on a
+/// desktop, its window has the focus.
+bool appInFront() =>
+    WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed &&
+    (!isDesktop || DesktopShell.focus.value);
 
 /// The desktop window and its tray icon. The window opens where it was
 /// left; closing it hides it to the tray, or minimises it where there is no
@@ -122,14 +130,29 @@ class DesktopShell with WindowListener {
   }
 
   /// Shows and focuses the window, wherever it went.
-  Future<void> open() async {
+  static Future<void> open() async {
     if (await windowManager.isMinimized()) await windowManager.restore();
     await windowManager.show();
     await windowManager.focus();
   }
 
+  /// Whether the window has the keyboard focus. Flutter's lifecycle doesn't
+  /// follow the focus on Linux, so this comes from the window events.
+  static ValueListenable<bool> get focus => _focus;
+  static final _focus = ValueNotifier(true);
+
+  @override
+  void onWindowFocus() => _focus.value = true;
+
+  @override
+  void onWindowBlur() => _focus.value = false;
+
+  @override
+  void onWindowMinimize() => _focus.value = false;
+
   @override
   void onWindowEvent(String eventName) {
+    if (eventName == 'hide') _focus.value = false;
     // GTK forgets the size hints when a hidden window shows again, also
     // when a second launch shows it.
     if (eventName == 'show') {

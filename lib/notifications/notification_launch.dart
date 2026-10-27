@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
+import 'package:matterleast/data/servers/server_manager.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/app_visibility.dart';
@@ -25,7 +27,10 @@ Future<bool> startNotifications(WidgetRef ref, NavigatorState navigator) async {
     await notifier.init(
       onTap: (response) {
         final target = NoticeTarget.decode(response.payload);
-        if (target != null) unawaited(openNotice(navigator, ref, target));
+        if (target == null) return;
+        // A toast may be clicked while the window is in the tray.
+        if (isDesktop) unawaited(DesktopShell.open());
+        unawaited(openNotice(navigator, ref, target));
       },
       onAction: onNoticeAction,
     );
@@ -37,6 +42,14 @@ Future<bool> startNotifications(WidgetRef ref, NavigatorState navigator) async {
     Log.warn('notify', 'Setting up notifications failed', e);
     return false;
   }
+}
+
+/// The app left the screen. On a phone the connections go quiet a little
+/// later and the background engines take over; on a desktop they stay up
+/// while the process runs, minimised or in the tray, for the toasts.
+Future<void> appHidden(ServerManager manager) async {
+  AppVisibility.set(visible: false);
+  if (!isDesktop) await manager.setForeground(false);
 }
 
 /// The periodic check runs while any server is signed in.
