@@ -55,4 +55,4 @@ final class DesktopNotificationsProvider
 }
 
 String _$desktopNotificationsHash() =>
-    r'c8da633cccc41bf174420e40b7e6af0bd897ba09';
+    r'99694057d494e25df3b4e5148932bd9e76e1752e';
