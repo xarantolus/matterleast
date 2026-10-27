@@ -12,6 +12,7 @@ import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/update_indicator.dart';
 
 /// Text in a toolbar grows with the system font size only this far, as
 /// Android's own toolbars do; the bar grows with it.
@@ -86,6 +87,7 @@ class ConversationScaffold extends ConsumerWidget {
               onPressed: ref.read(conversation.notifier).retry,
             ),
           ...actions,
+          const UpdateIndicator(),
         ],
         bottom: ProgressSlot(active: state.refreshing && showsMessages(state)),
       ),
