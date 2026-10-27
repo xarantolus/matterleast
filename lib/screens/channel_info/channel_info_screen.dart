@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/app/extras_providers.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
@@ -56,18 +57,33 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
   Future<ChannelActions> get _actions =>
       ref.read(channelActionsProvider(widget.url).future);
 
-  /// Runs [action] and says what failed in words when it does.
+  /// Options the server refused (403, 404, 501) stay hidden.
+  final _off = <String>{};
+
+  /// Runs [action] and says what failed in words when it does. With an
+  /// [option], a refusal also hides that option.
   Future<bool> _run(
     String failure,
-    Future<void> Function(ChannelActions) action,
-  ) async {
+    Future<void> Function(ChannelActions) action, {
+    String? option,
+  }) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await action(await _actions);
       return true;
     } on Object catch (e) {
+      final refused =
+          e is ServerError && const {403, 404, 501}.contains(e.statusCode);
+      final said = e is ServerError ? e.message : null;
+      if (refused && option != null && mounted) {
+        setState(() => _off.add(option));
+      }
       messenger.showSnackBar(
-        SnackBar(content: Text('$failure ${requestProblemText(e, _host)}')),
+        SnackBar(
+          content: Text(
+            '$failure ${said != null && said.isNotEmpty ? said : requestProblemText(e, _host)}',
+          ),
+        ),
       );
       return false;
     }
@@ -103,6 +119,43 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
     );
     if (!ok || !mounted) return;
     await _run("Couldn't archive ${info.title}.", (a) => a.archive(info.id));
+  }
+
+  Future<void> _unarchive(ChannelInfo info) async {
+    final kind = info.type == 'P' ? 'private' : 'public';
+    final ok = await confirm(
+      context,
+      title: 'Unarchive $kind channel',
+      body:
+          'Are you sure you want to unarchive the $kind channel ${info.title}?',
+      action: 'Unarchive',
+    );
+    if (!ok || !mounted) return;
+    await _run(
+      "Couldn't unarchive ${info.title}.",
+      (a) => a.unarchive(info.id),
+      option: 'unarchive',
+    );
+  }
+
+  Future<void> _convert(ChannelInfo info) async {
+    final ok = await confirm(
+      context,
+      title: 'Convert ${info.title} to a private channel?',
+      body:
+          'When you convert ${info.title} to a private channel, history and '
+          'membership are preserved. Publicly shared files remain accessible '
+          'to anyone with the link. Membership in a private channel is by '
+          'invitation only.\n\nThe change is permanent and cannot be '
+          'undone.',
+      action: 'Convert',
+    );
+    if (!ok || !mounted) return;
+    await _run(
+      "Couldn't convert ${info.title} to a private channel.",
+      (a) => a.convertToPrivate(info.id),
+      option: 'convert',
+    );
   }
 
   @override
@@ -179,6 +232,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
                             info.canManageMembers &&
                             !info.archived &&
                             !info.conversation,
+                        canRemove: info.canRemoveMembers,
                       ),
                     ),
                   ),
@@ -271,6 +325,20 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
                         channel: info,
                       ),
                     ),
+                  ),
+                if (info.canConvert &&
+                    !info.archived &&
+                    !_off.contains('convert'))
+                  ListTile(
+                    leading: const Icon(Icons.lock_outline),
+                    title: const Text('Convert to private channel'),
+                    onTap: () => _convert(info),
+                  ),
+                if (info.canUnarchive && !_off.contains('unarchive'))
+                  ListTile(
+                    leading: const Icon(Icons.unarchive_outlined),
+                    title: const Text('Unarchive channel'),
+                    onTap: () => _unarchive(info),
                   ),
                 if (info.canArchive &&
                     !info.archived &&

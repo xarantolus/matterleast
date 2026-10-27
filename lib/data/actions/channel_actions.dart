@@ -338,7 +338,7 @@ class ChannelActions {
   Future<String> directChannel(String userId) async {
     final known = await storedDirectChannel(userId);
     if (known != null) return known;
-    final me = await _myId();
+    final me = await myId();
     final channel = await session.api.call(
       () => _client.channels.createDirectChannel(body: {me, userId}.toList()),
     );
@@ -349,7 +349,7 @@ class ChannelActions {
   /// A group message with [userIds] and the user; the server returns the
   /// existing one for the same people.
   Future<String> groupChannel(List<String> userIds) async {
-    final me = await _myId();
+    final me = await myId();
     final channel = await session.api.call(
       () =>
           _client.channels.createGroupChannel(body: {me, ...userIds}.toList()),
@@ -360,7 +360,7 @@ class ChannelActions {
 
   /// Joins an open team, and stores it with its channels.
   Future<void> joinTeam(String teamId) async {
-    final me = await _myId();
+    final me = await myId();
     await session.api.call(
       () => _client.teams.addTeamMember(
         teamId: teamId,
@@ -375,7 +375,7 @@ class ChannelActions {
 
   /// Joins a public channel.
   Future<void> join(String channelId) async {
-    final me = await _myId();
+    final me = await myId();
     await session.api.call(
       () => _client.channels.addChannelMember(
         channelId: channelId,
@@ -441,6 +441,38 @@ class ChannelActions {
     await session.store.applyChannelArchived(channelId, _clock());
   }
 
+  Future<void> unarchive(String channelId) async {
+    await session.api.call(
+      () => _client.channels.restoreChannel(channelId: channelId),
+    );
+    await session.store.applyChannelArchived(channelId, null);
+  }
+
+  /// Makes a public channel private; it can't be undone.
+  Future<void> convertToPrivate(String channelId) async {
+    final channel = await session.api.call(
+      () => _client.channels.updateChannelPrivacy(
+        channelId: channelId,
+        body: const api.ApiV4ChannelsChannelIdPrivacyRequestBody(privacy: 'P'),
+      ),
+    );
+    await session.store.applyChannel(channel);
+  }
+
+  /// Takes someone else out of a channel. Leaving is [leave].
+  Future<void> removeMember(String channelId, String userId) async {
+    try {
+      await session.api.call(
+        () => _client.channels.removeUserFromChannel(
+          channelId: channelId,
+          userId: userId,
+        ),
+      );
+    } finally {
+      await refreshStats(channelId);
+    }
+  }
+
   /// Adds people one request each, as the official app does; the first
   /// failure is thrown once all have finished.
   Future<void> addMembers(String channelId, List<String> userIds) async {
@@ -490,7 +522,7 @@ class ChannelActions {
 
   static String pinnedList(String channelId) => PostListNames.pinned(channelId);
 
-  Future<String> _myId() async {
+  Future<String> myId() async {
     final me = await _db.syncText(SyncKeys.currentUserId);
     if (me == null) throw StateError('No signed-in user');
     return me;

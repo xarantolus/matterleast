@@ -31,6 +31,8 @@ abstract class ChannelInfo with _$ChannelInfo {
     required bool canEdit,
     required bool canArchive,
     required bool canManageMembers,
+    required bool canConvert,
+    required bool canUnarchive,
   }) = _ChannelInfo;
 
   const ChannelInfo._();
@@ -39,6 +41,10 @@ abstract class ChannelInfo with _$ChannelInfo {
 
   /// The team's default channel can't be left or archived.
   bool get isDefault => name == 'town-square';
+
+  /// Whether the user may take people out of the channel.
+  bool get canRemoveMembers =>
+      canManageMembers && !archived && !conversation && !isDefault;
 }
 
 /// The user's notification settings for one channel, each `default` when

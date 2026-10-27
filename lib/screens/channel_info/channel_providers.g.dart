@@ -655,3 +655,81 @@ final class TeamRightsFamily extends $Family
   @override
   String toString() => r'teamRightsProvider';
 }
+
+/// The signed-in user's id.
+
+@ProviderFor(myUserId)
+final myUserIdProvider = MyUserIdFamily._();
+
+/// The signed-in user's id.
+
+final class MyUserIdProvider
+    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
+    with $FutureModifier<String>, $FutureProvider<String> {
+  /// The signed-in user's id.
+  MyUserIdProvider._({
+    required MyUserIdFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'myUserIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myUserIdHash();
+
+  @override
+  String toString() {
+    return r'myUserIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String> create(Ref ref) {
+    final argument = this.argument as String;
+    return myUserId(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyUserIdProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myUserIdHash() => r'ca61a54a39b063fdedb07785a2c23dc0cbb72f74';
+
+/// The signed-in user's id.
+
+final class MyUserIdFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String>, String> {
+  MyUserIdFamily._()
+    : super(
+        retry: null,
+        name: r'myUserIdProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The signed-in user's id.
+
+  MyUserIdProvider call(String url) =>
+      MyUserIdProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'myUserIdProvider';
+}
