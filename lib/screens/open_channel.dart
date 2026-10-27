@@ -95,6 +95,26 @@ Future<void> openConversation(
       .set(target.copyWith(highlightPostId: null));
 }
 
+/// Closes the channel [channelId] of [url] and its threads wherever they
+/// show, in routes or panes, once the user has left it; what was open over
+/// them stays.
+void closeChannel(
+  NavigatorState navigator, {
+  required String url,
+  required String channelId,
+}) {
+  if (!navigator.mounted) return;
+  final container = ProviderScope.containerOf(navigator.context, listen: false);
+  container.read(openPanesProvider.notifier).close(url, channelId);
+  for (final route in container.read(conversationRoutesProvider).live) {
+    if (route.navigator == navigator &&
+        route.target.url == url &&
+        route.target.channelId == channelId) {
+      navigator.removeRoute(route);
+    }
+  }
+}
+
 /// Opens [target] again the way [openConversation] first did.
 Future<void> reopenConversation(
   NavigatorState navigator,
