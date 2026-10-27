@@ -115,16 +115,17 @@ class AgentActions {
     String channelId,
     AgentBot bot, {
     int? days,
-    bool unreadsOnly = false,
+    DateTime? unreadsSince,
   }) async {
     final response = await session.api.call(
       () => session.api.dio.post<Object?>(
         '$_route/channel/${Uri.encodeComponent(channelId)}/analyze',
         queryParameters: {'botUsername': bot.username},
-        data: AgentAnalysisRequest(
-          days: days,
-          unreadsOnly: unreadsOnly ? true : null,
-        ).toJson(),
+        data:
+            (unreadsSince == null
+                    ? AgentAnalysisRequest(days: days)
+                    : AgentAnalysisRequest.unreads(unreadsSince.toUtc()))
+                .toJson(),
       ),
     );
     final json = response.data;

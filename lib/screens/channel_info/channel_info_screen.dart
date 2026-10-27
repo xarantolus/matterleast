@@ -34,11 +34,16 @@ class ChannelInfoScreen extends ConsumerStatefulWidget {
   const ChannelInfoScreen({
     required this.url,
     required this.channelId,
+    this.unreadSince,
     super.key,
   });
 
   final String url;
   final String channelId;
+
+  /// When the channel was last read before it was opened, if it had unread
+  /// messages then.
+  final DateTime? unreadSince;
 
   @override
   ConsumerState<ChannelInfoScreen> createState() => _ChannelInfoScreenState();
@@ -184,6 +189,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
                       context,
                       url: widget.url,
                       channelId: info.id,
+                      unreadSince: widget.unreadSince,
                     ),
                   ),
                 ListTile(

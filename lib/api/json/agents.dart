@@ -483,12 +483,17 @@ class AgentAnalysisRequest {
   const AgentAnalysisRequest({
     this.analysisType = 'summarize_channel',
     this.days,
-    this.unreadsOnly,
+    this.since,
   });
+
+  /// Everything after [since], which is when the user last read the channel.
+  const AgentAnalysisRequest.unreads(DateTime this.since)
+    : analysisType = 'summarize_unreads',
+      days = null;
 
   final String analysisType;
   final int? days;
-  final bool? unreadsOnly;
+  final DateTime? since;
 
   Map<String, Object?> toJson() => _$AgentAnalysisRequestToJson(this);
 }

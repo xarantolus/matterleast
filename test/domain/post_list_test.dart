@@ -140,4 +140,15 @@ void main() {
     final rows = rowsOf([post('a', morning)], lastViewedAt: DateTime(2026));
     expect({for (final r in rows) r.key}, {'a', 'day:2026-10-20', 'new-line'});
   });
+
+  test('unreads can be summarised only while the new-messages line shows', () {
+    final seen = morning.add(const Duration(minutes: 1)).toUtc();
+    final unread = rowsOf([
+      post('a', morning),
+      post('b', morning.add(const Duration(minutes: 2))),
+    ], lastViewedAt: seen);
+    final read = rowsOf([post('a', morning)], lastViewedAt: seen);
+    expect(unreadSince(unread, seen), seen);
+    expect(unreadSince(read, seen), isNull);
+  });
 }

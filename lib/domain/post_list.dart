@@ -227,6 +227,11 @@ String _two(int n) => n.toString().padLeft(2, '0');
 
 const _groupWindow = Duration(minutes: 5);
 
+/// When the channel was last read, if [rows] show the new-messages line,
+/// that is, if there was something unread to summarise.
+DateTime? unreadSince(List<ListRow> rows, DateTime? lastViewedAt) =>
+    rows.any((r) => r is NewMessagesLine) ? lastViewedAt : null;
+
 /// The rows for [posts] (newest first), newest first: date separators,
 /// grouping of consecutive messages, and the new-messages line before the
 /// first message from someone else after [lastViewedAt]. System messages
