@@ -46,7 +46,7 @@ final class OpenPanesProvider extends $NotifierProvider<OpenPanes, Panes> {
   }
 }
 
-String _$openPanesHash() => r'10fadeeadf55a4bd4c9d7b7cd4cdf74dac52a44a';
+String _$openPanesHash() => r'd074beda4624a992c15dcb5a4e7cdb554083a474';
 
 /// The conversations shown beside the channel list on a wide screen. On a
 /// narrow one the [ConversationRoute]s on the navigator are the truth.
