@@ -7,6 +7,19 @@
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  // One instance per user session: a second launch shows the running
+  // window, which may be hidden in the tray, and exits.
+  ::CreateMutexW(nullptr, TRUE, L"io.github.xarantolus.matterleast");
+  if (::GetLastError() == ERROR_ALREADY_EXISTS) {
+    HWND running =
+        ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", L"Matterleast");
+    if (running != nullptr) {
+      ::ShowWindow(running, ::IsIconic(running) ? SW_RESTORE : SW_SHOW);
+      ::SetForegroundWindow(running);
+    }
+    return EXIT_SUCCESS;
+  }
+
   // Attach to console when present (e.g., 'flutter run') or create a
   // new console when running with a debugger.
   if (!::AttachConsole(ATTACH_PARENT_PROCESS) && ::IsDebuggerPresent()) {
