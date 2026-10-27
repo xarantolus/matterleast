@@ -103,4 +103,30 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Threads'), findsNothing);
   });
+
+  testWidgets('a field typed in below gives up the keyboard when a page '
+      'opens over it, and leaves it down when the page goes', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: TextField())),
+    );
+    await tester.showKeyboard(find.byType(TextField));
+    expect(tester.testTextInput.isVisible, isTrue);
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    unawaited(
+      navigator.push(
+        SlideRoute<void>(builder: (_) => const Scaffold(body: Text('Thread'))),
+      ),
+    );
+    await tester.pump();
+    expect(tester.testTextInput.isVisible, isFalse);
+    await tester.pumpAndSettle();
+    navigator.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Thread'), findsNothing);
+    expect(tester.testTextInput.isVisible, isFalse);
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus,
+      isFalse,
+    );
+  });
 }

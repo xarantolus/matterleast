@@ -23,6 +23,9 @@ class SlideRoute<T> extends PageRoute<T> {
 
   @override
   TickerFuture didPush() {
+    // At once, so keys typed while it slides in don't reach a field below,
+    // and that field doesn't take the keyboard back when the page goes.
+    FocusManager.instance.primaryFocus?.unfocus();
     if (instant) controller!.value = 1;
     return super.didPush();
   }
