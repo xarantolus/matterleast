@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
@@ -129,6 +130,7 @@ class _ComposerField extends ConsumerStatefulWidget {
 class _ComposerFieldState extends ConsumerState<_ComposerField> {
   final _text = TextEditingController();
   final _focus = FocusNode();
+  final _suggestionsShown = OverlayPortalController()..show();
   Timer? _focusLater;
 
   ComposerDraftProvider get _provider =>
@@ -190,6 +192,38 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       }
     });
     final value = ref.watch(_provider);
+    final suggestions = value.suggestions;
+    // Over the messages, so the list doesn't shrink and move under the
+    // reader while they come and go.
+    return OverlayPortal.overlayChildLayoutBuilder(
+      controller: _suggestionsShown,
+      overlayChildBuilder: (context, info) {
+        if (suggestions.isEmpty) return const SizedBox.shrink();
+        final field = MatrixUtils.transformRect(
+          info.childPaintTransform,
+          Offset.zero & info.childSize,
+        );
+        return Positioned(
+          left: field.left,
+          width: field.width,
+          bottom: info.overlaySize.height - field.top,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: math.max(0, field.top)),
+            child: TextFieldTapRegion(
+              child: SuggestionList(
+                url: widget.url,
+                suggestions: suggestions,
+                onPick: ref.read(_provider.notifier).pick,
+              ),
+            ),
+          ),
+        );
+      },
+      child: _field(context, value),
+    );
+  }
+
+  Widget _field(BuildContext context, ComposerValue value) {
     final tokens = context.tokens;
     final limit =
         ref.watch(maxPostSizeProvider(widget.url)).value ??
@@ -216,12 +250,6 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (value.suggestions.isNotEmpty)
-              SuggestionList(
-                url: widget.url,
-                suggestions: value.suggestions,
-                onPick: ref.read(_provider.notifier).pick,
-              ),
             if (editing != null)
               Padding(
                 padding: const EdgeInsets.only(left: Spacing.lg),
