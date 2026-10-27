@@ -23,7 +23,8 @@ import 'package:matterleast/domain/agent_stream.dart';
 /// Keeps one server's database current while the app is in the foreground:
 /// the WebSocket, the entry sync it triggers and presence polling. It goes
 /// quiet 15 s after the app goes to the background. When the device's
-/// network comes back it reconnects and refreshes at once.
+/// network comes back, or the server answers again after it didn't, it
+/// reconnects and refreshes at once.
 class ServerConnection {
   ServerConnection({
     required Uri url,
@@ -73,6 +74,8 @@ class ServerConnection {
       pingInterval: pingInterval,
       onEvent: receive,
       online: online,
+      reachable: server.reach.reachable,
+      probe: server.reach.probe,
       onResync: () {
         agents.reconnected();
         refreshAll();
@@ -84,6 +87,7 @@ class ServerConnection {
       },
     );
     online?.addListener(_networkChanged);
+    server.reach.reachable.addListener(_reachChanged);
   }
 
   /// False while the device has no network.
@@ -199,6 +203,10 @@ class ServerConnection {
     if (_active && online!.value) refreshAll();
   }
 
+  void _reachChanged() {
+    if (_active && server.reach.reachable.value) refreshAll();
+  }
+
   Future<void> _stop() async {
     _active = false;
     presence.stop();
@@ -207,6 +215,7 @@ class ServerConnection {
 
   Future<void> close() async {
     online?.removeListener(_networkChanged);
+    server.reach.reachable.removeListener(_reachChanged);
     _startTimer?.cancel();
     _stopTimer?.cancel();
     await _stop();

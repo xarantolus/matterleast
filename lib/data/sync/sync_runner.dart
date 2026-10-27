@@ -35,6 +35,12 @@ final class SyncFailed extends SyncStatus {
 
   /// No answer arrived at all; a slow or failing server is not offline.
   bool get offline => cause is Unreachable;
+
+  /// The device has a network but the server is known not to answer.
+  bool get serverDown => switch (cause) {
+    Unreachable(serverDown: true) => true,
+    _ => false,
+  };
 }
 
 class SyncJob {
@@ -84,19 +90,26 @@ class _Queued {
 /// Runs sync work by priority with bounded parallelism. Foreground and
 /// background triggers enqueue here; nothing else fetches on its own. While
 /// [offline] says so, jobs fail at once without showing as refreshing.
+/// While [reachable] says the server doesn't answer, jobs don't show as
+/// refreshing either: their requests only wait for a short ping, and the
+/// bar comes back as soon as the server answers.
 class SyncRunner {
   SyncRunner({
     this.maxParallel = 2,
     DateTime Function()? clock,
     bool Function()? offline,
+    this.reachable,
   }) : _clock = clock ?? (() => DateTime.now().toUtc()),
-       _offline = offline ?? _never;
+       _offline = offline ?? _never {
+    reachable?.addListener(_publish);
+  }
 
   static bool _never() => false;
 
   final int maxParallel;
   final DateTime Function() _clock;
   final bool Function() _offline;
+  final ValueListenable<bool>? reachable;
   final _status = ValueNotifier<SyncStatus>(const SyncIdle());
   final _queue = <_Queued>[];
   final _running = HashMap<String, _Queued>();
@@ -149,6 +162,7 @@ class SyncRunner {
   }
 
   void close() {
+    reachable?.removeListener(_publish);
     _closed = true;
     for (final q in _queue) {
       q.completer.complete();
@@ -181,7 +195,7 @@ class SyncRunner {
       await run.timeout(
         job.timeout,
         onTimeout: () async {
-          cancel.cancel();
+          cancel.cancel(const RequestTimeout());
           // Its requests stop now; let it unwind before the key is free
           // again, so a second run never overlaps the first one's writes.
           await run.timeout(_unwind, onTimeout: () {}).catchError((_) {});
@@ -212,8 +226,11 @@ class SyncRunner {
 
   void _publish() {
     if (_closed) return;
-    final running = _running.values.where((q) => q.shown).length;
-    final queued = _queue.where((q) => q.shown).length;
+    final answering = reachable?.value ?? true;
+    final running = answering
+        ? _running.values.where((q) => q.shown).length
+        : 0;
+    final queued = answering ? _queue.where((q) => q.shown).length : 0;
     if (running + queued > 0) {
       _status.value = SyncRefreshing(running: running, queued: queued);
     } else if (_failed case final cause?) {

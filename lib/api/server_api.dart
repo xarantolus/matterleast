@@ -8,11 +8,13 @@ import 'package:matterleast/api/coalesce.dart';
 import 'package:matterleast/api/generated/export.dart' show MattermostClient;
 import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/api/server_paths.dart';
+import 'package:matterleast/api/server_reach.dart';
 import 'package:matterleast/api/trusted_authorities.dart';
 
 typedef TokenProvider = FutureOr<String?> Function();
 
 const _cancelKey = #matterleast.requestCancel;
+const _probeKey = 'matterleast.probe';
 
 /// Runs [body] so that every request it makes through a [ServerApi] stops
 /// when [cancel] fires, such as a sync job that ran out of time.
@@ -22,8 +24,9 @@ Future<T> cancellable<T>(CancelToken cancel, Future<T> Function() body) =>
 /// One HTTP client per server: base URL, auth header, deadlines, error
 /// mapping, and identical GETs in flight sharing one round trip. While
 /// [network] reports none nothing is sent, and what is in flight stops when
-/// it goes away, so nothing waits for a timeout to say "offline". The
-/// generated
+/// it goes away, so nothing waits for a timeout to say "offline". While
+/// [reach] knows the server doesn't answer, each request first waits for a
+/// short shared ping and fails at once when it gets none. The generated
 /// [MattermostClient] sits on top; nothing above the data layer touches Dio.
 class ServerApi {
   ServerApi({
@@ -64,7 +67,26 @@ class ServerApi {
             if (own == null) {
               options.cancelToken = cancel;
             } else {
-              unawaited(cancel.whenCancel.then((_) => own.cancel()));
+              unawaited(cancel.whenCancel.then((e) => own.cancel(e.error)));
+            }
+          }
+          final cancel = options.cancelToken ??= CancelToken();
+          if (options.extra[_probeKey] != true && reach.unreachable) {
+            final answers = await Future.any([
+              reach.probe(),
+              cancel.whenCancel.then((_) => true),
+            ]);
+            // A request stopped meanwhile fails as stopped, below.
+            if (!answers && !cancel.isCancelled) {
+              handler.reject(
+                DioException(
+                  requestOptions: options,
+                  type: DioExceptionType.connectionError,
+                  error: const ServerDown(),
+                ),
+                true,
+              );
+              return;
             }
           }
           if (preAuthSecret != null && options.uri.origin == baseUrl.origin) {
@@ -80,18 +102,21 @@ class ServerApi {
           if (token != null && carriesToken(options.uri, baseUrl)) {
             options.headers['Authorization'] = 'Bearer $token';
           }
-          if (network != null) {
-            options.cancelToken ??= CancelToken();
-            _live.add(options);
-          }
+          _live.add(options);
           handler.next(options);
         },
         onResponse: (response, handler) {
           _live.remove(response.requestOptions);
+          reach.answered();
           handler.next(response);
         },
         onError: (e, handler) {
           _live.remove(e.requestOptions);
+          if (e.response != null) {
+            reach.answered();
+          } else if (_noAnswer(e)) {
+            reach.noAnswer();
+          }
           final error = ApiError.from(e);
           if (error is ServerError &&
               error.isUnauthorized &&
@@ -105,7 +130,18 @@ class ServerApi {
     this.dio.httpClientAdapter = _SameGets(this.dio.httpClientAdapter);
     client = MattermostClient(this.dio);
     network?.online.addListener(_networkChanged);
+    reach.reachable.addListener(_reachChanged);
   }
+
+  /// The transport gave up waiting for the server.
+  static bool _noAnswer(DioException e) =>
+      e.type == DioExceptionType.connectionTimeout ||
+      e.type == DioExceptionType.receiveTimeout ||
+      e.type == DioExceptionType.sendTimeout;
+
+  /// How long a ping may take while the server is believed down; a server
+  /// that answers more slowly counts as down until a request gets through.
+  static const probeTimeout = Duration(seconds: 4);
 
   /// How long [call] lets a request run in total, unless the call says
   /// otherwise.
@@ -121,6 +157,10 @@ class ServerApi {
   final TokenProvider _token;
   final NetworkState? network;
   late final MattermostClient client;
+
+  /// Whether this server answers, from what its requests and its socket
+  /// saw.
+  late final reach = ServerReach(ping: _ping);
 
   /// Requests between being sent and their answer (or failure).
   final _live = Set<RequestOptions>.identity();
@@ -172,23 +212,37 @@ class ServerApi {
   /// or when the surrounding [cancellable] scope is.
   Future<T> call<T>(Future<T> Function() request, {Duration? deadline}) async {
     final cancel = CancelToken();
+    var outOfTime = false;
     if (Zone.current[_cancelKey] case final CancelToken outer) {
       if (outer.isCancelled) throw const Cancelled();
-      unawaited(outer.whenCancel.then((_) => cancel.cancel()));
+      unawaited(
+        outer.whenCancel.then((e) {
+          outOfTime = e.error is RequestTimeout;
+          cancel.cancel(e.error);
+        }),
+      );
     }
     var late = false;
     final timer = Timer(deadline ?? this.deadline, () {
       late = true;
-      cancel.cancel();
+      cancel.cancel(const RequestTimeout());
     });
+    final started = DateTime.now();
     try {
       return await cancellable(cancel, request);
-    } on DioException catch (e) {
+    } on Object catch (e) {
+      // Stopped for taking too long, after more than a connection may
+      // take; an impatient caller doesn't make a slow server look down.
+      if ((late || outOfTime) &&
+          DateTime.now().difference(started) >=
+              (dio.options.connectTimeout ?? Duration.zero)) {
+        reach.noAnswer();
+      }
       if (late) throw const RequestTimeout();
-      final error = e.error;
-      throw error is ApiError ? error : ApiError.from(e);
-    } on Cancelled {
-      if (late) throw const RequestTimeout();
+      if (e is DioException) {
+        final error = e.error;
+        throw error is ApiError ? error : ApiError.from(e);
+      }
       rethrow;
     } finally {
       timer.cancel();
@@ -225,6 +279,29 @@ class ServerApi {
         () => runZoned(() => call(request), zoneValues: {_cancelKey: null}),
       ).then((v) => v as T);
 
+  /// One short `system/ping`: any answer, even an error, means the server
+  /// is there.
+  Future<bool> _ping() async {
+    try {
+      // Shared by every waiting request, so none of them may cancel it.
+      await runZoned(
+        () => call(
+          () => dio.get<Object?>(
+            '/api/v4/system/ping',
+            options: Options(extra: {_probeKey: true}),
+          ),
+          deadline: probeTimeout,
+        ),
+        zoneValues: {_cancelKey: null},
+      );
+      return true;
+    } on ServerError {
+      return true;
+    } on ApiError {
+      return false;
+    }
+  }
+
   void _networkChanged() {
     if (!network!.offline) return;
     for (final options in _live.toList()) {
@@ -232,8 +309,20 @@ class ServerApi {
     }
   }
 
+  /// Requests waiting on a server just found not to answer stop now
+  /// instead of at their timeouts.
+  void _reachChanged() {
+    if (!reach.unreachable) return;
+    for (final options in _live.toList()) {
+      if (options.extra[_probeKey] == true) continue;
+      options.cancelToken?.cancel(const ServerDown());
+    }
+  }
+
   void close() {
+    reach.reachable.removeListener(_reachChanged);
     network?.online.removeListener(_networkChanged);
+    reach.dispose();
     dio.close(force: true);
     _sessionEnded.close();
   }

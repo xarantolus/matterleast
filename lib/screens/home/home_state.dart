@@ -55,15 +55,18 @@ HomeState homeState(InboxFilter filter, List<HomeServer> servers) {
     }
     return const HomeState.loading();
   }
-  String problem(SyncFailed status) =>
-      status.offline ? 'offline' : "couldn't refresh";
+  String problem(SyncFailed status) => status.serverDown
+      ? "can't be reached"
+      : status.offline
+      ? 'offline'
+      : "couldn't refresh";
   final notice = switch (failed) {
     [] => null,
     [final first, ...] when failed.length == servers.length =>
       '${_capitalised(problem(first.status))} · showing saved data',
     [final only] =>
       '${only.server.name} ${problem(only.status)} · showing saved data',
-    _ when failed.every((f) => f.status.offline) =>
+    _ when failed.every((f) => f.status.offline && !f.status.serverDown) =>
       'Some servers are offline · showing saved data',
     _ => "Some servers couldn't refresh · showing saved data",
   };

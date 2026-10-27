@@ -56,6 +56,8 @@ class ServerSession {
     );
     connection.state.addListener(_onSocketState);
     network?.online.addListener(_onNetwork);
+    api.reach.reachable.addListener(_onReach);
+    api.reach.checkSocket = connection.socket.checkAlive;
   }
 
   final Uri url;
@@ -106,14 +108,23 @@ class ServerSession {
 
   /// A socket that connects again means the server is reachable again.
   void _onSocketState() {
-    if (connection.state.value == SocketState.connected) {
-      network?.reachable();
-      unawaited(outbox.wake());
+    switch (connection.state.value) {
+      case SocketState.connected:
+        network?.reachable();
+        api.reach.socketConnected();
+        unawaited(outbox.wake());
+      case SocketState.disconnected:
+        api.reach.socketDown();
+      case SocketState.connecting:
     }
   }
 
   void _onNetwork() {
     if (network?.offline == false) unawaited(outbox.wake());
+  }
+
+  void _onReach() {
+    if (api.reach.reachable.value) unawaited(outbox.wake());
   }
 
   /// Opens the session without waiting for the Keystore, so stored data
@@ -141,7 +152,10 @@ class ServerSession {
       api: api,
       db: db,
       network: network,
-      runner: SyncRunner(offline: () => network?.offline ?? false),
+      runner: SyncRunner(
+        offline: () => network?.offline ?? false,
+        reachable: api.reach.reachable,
+      ),
       dbPath: dbPath,
       images: ServerImageCaches(
         directory: imagesDirectory,
@@ -162,6 +176,8 @@ class ServerSession {
 
   Future<void> close() async {
     network?.online.removeListener(_onNetwork);
+    api.reach.reachable.removeListener(_onReach);
+    api.reach.checkSocket = null;
     connection.state.removeListener(_onSocketState);
     await composer.dispose().catchError((Object _) {});
     await outbox.close();
