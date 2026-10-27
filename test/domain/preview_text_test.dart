@@ -31,4 +31,11 @@ void main() {
       'done next print(1);',
     );
   });
+
+  test('known emoji codes become the emoji, others and times stay', () {
+    expect(
+      previewText('this one is about you :smile: :party_parrot: at 10:30:45'),
+      'this one is about you 😄 :party_parrot: at 10:30:45',
+    );
+  });
 }

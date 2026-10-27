@@ -172,6 +172,8 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   /// Tells a screen reader what arrived or failed; nothing without one.
   void _announce(ConversationState before, ConversationState after) {
     if (!MediaQuery.accessibleNavigationOf(context)) return;
+    // A conversation under a thread or sheet doesn't talk over it.
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
     final news = conversationNews(before, after);
     if (news.isEmpty) return;
     unawaited(
@@ -415,6 +417,8 @@ extension on _ConversationViewState {
       unawaited(_menu(post, _state.window?.teamId ?? ''));
     }
 
+    final failed = post.sendState == 'failed';
+    final tappable = usable && threads && post.sendState == null;
     final tile = PostTile(
       post: post,
       compact: compact,
@@ -429,6 +433,13 @@ extension on _ConversationViewState {
       onToggleReaction: reacts ? (name) => _toggleReaction(post, name) : null,
       onAddReaction: reacts ? () => _pickReaction(post) : null,
       onAcknowledge: reacts ? () => _toggleAcknowledged(post) : null,
+      onTap: failed
+          ? () => showFailedPostSheet(context, url: widget.url, post: post)
+          : tappable
+          ? openThread
+          : null,
+      tapHint: failed ? 'try again or delete' : 'open thread',
+      onLongPress: usable && !failed ? open : null,
       actions: usable && post.sendState == null
           ? {
               if (threads) _replyAction: openThread,
@@ -437,22 +448,8 @@ extension on _ConversationViewState {
             }
           : const {},
     );
-    if (post.sendState == 'failed') {
-      return InkWell(
-        onTap: () => showFailedPostSheet(context, url: widget.url, post: post),
-        child: tile,
-      );
-    }
-    if (!usable) return tile;
-    return SwipeToOpen(
-      onOpen: open,
-      child: InkWell(
-        // Links, images, files, reactions and names take their own taps.
-        onTap: threads && post.sendState == null ? openThread : null,
-        onLongPress: open,
-        child: tile,
-      ),
-    );
+    if (failed || !usable) return tile;
+    return SwipeToOpen(onOpen: open, child: tile);
   }
 
   Future<void> _menu(PostItem post, String teamId) => showMessageMenu(

@@ -32,25 +32,59 @@ class ChannelTile extends StatelessWidget {
       dense: true,
       contentPadding: Spacing.row,
       minLeadingWidth: 28,
-      leading: _ChannelIcon(serverUrl: serverUrl, item: item, color: color),
-      title: Text(
-        item.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 15,
-          color: color,
-          fontWeight: item.unread || item.mentions > 0
-              ? FontWeight.w700
-              : FontWeight.w400,
+      // The row reads as one sentence, name first; the icon and markers
+      // are in it as words.
+      leading: ExcludeSemantics(
+        child: _ChannelIcon(serverUrl: serverUrl, item: item, color: color),
+      ),
+      title: Semantics(
+        label: channelRowLabel(item, markers: trailing == null),
+        onLongPressHint: onLongPress == null ? null : 'channel options',
+        child: ExcludeSemantics(
+          child: Text(
+            item.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              color: color,
+              fontWeight: item.unread || item.mentions > 0
+                  ? FontWeight.w700
+                  : FontWeight.w400,
+            ),
+          ),
         ),
       ),
-      trailing: trailing ?? _Markers(item: item),
+      trailing: trailing ?? ExcludeSemantics(child: _Markers(item: item)),
       onTap: onTap,
       onLongPress: onLongPress,
     );
   }
 }
+
+/// Pure: a channel row in words: the name, what kind of channel or how
+/// the other person is, then, with [markers], the draft, muted and unread
+/// state.
+String channelRowLabel(ChannelItem item, {bool markers = true}) => [
+  item.title,
+  switch (item.kind) {
+    ChannelKind.public => null,
+    ChannelKind.private => 'private channel',
+    ChannelKind.archived => 'archived channel',
+    ChannelKind.group => 'group message',
+    ChannelKind.direct => presenceLabel(item.status).toLowerCase(),
+  },
+  if (markers) ...[
+    if (item.hasDraft) 'draft',
+    if (item.muted) 'muted',
+    if (item.mentions == 1)
+      '1 mention'
+    else if (item.mentions > 1)
+      '${item.mentions} mentions'
+    else if (item.unread)
+      'unread',
+  ],
+].nonNulls.join(', ');
 
 class _Markers extends StatelessWidget {
   const _Markers({required this.item});
@@ -63,35 +97,17 @@ class _Markers extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final markers = [
       if (item.hasDraft)
-        Icon(
-          Icons.edit_outlined,
-          size: 16,
-          color: tokens.muted,
-          semanticLabel: 'Draft',
-        ),
+        Icon(Icons.edit_outlined, size: 16, color: tokens.muted),
       if (item.muted)
-        Icon(
-          Icons.notifications_off_outlined,
-          size: 16,
-          color: tokens.muted,
-          semanticLabel: 'Muted',
-        ),
+        Icon(Icons.notifications_off_outlined, size: 16, color: tokens.muted),
       if (item.mentions > 0)
-        Semantics(
-          label: item.mentions == 1 ? '1 mention' : '${item.mentions} mentions',
-          child: ExcludeSemantics(
-            child: Badge.count(
-              count: item.mentions,
-              backgroundColor: item.muted ? tokens.muted : scheme.error,
-              textColor: item.muted ? tokens.page : scheme.onError,
-            ),
-          ),
+        Badge.count(
+          count: item.mentions,
+          backgroundColor: item.muted ? tokens.muted : scheme.error,
+          textColor: item.muted ? tokens.page : scheme.onError,
         )
       else if (item.unread)
-        Semantics(
-          label: 'Unread',
-          child: Badge(smallSize: 8, backgroundColor: tokens.unread),
-        ),
+        Badge(smallSize: 8, backgroundColor: tokens.unread),
     ];
     if (markers.isEmpty) return const SizedBox.shrink();
     return Row(

@@ -43,24 +43,27 @@ class MessagePreviewTile extends ConsumerWidget {
     return ListTile(
       contentPadding: Spacing.row,
       onTap: onTap,
-      leading: Stack(
-        children: [
-          if (item.avatarUserId case final userId?)
-            UserAvatar(
-              serverUrl: item.serverUrl,
-              userId: userId,
-              name: item.avatarName,
-              lastPictureUpdate: item.avatarPictureUpdate,
-            )
-          else
-            InitialsBadge(name: item.avatarName, round: true),
-          if (item.kind == InboxKind.direct)
-            PositionedDirectional(
-              end: 0,
-              bottom: 0,
-              child: PresenceDot(status: item.status, size: 12),
-            ),
-        ],
+      // Pictures are decoration here; presence is read after the name.
+      leading: ExcludeSemantics(
+        child: Stack(
+          children: [
+            if (item.avatarUserId case final userId?)
+              UserAvatar(
+                serverUrl: item.serverUrl,
+                userId: userId,
+                name: item.avatarName,
+                lastPictureUpdate: item.avatarPictureUpdate,
+              )
+            else
+              InitialsBadge(name: item.avatarName, round: true),
+            if (item.kind == InboxKind.direct)
+              PositionedDirectional(
+                end: 0,
+                bottom: 0,
+                child: PresenceDot(status: item.status, size: 12),
+              ),
+          ],
+        ),
       ),
       title: Row(
         children: [
@@ -87,6 +90,8 @@ class MessagePreviewTile extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (item.kind == InboxKind.direct)
+            Semantics(label: presenceLabel(item.status).toLowerCase()),
           if (!large) ...[
             const SizedBox(width: Spacing.sm),
             Text(when, style: text.bodySmall?.copyWith(color: tokens.muted)),

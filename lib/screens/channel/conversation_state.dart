@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/preview_text.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/ui/presence_dot.dart';
@@ -160,7 +161,7 @@ List<String> conversationNews(
       .where((p) => p.sendState == 'failed' && !wasFailed.contains(p.key))
       .length;
   return [
-    if (arrived.length == 1) 'New message from ${arrived.single.authorName}',
+    if (arrived.length == 1) _arrivedWords(arrived.single),
     if (arrived.length > 1) '${arrived.length} new messages',
     if (failed == 1) 'Your message was not sent',
     if (failed > 1) '$failed of your messages were not sent',
@@ -176,4 +177,16 @@ bool sentJustNow(ConversationState before, ConversationState after) {
   return (after.window?.posts ?? const <PostItem>[]).any(
     (p) => p.sendState == 'pending' && !known.contains(p.key),
   );
+}
+
+/// One arrived message, said the way a reader would glance at it: who,
+/// and how it starts.
+String _arrivedWords(PostItem post) {
+  final text = previewText(post.message);
+  if (text.isEmpty) return 'New message from ${post.authorName}';
+  const max = 150;
+  final start = text.length <= max
+      ? text
+      : '${text.substring(0, max).trimRight()}…';
+  return '${post.authorName}: $start';
 }
