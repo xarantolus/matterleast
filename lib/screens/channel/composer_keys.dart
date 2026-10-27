@@ -1,0 +1,85 @@
+import 'package:flutter/services.dart';
+import 'package:matterleast/domain/post_list.dart';
+
+/// What a key press in the composer does.
+enum ComposerKey {
+  send,
+  acceptSuggestion,
+  nextSuggestion,
+  previousSuggestion,
+  closeSuggestions,
+  editLast,
+  stopEditing,
+  blur,
+}
+
+/// Pure: what [key] does in the composer, or null when the text field is
+/// left to handle it (typing, a new line, an IME). [enterSends] is a hardware
+/// keyboard that sends with Enter; Ctrl+Enter sends everywhere.
+ComposerKey? composerKey({
+  required LogicalKeyboardKey key,
+  required bool shift,
+  required bool control,
+  required bool alt,
+  required bool meta,
+  required bool enterSends,
+  required bool composing,
+  required bool suggestionsOpen,
+  required bool editing,
+  required bool empty,
+  required bool desktop,
+}) {
+  if (composing) return null;
+  final plain = !shift && !control && !alt && !meta;
+  if (key == LogicalKeyboardKey.enter ||
+      key == LogicalKeyboardKey.numpadEnter) {
+    if (control && !alt && !meta) return ComposerKey.send;
+    if (!plain) return null;
+    if (suggestionsOpen) return ComposerKey.acceptSuggestion;
+    return enterSends ? ComposerKey.send : null;
+  }
+  if (key == LogicalKeyboardKey.tab && plain && suggestionsOpen) {
+    return ComposerKey.acceptSuggestion;
+  }
+  if (key == LogicalKeyboardKey.arrowDown && plain && suggestionsOpen) {
+    return ComposerKey.nextSuggestion;
+  }
+  if (key == LogicalKeyboardKey.arrowUp && plain) {
+    if (suggestionsOpen) return ComposerKey.previousSuggestion;
+    if (empty && !editing && desktop) return ComposerKey.editLast;
+    return null;
+  }
+  if (key == LogicalKeyboardKey.escape && plain) {
+    if (suggestionsOpen) return ComposerKey.closeSuggestions;
+    if (editing) return ComposerKey.stopEditing;
+    if (desktop) return ComposerKey.blur;
+  }
+  return null;
+}
+
+/// The highlight after moving by [step] through [count] suggestions, which
+/// wraps around.
+int movedHighlight(int current, int step, int count) =>
+    count == 0 ? 0 : (current + step) % count;
+
+/// The newest message of [userId] that can be edited: not a system message,
+/// not deleted and not still being sent.
+PostItem? lastOwnPost(List<ListRow> rows, String? userId) {
+  if (userId == null) return null;
+  PostItem? newest;
+  for (final row in rows) {
+    if (row is! MessageRow) continue;
+    final post = row.post;
+    if (post.userId != userId ||
+        post.type.isNotEmpty ||
+        post.deleted ||
+        post.sendState != null ||
+        post.isEphemeral) {
+      continue;
+    }
+    if (newest == null || post.createAt.isAfter(newest.createAt)) {
+      newest = post;
+    }
+  }
+  return newest;
+}
