@@ -51,6 +51,7 @@ class PostTile extends StatelessWidget {
     this.onTap,
     this.tapHint,
     this.onLongPress,
+    this.onContextMenu,
     this.actions = const {},
     super.key,
   });
@@ -82,6 +83,10 @@ class PostTile extends StatelessWidget {
 
   /// Opens the message's options.
   final VoidCallback? onLongPress;
+
+  /// A right click on the text at a global position, with the text
+  /// selected in it, if any.
+  final void Function(Offset position, String? selection)? onContextMenu;
 
   /// What a screen reader offers on the message, such as Reply.
   final Map<CustomSemanticsAction, VoidCallback> actions;
@@ -254,12 +259,15 @@ class PostTile extends StatelessWidget {
         else if (post.type == burnOnReadType && !post.deleted)
           BurnOnReadView(
             post: post,
-            child: MessageImageOpener(
-              open: (url) => _openImage(context, url, details, name),
-              child: PostTextActions(
-                post: post,
-                details: details,
-                child: PostText(post: post, details: details),
+            child: _Selectable(
+              onContextMenu: onContextMenu,
+              child: MessageImageOpener(
+                open: (url) => _openImage(context, url, details, name),
+                child: PostTextActions(
+                  post: post,
+                  details: details,
+                  child: PostText(post: post, details: details),
+                ),
               ),
             ),
           )
@@ -270,12 +278,15 @@ class PostTile extends StatelessWidget {
         else
           ExcludeSemantics(
             excluding: mergedText,
-            child: MessageImageOpener(
-              open: (url) => _openImage(context, url, details, name),
-              child: PostTextActions(
-                post: post,
-                details: details,
-                child: PostText(post: post, details: details),
+            child: _Selectable(
+              onContextMenu: onContextMenu,
+              child: MessageImageOpener(
+                open: (url) => _openImage(context, url, details, name),
+                child: PostTextActions(
+                  post: post,
+                  details: details,
+                  child: PostText(post: post, details: details),
+                ),
               ),
             ),
           ),
@@ -394,6 +405,8 @@ class PostTile extends StatelessWidget {
               // taps.
               onTap: onTap,
               onLongPress: onLongPress,
+              // A mouse tints the row where it is shown, with its toolbar.
+              hoverColor: Colors.transparent,
               excludeFromSemantics: true,
               child: tile,
             ),
@@ -742,6 +755,38 @@ class _PriorityLabel extends StatelessWidget {
                 ?.copyWith(color: foreground, fontWeight: FontWeight.w700),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Where the message has a right-click menu (with a mouse), its text is
+/// selectable within this one message; elsewhere just [child] ("Copy text"
+/// is in the menu).
+class _Selectable extends StatefulWidget {
+  const _Selectable({required this.onContextMenu, required this.child});
+
+  final void Function(Offset position, String? selection)? onContextMenu;
+  final Widget child;
+
+  @override
+  State<_Selectable> createState() => _SelectableState();
+}
+
+class _SelectableState extends State<_Selectable> {
+  String? _selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final menu = widget.onContextMenu;
+    if (menu == null) return widget.child;
+    return SelectionArea(
+      // A right click opens the message menu, which offers the selection.
+      contextMenuBuilder: null,
+      onSelectionChanged: (content) => _selected = content?.plainText,
+      child: GestureDetector(
+        onSecondaryTapUp: (d) => menu(d.globalPosition, _selected),
+        child: widget.child,
       ),
     );
   }

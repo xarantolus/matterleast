@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +15,8 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
+import 'package:matterleast/screens/channel/message_hover.dart';
+import 'package:matterleast/ui/post_tile.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
@@ -313,6 +316,223 @@ void main() {
         reason: 'message $i',
       );
     }
+    await close(tester);
+  });
+
+  group('with a mouse on desktop', () {
+    final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
+
+    Finder rowOf(String text) =>
+        find.ancestor(of: find.text(text), matching: find.byType(MessageHover));
+
+    Future<TestGesture> mouseAt(WidgetTester tester, Offset at) async {
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: at);
+      addTearDown(mouse.removePointer);
+      return mouse;
+    }
+
+    testWidgets('hovering a message shows its toolbar and keeps its height', (
+      tester,
+    ) async {
+      await open(tester);
+      final row = rowOf('message 57');
+      final before = tester.getRect(row);
+      expect(find.byTooltip('More actions'), findsNothing);
+
+      await mouseAt(tester, tester.getCenter(find.text('message 57')));
+      await settle(tester);
+
+      expect(find.byTooltip('More actions'), findsOneWidget);
+      expect(find.byTooltip('Reply'), findsNothing); // no thread here
+      expect(tester.getRect(row), before);
+      expect(
+        tester.getRect(find.text('message 58')).top,
+        greaterThanOrEqualTo(before.bottom),
+      );
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('moving over the list rebuilds only the rows the mouse '
+        'enters and leaves', (tester) async {
+      await open(tester);
+      final mouse = await mouseAt(tester, Offset.zero);
+      await settle(tester);
+      final rebuilt = <String>[];
+      debugOnRebuildDirtyWidget = (element, _) {
+        switch (element.widget) {
+          case PostTile(:final post):
+            rebuilt.add('tile ${post.message}');
+          case MessageHover(:final target):
+            rebuilt.add(target.post.message);
+        }
+      };
+      addTearDown(() => debugOnRebuildDirtyWidget = null);
+      for (final i in [54, 55, 56, 57]) {
+        await mouse.moveTo(tester.getCenter(find.text('message $i')));
+        await tester.pump();
+      }
+      debugOnRebuildDirtyWidget = null;
+
+      expect(rebuilt.where((r) => r.startsWith('tile')), isEmpty);
+      expect(rebuilt.toSet(), {
+        for (final i in [54, 55, 56, 57]) 'message $i',
+      });
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('a right click on a message opens its menu at the pointer', (
+      tester,
+    ) async {
+      await open(tester);
+      final at = tester.getCenter(find.text('message 57'));
+      await tester.tapAt(
+        at,
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await settle(tester);
+
+      expect(find.text('Copy text'), findsOneWidget);
+      expect(find.byType(BottomSheet), findsNothing);
+      // A popup next to the pointer, not a sheet at the bottom.
+      final entry = tester.getCenter(find.text('Copy text'));
+      expect((entry - at).distance, lessThan(300));
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('dragging over a message selects its text for the menu', (
+      tester,
+    ) async {
+      await open(tester);
+      final text = tester.getRect(find.text('message 57'));
+      final drag = await tester.startGesture(
+        text.centerLeft + const Offset(1, 0),
+        kind: PointerDeviceKind.mouse,
+      );
+      await drag.moveTo(text.center);
+      await drag.moveTo(text.centerRight - const Offset(1, 0));
+      await drag.up();
+      await settle(tester);
+      await tester.tapAt(
+        text.center,
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await settle(tester);
+
+      expect(find.text('Copy selection'), findsOneWidget);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('a click on a link opens it and moves nothing', (tester) async {
+      final launched = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/url_launcher'),
+        (call) async {
+          if (call.method == 'canLaunch') return true;
+          launched.add((call.arguments as Map)['url'] as String);
+          return true;
+        },
+      );
+      await open(tester);
+      answerOlder.complete();
+      final linkText = find.textContaining('tide table');
+      for (var i = 0; i < 10 && linkText.evaluate().isEmpty; i++) {
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
+        await settle(tester);
+      }
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 150));
+      await settle(tester);
+      final rows = [
+        for (var i = 0; i < 60; i++)
+          if (find.text('message $i').evaluate().isNotEmpty) i,
+      ];
+      final before = {
+        for (final i in rows) i: tester.getTopLeft(find.text('message $i')).dy,
+      };
+
+      final range = find.textRange.ofSubstring(link).evaluate().single;
+      final onLink = range.renderObject.localToGlobal(
+        range.renderObject
+            .getBoxesForSelection(
+              TextSelection(
+                baseOffset: range.textRange.start,
+                extentOffset: range.textRange.end,
+              ),
+            )
+            .first
+            .toRect()
+            .center,
+      );
+      await tester.tapAt(onLink, kind: PointerDeviceKind.mouse);
+      await settle(tester);
+
+      expect(launched, [link]);
+      for (final i in rows) {
+        expect(
+          tester.getTopLeft(find.text('message $i')).dy,
+          closeTo(before[i]!, 0.5),
+          reason: 'message $i',
+        );
+      }
+
+      await tester.tapAt(
+        onLink,
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await settle(tester);
+      expect(find.text('Open link'), findsOneWidget);
+      expect(find.text('Copy link'), findsOneWidget);
+      expect(find.text('Copy text'), findsNothing);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('a message does not swipe open its menu', (tester) async {
+      await open(tester);
+      // From the margin, where no text selection takes the drag.
+      final row = tester.getRect(rowOf('message 57'));
+      await tester.dragFrom(
+        Offset(row.left + 4, row.center.dy),
+        const Offset(-120, 0),
+      );
+      await settle(tester);
+      expect(find.text('Copy text'), findsNothing);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('a touch shows no toolbar', (tester) async {
+      await open(tester);
+      await tester.tap(find.text('message 57'));
+      await settle(tester);
+      expect(find.byTooltip('More actions'), findsNothing);
+      await close(tester);
+    }, variant: desktop);
+  });
+
+  testWidgets('on a phone a mouse gets no toolbar and no right-click menu', (
+    tester,
+  ) async {
+    await open(tester);
+    final at = tester.getCenter(find.text('message 57'));
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: at);
+    addTearDown(mouse.removePointer);
+    await settle(tester);
+    expect(find.byTooltip('More actions'), findsNothing);
+
+    await tester.tapAt(
+      at,
+      kind: PointerDeviceKind.mouse,
+      buttons: kSecondaryMouseButton,
+    );
+    await settle(tester);
+    expect(find.text('Copy text'), findsNothing);
+
+    await tester.drag(find.text('message 57'), const Offset(-120, 0));
+    await settle(tester);
+    expect(find.text('Copy text'), findsOneWidget);
     await close(tester);
   });
 }

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/file_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/file_handoff.dart';
@@ -13,6 +14,7 @@ import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
@@ -218,52 +220,58 @@ class _MediaTile extends StatelessWidget {
       ].join(', '),
       excludeSemantics: true,
       onTap: onTap,
-      child: SizedBox.fromSize(
-        size: size,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(Spacing.sm),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Hero(
-                tag: heroTag,
-                child: MediaPicture(url: url, file: file, size: size),
-              ),
-              if (file.kind == FileKind.video)
-                Center(
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(
-                      color: Color(0x8A000000),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Spacing.sm),
-                      child: Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                        size: size.shortestSide < 96 ? 20 : 36,
+      child: FileRightClick(
+        url: url,
+        file: file,
+        child: SizedBox.fromSize(
+          size: size,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(Spacing.sm),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Hero(
+                  tag: heroTag,
+                  child: MediaPicture(url: url, file: file, size: size),
+                ),
+                if (file.kind == FileKind.video)
+                  Center(
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        color: Color(0x8A000000),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(Spacing.sm),
+                        child: Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                          size: size.shortestSide < 96 ? 20 : 36,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              if (more > 0)
-                ColoredBox(
-                  color: const Color(0x99000000),
-                  child: Center(
-                    child: Text(
-                      '+$more',
-                      style: text.headlineSmall?.copyWith(color: Colors.white),
+                if (more > 0)
+                  ColoredBox(
+                    color: const Color(0x99000000),
+                    child: Center(
+                      child: Text(
+                        '+$more',
+                        style: text.headlineSmall?.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
+                Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    onTap: onTap,
+                    splashColor: scheme.primary.withValues(alpha: 0.2),
+                  ),
                 ),
-              Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  onTap: onTap,
-                  splashColor: scheme.primary.withValues(alpha: 0.2),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -358,42 +366,52 @@ class FileCard extends ConsumerWidget {
     final progress = transfers[file.id];
     return Padding(
       padding: const EdgeInsets.only(top: Spacing.xs),
-      child: Card.outlined(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        child: ListTile(
-          contentPadding: const EdgeInsetsDirectional.only(
-            start: Spacing.md,
-            end: Spacing.xs,
+      child: FileRightClick(
+        url: url,
+        file: file,
+        child: Card.outlined(
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          child: ListTile(
+            contentPadding: const EdgeInsetsDirectional.only(
+              start: Spacing.md,
+              end: Spacing.xs,
+            ),
+            leading: Icon(
+              fileIcon(file.kind, file.extension),
+              color: tokens.accent,
+            ),
+            title: Text(
+              file.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: running
+                ? Padding(
+                    padding: const EdgeInsets.only(top: Spacing.xs),
+                    child: LinearProgressIndicator(value: progress),
+                  )
+                : Text(
+                    [
+                      if (file.extension.isNotEmpty)
+                        file.extension.toUpperCase(),
+                      formatBytes(file.size),
+                    ].join(' · '),
+                  ),
+            trailing: running
+                ? IconButton(
+                    tooltip: 'Cancel download',
+                    icon: const Icon(Icons.close),
+                    onPressed: () => ref
+                        .read(fileTransfersProvider(url).notifier)
+                        .cancel(file.id),
+                  )
+                : FileActionsMenu(url: url, file: file),
+            onTap: running
+                ? null
+                : () =>
+                      _runFileAction(context, ref, url, file, _FileAction.view),
           ),
-          leading: Icon(
-            fileIcon(file.kind, file.extension),
-            color: tokens.accent,
-          ),
-          title: Text(file.name, maxLines: 2, overflow: TextOverflow.ellipsis),
-          subtitle: running
-              ? Padding(
-                  padding: const EdgeInsets.only(top: Spacing.xs),
-                  child: LinearProgressIndicator(value: progress),
-                )
-              : Text(
-                  [
-                    if (file.extension.isNotEmpty) file.extension.toUpperCase(),
-                    formatBytes(file.size),
-                  ].join(' · '),
-                ),
-          trailing: running
-              ? IconButton(
-                  tooltip: 'Cancel download',
-                  icon: const Icon(Icons.close),
-                  onPressed: () => ref
-                      .read(fileTransfersProvider(url).notifier)
-                      .cancel(file.id),
-                )
-              : FileActionsMenu(url: url, file: file),
-          onTap: running
-              ? null
-              : () => _runFileAction(context, ref, url, file, _FileAction.view),
         ),
       ),
     );
@@ -549,17 +567,52 @@ class FileActionsMenu extends ConsumerWidget {
       tooltip: 'More',
       iconColor: color,
       onSelected: (action) => runMediaAction(context, ref, url, file, action),
-      itemBuilder: (_) => [
-        PopupMenuItem(
-          value: MediaAction.save,
-          child: Text('Save to ${_folderOf(file)}'),
-        ),
-        const PopupMenuItem(value: MediaAction.share, child: Text('Share')),
-        const PopupMenuItem(
-          value: MediaAction.openWith,
-          child: Text('Open with…'),
-        ),
-      ],
+      itemBuilder: (_) => _fileMenuItems(file),
+    );
+  }
+}
+
+List<PopupMenuEntry<MediaAction>> _fileMenuItems(PostFile file) => [
+  PopupMenuItem(
+    value: MediaAction.save,
+    child: Text('Save to ${_folderOf(file)}'),
+  ),
+  const PopupMenuItem(value: MediaAction.share, child: Text('Share')),
+  const PopupMenuItem(value: MediaAction.openWith, child: Text('Open with…')),
+];
+
+/// On desktop, a right click on [child] opens [file]'s menu at the pointer,
+/// the one its three dots open.
+class FileRightClick extends ConsumerWidget {
+  const FileRightClick({
+    required this.url,
+    required this.file,
+    required this.child,
+    super.key,
+  });
+
+  final String url;
+  final PostFile file;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!isDesktop) return child;
+    return GestureDetector(
+      onSecondaryTapUp: (d) async {
+        // Each action hands the file out of the app.
+        final features = await ref.read(featuresProvider(url).future);
+        if (!features.fileDownloads || !context.mounted) return;
+        final action = await showMenuAt(
+          context,
+          d.globalPosition,
+          _fileMenuItems(file),
+        );
+        if (action != null && context.mounted) {
+          await runMediaAction(context, ref, url, file, action);
+        }
+      },
+      child: child,
     );
   }
 }
