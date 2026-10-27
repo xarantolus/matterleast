@@ -82,10 +82,18 @@ class ServerManager {
 
   /// Signs out servers whose token went missing (e.g. Keystore reset), so the
   /// list never shows a server as signed in that can't be used.
+  /// A keyring that doesn't answer proves nothing, so it signs out nobody.
   Future<void> checkTokens() async {
     for (final server in await _db.allServers()) {
       if (server.lastActiveAt == null) continue;
-      if (await _tokens.read(server.url) == null) {
+      final String? token;
+      try {
+        token = await _tokens.read(server.url);
+      } on KeyringUnavailable {
+        Log.warn('servers', 'The keyring is unavailable; tokens not checked');
+        return;
+      }
+      if (token == null) {
         Log.warn('servers', 'No token for a signed-in server; signing out');
         await _wipe(server.url);
       }

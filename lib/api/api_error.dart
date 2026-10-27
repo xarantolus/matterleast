@@ -30,6 +30,7 @@ sealed class ApiError implements Exception {
       );
     }
     return switch (e.type) {
+      _ when e.error is ApiError => e.error! as ApiError,
       DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
       DioExceptionType.receiveTimeout => const RequestTimeout(),
@@ -93,6 +94,12 @@ final class UntrustedCertificate extends ApiError {
 
 final class Cancelled extends ApiError {
   const Cancelled();
+}
+
+/// The system keyring that holds the session token didn't answer (on Linux,
+/// no Secret Service running or unlocked), so no request could be signed.
+final class KeyringUnavailable extends ApiError {
+  const KeyringUnavailable();
 }
 
 /// The request reached the server but its answer could not be read or

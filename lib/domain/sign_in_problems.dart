@@ -33,6 +33,11 @@ const mfaSetupNeededText =
     'This server requires two-factor authentication. Set it up in the web '
     'app, then sign in again.';
 
+const keyringUnavailableText =
+    "Matterleast can't reach the system keyring, where it keeps your "
+    'sign-in. Make sure a keyring such as GNOME Keyring or KWallet is '
+    'running and unlocked, then try again.';
+
 /// Words for a request that never got a usable answer from [host].
 String connectionProblemText(ApiError error, String host) => switch (error) {
   Unreachable() =>
@@ -42,6 +47,7 @@ String connectionProblemText(ApiError error, String host) => switch (error) {
     "$host's certificate isn't trusted, so the app didn't connect. Check the "
         "address, or ask the server's admin about the certificate.",
   Cancelled() => 'The request was stopped.',
+  KeyringUnavailable() => keyringUnavailableText,
   UnexpectedFailure(:final type) =>
     "$host's answer couldn't be read ($type). Try again later.",
   ServerError(:final message?) when message.trim().isNotEmpty =>
@@ -69,6 +75,7 @@ String shortProblemText(ApiError error) => switch (error) {
   RequestTimeout() => 'No answer in time',
   UntrustedCertificate() => 'Untrusted certificate',
   Cancelled() => 'Stopped',
+  KeyringUnavailable() => 'Keyring unavailable',
   UnexpectedFailure() => 'Unreadable answer',
 };
 
@@ -81,6 +88,7 @@ String staleDataNotice(ApiError error) => switch (error) {
   UnexpectedFailure() => "Couldn't read the server's reply",
   UntrustedCertificate() => "Couldn't update: untrusted certificate",
   Cancelled() => "Couldn't update: stopped",
+  KeyringUnavailable() => "Couldn't update: the keyring is unavailable",
 };
 
 /// Words for any failed request to [host], including our own timeouts.

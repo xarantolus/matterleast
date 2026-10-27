@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/app_visibility.dart';
 import 'package:matterleast/notifications/background.dart';
@@ -11,19 +12,24 @@ import 'package:matterleast/notifications/notification_check.dart';
 
 /// The opt-in foreground service, switched from the settings. Its state
 /// lives with the service (so its notification's Stop action and this
-/// switch agree); this only asks it.
+/// switch agree); this only asks it. Android only: elsewhere it is off.
 abstract final class StayConnected {
   static const _channel = MethodChannel('matterleast/stay_connected');
 
   static Future<bool> enabled() async =>
-      await _channel.invokeMethod<bool>('isEnabled') ?? false;
+      !isDesktop && (await _channel.invokeMethod<bool>('isEnabled') ?? false);
 
-  static Future<void> enable() => _channel.invokeMethod<void>('enable');
+  static Future<void> enable() => _call('enable');
 
-  static Future<void> disable() => _channel.invokeMethod<void>('disable');
+  static Future<void> disable() => _call('disable');
 
   /// Starts the service at launch when it is switched on.
-  static Future<void> resume() => _channel.invokeMethod<void>('resume');
+  static Future<void> resume() => _call('resume');
+
+  static Future<void> _call(String method) async {
+    if (isDesktop) return;
+    await _channel.invokeMethod<void>(method);
+  }
 }
 
 /// The service's own engine. It holds the WebSockets of the signed-in

@@ -6,6 +6,11 @@ on:
   # push.
   pull_request:
   workflow_dispatch:
+    inputs:
+      desktop:
+        description: Also build for Windows, without releasing
+        type: boolean
+        default: false
 
 # A cancelled release run is safe: the next run on main still finds the
 # version untagged and releases it.
@@ -105,12 +110,54 @@ jobs:
       - name: Analyze with dart analyze
         run: dart analyze
 
+      # Tests build the native hooks for this host, and the tray plugin's
+      # (nativeapi) compiles against GTK, X11 and Xi.
+      - name: Install the desktop build headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgtk-3-dev libx11-dev libxi-dev
+
       - name: Run tests
         run: flutter test
         env:
           # A zone with summer time, so date labels are tested across
           # clock changes.
           TZ: Europe/Berlin
+
+  # Only for releases and on request: Windows minutes are costly. It gets
+  # no secrets and only uploads the build.
+  windows:
+    name: Build for Windows
+    needs: check
+    if: needs.check.outputs.release == 'true' || inputs.desktop
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Build for Windows
+        run: flutter build windows --release
+
+      - name: Upload the build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: matterleast-windows-${{ github.sha }}
+          path: build/windows/x64/runner/Release
+          if-no-files-found: error
+          retention-days: 14
 
   # The only job that uses the signing secrets or can write to the repo.
   # The secrets live in the release environment, which admits main alone,

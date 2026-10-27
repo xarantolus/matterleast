@@ -176,6 +176,48 @@ final class TokenStoreProvider
 
 String _$tokenStoreHash() => r'1a3723cb9c87a80308bd518f02c3e17b42cdd4e8';
 
+/// Whether the token storage stopped answering (a locked or missing
+/// keyring), as it changes.
+
+@ProviderFor(keyringUnavailable)
+final keyringUnavailableProvider = KeyringUnavailableProvider._();
+
+/// Whether the token storage stopped answering (a locked or missing
+/// keyring), as it changes.
+
+final class KeyringUnavailableProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  /// Whether the token storage stopped answering (a locked or missing
+  /// keyring), as it changes.
+  KeyringUnavailableProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'keyringUnavailableProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$keyringUnavailableHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return keyringUnavailable(ref);
+  }
+}
+
+String _$keyringUnavailableHash() =>
+    r'27d1522cf15cfb0e24e4fd50849e60b94954d245';
+
 @ProviderFor(serverManager)
 final serverManagerProvider = ServerManagerProvider._();
 
@@ -818,3 +860,36 @@ final class WrapCodeProvider
 }
 
 String _$wrapCodeHash() => r'29d6ee002f5e077605648ad91b2d08edd0583605';
+
+@ProviderFor(closeToTray)
+final closeToTrayProvider = CloseToTrayProvider._();
+
+final class CloseToTrayProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  CloseToTrayProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'closeToTrayProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$closeToTrayHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return closeToTray(ref);
+  }
+}
+
+String _$closeToTrayHash() => r'4389da6bfd94950822cdbf5ac27f20460f0af4c9';
