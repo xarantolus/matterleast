@@ -5,6 +5,10 @@ import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
 
+/// The tallest an inline image may be: 45 % of the screen's longer side, so
+/// a portrait picture takes the same room whichever way the phone is held.
+double imageMaxHeight(Size screen) => screen.longestSide * 0.45;
+
 /// Pure: the box an image takes before its bytes arrive. The size typed in
 /// the message (`=WxH`) wins, a missing side follows the measured aspect
 /// ratio, and the box shrinks to fit [maxWidth] × [maxHeight] keeping the
@@ -78,7 +82,7 @@ class MessageImage extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxHeight = MediaQuery.sizeOf(context).height * 0.45;
+        final maxHeight = imageMaxHeight(MediaQuery.sizeOf(context));
         final known = imageBox(
           measuredWidth: measured?.width,
           measuredHeight: measured?.height,
