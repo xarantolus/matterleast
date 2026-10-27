@@ -188,7 +188,16 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     final oldNewest = old.rows.isEmpty ? null : old.keyOf(old.rows.first);
     final idle =
         !_scroll.hasClients || !_scroll.position.isScrollingNotifier.value;
-    final wasPinned = idle && _isPinned(oldNewest);
+    // Anchored at the newest row's bottom edge is at the bottom by
+    // construction. Measuring isn't enough: right after a jump from far up
+    // the rows are still laid out where they were, and a row sent with the
+    // jump would land below the screen.
+    final atBottom =
+        _anchor != null &&
+        _anchor == oldNewest &&
+        _scroll.hasClients &&
+        _scroll.position.pixels <= pinTolerance;
+    final wasPinned = idle && (atBottom || _isPinned(oldNewest));
     _indexRows();
     final newest = _newestKey;
     if (_anchor == null || (wasPinned && newest != oldNewest)) {

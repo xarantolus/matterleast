@@ -14,6 +14,7 @@ import 'package:matterleast/screens/home/home_state.dart';
 import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/threads/thread_options_sheet.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -193,6 +194,9 @@ class _HomePaneState extends ConsumerState<HomePane> {
                         item: item,
                         serverName: names[item.serverUrl],
                         onTap: () => openInboxItem(context, item),
+                        onLongPress: item.kind == InboxKind.thread
+                            ? () => showThreadOptions(context, item)
+                            : null,
                       );
                     },
                   ),

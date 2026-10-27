@@ -80,17 +80,45 @@ class EntrySync {
     ),
   );
 
-  /// Stores a team the user just joined, then its channels.
+  /// The channel's member count, e.g. after someone joined or left.
+  Future<void> channelStats(String channelId, {Object? owner}) =>
+      runner.enqueue(
+        SyncJob(
+          key: 'channel-stats:$channelId',
+          owner: owner,
+          visible: false,
+          run: () async {
+            final stats = await server.call(
+              () => _client.channels.getChannelStats(channelId: channelId),
+            );
+            if (stats.memberCount case final count?) {
+              await store.applyChannelStats(channelId, count);
+            }
+          },
+        ),
+      );
+
+  /// Stores a team the user just joined (or that was restored while they
+  /// are in it), then its channels and roles.
   Future<void> joinedTeam(String teamId) => runner.enqueue(
     SyncJob(
       key: 'join:$teamId',
       run: () async {
-        final team = server.call(() => _client.teams.getTeam(teamId: teamId));
-        final member = server.call(
-          () => _client.teams.getTeamMember(teamId: teamId, userId: 'me'),
+        final api.TeamMember member;
+        try {
+          member = await server.call(
+            () => _client.teams.getTeamMember(teamId: teamId, userId: 'me'),
+          );
+        } on ServerError catch (e) {
+          if (e.statusCode == 403 || e.statusCode == 404) return;
+          rethrow;
+        }
+        if (member.deleteAt != null) return;
+        final team = await server.call(
+          () => _client.teams.getTeam(teamId: teamId),
         );
-        await Future.wait<Object?>([team, member]);
-        await store.applyTeams([await team], [await member]);
+        await store.applyTeams([team], [member]);
+        unawaited(ensureRoles([member.roles ?? '']).catchError((Object _) {}));
         unawaited(
           refreshTeam(
             teamId,

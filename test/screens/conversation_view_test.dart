@@ -39,7 +39,7 @@ void main() {
     'message': i == linkRow ? 'tide table at $link' : 'message $i',
   };
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(WidgetTester tester, {int count = 60}) async {
     HttpOverrides.global = null;
     olderAsked = Completer();
     answerOlder = Completer();
@@ -50,11 +50,11 @@ void main() {
       await session.store.applyChannelPage(
         channelId: channelId,
         page: api.PostList.fromJson({
-          'order': [for (var i = 59; i >= 0; i--) 'n$i'],
-          'posts': {for (var i = 0; i < 60; i++) 'n$i': post(i)},
+          'order': [for (var i = count - 1; i >= 0; i--) 'n$i'],
+          'posts': {for (var i = 0; i < count; i++) 'n$i': post(i)},
         }),
         kind: PageKind.page,
-        requested: 60,
+        requested: count,
       );
       server.handle = (r) async {
         if (r.path == '/api/v4/channels/$channelId/posts') {
@@ -231,6 +231,45 @@ void main() {
     );
     await settle(tester);
     expect(tester.getTopLeft(find.text('message 0')).dy, closeTo(oldest, 0.5));
+    await close(tester);
+  });
+
+  testWidgets('what the reader sends far up in a long conversation shows, '
+      'and so does what comes after it', (tester) async {
+    await open(tester, count: 200);
+    for (var i = 0; i < 6; i++) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
+      await settle(tester);
+    }
+    expect(find.text('message 199'), findsNothing);
+
+    Future<void> arrive(String id, String message, int minute) =>
+        tester.runAsync(
+          () => session.store.queuePost(
+            pendingPostId: id,
+            channelId: channelId,
+            rootId: '',
+            userId: 'me',
+            message: message,
+            createAt: start.add(Duration(minutes: minute)),
+          ),
+        );
+    final list = tester.getRect(find.byType(Scrollable).first);
+    await arrive('p1', 'my reply', 300);
+    await settle(tester);
+    expect(find.text('my reply'), findsOneWidget);
+    expect(
+      tester.getBottomLeft(find.text('my reply')).dy,
+      lessThan(list.bottom),
+    );
+
+    await arrive('p2', 'the next answer', 301);
+    await settle(tester);
+    expect(find.text('the next answer'), findsOneWidget);
+    expect(
+      tester.getBottomLeft(find.text('the next answer')).dy,
+      lessThan(list.bottom),
+    );
     await close(tester);
   });
 

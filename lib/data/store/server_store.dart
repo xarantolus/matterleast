@@ -14,6 +14,7 @@ import 'package:matterleast/domain/outbox.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_features.dart';
+import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/log.dart';
 
 /// How a page of posts was fetched, which decides how it joins the cached
@@ -1082,7 +1083,7 @@ class ServerStore {
     final channel = await (db.select(
       db.channels,
     )..where((c) => c.id.equals(channelId))).getSingleOrNull();
-    if (channel != null) {
+    if (channel != null && !isJoinLeave(post.type)) {
       await (db.update(
         db.channels,
       )..where((c) => c.id.equals(channelId))).write(
@@ -1098,15 +1099,21 @@ class ServerStore {
       db.myChannels,
     )..where((m) => m.channelId.equals(channelId))).getSingleOrNull();
     if (mine == null) return;
-    if (fromSelf) {
+    // A channel marked unread stays unread until it is opened again, even
+    // when the user posts in it.
+    if (fromSelf && !mine.manuallyUnread) {
       await markViewed(channelId, at: post.createAt!);
-    } else if (mentionsMe) {
+    } else if (mentionsMe && !fromSelf) {
+      final urgent =
+          isRoot &&
+          post.metadata?.priority?.priority == api.PostPriorityPriority.urgent;
       await (db.update(
         db.myChannels,
       )..where((m) => m.channelId.equals(channelId))).write(
         MyChannelsCompanion(
           mentionCount: Value(mine.mentionCount + 1),
           mentionCountRoot: Value(mine.mentionCountRoot + (isRoot ? 1 : 0)),
+          urgentMentionCount: Value(mine.urgentMentionCount + (urgent ? 1 : 0)),
         ),
       );
     }

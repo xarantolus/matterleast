@@ -159,7 +159,7 @@ class Conversation extends _$Conversation {
     );
     final lifecycle = WidgetsBinding.instance.lifecycleState;
     if (fromOthers && lifecycle == AppLifecycleState.resumed) {
-      unawaited(_markRead());
+      unawaited(_markRead(seen: true));
     }
   }
 
@@ -183,14 +183,20 @@ class Conversation extends _$Conversation {
     state = state.copyWith(rows: _rows(window));
   }
 
-  Future<void> _markRead() async {
+  /// Opening reads the conversation; new messages [seen] in it read a
+  /// channel only if it wasn't marked unread (here or elsewhere). As in the
+  /// official app, only a followed thread has a read mark to move.
+  Future<void> _markRead({bool seen = false}) async {
+    final views = ConversationViews(_session!.db);
     if (!_isThread) {
+      if (seen && await views.markedUnread(channelId)) return;
       final actions = await ref.read(channelActionsProvider(url).future);
       await actions.view(channelId);
       return;
     }
     final team = await _threadTeam();
     if (team == null) return;
+    if (await views.threadFollowing(rootId!).first != true) return;
     await _actions!.markThreadRead(team, rootId!).catchError((Object _) {});
   }
 
@@ -277,7 +283,7 @@ class Conversation extends _$Conversation {
     await _refresh();
     if (!ref.mounted || state.refreshFailure != null) return;
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
-      await _markRead();
+      await _markRead(seen: true);
     }
   }
 
