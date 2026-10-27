@@ -332,6 +332,14 @@ class ComposerDraft extends _$ComposerDraft {
         .listen(_setSuggestions, onError: (Object _) {});
   }
 
+  /// Closes the suggestions until the next edit.
+  void dismissSuggestions() {
+    unawaited(_suggesting?.cancel());
+    _suggesting = null;
+    _trigger = null;
+    if (state.suggestions.isNotEmpty) _setSuggestions(const []);
+  }
+
   void _setSuggestions(List<Suggestion> found) {
     if (!ref.mounted) return;
     state = ComposerValue(

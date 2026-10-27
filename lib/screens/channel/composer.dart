@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,16 +13,20 @@ import 'package:image_picker_platform_interface/image_picker_platform_interface.
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/permission_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/permissions.dart';
+import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/composer_extras.dart';
+import 'package:matterleast/screens/channel/composer_keys.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/posting_rules.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/schedule_picker.dart';
@@ -72,6 +78,7 @@ class Composer extends ConsumerWidget {
     this.rootId = '',
     this.archived = false,
     this.autofocus = false,
+    this.lastOwnPost,
     super.key,
   });
 
@@ -81,6 +88,10 @@ class Composer extends ConsumerWidget {
   final String teamId;
   final String hint;
   final bool archived;
+
+  /// The newest message of the signed-in user here, for Up in an empty
+  /// field.
+  final PostItem? Function()? lastOwnPost;
 
   /// The field takes the keyboard when it first shows.
   final bool autofocus;
@@ -97,6 +108,7 @@ class Composer extends ConsumerWidget {
       teamId: teamId,
       hint: hint,
       autofocus: autofocus,
+      lastOwnPost: lastOwnPost,
     );
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -122,8 +134,10 @@ class _ComposerField extends ConsumerStatefulWidget {
     required this.teamId,
     required this.hint,
     required this.autofocus,
+    required this.lastOwnPost,
   });
 
+  final PostItem? Function()? lastOwnPost;
   final String url;
   final String channelId;
   final String rootId;
@@ -141,6 +155,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   final _suggestionsShown = OverlayPortalController()..show();
   Timer? _focusLater;
 
+  /// The suggestion Enter and Tab take.
+  int _highlight = 0;
+
   ComposerDraftProvider get _provider =>
       composerDraftProvider(widget.url, widget.channelId, widget.rootId);
 
@@ -149,6 +166,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     super.initState();
     _text.value = ref.read(_provider).text;
     _text.addListener(_typed);
+    _focus.onKeyEvent = _onKey;
     ref.read(_provider.notifier).inTeam(widget.teamId);
     // Taken once the field is in the tree, after anything that closed on
     // the way here gave the focus back.
@@ -167,6 +185,79 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   void _focusSoon() {
     _focusLater?.cancel();
     _focusLater = Timer(const Duration(milliseconds: 350), _focus.requestFocus);
+  }
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent) return KeyEventResult.ignored;
+    final keys = HardwareKeyboard.instance;
+    final value = ref.read(_provider);
+    final suggestions = value.suggestions;
+    final field = _text.value;
+    final action = composerKey(
+      key: event.logicalKey,
+      shift: keys.isShiftPressed,
+      control: keys.isControlPressed,
+      alt: keys.isAltPressed,
+      meta: keys.isMetaPressed,
+      // A phone's soft keyboard sends no key events, so a key event here
+      // is a hardware keyboard, which sends with Enter as the official app
+      // does.
+      enterSends:
+          isDesktop ||
+          (defaultTargetPlatform == TargetPlatform.android &&
+              event.deviceType == ui.KeyEventDeviceType.keyboard),
+      composing: field.composing.isValid && !field.composing.isCollapsed,
+      suggestionsOpen: suggestions.isNotEmpty,
+      editing: value.editing != null,
+      empty: field.text.isEmpty,
+      desktop: isDesktop,
+    );
+    if (action == null) return KeyEventResult.ignored;
+    if (event is KeyRepeatEvent &&
+        action != ComposerKey.nextSuggestion &&
+        action != ComposerKey.previousSuggestion) {
+      return KeyEventResult.handled;
+    }
+    final draft = ref.read(_provider.notifier);
+    switch (action) {
+      case ComposerKey.send:
+        if (canSend(value, _limit)) unawaited(_send());
+      case ComposerKey.acceptSuggestion:
+        draft.pick(suggestions[_highlight.clamp(0, suggestions.length - 1)]);
+      case ComposerKey.nextSuggestion:
+        setState(
+          () => _highlight = movedHighlight(_highlight, 1, suggestions.length),
+        );
+      case ComposerKey.previousSuggestion:
+        setState(
+          () => _highlight = movedHighlight(_highlight, -1, suggestions.length),
+        );
+      case ComposerKey.closeSuggestions:
+        draft.dismissSuggestions();
+      case ComposerKey.editLast:
+        unawaited(_editLast());
+      case ComposerKey.stopEditing:
+        draft.stopEditing();
+      case ComposerKey.blur:
+        node.unfocus();
+    }
+    return KeyEventResult.handled;
+  }
+
+  int get _limit =>
+      ref.read(maxPostSizeProvider(widget.url)).value ??
+      ServerFeatures.defaultMaxPostSize;
+
+  /// Edits the newest own message through the same checks as the message
+  /// menu's Edit.
+  Future<void> _editLast() async {
+    final post = widget.lastOwnPost?.call();
+    if (post == null) return;
+    final facts = await ref.read(
+      postMenuFactsProvider(widget.url, post, widget.teamId).future,
+    );
+    if (!mounted || !facts.rights.edit) return;
+    ref.read(_provider.notifier).startEditing(post);
   }
 
   void _typed() {
@@ -197,6 +288,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   Widget build(BuildContext context) {
     ref.listen(_provider, (before, next) {
       if (_text.value != next.text) _text.value = next.text;
+      if (before?.suggestions != next.suggestions) _highlight = 0;
       if ((next.editing != null && before?.editing != next.editing) ||
           next.quotes > (before?.quotes ?? 0)) {
         _focusSoon();
@@ -224,6 +316,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
               child: SuggestionList(
                 url: widget.url,
                 suggestions: suggestions,
+                highlighted: _highlight,
                 onPick: ref.read(_provider.notifier).pick,
               ),
             ),
@@ -379,50 +472,31 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                   Expanded(
                     child: Stack(
                       children: [
-                        // A hardware keyboard sends with Ctrl+Enter and
-                        // leaves editing with Escape.
-                        CallbackShortcuts(
-                          bindings: {
-                            const SingleActivator(
-                              LogicalKeyboardKey.enter,
-                              control: true,
-                            ): () {
-                              if (sendable) unawaited(_send());
-                            },
-                            const SingleActivator(
-                              LogicalKeyboardKey.escape,
-                            ): () {
-                              if (editing != null) {
-                                ref.read(_provider.notifier).stopEditing();
-                              }
-                            },
-                          },
-                          child: TextField(
-                            controller: _text,
-                            focusNode: _focus,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.forMessages(context, fallbackSize: 16),
-                            minLines: 1,
-                            maxLines: 6,
-                            keyboardType: TextInputType.multiline,
-                            textCapitalization: TextCapitalization.sentences,
-                            decoration: InputDecoration(
-                              hintText: widget.hint,
-                              hintMaxLines: 1,
-                              filled: true,
-                              isDense: true,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding:
-                                  const EdgeInsetsDirectional.fromSTEB(
-                                    Spacing.lg,
-                                    Spacing.md,
-                                    48,
-                                    Spacing.md,
-                                  ),
+                        TextField(
+                          controller: _text,
+                          focusNode: _focus,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.forMessages(context, fallbackSize: 16),
+                          minLines: 1,
+                          maxLines: 6,
+                          keyboardType: TextInputType.multiline,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: InputDecoration(
+                            hintText: widget.hint,
+                            hintMaxLines: 1,
+                            filled: true,
+                            isDense: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
                             ),
+                            contentPadding:
+                                const EdgeInsetsDirectional.fromSTEB(
+                                  Spacing.lg,
+                                  Spacing.md,
+                                  48,
+                                  Spacing.md,
+                                ),
                           ),
                         ),
                         // At the bottom like send, so a long message keeps
@@ -930,6 +1004,7 @@ class SuggestionList extends ConsumerWidget {
     required this.url,
     required this.suggestions,
     required this.onPick,
+    this.highlighted,
     super.key,
   });
 
@@ -937,9 +1012,12 @@ class SuggestionList extends ConsumerWidget {
   final List<Suggestion> suggestions;
   final ValueChanged<Suggestion> onPick;
 
+  /// The row the keyboard would pick, if it is in use.
+  final int? highlighted;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tokens = context.tokens;
+    final scheme = Theme.of(context).colorScheme;
     return ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.3,
@@ -950,75 +1028,121 @@ class SuggestionList extends ConsumerWidget {
         shape: Border(
           top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         ),
-        child: ListView.builder(
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          itemCount: suggestions.length,
-          itemBuilder: (context, i) {
-            final s = suggestions[i];
-            Widget row(Widget leading, String title, String subtitle) =>
-                ListTile(
-                  dense: true,
-                  leading: SizedBox(width: 32, child: Center(child: leading)),
-                  title: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+        child: ListTileTheme(
+          data: ListTileThemeData(
+            selectedColor: scheme.onSecondaryContainer,
+            selectedTileColor: scheme.secondaryContainer,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < suggestions.length; i++)
+                  _Keep(
+                    selected: i == highlighted,
+                    child: _row(context, suggestions[i], i == highlighted),
                   ),
-                  subtitle: subtitle.isEmpty
-                      ? null
-                      : Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: tokens.muted),
-                        ),
-                  onTap: () => onPick(s),
-                );
-            return switch (s) {
-              UserSuggestion() => PersonTile(
-                dense: true,
-                serverUrl: url,
-                userId: s.id,
-                name: [
-                  '${s.firstName} ${s.lastName}'.trim(),
-                  if (s.nickname.isNotEmpty) '(${s.nickname})',
-                ].where((p) => p.isNotEmpty).join(' '),
-                username: s.username,
-                note: s.outOfChannel ? 'not in channel' : null,
-                onTap: () => onPick(s),
-              ),
-              SpecialMention() => row(
-                const Icon(Icons.campaign_outlined),
-                '@${s.handle}',
-                s.onlineOnly
-                    ? 'Notifies everyone online in this channel'
-                    : 'Notifies everyone in this channel',
-              ),
-              GroupSuggestion() => row(
-                const Icon(Icons.groups_outlined),
-                '@${s.name}',
-                s.displayName == s.name ? '' : s.displayName,
-              ),
-              ChannelSuggestion() => row(
-                Icon(s.type == 'P' ? Icons.lock_outline : Icons.tag),
-                s.displayName,
-                '~${s.name}',
-              ),
-              EmojiSuggestion() => row(
-                EmojiGlyph(name: s.name, size: 24, serverUrl: url),
-                ':${s.name}:',
-                '',
-              ),
-              CommandSuggestion() => row(
-                const Icon(Icons.terminal),
-                '/${s.complete}${s.hint.isEmpty ? '' : ' ${s.hint}'}',
-                s.description,
-              ),
-            };
-          },
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
+
+  Widget _row(BuildContext context, Suggestion s, bool selected) {
+    final tokens = context.tokens;
+    Widget row(Widget leading, String title, String subtitle) => ListTile(
+      dense: true,
+      selected: selected,
+      leading: SizedBox(width: 32, child: Center(child: leading)),
+      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: subtitle.isEmpty
+          ? null
+          : Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: selected ? null : TextStyle(color: tokens.muted),
+            ),
+      onTap: () => onPick(s),
+    );
+    return switch (s) {
+      UserSuggestion() => PersonTile(
+        dense: true,
+        selected: selected,
+        serverUrl: url,
+        userId: s.id,
+        name: [
+          '${s.firstName} ${s.lastName}'.trim(),
+          if (s.nickname.isNotEmpty) '(${s.nickname})',
+        ].where((p) => p.isNotEmpty).join(' '),
+        username: s.username,
+        note: s.outOfChannel ? 'not in channel' : null,
+        onTap: () => onPick(s),
+      ),
+      SpecialMention() => row(
+        const Icon(Icons.campaign_outlined),
+        '@${s.handle}',
+        s.onlineOnly
+            ? 'Notifies everyone online in this channel'
+            : 'Notifies everyone in this channel',
+      ),
+      GroupSuggestion() => row(
+        const Icon(Icons.groups_outlined),
+        '@${s.name}',
+        s.displayName == s.name ? '' : s.displayName,
+      ),
+      ChannelSuggestion() => row(
+        Icon(s.type == 'P' ? Icons.lock_outline : Icons.tag),
+        s.displayName,
+        '~${s.name}',
+      ),
+      EmojiSuggestion() => row(
+        EmojiGlyph(name: s.name, size: 24, serverUrl: url),
+        ':${s.name}:',
+        '',
+      ),
+      CommandSuggestion() => row(
+        const Icon(Icons.terminal),
+        '/${s.complete}${s.hint.isEmpty ? '' : ' ${s.hint}'}',
+        s.description,
+      ),
+    };
+  }
+}
+
+/// Keeps the row the keyboard moved to in view.
+class _Keep extends StatefulWidget {
+  const _Keep({required this.selected, required this.child});
+
+  final bool selected;
+  final Widget child;
+
+  @override
+  State<_Keep> createState() => _KeepState();
+}
+
+class _KeepState extends State<_Keep> {
+  @override
+  void initState() {
+    super.initState();
+    _show();
+  }
+
+  @override
+  void didUpdateWidget(_Keep old) {
+    super.didUpdateWidget(old);
+    if (!old.selected) _show();
+  }
+
+  void _show() {
+    if (!widget.selected) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(Scrollable.ensureVisible(context));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

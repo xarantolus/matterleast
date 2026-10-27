@@ -4,6 +4,7 @@ import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
+import 'package:matterleast/screens/channel/composer_keys.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
@@ -135,6 +136,10 @@ class ConversationScaffold extends ConsumerWidget {
                     hint: composerHint,
                     archived: window.archived,
                     autofocus: focusComposer,
+                    lastOwnPost: () {
+                      final now = ref.read(conversation);
+                      return lastOwnPost(now.rows, now.myUserId);
+                    },
                   ),
               ],
             ),

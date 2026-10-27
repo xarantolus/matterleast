@@ -19,6 +19,7 @@ class PersonTile extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.dense = false,
+    this.selected = false,
     super.key,
   });
 
@@ -35,12 +36,16 @@ class PersonTile extends StatelessWidget {
   final VoidCallback? onTap;
   final bool dense;
 
+  /// The row a keyboard would pick.
+  final bool selected;
+
   @override
   Widget build(BuildContext context) {
     final size = dense ? 32.0 : 40.0;
     final details = [if (username.isNotEmpty) '@$username', ?note];
     return ListTile(
       dense: dense,
+      selected: selected,
       onTap:
           onTap ??
           () => showUserProfile(context, url: serverUrl, userId: userId),
@@ -75,7 +80,7 @@ class PersonTile extends StatelessWidget {
               details.join(' · '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: context.tokens.muted),
+              style: selected ? null : TextStyle(color: context.tokens.muted),
             ),
       trailing: trailing,
     );
