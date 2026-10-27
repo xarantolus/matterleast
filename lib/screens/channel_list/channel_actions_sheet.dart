@@ -8,6 +8,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/sheet_header.dart';
 import 'package:matterleast/ui/slide_route.dart';
@@ -18,7 +19,7 @@ Future<void> showChannelActions(
   required String url,
   required String teamId,
   required ChannelItem item,
-}) => showModalBottomSheet<void>(
+}) => showAppSheet<void>(
   context: context,
   showDragHandle: true,
   builder: (_) => _ChannelActionsSheet(url: url, teamId: teamId, item: item),

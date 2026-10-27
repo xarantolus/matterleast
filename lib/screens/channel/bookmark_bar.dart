@@ -10,6 +10,7 @@ import 'package:matterleast/domain/bookmarks.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/file_icon.dart';
@@ -143,7 +144,7 @@ class _BookmarkChip extends ConsumerWidget {
   void _showMenu(BuildContext context, WidgetRef ref) {
     final link = bookmark.linkUrl;
     unawaited(
-      showModalBottomSheet<void>(
+      showAppSheet<void>(
         context: context,
         showDragHandle: true,
         builder: (sheet) => SafeArea(
@@ -267,7 +268,7 @@ Future<void> showAddBookmark(
   BuildContext context,
   String url,
   String channelId,
-) => showModalBottomSheet<void>(
+) => showAppSheet<void>(
   context: context,
   showDragHandle: true,
   builder: (sheet) => Consumer(

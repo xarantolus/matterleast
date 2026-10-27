@@ -56,14 +56,15 @@ extension StackStepPatterns on StackStep {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PushStep value)?  push,TResult Function( ReturnToStep value)?  returnTo,TResult Function( PushOverStep value)?  pushOver,TResult Function( ReplaceStep value)?  replace,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PushStep value)?  push,TResult Function( ReturnToStep value)?  returnTo,TResult Function( PushOverStep value)?  pushOver,TResult Function( ReplaceStep value)?  replace,TResult Function( OverListStep value)?  overList,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case PushStep() when push != null:
 return push(_that);case ReturnToStep() when returnTo != null:
 return returnTo(_that);case PushOverStep() when pushOver != null:
 return pushOver(_that);case ReplaceStep() when replace != null:
-return replace(_that);case _:
+return replace(_that);case OverListStep() when overList != null:
+return overList(_that);case _:
   return orElse();
 
 }
@@ -81,14 +82,15 @@ return replace(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PushStep value)  push,required TResult Function( ReturnToStep value)  returnTo,required TResult Function( PushOverStep value)  pushOver,required TResult Function( ReplaceStep value)  replace,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PushStep value)  push,required TResult Function( ReturnToStep value)  returnTo,required TResult Function( PushOverStep value)  pushOver,required TResult Function( ReplaceStep value)  replace,required TResult Function( OverListStep value)  overList,}){
 final _that = this;
 switch (_that) {
 case PushStep():
 return push(_that);case ReturnToStep():
 return returnTo(_that);case PushOverStep():
 return pushOver(_that);case ReplaceStep():
-return replace(_that);}
+return replace(_that);case OverListStep():
+return overList(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -102,14 +104,15 @@ return replace(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PushStep value)?  push,TResult? Function( ReturnToStep value)?  returnTo,TResult? Function( PushOverStep value)?  pushOver,TResult? Function( ReplaceStep value)?  replace,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PushStep value)?  push,TResult? Function( ReturnToStep value)?  returnTo,TResult? Function( PushOverStep value)?  pushOver,TResult? Function( ReplaceStep value)?  replace,TResult? Function( OverListStep value)?  overList,}){
 final _that = this;
 switch (_that) {
 case PushStep() when push != null:
 return push(_that);case ReturnToStep() when returnTo != null:
 return returnTo(_that);case PushOverStep() when pushOver != null:
 return pushOver(_that);case ReplaceStep() when replace != null:
-return replace(_that);case _:
+return replace(_that);case OverListStep() when overList != null:
+return overList(_that);case _:
   return null;
 
 }
@@ -126,13 +129,14 @@ return replace(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  push,TResult Function( int index)?  returnTo,TResult Function( int index)?  pushOver,TResult Function( int index)?  replace,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  push,TResult Function( int index)?  returnTo,TResult Function( int index)?  pushOver,TResult Function( int index)?  replace,TResult Function()?  overList,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case PushStep() when push != null:
 return push();case ReturnToStep() when returnTo != null:
 return returnTo(_that.index);case PushOverStep() when pushOver != null:
 return pushOver(_that.index);case ReplaceStep() when replace != null:
-return replace(_that.index);case _:
+return replace(_that.index);case OverListStep() when overList != null:
+return overList();case _:
   return orElse();
 
 }
@@ -150,13 +154,14 @@ return replace(_that.index);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  push,required TResult Function( int index)  returnTo,required TResult Function( int index)  pushOver,required TResult Function( int index)  replace,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  push,required TResult Function( int index)  returnTo,required TResult Function( int index)  pushOver,required TResult Function( int index)  replace,required TResult Function()  overList,}) {final _that = this;
 switch (_that) {
 case PushStep():
 return push();case ReturnToStep():
 return returnTo(_that.index);case PushOverStep():
 return pushOver(_that.index);case ReplaceStep():
-return replace(_that.index);}
+return replace(_that.index);case OverListStep():
+return overList();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -170,13 +175,14 @@ return replace(_that.index);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  push,TResult? Function( int index)?  returnTo,TResult? Function( int index)?  pushOver,TResult? Function( int index)?  replace,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  push,TResult? Function( int index)?  returnTo,TResult? Function( int index)?  pushOver,TResult? Function( int index)?  replace,TResult? Function()?  overList,}) {final _that = this;
 switch (_that) {
 case PushStep() when push != null:
 return push();case ReturnToStep() when returnTo != null:
 return returnTo(_that.index);case PushOverStep() when pushOver != null:
 return pushOver(_that.index);case ReplaceStep() when replace != null:
-return replace(_that.index);case _:
+return replace(_that.index);case OverListStep() when overList != null:
+return overList();case _:
   return null;
 
 }
@@ -419,5 +425,37 @@ as int,
 
 
 }
+
+/// @nodoc
+
+
+class OverListStep implements StackStep {
+  const OverListStep();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is OverListStep);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'StackStep.overList()';
+}
+
+
+}
+
+
+
 
 // dart format on

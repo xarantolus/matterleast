@@ -15,6 +15,7 @@ class ThreadScreen extends ConsumerWidget {
     required this.rootId,
     required this.channelName,
     this.highlightPostId,
+    this.focusComposer = false,
     super.key,
   });
 
@@ -25,6 +26,9 @@ class ThreadScreen extends ConsumerWidget {
 
   /// The reply to show centred and highlighted.
   final String? highlightPostId;
+
+  /// The composer takes the keyboard when it shows, as after Reply.
+  final bool focusComposer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,6 +57,7 @@ class ThreadScreen extends ConsumerWidget {
           ),
       ],
       composerHint: 'Reply…',
+      focusComposer: focusComposer,
     );
   }
 

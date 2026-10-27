@@ -6,6 +6,7 @@ import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/sheet_header.dart';
 
@@ -17,7 +18,7 @@ Future<void> showCategoryMenu(
   required String teamId,
   required CategorySection section,
   required VoidCallback onReorder,
-}) => showModalBottomSheet<void>(
+}) => showAppSheet<void>(
   context: context,
   showDragHandle: true,
   builder: (sheet) {

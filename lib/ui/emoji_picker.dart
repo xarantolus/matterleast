@@ -6,6 +6,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -28,7 +29,7 @@ Stream<int> skinTone(Ref ref, String url) async* {
 
 /// Lets the user pick an emoji; completes with its name, or null.
 Future<String?> showEmojiPicker(BuildContext context, String url) =>
-    showModalBottomSheet<String>(
+    showAppSheet<String>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,

@@ -11,6 +11,7 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/profile_attributes_list.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/presence_dot.dart';
@@ -22,7 +23,7 @@ Future<void> showUserProfile(
   BuildContext context, {
   required String url,
   required String userId,
-}) => showModalBottomSheet<void>(
+}) => showAppSheet<void>(
   context: context,
   showDragHandle: true,
   isScrollControlled: true,

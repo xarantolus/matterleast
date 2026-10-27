@@ -686,7 +686,12 @@ class _FileTileState extends ConsumerState<_FileTile> {
     if (_locating) return;
     setState(() => _locating = true);
     try {
-      await openPost(Navigator.of(context), widget.url, widget.file.postId);
+      await openPost(
+        Navigator.of(context),
+        widget.url,
+        widget.file.postId,
+        showsProgress: true,
+      );
     } finally {
       if (mounted) setState(() => _locating = false);
     }
