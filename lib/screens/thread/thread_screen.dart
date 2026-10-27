@@ -57,6 +57,7 @@ class ThreadScreen extends ConsumerWidget {
           ),
       ],
       composerHint: 'Reply…',
+      dropTarget: 'this thread',
       focusComposer: focusComposer,
     );
   }

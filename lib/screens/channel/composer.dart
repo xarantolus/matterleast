@@ -23,6 +23,7 @@ import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
+import 'package:matterleast/screens/channel/composer_desktop.dart';
 import 'package:matterleast/screens/channel/composer_extras.dart';
 import 'package:matterleast/screens/channel/composer_keys.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
@@ -37,6 +38,7 @@ import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/sheet_header.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'composer.g.dart';
@@ -167,6 +169,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     _text.value = ref.read(_provider).text;
     _text.addListener(_typed);
     _focus.onKeyEvent = _onKey;
+    if (isDesktop) HardwareKeyboard.instance.addHandler(_typeToFocus);
     ref.read(_provider.notifier).inTeam(widget.teamId);
     // Taken once the field is in the tree, after anything that closed on
     // the way here gave the focus back.
@@ -190,6 +193,13 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
     final keys = HardwareKeyboard.instance;
+    if (isDesktop &&
+        event.logicalKey == LogicalKeyboardKey.keyV &&
+        keys.isControlPressed &&
+        !keys.isAltPressed) {
+      // The text paste goes on as usual; an image alone is attached.
+      unawaited(_pasteImage());
+    }
     final value = ref.read(_provider);
     final suggestions = value.suggestions;
     final field = _text.value;
@@ -244,6 +254,49 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     return KeyEventResult.handled;
   }
 
+  Future<void> _pasteImage() async {
+    final bytes = await clipboardImage(
+      () => Pasteboard.image,
+      () => Pasteboard.text,
+    );
+    if (bytes == null || !mounted) return;
+    unawaited(
+      ref
+          .read(_provider.notifier)
+          .attach(
+            open: () => Stream.value(bytes),
+            name: pastedImageName(DateTime.now()),
+            size: bytes.length,
+          ),
+    );
+  }
+
+  static KeyEvent? _typedEvent;
+
+  /// Typing while no text field has the focus starts the message.
+  bool _typeToFocus(KeyEvent event) {
+    if (event is KeyUpEvent) return false;
+    final keys = HardwareKeyboard.instance;
+    final focus = FocusManager.instance.primaryFocus;
+    final typed = typesIntoComposer(
+      character: event.character,
+      control: keys.isControlPressed,
+      alt: keys.isAltPressed,
+      meta: keys.isMetaPressed,
+      textFocused: textHasFocus(),
+      otherFocused: focus != null && focus is! FocusScopeNode,
+      routeCurrent: ModalRoute.isCurrentOf(context) ?? true,
+    );
+    if (!typed || !_focus.canRequestFocus || identical(event, _typedEvent)) {
+      return false;
+    }
+    // Every composer on screen hears the key; only the first takes it.
+    _typedEvent = event;
+    _focus.requestFocus();
+    _text.value = typedInto(_text.value, event.character!);
+    return true;
+  }
+
   int get _limit =>
       ref.read(maxPostSizeProvider(widget.url)).value ??
       ServerFeatures.defaultMaxPostSize;
@@ -268,6 +321,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
 
   @override
   void dispose() {
+    if (isDesktop) HardwareKeyboard.instance.removeHandler(_typeToFocus);
     _focusLater?.cancel();
     _text.removeListener(_typed);
     _text.dispose();
@@ -576,19 +630,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (uploads)
-              for (final (source, icon, label) in const [
-                (
-                  PickSource.camera,
-                  Icons.photo_camera_outlined,
-                  'Take a photo',
-                ),
-                (
-                  PickSource.media,
-                  Icons.photo_library_outlined,
-                  'Photos and videos',
-                ),
-                (PickSource.files, Icons.attach_file, 'Files'),
-              ])
+              for (final (source, icon, label) in pickSources(
+                desktop: isDesktop,
+              ))
                 ListTile(
                   leading: Icon(icon),
                   title: Text(label),
@@ -711,6 +755,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         );
       case SubmitDone():
     }
+    if (isDesktop && mounted) _focus.requestFocus();
   }
 }
 
@@ -828,6 +873,16 @@ class _PriorityPickerState extends State<PriorityPicker> {
 }
 
 enum PickSource { camera, media, files }
+
+typedef PickChoice = (PickSource, IconData, String);
+
+/// What the + sheet offers; desktops have no camera to take a photo with.
+List<PickChoice> pickSources({required bool desktop}) => [
+  if (!desktop)
+    (PickSource.camera, Icons.photo_camera_outlined, 'Take a photo'),
+  (PickSource.media, Icons.photo_library_outlined, 'Photos and videos'),
+  (PickSource.files, Icons.attach_file, 'Files'),
+];
 
 typedef PickedFile = ({XFile file, String? path, String name, int size});
 

@@ -13,6 +13,7 @@ dependencies:
   connectivity_plus: ^7.3.2
   crypto: ^3.0.8
   dbus: ^0.8.0
+  desktop_drop: ^0.8.0
   dio: ^5.11.1
   drift: ^2.35.3
   drift_flutter: ^0.3.1
@@ -40,6 +41,7 @@ dependencies:
   material_color_utilities: ^0.13.0
   material_ui: ^1.8.0
   package_info_plus: ^10.2.2
+  pasteboard: ^0.6.0
   path: ^1.9.1
   path_provider: ^2.1.6
   pdfrx: ^2.10.1

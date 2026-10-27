@@ -4,6 +4,7 @@ import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
+import 'package:matterleast/screens/channel/composer_desktop.dart';
 import 'package:matterleast/screens/channel/composer_keys.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
@@ -36,6 +37,7 @@ class ConversationScaffold extends ConsumerWidget {
     this.onOpenThread,
     this.header,
     this.focusComposer = false,
+    this.dropTarget = 'this conversation',
     super.key,
   });
 
@@ -56,6 +58,9 @@ class ConversationScaffold extends ConsumerWidget {
 
   /// The composer takes the keyboard when it shows.
   final bool focusComposer;
+
+  /// What dropped files are attached to, for the drop veil.
+  final String dropTarget;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -93,56 +98,62 @@ class ConversationScaffold extends ConsumerWidget {
         ],
         bottom: ProgressSlot(active: state.refreshing && showsMessages(state)),
       ),
-      body: ConversationPane(
-        child: _Readable(
-          child: SafeArea(
-            top: false,
-            bottom: window == null,
-            child: Column(
-              children: [
-                ?header,
-                Expanded(
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: ConversationView(
-                          url: url,
-                          conversation: conversation,
-                          composer: window == null || window.archived
-                              ? null
-                              : composerDraftProvider(url, channelId, rootId),
-                          startText: startText,
-                          onOpenThread: onOpenThread,
+      body: ConversationDropTarget(
+        url: url,
+        channelId: channelId,
+        rootId: rootId,
+        target: dropTarget,
+        child: ConversationPane(
+          child: _Readable(
+            child: SafeArea(
+              top: false,
+              bottom: window == null,
+              child: Column(
+                children: [
+                  ?header,
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: ConversationView(
+                            url: url,
+                            conversation: conversation,
+                            composer: window == null || window.archived
+                                ? null
+                                : composerDraftProvider(url, channelId, rootId),
+                            startText: startText,
+                            onOpenThread: onOpenThread,
+                          ),
                         ),
-                      ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: TypingLine(
-                          url: url,
-                          channelId: channelId,
-                          rootId: rootId,
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: TypingLine(
+                            url: url,
+                            channelId: channelId,
+                            rootId: rootId,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                if (window != null)
-                  Composer(
-                    url: url,
-                    channelId: channelId,
-                    rootId: rootId,
-                    teamId: window.teamId,
-                    hint: composerHint,
-                    archived: window.archived,
-                    autofocus: focusComposer,
-                    lastOwnPost: () {
-                      final now = ref.read(conversation);
-                      return lastOwnPost(now.rows, now.myUserId);
-                    },
-                  ),
-              ],
+                  if (window != null)
+                    Composer(
+                      url: url,
+                      channelId: channelId,
+                      rootId: rootId,
+                      teamId: window.teamId,
+                      hint: composerHint,
+                      archived: window.archived,
+                      autofocus: focusComposer,
+                      lastOwnPost: () {
+                        final now = ref.read(conversation);
+                        return lastOwnPost(now.rows, now.myUserId);
+                      },
+                    ),
+                ],
+              ),
             ),
           ),
         ),
