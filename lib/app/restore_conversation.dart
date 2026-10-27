@@ -54,33 +54,23 @@ Future<List<ConversationTarget>> openableStack(
   WidgetRef ref,
   SavedConversation saved,
 ) async {
-  // Held while read: nothing else may be listening to them.
-  final listened = [
-    ref.listenManual(serversProvider, (_, _) {}),
-    ref.listenManual(switchItemsProvider(saved.url), (_, _) {}),
-  ];
-  try {
-    final servers = await ref.read(serversProvider.future);
-    final signedIn = {
-      for (final s in servers)
-        if (s.signedIn) s.url,
-    };
-    if (!signedIn.contains(saved.url)) return const [];
-    final items = await ref
-        .read(switchItemsProvider(saved.url).future)
-        .timeout(const Duration(seconds: 5));
-    return conversationsToRestore(
-      saved: saved,
-      launchedByIntent: false,
-      signedInUrls: signedIn,
-      channels: {
-        for (final i in items)
-          if (i.kind != SwitchKind.person) i.id: i,
-      },
-    );
-  } finally {
-    for (final l in listened) {
-      l.close();
-    }
-  }
+  final servers = await readOnce(ref, serversProvider.future);
+  final signedIn = {
+    for (final s in servers)
+      if (s.signedIn) s.url,
+  };
+  if (!signedIn.contains(saved.url)) return const [];
+  final items = await readOnce(
+    ref,
+    switchItemsProvider(saved.url).future,
+  ).timeout(const Duration(seconds: 5));
+  return conversationsToRestore(
+    saved: saved,
+    launchedByIntent: false,
+    signedInUrls: signedIn,
+    channels: {
+      for (final i in items)
+        if (i.kind != SwitchKind.person) i.id: i,
+    },
+  );
 }

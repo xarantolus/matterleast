@@ -56,9 +56,9 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   Future<void> _openShortcut(NavigatorState navigator, String type) async {
     final target = parseShortcutType(type);
     if (target == null) return;
-    final servers = await ref.read(serversProvider.future);
+    final servers = await readOnce(ref, serversProvider.future);
     if (!servers.any((s) => s.signedIn && s.url == target.url)) return;
-    final items = await ref.read(switchItemsProvider(target.url).future);
+    final items = await readOnce(ref, switchItemsProvider(target.url).future);
     final channel = items.where((i) => i.id == target.channelId).firstOrNull;
     if (channel == null || !navigator.mounted) return;
     navigator.popUntil((route) => route.isFirst);
