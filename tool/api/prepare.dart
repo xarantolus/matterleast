@@ -2,6 +2,8 @@
 // millisecond timestamps become date-time (the generator emits DateTime),
 // arrays default to empty, free-form objects become maps, and `required` is
 // dropped from everything the server sends, so every field is nullable.
+// Documentation text (descriptions, summaries, examples) is removed: the
+// upstream API docs are CC BY-NC-SA and must not end up in generated code.
 //
 //   dart run tool/api/prepare.dart <patched.yaml> <spec.json>
 import 'dart:convert';
@@ -40,6 +42,8 @@ void main(List<String> args) {
     }
   }
 
+  _stripDocs(spec);
+
   File(
     args[1],
   ).writeAsStringSync('${const JsonEncoder.withIndent('  ').convert(spec)}\n');
@@ -47,6 +51,32 @@ void main(List<String> args) {
     'timestamps $_timestamps, arrays $_arrays, free-form maps $_freeForm, '
     'required stripped $_requiredStripped, allOf unwrapped $_allOfUnwrapped',
   );
+}
+
+const _docKeys = {
+  'description',
+  'summary',
+  'example',
+  'examples',
+  'externalDocs',
+  'x-codeSamples',
+};
+
+// Maps whose keys are names chosen by the spec (a field called
+// `description` is not documentation).
+const _nameMaps = {'properties', 'patternProperties', 'schemas', 'paths'};
+
+void _stripDocs(Object? node, {bool namesAsKeys = false}) {
+  if (node is List) {
+    for (final item in node) {
+      _stripDocs(item);
+    }
+  } else if (node is Map<String, Object?>) {
+    if (!namesAsKeys) node.removeWhere((key, _) => _docKeys.contains(key));
+    for (final entry in node.entries) {
+      _stripDocs(entry.value, namesAsKeys: _nameMaps.contains(entry.key));
+    }
+  }
 }
 
 bool _isTimestamp(String key) =>
