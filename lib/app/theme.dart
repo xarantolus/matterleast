@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/wallpaper_colours.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -186,6 +187,10 @@ ThemeData _build({
     ),
   );
 }
+
+/// [theme] as it is on a phone, at desktop sizes on desktop.
+ThemeData themeForPlatform(ThemeData theme) =>
+    isDesktop ? desktopTheme(theme) : theme;
 
 /// [theme] at mouse and keyboard sizes for a desktop window, near Discord's
 /// and the Mattermost desktop app's at 100 %: 14 px text, 36 to 44 px list rows,

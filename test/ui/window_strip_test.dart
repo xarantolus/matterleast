@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/update_providers.dart';
 import 'package:matterleast/ui/refresh_area.dart';
-import 'package:matterleast/ui/update_indicator.dart';
-import 'package:matterleast/ui/window_bar.dart';
+import 'package:matterleast/ui/window_strip.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// Runs [body] as [platform]; the override has to be gone before the test
@@ -19,10 +20,11 @@ Future<void> on(TargetPlatform platform, Future<void> Function() body) async {
 }
 
 void main() {
-  Widget page({bool corner = true}) => MaterialApp(
-    home: WindowCorner(
-      here: corner,
-      child: Scaffold(
+  Widget app() => ProviderScope(
+    overrides: [availableUpdateProvider.overrideWithValue(null)],
+    child: MaterialApp(
+      builder: (context, child) => WindowFrame(child: child!),
+      home: Scaffold(
         appBar: AppBar(
           title: const Text('Town Square'),
           actions: const [
@@ -37,58 +39,73 @@ void main() {
     ),
   );
 
-  group('the app bar is the window title bar', () {
+  group('the window strip', () {
     for (final platform in [TargetPlatform.linux, TargetPlatform.windows]) {
-      testWidgets('on ${platform.name}: drag area, window buttons last', (
+      testWidgets('on ${platform.name}: a thin strip across the window above '
+          'the app bar holds the drag area and the window buttons', (
         tester,
       ) async {
         await on(platform, () async {
-          await tester.pumpWidget(page());
+          await tester.pumpWidget(app());
+          final width =
+              tester.view.physicalSize.width / tester.view.devicePixelRatio;
+          final strip = tester.getRect(find.byType(WindowStrip));
+          expect(strip, Rect.fromLTWH(0, 0, width, windowStripHeight));
+          expect(tester.getTopLeft(find.byType(AppBar)).dy, windowStripHeight);
+
+          final inStrip = find.descendant(
+            of: find.byType(WindowStrip),
+            matching: find.byType(DragToMoveArea),
+          );
+          expect(inStrip, findsOneWidget);
           expect(find.byType(DragToMoveArea), findsOneWidget);
           for (final button in ['Minimise', 'Maximise', 'Close']) {
             expect(find.byTooltip(button), findsOneWidget);
+            expect(
+              find.descendant(
+                of: find.byType(WindowStrip),
+                matching: find.byTooltip(button),
+              ),
+              findsOneWidget,
+            );
           }
-          final width =
-              tester.view.physicalSize.width / tester.view.devicePixelRatio;
           final close = tester.getRect(find.byTooltip('Close'));
           expect(close.topRight, Offset(width, 0));
-          expect(close.size, const Size(46, kToolbarHeight));
+          expect(close.height, windowStripHeight);
           expect(
-            tester.getTopRight(find.byTooltip('Search')).dx,
-            lessThanOrEqualTo(tester.getTopLeft(find.byTooltip('Minimise')).dx),
+            find.descendant(
+              of: find.byType(AppBar),
+              matching: find.byTooltip('Close'),
+            ),
+            findsNothing,
           );
         });
       });
     }
 
-    testWidgets('a pane away from the top right corner has no buttons', (
-      tester,
-    ) async {
+    testWidgets('the strip grows with the system text size', (tester) async {
       await on(TargetPlatform.linux, () async {
-        await tester.pumpWidget(page(corner: false));
-        expect(find.byType(DragToMoveArea), findsOneWidget);
-        expect(find.byTooltip('Close'), findsNothing);
-      });
-    });
-
-    testWidgets('a page pushed over the whole window has them', (tester) async {
-      await on(TargetPlatform.linux, () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(appBar: AppBar(title: const Text('Settings'))),
-          ),
+        tester.platformDispatcher.textScaleFactorTestValue = 2;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        await tester.pumpWidget(app());
+        expect(
+          tester.getSize(find.byType(WindowStrip)).height,
+          greaterThan(windowStripHeight),
         );
-        expect(find.byTooltip('Close'), findsOneWidget);
+        expect(tester.takeException(), isNull);
       });
     });
 
     testWidgets('not on Android', (tester) async {
       await on(TargetPlatform.android, () async {
-        await tester.pumpWidget(page());
+        await tester.pumpWidget(app());
         expect(find.text('Town Square'), findsOneWidget);
+        expect(tester.getTopLeft(find.byType(AppBar)).dy, 0);
+        expect(find.byType(WindowStrip), findsNothing);
         expect(find.byType(DragToMoveArea), findsNothing);
-        expect(find.byTooltip('Close'), findsNothing);
-        expect(find.byTooltip('Minimise'), findsNothing);
+        for (final button in ['Minimise', 'Maximise', 'Close']) {
+          expect(find.byTooltip(button), findsNothing);
+        }
       });
     });
   });

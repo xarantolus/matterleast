@@ -13,6 +13,7 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/window_strip.dart';
 
 /// Mattermost's built-in themes as the server stores them.
 const _presets = {
@@ -135,6 +136,7 @@ Map<String, ThemeData> _allThemes() {
 Map<String, (Color, Color)> _schemePairs(ThemeData theme) {
   final s = theme.colorScheme;
   final t = theme.extension<AppTokens>()!;
+  final strip = windowStripColours(theme);
   return {
     'app bar text on the bar': (
       theme.appBarTheme.foregroundColor!,
@@ -156,6 +158,8 @@ Map<String, (Color, Color)> _schemePairs(ThemeData theme) {
     'snack bar text': (s.onInverseSurface, s.inverseSurface),
     'text on the highlighted row': (t.text, t.accentWash),
     'muted on the highlighted row': (t.muted, t.accentWash),
+    'desktop window strip text': (strip.text, strip.fill),
+    'close button under the pointer': (Colors.white, closeHoverColour),
   };
 }
 
@@ -173,6 +177,16 @@ void main() {
           reason: '$key: $fg on $bg',
         );
       }
+    });
+  }
+
+  for (final MapEntry(key: name, value: theme) in themes.entries) {
+    test('the desktop window strip is darker than the app bar in $name', () {
+      final bar = theme.appBarTheme.backgroundColor!;
+      expect(
+        windowStripColours(theme).fill.computeLuminance(),
+        lessThan(bar.computeLuminance()),
+      );
     });
   }
 

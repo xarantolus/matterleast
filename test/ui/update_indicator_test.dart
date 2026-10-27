@@ -8,7 +8,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/update_providers.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
-import 'package:matterleast/ui/update_indicator.dart';
+import 'package:matterleast/ui/window_strip.dart';
 
 import '../support/fake_releases.dart';
 
@@ -37,14 +37,8 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          home: WindowCorner(
-            child: Scaffold(
-              appBar: AppBar(
-                title: const Text('Town Square'),
-                actions: const [UpdateIndicator()],
-              ),
-            ),
-          ),
+          builder: (context, child) => WindowFrame(child: child!),
+          home: const Scaffold(body: Text('Town Square')),
         ),
       ),
     );
@@ -104,7 +98,7 @@ void main() {
     await showApp(tester, TargetPlatform.windows);
 
     expect(github.requests, hasLength(1));
-    expect(find.byType(IconButton), findsNothing);
+    expect(indicator, findsNothing);
 
     await closeApp(tester);
   });
@@ -113,7 +107,7 @@ void main() {
     await showApp(tester, TargetPlatform.android);
 
     expect(github.requests, isEmpty);
-    expect(find.byType(IconButton), findsNothing);
+    expect(indicator, findsNothing);
 
     await closeApp(tester);
   });
