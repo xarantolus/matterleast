@@ -101,8 +101,9 @@ seed() {
     post carol "$reg" "Perfect, see everyone at the dock. :sailboat:" >/dev/null
 
     # Everything alice has read, then the unread messages the screenshots show.
-    local town eng des nw dmb dmc dmd gm
+    local town eng des nw media dmb dmc dmd gm
     town=$(api alice GET "/teams/$lh/channels/name/town-square" | jq -r .id)
+    media=$(api alice GET "/teams/$lh/channels/name/media" | jq -r .id)
     eng=$(api alice GET "/teams/$lh/channels/name/engineering" | jq -r .id)
     des=$(api alice GET "/teams/$lh/channels/name/design" | jq -r .id)
     nw=$(api alice GET "/teams/$lh/channels/name/night-watch" | jq -r .id)
@@ -110,7 +111,7 @@ seed() {
     dmc=$(api alice POST /channels/direct "[\"${ID[alice]}\",\"${ID[carol]}\"]" | jq -r .id)
     dmd=$(api alice POST /channels/direct "[\"${ID[alice]}\",\"${ID[dave]}\"]" | jq -r .id)
     gm=$(api alice POST /channels/group "[\"${ID[alice]}\",\"${ID[bob]}\",\"${ID[carol]}\"]" | jq -r .id)
-    for c in $reg $town $eng $des $nw $dmb $dmc $dmd $gm; do view "$c"; done
+    for c in $reg $town $eng $des $nw $media $dmb $dmc $dmd $gm; do view "$c"; done
     sleep 1
     post dave "$town" "@alice the harbour master wants the entry form by Friday noon." >/dev/null
     post erin "$town" "Coffee machine on the second floor is fixed. Rejoice. :coffee:" >/dev/null
@@ -152,14 +153,17 @@ shots() {
         # shellcheck disable=SC2086
         "$lane" adb shell am broadcast -a com.android.systemui.demo $c >/dev/null
     done
+    # A fresh install asks about notifications first.
+    if python3 "$ui" "$lane adb" has 'Not now'; then tap 'Not now'; fi
     for mode in d:yes l:no; do
         "$lane" adb shell cmd uimode night "${mode##*:}" >/dev/null
         sleep 3
         tap 'Home' -1
         keep "${mode%%:*}" home
         tap 'Lighthouse Crew · Mattermost.*'
-        # Collapse Channels (once) so the direct messages fit on the screen.
-        if python3 "$ui" "$lane adb" has 'Media'; then tap 'Channels'; fi
+        # Collapse Channels on the first visit so the direct messages fit on
+        # the screen; it stays collapsed for the second.
+        if [ "${mode%%:*}" = d ]; then tap 'Channels'; fi
         keep "${mode%%:*}" list
         tap 'Regatta'
         sleep 1
