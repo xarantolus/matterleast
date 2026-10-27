@@ -16,6 +16,8 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/composer.dart';
+import 'package:matterleast/screens/channel/composer_controller.dart';
+import 'package:matterleast/screens/channel/composer_desktop.dart';
 import 'package:matterleast/screens/channel/composer_keys.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
@@ -354,6 +356,105 @@ void main() {
       await finish(tester);
     });
 
+    Future<void> dropOnPane(WidgetTester tester, List<String> paths) async {
+      const codec = StandardMethodCodec();
+      Future<void> send(String method, Object? args) async {
+        await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+          'desktop_drop',
+          codec.encodeMethodCall(MethodCall(method, args)),
+          (_) {},
+        );
+      }
+
+      await send('entered', [100.0, 100.0]);
+      await send('exited', [100.0, 100.0]);
+      await send('performOperation_linux', [
+        paths.map((p) => Uri.file(p).toString()).join('\n'),
+        [100.0, 100.0],
+      ]);
+      await settle(tester);
+    }
+
+    Future<List<String>> makeFiles(WidgetTester tester, int count) async {
+      final dir = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('drop'),
+      ))!;
+      addTearDown(() => dir.deleteSync(recursive: true));
+      return [
+        for (var i = 0; i < count; i++)
+          (File('${dir.path}/note$i.txt')..writeAsStringSync('hello $i')).path,
+      ];
+    }
+
+    testWidgets('files dropped on the pane attach to the message', (
+      tester,
+    ) async {
+      await start(tester);
+      await dropOnPane(tester, await makeFiles(tester, 2));
+      expect(find.text('note0.txt'), findsOneWidget);
+      expect(find.text('note1.txt'), findsOneWidget);
+      await finish(tester);
+    });
+
+    testWidgets('a drop stops at ten files and says so', (tester) async {
+      await start(tester);
+      await dropOnPane(tester, await makeFiles(tester, 12));
+      final attached = ProviderScope.containerOf(
+        tester.element(find.byType(TextField)),
+      ).read(composerDraftProvider(server.url.toString(), channelId, ''));
+      expect(attached.attachments, hasLength(maxAttachments));
+      expect(
+        find.text('A message can carry $maxAttachments files at most.'),
+        findsOneWidget,
+      );
+      await finish(tester);
+    });
+
+    testWidgets('typing with nothing focused starts the message', (
+      tester,
+    ) async {
+      await start(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(FocusManager.instance.primaryFocus?.hasPrimaryFocus, isTrue);
+      expect(textHasFocus(), isFalse);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyH, character: 'h');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyH);
+      await tester.pump();
+      expect(text(tester), 'h');
+      expect(textHasFocus(), isTrue);
+      await finish(tester);
+    });
+
+    testWidgets('typing with Ctrl held or a dialog open leaves the field', (
+      tester,
+    ) async {
+      await start(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyH, character: 'h');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyH);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(text(tester), isEmpty);
+
+      unawaited(
+        showDialog<void>(
+          context: tester.element(find.byType(TextField)),
+          builder: (_) => const AlertDialog(content: Text('Sure?')),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyH, character: 'h');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyH);
+      await tester.pump();
+      expect(text(tester), isEmpty);
+      Navigator.of(tester.element(find.text('Sure?'))).pop();
+      await tester.pump(const Duration(milliseconds: 400));
+      await finish(tester);
+    });
+
     testWidgets('Up in an empty composer edits the last own message', (
       tester,
     ) async {
@@ -362,6 +463,66 @@ void main() {
       await settle(tester);
       expect(text(tester), 'on my way');
       await finish(tester);
+    });
+  });
+
+  group('on desktop', () {
+    test('the + sheet has no camera', () {
+      expect(pickSources(desktop: true).map((c) => c.$1), [
+        PickSource.media,
+        PickSource.files,
+      ]);
+      expect(
+        pickSources(desktop: false).map((c) => c.$1),
+        contains(PickSource.camera),
+      );
+    });
+
+    test('a pasted image is taken only without text beside it', () async {
+      final png = Uint8List.fromList([1, 2, 3]);
+      Future<Uint8List?> image() async => png;
+      expect(await clipboardImage(image, () async => null), png);
+      expect(await clipboardImage(image, () async => ''), png);
+      expect(await clipboardImage(image, () async => 'cells'), isNull);
+      expect(await clipboardImage(() async => null, () async => null), isNull);
+    });
+
+    test('a dropped name is cut to its last part', () {
+      expect(baseName('/home/a/../b/x.png'), 'x.png');
+      expect(baseName(r'C:\\dir\\y.png'), 'y.png');
+    });
+
+    test('typing needs a printable character and no shortcut', () {
+      bool types({
+        String? c = 'a',
+        bool control = false,
+        bool text = false,
+        bool route = true,
+      }) => typesIntoComposer(
+        character: c,
+        control: control,
+        alt: false,
+        meta: false,
+        textFocused: text,
+        otherFocused: false,
+        routeCurrent: route,
+      );
+      expect(types(), isTrue);
+      expect(types(c: null), isFalse);
+      expect(types(c: '\n'), isFalse);
+      expect(types(control: true), isFalse);
+      expect(types(text: true), isFalse);
+      expect(types(route: false), isFalse);
+    });
+
+    test('a typed character goes at the cursor', () {
+      const value = TextEditingValue(
+        text: 'ac',
+        selection: TextSelection.collapsed(offset: 1),
+      );
+      final typed = typedInto(value, 'b');
+      expect(typed.text, 'abc');
+      expect(typed.selection.baseOffset, 2);
     });
   });
 }

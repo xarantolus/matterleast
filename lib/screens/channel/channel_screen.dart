@@ -90,6 +90,7 @@ class ChannelScreen extends ConsumerWidget {
       ],
       header: BookmarkBar(url: url, channelId: channelId),
       composerHint: 'Write to $name',
+      dropTarget: name,
       focusComposer: focusComposer,
       startText: 'This is the start of $name.',
       onOpenThread: (post, {reply = false}) => openConversation(
