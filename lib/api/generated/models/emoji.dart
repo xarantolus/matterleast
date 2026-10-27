@@ -22,22 +22,17 @@ class Emoji {
 
   @LenientString()
   final String? id;
-
   @LenientString()
   @JsonKey(name: 'creator_id')
   final String? creatorId;
-
   @LenientString()
   final String? name;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @MillisDateTime()
   @JsonKey(name: 'update_at')
   final DateTime? updateAt;
-
   @MillisDateTime()
   @JsonKey(name: 'delete_at')
   final DateTime? deleteAt;

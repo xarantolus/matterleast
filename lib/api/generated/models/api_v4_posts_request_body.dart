@@ -28,27 +28,20 @@ class ApiV4PostsRequestBody {
 
   @JsonKey(name: 'channel_id')
   final String channelId;
-
   final String message;
-
   @LenientString()
   @JsonKey(name: 'root_id')
   final String? rootId;
-
   @LenientStringList()
   @JsonKey(name: 'file_ids')
   final List<String> fileIds;
-
   @JsonMap()
   final Map<String, Object?>? props;
-
   @LenientMetadata()
   final Metadata? metadata;
-
   @LenientString()
   @JsonKey(name: 'pending_post_id')
   final String? pendingPostId;
-
   @LenientString()
   final String? type;
 

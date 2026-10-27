@@ -16,7 +16,6 @@ class AccessControlResource {
 
   @LenientString()
   final String? type;
-
   @LenientString()
   final String? id;
 

@@ -26,10 +26,8 @@ class ActionSearchResponse {
 
   @LenientAccessControlResource()
   final AccessControlResource? resource;
-
   @LenientListOfActionSearchResult()
   final List<ActionSearchResult> results;
-
   @LenientMapOfRenderPermissionDecision()
   final Map<String, RenderPermissionDecision>? decisions;
   @LenientActionSearchPage()

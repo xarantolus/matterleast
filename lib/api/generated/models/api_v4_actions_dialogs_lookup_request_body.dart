@@ -23,21 +23,16 @@ class ApiV4ActionsDialogsLookupRequestBody {
   ) => _$ApiV4ActionsDialogsLookupRequestBodyFromJson(json);
 
   final String url;
-
   @JsonKey(name: 'channel_id')
   final String channelId;
-
   @LenientString()
   @JsonKey(name: 'team_id')
   final String? teamId;
-
   @JsonMapOrEmpty()
   final Map<String, Object?> submission;
-
   @LenientString()
   @JsonKey(name: 'callback_id')
   final String? callbackId;
-
   @LenientString()
   final String? state;
 

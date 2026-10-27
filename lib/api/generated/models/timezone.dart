@@ -20,10 +20,8 @@ class Timezone {
 
   @LenientString()
   final String? useAutomaticTimezone;
-
   @LenientString()
   final String? manualTimezone;
-
   @LenientString()
   final String? automaticTimezone;
 

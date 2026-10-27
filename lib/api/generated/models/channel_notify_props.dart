@@ -26,13 +26,10 @@ class ChannelNotifyProps {
 
   @LenientString()
   final String? email;
-
   @LenientString()
   final String? push;
-
   @LenientString()
   final String? desktop;
-
   @LenientString()
   @JsonKey(name: 'mark_unread')
   final String? markUnread;

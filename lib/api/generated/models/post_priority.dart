@@ -21,11 +21,9 @@ class PostPriority {
       _$PostPriorityFromJson(json);
 
   final PostPriorityPriority? priority;
-
   @LenientBool()
   @JsonKey(name: 'requested_ack')
   final bool? requestedAck;
-
   @LenientBool()
   @JsonKey(name: 'persistent_notifications')
   final bool? persistentNotifications;

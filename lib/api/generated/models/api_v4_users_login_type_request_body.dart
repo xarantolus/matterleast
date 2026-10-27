@@ -16,11 +16,9 @@ class ApiV4UsersLoginTypeRequestBody {
 
   @LenientString()
   final String? id;
-
   @LenientString()
   @JsonKey(name: 'login_id')
   final String? loginId;
-
   @LenientString()
   @JsonKey(name: 'device_id')
   final String? deviceId;

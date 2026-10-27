@@ -33,17 +33,14 @@ class ApiV4UsersLoginRequestBody {
   @LenientString()
   @JsonKey(name: 'device_id')
   final String? deviceId;
-
   @LenientString()
   @JsonKey(name: 'voip_device_id')
   final String? voipDeviceId;
   @LenientBool()
   @JsonKey(name: 'ldap_only')
   final bool? ldapOnly;
-
   @LenientString()
   final String? password;
-
   @LenientString()
   @JsonKey(name: 'magic_link_token')
   final String? magicLinkToken;

@@ -25,24 +25,17 @@ class ApiV4ChannelsRequestBody {
 
   @JsonKey(name: 'team_id')
   final String teamId;
-
   final String name;
-
   @JsonKey(name: 'display_name')
   final String displayName;
-
   @LenientString()
   final String? purpose;
-
   @LenientString()
   final String? header;
-
   final String type;
-
   @LenientString()
   @JsonKey(name: 'managed_category_name')
   final String? managedCategoryName;
-
   @LenientString()
   @JsonKey(name: 'default_category_name')
   final String? defaultCategoryName;

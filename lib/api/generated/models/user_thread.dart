@@ -31,19 +31,15 @@ class UserThread {
 
   @LenientString()
   final String? id;
-
   @LenientInt()
   @JsonKey(name: 'reply_count')
   final int? replyCount;
-
   @MillisDateTime()
   @JsonKey(name: 'last_reply_at')
   final DateTime? lastReplyAt;
-
   @MillisDateTime()
   @JsonKey(name: 'last_viewed_at')
   final DateTime? lastViewedAt;
-
   @LenientListOfUser()
   final List<User> participants;
   @LenientPost()

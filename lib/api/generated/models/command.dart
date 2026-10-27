@@ -34,62 +34,46 @@ class Command {
 
   @LenientString()
   final String? id;
-
   @LenientString()
   final String? token;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @MillisDateTime()
   @JsonKey(name: 'update_at')
   final DateTime? updateAt;
-
   @MillisDateTime()
   @JsonKey(name: 'delete_at')
   final DateTime? deleteAt;
-
   @LenientString()
   @JsonKey(name: 'creator_id')
   final String? creatorId;
-
   @LenientString()
   @JsonKey(name: 'team_id')
   final String? teamId;
-
   @LenientString()
   final String? trigger;
-
   @LenientString()
   final String? method;
-
   @LenientString()
   final String? username;
-
   @LenientString()
   @JsonKey(name: 'icon_url')
   final String? iconUrl;
-
   @LenientBool()
   @JsonKey(name: 'auto_complete')
   final bool? autoComplete;
-
   @LenientString()
   @JsonKey(name: 'auto_complete_desc')
   final String? autoCompleteDesc;
-
   @LenientString()
   @JsonKey(name: 'auto_complete_hint')
   final String? autoCompleteHint;
-
   @LenientString()
   @JsonKey(name: 'display_name')
   final String? displayName;
-
   @LenientString()
   final String? description;
-
   @LenientString()
   final String? url;
 

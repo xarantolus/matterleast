@@ -37,15 +37,12 @@ class Channel {
 
   @LenientString()
   final String? id;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @MillisDateTime()
   @JsonKey(name: 'update_at')
   final DateTime? updateAt;
-
   @MillisDateTime()
   @JsonKey(name: 'delete_at')
   final DateTime? deleteAt;
@@ -63,14 +60,12 @@ class Channel {
   final String? header;
   @LenientString()
   final String? purpose;
-
   @MillisDateTime()
   @JsonKey(name: 'last_post_at')
   final DateTime? lastPostAt;
   @LenientInt()
   @JsonKey(name: 'total_msg_count')
   final int? totalMsgCount;
-
   @MillisDateTime()
   @JsonKey(name: 'extra_update_at')
   final DateTime? extraUpdateAt;

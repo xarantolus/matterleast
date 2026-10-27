@@ -43,7 +43,6 @@ class ChannelMemberWithTeamData {
   final String? userId;
   @LenientString()
   final String? roles;
-
   @MillisDateTime()
   @JsonKey(name: 'last_viewed_at')
   final DateTime? lastViewedAt;
@@ -56,7 +55,6 @@ class ChannelMemberWithTeamData {
   @LenientChannelNotifyProps()
   @JsonKey(name: 'notify_props')
   final ChannelNotifyProps? notifyProps;
-
   @MillisDateTime()
   @JsonKey(name: 'last_update_at')
   final DateTime? lastUpdateAt;
@@ -78,15 +76,12 @@ class ChannelMemberWithTeamData {
   @LenientBool()
   @JsonKey(name: 'scheme_guest')
   final bool? schemeGuest;
-
   @LenientString()
   @JsonKey(name: 'team_display_name')
   final String? teamDisplayName;
-
   @LenientString()
   @JsonKey(name: 'team_name')
   final String? teamName;
-
   @MillisDateTime()
   @JsonKey(name: 'team_update_at')
   final DateTime? teamUpdateAt;

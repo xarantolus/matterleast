@@ -20,11 +20,9 @@ class ApiV4EphemeralModeWipeRequestBody {
   ) => _$ApiV4EphemeralModeWipeRequestBodyFromJson(json);
 
   final String signature;
-
   @MillisDateTime()
   @JsonKey(name: 'wipe_at')
   final DateTime? wipeAt;
-
   @LenientString()
   @JsonKey(name: 'error_reason')
   final String? errorReason;

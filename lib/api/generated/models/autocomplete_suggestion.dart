@@ -23,19 +23,15 @@ class AutocompleteSuggestion {
   @LenientString()
   @JsonKey(name: 'Complete')
   final String? complete;
-
   @LenientString()
   @JsonKey(name: 'Suggestion')
   final String? suggestion;
-
   @LenientString()
   @JsonKey(name: 'Hint')
   final String? hint;
-
   @LenientString()
   @JsonKey(name: 'Description')
   final String? description;
-
   @LenientString()
   @JsonKey(name: 'IconData')
   final String? iconData;

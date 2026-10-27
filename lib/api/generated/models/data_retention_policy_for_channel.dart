@@ -17,7 +17,6 @@ class DataRetentionPolicyForChannel {
   @LenientString()
   @JsonKey(name: 'channel_id')
   final String? channelId;
-
   @LenientInt()
   @JsonKey(name: 'post_duration')
   final int? postDuration;

@@ -26,31 +26,24 @@ class PostInfo {
   @LenientString()
   @JsonKey(name: 'channel_id')
   final String? channelId;
-
   @LenientString()
   @JsonKey(name: 'channel_type')
   final String? channelType;
-
   @LenientString()
   @JsonKey(name: 'channel_display_name')
   final String? channelDisplayName;
-
   @LenientBool()
   @JsonKey(name: 'has_joined_channel')
   final bool? hasJoinedChannel;
-
   @LenientString()
   @JsonKey(name: 'team_id')
   final String? teamId;
-
   @LenientString()
   @JsonKey(name: 'team_type')
   final String? teamType;
-
   @LenientString()
   @JsonKey(name: 'team_display_name')
   final String? teamDisplayName;
-
   @LenientBool()
   @JsonKey(name: 'has_joined_team')
   final bool? hasJoinedTeam;

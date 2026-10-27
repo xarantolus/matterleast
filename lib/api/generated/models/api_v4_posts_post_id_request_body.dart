@@ -21,18 +21,14 @@ class ApiV4PostsPostIdRequestBody {
       _$ApiV4PostsPostIdRequestBodyFromJson(json);
 
   final String id;
-
   @LenientBool()
   @JsonKey(name: 'is_pinned')
   final bool? isPinned;
-
   @LenientString()
   final String? message;
-
   @LenientBool()
   @JsonKey(name: 'has_reactions')
   final bool? hasReactions;
-
   @LenientString()
   final String? props;
 

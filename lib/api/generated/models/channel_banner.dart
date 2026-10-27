@@ -16,10 +16,8 @@ class ChannelBanner {
 
   @LenientBool()
   final bool? enabled;
-
   @LenientString()
   final String? text;
-
   @LenientString()
   @JsonKey(name: 'background_color')
   final String? backgroundColor;

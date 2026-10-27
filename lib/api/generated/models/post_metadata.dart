@@ -35,21 +35,16 @@ class PostMetadata {
 
   @LenientListOfEmbeds()
   final List<Embeds> embeds;
-
   @LenientListOfEmoji()
   final List<Emoji> emojis;
-
   @LenientListOfFileInfo()
   final List<FileInfo> files;
-
   @JsonMap()
   final Map<String, Object?>? images;
-
   @LenientListOfReaction()
   final List<Reaction> reactions;
   @LenientPostPriority()
   final PostPriority? priority;
-
   @LenientListOfPostAcknowledgement()
   final List<PostAcknowledgement> acknowledgements;
   @MillisDateTime()

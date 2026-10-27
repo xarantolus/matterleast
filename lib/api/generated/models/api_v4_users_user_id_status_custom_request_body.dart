@@ -21,12 +21,9 @@ class ApiV4UsersUserIdStatusCustomRequestBody {
   ) => _$ApiV4UsersUserIdStatusCustomRequestBodyFromJson(json);
 
   final String emoji;
-
   final String text;
-
   @LenientString()
   final String? duration;
-
   @LenientString()
   @JsonKey(name: 'expires_at')
   final String? expiresAt;

@@ -18,10 +18,8 @@ class ApiV4TeamsRequestBody {
       _$ApiV4TeamsRequestBodyFromJson(json);
 
   final String name;
-
   @JsonKey(name: 'display_name')
   final String displayName;
-
   final String type;
 
   Map<String, Object?> toJson() => _$ApiV4TeamsRequestBodyToJson(this);

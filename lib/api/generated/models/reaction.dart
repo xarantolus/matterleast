@@ -26,15 +26,12 @@ class Reaction {
   @LenientString()
   @JsonKey(name: 'user_id')
   final String? userId;
-
   @LenientString()
   @JsonKey(name: 'post_id')
   final String? postId;
-
   @LenientString()
   @JsonKey(name: 'emoji_name')
   final String? emojiName;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;

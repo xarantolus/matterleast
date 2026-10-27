@@ -46,15 +46,12 @@ class ApiV4UsersRequestBody {
   final String? position;
   @LenientTimezone()
   final Timezone? timezone;
-
   @LenientString()
   @JsonKey(name: 'auth_data')
   final String? authData;
-
   @LenientString()
   @JsonKey(name: 'auth_service')
   final String? authService;
-
   @LenientString()
   final String? password;
   @LenientString()

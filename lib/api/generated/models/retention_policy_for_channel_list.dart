@@ -22,7 +22,6 @@ class RetentionPolicyForChannelList {
 
   @LenientListOfDataRetentionPolicyForChannel()
   final List<DataRetentionPolicyForChannel> policies;
-
   @LenientInt()
   @JsonKey(name: 'total_count')
   final int? totalCount;

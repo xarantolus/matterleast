@@ -28,15 +28,12 @@ class PostList {
   final List<String> order;
   @LenientMapOfPost()
   final Map<String, Post>? posts;
-
   @LenientString()
   @JsonKey(name: 'next_post_id')
   final String? nextPostId;
-
   @LenientString()
   @JsonKey(name: 'prev_post_id')
   final String? prevPostId;
-
   @LenientBool()
   @JsonKey(name: 'has_next')
   final bool? hasNext;

@@ -21,9 +21,7 @@ class ApiV4UsersUserIdStatusRequestBody {
 
   @JsonKey(name: 'user_id')
   final String userId;
-
   final String status;
-
   @LenientInt()
   @JsonKey(name: 'dnd_end_time')
   final int? dndEndTime;

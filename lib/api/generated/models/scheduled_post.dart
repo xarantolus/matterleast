@@ -35,11 +35,9 @@ class ScheduledPost {
 
   @LenientString()
   final String? id;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @MillisDateTime()
   @JsonKey(name: 'update_at')
   final DateTime? updateAt;
@@ -59,23 +57,18 @@ class ScheduledPost {
   @LenientStringList()
   @JsonKey(name: 'file_ids')
   final List<String> fileIds;
-
   @MillisDateTime()
   @JsonKey(name: 'scheduled_at')
   final DateTime? scheduledAt;
-
   @MillisDateTime()
   @JsonKey(name: 'processed_at')
   final DateTime? processedAt;
-
   @LenientString()
   @JsonKey(name: 'error_code')
   final String? errorCode;
-
   @LenientString()
   @JsonKey(name: 'repeat_type')
   final String? repeatType;
-
   @LenientString()
   @JsonKey(name: 'repeat_timezone')
   final String? repeatTimezone;

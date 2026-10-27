@@ -27,21 +27,16 @@ class ApiV4ChannelsChannelIdBookmarksRequestBody {
   @LenientString()
   @JsonKey(name: 'file_id')
   final String? fileId;
-
   @JsonKey(name: 'display_name')
   final String displayName;
-
   @LenientString()
   @JsonKey(name: 'link_url')
   final String? linkUrl;
-
   @LenientString()
   @JsonKey(name: 'image_url')
   final String? imageUrl;
-
   @LenientString()
   final String? emoji;
-
   final Type type;
 
   Map<String, Object?> toJson() =>

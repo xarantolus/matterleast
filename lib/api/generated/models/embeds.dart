@@ -16,10 +16,8 @@ class Embeds {
   factory Embeds.fromJson(Map<String, Object?> json) => _$EmbedsFromJson(json);
 
   final Type2? type;
-
   @LenientString()
   final String? url;
-
   @JsonMap()
   final Map<String, Object?>? data;
 

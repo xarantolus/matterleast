@@ -34,51 +34,39 @@ class FileInfo {
 
   @LenientString()
   final String? id;
-
   @LenientString()
   @JsonKey(name: 'user_id')
   final String? userId;
-
   @LenientString()
   @JsonKey(name: 'post_id')
   final String? postId;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @MillisDateTime()
   @JsonKey(name: 'update_at')
   final DateTime? updateAt;
-
   @MillisDateTime()
   @JsonKey(name: 'delete_at')
   final DateTime? deleteAt;
-
   @LenientString()
   final String? name;
 
   @LenientString()
   @JsonKey(name: 'extension')
   final String? extensionValue;
-
   @LenientInt()
   final int? size;
-
   @LenientString()
   @JsonKey(name: 'mime_type')
   final String? mimeType;
-
   @LenientInt()
   final int? width;
-
   @LenientInt()
   final int? height;
-
   @LenientBool()
   @JsonKey(name: 'has_preview_image')
   final bool? hasPreviewImage;
-
   @LenientString()
   @JsonKey(name: 'mini_preview')
   final String? miniPreview;

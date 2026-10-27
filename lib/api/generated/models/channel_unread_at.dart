@@ -23,19 +23,15 @@ class ChannelUnreadAt {
   @LenientString()
   @JsonKey(name: 'team_id')
   final String? teamId;
-
   @LenientString()
   @JsonKey(name: 'channel_id')
   final String? channelId;
-
   @LenientInt()
   @JsonKey(name: 'msg_count')
   final int? msgCount;
-
   @LenientInt()
   @JsonKey(name: 'mention_count')
   final int? mentionCount;
-
   @MillisDateTime()
   @JsonKey(name: 'last_viewed_at')
   final DateTime? lastViewedAt;
