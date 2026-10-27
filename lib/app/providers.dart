@@ -129,6 +129,18 @@ Stream<ServerFeatures> features(Ref ref, String url) async* {
 Stream<ServerEntry> sessionEnded(Ref ref) =>
     ref.watch(serverManagerProvider).sessionEnded.map(serverEntryOf);
 
+/// The GitHub repository whose releases the desktop update check reads.
+/// CI passes the repository it builds in, so a fork checks its own.
+const releaseRepo = String.fromEnvironment(
+  'RELEASE_REPO',
+  defaultValue: 'xarantolus/matterleast',
+);
+
+/// The running version alone, such as `0.11.1`.
+@Riverpod(keepAlive: true)
+Future<String> runningVersion(Ref ref) async =>
+    (await PackageInfo.fromPlatform()).version;
+
 /// The app's version as people read it, such as `0.1.0 (1)`.
 @Riverpod(keepAlive: true)
 Future<String> appVersion(Ref ref) async {

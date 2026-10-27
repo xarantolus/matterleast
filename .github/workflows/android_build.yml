@@ -1,4 +1,4 @@
-name: Build for Android
+name: Build
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       desktop:
-        description: Also build for Windows, without releasing
+        description: Also build for Windows and Linux, without releasing
         type: boolean
         default: false
 
@@ -18,7 +18,7 @@ concurrency:
   group: android-build-${{ github.ref }}
   cancel-in-progress: true
 
-# Jobs ask for more themselves; only the release job can write.
+# Jobs ask for more themselves; only the publish job can write.
 permissions:
   contents: read
 
@@ -29,6 +29,7 @@ jobs:
     runs-on: ubuntu-26.04
     outputs:
       release: ${{ steps.release.outputs.release }}
+      version: ${{ steps.release.outputs.version }}
 
     steps:
       - name: Check out the code
@@ -43,7 +44,9 @@ jobs:
       - name: Decide whether this run releases
         id: release
         run: |
+          # "version: 1.2.3+4" -> 1.2.3
           version=$(grep -m1 '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           if [ "$GITHUB_EVENT_NAME" = pull_request ] || [ "$GITHUB_REF" != refs/heads/main ] \
               || git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
             echo "release=false" >> "$GITHUB_OUTPUT"
@@ -124,68 +127,21 @@ jobs:
           # clock changes.
           TZ: Europe/Berlin
 
-  # Only for releases and on request: Windows minutes are costly. It gets
-  # no secrets and only uploads the build.
-  windows:
-    name: Build for Windows
-    needs: check
-    if: needs.check.outputs.release == 'true' || inputs.desktop
-    runs-on: windows-latest
-
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: stable
-          flutter-version: 3.47.8
-          cache: true
-
-      - name: Get packages
-        run: flutter pub get
-
-      - name: Build for Windows
-        run: flutter build windows --release
-
-      - name: Upload the build
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: matterleast-windows-${{ github.sha }}
-          path: build/windows/x64/runner/Release
-          if-no-files-found: error
-          retention-days: 14
-
-  # The only job that uses the signing secrets or can write to the repo.
-  # The secrets live in the release environment, which admits main alone,
-  # so no other branch, fork or pull request can reach them.
-  release:
-    name: Build and release the APK
+  # The only job that sees the signing secrets. They live in the release
+  # environment, which admits main alone, so no other branch, fork or pull
+  # request can reach them. It only uploads the APK; publish releases it.
+  android:
+    name: Build for Android
     needs: check
     if: needs.check.outputs.release == 'true'
     runs-on: ubuntu-26.04
     environment: release
-    permissions:
-      # Creates the tag and the release.
-      contents: write
 
     steps:
       - name: Check out the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          # Tags and history, for the release notes.
-          fetch-depth: 0
           persist-credentials: false
-
-      - name: Read the version and write the release notes
-        run: |
-          # "version: 1.2.3+4" -> 1.2.3
-          echo "APP_VERSION=$(grep -m1 '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> $GITHUB_ENV
-          previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
-          git log --no-merges --format='- %s' ${previous:+"$previous"..HEAD} > "$RUNNER_TEMP/release-notes.md"
 
       - name: Set up Java and the Gradle cache
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
@@ -247,7 +203,9 @@ jobs:
 
       - name: Build the release APK
         # Releases are for phones; emulators run local debug builds.
-        run: flutter build apk --release --target-platform android-arm,android-arm64
+        run: >-
+          flutter build apk --release --target-platform android-arm,android-arm64
+          --dart-define=RELEASE_REPO=$GITHUB_REPOSITORY
 
       # One stable name, so the README can link to the latest release's
       # download directly.
@@ -259,18 +217,161 @@ jobs:
       - name: Upload the APK
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: matterleast-apk-${{ env.APP_VERSION }}-${{ github.sha }}
+          name: android
           path: ${{ runner.temp }}/matterleast.apk
           if-no-files-found: error
           retention-days: 30
 
+  # Desktop builds run only for releases and on request (the desktop input
+  # of a manual run): Windows minutes are costly. They get no secrets.
+  windows:
+    name: Build for Windows
+    needs: check
+    if: needs.check.outputs.release == 'true' || inputs.desktop
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+
+      - name: Get packages
+        run: flutter pub get
+
+      # The update check asks this repository, so a fork checks its own.
+      - name: Build for Windows
+        run: flutter build windows --release "--dart-define=RELEASE_REPO=$env:GITHUB_REPOSITORY"
+
+      # Inno Setup comes with the runner image; installed if an image
+      # drops it.
+      - name: Build the installer
+        env:
+          APP_VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          & $iscc "/DAppVersion=$env:APP_VERSION" "/O$env:RUNNER_TEMP" windows\installer\matterleast.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-FileHash "$env:RUNNER_TEMP\matterleast-setup.exe"
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: windows
+          path: ${{ runner.temp }}/matterleast-setup.exe
+          if-no-files-found: error
+          retention-days: 30
+
+  # Experimental: the runner's bundle as a tarball.
+  linux:
+    name: Build for Linux
+    needs: check
+    if: needs.check.outputs.release == 'true' || inputs.desktop
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # The libraries of the dev container's desktop layer, and X11 and Xi
+      # for the tray plugin.
+      - name: Install the desktop build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev \
+            libwebkit2gtk-4.1-dev libayatana-appindicator3-dev libx11-dev libxi-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+
+      - name: Restore the native build hook outputs
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .dart_tool/hooks_runner
+          key: build-hooks-${{ hashFiles('pubspec.lock') }}
+          restore-keys: build-hooks-
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Build for Linux
+        run: flutter build linux --release --dart-define=RELEASE_REPO=$GITHUB_REPOSITORY
+
+      - name: Pack the bundle
+        run: |
+          tar -C build/linux/x64/release/bundle -czf "$RUNNER_TEMP/matterleast-linux-x64.tar.gz" .
+          sha256sum "$RUNNER_TEMP/matterleast-linux-x64.tar.gz"
+
+      - name: Upload the tarball
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: linux
+          path: ${{ runner.temp }}/matterleast-linux-x64.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  # The only job that can write to the repository. Without always() it
+  # runs only when every build succeeded, so a release has all its files.
+  publish:
+    name: Publish the release
+    needs: [check, android, windows, linux]
+    if: needs.check.outputs.release == 'true'
+    runs-on: ubuntu-26.04
+    environment: release
+    permissions:
+      # Creates the tag and the release.
+      contents: write
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Tags and history, for the release notes.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Write the release notes
+        run: |
+          previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          git log --no-merges --format='- %s' ${previous:+"$previous"..HEAD} > "$RUNNER_TEMP/release-notes.md"
+
+      - name: Download the builds
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          path: ${{ runner.temp }}/dist
+          merge-multiple: true
+
+      - name: List the files
+        run: sha256sum "$RUNNER_TEMP"/dist/*
+
       - name: Publish the release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
-          files: ${{ runner.temp }}/matterleast.apk
-          tag_name: v${{ env.APP_VERSION }}
+          files: |
+            ${{ runner.temp }}/dist/matterleast.apk
+            ${{ runner.temp }}/dist/matterleast-setup.exe
+            ${{ runner.temp }}/dist/matterleast-linux-x64.tar.gz
+          tag_name: v${{ needs.check.outputs.version }}
           target_commitish: ${{ github.sha }}
-          name: v${{ env.APP_VERSION }}
+          name: v${{ needs.check.outputs.version }}
           body_path: ${{ runner.temp }}/release-notes.md
           fail_on_unmatched_files: true
         env:

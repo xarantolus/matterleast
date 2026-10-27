@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:matterleast/data/app_db/app_database.dart';
+import 'package:matterleast/domain/app_update.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/desktop_window.dart';
 import 'package:matterleast/domain/message_text_size.dart';
@@ -130,6 +131,31 @@ abstract final class Settings {
     _encodeWindowPlacement,
   );
 
+  /// When the desktop update check last asked GitHub, answered or not.
+  static const lastUpdateCheck = Setting<DateTime?>(
+    'lastUpdateCheck',
+    null,
+    _decodeOptionalTime,
+    _encodeOptionalTime,
+  );
+
+  /// The newest release the update check found, kept so the indicator
+  /// shows without a network.
+  static const latestRelease = Setting<KnownRelease?>(
+    'latestRelease',
+    null,
+    _decodeRelease,
+    _encodeRelease,
+  );
+
+  /// The release tag the user hid the update indicator for.
+  static const dismissedRelease = Setting<String?>(
+    'dismissedRelease',
+    null,
+    _decodeOptionalText,
+    _encodeOptionalText,
+  );
+
   static const all = <Setting<Object?>>[
     imagesOnMobileData,
     mediaCacheBytes,
@@ -144,6 +170,9 @@ abstract final class Settings {
     lastConversation,
     closeToTray,
     windowPlacement,
+    lastUpdateCheck,
+    latestRelease,
+    dismissedRelease,
   ];
 
   static bool _decodeBool(String raw) => switch (raw) {
@@ -157,6 +186,26 @@ abstract final class Settings {
   static String _encodeOptionalBool(bool? value) =>
       value == null ? 'system' : value.toString();
   static String _encodeInt(int value) => value.toString();
+  static DateTime? _decodeOptionalTime(String raw) =>
+      raw.isEmpty ? null : DateTime.parse(raw).toUtc();
+  static String _encodeOptionalTime(DateTime? value) =>
+      value?.toUtc().toIso8601String() ?? '';
+  static String? _decodeOptionalText(String raw) => raw.isEmpty ? null : raw;
+  static String _encodeOptionalText(String? value) => value ?? '';
+  static KnownRelease? _decodeRelease(String raw) {
+    if (raw.isEmpty) return null;
+    try {
+      if (jsonDecode(raw) case final Map<String, Object?> json) {
+        return KnownRelease.fromJson(json);
+      }
+    } on Object {
+      // Falls through to the format error below.
+    }
+    throw FormatException('release', raw);
+  }
+
+  static String _encodeRelease(KnownRelease? value) =>
+      value == null ? '' : jsonEncode(value.toJson());
   static MessageTextSize _decodeTextSize(String raw) =>
       MessageTextSize.values.where((s) => s.name == raw).firstOrNull ??
       (throw FormatException('text size', raw));
