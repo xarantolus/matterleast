@@ -18,7 +18,6 @@ import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
-import 'package:matterleast/ui/window_bar.dart';
 import 'package:path/path.dart' as p;
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -199,7 +198,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     return PopScope(
       canPop: !_sending,
       child: Scaffold(
-        appBar: WindowAppBar(
+        appBar: AppBar(
           title: const Text('Share'),
           bottom: ProgressSlot(active: _sending),
           actions: [

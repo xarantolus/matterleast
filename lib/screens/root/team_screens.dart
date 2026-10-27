@@ -8,7 +8,6 @@ import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/slide_route.dart';
-import 'package:matterleast/ui/window_bar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'team_screens.g.dart';
@@ -68,7 +67,7 @@ class _JoinTeamScreenState extends ConsumerState<JoinTeamScreen> {
   Widget build(BuildContext context) {
     final teams = ref.watch(joinableTeamListProvider(widget.url));
     return Scaffold(
-      appBar: WindowAppBar(
+      appBar: AppBar(
         title: const Text('Join a team'),
         bottom: ProgressSlot(active: _joining != null),
       ),

@@ -16,7 +16,6 @@ import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
-import 'package:matterleast/ui/window_bar.dart';
 
 /// Talk to an agent: pick one, ask, and find earlier conversations. Each
 /// conversation is a thread in the direct message with the agent.
@@ -127,7 +126,7 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
     final bot = bots == null ? null : pickAgent(bots, saved: _botId);
     final busy = _opening || botsValue.isLoading || threadsValue.isLoading;
     return Scaffold(
-      appBar: WindowAppBar(
+      appBar: AppBar(
         title: const Text('Agents'),
         bottom: ProgressSlot(active: busy && bots != null),
         actions: [

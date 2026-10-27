@@ -23,7 +23,7 @@ void main() {
     home: WindowCorner(
       here: corner,
       child: Scaffold(
-        appBar: WindowAppBar(
+        appBar: AppBar(
           title: const Text('Town Square'),
           actions: const [
             IconButton(
@@ -75,7 +75,7 @@ void main() {
       await on(TargetPlatform.linux, () async {
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(appBar: WindowAppBar(title: const Text('Settings'))),
+            home: Scaffold(appBar: AppBar(title: const Text('Settings'))),
           ),
         );
         expect(find.byTooltip('Close'), findsOneWidget);

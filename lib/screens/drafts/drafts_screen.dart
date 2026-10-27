@@ -15,7 +15,6 @@ import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
-import 'package:matterleast/ui/window_bar.dart';
 
 /// Unsent messages of one team and of direct messages: tap to go on
 /// writing, swipe or long-press to delete. Where the server schedules
@@ -49,7 +48,7 @@ class DraftsScreen extends ConsumerWidget {
     );
     if (!scheduling && (scheduled?.isEmpty ?? true)) {
       return Scaffold(
-        appBar: WindowAppBar(title: title),
+        appBar: AppBar(title: title),
         body: _drafts(context, ref),
       );
     }
@@ -57,7 +56,7 @@ class DraftsScreen extends ConsumerWidget {
       length: 2,
       initialIndex: scheduledFirst ? 1 : 0,
       child: Scaffold(
-        appBar: WindowAppBar(
+        appBar: AppBar(
           title: title,
           bottom: TabBar(
             tabs: [

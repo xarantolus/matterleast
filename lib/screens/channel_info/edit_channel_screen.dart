@@ -11,7 +11,6 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
-import 'package:matterleast/ui/window_bar.dart';
 
 /// Creates a channel in a team, or edits one's name, purpose and header
 /// ([channel] given). Direct and group messages only have a header.
@@ -141,7 +140,7 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
     final canPrivate = rights.value?.private ?? true;
     final slug = channelSlug(_name.text);
     return Scaffold(
-      appBar: WindowAppBar(
+      appBar: AppBar(
         title: Text(
           _creating
               ? 'New channel'

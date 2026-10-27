@@ -11,7 +11,6 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
-import 'package:matterleast/ui/window_bar.dart';
 
 /// Picks people for a channel or a new conversation; the picked ones show
 /// as chips above the list.
@@ -88,7 +87,7 @@ class _PeoplePickerScreenState extends ConsumerState<PeoplePickerScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: WindowAppBar(
+    appBar: AppBar(
       title: Text(widget.title),
       actions: [
         TextButton(
