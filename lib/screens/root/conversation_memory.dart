@@ -13,12 +13,11 @@ part 'conversation_memory.g.dart';
 /// change, in routes on a narrow window or in panes on a wide one, so the
 /// next launch can open it again. Read it once the launch has restored.
 @Riverpod(keepAlive: true)
-ConversationMemory conversationMemory(Ref ref, SavedConversation? saved) {
+ConversationMemory conversationMemory(Ref ref) {
   final memory = ConversationMemory(
     store: ref.watch(settingsStoreProvider),
     routes: ref.watch(conversationRoutesProvider),
     panes: () => ref.read(openPanesProvider),
-    saved: saved,
   );
   ref.listen(openPanesProvider, (_, _) => memory.update());
   final changes = memory.routes.changes.listen((_) => memory.update());
@@ -31,7 +30,6 @@ class ConversationMemory {
     required this.store,
     required this.routes,
     required this.panes,
-    required this.saved,
   });
 
   final SettingsStore store;
@@ -40,6 +38,13 @@ class ConversationMemory {
 
   /// What the settings hold now.
   SavedConversation? saved;
+
+  /// Reads what the last run saved, then keeps it current; called once the
+  /// launch has restored, so the empty state before never overwrites it.
+  Future<void> start() async {
+    saved = await store.read(Settings.lastConversation);
+    update();
+  }
 
   void update() {
     final live = routes.live;

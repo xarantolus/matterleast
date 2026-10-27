@@ -43,7 +43,7 @@ void main() {
     tester,
   ) async {
     final routes = container.read(conversationRoutesProvider);
-    container.read(conversationMemoryProvider(null)).update();
+    await tester.runAsync(container.read(conversationMemoryProvider).start);
     final navigatorKey = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -75,7 +75,7 @@ void main() {
   });
 
   testWidgets('a conversation in a pane is remembered too', (tester) async {
-    container.read(conversationMemoryProvider(null));
+    await tester.runAsync(container.read(conversationMemoryProvider).start);
     container.read(openPanesProvider.notifier).open(_general);
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     expect(await tester.runAsync(stored), contains('"channelId":"c1"'));

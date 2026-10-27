@@ -14,7 +14,8 @@ import 'package:matterleast/ui/conversation_route.dart';
 /// Opens a conversation the user is in, the one way every screen does it:
 /// its server and team in the rail, then the channel, or the thread of
 /// [rootId], at [highlightPostId] when given. Opening a channel (not a
-/// thread) remembers it as the team's last one and marks it viewed.
+/// thread) remembers it as the team's last one and marks it viewed. With
+/// [instant] it is there at once instead of sliding in.
 Future<void> openConversation(
   NavigatorState navigator, {
   required String url,
@@ -23,6 +24,7 @@ Future<void> openConversation(
   String? teamId,
   String? rootId,
   String? highlightPostId,
+  bool instant = false,
 }) async {
   if (!navigator.mounted) return;
   final container = ProviderScope.containerOf(navigator.context, listen: false);
@@ -58,7 +60,7 @@ Future<void> openConversation(
     container.read(openPanesProvider.notifier).open(target);
     return;
   }
-  await navigator.push(conversationRoute(target));
+  await navigator.push(conversationRoute(target, instant: instant));
   // Brought back at the reading position, not at the message it opened at.
   container
       .read(lastClosedProvider.notifier)
@@ -68,14 +70,16 @@ Future<void> openConversation(
 /// Opens [target] again the way [openConversation] first did.
 Future<void> reopenConversation(
   NavigatorState navigator,
-  ConversationTarget target,
-) => switch (target) {
+  ConversationTarget target, {
+  bool instant = false,
+}) => switch (target) {
   ChannelTarget() => openConversation(
     navigator,
     url: target.url,
     channelId: target.channelId,
     title: target.title,
     teamId: target.teamId,
+    instant: instant,
   ),
   ThreadTarget() => openConversation(
     navigator,
@@ -84,6 +88,7 @@ Future<void> reopenConversation(
     title: target.channelName,
     teamId: target.teamId,
     rootId: target.rootId,
+    instant: instant,
   ),
 };
 

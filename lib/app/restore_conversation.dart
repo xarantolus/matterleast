@@ -10,7 +10,6 @@ import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
-import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 
 /// Opens the conversation the user last had open, over the channel list it
@@ -21,29 +20,21 @@ Future<void> restoreConversation(
   NavigatorState navigator, {
   required Future<bool> launchedByIntent,
 }) async {
-  SavedConversation? saved;
   try {
-    saved = await ref
+    final saved = await ref
         .read(settingsStoreProvider)
         .read(Settings.lastConversation);
     final stack = await _stackOf(ref, saved, await launchedByIntent);
     if (stack.isNotEmpty && navigator.mounted) {
-      final wide = windowClassOf(MediaQuery.sizeOf(navigator.context).width)
-          .showsPanes;
-      if (wide) {
-        final panes = ref.read(openPanesProvider.notifier);
-        stack.forEach(panes.open);
-      } else {
-        for (final target in stack) {
-          unawaited(navigator.push(conversationRoute(target, instant: true)));
-        }
+      for (final target in stack) {
+        unawaited(reopenConversation(navigator, target, instant: true));
       }
     }
   } on Object catch (e) {
     Log.warn('launch', 'Restoring the open conversation failed', e);
   }
   if (navigator.mounted) {
-    ref.read(conversationMemoryProvider(saved)).update();
+    await ref.read(conversationMemoryProvider).start();
   }
 }
 
