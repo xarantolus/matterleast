@@ -32,12 +32,17 @@ void main() {
       );
     });
 
+    test('the redirect as Windows hands it over, with a slash after the '
+        'host, is accepted', () {
+      expect(accepted('mmauth://callback/?MMAUTHTOKEN=t&srv=x'), isTrue);
+    });
+
     test('anything a hand-made link could add is refused', () {
       for (final link in [
         'mmauthbeta://callback?MMAUTHTOKEN=t',
         'mmauth://callback',
         'mmauth://callback?',
-        'mmauth://callback/?MMAUTHTOKEN=t',
+        'mmauth://callback//?MMAUTHTOKEN=t',
         'mmauth://callback/x?MMAUTHTOKEN=t',
         'mmauth://user@callback?MMAUTHTOKEN=t',
         'mmauth://callback:80?MMAUTHTOKEN=t',

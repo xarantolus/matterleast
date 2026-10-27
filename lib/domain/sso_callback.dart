@@ -28,13 +28,15 @@ bool isSsoCallbackLink(Uri uri) =>
     uri.host == 'callback' && uri.scheme != 'https' && uri.scheme != 'http';
 
 /// Whether [uri] is exactly `<scheme>://callback?…`, the only shape a server
-/// redirects to, with nothing that a hand-made link could add.
+/// redirects to, with nothing that a hand-made link could add. Windows may add a
+/// slash after the host when it hands a protocol link to the app, so an
+/// empty path and `/` count alike.
 bool isSsoCallbackFor(Uri uri, String scheme) =>
     uri.scheme == scheme.toLowerCase() &&
     uri.host == 'callback' &&
     uri.userInfo.isEmpty &&
     !uri.hasPort &&
-    uri.path.isEmpty &&
+    (uri.path.isEmpty || uri.path == '/') &&
     uri.query.isNotEmpty &&
     !uri.hasFragment;
 
@@ -62,8 +64,9 @@ SsoResult parseSsoCallback(
   required String serverVersion,
 }) {
   if (!isSsoCallbackFor(callback, scheme)) {
-    return const SsoResult.rejected(
-      "The sign-in came back in a form the app doesn't expect.",
+    return SsoResult.rejected(
+      'The sign-in came back as ${_shapeOf(callback)}, which the app '
+      "doesn't expect.",
     );
   }
   final srv = callback.queryParameters['srv'];
@@ -91,6 +94,18 @@ SsoResult parseSsoCallback(
     return const SsoResult.rejected('The server sent no session.');
   }
   return SsoResult.token(token);
+}
+
+// The query carries the token, so the shape names only what is around it.
+String _shapeOf(Uri u) {
+  final base = u.hasAuthority
+      ? '${u.scheme}://${u.authority}${u.path}'
+      : '${u.scheme}:${u.path}';
+  return [
+    base,
+    if (u.query.isEmpty) 'without a query',
+    if (u.hasFragment) 'with a fragment',
+  ].join(' ');
 }
 
 String _hostOf(Uri u) {
