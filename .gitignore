@@ -77,3 +77,6 @@ node_modules/
 /docs/status.md
 /docs/research/
 /docs/inventory/
+
+# Prepared API spec (upstream docs are CC BY-NC-SA); update-api.sh keeps it in a temp dir
+/tool/api/spec.json

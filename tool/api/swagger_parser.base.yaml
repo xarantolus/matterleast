@@ -1,4 +1,5 @@
-# Base of tool/api/swagger_parser.yaml; tool/update-api.sh appends the
+# Base of the swagger_parser config; tool/update-api.sh points schema_path at
+# the prepared spec in a temp dir (never committed) and appends the
 # generated lenient model parsers and the include paths.
 swagger_parser:
   schema_path: tool/api/spec.json
