@@ -15,8 +15,8 @@ import 'package:matterleast/screens/search/search_providers.dart';
 
 /// Sets up notifications in the UI isolate: taps open their conversation,
 /// the app counts as on screen, and the stay-connected service comes back
-/// when it is switched on.
-Future<void> startNotifications(WidgetRef ref, NavigatorState navigator) async {
+/// when it is switched on. True when a notification launched the app.
+Future<bool> startNotifications(WidgetRef ref, NavigatorState navigator) async {
   AppVisibility.set(visible: true);
   final notifier = ref.read(notifierProvider);
   try {
@@ -27,12 +27,13 @@ Future<void> startNotifications(WidgetRef ref, NavigatorState navigator) async {
       },
       onAction: onNoticeAction,
     );
-    if (await notifier.launchTarget() case final target?) {
-      await openNotice(navigator, ref, target);
-    }
+    final launch = await notifier.launchTarget();
+    if (launch != null) await openNotice(navigator, ref, launch);
     await StayConnected.resume();
+    return launch != null;
   } on Object catch (e) {
     Log.warn('notify', 'Setting up notifications failed', e);
+    return false;
   }
 }
 

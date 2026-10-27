@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/dev_sign_in.dart';
 import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/app/shortcuts.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/quick_switch.dart';
@@ -98,11 +99,24 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       );
       if (!mounted) return;
       final navigator = Navigator.of(context);
-      unawaited(startNotifications(ref, navigator));
-      _links = AppLinks().uriLinkStream.listen(
+      final notice = startNotifications(ref, navigator);
+      final links = AppLinks();
+      _links = links.uriLinkStream.listen(
         (uri) => unawaited(openIncomingLink(navigator, uri)),
       );
       final shares = ReceiveSharingIntent.instance;
+      final initialMedia = shares.getInitialMedia();
+      unawaited(
+        restoreConversation(
+          ref,
+          navigator,
+          launchedByIntent: Future.wait([
+            notice,
+            links.getInitialLink().then((link) => link != null),
+            initialMedia.then((media) => media.isNotEmpty),
+          ]).then((launches) => launches.any((l) => l)),
+        ),
+      );
       final cacheDir = LocalCopies.cacheDirectory();
       unawaited(cacheDir.then((dir) => LocalCopies.sweep(dir, DateTime.now())));
       Future<void> open(List<SharedMediaFile> media) async {
@@ -128,7 +142,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       );
       _shares = shares.getMediaStream().listen((m) => unawaited(open(m)));
       unawaited(
-        shares.getInitialMedia().then((media) async {
+        initialMedia.then((media) async {
           await open(media);
           return shares.reset();
         }),
