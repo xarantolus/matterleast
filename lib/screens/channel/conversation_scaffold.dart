@@ -80,7 +80,8 @@ class ConversationScaffold extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         leading: InPane.closeButton(context),
-        toolbarHeight: kToolbarHeight * scale,
+        toolbarHeight:
+            (AppBarTheme.of(context).toolbarHeight ?? kToolbarHeight) * scale,
         title: MediaQuery.withClampedTextScaling(
           maxScaleFactor: _maxBarTextScale,
           child: title,

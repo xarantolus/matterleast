@@ -696,7 +696,7 @@ class _ShortcutTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 15,
+          fontSize: channelRowTextSize(context),
           color: color,
           fontWeight: count > 0 ? FontWeight.w700 : FontWeight.w400,
         ),

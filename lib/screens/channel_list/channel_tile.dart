@@ -50,7 +50,7 @@ class ChannelTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: channelRowTextSize(context),
               color: color,
               fontWeight: item.unread || item.mentions > 0
                   ? FontWeight.w700
@@ -72,6 +72,11 @@ class ChannelTile extends StatelessWidget {
           );
   }
 }
+
+/// The name size of a row in the channel list: a little larger than a
+/// dense list tile's on a phone, the theme's list text on desktop.
+double channelRowTextSize(BuildContext context) =>
+    ListTileTheme.of(context).titleTextStyle?.fontSize ?? 15;
 
 /// Pure: a channel row in words: the name, what kind of channel or how
 /// the other person is, then, with [markers], the draft, muted and unread
