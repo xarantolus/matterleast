@@ -376,4 +376,37 @@ void main() {
     );
     expect((changed as AgentConversationEvent).conversationId, 'conv1');
   });
+
+  group('conversation history', () {
+    const lighthouse = AgentBot(id: 'bot1', dmChannelId: 'dm1');
+    const ferry = AgentBot(id: 'bot2', dmChannelId: 'dm2');
+
+    test('plugin 2.x rows open their root post, threadless ones are left '
+        'out', () {
+      final threads = decodeAgentThreads([
+        {'id': 'conv1', 'root_post_id': 'post1', 'channel_id': null},
+        {'id': 'conv2', 'root_post_id': null, 'channel_id': null},
+      ]);
+      expect(threads.map((t) => t.root), ['post1']);
+    });
+
+    test('plugin 1.x rows are their root post', () {
+      final threads = decodeAgentThreads([
+        {'id': 'post1', 'message': 'Hello', 'channel_id': 'dm1'},
+      ]);
+      expect(threads.single.root, 'post1');
+      expect(threads.single.message, 'Hello');
+    });
+
+    test('a row belongs to its bot, or to the agent whose direct message '
+        'it is in', () {
+      final bots = [lighthouse, ferry];
+      AgentBot? of(Map<String, Object?> json) =>
+          agentOfThread(AgentThread.fromJson(json), bots);
+      expect(of({'id': 'p', 'bot_id': 'bot2', 'channel_id': 'dm1'}), ferry);
+      expect(of({'id': 'p', 'channel_id': 'dm2'}), ferry);
+      expect(of({'id': 'p', 'bot_id': 'gone'}), isNull);
+      expect(of({'id': 'p', 'channel_id': 'elsewhere'}), isNull);
+    });
+  });
 }

@@ -17,6 +17,7 @@ class AgentBot {
     this.displayName = '',
     this.username = '',
     this.lastIconUpdate,
+    this.dmChannelId,
     this.isDefault,
     this.isDefaultSnake,
   });
@@ -32,6 +33,11 @@ class AgentBot {
   final String username;
   @LenientInt()
   final int? lastIconUpdate;
+
+  /// The user's direct message with the agent, when it exists.
+  @LenientString()
+  @JsonKey(name: 'dmChannelID')
+  final String? dmChannelId;
   @LenientBool()
   final bool? isDefault;
   @LenientBool()
@@ -56,43 +62,42 @@ class AgentBotsAnswer {
 }
 
 /// A past conversation with an agent, from `GET /ai_threads`. Plugin 2.x
-/// sends `root_post_id` and `bot_id`; older ones use `id` as the root post.
+/// names the thread's root post in `root_post_id` (null for a conversation
+/// without a thread) and `id` is the conversation; older plugins send the
+/// root post as `id`. Channel summaries come without a `channel_id`.
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
 class AgentThread {
   const AgentThread({
-    this.id = '',
+    this.root = '',
     this.title,
     this.message,
     this.channelId,
-    this.rootPostId,
     this.botId,
-    this.replyCount,
     this.updateAt,
   });
 
   factory AgentThread.fromJson(Map<String, Object?> json) =>
       _$AgentThreadFromJson(json);
 
-  @JsonKey(fromJson: _string)
-  final String id;
+  /// The post the conversation hangs under; empty when there is none.
+  @JsonKey(readValue: _rootOf, fromJson: _string)
+  final String root;
   @LenientString()
   final String? title;
+
+  /// The first message (plugin 1.x only).
   @LenientString()
   final String? message;
   @LenientString()
   final String? channelId;
   @LenientString()
-  final String? rootPostId;
-  @LenientString()
   final String? botId;
-  @LenientInt()
-  final int? replyCount;
   @MillisDateTime()
   final DateTime? updateAt;
-
-  /// The post the conversation hangs under.
-  String get root => rootPostId?.isNotEmpty ?? false ? rootPostId! : id;
 }
+
+Object? _rootOf(Map<dynamic, dynamic> json, String _) =>
+    json.containsKey('root_post_id') ? json['root_post_id'] : json['id'];
 
 /// What the plugin answers to a channel analysis: the summary post it
 /// started in the agent's direct message.
@@ -553,6 +558,9 @@ List<AgentCitation>? _encodedCitations(Object? json) {
   return value is List ? _list(value, AgentCitation.fromJson) : null;
 }
 
-/// Pure: the threads of `GET /ai_threads`, unreadable ones skipped.
-List<AgentThread> decodeAgentThreads(Object? json) =>
-    _list(json, AgentThread.fromJson);
+/// Pure: the threads of `GET /ai_threads` that can be opened; unreadable
+/// ones and conversations without a thread are skipped.
+List<AgentThread> decodeAgentThreads(Object? json) => [
+  for (final t in _list(json, AgentThread.fromJson))
+    if (t.root.isNotEmpty) t,
+];

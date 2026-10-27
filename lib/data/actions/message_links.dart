@@ -40,7 +40,10 @@ class MessageLinks {
       );
       final channelId = info.channelId;
       if (channelId == null) return const LinkedPostMissing();
-      if (!(info.hasJoinedTeam ?? false) || !(info.hasJoinedChannel ?? false)) {
+      // Direct and group messages have no team to be in.
+      final teamless = info.teamId?.isEmpty ?? true;
+      if (!(teamless || (info.hasJoinedTeam ?? false)) ||
+          !(info.hasJoinedChannel ?? false)) {
         return LinkedPostNeedsJoin(
           teamId: info.teamId ?? '',
           teamName: info.teamDisplayName ?? '',

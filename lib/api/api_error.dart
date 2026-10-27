@@ -20,7 +20,12 @@ sealed class ApiError implements Exception {
       return ServerError(
         statusCode: response.statusCode ?? 0,
         id: json?['id'] as String?,
-        message: json?['message'] as String?,
+        // Plugins built on gin answer `{"error": "..."}`.
+        message: switch (json) {
+          {'message': final String m} => m,
+          {'error': final String m} => m,
+          _ => null,
+        },
         requestId: json?['request_id'] as String?,
       );
     }

@@ -375,6 +375,24 @@ AgentBot? pickAgent(List<AgentBot> bots, {String? saved}) {
   return bots.first;
 }
 
+/// Pure: the agent [thread] is with: by its bot id (plugin 2.x), else by
+/// the agent's direct message it is in; null for one no longer offered.
+AgentBot? agentOfThread(AgentThread thread, List<AgentBot> bots) {
+  final botId = thread.botId;
+  if (botId != null && botId.isNotEmpty) {
+    for (final b in bots) {
+      if (b.id == botId) return b;
+    }
+    return null;
+  }
+  final channelId = thread.channelId;
+  if (channelId == null || channelId.isEmpty) return null;
+  for (final b in bots) {
+    if (b.dmChannelId == channelId) return b;
+  }
+  return null;
+}
+
 /// Pure: the sources cited across [rounds], each address once.
 List<AgentCitation> citationsOf(List<AgentRound> rounds) {
   final seen = <String>{};

@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/app/today_provider.dart';
+import 'package:matterleast/data/actions/message_links.dart';
 import 'package:matterleast/domain/agent_stream.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/empty_state.dart';
@@ -27,6 +31,7 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
   final _text = TextEditingController();
   String? _botId;
   var _sending = false;
+  var _opening = false;
 
   @override
   void dispose() {
@@ -44,13 +49,16 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
       final actions = await ref.read(agentActionsProvider(widget.url).future);
       final asked = await actions.ask(bot, message);
       _text.clear();
-      ref.invalidate(agentThreadsProvider(widget.url));
-      await openConversation(
-        navigator,
-        url: widget.url,
-        channelId: asked.channelId,
-        rootId: asked.postId,
-        title: bot.name,
+      // Coming back must not bring the keyboard up again.
+      FocusManager.instance.primaryFocus?.unfocus();
+      unawaited(
+        openConversation(
+          navigator,
+          url: widget.url,
+          channelId: asked.channelId,
+          rootId: asked.postId,
+          title: bot.name,
+        ).then((_) => _refreshThreads()),
       );
     } on Object catch (e) {
       messenger.showSnackBar(
@@ -61,17 +69,65 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
     }
   }
 
+  // A new conversation, or its title, which is written after the first
+  // answer, shows when the reader comes back.
+  void _refreshThreads() {
+    if (mounted) ref.invalidate(agentThreadsProvider(widget.url));
+  }
+
+  /// Opens [thread] in the channel its first post is in, which a channel
+  /// summary's row does not name.
+  Future<void> _open(AgentThread thread, AgentBot? bot) async {
+    if (_opening) return;
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _opening = true);
+    try {
+      final links = await ref.read(messageLinksProvider(widget.url).future);
+      final located = await links.locatePost(thread.root);
+      if (located is! LinkedPostFound) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              "This conversation is gone, or it's in a channel you're no "
+              'longer in.',
+            ),
+          ),
+        );
+        return;
+      }
+      unawaited(
+        openConversation(
+          navigator,
+          url: widget.url,
+          channelId: located.channelId,
+          rootId: thread.root,
+          teamId: located.teamId,
+          title: located.channelName.isNotEmpty
+              ? located.channelName
+              : bot?.name ?? 'Agents',
+        ).then((_) => _refreshThreads()),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(agentProblemText(e, widget.url))),
+      );
+    } finally {
+      if (mounted) setState(() => _opening = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final botsValue = ref.watch(agentBotsProvider(widget.url));
     final threadsValue = ref.watch(agentThreadsProvider(widget.url));
     final bots = botsValue.value;
     final bot = bots == null ? null : pickAgent(bots, saved: _botId);
-    final refreshing = botsValue.isLoading || threadsValue.isLoading;
+    final busy = _opening || botsValue.isLoading || threadsValue.isLoading;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agents'),
-        bottom: ProgressSlot(active: refreshing && bots != null),
+        bottom: ProgressSlot(active: busy && bots != null),
         actions: [
           if (bots != null && bots.length > 1 && bot != null)
             PopupMenuButton<String>(
@@ -114,7 +170,13 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
         _ => Column(
           children: [
             Expanded(
-              child: _History(url: widget.url, bot: bot, threads: threadsValue),
+              child: _History(
+                url: widget.url,
+                bot: bot,
+                bots: bots ?? const [],
+                threads: threadsValue,
+                onOpen: _open,
+              ),
             ),
             _AskField(
               controller: _text,
@@ -130,11 +192,19 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
 }
 
 class _History extends ConsumerWidget {
-  const _History({required this.url, required this.bot, required this.threads});
+  const _History({
+    required this.url,
+    required this.bot,
+    required this.bots,
+    required this.threads,
+    required this.onOpen,
+  });
 
   final String url;
   final AgentBot bot;
+  final List<AgentBot> bots;
   final AsyncValue<List<AgentThread>> threads;
+  final void Function(AgentThread thread, AgentBot? agent) onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -153,17 +223,13 @@ class _History extends ConsumerWidget {
       }
       return const Center(child: CircularProgressIndicator());
     }
-    final mine = [
-      for (final t in list)
-        if (t.botId == null || t.botId!.isEmpty || t.botId == bot.id) t,
-    ];
-    if (mine.isEmpty) {
+    if (list.isEmpty) {
       return EmptyState(
         icon: Icons.smart_toy_outlined,
         title: 'Ask ${bot.name}',
         body:
-            'Write a question below. Your conversations with the agent are '
-            'listed here.',
+            'Write a question below. Your conversations with agents, and '
+            'the channel summaries they write for you, are listed here.',
       );
     }
     final today = ref.watch(todayProvider);
@@ -172,30 +238,38 @@ class _History extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () => ref.refresh(agentThreadsProvider(url).future),
       child: ListView.builder(
-        itemCount: mine.length,
+        itemCount: list.length,
         itemBuilder: (context, i) {
-          final thread = mine[i];
+          final thread = list[i];
+          final agent = agentOfThread(thread, bots);
+          final message = thread.message ?? '';
           final title = thread.title?.isNotEmpty ?? false
               ? thread.title!
-              : thread.message?.isNotEmpty ?? false
-              ? thread.message!
+              : message.isNotEmpty
+              ? message
               : 'Conversation';
+          final subtitle = message.isNotEmpty && message != title
+              ? message
+              : bots.length > 1
+              ? agent?.name
+              : null;
           return ListTile(
-            leading: UserAvatar(
-              serverUrl: url,
-              userId: bot.id,
-              name: bot.name,
-              lastPictureUpdate: bot.lastIconUpdate,
-              size: 36,
-            ),
-            title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-            subtitle: thread.message?.isNotEmpty ?? false
-                ? Text(
-                    thread.message!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            leading: agent == null
+                ? const CircleAvatar(
+                    radius: 18,
+                    child: Icon(Icons.smart_toy_outlined, size: 20),
                   )
-                : null,
+                : UserAvatar(
+                    serverUrl: url,
+                    userId: agent.id,
+                    name: agent.name,
+                    lastPictureUpdate: agent.lastIconUpdate,
+                    size: 36,
+                  ),
+            title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+            subtitle: subtitle == null
+                ? null
+                : Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
             trailing: thread.updateAt == null
                 ? null
                 : Text(
@@ -206,15 +280,7 @@ class _History extends ConsumerWidget {
                     ),
                     style: text.bodySmall?.copyWith(color: tokens.muted),
                   ),
-            onTap: thread.channelId == null || thread.channelId!.isEmpty
-                ? null
-                : () => openConversation(
-                    Navigator.of(context),
-                    url: url,
-                    channelId: thread.channelId!,
-                    rootId: thread.root,
-                    title: bot.name,
-                  ),
+            onTap: () => onOpen(thread, agent),
           );
         },
       ),

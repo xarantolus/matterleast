@@ -1,6 +1,8 @@
+import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/domain/server_features.dart';
 
 const _route = '/plugins/mattermost-ai';
 
@@ -12,23 +14,31 @@ class AgentActions {
 
   String _post(String postId) => '$_route/post/${Uri.encodeComponent(postId)}';
 
-  /// The agents the user may talk to.
-  Future<List<AgentBot>> bots() async {
+  /// The agents the user may talk to; none when the plugin refuses.
+  Future<List<AgentBot>> bots() => _unlessAbsent(() async {
     final json = await session.api.getJsonObject('$_route/ai_bots');
     return json == null ? const [] : AgentBotsAnswer.fromJson(json).bots;
-  }
+  });
 
-  /// The user's conversations with agents, newest first.
-  Future<List<AgentThread>> threads() async {
+  /// The user's conversations with agents that have a thread to open,
+  /// newest first; the plugin sends at most its latest 60.
+  Future<List<AgentThread>> threads() => _unlessAbsent(() async {
     final response = await session.api.call(
       () => session.api.dio.get<Object?>('$_route/ai_threads'),
     );
-    final threads = decodeAgentThreads(response.data)
-      ..sort(
-        (a, b) =>
-            (b.updateAt ?? DateTime(0)).compareTo(a.updateAt ?? DateTime(0)),
-      );
-    return threads;
+    return decodeAgentThreads(response.data)..sort(
+      (a, b) =>
+          (b.updateAt ?? DateTime(0)).compareTo(a.updateAt ?? DateTime(0)),
+    );
+  });
+
+  Future<List<T>> _unlessAbsent<T>(Future<List<T>> Function() fetch) async {
+    try {
+      return await fetch();
+    } on ServerError catch (e) {
+      if (endpointUnavailable(e, refusalMeansAbsent: true)) return const [];
+      rethrow;
+    }
   }
 
   /// Starts a conversation with [bot]: the message goes to the direct
