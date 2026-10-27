@@ -58,6 +58,9 @@ class ServerConnection {
       dialogs: dialogs,
       drafts: drafts,
       scheduled: scheduled,
+      onNotice: (message) {
+        if (!_notices.isClosed) _notices.add(message);
+      },
     );
     presence = PresencePoller(server: server, store: store, runner: runner);
     socket = ServerSocket(
@@ -139,6 +142,11 @@ class ServerConnection {
   }
 
   final _caughtUp = StreamController<void>.broadcast();
+  final _notices = StreamController<String>.broadcast();
+
+  /// Messages from the server or a plugin to show the user, such as a
+  /// refused download.
+  Stream<String> get notices => _notices.stream;
   final _applied = StreamController<ServerEvent>.broadcast();
 
   /// Events once they are in the database.
@@ -176,6 +184,7 @@ class ServerConnection {
     dialogs.close();
     agents.close();
     await _caughtUp.close();
+    await _notices.close();
     await _applied.close();
   }
 }

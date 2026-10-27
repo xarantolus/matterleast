@@ -42,6 +42,19 @@ Stream<SyncStatus> syncStatus(Ref ref, String url) async* {
   yield* changes.stream;
 }
 
+/// A message the server or a plugin asks to show this user. Without
+/// value equality, so the same text twice shows twice.
+class ServerNotice {
+  ServerNotice(this.message);
+  final String message;
+}
+
+@riverpod
+Stream<ServerNotice> serverNotices(Ref ref, String url) async* {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  yield* session.connection.notices.map(ServerNotice.new);
+}
+
 /// Kept while the app runs, like the session it wraps, so the rail can use
 /// it.
 @Riverpod(keepAlive: true)

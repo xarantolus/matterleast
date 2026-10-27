@@ -71,6 +71,14 @@ enum Activity {
   };
 }
 
+/// Pure: whether a post of [type] is a membership message, which the
+/// server leaves out of a channel's message count (`IsJoinLeaveMessage`).
+bool isJoinLeave(String? type) =>
+    type != null &&
+    (Activity.of(type) != null ||
+        type == 'system_join_leave' ||
+        type == 'system_add_remove');
+
 /// One membership message: who it is about and who did it.
 typedef ActivityEntry = ({String? subject, String? actor});
 

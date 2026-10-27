@@ -264,6 +264,81 @@ final class SyncStatusFamily extends $Family
   String toString() => r'syncStatusProvider';
 }
 
+@ProviderFor(serverNotices)
+final serverNoticesProvider = ServerNoticesFamily._();
+
+final class ServerNoticesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ServerNotice>,
+          ServerNotice,
+          Stream<ServerNotice>
+        >
+    with $FutureModifier<ServerNotice>, $StreamProvider<ServerNotice> {
+  ServerNoticesProvider._({
+    required ServerNoticesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'serverNoticesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverNoticesHash();
+
+  @override
+  String toString() {
+    return r'serverNoticesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<ServerNotice> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<ServerNotice> create(Ref ref) {
+    final argument = this.argument as String;
+    return serverNotices(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ServerNoticesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$serverNoticesHash() => r'abebccaee192ceb792d7d45715a58a481bc1f0b1';
+
+final class ServerNoticesFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<ServerNotice>, String> {
+  ServerNoticesFamily._()
+    : super(
+        retry: null,
+        name: r'serverNoticesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ServerNoticesProvider call(String url) =>
+      ServerNoticesProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'serverNoticesProvider';
+}
+
 /// Kept while the app runs, like the session it wraps, so the rail can use
 /// it.
 
