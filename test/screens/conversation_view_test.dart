@@ -181,6 +181,41 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('the start of the channel takes the place of the spinner', (
+    tester,
+  ) async {
+    olderPage = [];
+    await open(tester);
+    while (!olderAsked.isCompleted) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
+      await settle(tester);
+    }
+    await tester.fling(
+      find.byType(Scrollable).first,
+      const Offset(0, 800),
+      3000,
+    );
+    await settle(tester);
+    final spinner = find.bySemanticsLabel('Loading older messages');
+    expect(tester.getTopLeft(spinner).dy, greaterThanOrEqualTo(0));
+    final oldest = tester.getTopLeft(find.text('message 0')).dy;
+
+    answerOlder.complete();
+    await settle(tester);
+
+    expect(find.text('This is the start of Boats.'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('message 0')).dy, closeTo(oldest, 0.5));
+    // Still at the top: nothing of the start text is hidden above.
+    await tester.fling(
+      find.byType(Scrollable).first,
+      const Offset(0, 300),
+      3000,
+    );
+    await settle(tester);
+    expect(tester.getTopLeft(find.text('message 0')).dy, closeTo(oldest, 0.5));
+    await close(tester);
+  });
+
   testWidgets('tapping a link in a message opens it and moves nothing', (
     tester,
   ) async {

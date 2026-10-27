@@ -552,20 +552,7 @@ class _OlderEdge extends StatelessWidget {
   Widget build(BuildContext context) {
     final window = state.window;
     if (window == null) return const SizedBox.shrink();
-    if (window.reachesStart) {
-      final text = startText;
-      if (text == null) return const SizedBox(height: Spacing.sm);
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.lg,
-          Spacing.xl,
-          Spacing.lg,
-          Spacing.lg,
-        ),
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium),
-      );
-    }
-    if (state.olderFailure case final cause?) {
+    if (state.olderFailure case final cause? when !window.reachesStart) {
       return Padding(
         padding: const EdgeInsets.all(Spacing.md),
         child: Column(
@@ -581,17 +568,38 @@ class _OlderEdge extends StatelessWidget {
         ),
       );
     }
-    return const Padding(
-      padding: EdgeInsets.all(Spacing.md),
-      child: Center(
-        child: SizedBox.square(
-          dimension: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            semanticsLabel: 'Loading older messages',
+    final text = startText;
+    // Both are laid out, so the start takes exactly the spinner's room and
+    // a reader at the top stays there when it replaces the spinner.
+    return IndexedStack(
+      index: window.reachesStart ? 1 : 0,
+      alignment: AlignmentDirectional.bottomStart,
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(Spacing.md),
+          child: Center(
+            child: SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                semanticsLabel: 'Loading older messages',
+              ),
+            ),
           ),
         ),
-      ),
+        if (text == null)
+          const SizedBox(height: Spacing.sm)
+        else
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.lg,
+              Spacing.xl,
+              Spacing.lg,
+              Spacing.lg,
+            ),
+            child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+          ),
+      ],
     );
   }
 }
