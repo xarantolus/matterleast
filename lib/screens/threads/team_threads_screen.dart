@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/progress_slot.dart';
@@ -51,6 +53,30 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
     }
   }
 
+  Future<void> _markAllRead() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final sure = await confirm(
+      context,
+      title: 'Mark all as read?',
+      body: 'Every thread you follow in ${widget.teamName} counts as read.',
+      action: 'Mark read',
+    );
+    if (!sure) return;
+    try {
+      final session = await ref.read(serverSessionProvider(widget.url).future);
+      await ConversationActions(session).markAllThreadsRead(widget.teamId);
+    } on ApiError catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            "Couldn't mark the threads as read. "
+            '${requestProblemText(e, Uri.parse(widget.url).host)}',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final all = ref.watch(teamThreadsProvider(widget.url, widget.teamId)).value;
@@ -69,6 +95,15 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Mark all as read',
+            onPressed: (all?.any((t) => t.unread) ?? false)
+                ? _markAllRead
+                : null,
+            icon: const Icon(Icons.done_all),
+          ),
+        ],
         bottom: ProgressSlot(active: refreshing),
       ),
       body: CustomScrollView(

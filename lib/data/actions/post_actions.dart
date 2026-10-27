@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
@@ -90,6 +91,58 @@ class PostActions {
       },
     );
   }
+
+  /// Adds or takes back a reaction on the newest message in the channel
+  /// (its root messages under collapsed threads) or in the thread of
+  /// [rootId]. False when [emojiName] is no emoji the server knows or
+  /// there is no message, so the text is sent as it is.
+  Future<bool> reactToNewest(
+    String channelId, {
+    required String rootId,
+    required String emojiName,
+    required bool add,
+  }) async {
+    final name = canonicalName(emojiName);
+    if (!isKnownEmoji(name) && !await _isCustomEmoji(name)) return false;
+    final crt = await _db.collapsedThreads();
+    final newest =
+        await (_db.select(_db.posts)
+              ..where(
+                (p) =>
+                    p.channelId.equals(channelId) &
+                    p.deleteAt.isNull() &
+                    p.sendState.isNull() &
+                    p.type.equals(ephemeralType).not() &
+                    (rootId.isNotEmpty
+                        ? p.rootId.equals(rootId) | p.id.equals(rootId)
+                        : crt
+                        ? p.rootId.equals('')
+                        : const Constant(true)),
+              )
+              ..orderBy([(p) => OrderingTerm.desc(p.createAt)])
+              ..limit(1))
+            .getSingleOrNull();
+    if (newest == null) return false;
+    final me = await _me();
+    final mine =
+        await (_db.select(_db.reactions)..where(
+              (r) =>
+                  r.postId.equals(newest.id) &
+                  r.userId.equals(me) &
+                  r.emojiName.equals(name),
+            ))
+            .getSingleOrNull();
+    if (add && mine == null) await addReaction(newest.id, name);
+    if (!add && mine != null) await removeReaction(newest.id, name);
+    return true;
+  }
+
+  Future<bool> _isCustomEmoji(String name) async =>
+      await (_db.select(_db.customEmoji)
+            ..where((e) => e.name.equals(name) & e.deleteAt.isNull())
+            ..limit(1))
+          .getSingleOrNull() !=
+      null;
 
   /// Changes the text of a post; it shows edited at once.
   Future<void> editPost(String postId, String message) async {

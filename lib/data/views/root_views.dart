@@ -23,6 +23,7 @@ class RootViews {
         db.myTeams,
         db.channels,
         db.myChannels,
+        db.threads,
         db.preferences,
         db.syncState,
         db.config,
@@ -76,6 +77,9 @@ class RootViews {
       for (final row in teams)
         row.readTable(db.myTeams).teamId: row.readTable(db.myTeams),
     };
+    final threads = crt
+        ? await _followedThreadCounts()
+        : const <String, ({int mentions, bool unread})>{};
     final iconUpdates = {
       for (final row in teams)
         row.readTable(db.teams).id: row.readTable(db.teams).lastTeamIconUpdate,
@@ -105,6 +109,8 @@ class RootViews {
             teamUnreadMessages: crt
                 ? mine[team.id]!.msgCountRoot
                 : mine[team.id]!.msgCount,
+            threadMentions: threads[team.id]?.mentions ?? 0,
+            anyThreadUnread: threads[team.id]?.unread ?? false,
           );
           return RailTeam(
             id: team.id,
@@ -115,6 +121,36 @@ class RootViews {
           );
         }(),
     ];
+  }
+
+  /// Per team, over the followed threads with replies in its live
+  /// channels; direct and group messages belong to no team.
+  Future<Map<String, ({int mentions, bool unread})>>
+  _followedThreadCounts() async {
+    final rows =
+        await (db.select(db.threads).join([
+              innerJoin(
+                db.channels,
+                db.channels.id.equalsExp(db.threads.channelId),
+              ),
+            ])..where(
+              db.threads.isFollowing.equals(true) &
+                  db.threads.replyCount.isBiggerThanValue(0) &
+                  db.channels.deleteAt.isNull() &
+                  db.channels.teamId.equals('').not(),
+            ))
+            .get();
+    final counts = <String, ({int mentions, bool unread})>{};
+    for (final row in rows) {
+      final t = row.readTable(db.threads);
+      final team = row.readTable(db.channels).teamId;
+      final before = counts[team] ?? (mentions: 0, unread: false);
+      counts[team] = (
+        mentions: before.mentions + t.unreadMentions,
+        unread: before.unread || t.unreadReplies > 0,
+      );
+    }
+    return counts;
   }
 
   int _unreadCount(ChannelInput c, bool crt) =>

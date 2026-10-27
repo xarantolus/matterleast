@@ -184,22 +184,7 @@ class ConversationActions {
   }
 
   Future<void> channelStats(String channelId, {Object? owner}) =>
-      session.runner.enqueue(
-        SyncJob(
-          key: 'channel-stats:$channelId',
-          priority: SyncPriority.p1,
-          owner: owner,
-          visible: false,
-          run: () async {
-            final stats = await _call(
-              () => _client.channels.getChannelStats(channelId: channelId),
-            );
-            if (stats.memberCount case final count?) {
-              await _store.applyChannelStats(channelId, count);
-            }
-          },
-        ),
-      );
+      session.connection.entry.channelStats(channelId, owner: owner);
 
   /// The newest replies of a thread, with its first message.
   Future<void> refreshThread(String rootId, {Object? owner}) =>
@@ -272,6 +257,18 @@ class ConversationActions {
         ),
       ),
     );
+  }
+
+  /// Marks every thread of [teamId] read once the server agreed, as the
+  /// Threads list's "Mark all as read" in the official app does.
+  Future<void> markAllThreadsRead(String teamId) async {
+    // Not in the generated client: no body and an OK answer.
+    await _call(
+      () => session.api.dio.put<Object?>(
+        '/api/v4/users/me/teams/$teamId/threads/read',
+      ),
+    );
+    await _store.applyThreadRead(teamId: teamId, lastViewedAt: _clock());
   }
 
   Future<DateTime?> _postsFetchedAt(String channelId) async =>

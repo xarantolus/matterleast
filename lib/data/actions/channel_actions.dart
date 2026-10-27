@@ -358,21 +358,6 @@ class ChannelActions {
     return channel.id!;
   }
 
-  /// Joins an open team, and stores it with its channels.
-  Future<void> joinTeam(String teamId) async {
-    final me = await _myId();
-    await session.api.call(
-      () => _client.teams.addTeamMember(
-        teamId: teamId,
-        body: api.ApiV4TeamsTeamIdMembersRequestBody(
-          teamId: teamId,
-          userId: me,
-        ),
-      ),
-    );
-    await session.connection.entry.joinedTeam(teamId);
-  }
-
   /// Joins a public channel.
   Future<void> join(String channelId) async {
     final me = await _myId();
@@ -488,7 +473,7 @@ class ChannelActions {
     );
   }
 
-  static String pinnedList(String channelId) => 'pinned:$channelId';
+  static String pinnedList(String channelId) => PostListNames.pinned(channelId);
 
   Future<String> _myId() async {
     final me = await _db.syncText(SyncKeys.currentUserId);
