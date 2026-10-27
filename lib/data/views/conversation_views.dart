@@ -155,6 +155,14 @@ class ConversationViews {
     currentTeamId: await db.syncText(SyncKeys.currentTeamId),
   );
 
+  /// Whether the user marked the channel unread and hasn't opened it since.
+  Future<bool> markedUnread(String channelId) async =>
+      (await (db.select(
+            db.myChannels,
+          )..where((m) => m.channelId.equals(channelId))).getSingleOrNull())
+          ?.manuallyUnread ??
+      false;
+
   /// Whether the user follows the thread; null without collapsed threads,
   /// where there is nothing to follow.
   Stream<bool?> threadFollowing(String rootId) async* {

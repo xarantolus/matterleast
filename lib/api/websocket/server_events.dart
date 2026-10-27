@@ -185,8 +185,8 @@ final class ChannelArchivedEvent extends ServerEvent {
 }
 
 /// The user's membership or a channel's shape changed in a way the payload
-/// doesn't carry (`post_unread`, `channel_created`, `channel_converted`,
-/// `direct_added`, `group_added`, `user_added`): refetch the channel.
+/// doesn't carry (`channel_created`, `channel_converted`, `direct_added`,
+/// `group_added`, `user_added`): refetch the channel.
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
 final class ChannelChangedEvent extends ServerEvent {
   const ChannelChangedEvent({this.channelId, this.userId, this.broadcast});
@@ -203,6 +203,19 @@ final class ChannelChangedEvent extends ServerEvent {
 
   String? get channel =>
       (channelId?.isNotEmpty ?? false) ? channelId : broadcast?.channelId;
+}
+
+/// `post_unread`: the user marked a message unread, maybe on another device.
+final class MarkedUnreadEvent extends ServerEvent {
+  const MarkedUnreadEvent(this.channelId);
+  final String channelId;
+}
+
+/// `channel_scheme_updated`: the channel's permission scheme changed, and
+/// with it the roles the user's membership resolves to.
+final class ChannelSchemeEvent extends ServerEvent {
+  const ChannelSchemeEvent(this.channelId);
+  final String channelId;
 }
 
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
@@ -288,7 +301,8 @@ final class CategoriesEvent extends ServerEvent {
   final Broadcast? broadcast;
 }
 
-/// `added_to_team`, `leave_team`, `update_team`, `delete_team`.
+/// `added_to_team`, `leave_team`, `update_team`, `delete_team`,
+/// `restore_team`.
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
 final class TeamEvent extends ServerEvent {
   const TeamEvent({
@@ -312,7 +326,7 @@ final class TeamEvent extends ServerEvent {
   String? get id => team?.id ?? teamId;
 }
 
-enum TeamChange { joined, left, updated, deleted }
+enum TeamChange { joined, left, updated, deleted, restored }
 
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
 final class UserUpdatedEvent extends ServerEvent {
@@ -428,10 +442,16 @@ final class OpenDialogEvent extends ServerEvent {
   final OpenDialog? dialog;
 }
 
-/// Someone is writing in a channel, or in a thread when [parentId] is set.
+/// Someone is writing in a channel, or in a thread when [parentId] is set;
+/// `stop_typing` when they [stopped].
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
 final class TypingEvent extends ServerEvent {
-  const TypingEvent({this.userId, this.parentId, this.broadcast});
+  const TypingEvent({
+    this.userId,
+    this.parentId,
+    this.broadcast,
+    this.stopped = false,
+  });
   factory TypingEvent.fromJson(Map<String, Object?> json) =>
       _$TypingEventFromJson(json);
 
@@ -440,6 +460,15 @@ final class TypingEvent extends ServerEvent {
   @LenientString()
   final String? parentId;
   final Broadcast? broadcast;
+  @JsonKey(includeFromJson: false)
+  final bool stopped;
+}
+
+/// A message from the server or a plugin for this user: `show_toast`, or
+/// `file_download_rejected` for a download they asked for.
+final class ServerNoticeEvent extends ServerEvent {
+  const ServerNoticeEvent(this.message);
+  final String message;
 }
 
 /// `scheduled_post_created`, `scheduled_post_updated` and
@@ -589,6 +618,25 @@ ServerEvent decodeEvent(SocketFrame frame) {
     'ephemeral_message' => EphemeralMessageEvent.fromJson(json),
     'open_dialog' => OpenDialogEvent.fromJson(json),
     'typing' => TypingEvent.fromJson(json),
+    'stop_typing' => _stoppedTyping(TypingEvent.fromJson(json)),
+    'show_toast' => switch (const LenientString().fromJson(
+      frame.data['message'],
+    )) {
+      final message? when message.trim().isNotEmpty => ServerNoticeEvent(
+        message,
+      ),
+      _ => const UnknownEvent('show_toast'),
+    },
+    // Thumbnails load on their own; a refusal there is not news to the user.
+    'file_download_rejected'
+        when frame.data['download_type'] != 'thumbnail' &&
+            frame.data['file_id'] is String =>
+      ServerNoticeEvent(switch (const LenientString().fromJson(
+        frame.data['rejection_reason'],
+      )) {
+        final reason? when reason.trim().isNotEmpty => reason,
+        _ => 'A plugin blocked access to this file.',
+      }),
     'channel_viewed' ||
     'multiple_channels_viewed' => ChannelViewedEvent.fromJson(json),
     'channel_updated' => ChannelUpdatedEvent.fromJson(json),
@@ -596,7 +644,15 @@ ServerEvent decodeEvent(SocketFrame frame) {
     'channel_restored' => ChannelArchivedEvent(
       channelId: ChannelArchivedEvent.fromJson(json).channelId,
     ),
-    'post_unread' ||
+    'post_unread' => switch (ChannelChangedEvent.fromJson(json).channel) {
+      final id? => MarkedUnreadEvent(id),
+      _ => const UnknownEvent('post_unread'),
+    },
+    'channel_scheme_updated' => switch (ChannelChangedEvent.fromJson(json)
+        .channel) {
+      final id? => ChannelSchemeEvent(id),
+      _ => const UnknownEvent('channel_scheme_updated'),
+    },
     'channel_created' ||
     'channel_converted' ||
     'direct_added' ||
@@ -615,6 +671,7 @@ ServerEvent decodeEvent(SocketFrame frame) {
     'leave_team' => _team(json, TeamChange.left),
     'update_team' => _team(json, TeamChange.updated),
     'delete_team' => _team(json, TeamChange.deleted),
+    'restore_team' => _team(json, TeamChange.restored),
     'user_updated' => UserUpdatedEvent.fromJson(json),
     'status_change' => StatusChangedEvent.fromJson(json),
     'preference_changed' ||
@@ -719,6 +776,13 @@ ServerEvent _bookmarks(SocketFrame frame, List<Object?> raw) {
   if (channelId == null) return UnknownEvent(frame.event ?? '');
   return BookmarksEvent(channelId, bookmarks);
 }
+
+TypingEvent _stoppedTyping(TypingEvent decoded) => TypingEvent(
+  userId: decoded.userId,
+  parentId: decoded.parentId,
+  broadcast: decoded.broadcast,
+  stopped: true,
+);
 
 TeamEvent _team(Map<String, Object?> json, TeamChange kind) {
   final decoded = TeamEvent.fromJson(json);

@@ -42,7 +42,8 @@ class TeamActions {
     ], mine);
   }
 
-  /// Joins [teamId]; the team appears once the server confirms.
+  /// Joins [teamId]; completes once the team is stored, its channels
+  /// follow behind.
   Future<void> join(String teamId) async {
     final me = await _me();
     await session.api.call(
@@ -54,7 +55,7 @@ class TeamActions {
         ),
       ),
     );
-    session.connection.refreshAll();
+    await session.connection.entry.joinedTeam(teamId);
   }
 
   Future<void> leave(String teamId) async {

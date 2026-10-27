@@ -117,7 +117,7 @@ Future<void> _openPost(
     if (!await _askJoin(navigator, join)) return;
     final actions = await ref.read(channelActionsProvider(url).future);
     await locating(() async {
-      if (!join.inTeam) await actions.joinTeam(join.teamId);
+      if (!join.inTeam) await session.teams.join(join.teamId);
       await actions.join(join.channelId);
     });
     located = await locating<LinkedPost>(() => links.locatePost(postId));

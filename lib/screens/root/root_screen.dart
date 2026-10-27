@@ -70,6 +70,14 @@ class _RootScreenState extends ConsumerState<RootScreen> {
   @override
   Widget build(BuildContext context) {
     final servers = widget.servers;
+    for (final s in servers) {
+      ref.listen(serverNoticesProvider(s.url), (_, next) {
+        if (next.value case final notice?) {
+          ScaffoldMessenger.maybeOf(context)
+              ?.showSnackBar(SnackBar(content: Text(notice.message)));
+        }
+      });
+    }
     final target = ref.watch(railSelectionProvider);
     final server = servers.where((s) => s.url == target?.url).firstOrNull;
     if (server == null) {
