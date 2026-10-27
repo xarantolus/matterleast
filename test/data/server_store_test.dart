@@ -313,6 +313,42 @@ void main() {
       );
     });
 
+    test('a post first stored by a fetch still moves its channel up', () async {
+      await store.applyChannelPage(
+        channelId: 'c1',
+        page: pageOf([post('p2', createAt: 200)]),
+        kind: PageKind.since,
+      );
+      await store.applyLivePost(
+        post('p2', createAt: 200),
+        fromSelf: false,
+        mentionsMe: false,
+      );
+      final at = DateTime.fromMillisecondsSinceEpoch(200, isUtc: true);
+      final channel = await db.select(db.channels).getSingle();
+      expect(channel.lastPostAt, at);
+      expect(channel.lastRootPostAt, at);
+    });
+
+    test('an older page leaves the last-post time where it is', () async {
+      await store.applyLivePost(
+        post('p3', createAt: 300),
+        fromSelf: false,
+        mentionsMe: false,
+      );
+      await store.applyChannelPage(
+        channelId: 'c1',
+        page: pageOf([post('p0', createAt: 50)]),
+        kind: PageKind.before,
+        anchor: DateTime.fromMillisecondsSinceEpoch(100, isUtc: true),
+      );
+      final channel = await db.select(db.channels).getSingle();
+      expect(
+        channel.lastPostAt,
+        DateTime.fromMillisecondsSinceEpoch(300, isUtc: true),
+      );
+    });
+
     test('a replayed post is not counted twice', () async {
       for (var i = 0; i < 2; i++) {
         await store.applyLivePost(

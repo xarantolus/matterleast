@@ -932,6 +932,50 @@ class ServerStore {
 
   Future<void> _upsertPosts(List<api.Post> posts) async {
     if (posts.isEmpty) return;
+    await _upsertPostRows(posts);
+    await _raiseLastPostTimes(posts);
+  }
+
+  /// Every stored post moves its channel's last-post times forward, however
+  /// it arrived (live, a page, a search, a background check), so the
+  /// channel list sorts by the newest message the app has seen. The times
+  /// never go back: an older page leaves them be.
+  Future<void> _raiseLastPostTimes(List<api.Post> posts) async {
+    final latest = <String, ({int all, int? root})>{};
+    for (final p in posts) {
+      final channelId = p.channelId;
+      final at = p.createAt?.millisecondsSinceEpoch;
+      if (channelId == null || at == null) continue;
+      if (p.type?.startsWith('system_ephemeral') ?? false) continue;
+      final isRoot = p.rootId == null || p.rootId!.isEmpty;
+      final was = latest[channelId];
+      final root = isRoot ? at : null;
+      latest[channelId] = (
+        all: was == null || at > was.all ? at : was.all,
+        root: switch ((was?.root, root)) {
+          (final a?, final b?) => a > b ? a : b,
+          (final a, final b) => a ?? b,
+        },
+      );
+    }
+    for (final MapEntry(key: channelId, value: at) in latest.entries) {
+      await db.customUpdate(
+        'UPDATE channels SET '
+        'last_post_at = MAX(COALESCE(last_post_at, 0), ?1), '
+        'last_root_post_at = CASE WHEN ?2 IS NULL THEN last_root_post_at '
+        'ELSE MAX(COALESCE(last_root_post_at, 0), ?2) END '
+        'WHERE id = ?3',
+        variables: [
+          Variable.withInt(at.all),
+          Variable<int>(at.root),
+          Variable.withString(channelId),
+        ],
+        updates: {db.channels},
+      );
+    }
+  }
+
+  Future<void> _upsertPostRows(List<api.Post> posts) async {
     final pendingIds = posts
         .map((p) => p.pendingPostId)
         .where((id) => id != null && id.isNotEmpty)
@@ -1030,8 +1074,6 @@ class ServerStore {
           totalMsgCountRoot: Value(
             channel.totalMsgCountRoot + (isRoot ? 1 : 0),
           ),
-          lastPostAt: Value(post.createAt),
-          lastRootPostAt: isRoot ? Value(post.createAt) : const Value.absent(),
         ),
       );
     }
