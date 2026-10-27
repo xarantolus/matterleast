@@ -26,12 +26,14 @@ import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
+import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/conversation_route.dart';
+import 'package:matterleast/ui/slide_route.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
@@ -79,16 +81,19 @@ void main() {
             _pat.id,
           ).overrideWith((ref) async {}),
         ],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: Consumer(
-            builder: (context, ref, _) {
-              widgetRef = ref;
-              container = ProviderScope.containerOf(context);
-              return const Scaffold(
-                body: ReopenSwipe(child: SizedBox.expand()),
-              );
-            },
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp(
+            theme: MatterleastApp.lightTheme,
+            navigatorObservers: [ref.watch(conversationRoutesProvider)],
+            home: Consumer(
+              builder: (context, ref, _) {
+                widgetRef = ref;
+                container = ProviderScope.containerOf(context);
+                return const Scaffold(
+                  body: ReopenSwipe(child: SizedBox.expand()),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -114,6 +119,105 @@ void main() {
 
   NavigatorState navigator(WidgetTester tester) =>
       tester.state<NavigatorState>(find.byType(Navigator).first);
+
+  Future<void> open(
+    WidgetTester tester, {
+    String channel = channelId,
+    String? rootId,
+    String? highlight,
+  }) async {
+    unawaited(
+      openConversation(
+        navigator(tester),
+        url: server.url.toString(),
+        channelId: channel,
+        title: 'Boats',
+        teamId: teamId,
+        rootId: rootId,
+        highlightPostId: highlight,
+      ),
+    );
+    await settle(tester);
+  }
+
+  Future<void> back(WidgetTester tester) async {
+    navigator(tester).pop();
+    await settle(tester);
+  }
+
+  /// A page such as a channel's info or its pinned messages.
+  Future<void> page(WidgetTester tester, String title) async {
+    unawaited(
+      navigator(tester).push(
+        SlideRoute<void>(
+          builder: (_) => Scaffold(appBar: AppBar(title: Text(title))),
+        ),
+      ),
+    );
+    await settle(tester);
+  }
+
+  Finder conversations() => find.byWidgetPredicate(
+    (w) => w is ChannelScreen || w is ThreadScreen,
+    skipOffstage: false,
+  );
+
+  testWidgets('a message picked under a channel\'s info opens in that '
+      'channel, and one Back leads to the list', (tester) async {
+    await start(tester);
+    await open(tester);
+    await page(tester, 'Info');
+    await page(tester, 'Pinned');
+    await open(tester, highlight: 'old1');
+    expect(find.text('Pinned'), findsNothing);
+    expect(conversations(), findsOneWidget);
+    expect(
+      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
+      'old1',
+    );
+    await back(tester);
+    expect(conversations(), findsNothing);
+    expect(find.byType(ReopenSwipe), findsOneWidget);
+    await finish(tester);
+  });
+
+  testWidgets('another conversation takes the place of the open one', (
+    tester,
+  ) async {
+    await start(tester);
+    await open(tester);
+    await open(tester, rootId: 'old1');
+    await page(tester, 'Profile');
+    await open(tester, channel: _directId);
+    expect(conversations(), findsOneWidget);
+    expect(
+      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).channelId,
+      _directId,
+    );
+    await back(tester);
+    expect(conversations(), findsNothing);
+    await finish(tester);
+  });
+
+  testWidgets('a thread opens over its channel; a right swipe goes back to '
+      'the channel, the next to the list', (tester) async {
+    await start(tester);
+    await open(tester);
+    await open(tester, rootId: 'old1');
+    expect(find.byType(ThreadScreen), findsOneWidget);
+    await tester.fling(find.byType(ThreadScreen), const Offset(300, 0), 1000);
+    await settle(tester);
+    expect(find.byType(ThreadScreen), findsNothing);
+    expect(find.byType(ChannelScreen), findsOneWidget);
+    await open(tester, rootId: 'old1');
+    await open(tester, rootId: 'old2');
+    await back(tester);
+    expect(find.byType(ChannelScreen), findsOneWidget);
+    expect(find.byType(ThreadScreen), findsNothing);
+    await back(tester);
+    expect(conversations(), findsNothing);
+    await finish(tester);
+  });
 
   testWidgets('a channel slides in, its team is picked and it is remembered', (
     tester,
