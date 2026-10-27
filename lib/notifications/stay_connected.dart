@@ -3,11 +3,11 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
-import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/app_visibility.dart';
 import 'package:matterleast/notifications/background.dart';
+import 'package:matterleast/notifications/live_notifications.dart';
 import 'package:matterleast/notifications/notification_check.dart';
 
 /// The opt-in foreground service, switched from the settings. Its state
@@ -54,10 +54,7 @@ Future<void> stayConnectedMain() async {
 
 class _ServiceEngine {
   BackgroundApp? _app;
-  final _subscriptions = <StreamSubscription<Object?>>[];
-  final _checks = <String, NotificationCheck>{};
-  final _pending = <String>{};
-  Timer? _debounce;
+  final _live = <LiveNotifications>[];
   var _busy = Future<void>.value();
 
   /// One step at a time: connecting and letting go never overlap.
@@ -76,45 +73,29 @@ class _ServiceEngine {
     final labels = await app.signedIn();
     for (final MapEntry(key: url, value: label) in labels.entries) {
       final session = await app.manager.session(url);
-      final check = _checks[url] = NotificationCheck(
+      final check = NotificationCheck(
         session,
         app.notifier,
-        appVisible: () => AppVisibility.visible,
+        shownNow: (_) => AppVisibility.visible,
         serverName: label,
       );
-      _subscriptions
-        ..add(
-          session.connection.applied
-              .where((e) => e is PostedEvent)
-              .listen((_) => _soon(url)),
-        )
-        ..add(session.connection.caughtUp.listen((_) => _soon(url)));
+      _live.add(
+        LiveNotifications(
+          applied: session.connection.applied,
+          caughtUp: session.connection.caughtUp,
+          check: () => check.run(refresh: false),
+        )..start(),
+      );
       session.connection.socket.start();
       unawaited(check.run().catchError((Object _) {}));
     }
   });
 
-  /// Posts often come in bursts; one check covers them.
-  void _soon(String url) {
-    _pending.add(url);
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(seconds: 2), () {
-      final urls = _pending.toList();
-      _pending.clear();
-      for (final url in urls) {
-        unawaited(_checks[url]?.run(refresh: false).catchError((Object _) {}));
-      }
-    });
-  }
-
   Future<void> _disconnect() async {
-    _debounce?.cancel();
-    _pending.clear();
-    for (final s in _subscriptions) {
-      await s.cancel();
+    for (final live in _live) {
+      await live.stop();
     }
-    _subscriptions.clear();
-    _checks.clear();
+    _live.clear();
     await _app?.close();
     _app = null;
   }

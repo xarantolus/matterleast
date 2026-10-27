@@ -47,10 +47,10 @@ class ConversationMemory {
   }
 
   void update() {
-    final live = routes.live;
-    final open = live.isEmpty
-        ? panes()
-        : Panes.fromStack([for (final r in live) r.target]);
+    final open = Panes.openNow(
+      routes: [for (final r in routes.live) r.target],
+      panes: panes(),
+    );
     final now = conversationToSave(open);
     if (now == saved) return;
     saved = now;

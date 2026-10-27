@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/domain/notify_props.dart';
+import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/notifications/notifier.dart';
 import 'package:matterleast/notifications/notify_rules.dart';
 
@@ -442,5 +443,137 @@ void main() {
         ),
       );
     });
+  });
+
+  group('toast on desktop', () {
+    const url = 'https://chat.example.test';
+    const dm = ChannelTarget(url: url, channelId: 'dm', title: 'Bob');
+    const town = ChannelTarget(url: url, channelId: 'town', title: 'Town');
+    const thread = ThreadTarget(
+      url: url,
+      channelId: 'town',
+      rootId: 'root',
+      channelName: 'Town',
+    );
+    const elsewhere = ChannelTarget(
+      url: 'https://other.example.test',
+      channelId: 'dm',
+      title: 'Bob',
+    );
+
+    // As the check decides: worth notifying by the server's notify props,
+    // and not in view right now.
+    bool toast(
+      NotifyPost post,
+      NotifyChannel channel, {
+      required bool focused,
+      Panes open = Panes.none,
+      NotifyUser? user,
+      bool crt = false,
+    }) {
+      final me = user ?? _me(crt: crt);
+      final kind = notifyKindOf(
+        post,
+        channel,
+        me,
+        thread: const NotifyThread(following: true),
+      );
+      return kind != null &&
+          !conversationInView(
+            url,
+            ConversationKey.of(post, collapsedThreads: crt),
+            focused: focused,
+            open: open,
+          );
+    }
+
+    final dmPost = _post('p', channel: 'dm');
+    final reply = _post('r', rootId: 'root', message: 'ping @kim');
+    final cases = <(String, bool, bool)>[
+      (
+        'a DM, window focused on another channel',
+        toast(dmPost, _direct, focused: true, open: const Panes(channel: town)),
+        true,
+      ),
+      (
+        'a DM, window hidden in the tray with the DM open',
+        toast(dmPost, _direct, focused: false, open: const Panes(channel: dm)),
+        true,
+      ),
+      (
+        'a DM, the DM open in a focused window',
+        toast(dmPost, _direct, focused: true, open: const Panes(channel: dm)),
+        false,
+      ),
+      (
+        'a DM, the same channel id open on another server',
+        toast(
+          dmPost,
+          _direct,
+          focused: true,
+          open: const Panes(channel: elsewhere),
+        ),
+        true,
+      ),
+      (
+        'a DM, nothing open in a focused window',
+        toast(dmPost, _direct, focused: true),
+        true,
+      ),
+      (
+        'a channel message without a mention, never',
+        toast(_post('p'), _open, focused: false),
+        false,
+      ),
+      (
+        'a DM set to never notify, never',
+        toast(
+          dmPost,
+          const NotifyChannel(id: 'dm', type: 'D', push: 'none'),
+          focused: false,
+        ),
+        false,
+      ),
+      (
+        'do not disturb, never',
+        toast(dmPost, _direct, focused: false, user: _me(dnd: true)),
+        false,
+      ),
+      (
+        'own post, never',
+        toast(_post('p', channel: 'dm', user: 'u-me'), _direct, focused: false),
+        false,
+      ),
+      (
+        'a collapsed-thread reply, only its channel open',
+        toast(
+          reply,
+          _open,
+          focused: true,
+          crt: true,
+          open: const Panes(channel: town),
+        ),
+        true,
+      ),
+      (
+        'a collapsed-thread reply, its thread open',
+        toast(
+          reply,
+          _open,
+          focused: true,
+          crt: true,
+          open: const Panes(channel: town, thread: thread),
+        ),
+        false,
+      ),
+      (
+        'a reply without collapsed threads, its channel open',
+        toast(reply, _open, focused: true, open: const Panes(channel: town)),
+        false,
+      ),
+    ];
+    for (final (name, got, want) in cases) {
+      test(name, () => expect(got, want));
+    }
   });
 }

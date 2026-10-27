@@ -117,6 +117,28 @@ void main() {
     });
   });
 
+  group('desktop toast', () {
+    test('a direct message: the sender above, the message below', () {
+      expect(
+        toastText(title: 'Bob Stone', group: false, sender: 'Bob', text: 'hi'),
+        (title: 'Bob Stone', body: 'hi'),
+      );
+    });
+
+    test('a channel names the sender in the body and its server', () {
+      expect(
+        toastText(
+          title: 'Town Square',
+          group: true,
+          sender: 'Bob Stone',
+          text: 'lunch?',
+          subText: 'Home · Crew',
+        ),
+        (title: 'Town Square · Home · Crew', body: 'Bob Stone: lunch?'),
+      );
+    });
+  });
+
   group('details', () {
     test('messages stay oldest first, dated by their posts', () {
       final details = _details(

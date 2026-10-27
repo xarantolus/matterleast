@@ -80,7 +80,7 @@ class BackgroundApp {
         await NotificationCheck(
           session,
           notifier,
-          appVisible: () => AppVisibility.visible,
+          shownNow: (_) => AppVisibility.visible,
           serverName: label,
         ).run(refresh: refresh);
       } on Object catch (e) {
