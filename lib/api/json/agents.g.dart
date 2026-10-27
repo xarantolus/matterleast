@@ -156,5 +156,5 @@ Map<String, dynamic> _$AgentAnalysisRequestToJson(
 ) => <String, dynamic>{
   'analysis_type': instance.analysisType,
   'days': ?instance.days,
-  'unreads_only': ?instance.unreadsOnly,
+  'since': ?instance.since?.toIso8601String(),
 };

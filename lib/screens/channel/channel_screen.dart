@@ -50,7 +50,11 @@ class ChannelScreen extends ConsumerWidget {
         : ref.watch(userProfileProvider(url, partnerId)).value;
     void openInfo() => Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => ChannelInfoScreen(url: url, channelId: channelId),
+        builder: (_) => ChannelInfoScreen(
+          url: url,
+          channelId: channelId,
+          unreadSince: unreadSince(state.rows, state.lastViewedAt),
+        ),
       ),
     );
     return ConversationScaffold(
