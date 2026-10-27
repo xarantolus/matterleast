@@ -1,4 +1,9 @@
 Matterleast
+Copyright 2026 xarantolus
+
+This product is licensed under the Apache License, Version 2.0 (see
+LICENSE). Third-party packages it depends on are distributed under their
+own licences.
 
 The emoji table in lib/data/emoji/emoji_table.g.dart is generated from
 emoji.json in Mattermost (https://github.com/mattermost/mattermost),
@@ -6,3 +11,13 @@ Copyright (c) 2015-present Mattermost, Inc., licensed under the Apache
 License 2.0. That data is based on emoji-data
 (https://github.com/iamcal/emoji-data), Copyright (c) 2013 Cal Henderson,
 licensed under the MIT License.
+
+Matterleast is an independent rebuild of the behaviour of Mattermost Mobile
+(https://github.com/mattermost/mattermost-mobile), Copyright 2015-present
+Mattermost, Inc., licensed under the Apache License 2.0. No source code,
+assets or translations from Mattermost Mobile are included. Its NOTICE file
+lists the JavaScript packages that app bundles; Matterleast bundles none of
+them.
+
+Mattermost is a trademark of Mattermost, Inc. Matterleast is not affiliated
+with or endorsed by Mattermost, Inc.

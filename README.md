@@ -44,4 +44,6 @@ Everything builds inside the dev container (Flutter, Android SDK, a headless emu
 
 
 ### [License](LICENSE)
-This is free as in freedom software. Do whatever you like with it.
+Matterleast is licensed under the [Apache License 2.0](LICENSE), the same licence as the official Mattermost mobile app. Third-party packages keep their own licences, and [NOTICE](NOTICE) lists the notices that apply to material in this repository.
+
+Mattermost is a trademark of Mattermost, Inc. The licence covers the code only and grants no rights to the Mattermost name or logo. Matterleast uses neither as its own branding.
