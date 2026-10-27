@@ -54,6 +54,9 @@ typedef ReadMark = ({String? channelId, String? rootId});
 abstract final class PostListNames {
   static const mentions = 'mentions';
   static const saved = 'saved';
+
+  /// A channel's pinned messages.
+  static String pinned(String channelId) => 'pinned:$channelId';
 }
 
 /// The only write path into a server database. Each method is one
@@ -1173,21 +1176,58 @@ class ServerStore {
     if (post.id == null || post.createAt == null || post.channelId == null) {
       return;
     }
-    await db.transaction(() => _upsertPosts([post]));
+    await db.transaction(() async {
+      await _upsertPosts([post]);
+      await _keepPinnedList(post.id!, post.channelId!, pinned: post.isPinned);
+    });
+  }
+
+  /// A channel's pinned list follows a post being pinned or unpinned, here
+  /// or elsewhere, until the list is fetched again.
+  Future<void> _keepPinnedList(
+    String postId,
+    String channelId, {
+    required bool? pinned,
+  }) async {
+    final list = PostListNames.pinned(channelId);
+    if (pinned ?? false) {
+      await _prependToList(list, postId);
+    } else if (pinned == false) {
+      await (db.delete(
+        db.postLists,
+      )..where((l) => l.list.equals(list) & l.postId.equals(postId))).go();
+    }
   }
 
   /// Keeps the row as a placeholder until the channel is reopened.
   Future<void> applyDelete(String postId, {required DateTime at}) =>
-      (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
-        PostsCompanion(
-          deleteAt: Value(at),
-          message: const Value(''),
-          propsJson: const Value(null),
-          metadataJson: const Value(null),
-          fileCount: const Value(0),
-          reactionCount: const Value(0),
-        ),
-      );
+      db.transaction(() async {
+        final row = await post(postId);
+        if (row == null || row.deleteAt != null) return;
+        await _replyGone(row);
+        await (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
+          PostsCompanion(
+            deleteAt: Value(at),
+            message: const Value(''),
+            propsJson: const Value(null),
+            metadataJson: const Value(null),
+            fileCount: const Value(0),
+            reactionCount: const Value(0),
+          ),
+        );
+      });
+
+  /// The server sends no thread update when a reply goes, so its root
+  /// and thread count one reply less here, as the official app does.
+  Future<void> _replyGone(PostRow reply) async {
+    if (reply.rootId.isEmpty || reply.deleteAt != null) return;
+    final less = const CustomExpression<int>('MAX(reply_count - 1, 0)');
+    await (db.update(db.posts)..where((p) => p.id.equals(reply.rootId))).write(
+      PostsCompanion.custom(replyCount: less),
+    );
+    await (db.update(db.threads)..where((t) => t.rootId.equals(reply.rootId)))
+        .write(ThreadsCompanion.custom(replyCount: less));
+  }
 
   Future<void> applyReaction(api.Reaction reaction, {required bool added}) =>
       db.transaction(() async {
@@ -1526,13 +1566,19 @@ class ServerStore {
   );
 
   Future<void> setPinned(String postId, {required bool pinned}) =>
-      (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
-        PostsCompanion(isPinned: Value(pinned)),
-      );
+      db.transaction(() async {
+        final row = await post(postId);
+        if (row == null) return;
+        await (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
+          PostsCompanion(isPinned: Value(pinned)),
+        );
+        await _keepPinnedList(postId, row.channelId, pinned: pinned);
+      });
 
   /// The user deleted their post: it goes at once, without the placeholder
   /// others' deletions leave.
   Future<void> removePost(String postId) => db.transaction(() async {
+    if (await post(postId) case final row?) await _replyGone(row);
     await (db.delete(db.posts)..where((p) => p.id.equals(postId))).go();
     await (db.delete(db.reactions)..where((r) => r.postId.equals(postId))).go();
     await (db.delete(db.files)..where((f) => f.postId.equals(postId))).go();

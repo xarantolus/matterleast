@@ -172,13 +172,13 @@ class MessageMenu extends ConsumerWidget {
                               _run(ref.read(postActionsProvider(url).future), (
                                 a,
                               ) async {
-                                final group = post.reactions
-                                    .where((g) => g.emojiName == name && g.mine)
-                                    .firstOrNull;
-                                if (group == null) {
-                                  await a.addReaction(post.id, name);
-                                }
-                              }, "Couldn't add the reaction."),
+                                final mine = post.reactions.any(
+                                  (g) => g.emojiName == name && g.mine,
+                                );
+                                await (mine
+                                    ? a.removeReaction(post.id, name)
+                                    : a.addReaction(post.id, name));
+                              }, "Couldn't change the reaction."),
                             );
                           },
                           icon: EmojiGlyph(
