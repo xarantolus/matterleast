@@ -44,7 +44,12 @@ Alternatively, you can [download the APK file](https://github.com/xarantolus/mat
 
 ### Desktop
 - **Windows:** [download `matterleast-setup.exe`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast-setup.exe) and run it. The installer is unsigned, so SmartScreen shows "More info", then "Run anyway".
-- **Linux (experimental):** [download `matterleast-linux-x64.tar.gz`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast-linux-x64.tar.gz) and unpack it. It needs GTK 3, libsecret with a running keyring (GNOME Keyring or KWallet), libayatana-appindicator3 and WebKitGTK 4.1. Videos open in your system player.
+- **Linux (experimental):** [download `matterleast-linux-x64.tar.gz`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast-linux-x64.tar.gz), unpack it anywhere and run `./matterleast`. On its first start it adds itself to the app menu and registers as the handler of the `mmauth://` links single sign-on needs; it does that again if you move the folder. To remove it, delete the folder and `~/.local/share/applications/matterleast.desktop`. It needs GTK 3, libsecret with a running keyring (GNOME Keyring or KWallet), libayatana-appindicator3 and WebKitGTK 4.1.
+  ```sh
+  tar xzf matterleast-linux-x64.tar.gz
+  ./matterleast/matterleast
+  ```
+  Known gaps: it's experimental. Without a running, unlocked keyring the app can't save your sign-in and says so. The tray icon needs the AppIndicator extension on GNOME. Videos open in your system player. The unread count shows on the icon in docks that support it. The tarball also holds `matterleast.desktop` and the icon for a manual install.
 
 
 ### Development

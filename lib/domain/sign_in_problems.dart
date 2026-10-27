@@ -34,9 +34,8 @@ const mfaSetupNeededText =
     'app, then sign in again.';
 
 const keyringUnavailableText =
-    "Matterleast can't reach the system keyring, where it keeps your "
-    'sign-in. Make sure a keyring such as GNOME Keyring or KWallet is '
-    'running and unlocked, then try again.';
+    "No keyring available, so your sign-in can't be saved. Install or "
+    'unlock a keyring such as GNOME Keyring or KWallet, then try again.';
 
 /// Words for a request that never got a usable answer from [host].
 String connectionProblemText(ApiError error, String host) => switch (error) {
