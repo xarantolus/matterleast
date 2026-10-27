@@ -62,6 +62,7 @@ class TeamActions {
     await session.api.call(
       () => _client.teams.removeTeamMember(teamId: teamId, userId: me),
     );
+    await session.store.removeTeam(teamId);
     session.connection.refreshAll();
   }
 

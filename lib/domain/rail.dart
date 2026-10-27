@@ -39,13 +39,23 @@ String? shownTeam(RailTarget? target, List<RailTeam> teams) {
 }
 
 /// Per team: mention and unread totals over its channels once they were
-/// fetched, else the server's team counts from the entry sync.
+/// fetched, else the server's team counts from the entry sync. With
+/// collapsed threads the team's followed threads count too, as in the
+/// official app.
 ({bool unread, int mentions}) teamBadge({
   required bool channelsSynced,
   required int channelMentions,
   required bool anyChannelUnread,
   required int teamMentions,
   required int teamUnreadMessages,
-}) => channelsSynced
-    ? (unread: anyChannelUnread, mentions: channelMentions)
-    : (unread: teamUnreadMessages > 0, mentions: teamMentions);
+  int threadMentions = 0,
+  bool anyThreadUnread = false,
+}) {
+  final channels = channelsSynced
+      ? (unread: anyChannelUnread, mentions: channelMentions)
+      : (unread: teamUnreadMessages > 0, mentions: teamMentions);
+  return (
+    unread: channels.unread || anyThreadUnread,
+    mentions: channels.mentions + threadMentions,
+  );
+}

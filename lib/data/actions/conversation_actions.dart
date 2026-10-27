@@ -274,6 +274,18 @@ class ConversationActions {
     );
   }
 
+  /// Marks every thread of [teamId] read once the server agreed, as the
+  /// Threads list's "Mark all as read" in the official app does.
+  Future<void> markAllThreadsRead(String teamId) async {
+    // Not in the generated client: no body and an OK answer.
+    await _call(
+      () => session.api.dio.put<Object?>(
+        '/api/v4/users/me/teams/$teamId/threads/read',
+      ),
+    );
+    await _store.applyThreadRead(teamId: teamId, lastViewedAt: _clock());
+  }
+
   Future<DateTime?> _postsFetchedAt(String channelId) async =>
       (await (_db.select(
             _db.myChannels,

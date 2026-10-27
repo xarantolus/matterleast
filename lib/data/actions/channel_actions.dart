@@ -488,7 +488,7 @@ class ChannelActions {
     );
   }
 
-  static String pinnedList(String channelId) => 'pinned:$channelId';
+  static String pinnedList(String channelId) => PostListNames.pinned(channelId);
 
   Future<String> _myId() async {
     final me = await _db.syncText(SyncKeys.currentUserId);

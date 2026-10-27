@@ -11,6 +11,7 @@ import 'package:matterleast/data/actions/file_upload.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/quote.dart';
+import 'package:matterleast/domain/reaction_shortcut.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/screens/channel/composer_extras.dart';
@@ -471,6 +472,20 @@ class ComposerDraft extends _$ComposerDraft {
           }
         }
         return const SubmitDone();
+      }
+      if (reactionShortcut(message) case final shortcut?
+          when value.attachments.isEmpty && at == null && !burnOnRead) {
+        final posts = await ref.read(postActionsProvider(url).future);
+        if (await posts.reactToNewest(
+          channelId,
+          rootId: rootId,
+          emojiName: shortcut.emojiName,
+          add: shortcut.add,
+        )) {
+          if (ref.mounted) sent();
+          await actions.clearDraft(channelId, rootId: rootId);
+          return const SubmitDone();
+        }
       }
       if (!await confirmMention(message) || !ref.mounted) {
         return const SubmitDone();
