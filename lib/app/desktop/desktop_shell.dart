@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'package:matterleast/app/desktop/taskbar.dart';
 import 'package:matterleast/app/desktop/tray_host.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/desktop_window.dart';
+import 'package:matterleast/domain/unread_badge.dart';
 import 'package:matterleast/log.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:tray_manager/tray_manager.dart' as tray;
@@ -31,6 +33,7 @@ class DesktopShell with WindowListener {
   StreamSubscription<bool>? _closeSetting;
   StreamSubscription<bool>? _hostChanges;
   Timer? _saveSoon;
+  int? _unread;
 
   // Held for as long as the icon shows: a collected wrapper releases its
   // native object, and with it the icon or the click listener.
@@ -49,6 +52,7 @@ class DesktopShell with WindowListener {
     await windowManager.waitUntilReadyToShow(
       WindowOptions(
         title: 'Matterleast',
+        titleBarStyle: TitleBarStyle.hidden,
         minimumSize: minimumWindowSize,
         size: placement == null
             ? defaultWindowSize
@@ -60,6 +64,7 @@ class DesktopShell with WindowListener {
       await windowManager.setPosition(Offset(x, y));
     }
     if (placement?.maximized ?? false) await windowManager.maximize();
+    _maximized.value = await windowManager.isMaximized();
     await windowManager.setPreventClose(true);
     windowManager.addListener(shell);
     shell._closeSetting = settings
@@ -114,7 +119,7 @@ class DesktopShell with WindowListener {
         ..addSeparator()
         ..addItem(item('Quit', quit));
       icon
-        ..icon = tray.ImageAsset.fromAsset(appIconAsset)
+        ..icon = _trayImage()
         ..setTooltip('Matterleast')
         ..setContextMenu(menu)
         ..setContextMenuTrigger(tray.ContextMenuTrigger.rightClicked)
@@ -129,6 +134,31 @@ class DesktopShell with WindowListener {
     }
   }
 
+  tray.Image? _trayImage() => tray.ImageAsset.fromAsset(
+    windowBadge(_unread ?? 0).dot ? trayUnreadAsset : appIconAsset,
+  );
+
+  /// Shows [count] unread mentions and direct messages on the tray icon and
+  /// the taskbar button, and flashes the button when one arrives while the
+  /// window is in the background. Null while the count isn't known yet.
+  void showUnread(int? count) {
+    if (count == null) return;
+    final before = _unread;
+    _unread = count;
+    final badge = windowBadge(count);
+    if (before == null || windowBadge(before) != badge) {
+      try {
+        _tray?.icon = _trayImage();
+      } on Object catch (e) {
+        Log.warn('desktop', 'Changing the tray icon failed', e);
+      }
+      unawaited(Taskbar.setOverlay(badge.overlay));
+    }
+    if (flashesTaskbar(before: before, now: count, focused: _focus.value)) {
+      unawaited(Taskbar.flash());
+    }
+  }
+
   /// Shows and focuses the window, wherever it went.
   static Future<void> open() async {
     if (await windowManager.isMinimized()) await windowManager.restore();
@@ -140,6 +170,10 @@ class DesktopShell with WindowListener {
   /// follow the focus on Linux, so this comes from the window events.
   static ValueListenable<bool> get focus => _focus;
   static final _focus = ValueNotifier(true);
+
+  /// Whether the window fills the screen, for the maximise button.
+  static ValueListenable<bool> get maximized => _maximized;
+  static final _maximized = ValueNotifier(false);
 
   @override
   void onWindowFocus() => _focus.value = true;
@@ -201,10 +235,16 @@ class DesktopShell with WindowListener {
   void onWindowResized() => _changed();
 
   @override
-  void onWindowMaximize() => _changed();
+  void onWindowMaximize() {
+    _maximized.value = true;
+    _changed();
+  }
 
   @override
-  void onWindowUnmaximize() => _changed();
+  void onWindowUnmaximize() {
+    _maximized.value = false;
+    _changed();
+  }
 
   void _changed() {
     _saveSoon?.cancel();

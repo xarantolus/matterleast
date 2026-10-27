@@ -12,3 +12,7 @@ bool get isDesktop => switch (defaultTargetPlatform) {
 /// The app icon as a Flutter asset, for the tray and notifications on
 /// desktop.
 const appIconAsset = 'assets/icon/legacy.png';
+
+/// The tray icon with a dot, while there are unread mentions or direct
+/// messages; made by tool/make-badges.sh.
+const trayUnreadAsset = 'assets/icon/tray_unread.png';

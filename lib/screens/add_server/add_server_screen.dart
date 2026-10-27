@@ -11,6 +11,7 @@ import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/trust_authority.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// Asks for a server address, checks it and goes on to its login. As the
 /// first screen it also lists signed-out servers for a quick sign-in.
@@ -114,7 +115,7 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
         : <ServerEntry>[];
     final text = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(
+      appBar: WindowAppBar(
         title: Text(widget.isRoot ? 'Matterleast' : 'Add a server'),
         bottom: ProgressSlot(active: state.checking),
       ),

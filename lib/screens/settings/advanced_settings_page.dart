@@ -7,6 +7,7 @@ import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 const _mediaBudgets = [100, 250, 500, 1000];
 const _filesBudgets = [250, 500, 1000, 2000];
@@ -42,7 +43,7 @@ class AdvancedSettingsPage extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: WindowAppBar(
         title: const Text('Storage'),
         bottom: ProgressSlot(active: usage.isLoading),
       ),
