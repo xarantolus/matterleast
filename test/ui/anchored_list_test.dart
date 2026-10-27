@@ -265,4 +265,27 @@ void main() {
       closeTo(bottomOfOldest, 0.01),
     );
   });
+
+  testWidgets('older rows arriving during a fling leave the fling as it was', (
+    tester,
+  ) async {
+    Future<double> flingDown({required bool olderArrive}) async {
+      await tester.pumpWidget(list(rowsFrom(30, 1)));
+      await tester.pumpAndSettle();
+      await toTheTop(tester);
+      await tester.fling(find.byType(Scrollable), const Offset(0, -150), 800);
+      await tester.pump(const Duration(milliseconds: 16));
+      if (olderArrive) await tester.pumpWidget(list(rowsFrom(30, -30)));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      final top = topOf(tester, 8);
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox());
+      return top;
+    }
+
+    final undisturbed = await flingDown(olderArrive: false);
+    expect(await flingDown(olderArrive: true), closeTo(undisturbed, 1));
+  });
 }
