@@ -9,6 +9,8 @@ abstract final class Permission {
   static const managePrivateMembers = 'manage_private_channel_members';
   static const deletePublicChannel = 'delete_public_channel';
   static const deletePrivateChannel = 'delete_private_channel';
+  static const convertPublicToPrivate = 'convert_public_channel_to_private';
+  static const manageTeam = 'manage_team';
   static const createPost = 'create_post';
   static const editPost = 'edit_post';
   static const editOthersPosts = 'edit_others_posts';
@@ -48,7 +50,17 @@ Set<String> roleNames(Iterable<String> roleStrings) => {
 };
 
 /// What the user may do with one channel.
-typedef ChannelRights = ({bool edit, bool archive, bool manageMembers});
+typedef ChannelRights = ({
+  bool edit,
+  bool archive,
+  bool manageMembers,
+
+  /// Make a public channel private; never true for a private one.
+  bool convert,
+
+  /// Bring an archived channel back, a team admin's right.
+  bool unarchive,
+});
 
 /// Pure: the rights for a channel of [type] (`O` public, `P` private; direct
 /// and group messages have none of these).
@@ -64,13 +76,23 @@ ChannelRights channelRights(
       edit: can(Permission.managePublicProperties),
       archive: can(Permission.deletePublicChannel),
       manageMembers: can(Permission.managePublicMembers),
+      convert: can(Permission.convertPublicToPrivate),
+      unarchive: can(Permission.manageTeam),
     ),
     'P' => (
       edit: can(Permission.managePrivateProperties),
       archive: can(Permission.deletePrivateChannel),
       manageMembers: can(Permission.managePrivateMembers),
+      convert: false,
+      unarchive: can(Permission.manageTeam),
     ),
-    _ => (edit: false, archive: false, manageMembers: false),
+    _ => (
+      edit: false,
+      archive: false,
+      manageMembers: false,
+      convert: false,
+      unarchive: false,
+    ),
   };
 }
 

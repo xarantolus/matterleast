@@ -146,6 +146,11 @@ class ChannelViews {
       canEdit: rights.edit,
       canArchive: rights.archive,
       canManageMembers: rights.manageMembers,
+      canConvert:
+          rights.convert &&
+          channel.deleteAt == null &&
+          channel.name != 'town-square',
+      canUnarchive: rights.unarchive && channel.deleteAt != null,
     );
   }
 

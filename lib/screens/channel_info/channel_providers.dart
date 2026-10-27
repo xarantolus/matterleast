@@ -71,3 +71,8 @@ Future<({bool public, bool private, bool join})> teamRights(
   final views = await ref.watch(channelViewsProvider(url).future);
   return views.teamRights(teamId);
 }
+
+/// The signed-in user's id.
+@riverpod
+Future<String> myUserId(Ref ref, String url) async =>
+    (await ref.watch(channelActionsProvider(url).future)).myId();

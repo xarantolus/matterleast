@@ -17,7 +17,7 @@ mixin _$ChannelInfo {
 
  String get id;/// `O`, `P`, `D` or `G`.
  String get type; String get name; String get title; String get teamId; String get teamName; String get teamDisplayName; String get purpose; String get header; bool get archived; bool get joined; bool get favorite; bool get muted; int? get memberCount;/// The other person of a direct message.
- String? get partnerId; String? get creatorName; DateTime? get createAt; ChannelNotify get notify; bool get canEdit; bool get canArchive; bool get canManageMembers;
+ String? get partnerId; String? get creatorName; DateTime? get createAt; ChannelNotify get notify; bool get canEdit; bool get canArchive; bool get canManageMembers; bool get canConvert; bool get canUnarchive;
 /// Create a copy of ChannelInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,20 +29,20 @@ $ChannelInfoCopyWith<ChannelInfo> get copyWith => _$ChannelInfoCopyWithImpl<Chan
 @override
 bool operator ==(Object other) {
   final _this = this as ChannelInfo;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChannelInfo&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.teamName, _this.teamName) || other.teamName == _this.teamName)&&(identical(other.teamDisplayName, _this.teamDisplayName) || other.teamDisplayName == _this.teamDisplayName)&&(identical(other.purpose, _this.purpose) || other.purpose == _this.purpose)&&(identical(other.header, _this.header) || other.header == _this.header)&&(identical(other.archived, _this.archived) || other.archived == _this.archived)&&(identical(other.joined, _this.joined) || other.joined == _this.joined)&&(identical(other.favorite, _this.favorite) || other.favorite == _this.favorite)&&(identical(other.muted, _this.muted) || other.muted == _this.muted)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.partnerId, _this.partnerId) || other.partnerId == _this.partnerId)&&(identical(other.creatorName, _this.creatorName) || other.creatorName == _this.creatorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.notify, _this.notify) || other.notify == _this.notify)&&(identical(other.canEdit, _this.canEdit) || other.canEdit == _this.canEdit)&&(identical(other.canArchive, _this.canArchive) || other.canArchive == _this.canArchive)&&(identical(other.canManageMembers, _this.canManageMembers) || other.canManageMembers == _this.canManageMembers));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChannelInfo&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.teamName, _this.teamName) || other.teamName == _this.teamName)&&(identical(other.teamDisplayName, _this.teamDisplayName) || other.teamDisplayName == _this.teamDisplayName)&&(identical(other.purpose, _this.purpose) || other.purpose == _this.purpose)&&(identical(other.header, _this.header) || other.header == _this.header)&&(identical(other.archived, _this.archived) || other.archived == _this.archived)&&(identical(other.joined, _this.joined) || other.joined == _this.joined)&&(identical(other.favorite, _this.favorite) || other.favorite == _this.favorite)&&(identical(other.muted, _this.muted) || other.muted == _this.muted)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.partnerId, _this.partnerId) || other.partnerId == _this.partnerId)&&(identical(other.creatorName, _this.creatorName) || other.creatorName == _this.creatorName)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.notify, _this.notify) || other.notify == _this.notify)&&(identical(other.canEdit, _this.canEdit) || other.canEdit == _this.canEdit)&&(identical(other.canArchive, _this.canArchive) || other.canArchive == _this.canArchive)&&(identical(other.canManageMembers, _this.canManageMembers) || other.canManageMembers == _this.canManageMembers)&&(identical(other.canConvert, _this.canConvert) || other.canConvert == _this.canConvert)&&(identical(other.canUnarchive, _this.canUnarchive) || other.canUnarchive == _this.canUnarchive));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ChannelInfo;
-  return Object.hashAll([runtimeType,_this.id,_this.type,_this.name,_this.title,_this.teamId,_this.teamName,_this.teamDisplayName,_this.purpose,_this.header,_this.archived,_this.joined,_this.favorite,_this.muted,_this.memberCount,_this.partnerId,_this.creatorName,_this.createAt,_this.notify,_this.canEdit,_this.canArchive,_this.canManageMembers]);
+  return Object.hashAll([runtimeType,_this.id,_this.type,_this.name,_this.title,_this.teamId,_this.teamName,_this.teamDisplayName,_this.purpose,_this.header,_this.archived,_this.joined,_this.favorite,_this.muted,_this.memberCount,_this.partnerId,_this.creatorName,_this.createAt,_this.notify,_this.canEdit,_this.canArchive,_this.canManageMembers,_this.canConvert,_this.canUnarchive]);
 }
 
 @override
 String toString() {
   final _this = this as ChannelInfo;
-  return 'ChannelInfo(id: ${_this.id}, type: ${_this.type}, name: ${_this.name}, title: ${_this.title}, teamId: ${_this.teamId}, teamName: ${_this.teamName}, teamDisplayName: ${_this.teamDisplayName}, purpose: ${_this.purpose}, header: ${_this.header}, archived: ${_this.archived}, joined: ${_this.joined}, favorite: ${_this.favorite}, muted: ${_this.muted}, memberCount: ${_this.memberCount}, partnerId: ${_this.partnerId}, creatorName: ${_this.creatorName}, createAt: ${_this.createAt}, notify: ${_this.notify}, canEdit: ${_this.canEdit}, canArchive: ${_this.canArchive}, canManageMembers: ${_this.canManageMembers})';
+  return 'ChannelInfo(id: ${_this.id}, type: ${_this.type}, name: ${_this.name}, title: ${_this.title}, teamId: ${_this.teamId}, teamName: ${_this.teamName}, teamDisplayName: ${_this.teamDisplayName}, purpose: ${_this.purpose}, header: ${_this.header}, archived: ${_this.archived}, joined: ${_this.joined}, favorite: ${_this.favorite}, muted: ${_this.muted}, memberCount: ${_this.memberCount}, partnerId: ${_this.partnerId}, creatorName: ${_this.creatorName}, createAt: ${_this.createAt}, notify: ${_this.notify}, canEdit: ${_this.canEdit}, canArchive: ${_this.canArchive}, canManageMembers: ${_this.canManageMembers}, canConvert: ${_this.canConvert}, canUnarchive: ${_this.canUnarchive})';
 }
 
 
@@ -53,7 +53,7 @@ abstract mixin class $ChannelInfoCopyWith<$Res>  {
   factory $ChannelInfoCopyWith(ChannelInfo value, $Res Function(ChannelInfo) _then) = _$ChannelInfoCopyWithImpl;
 @useResult
 $Res call({
- String id, String type, String name, String title, String teamId, String teamName, String teamDisplayName, String purpose, String header, bool archived, bool joined, bool favorite, bool muted, int? memberCount, String? partnerId, String? creatorName, DateTime? createAt, ChannelNotify notify, bool canEdit, bool canArchive, bool canManageMembers
+ String id, String type, String name, String title, String teamId, String teamName, String teamDisplayName, String purpose, String header, bool archived, bool joined, bool favorite, bool muted, int? memberCount, String? partnerId, String? creatorName, DateTime? createAt, ChannelNotify notify, bool canEdit, bool canArchive, bool canManageMembers, bool canConvert, bool canUnarchive
 });
 
 
@@ -70,7 +70,7 @@ class _$ChannelInfoCopyWithImpl<$Res>
 
 /// Create a copy of ChannelInfo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? name = null,Object? title = null,Object? teamId = null,Object? teamName = null,Object? teamDisplayName = null,Object? purpose = null,Object? header = null,Object? archived = null,Object? joined = null,Object? favorite = null,Object? muted = null,Object? memberCount = freezed,Object? partnerId = freezed,Object? creatorName = freezed,Object? createAt = freezed,Object? notify = null,Object? canEdit = null,Object? canArchive = null,Object? canManageMembers = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? name = null,Object? title = null,Object? teamId = null,Object? teamName = null,Object? teamDisplayName = null,Object? purpose = null,Object? header = null,Object? archived = null,Object? joined = null,Object? favorite = null,Object? muted = null,Object? memberCount = freezed,Object? partnerId = freezed,Object? creatorName = freezed,Object? createAt = freezed,Object? notify = null,Object? canEdit = null,Object? canArchive = null,Object? canManageMembers = null,Object? canConvert = null,Object? canUnarchive = null,}) {
   return _then(ChannelInfo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -93,6 +93,8 @@ as DateTime?,notify: null == notify ? _self.notify : notify // ignore: cast_null
 as ChannelNotify,canEdit: null == canEdit ? _self.canEdit : canEdit // ignore: cast_nullable_to_non_nullable
 as bool,canArchive: null == canArchive ? _self.canArchive : canArchive // ignore: cast_nullable_to_non_nullable
 as bool,canManageMembers: null == canManageMembers ? _self.canManageMembers : canManageMembers // ignore: cast_nullable_to_non_nullable
+as bool,canConvert: null == canConvert ? _self.canConvert : canConvert // ignore: cast_nullable_to_non_nullable
+as bool,canUnarchive: null == canUnarchive ? _self.canUnarchive : canUnarchive // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -187,10 +189,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String type,  String name,  String title,  String teamId,  String teamName,  String teamDisplayName,  String purpose,  String header,  bool archived,  bool joined,  bool favorite,  bool muted,  int? memberCount,  String? partnerId,  String? creatorName,  DateTime? createAt,  ChannelNotify notify,  bool canEdit,  bool canArchive,  bool canManageMembers)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String type,  String name,  String title,  String teamId,  String teamName,  String teamDisplayName,  String purpose,  String header,  bool archived,  bool joined,  bool favorite,  bool muted,  int? memberCount,  String? partnerId,  String? creatorName,  DateTime? createAt,  ChannelNotify notify,  bool canEdit,  bool canArchive,  bool canManageMembers,  bool canConvert,  bool canUnarchive)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChannelInfo() when $default != null:
-return $default(_that.id,_that.type,_that.name,_that.title,_that.teamId,_that.teamName,_that.teamDisplayName,_that.purpose,_that.header,_that.archived,_that.joined,_that.favorite,_that.muted,_that.memberCount,_that.partnerId,_that.creatorName,_that.createAt,_that.notify,_that.canEdit,_that.canArchive,_that.canManageMembers);case _:
+return $default(_that.id,_that.type,_that.name,_that.title,_that.teamId,_that.teamName,_that.teamDisplayName,_that.purpose,_that.header,_that.archived,_that.joined,_that.favorite,_that.muted,_that.memberCount,_that.partnerId,_that.creatorName,_that.createAt,_that.notify,_that.canEdit,_that.canArchive,_that.canManageMembers,_that.canConvert,_that.canUnarchive);case _:
   return orElse();
 
 }
@@ -208,10 +210,10 @@ return $default(_that.id,_that.type,_that.name,_that.title,_that.teamId,_that.te
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String type,  String name,  String title,  String teamId,  String teamName,  String teamDisplayName,  String purpose,  String header,  bool archived,  bool joined,  bool favorite,  bool muted,  int? memberCount,  String? partnerId,  String? creatorName,  DateTime? createAt,  ChannelNotify notify,  bool canEdit,  bool canArchive,  bool canManageMembers)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String type,  String name,  String title,  String teamId,  String teamName,  String teamDisplayName,  String purpose,  String header,  bool archived,  bool joined,  bool favorite,  bool muted,  int? memberCount,  String? partnerId,  String? creatorName,  DateTime? createAt,  ChannelNotify notify,  bool canEdit,  bool canArchive,  bool canManageMembers,  bool canConvert,  bool canUnarchive)  $default,) {final _that = this;
 switch (_that) {
 case _ChannelInfo():
-return $default(_that.id,_that.type,_that.name,_that.title,_that.teamId,_that.teamName,_that.teamDisplayName,_that.purpose,_that.header,_that.archived,_that.joined,_that.favorite,_that.muted,_that.memberCount,_that.partnerId,_that.creatorName,_that.createAt,_that.notify,_that.canEdit,_that.canArchive,_that.canManageMembers);case _:
+return $default(_that.id,_that.type,_that.name,_that.title,_that.teamId,_that.teamName,_that.teamDisplayName,_that.purpose,_that.header,_that.archived,_that.joined,_that.favorite,_that.muted,_that.memberCount,_that.partnerId,_that.creatorName,_that.createAt,_that.notify,_that.canEdit,_that.canArchive,_that.canManageMembers,_that.canConvert,_that.canUnarchive);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -228,10 +230,10 @@ return $default(_that.id,_that.type,_that.name,_that.title,_that.teamId,_that.te
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String type,  String name,  String title,  String teamId,  String teamName,  String teamDisplayName,  String purpose,  String header,  bool archived,  bool joined,  bool favorite,  bool muted,  int? memberCount,  String? partnerId,  String? creatorName,  DateTime? createAt,  ChannelNotify notify,  bool canEdit,  bool canArchive,  bool canManageMembers)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String type,  String name,  String title,  String teamId,  String teamName,  String teamDisplayName,  String purpose,  String header,  bool archived,  bool joined,  bool favorite,  bool muted,  int? memberCount,  String? partnerId,  String? creatorName,  DateTime? createAt,  ChannelNotify notify,  bool canEdit,  bool canArchive,  bool canManageMembers,  bool canConvert,  bool canUnarchive)?  $default,) {final _that = this;
 switch (_that) {
 case _ChannelInfo() when $default != null:
-return $default(_that.id,_that.type,_that.name,_that.title,_that.teamId,_that.teamName,_that.teamDisplayName,_that.purpose,_that.header,_that.archived,_that.joined,_that.favorite,_that.muted,_that.memberCount,_that.partnerId,_that.creatorName,_that.createAt,_that.notify,_that.canEdit,_that.canArchive,_that.canManageMembers);case _:
+return $default(_that.id,_that.type,_that.name,_that.title,_that.teamId,_that.teamName,_that.teamDisplayName,_that.purpose,_that.header,_that.archived,_that.joined,_that.favorite,_that.muted,_that.memberCount,_that.partnerId,_that.creatorName,_that.createAt,_that.notify,_that.canEdit,_that.canArchive,_that.canManageMembers,_that.canConvert,_that.canUnarchive);case _:
   return null;
 
 }
@@ -243,7 +245,7 @@ return $default(_that.id,_that.type,_that.name,_that.title,_that.teamId,_that.te
 
 
 class _ChannelInfo extends ChannelInfo {
-  const _ChannelInfo({required this.id, required this.type, required this.name, required this.title, required this.teamId, required this.teamName, required this.teamDisplayName, required this.purpose, required this.header, required this.archived, required this.joined, required this.favorite, required this.muted, this.memberCount, this.partnerId, this.creatorName, this.createAt, required this.notify, required this.canEdit, required this.canArchive, required this.canManageMembers}): super._();
+  const _ChannelInfo({required this.id, required this.type, required this.name, required this.title, required this.teamId, required this.teamName, required this.teamDisplayName, required this.purpose, required this.header, required this.archived, required this.joined, required this.favorite, required this.muted, this.memberCount, this.partnerId, this.creatorName, this.createAt, required this.notify, required this.canEdit, required this.canArchive, required this.canManageMembers, required this.canConvert, required this.canUnarchive}): super._();
   
 
 @override final  String id;
@@ -269,6 +271,8 @@ class _ChannelInfo extends ChannelInfo {
 @override final  bool canEdit;
 @override final  bool canArchive;
 @override final  bool canManageMembers;
+@override final  bool canConvert;
+@override final  bool canUnarchive;
 
 /// Create a copy of ChannelInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -280,18 +284,18 @@ _$ChannelInfoCopyWith<_ChannelInfo> get copyWith => __$ChannelInfoCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChannelInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.title, title) || other.title == title)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.teamName, teamName) || other.teamName == teamName)&&(identical(other.teamDisplayName, teamDisplayName) || other.teamDisplayName == teamDisplayName)&&(identical(other.purpose, purpose) || other.purpose == purpose)&&(identical(other.header, header) || other.header == header)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.joined, joined) || other.joined == joined)&&(identical(other.favorite, favorite) || other.favorite == favorite)&&(identical(other.muted, muted) || other.muted == muted)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.partnerId, partnerId) || other.partnerId == partnerId)&&(identical(other.creatorName, creatorName) || other.creatorName == creatorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.notify, notify) || other.notify == notify)&&(identical(other.canEdit, canEdit) || other.canEdit == canEdit)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive)&&(identical(other.canManageMembers, canManageMembers) || other.canManageMembers == canManageMembers));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChannelInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.title, title) || other.title == title)&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.teamName, teamName) || other.teamName == teamName)&&(identical(other.teamDisplayName, teamDisplayName) || other.teamDisplayName == teamDisplayName)&&(identical(other.purpose, purpose) || other.purpose == purpose)&&(identical(other.header, header) || other.header == header)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.joined, joined) || other.joined == joined)&&(identical(other.favorite, favorite) || other.favorite == favorite)&&(identical(other.muted, muted) || other.muted == muted)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.partnerId, partnerId) || other.partnerId == partnerId)&&(identical(other.creatorName, creatorName) || other.creatorName == creatorName)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.notify, notify) || other.notify == notify)&&(identical(other.canEdit, canEdit) || other.canEdit == canEdit)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive)&&(identical(other.canManageMembers, canManageMembers) || other.canManageMembers == canManageMembers)&&(identical(other.canConvert, canConvert) || other.canConvert == canConvert)&&(identical(other.canUnarchive, canUnarchive) || other.canUnarchive == canUnarchive));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,type,name,title,teamId,teamName,teamDisplayName,purpose,header,archived,joined,favorite,muted,memberCount,partnerId,creatorName,createAt,notify,canEdit,canArchive,canManageMembers]);
+    return Object.hashAll([runtimeType,id,type,name,title,teamId,teamName,teamDisplayName,purpose,header,archived,joined,favorite,muted,memberCount,partnerId,creatorName,createAt,notify,canEdit,canArchive,canManageMembers,canConvert,canUnarchive]);
 }
 
 @override
 String toString() {
-    return 'ChannelInfo(id: $id, type: $type, name: $name, title: $title, teamId: $teamId, teamName: $teamName, teamDisplayName: $teamDisplayName, purpose: $purpose, header: $header, archived: $archived, joined: $joined, favorite: $favorite, muted: $muted, memberCount: $memberCount, partnerId: $partnerId, creatorName: $creatorName, createAt: $createAt, notify: $notify, canEdit: $canEdit, canArchive: $canArchive, canManageMembers: $canManageMembers)';
+    return 'ChannelInfo(id: $id, type: $type, name: $name, title: $title, teamId: $teamId, teamName: $teamName, teamDisplayName: $teamDisplayName, purpose: $purpose, header: $header, archived: $archived, joined: $joined, favorite: $favorite, muted: $muted, memberCount: $memberCount, partnerId: $partnerId, creatorName: $creatorName, createAt: $createAt, notify: $notify, canEdit: $canEdit, canArchive: $canArchive, canManageMembers: $canManageMembers, canConvert: $canConvert, canUnarchive: $canUnarchive)';
 }
 
 
@@ -302,7 +306,7 @@ abstract mixin class _$ChannelInfoCopyWith<$Res> implements $ChannelInfoCopyWith
   factory _$ChannelInfoCopyWith(_ChannelInfo value, $Res Function(_ChannelInfo) _then) = __$ChannelInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String type, String name, String title, String teamId, String teamName, String teamDisplayName, String purpose, String header, bool archived, bool joined, bool favorite, bool muted, int? memberCount, String? partnerId, String? creatorName, DateTime? createAt, ChannelNotify notify, bool canEdit, bool canArchive, bool canManageMembers
+ String id, String type, String name, String title, String teamId, String teamName, String teamDisplayName, String purpose, String header, bool archived, bool joined, bool favorite, bool muted, int? memberCount, String? partnerId, String? creatorName, DateTime? createAt, ChannelNotify notify, bool canEdit, bool canArchive, bool canManageMembers, bool canConvert, bool canUnarchive
 });
 
 
@@ -319,7 +323,7 @@ class __$ChannelInfoCopyWithImpl<$Res>
 
 /// Create a copy of ChannelInfo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? name = null,Object? title = null,Object? teamId = null,Object? teamName = null,Object? teamDisplayName = null,Object? purpose = null,Object? header = null,Object? archived = null,Object? joined = null,Object? favorite = null,Object? muted = null,Object? memberCount = freezed,Object? partnerId = freezed,Object? creatorName = freezed,Object? createAt = freezed,Object? notify = null,Object? canEdit = null,Object? canArchive = null,Object? canManageMembers = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? name = null,Object? title = null,Object? teamId = null,Object? teamName = null,Object? teamDisplayName = null,Object? purpose = null,Object? header = null,Object? archived = null,Object? joined = null,Object? favorite = null,Object? muted = null,Object? memberCount = freezed,Object? partnerId = freezed,Object? creatorName = freezed,Object? createAt = freezed,Object? notify = null,Object? canEdit = null,Object? canArchive = null,Object? canManageMembers = null,Object? canConvert = null,Object? canUnarchive = null,}) {
   return _then(_ChannelInfo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -342,6 +346,8 @@ as DateTime?,notify: null == notify ? _self.notify : notify // ignore: cast_null
 as ChannelNotify,canEdit: null == canEdit ? _self.canEdit : canEdit // ignore: cast_nullable_to_non_nullable
 as bool,canArchive: null == canArchive ? _self.canArchive : canArchive // ignore: cast_nullable_to_non_nullable
 as bool,canManageMembers: null == canManageMembers ? _self.canManageMembers : canManageMembers // ignore: cast_nullable_to_non_nullable
+as bool,canConvert: null == canConvert ? _self.canConvert : canConvert // ignore: cast_nullable_to_non_nullable
+as bool,canUnarchive: null == canUnarchive ? _self.canUnarchive : canUnarchive // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

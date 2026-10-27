@@ -24,6 +24,7 @@ class PeopleList extends ConsumerStatefulWidget {
     required this.emptyBody,
     this.trailing,
     this.header,
+    this.hidden = const {},
     super.key,
   });
 
@@ -39,6 +40,9 @@ class PeopleList extends ConsumerStatefulWidget {
 
   /// Shown above the search field, such as the people picked so far.
   final Widget? header;
+
+  /// People left out of the rows, such as ones just removed.
+  final Set<String> hidden;
 
   @override
   ConsumerState<PeopleList> createState() => _PeopleListState();
@@ -89,7 +93,10 @@ class _PeopleListState extends ConsumerState<PeopleList> {
   @override
   Widget build(BuildContext context) {
     final list = _list.value;
-    final shownIds = list.found ?? list.items;
+    final shownIds = [
+      for (final id in list.found ?? list.items)
+        if (!widget.hidden.contains(id)) id,
+    ];
     final term = list.term;
     // A new page is a new query; the rows shown stay until it answers.
     final rows = _rows =

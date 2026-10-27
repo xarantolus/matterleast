@@ -29,7 +29,13 @@ void main() {
 
     test('may do none of it in a private channel without the admin role', () {
       final rights = channelRights('P', roles: roles, granted: granted);
-      expect(rights, (edit: false, archive: false, manageMembers: false));
+      expect(rights, (
+        edit: false,
+        archive: false,
+        manageMembers: false,
+        convert: false,
+        unarchive: false,
+      ));
     });
 
     test('gains the private rights as channel admin', () {
@@ -51,6 +57,8 @@ void main() {
         edit: false,
         archive: false,
         manageMembers: false,
+        convert: false,
+        unarchive: false,
       ));
     }
   });
