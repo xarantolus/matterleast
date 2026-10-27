@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
@@ -38,7 +39,7 @@ class TeamRail extends ConsumerWidget {
     final current = servers.where((s) => s.url == target?.url).firstOrNull;
     return FocusRegion(
       child: SizedBox(
-        width: 72,
+        width: railWidth,
         child: Column(
           children: [
             Expanded(

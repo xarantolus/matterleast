@@ -23,11 +23,14 @@ WindowClass windowClassOf(double width) => switch (width) {
   _ => WindowClass.compact,
 };
 
-/// Width of the channel list beside the rail when panes show.
+/// Width of the team rail, fixed: it holds icons only.
+const railWidth = 72.0;
+
+/// Default width of the channel list beside the rail when panes show.
 double listPaneWidth(WindowClass windowClass) =>
     windowClass == WindowClass.large ? 360 : 320;
 
-/// Width of the thread pane beside the channel.
+/// Default width of the thread pane beside the channel.
 const threadPaneWidth = 400.0;
 
 /// Message columns wider than this are hard to read; wider panes centre it.
