@@ -646,10 +646,7 @@ class _ShortcutTile extends StatelessWidget {
     // Same metrics as ChannelTile: these are rows of the same list.
     return ListTile(
       dense: true,
-      contentPadding: const EdgeInsets.only(
-        left: Spacing.lg,
-        right: Spacing.md,
-      ),
+      contentPadding: Spacing.row,
       minLeadingWidth: 28,
       leading: SizedBox(width: 28, child: Icon(icon, size: 20, color: color)),
       title: Text(

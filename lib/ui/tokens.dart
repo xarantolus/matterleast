@@ -8,6 +8,10 @@ abstract final class Spacing {
   static const lg = 16.0;
   static const xl = 24.0;
   static const xxl = 32.0;
+
+  /// Side padding of rows in the channel list and the Home lists, so both
+  /// end at the same distance from the screen edge.
+  static const row = EdgeInsets.only(left: lg, right: md);
 }
 
 /// Colours and text styles used on surfaces. [accent] is for text and icons

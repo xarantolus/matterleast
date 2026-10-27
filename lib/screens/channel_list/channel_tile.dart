@@ -30,10 +30,7 @@ class ChannelTile extends StatelessWidget {
     final color = item.muted ? tokens.muted : tokens.text;
     return ListTile(
       dense: true,
-      contentPadding: const EdgeInsets.only(
-        left: Spacing.lg,
-        right: Spacing.md,
-      ),
+      contentPadding: Spacing.row,
       minLeadingWidth: 28,
       leading: _ChannelIcon(serverUrl: serverUrl, item: item, color: color),
       title: Text(

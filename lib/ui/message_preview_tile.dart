@@ -41,6 +41,7 @@ class MessagePreviewTile extends ConsumerWidget {
     final large = MediaQuery.textScalerOf(context).scale(10) > 15;
     final marker = _marker(context, item);
     return ListTile(
+      contentPadding: Spacing.row,
       onTap: onTap,
       leading: Stack(
         children: [
