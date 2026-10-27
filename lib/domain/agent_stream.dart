@@ -123,12 +123,7 @@ AgentStream reduceAgentStream(AgentStream? state, AgentPostUpdate update) {
           ? s
           : s.copyWith(precontent: true);
     case 'end' || 'cancel':
-      return s.copyWith(
-        generating: false,
-        precontent: false,
-        reasoningLoading: false,
-        stopped: false,
-      );
+      return _ended(s);
     case 'continue':
       // The step before the tool decision is stored on the server now and
       // comes back with the conversation.
@@ -185,6 +180,37 @@ AgentStream reduceAgentStream(AgentStream? state, AgentPostUpdate update) {
   if (next == null) return s;
   return s.copyWith(message: next, precontent: false, generating: true);
 }
+
+/// Pure: [state] once the server stored [message] in the post. The plugin
+/// writes an agent post's text only when an answer is over, and when it
+/// fails before streaming (its `progress` events, then the error text) no
+/// `end` follows. A stream with nothing of its own goes (null), so the
+/// stored text shows; streamed text stays, no longer busy, until `end`
+/// hands it over to the conversation.
+AgentStream? agentStreamAfterEdit(
+  AgentStream? state, {
+  required String message,
+}) {
+  if (state == null || !state.busy || message.trim().isEmpty) return state;
+  if (state.live == null && state.rounds.isEmpty) return null;
+  return _ended(state);
+}
+
+/// Pure: [state] after the connection was lost and is back. Whatever ended
+/// meanwhile sent nothing this client saw; a stream still running is busy
+/// again with its next event.
+AgentStream? agentStreamAfterReconnect(AgentStream? state) {
+  if (state == null) return null;
+  if (state.live == null && state.rounds.isEmpty) return null;
+  return state.busy ? _ended(state) : state;
+}
+
+AgentStream _ended(AgentStream s) => s.copyWith(
+  generating: false,
+  precontent: false,
+  reasoningLoading: false,
+  stopped: false,
+);
 
 /// Pure: [state] once the user tapped Stop.
 AgentStream stopAgentStream(AgentStream? state) =>

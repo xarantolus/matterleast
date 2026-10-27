@@ -34,6 +34,7 @@ class EventApplier {
     DialogInbox? dialogs,
     this.drafts,
     this.scheduled,
+    this.onNotice,
     DateTime Function()? clock,
   }) : typing = typing ?? TypingTracker(),
        dialogs = dialogs ?? DialogInbox(),
@@ -49,6 +50,9 @@ class EventApplier {
   final DialogInbox dialogs;
   final DraftSync? drafts;
   final ScheduledSync? scheduled;
+
+  /// Shows the user a message from the server or a plugin.
+  final void Function(String message)? onNotice;
   final DateTime Function() _clock;
 
   ServerDatabase get _db => store.db;
@@ -83,6 +87,11 @@ class EventApplier {
         await store.applyEphemeralPost(post);
       case OpenDialogEvent(:final dialog?):
         dialogs.offer(dialog);
+      case ServerNoticeEvent(:final message):
+        onNotice?.call(message);
+      case TypingEvent(:final userId?, :final broadcast?, stopped: true)
+          when broadcast.channelId?.isNotEmpty ?? false:
+        typing.stopped(broadcast.channelId!, event.parentId ?? '', userId);
       case TypingEvent(:final userId?, :final broadcast?)
           when userId != me && (broadcast.channelId?.isNotEmpty ?? false):
         typing.expiry = await _typingExpiry();
@@ -112,8 +121,17 @@ class EventApplier {
       case ChannelChangedEvent(:final channel?, :final userId)
           when userId == null || userId.isEmpty || userId == me:
         await _refreshChannel(channel);
+      case ChannelChangedEvent(:final channel?)
+          when await _knownChannel(channel):
+        _later(entry.channelStats(channel));
       case ChannelChangedEvent():
         return;
+      case MarkedUnreadEvent(:final channelId)
+          when await _knownChannel(channelId):
+        await _markedUnread(channelId);
+      case ChannelSchemeEvent(:final channelId)
+          when await _knownChannel(channelId):
+        await _refreshChannel(channelId);
       case ChannelMemberUpdatedEvent(:final channelMember?)
           when channelMember.userId == me:
         await store.applyChannelMember(channelMember);
@@ -131,6 +149,8 @@ class EventApplier {
         _later(entry.ensureRoles([member.roles ?? '']));
       case UserRemovedEvent(:final channel?) when event.removedUser == me:
         await store.removeChannel(channel);
+      case UserRemovedEvent(:final channel?) when await _knownChannel(channel):
+        _later(entry.channelStats(channel));
       case CategoriesEvent(:final updatedCategories)
           when updatedCategories.isNotEmpty:
         await store.applyCategoryUpdates(updatedCategories);
@@ -140,6 +160,9 @@ class EventApplier {
       case TeamEvent(kind: TeamChange.joined, :final teamId?)
           when event.userId == me:
         _later(entry.joinedTeam(teamId));
+      // Sent to everyone; the membership decides whether it is ours.
+      case TeamEvent(kind: TeamChange.restored, :final id?):
+        _later(entry.joinedTeam(id));
       case TeamEvent(kind: TeamChange.left || TeamChange.deleted)
           when event.id != null && (event.userId == null || event.userId == me):
         await store.removeTeam(event.id!);
@@ -254,6 +277,7 @@ class EventApplier {
           channels: [await channel],
           members: [await member],
         );
+        _later(entry.ensureRoles([(await member).roles ?? '']));
         await _partnerProfile(await channel);
         final team = (await channel).teamId;
         final current = await _db.syncText(SyncKeys.currentTeamId);
@@ -261,6 +285,30 @@ class EventApplier {
         if (categoriesOf != null) {
           _later(entry.refreshTeam(categoriesOf, priority: SyncPriority.p1));
         }
+      },
+    ),
+  );
+
+  /// Marked unread elsewhere: the server's counts, and no automatic read
+  /// here until the channel is opened again. Its own key, so a plain
+  /// refresh in flight doesn't swallow it.
+  Future<void> _markedUnread(String channelId) => runner.enqueue(
+    SyncJob(
+      key: 'marked-unread:$channelId',
+      priority: SyncPriority.p0,
+      run: () async {
+        final channel = server.call(
+          () => server.client.channels.getChannel(channelId: channelId),
+        );
+        final member = server.call(
+          () => server.client.channels.getChannelMember(
+            channelId: channelId,
+            userId: 'me',
+          ),
+        );
+        await Future.wait<Object?>([channel, member]);
+        await store.applyChannel(await channel);
+        await store.applyMarkedUnread(await member);
       },
     ),
   );

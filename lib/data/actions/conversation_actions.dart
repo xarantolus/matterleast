@@ -184,22 +184,7 @@ class ConversationActions {
   }
 
   Future<void> channelStats(String channelId, {Object? owner}) =>
-      session.runner.enqueue(
-        SyncJob(
-          key: 'channel-stats:$channelId',
-          priority: SyncPriority.p1,
-          owner: owner,
-          visible: false,
-          run: () async {
-            final stats = await _call(
-              () => _client.channels.getChannelStats(channelId: channelId),
-            );
-            if (stats.memberCount case final count?) {
-              await _store.applyChannelStats(channelId, count);
-            }
-          },
-        ),
-      );
+      session.connection.entry.channelStats(channelId, owner: owner);
 
   /// The newest replies of a thread, with its first message.
   Future<void> refreshThread(String rootId, {Object? owner}) =>
