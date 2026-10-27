@@ -3,6 +3,7 @@ import 'package:matterleast/data/dialog_clock.dart';
 import 'package:matterleast/domain/dialog_dates.dart';
 import 'package:matterleast/domain/scheduled_posts.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 
 /// Asks when a message should go out: tomorrow or Monday morning, or a day
 /// and time of the user's choice, on the clock of [zone] (the user's
@@ -16,7 +17,7 @@ Future<DateTime?> pickScheduleTime(
   final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
   final nine = timeLabel(DateTime(2000, 1, 1, 9), use24: use24);
   final presets = schedulePresets(clock, nine: nine);
-  final choice = await showModalBottomSheet<DateTime?>(
+  final choice = await showAppSheet<DateTime?>(
     context: context,
     showDragHandle: true,
     builder: (sheet) => SafeArea(

@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/panes.dart';
-import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
@@ -33,6 +32,7 @@ class ConversationScaffold extends ConsumerWidget {
     this.startText,
     this.onOpenThread,
     this.header,
+    this.focusComposer = false,
     super.key,
   });
 
@@ -46,10 +46,13 @@ class ConversationScaffold extends ConsumerWidget {
   final List<Widget> actions;
   final String composerHint;
   final String? startText;
-  final ValueChanged<PostItem>? onOpenThread;
+  final OpenThread? onOpenThread;
 
   /// Shown between the app bar and the messages, such as bookmarks.
   final Widget? header;
+
+  /// The composer takes the keyboard when it shows.
+  final bool focusComposer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -129,6 +132,7 @@ class ConversationScaffold extends ConsumerWidget {
                     teamId: window.teamId,
                     hint: composerHint,
                     archived: window.archived,
+                    autofocus: focusComposer,
                   ),
               ],
             ),

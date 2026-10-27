@@ -15,6 +15,7 @@ import 'package:matterleast/notifications/app_visibility.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/root/gone_channels.dart';
 import 'package:matterleast/screens/root/root_screen.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
@@ -37,6 +38,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   late final AppLifecycleListener _lifecycle;
   StreamSubscription<Uri>? _links;
   StreamSubscription<List<SharedMediaFile>>? _shares;
+  GoneChannels? _gone;
   final _quickActions = const QuickActions();
   String? _shortcutsShown;
   ProviderSubscription<AsyncValue<List<SwitchItem>>>? _shortcutSource;
@@ -61,13 +63,13 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     final items = await readOnce(ref, switchItemsProvider(target.url).future);
     final channel = items.where((i) => i.id == target.channelId).firstOrNull;
     if (channel == null || !navigator.mounted) return;
-    navigator.popUntil((route) => route.isFirst);
     await openConversation(
       navigator,
       url: target.url,
       channelId: channel.id,
       title: channel.title,
       teamId: channel.teamId,
+      fromOutside: true,
     );
   }
 
@@ -100,6 +102,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       );
       if (!mounted) return;
       final navigator = Navigator.of(context);
+      _gone = GoneChannels(ref, navigator)..start();
       final notice = startNotifications(ref, navigator);
       final links = AppLinks();
       _links = links.uriLinkStream.listen(
@@ -169,6 +172,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     unawaited(_links?.cancel());
     unawaited(_shares?.cancel());
     _shortcutSource?.close();
+    _gone?.dispose();
     _lifecycle.dispose();
     super.dispose();
   }

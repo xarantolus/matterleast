@@ -10,6 +10,7 @@ import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/scheduled_list.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -130,7 +131,7 @@ class DraftsScreen extends ConsumerWidget {
     WidgetRef ref,
     DraftItem draft,
   ) async {
-    final delete = await showModalBottomSheet<bool>(
+    final delete = await showAppSheet<bool>(
       context: context,
       showDragHandle: true,
       builder: (sheet) => SafeArea(

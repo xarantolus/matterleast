@@ -40,7 +40,7 @@ Future<void> openLinkFromMessage(
   try {
     switch (link) {
       case PostLink(:final postId):
-        await _openPost(navigator, ref, url, postId);
+        await _openPost(navigator, ref, url, postId, fromOutside: fromOutside);
       case ChannelNameLink(:final team, :final name):
         await _openChannelNamed(navigator, ref, url, team, name);
       case DirectMessageLink(:final username):
@@ -64,17 +64,28 @@ Future<void> openLinkFromMessage(
 }
 
 /// Opens the message [postId] on the server [url] in its channel (or its
-/// thread under collapsed threads), joining first when needed. Says why in
-/// a snackbar when the server refuses.
+/// thread under collapsed threads), joining first when needed. Says so
+/// while the server takes a moment to find it, unless the caller
+/// [showsProgress] itself, and why in a snackbar when the server refuses.
+/// Completes once the conversation shows.
 Future<void> openPost(
   NavigatorState navigator,
   String url,
-  String postId,
-) async {
+  String postId, {
+  bool fromOutside = false,
+  bool showsProgress = false,
+}) async {
   if (!navigator.mounted) return;
   final ref = ProviderScope.containerOf(navigator.context, listen: false);
   try {
-    await _openPost(navigator, ref, url, postId);
+    await _openPost(
+      navigator,
+      ref,
+      url,
+      postId,
+      fromOutside: fromOutside,
+      showsProgress: showsProgress,
+    );
   } on ApiError catch (e) {
     _say(
       navigator,
@@ -87,11 +98,16 @@ Future<void> _openPost(
   NavigatorState navigator,
   ProviderContainer ref,
   String url,
-  String postId,
-) async {
+  String postId, {
+  required bool fromOutside,
+  bool showsProgress = false,
+}) async {
+  Future<T> locating<T>(Future<T> Function() work) => showsProgress
+      ? work()
+      : _saySlow(navigator, 'Opening the message…', work);
   final links = await ref.read(messageLinksProvider(url).future);
   final session = await ref.read(serverSessionProvider(url).future);
-  var located = await links.locatePost(postId);
+  var located = await locating(() => links.locatePost(postId));
   if (located is LinkedPostNeedsJoin) {
     if (located.privateChannel || !navigator.mounted) {
       _notFound(navigator);
@@ -100,9 +116,11 @@ Future<void> _openPost(
     final join = located;
     if (!await _askJoin(navigator, join)) return;
     final actions = await ref.read(channelActionsProvider(url).future);
-    if (!join.inTeam) await actions.joinTeam(join.teamId);
-    await actions.join(join.channelId);
-    located = await links.locatePost(postId);
+    await locating(() async {
+      if (!join.inTeam) await actions.joinTeam(join.teamId);
+      await actions.join(join.channelId);
+    });
+    located = await locating<LinkedPost>(() => links.locatePost(postId));
   }
   switch (located) {
     case LinkedPostFound():
@@ -111,14 +129,17 @@ Future<void> _openPost(
         collapsedThreads: await session.db.collapsedThreads(),
       );
       if (!navigator.mounted) return;
-      await openConversation(
-        navigator,
-        url: url,
-        channelId: located.channelId,
-        title: located.channelName,
-        teamId: located.teamId,
-        highlightPostId: postId,
-        rootId: thread,
+      unawaited(
+        openConversation(
+          navigator,
+          url: url,
+          channelId: located.channelId,
+          title: located.channelName,
+          teamId: located.teamId,
+          highlightPostId: postId,
+          rootId: thread,
+          fromOutside: fromOutside,
+        ),
       );
     case LinkedPostMissing() || LinkedPostNeedsJoin():
       _notFound(navigator);
@@ -246,6 +267,28 @@ void _notFound(NavigatorState navigator) {
       ),
     ),
   );
+}
+
+/// Runs [work], saying [message] in a snackbar when it takes long enough
+/// to look stuck, and taking it away once done.
+Future<T> _saySlow<T>(
+  NavigatorState navigator,
+  String message,
+  Future<T> Function() work,
+) async {
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? shown;
+  final later = Timer(const Duration(milliseconds: 300), () {
+    if (!navigator.mounted) return;
+    shown = ScaffoldMessenger.maybeOf(navigator.context)?.showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(minutes: 1)),
+    );
+  });
+  try {
+    return await work();
+  } finally {
+    later.cancel();
+    shown?.close();
+  }
 }
 
 void _say(NavigatorState navigator, String message) {

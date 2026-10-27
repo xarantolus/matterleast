@@ -24,6 +24,7 @@ import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/channel/posting_rules.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/schedule_picker.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/message_display.dart';
@@ -70,6 +71,7 @@ class Composer extends ConsumerWidget {
     required this.hint,
     this.rootId = '',
     this.archived = false,
+    this.autofocus = false,
     super.key,
   });
 
@@ -79,6 +81,9 @@ class Composer extends ConsumerWidget {
   final String teamId;
   final String hint;
   final bool archived;
+
+  /// The field takes the keyboard when it first shows.
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -91,6 +96,7 @@ class Composer extends ConsumerWidget {
       rootId: rootId,
       teamId: teamId,
       hint: hint,
+      autofocus: autofocus,
     );
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -115,6 +121,7 @@ class _ComposerField extends ConsumerStatefulWidget {
     required this.rootId,
     required this.teamId,
     required this.hint,
+    required this.autofocus,
   });
 
   final String url;
@@ -122,6 +129,7 @@ class _ComposerField extends ConsumerStatefulWidget {
   final String rootId;
   final String teamId;
   final String hint;
+  final bool autofocus;
 
   @override
   ConsumerState<_ComposerField> createState() => _ComposerFieldState();
@@ -142,6 +150,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     _text.value = ref.read(_provider).text;
     _text.addListener(_typed);
     ref.read(_provider.notifier).inTeam(widget.teamId);
+    // Taken once the field is in the tree, after anything that closed on
+    // the way here gave the focus back.
+    if (widget.autofocus) _focus.requestFocus();
   }
 
   @override
@@ -461,7 +472,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
 
   Future<void> _pickPriority(bool acknowledgements) async {
     final draft = ref.read(_provider.notifier);
-    final picked = await showModalBottomSheet<api.PostPriority>(
+    final picked = await showAppSheet<api.PostPriority>(
       context: context,
       showDragHandle: true,
       builder: (_) => PriorityPicker(
@@ -482,9 +493,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     required bool? acknowledgements,
     bool burnOnRead = false,
   }) async {
-    FocusManager.instance.primaryFocus?.unfocus();
     final room = maxAttachments - ref.read(_provider).attachments.length;
-    final source = await showModalBottomSheet<PickSource>(
+    final source = await showAppSheet<PickSource>(
       context: context,
       showDragHandle: true,
       builder: (sheet) => SafeArea(
@@ -577,6 +587,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   }
 
   Future<void> _schedule() async {
+    // Down for good: a day and a time picker may follow the sheet.
     FocusManager.instance.primaryFocus?.unfocus();
     final zone = ref.read(manualTimeZoneProvider(widget.url)).value;
     final at = await pickScheduleTime(context, zone: zone);

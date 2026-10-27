@@ -26,8 +26,10 @@ import 'package:matterleast/notifications/notifier.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
+import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
+import 'package:matterleast/screens/root/gone_channels.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
@@ -106,6 +108,7 @@ void main() {
   /// [kind].
   List<Override> Function(String url) known({
     SwitchKind kind = SwitchKind.channel,
+    Stream<List<SwitchItem>>? listed,
   }) =>
       (url) => [
         serversProvider.overrideWith((ref) {
@@ -124,15 +127,16 @@ void main() {
         }),
         switchItemsProvider(url).overrideWith((ref) {
           ref.keepAlive();
-          return Stream.value([
-            SwitchItem(
-              serverUrl: url,
-              kind: kind,
-              id: channelId,
-              title: 'Boats',
-              teamId: teamId,
-            ),
-          ]);
+          return listed ??
+              Stream.value([
+                SwitchItem(
+                  serverUrl: url,
+                  kind: kind,
+                  id: channelId,
+                  title: 'Boats',
+                  teamId: teamId,
+                ),
+              ]);
         }),
       ];
 
@@ -197,6 +201,28 @@ void main() {
     (w) => w is ChannelScreen || w is ThreadScreen,
     skipOffstage: false,
   );
+
+  /// The user may post, so the composer shows.
+  Future<void> mayPost(WidgetTester tester) => tester.runAsync(() async {
+    await session.db.setSyncText(SyncKeys.currentUserRoles, 'system_user');
+    await session.store.applyRoles([
+      api.Role.fromJson({
+        'id': 'rl000000000000000000000r01',
+        'name': 'system_user',
+        'permissions': ['create_post'],
+      }),
+    ]);
+  });
+
+  /// Whether the composer of the [screen] on top has the keyboard.
+  bool typingIn(WidgetTester tester, Type screen) {
+    final field = find.descendant(
+      of: find.byType(screen),
+      matching: find.byType(EditableText),
+    );
+    return tester.widget<EditableText>(field).focusNode.hasFocus &&
+        tester.testTextInput.isVisible;
+  }
 
   testWidgets('a message picked under a channel\'s info opens in that '
       'channel, and one Back leads to the list', (tester) async {
@@ -567,6 +593,258 @@ void main() {
     navigator(tester).pop();
     await settle(tester);
     await finish(tester);
+  });
+
+  testWidgets('Reply in the message menu opens the thread ready to type; '
+      'tapping the message opens it with the keyboard down', (tester) async {
+    await start(tester);
+    await mayPost(tester);
+    await open(tester);
+    await tester.longPress(find.text('morning'));
+    await settle(tester);
+    await tester.tap(find.text('Reply'));
+    await settle(tester);
+    expect(find.byType(ThreadScreen), findsOneWidget);
+    expect(typingIn(tester, ThreadScreen), isTrue);
+    await back(tester);
+    expect(find.byType(ThreadScreen), findsNothing);
+    expect(tester.testTextInput.isVisible, isFalse);
+    await tester.tap(find.text('morning'));
+    await settle(tester);
+    expect(find.byType(ThreadScreen), findsOneWidget);
+    expect(tester.testTextInput.isVisible, isFalse);
+    await back(tester);
+    await back(tester);
+    await finish(tester);
+  });
+
+  testWidgets('closing the message menu gives the keyboard back to the '
+      'composer it was in', (tester) async {
+    await start(tester);
+    await mayPost(tester);
+    await open(tester);
+    await tester.showKeyboard(find.byType(TextField));
+    await settle(tester);
+    await tester.longPress(find.text('morning'));
+    await settle(tester);
+    expect(tester.testTextInput.isVisible, isFalse);
+    navigator(tester).pop();
+    await settle(tester);
+    expect(typingIn(tester, ChannelScreen), isTrue);
+    await back(tester);
+    await finish(tester);
+  });
+
+  testWidgets('a notification for a thread of the open channel opens over '
+      'it, and Back leads to the channel', (tester) async {
+    await start(tester, more: known());
+    await open(tester);
+    await page(tester, 'Info');
+    unawaited(
+      openNotice(
+        navigator(tester),
+        widgetRef,
+        NoticeTarget(
+          serverUrl: server.url.toString(),
+          channelId: channelId,
+          rootId: 'old1',
+          postId: 'old1',
+          newestAt: DateTime(2026),
+        ),
+      ),
+    );
+    await settle(tester);
+    expect(find.byType(ThreadScreen), findsOneWidget);
+    expect(find.text('Info', skipOffstage: false), findsNothing);
+    await back(tester);
+    expect(find.byType(ChannelScreen), findsOneWidget);
+    await back(tester);
+    expect(conversations(), findsNothing);
+    await finish(tester);
+  });
+
+  testWidgets('a notification for another channel opens over the list, not '
+      'over the page that was open', (tester) async {
+    await start(tester, more: known());
+    await page(tester, 'Settings');
+    unawaited(
+      openNotice(
+        navigator(tester),
+        widgetRef,
+        NoticeTarget(
+          serverUrl: server.url.toString(),
+          channelId: channelId,
+          postId: 'old1',
+          newestAt: DateTime(2026),
+        ),
+      ),
+    );
+    await settle(tester);
+    expect(find.byType(ChannelScreen), findsOneWidget);
+    await back(tester);
+    expect(conversations(), findsNothing);
+    expect(find.text('Settings'), findsNothing);
+    await finish(tester);
+  });
+
+  testWidgets('a notification for a channel not stored yet opens it from '
+      'the server', (tester) async {
+    await start(tester, more: known());
+    server.handle = (request) => switch (request.path) {
+      '/api/v4/posts/new1/info' => ok({
+        'channel_id': _directId,
+        'channel_type': 'D',
+        'channel_display_name': 'pat',
+        'has_joined_channel': true,
+        'team_id': '',
+      }),
+      '/api/v4/posts/new1' => ok({
+        'id': 'new1',
+        'channel_id': _directId,
+        'user_id': _pat.id,
+        'message': 'hello there',
+        'create_at': DateTime.utc(2026, 10, 26).millisecondsSinceEpoch,
+      }),
+      _ => ok(const <String, Object?>{}),
+    };
+    unawaited(
+      openNotice(
+        navigator(tester),
+        widgetRef,
+        NoticeTarget(
+          serverUrl: server.url.toString(),
+          channelId: _directId,
+          postId: 'new1',
+          newestAt: DateTime(2026),
+        ),
+      ),
+    );
+    await settle(tester);
+    expect(
+      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).channelId,
+      _directId,
+    );
+    await back(tester);
+    await finish(tester);
+  });
+
+  testWidgets('a message link the server takes a while to find says it is '
+      'opening, then opens it', (tester) async {
+    await start(tester);
+    final found = Completer<void>();
+    server.handle = (request) async {
+      if (request.path == '/api/v4/posts/far1/info') {
+        await found.future;
+        return ok({
+          'channel_id': channelId,
+          'team_id': teamId,
+          'has_joined_team': true,
+          'has_joined_channel': true,
+          'channel_display_name': 'Boats',
+        });
+      }
+      if (request.path == '/api/v4/posts/far1') {
+        return ok({
+          'id': 'far1',
+          'channel_id': channelId,
+          'user_id': 'someone',
+          'message': 'far back',
+          'create_at': DateTime.utc(2026, 1, 2).millisecondsSinceEpoch,
+        });
+      }
+      return ok(const <String, Object?>{});
+    };
+    unawaited(openPost(navigator(tester), server.url.toString(), 'far1'));
+    var said = false;
+    for (var i = 0; i < 20 && !said; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      said = find.text('Opening the message…').evaluate().isNotEmpty;
+    }
+    expect(said, isTrue);
+    found.complete();
+    await settle(tester);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Opening the message…'), findsNothing);
+    expect(
+      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
+      'far1',
+    );
+    await back(tester);
+    await finish(tester);
+  });
+
+  testWidgets('going back to a conversation that is open completes once it '
+      'closes', (tester) async {
+    await start(tester);
+    await open(tester);
+    var closed = false;
+    unawaited(
+      openConversation(
+        navigator(tester),
+        url: server.url.toString(),
+        channelId: channelId,
+        title: 'Boats',
+        teamId: teamId,
+      ).then((_) => closed = true),
+    );
+    await settle(tester);
+    expect(find.byType(ChannelScreen), findsOneWidget);
+    expect(closed, isFalse);
+    await back(tester);
+    expect(closed, isTrue);
+    await finish(tester);
+  });
+
+  group('removed from an open channel', () {
+    late StreamController<List<SwitchItem>> listed;
+
+    Future<void> startListing(WidgetTester tester) async {
+      listed = StreamController.broadcast();
+      addTearDown(listed.close);
+      await start(tester, more: known(listed: listed.stream));
+      final gone = GoneChannels(widgetRef, navigator(tester))..start();
+      addTearDown(gone.dispose);
+    }
+
+    SwitchItem boats() => SwitchItem(
+      serverUrl: server.url.toString(),
+      kind: SwitchKind.channel,
+      id: channelId,
+      title: 'Boats',
+      teamId: teamId,
+    );
+
+    testWidgets('the channel, its thread and the pages over them close, and '
+        'the user is told', (tester) async {
+      await startListing(tester);
+      await open(tester);
+      await open(tester, rootId: 'old1');
+      await page(tester, 'Thread info');
+      listed.add([boats()]);
+      await settle(tester);
+      expect(find.text('Thread info'), findsOneWidget);
+      listed.add(const []);
+      await settle(tester);
+      expect(conversations(), findsNothing);
+      expect(find.text('Thread info'), findsNothing);
+      expect(find.text('You were removed from Boats.'), findsOneWidget);
+      await finish(tester);
+    });
+
+    testWidgets('a conversation opened before its channel is listed stays', (
+      tester,
+    ) async {
+      await startListing(tester);
+      await open(tester);
+      listed.add(const []);
+      await settle(tester);
+      expect(find.byType(ChannelScreen), findsOneWidget);
+      await back(tester);
+      await finish(tester);
+    });
   });
 }
 

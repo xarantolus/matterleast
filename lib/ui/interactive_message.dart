@@ -8,6 +8,7 @@ import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
@@ -657,7 +658,7 @@ class _SelectState extends State<_Select> with _Acting {
 }
 
 Future<SelectOption?> _pickOption(BuildContext context, SelectBlock block) =>
-    showModalBottomSheet<SelectOption>(
+    showAppSheet<SelectOption>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,

@@ -19,7 +19,10 @@ import 'package:matterleast/ui/conversation_route.dart';
 /// [instant] it is there at once instead of sliding in. On a narrow screen
 /// it goes back to the conversation when it is already open, and takes the
 /// place of other conversations rather than piling up on them
-/// ([stackStepFor]); on a wide one it opens in the panes.
+/// ([stackStepFor]); on a wide one it opens in the panes. Opened
+/// [fromOutside] the app, Back leads to the list unless it is a thread of
+/// the open channel. With [focusComposer] its composer takes the keyboard.
+/// Completes once the conversation closes.
 Future<void> openConversation(
   NavigatorState navigator, {
   required String url,
@@ -29,6 +32,8 @@ Future<void> openConversation(
   String? rootId,
   String? highlightPostId,
   bool instant = false,
+  bool focusComposer = false,
+  bool fromOutside = false,
 }) async {
   if (!navigator.mounted) return;
   final container = ProviderScope.containerOf(navigator.context, listen: false);
@@ -51,6 +56,7 @@ Future<void> openConversation(
           channelName: title,
           teamId: team,
           highlightPostId: highlightPostId,
+          focusComposer: focusComposer,
         )
       : ConversationTarget.channel(
           url: url,
@@ -58,6 +64,7 @@ Future<void> openConversation(
           title: title,
           teamId: team,
           highlightPostId: highlightPostId,
+          focusComposer: focusComposer,
         );
   if (windowClassOf(MediaQuery.sizeOf(navigator.context).width).showsPanes) {
     navigator.popUntil((route) => route.isFirst);
@@ -68,7 +75,11 @@ Future<void> openConversation(
     for (final route in container.read(conversationRoutesProvider).live)
       if (route.navigator == navigator) route,
   ];
-  final step = stackStepFor([for (final r in open) r.target], target);
+  final step = stackStepFor(
+    [for (final r in open) r.target],
+    target,
+    fromOutside: fromOutside,
+  );
   final route = conversationRoute(
     target,
     instant: instant || step is ReturnToStep,
@@ -78,7 +89,10 @@ Future<void> openConversation(
       unawaited(navigator.push(route));
     case ReturnToStep(:final index):
       navigator.popUntil((r) => r == open[index]);
-      if (target.highlightPostId == null) return;
+      if (target.highlightPostId == null && !focusComposer) {
+        await open[index].popped;
+        return;
+      }
       // In place, as a pane would, so it opens at the message.
       navigator.replace(oldRoute: open[index], newRoute: route);
     case PushOverStep(:final index):
@@ -87,17 +101,20 @@ Future<void> openConversation(
     case ReplaceStep(:final index):
       navigator.popUntil((r) => r == open[index]);
       unawaited(navigator.pushReplacement(route));
+    case OverListStep():
+      navigator.popUntil((r) => r.isFirst);
+      unawaited(navigator.push(route));
   }
   await route.popped;
   // Brought back at the reading position, not at the message it opened at.
   container
       .read(lastClosedProvider.notifier)
-      .set(target.copyWith(highlightPostId: null));
+      .set(target.copyWith(highlightPostId: null, focusComposer: false));
 }
 
 /// Closes the channel [channelId] of [url] and its threads wherever they
-/// show, in routes or panes, once the user has left it; what was open over
-/// them stays.
+/// show, in routes or panes, once the user is no longer in it, with the
+/// pages open over them.
 void closeChannel(
   NavigatorState navigator, {
   required String url,
@@ -106,13 +123,23 @@ void closeChannel(
   if (!navigator.mounted) return;
   final container = ProviderScope.containerOf(navigator.context, listen: false);
   container.read(openPanesProvider.notifier).close(url, channelId);
-  for (final route in container.read(conversationRoutesProvider).live) {
-    if (route.navigator == navigator &&
-        route.target.url == url &&
-        route.target.channelId == channelId) {
-      navigator.removeRoute(route);
-    }
-  }
+  final lowest = container
+      .read(conversationRoutesProvider)
+      .live
+      .where(
+        (r) =>
+            r.navigator == navigator &&
+            r.target.url == url &&
+            r.target.channelId == channelId,
+      )
+      .firstOrNull;
+  if (lowest == null) return;
+  var passed = false;
+  navigator.popUntil((route) {
+    if (passed || route.isFirst) return true;
+    passed = route == lowest;
+    return false;
+  });
 }
 
 /// Opens [target] again the way [openConversation] first did.
@@ -158,11 +185,13 @@ Widget conversationScreen(ConversationTarget target) => switch (target) {
     rootId: target.rootId,
     channelName: target.channelName,
     highlightPostId: target.highlightPostId,
+    focusComposer: target.focusComposer,
   ),
   ChannelTarget() => ChannelScreen(
     url: target.url,
     channelId: target.channelId,
     title: target.title,
     highlightPostId: target.highlightPostId,
+    focusComposer: target.focusComposer,
   ),
 };

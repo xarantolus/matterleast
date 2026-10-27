@@ -40,6 +40,9 @@ create_db() {
 }
 
 # create_server <name> <port> <database>
+# The emulator knows the server as SiteURL; the desktop lane
+# (tool/desktop.sh) uses 127.0.0.1, which WebSockets only accept as an
+# allowed origin.
 create_server() {
     local name=$1 port=$2 database=$3
     podman run -d --name "$PREFIX-$name" --network host \
@@ -47,6 +50,7 @@ create_server() {
         -v "$PREFIX-$name-data":/mattermost/data \
         --env-file mattermost.env \
         -e MM_SERVICESETTINGS_SITEURL="http://10.0.2.2:$port" \
+        -e MM_SERVICESETTINGS_ALLOWCORSFROM="http://127.0.0.1:$port" \
         -e MM_SERVICESETTINGS_LISTENADDRESS="127.0.0.1:$port" \
         -e MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:$DB_PASSWORD@127.0.0.1:5432/$database?sslmode=disable&connect_timeout=10" \
         "$MM_IMAGE" >/dev/null

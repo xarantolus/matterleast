@@ -71,6 +71,7 @@ setup-specific-guide.md
 !tool/*.sh
 node_modules/
 .lane.pid
+.desktop.pid
 
 # Planning and research notes stay local.
 /docs/plan.md

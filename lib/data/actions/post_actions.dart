@@ -5,6 +5,7 @@ import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_features.dart';
 
@@ -296,11 +297,17 @@ class PostActions {
   }
 
   /// Marks the channel unread from this post on; it stays unread until the
-  /// user opens it again. The counts come from the server.
+  /// user opens it again. The counts come from the server. A reply under
+  /// collapsed threads marks its thread unread instead, as the channel
+  /// doesn't show replies.
   Future<void> markUnread(String postId) async {
     final me = await _me();
     final post = await _store.post(postId);
     final crt = await _db.collapsedThreads();
+    if (crt && post != null && post.rootId.isNotEmpty) {
+      final team = await ConversationViews(_db).threadTeam(post.channelId);
+      if (team != null) return _markThreadUnread(team, post);
+    }
     final unread = await _call(
       () => _client.posts.setPostUnread(
         userId: me,
@@ -321,6 +328,27 @@ class PostActions {
     );
     await _store.applyChannel(await channel);
     await _store.applyMarkedUnread(await member);
+  }
+
+  Future<void> _markThreadUnread(String teamId, PostRow post) async {
+    // Not in the generated client: its answer is typed as empty.
+    final answer = await _call(
+      () => session.api.dio.post<Object?>(
+        '/api/v4/users/me/teams/$teamId/threads/${post.rootId}'
+        '/set_unread/${post.id}',
+      ),
+    );
+    final body = answer.data;
+    final thread = body is Map<String, Object?>
+        ? api.UserThread.fromJson(body)
+        : null;
+    await _store.applyThreadRead(
+      teamId: teamId,
+      threadId: post.rootId,
+      lastViewedAt: post.createAt.subtract(const Duration(milliseconds: 1)),
+      unreadReplies: thread?.unreadReplies ?? 1,
+      unreadMentions: thread?.unreadMentions ?? 0,
+    );
   }
 
   /// With [channelId], a thread not stored yet is stored as followed.

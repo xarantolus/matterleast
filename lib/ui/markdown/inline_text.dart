@@ -6,6 +6,7 @@ import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/link_gestures.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -255,7 +256,7 @@ String? mentionedUsername(String typed, Set<String> usernames) {
 void showLinkSheet(BuildContext context, String url, PostEnvironment env) {
   final isMail = url.startsWith('mailto:');
   final shown = isMail ? url.substring(7) : url;
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     showDragHandle: true,
     builder: (sheet) => SafeArea(

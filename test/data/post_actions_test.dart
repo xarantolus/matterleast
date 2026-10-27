@@ -221,6 +221,69 @@ void main() {
     },
   );
 
+  Future<void> storeReply({bool collapsed = true}) async {
+    if (collapsed) {
+      await session.store.applyConfig('client_config', {
+        'CollapsedThreads': 'always_on',
+      });
+    }
+    await session.store.applyChannelPage(
+      channelId: channelId,
+      page: api.PostList.fromJson({
+        'order': ['reply1'],
+        'posts': {
+          'reply1': {
+            'id': 'reply1',
+            'root_id': 'old1',
+            'channel_id': channelId,
+            'user_id': 'someone',
+            'create_at': DateTime.utc(2026, 10, 25, 10).millisecondsSinceEpoch,
+            'message': 'answer',
+          },
+        },
+      }),
+      kind: PageKind.page,
+    );
+    await session.db
+        .into(session.db.threads)
+        .insert(
+          ThreadsCompanion.insert(
+            rootId: 'old1',
+            channelId: channelId,
+            isFollowing: const Value(true),
+          ),
+        );
+  }
+
+  test('marking a reply unread under collapsed threads unreads its thread, '
+      'not the channel', () async {
+    await storeReply();
+    answer = ok({'id': 'old1', 'unread_replies': 1, 'unread_mentions': 0});
+    await actions.markUnread('reply1');
+    expect(server.seen.single.method, 'POST');
+    expect(
+      server.seen.single.path,
+      '/api/v4/users/me/teams/$teamId/threads/old1/set_unread/reply1',
+    );
+    final thread = await session.db.select(session.db.threads).getSingle();
+    expect(thread.unreadReplies, 1);
+    expect(
+      thread.lastViewedAt,
+      DateTime.utc(2026, 10, 25, 10).subtract(const Duration(milliseconds: 1)),
+    );
+  });
+
+  test('marking a reply unread without collapsed threads unreads the '
+      'channel', () async {
+    answer = ok({'channel_id': channelId, 'msg_count': 0});
+    await storeReply(collapsed: false);
+    await actions.markUnread('reply1');
+    expect(
+      server.seen.first.path,
+      '/api/v4/users/$meId/posts/reply1/set_unread',
+    );
+  });
+
   test('following a thread shows at once and is undone on failure', () async {
     await session.db
         .into(session.db.threads)

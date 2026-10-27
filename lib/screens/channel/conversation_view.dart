@@ -23,6 +23,9 @@ import 'package:matterleast/ui/post_tile.dart';
 import 'package:matterleast/ui/swipe_to_open.dart';
 import 'package:matterleast/ui/tokens.dart';
 
+/// Opens the thread of [post]; for a [reply] with the keyboard up.
+typedef OpenThread = void Function(PostItem post, {bool reply});
+
 /// The message list of a channel or thread with its loading states and the
 /// pills that move through it.
 class ConversationView extends ConsumerStatefulWidget {
@@ -43,7 +46,7 @@ class ConversationView extends ConsumerStatefulWidget {
 
   /// Shown above the oldest message once nothing older exists.
   final String? startText;
-  final ValueChanged<PostItem>? onOpenThread;
+  final OpenThread? onOpenThread;
 
   @override
   ConsumerState<ConversationView> createState() => _ConversationViewState();
@@ -412,10 +415,8 @@ extension on _ConversationViewState {
     final reacts =
         post.sendState == null && !(_state.window?.archived ?? false);
     void openThread() => widget.onOpenThread?.call(post);
-    void open() {
-      FocusManager.instance.primaryFocus?.unfocus();
-      unawaited(_menu(post, _state.window?.teamId ?? ''));
-    }
+    void reply() => widget.onOpenThread?.call(post, reply: true);
+    void open() => unawaited(_menu(post, _state.window?.teamId ?? ''));
 
     final failed = post.sendState == 'failed';
     final tappable = usable && threads && post.sendState == null;
@@ -442,7 +443,7 @@ extension on _ConversationViewState {
       onLongPress: usable && !failed ? open : null,
       actions: usable && post.sendState == null
           ? {
-              if (threads) _replyAction: openThread,
+              if (threads) _replyAction: reply,
               if (reacts) _reactAction: () => _pickReaction(post),
               _menuAction: open,
             }
@@ -459,7 +460,7 @@ extension on _ConversationViewState {
     post: post,
     onReply: widget.onOpenThread == null
         ? null
-        : () => widget.onOpenThread!(post),
+        : () => widget.onOpenThread!(post, reply: true),
     onEdit: switch (widget.composer) {
       final composer? => () => ref.read(composer.notifier).startEditing(post),
       null => null,
@@ -520,7 +521,6 @@ extension on _ConversationViewState {
   }
 
   Future<void> _pickReaction(PostItem post) async {
-    FocusManager.instance.primaryFocus?.unfocus();
     final actions = ref.read(postActionsProvider(widget.url).future);
     final picked = await showEmojiPicker(context, widget.url);
     if (picked == null) return;

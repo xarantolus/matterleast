@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/person_tile.dart';
@@ -117,7 +118,7 @@ void showReactions(
   ReactionGroup initial,
 ) {
   final env = PostEnvironment.maybeOf(context);
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
