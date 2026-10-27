@@ -314,6 +314,7 @@ class _PaneDividerState extends State<_PaneDivider> {
             child: Center(
               child: SizedBox(
                 width: active || _hovered ? 3 : 1,
+                height: double.infinity,
                 child: ColoredBox(color: color),
               ),
             ),
