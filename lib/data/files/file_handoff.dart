@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
@@ -27,6 +28,17 @@ abstract final class FileHandoff {
       filePath: copy.path,
       mimeType: _mime(file),
     );
+  }
+
+  /// Asks where to save the file (desktop), then writes it there; the path,
+  /// or null when the person cancelled.
+  static Future<String?> saveAs(File cached, PostFile file) async {
+    final uri = await FilePicker.saveFile(
+      fileName: _safeName(file),
+      bytes: await cached.readAsBytes(),
+      mimeType: _mime(file) ?? 'application/octet-stream',
+    );
+    return uri?.toFilePath();
   }
 
   static Future<void> share(
@@ -62,9 +74,31 @@ abstract final class FileHandoff {
 
 String? _mime(PostFile file) => file.mimeType.isEmpty ? null : file.mimeType;
 
-/// Pure: [file]'s name without path separators, never empty.
-String _safeName(PostFile file) {
-  final name = file.name.replaceAll(RegExp(r'[/\\\x00]'), '_').trim();
-  if (name.isNotEmpty && name != '.' && name != '..') return name;
-  return file.extension.isEmpty ? file.id : '${file.id}.${file.extension}';
+/// Pure: [file]'s name as a file name every platform accepts, never empty.
+String _safeName(PostFile file) =>
+    safeFileName(file.name, file.id, file.extension);
+
+final _unsafe = RegExp(r'[/\\:*?"<>|\x00-\x1f\x7f]');
+final _deviceName = RegExp(
+  r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$',
+  caseSensitive: false,
+);
+const _longestName = 120;
+
+/// Pure: [name] without characters Windows or Linux reject, trailing dots
+/// and spaces, or a device name; [id] and [extension] stand in when nothing
+/// usable is left.
+String safeFileName(String name, String id, String extension) {
+  var safe = name.replaceAll(_unsafe, '_').trim();
+  safe = safe.replaceFirst(RegExp(r'[. ]+$'), '');
+  if (safe.isEmpty || safe == '.' || safe == '..') {
+    return extension.isEmpty ? id : '$id.$extension';
+  }
+  if (_deviceName.hasMatch(safe)) safe = '_$safe';
+  if (safe.length > _longestName) {
+    final dot = safe.lastIndexOf('.');
+    final ext = dot > 0 && safe.length - dot <= 16 ? safe.substring(dot) : '';
+    safe = safe.substring(0, _longestName - ext.length) + ext;
+  }
+  return safe;
 }

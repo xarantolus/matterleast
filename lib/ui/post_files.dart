@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/file_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/file_handoff.dart';
@@ -425,7 +426,7 @@ void openFile(
   }
 }
 
-enum _FileAction { view, save, share, openWith }
+enum _FileAction { view, save, saveAs, share, openWith }
 
 /// Text files larger than this open in another app instead of our viewer.
 const _textViewerLimit = 1024 * 1024;
@@ -497,7 +498,17 @@ Future<void> _runFileAction(
       );
     case _FileAction.view || _FileAction.openWith:
       if (!await FileHandoff.open(local, file, handoff)) {
-        say('No app on this phone opens ${file.name}.');
+        say(
+          'No app on this ${isDesktop ? 'computer' : 'phone'} opens '
+          '${file.name}.',
+        );
+      }
+    case _FileAction.saveAs:
+      try {
+        final saved = await FileHandoff.saveAs(local, file);
+        if (saved != null) say('Saved ${file.name}.');
+      } on Object {
+        say("Couldn't save ${file.name}.");
       }
     case _FileAction.share:
       await FileHandoff.share(local, file, handoff);
@@ -520,11 +531,12 @@ Future<void> runMediaAction(
   MediaAction action,
 ) => _runFileAction(context, ref, url, file, switch (action) {
   MediaAction.save => _FileAction.save,
+  MediaAction.saveAs => _FileAction.saveAs,
   MediaAction.share => _FileAction.share,
   MediaAction.openWith => _FileAction.openWith,
 });
 
-enum MediaAction { save, share, openWith }
+enum MediaAction { save, saveAs, share, openWith }
 
 /// The three-dot menu every file viewer and card carries.
 class FileActionsMenu extends ConsumerWidget {
@@ -550,11 +562,18 @@ class FileActionsMenu extends ConsumerWidget {
       iconColor: color,
       onSelected: (action) => runMediaAction(context, ref, url, file, action),
       itemBuilder: (_) => [
-        PopupMenuItem(
-          value: MediaAction.save,
-          child: Text('Save to ${_folderOf(file)}'),
-        ),
-        const PopupMenuItem(value: MediaAction.share, child: Text('Share')),
+        if (isDesktop)
+          const PopupMenuItem(
+            value: MediaAction.saveAs,
+            child: Text('Save as…'),
+          )
+        else ...[
+          PopupMenuItem(
+            value: MediaAction.save,
+            child: Text('Save to ${_folderOf(file)}'),
+          ),
+          const PopupMenuItem(value: MediaAction.share, child: Text('Share')),
+        ],
         const PopupMenuItem(
           value: MediaAction.openWith,
           child: Text('Open with…'),
