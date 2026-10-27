@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/ui/markdown/code_highlight.dart';
 import 'package:matterleast/ui/message_display.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _previewLines = 4;
@@ -138,7 +139,7 @@ void openCode(
   String language, {
   bool? wrap,
 }) => Navigator.of(context).push(
-  MaterialPageRoute<void>(
+  SlideRoute<void>(
     builder: (_) => CodeScreen(code: code, language: language, wrap: wrap),
   ),
 );

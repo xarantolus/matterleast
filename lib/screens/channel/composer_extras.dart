@@ -4,6 +4,7 @@ import 'package:matterleast/domain/burn_on_read.dart';
 import 'package:matterleast/domain/scheduled_posts.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/drafts_screen.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -102,7 +103,7 @@ class ScheduledNotice extends ConsumerWidget {
       color: scheme.surfaceContainerHigh,
       child: InkWell(
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
+          SlideRoute<void>(
             builder: (_) => DraftsScreen(
               url: url,
               teamId: teamId,

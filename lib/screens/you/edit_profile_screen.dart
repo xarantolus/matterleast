@@ -16,6 +16,7 @@ import 'package:matterleast/screens/you/profile_attributes_list.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
@@ -285,7 +286,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               onPressed: _saving
                   ? null
                   : () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
+                      SlideRoute<void>(
                         builder: (_) => ChangePasswordScreen(url: widget.url),
                       ),
                     ),

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/message_display.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _previewHeight = 300.0;
@@ -24,9 +25,9 @@ class TablePreview extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => TableScreen(table: table)),
-          ),
+          onTap: () => Navigator.of(
+            context,
+          ).push(SlideRoute<void>(builder: (_) => TableScreen(table: table))),
           child: Container(
             constraints: const BoxConstraints(maxHeight: _previewHeight),
             decoration: BoxDecoration(

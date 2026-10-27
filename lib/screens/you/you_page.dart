@@ -19,6 +19,7 @@ import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/trust_authority.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -71,9 +72,8 @@ class YouPage extends ConsumerWidget {
               child: Icon(Icons.settings_outlined),
             ),
             title: const Text('Settings'),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
-            ),
+            onTap: () => Navigator.of(context)
+                .push(SlideRoute<void>(builder: (_) => const SettingsPage())),
           ),
           const SizedBox(height: Spacing.lg),
           Padding(
@@ -85,9 +85,9 @@ class YouPage extends ConsumerWidget {
           ListTile(
             leading: const SizedBox(width: 40, child: Icon(Icons.add)),
             title: const Text('Add a server'),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const AddServerScreen()),
-            ),
+            onTap: () => Navigator.of(
+              context,
+            ).push(SlideRoute<void>(builder: (_) => const AddServerScreen())),
           ),
         ],
       ),
@@ -114,8 +114,7 @@ class _Profile extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
     void push(Widget screen) =>
-        Navigator.of(context)
-            .push(MaterialPageRoute<void>(builder: (_) => screen));
+        Navigator.of(context).push(SlideRoute<void>(builder: (_) => screen));
     return Column(
       children: [
         Padding(
@@ -356,7 +355,7 @@ class _ServerTile extends ConsumerWidget {
         navigator.pop();
       case _ServerAction.signIn:
         await navigator.push(
-          MaterialPageRoute<void>(
+          SlideRoute<void>(
             builder: (_) => AddServerScreen(
               initialUrl: server.url,
               initialName: server.displayName,

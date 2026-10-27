@@ -9,6 +9,7 @@ import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Per signed-in server: the connection, the last refresh, what is stored,
@@ -32,9 +33,7 @@ class StatusPage extends ConsumerWidget {
               body: 'Add a server to see its connection and what is saved.',
               action: FilledButton.tonal(
                 onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const AddServerScreen(),
-                  ),
+                  SlideRoute<void>(builder: (_) => const AddServerScreen()),
                 ),
                 child: const Text('Add server'),
               ),

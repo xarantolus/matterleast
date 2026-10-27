@@ -7,6 +7,7 @@ import 'package:matterleast/screens/settings/notification_settings_page.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/status/status_page.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final _sourceCode = Uri.parse('https://github.com/xarantolus/matterleast');
@@ -24,8 +25,7 @@ class SettingsPage extends ConsumerWidget {
         ? null
         : ref.watch(featuresProvider(server.url)).value?.versionLabel;
     void push(Widget page) =>
-        Navigator.of(context)
-            .push(MaterialPageRoute<void>(builder: (_) => page));
+        Navigator.of(context).push(SlideRoute<void>(builder: (_) => page));
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(

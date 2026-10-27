@@ -8,6 +8,7 @@ import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/slide_route.dart';
 
 /// A channel's messages, opened at the new-messages line, a message asked
 /// for, or where the reader left off.
@@ -49,7 +50,7 @@ class ChannelScreen extends ConsumerWidget {
         ? null
         : ref.watch(userProfileProvider(url, partnerId)).value;
     void openInfo() => Navigator.of(context).push(
-      MaterialPageRoute<void>(
+      SlideRoute<void>(
         builder: (_) => ChannelInfoScreen(url: url, channelId: channelId),
       ),
     );

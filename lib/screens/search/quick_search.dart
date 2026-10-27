@@ -18,6 +18,7 @@ import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
@@ -92,7 +93,7 @@ class QuickSearchAnchor extends ConsumerWidget {
   void _push(BuildContext context, Widget screen) {
     final navigator = Navigator.of(context);
     controller.closeView('');
-    unawaited(navigator.push(MaterialPageRoute<void>(builder: (_) => screen)));
+    unawaited(navigator.push(SlideRoute<void>(builder: (_) => screen)));
   }
 
   void _searchMessages(BuildContext context, String text) {
@@ -102,7 +103,7 @@ class QuickSearchAnchor extends ConsumerWidget {
     controller.closeView(text);
     unawaited(
       navigator.push(
-        MaterialPageRoute<void>(
+        SlideRoute<void>(
           builder: (_) => SearchResultsScreen(
             url: target.url,
             teamId: target.teamId,

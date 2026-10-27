@@ -19,6 +19,7 @@ import 'package:matterleast/screens/root/root_screen.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/share/share_screen.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
@@ -128,9 +129,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         if (shared == null || !navigator.mounted) return;
         unawaited(
           navigator.push(
-            MaterialPageRoute<void>(
-              builder: (_) => ShareScreen(shared: shared),
-            ),
+            SlideRoute<void>(builder: (_) => ShareScreen(shared: shared)),
           ),
         );
       }
@@ -192,7 +191,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
               onPressed: () {
                 messenger.hideCurrentMaterialBanner();
                 navigator.push(
-                  MaterialPageRoute<void>(
+                  SlideRoute<void>(
                     builder: (_) => AddServerScreen(
                       initialUrl: server.url,
                       initialName: server.displayName,

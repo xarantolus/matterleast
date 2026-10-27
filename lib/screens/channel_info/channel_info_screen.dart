@@ -25,6 +25,7 @@ import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
@@ -67,7 +68,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
   }
 
   void _push(Widget screen) => unawaited(
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen)),
+    Navigator.of(context).push(SlideRoute<void>(builder: (_) => screen)),
   );
 
   Future<void> _leave(ChannelInfo info) async {

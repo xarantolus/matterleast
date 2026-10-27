@@ -18,6 +18,7 @@ import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _gap = 4.0;
@@ -479,7 +480,7 @@ Future<void> _runFileAction(
           : text;
       unawaited(
         navigator.push(
-          MaterialPageRoute<void>(
+          SlideRoute<void>(
             builder: (_) => CodeScreen(
               code: code,
               language: languageOfExtension(file.extension),

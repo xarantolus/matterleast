@@ -8,6 +8,7 @@ import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/you_page.dart';
 import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/team_icon.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -66,9 +67,9 @@ class TeamRail extends ConsumerWidget {
           IconButton(
             tooltip: 'Add a server',
             icon: const Icon(Icons.add),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const AddServerScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(SlideRoute<void>(builder: (_) => const AddServerScreen())),
           ),
           const SizedBox(height: Spacing.sm),
           _YouButton(url: (current ?? _mostRecent(servers)).url),
@@ -210,7 +211,7 @@ class _YouButton extends ConsumerWidget {
       tooltip: 'You',
       onPressed: () =>
           Navigator.of(context)
-              .push(MaterialPageRoute<void>(builder: (_) => const YouPage())),
+              .push(SlideRoute<void>(builder: (_) => const YouPage())),
       icon: me == null
           ? const InitialsBadge(
               name: '',
