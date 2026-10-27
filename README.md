@@ -19,6 +19,10 @@ Other (obvious) features that exist: threads, reactions, file previews, sharing,
 | :---------------------------------------------: | :---------------------------------------------: | :-------------------------------------------: |
 | ![Channel list](.github/screenshots/l-list.jpg) | ![Conversation](.github/screenshots/l-chat.jpg) | ![Home inbox](.github/screenshots/l-home.jpg) |
 
+### Warning about LLM-generated code
+
+This app is significantly vibe-coded / created using LLMs. Most of its code has not been thoroughly reviewed by a human.
+
 ### Installation & updates
 If you have [F-Droid](https://f-droid.org/) installed, you can add [my repository](https://github.com/xarantolus/fdroid). Make sure you have "Include anti-feature apps" enabled in settings. Then just search for "matterleast" in the F-Droid client to download. You will receive update notifications.
 
