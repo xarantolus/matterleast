@@ -171,6 +171,7 @@ class ServerConnection {
     _stopTimer?.cancel();
     await _stop();
     await socket.dispose();
+    await drafts.close();
     typing.close();
     dialogs.close();
     agents.close();

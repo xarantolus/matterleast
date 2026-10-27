@@ -49,6 +49,12 @@ class DraftSync {
     });
   }
 
+  /// Waits for pushes in flight, so closing doesn't leave one writing to a
+  /// closed database.
+  Future<void> close() => Future.wait([
+    for (final push in _queues.values.toList()) push.catchError((Object _) {}),
+  ]);
+
   Future<void> _push(DraftKey key) async {
     try {
       if (!await enabled()) return;
