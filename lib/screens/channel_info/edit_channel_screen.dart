@@ -100,6 +100,8 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
           header: _header.text.trim(),
         );
         if (!mounted) return;
+        // This screen goes first, so the conversation opens over the list.
+        navigator.pop();
         unawaited(
           openConversation(
             navigator,
@@ -109,7 +111,6 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
             teamId: widget.teamId,
           ),
         );
-        navigator.pop();
       } else {
         await actions.patch(
           channel.id,

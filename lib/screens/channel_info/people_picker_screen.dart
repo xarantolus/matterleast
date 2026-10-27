@@ -191,7 +191,8 @@ Widget newMessageScreen({required String url, required String teamId}) =>
           final channelId = people.length == 1
               ? await actions.directChannel(people.single.id)
               : await actions.groupChannel([for (final p in people) p.id]);
-          // The channel opens over the root once the picker has closed.
+          // The picker goes first, so the channel opens over the root.
+          navigator.pop();
           unawaited(
             openConversation(
               navigator,
@@ -201,7 +202,6 @@ Widget newMessageScreen({required String url, required String teamId}) =>
               teamId: teamId,
             ),
           );
-          navigator.pop();
         },
       ),
     );

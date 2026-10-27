@@ -135,6 +135,9 @@ class UserProfileSheet extends ConsumerWidget {
     try {
       final actions = await ref.read(channelActionsProvider(url).future);
       final channelId = await actions.directChannel(profile.id);
+      // The sheet goes first: the conversation is pushed at once, so a
+      // pop after it would close the conversation instead.
+      navigator.pop();
       unawaited(
         openConversation(
           navigator,
@@ -143,7 +146,6 @@ class UserProfileSheet extends ConsumerWidget {
           title: profile.name,
         ),
       );
-      navigator.pop();
     } on Object catch (e) {
       messenger.showSnackBar(
         SnackBar(
