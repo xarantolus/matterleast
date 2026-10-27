@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 import 'package:matterleast/api/network_state.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/servers/app_servers.dart';
+import 'package:matterleast/data/servers/browser_auth_session.dart';
 import 'package:matterleast/data/servers/entries.dart';
 import 'package:matterleast/data/servers/server_manager.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
@@ -20,6 +22,7 @@ import 'package:matterleast/notifications/notification_check.dart';
 import 'package:matterleast/notifications/notifier.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 part 'providers.g.dart';
 
@@ -90,8 +93,19 @@ Notifier notifier(Ref ref) => Notifier();
 @riverpod
 ServerProbe serverProbe(Ref ref) => ServerProbe();
 
+/// The desktop SSO sign-in waiting for the browser; callback links that
+/// reach the app go to it.
+@Riverpod(keepAlive: true)
+BrowserAuthSession browserAuthSession(Ref ref) => BrowserAuthSession(
+  launch: (url) => launchUrl(url, mode: LaunchMode.externalApplication),
+);
+
 @riverpod
-SignIn signIn(Ref ref) => SignIn();
+SignIn signIn(Ref ref) => SignIn(
+  openAuthSession: isDesktop
+      ? ref.watch(browserAuthSessionProvider).open
+      : null,
+);
 
 /// Every added server, signed in or not, in rail order.
 @riverpod

@@ -2,18 +2,22 @@
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
+#include "app_links/app_links_plugin_c_api.h"
 #include "flutter_window.h"
 #include "utils.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
-  // One instance per user session: a second launch shows the running
-  // window, which may be hidden in the tray, and exits.
+  // One instance per user session: a second launch hands its link (the
+  // browser starts us with an mmauth:// sign-in callback as the only
+  // argument) to the running window, shows it, which may be hidden in the
+  // tray, and exits. The running app decides whether the link counts.
   ::CreateMutexW(nullptr, TRUE, L"io.github.xarantolus.matterleast");
   if (::GetLastError() == ERROR_ALREADY_EXISTS) {
     HWND running =
         ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", L"Matterleast");
     if (running != nullptr) {
+      SendAppLink(running);
       ::ShowWindow(running, ::IsIconic(running) ? SW_RESTORE : SW_SHOW);
       ::SetForegroundWindow(running);
     }

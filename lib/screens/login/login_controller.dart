@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
 import 'package:matterleast/domain/login_options.dart';
@@ -18,6 +19,9 @@ abstract class LoginState with _$LoginState {
   const factory LoginState({
     @Default(false) bool busy,
     @Default(false) bool mfaNeeded,
+
+    /// Waiting for the sign-in to finish in the system browser (desktop).
+    @Default(false) bool inBrowser,
     String? error,
     String? mfaError,
   }) = _LoginState;
@@ -48,6 +52,7 @@ class LoginController extends _$LoginController {
 
   Future<bool> withSso(LoginTarget target, SsoButton button) => _attempt(
     target,
+    inBrowser: isDesktop,
     () => ref
         .read(signInProvider)
         .withSso(
@@ -57,16 +62,32 @@ class LoginController extends _$LoginController {
         ),
   );
 
+  /// Stops waiting for the browser; the login form comes back.
+  void cancelBrowser() => ref.read(browserAuthSessionProvider).cancel();
+
   /// Signs in and stores the server; true when the user is signed in.
   Future<bool> _attempt(
     LoginTarget target,
     Future<SignedIn?> Function() signIn, {
     String? loginId,
+    bool inBrowser = false,
   }) async {
     if (state.busy) return false;
-    state = state.copyWith(busy: true, error: null, mfaError: null);
+    state = state.copyWith(
+      busy: true,
+      inBrowser: inBrowser,
+      error: null,
+      mfaError: null,
+    );
     try {
-      final signedIn = await signIn();
+      final SignedIn? signedIn;
+      try {
+        signedIn = await signIn();
+      } finally {
+        if (ref.mounted && state.inBrowser) {
+          state = state.copyWith(inBrowser: false);
+        }
+      }
       if (signedIn == null) {
         if (ref.mounted) state = state.copyWith(busy: false);
         return false;

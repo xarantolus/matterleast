@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/screens/add_server/add_server_controller.dart';
@@ -117,6 +118,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   'The app is made for ${minimumServerVersion.$1}.'
                   '${minimumServerVersion.$2} and newer, so some things '
                   'may not work.',
+            ),
+          ],
+          if (state.inBrowser) ...[
+            const SizedBox(height: Spacing.lg),
+            _Notice(
+              icon: Icons.open_in_browser,
+              text:
+                  'Finish signing in in your browser. When it asks to open '
+                  'Matterleast, allow it.',
+              action: TextButton(
+                onPressed: _controller.cancelBrowser,
+                child: const Text('Cancel'),
+              ),
             ),
           ],
           if (state.error case final message?) ...[
@@ -234,8 +248,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: Spacing.md),
             ],
             Text(
-              'Opens the sign-in page in your browser. If Android asks which '
-              'app should finish signing in, choose Matterleast.',
+              isDesktop
+                  ? 'Opens the sign-in page in your browser. When it asks to '
+                        'open Matterleast, allow it.'
+                  : 'Opens the sign-in page in your browser. If Android asks '
+                        'which app should finish signing in, choose '
+                        'Matterleast.',
               style: text.bodySmall?.copyWith(color: context.tokens.muted),
             ),
           ],
@@ -246,11 +264,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 }
 
 class _Notice extends StatelessWidget {
-  const _Notice({required this.icon, required this.text, this.color});
+  const _Notice({
+    required this.icon,
+    required this.text,
+    this.color,
+    this.action,
+  });
 
   final IconData icon;
   final String text;
   final Color? color;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -267,6 +291,7 @@ class _Notice extends StatelessWidget {
                 ?.copyWith(color: colour),
           ),
         ),
+        ?action,
       ],
     );
   }

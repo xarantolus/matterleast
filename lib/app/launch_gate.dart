@@ -14,6 +14,7 @@ import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/sso_callback.dart';
 import 'package:matterleast/notifications/app_visibility.dart';
 import 'package:matterleast/notifications/desktop_notifications.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
@@ -104,8 +105,11 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       _gone = GoneChannels(ref, navigator)..start();
       final notice = startNotifications(ref, navigator);
       final links = AppLinks();
+      final authSession = ref.read(browserAuthSessionProvider);
       _links = links.uriLinkStream.listen(
-        (uri) => unawaited(openIncomingLink(navigator, uri)),
+        (uri) => isSsoCallbackLink(uri)
+            ? authSession.deliver(uri)
+            : unawaited(openIncomingLink(navigator, uri)),
       );
       final initialMedia = IncomingShares.initial();
       unawaited(
@@ -114,7 +118,9 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
           navigator,
           launchedByIntent: Future.wait([
             notice,
-            links.getInitialLink().then((link) => link != null),
+            links.getInitialLink().then(
+              (link) => link != null && !isSsoCallbackLink(link),
+            ),
             initialMedia.then((media) => media.isNotEmpty),
           ]).then((launches) => launches.any((l) => l)),
         ),

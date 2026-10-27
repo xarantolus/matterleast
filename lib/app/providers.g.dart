@@ -432,6 +432,62 @@ final class ServerProbeProvider
 
 String _$serverProbeHash() => r'ee7b1e15a5fbd0aeaa4c0d524f1584e448f8b41e';
 
+/// The desktop SSO sign-in waiting for the browser; callback links that
+/// reach the app go to it.
+
+@ProviderFor(browserAuthSession)
+final browserAuthSessionProvider = BrowserAuthSessionProvider._();
+
+/// The desktop SSO sign-in waiting for the browser; callback links that
+/// reach the app go to it.
+
+final class BrowserAuthSessionProvider
+    extends
+        $FunctionalProvider<
+          BrowserAuthSession,
+          BrowserAuthSession,
+          BrowserAuthSession
+        >
+    with $Provider<BrowserAuthSession> {
+  /// The desktop SSO sign-in waiting for the browser; callback links that
+  /// reach the app go to it.
+  BrowserAuthSessionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'browserAuthSessionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$browserAuthSessionHash();
+
+  @$internal
+  @override
+  $ProviderElement<BrowserAuthSession> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  BrowserAuthSession create(Ref ref) {
+    return browserAuthSession(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(BrowserAuthSession value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<BrowserAuthSession>(value),
+    );
+  }
+}
+
+String _$browserAuthSessionHash() =>
+    r'5d2a45f9a687b1ad12029f424db8a1a45add9852';
+
 @ProviderFor(signIn)
 final signInProvider = SignInProvider._();
 
@@ -470,7 +526,7 @@ final class SignInProvider extends $FunctionalProvider<SignIn, SignIn, SignIn>
   }
 }
 
-String _$signInHash() => r'ba29e87deb34c0edfb350e4114031a6d195b2ee5';
+String _$signInHash() => r'a5dea4347eae281c9fb2b1e96fd0bda214082bcb';
 
 /// Every added server, signed in or not, in rail order.
 

@@ -22,6 +22,22 @@ Uri ssoStartUrl({
   );
 }
 
+/// Whether [uri] is meant as an SSO redirect (`<scheme>://callback`), which
+/// only ever finishes a sign-in in progress and never opens anything.
+bool isSsoCallbackLink(Uri uri) =>
+    uri.host == 'callback' && uri.scheme != 'https' && uri.scheme != 'http';
+
+/// Whether [uri] is exactly `<scheme>://callback?…`, the only shape a server
+/// redirects to, with nothing that a hand-made link could add.
+bool isSsoCallbackFor(Uri uri, String scheme) =>
+    uri.scheme == scheme.toLowerCase() &&
+    uri.host == 'callback' &&
+    uri.userInfo.isEmpty &&
+    !uri.hasPort &&
+    uri.path.isEmpty &&
+    uri.query.isNotEmpty &&
+    !uri.hasFragment;
+
 @freezed
 sealed class SsoResult with _$SsoResult {
   const factory SsoResult.token(String token) = SsoToken;
