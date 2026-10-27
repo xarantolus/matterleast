@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -147,11 +148,19 @@ class MessageToolbar extends ConsumerWidget {
                 ),
                 icon: EmojiGlyph(name: quick, size: 20, serverUrl: url),
               ),
-              IconButton(
-                visualDensity: density,
-                tooltip: react.label,
-                onPressed: () => onRun(react.run),
-                icon: Icon(react.icon, size: 20),
+              Builder(
+                builder: (button) => IconButton(
+                  visualDensity: density,
+                  tooltip: react.label,
+                  onPressed: () {
+                    final anchor = globalRectOf(button);
+                    onRun(
+                      (context) =>
+                          pickReaction(context, url, post, anchor: anchor),
+                    );
+                  },
+                  icon: Icon(react.icon, size: 20),
+                ),
               ),
             ],
             if (reply != null)

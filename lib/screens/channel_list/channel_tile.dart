@@ -12,6 +12,7 @@ class ChannelTile extends StatelessWidget {
     required this.item,
     this.onTap,
     this.onLongPress,
+    this.onContextMenu,
     this.trailing,
     super.key,
   });
@@ -21,6 +22,9 @@ class ChannelTile extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
+  /// A right click, at its global position.
+  final ValueChanged<Offset>? onContextMenu;
+
   /// In place of the draft, muted and mention markers.
   final Widget? trailing;
 
@@ -28,7 +32,7 @@ class ChannelTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final color = item.muted ? tokens.muted : tokens.text;
-    return ListTile(
+    final tile = ListTile(
       dense: true,
       contentPadding: Spacing.row,
       minLeadingWidth: 28,
@@ -59,6 +63,13 @@ class ChannelTile extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
     );
+    final menu = onContextMenu;
+    return menu == null
+        ? tile
+        : GestureDetector(
+            onSecondaryTapUp: (d) => menu(d.globalPosition),
+            child: tile,
+          );
   }
 }
 

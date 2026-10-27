@@ -13,15 +13,18 @@ import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/sheet_header.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
-/// The long-press sheet of a channel row.
+/// The long-press sheet of a channel row; on desktop a popup next to
+/// [anchor] (global), where it was right-clicked.
 Future<void> showChannelActions(
   BuildContext context, {
   required String url,
   required String teamId,
   required ChannelItem item,
+  Rect? anchor,
 }) => showAppSheet<void>(
   context: context,
   showDragHandle: true,
+  anchor: anchor,
   builder: (_) => _ChannelActionsSheet(url: url, teamId: teamId, item: item),
 );
 

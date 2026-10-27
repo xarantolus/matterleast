@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/emoji_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/preference_keys.dart';
@@ -27,18 +28,29 @@ Stream<int> skinTone(Ref ref, String url) async* {
   yield* db.watchPreference(Prefs.skinTone).map(skinToneOf);
 }
 
-/// Lets the user pick an emoji; completes with its name, or null.
-Future<String?> showEmojiPicker(BuildContext context, String url) =>
-    showAppSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (sheet) => SizedBox(
-        height: MediaQuery.sizeOf(sheet).height * 0.7,
-        child: EmojiPicker(url: url),
-      ),
-    );
+/// Lets the user pick an emoji; completes with its name, or null. On
+/// desktop it opens as a popup next to [anchor] (global), the button that
+/// opened it.
+Future<String?> showEmojiPicker(
+  BuildContext context,
+  String url, {
+  Rect? anchor,
+}) => showAppSheet<String>(
+  context: context,
+  showDragHandle: true,
+  isScrollControlled: true,
+  useSafeArea: true,
+  anchor: anchor,
+  constraints: isDesktop ? BoxConstraints.tight(desktopPickerSize) : null,
+  builder: (sheet) => isDesktop
+      ? EmojiPicker(url: url, keyboard: true)
+      : SizedBox(
+          height: MediaQuery.sizeOf(sheet).height * 0.7,
+          child: EmojiPicker(url: url),
+        ),
+);
+
+const desktopPickerSize = Size(360, 420);
 
 const _recent = 'recent';
 const _custom = 'custom';
@@ -99,9 +111,13 @@ const _cell = 52.0;
 
 /// Search, a category bar and every emoji in one list, by category.
 class EmojiPicker extends ConsumerStatefulWidget {
-  const EmojiPicker({required this.url, super.key});
+  const EmojiPicker({required this.url, this.keyboard = false, super.key});
 
   final String url;
+
+  /// Used with a keyboard: search has the focus from the start and Enter
+  /// picks the first match.
+  final bool keyboard;
 
   @override
   ConsumerState<EmojiPicker> createState() => _EmojiPickerState();
@@ -182,6 +198,16 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
     return _sections ??= emojiSections(recent: recent, custom: _custom!);
   }
 
+  List<String> _matches(String query) => {
+    for (final n in _custom ?? const <String>[])
+      if (n.contains(query)) n,
+    for (final n in systemEmojiNames())
+      if (n.contains(query)) canonicalName(n),
+  }.toList();
+
+  String _withTone(String name, Map<String, String> custom, int tone) =>
+      custom.containsKey(name) ? name : withSkinTone(name, tone);
+
   @override
   Widget build(BuildContext context) {
     final loading = ref.watch(customEmojiCatalogProvider(widget.url)).isLoading;
@@ -194,7 +220,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     Widget cell(String name) {
-      final shown = custom.containsKey(name) ? name : withSkinTone(name, tone);
+      final shown = _withTone(name, custom, tone);
       // Read by its name once, not as the tooltip and the glyph.
       return Semantics(
         button: true,
@@ -215,12 +241,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
 
     final Widget body;
     if (query.isNotEmpty) {
-      final names = {
-        for (final n in _custom ?? const <String>[])
-          if (n.contains(query)) n,
-        for (final n in systemEmojiNames())
-          if (n.contains(query)) canonicalName(n),
-      }.toList();
+      final names = _matches(query);
       body = names.isEmpty
           ? const Center(child: Text('No emoji match.'))
           : GridView.builder(
@@ -298,6 +319,15 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
             children: [
               Expanded(
                 child: SearchBar(
+                  autoFocus: widget.keyboard,
+                  onSubmitted: widget.keyboard
+                      ? (_) {
+                          final first = _matches(query).firstOrNull;
+                          if (query.isEmpty || first == null) return;
+                          Navigator.of(context)
+                              .pop(_withTone(first, custom, tone));
+                        }
+                      : null,
                   hintText: 'Search emoji',
                   leading: const Icon(Icons.search),
                   elevation: const WidgetStatePropertyAll(0),

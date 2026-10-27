@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/panes.dart';
@@ -12,7 +13,8 @@ import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
 /// A left swipe anywhere on [child] brings back the conversation the user
-/// last closed, as Discord does after swiping a chat away.
+/// last closed, as Discord does after swiping a chat away. Not on desktop,
+/// where a drag selects.
 class ReopenSwipe extends ConsumerStatefulWidget {
   const ReopenSwipe({required this.child, super.key});
 
@@ -61,24 +63,27 @@ class _ReopenSwipeState extends ConsumerState<ReopenSwipe> {
   }
 
   @override
-  Widget build(BuildContext context) => RawGestureDetector(
-    // Empty space between rows and empty states count too.
-    behavior: HitTestBehavior.translucent,
-    gestures: {
-      OneWayDragRecognizer:
-          GestureRecognizerFactoryWithHandlers<OneWayDragRecognizer>(
-            () => OneWayDragRecognizer(rightward: false, debugOwner: this),
-            (r) => r
-              ..onStart = (_) {
-                _swipe = 0;
-              }
-              ..onUpdate = _update
-              ..onEnd = _end
-              ..onCancel = () {
-                _swipe = 0;
-              },
-          ),
-    },
-    child: widget.child,
-  );
+  Widget build(BuildContext context) => isDesktop
+      ? widget.child
+      : RawGestureDetector(
+          // Empty space between rows and empty states count too.
+          behavior: HitTestBehavior.translucent,
+          gestures: {
+            OneWayDragRecognizer:
+                GestureRecognizerFactoryWithHandlers<OneWayDragRecognizer>(
+                  () =>
+                      OneWayDragRecognizer(rightward: false, debugOwner: this),
+                  (r) => r
+                    ..onStart = (_) {
+                      _swipe = 0;
+                    }
+                    ..onUpdate = _update
+                    ..onEnd = _end
+                    ..onCancel = () {
+                      _swipe = 0;
+                    },
+                ),
+          },
+          child: widget.child,
+        );
 }

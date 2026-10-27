@@ -18,9 +18,11 @@ Future<void> showCategoryMenu(
   required String teamId,
   required CategorySection section,
   required VoidCallback onReorder,
+  Rect? anchor,
 }) => showAppSheet<void>(
   context: context,
   showDragHandle: true,
+  anchor: anchor,
   builder: (sheet) {
     void close(void Function() then) {
       Navigator.of(sheet).pop();

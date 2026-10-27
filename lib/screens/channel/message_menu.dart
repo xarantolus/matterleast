@@ -461,13 +461,15 @@ Future<void> toggleReaction(
   );
 }
 
-/// Asks for an emoji and adds it to [post].
+/// Asks for an emoji and adds it to [post]; on desktop the picker opens
+/// next to [anchor] (global).
 Future<void> pickReaction(
   BuildContext context,
   String url,
-  PostItem post,
-) async {
-  final picked = await showEmojiPicker(context, url);
+  PostItem post, {
+  Rect? anchor,
+}) async {
+  final picked = await showEmojiPicker(context, url, anchor: anchor);
   if (picked == null || !context.mounted) return;
   await runPostAction(
     context,

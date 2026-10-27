@@ -16,6 +16,7 @@ import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/thread_options_sheet.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -130,80 +131,82 @@ class _HomePaneState extends ConsumerState<HomePane> {
         for (final s in servers) s.url: s.displayName,
     };
     return ReopenSwipe(
-      child: RefreshIndicator(
-        onRefresh: _pull,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: _FilterChips(
-                selected: filter,
-                onSelected: ref
-                    .read(homeFilterSelectionProvider.notifier)
-                    .select,
-                notice: switch (state) {
-                  HomeReady(:final notice) => notice,
-                  _ => null,
-                },
-                onRetry: () => unawaited(_pull()),
-              ),
-            ),
-            ...switch (state) {
-              HomeLoading() => const [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: CircularProgressIndicator()),
+      child: FocusRegion(
+        child: RefreshIndicator(
+          onRefresh: _pull,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: _FilterChips(
+                  selected: filter,
+                  onSelected: ref
+                      .read(homeFilterSelectionProvider.notifier)
+                      .select,
+                  notice: switch (state) {
+                    HomeReady(:final notice) => notice,
+                    _ => null,
+                  },
+                  onRetry: () => unawaited(_pull()),
                 ),
-              ],
-              HomeFailed(:final title, :final detail) => [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: EmptyState(
-                    icon: Icons.cloud_off,
-                    title: title,
-                    body: detail,
-                    action: FilledButton.tonal(
-                      onPressed: () => unawaited(_refresh(force: true)),
-                      child: const Text('Retry'),
+              ),
+              ...switch (state) {
+                HomeLoading() => const [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+                HomeFailed(:final title, :final detail) => [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: EmptyState(
+                      icon: Icons.cloud_off,
+                      title: title,
+                      body: detail,
+                      action: FilledButton.tonal(
+                        onPressed: () => unawaited(_refresh(force: true)),
+                        child: const Text('Retry'),
+                      ),
                     ),
                   ),
-                ),
-              ],
-              HomeReady(:final items) when items.isEmpty => [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: _Empty(filter: filter, onSearch: widget.onSearch),
-                ),
-              ],
-              HomeReady(:final items) => [
-                SliverPadding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
+                ],
+                HomeReady(:final items) when items.isEmpty => [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _Empty(filter: filter, onSearch: widget.onSearch),
                   ),
-                  sliver: SliverList.builder(
-                    itemCount: items.length,
-                    findChildIndexCallback: (key) {
-                      final id = (key as ValueKey<String>).value;
-                      final i = items.indexWhere((item) => item.key == id);
-                      return i < 0 ? null : i;
-                    },
-                    itemBuilder: (context, i) {
-                      final item = items[i];
-                      return MessagePreviewTile(
-                        key: ValueKey(item.key),
-                        item: item,
-                        serverName: names[item.serverUrl],
-                        onTap: () => openInboxItem(context, item),
-                        onLongPress: item.kind == InboxKind.thread
-                            ? () => showThreadOptions(context, item)
-                            : null,
-                      );
-                    },
+                ],
+                HomeReady(:final items) => [
+                  SliverPadding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
+                    ),
+                    sliver: SliverList.builder(
+                      itemCount: items.length,
+                      findChildIndexCallback: (key) {
+                        final id = (key as ValueKey<String>).value;
+                        final i = items.indexWhere((item) => item.key == id);
+                        return i < 0 ? null : i;
+                      },
+                      itemBuilder: (context, i) {
+                        final item = items[i];
+                        return MessagePreviewTile(
+                          key: ValueKey(item.key),
+                          item: item,
+                          serverName: names[item.serverUrl],
+                          onTap: () => openInboxItem(context, item),
+                          onLongPress: item.kind == InboxKind.thread
+                              ? () => showThreadOptions(context, item)
+                              : null,
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
-            },
-          ],
+                ],
+              },
+            ],
+          ),
         ),
       ),
     );

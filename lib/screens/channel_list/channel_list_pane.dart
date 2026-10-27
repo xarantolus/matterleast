@@ -19,7 +19,9 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/slide_route.dart';
@@ -242,13 +244,15 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     if (!on) _checkUnread();
   }
 
-  Future<void> _showMenu(CategorySection section) => showCategoryMenu(
-    context,
-    url: widget.url,
-    teamId: widget.teamId,
-    section: section,
-    onReorder: () => _setReordering(true),
-  );
+  Future<void> _showMenu(CategorySection section, Rect? anchor) =>
+      showCategoryMenu(
+        context,
+        url: widget.url,
+        teamId: widget.teamId,
+        section: section,
+        onReorder: () => _setReordering(true),
+        anchor: anchor,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -414,18 +418,23 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
       ),
     );
     return ReopenSwipe(
-      child: Stack(
-        children: [
-          // A resized viewport moves rows without scrolling.
-          NotificationListener<ScrollMetricsNotification>(
-            onNotification: (n) {
-              if (n.depth == 0) _checkUnread();
-              return false;
-            },
-            child: scrollView,
-          ),
-          _UnreadChips(unread: _unread, onJump: (id) => unawaited(_reveal(id))),
-        ],
+      child: FocusRegion(
+        child: Stack(
+          children: [
+            // A resized viewport moves rows without scrolling.
+            NotificationListener<ScrollMetricsNotification>(
+              onNotification: (n) {
+                if (n.depth == 0) _checkUnread();
+                return false;
+              },
+              child: scrollView,
+            ),
+            _UnreadChips(
+              unread: _unread,
+              onJump: (id) => unawaited(_reveal(id)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -443,7 +452,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 )
               : _CategoryHeader(
                   section: section,
-                  onMenu: () => unawaited(_showMenu(section)),
+                  onMenu: (anchor) => unawaited(_showMenu(section, anchor)),
                   onToggle: () async {
                     final actions = await ref.read(
                       channelActionsProvider(widget.url).future,
@@ -477,6 +486,13 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                   url: widget.url,
                   teamId: widget.teamId,
                   item: item,
+                ),
+                onContextMenu: (at) => showChannelActions(
+                  context,
+                  url: widget.url,
+                  teamId: widget.teamId,
+                  item: item,
+                  anchor: at & Size.zero,
                 ),
               ),
             );
@@ -602,26 +618,50 @@ class _UnreadChip extends StatelessWidget {
 }
 
 /// Looks like a search field; tapping it opens the search view.
-class _FindChannels extends StatelessWidget {
+class _FindChannels extends StatefulWidget {
   const _FindChannels({required this.onTap});
 
   final VoidCallback? onTap;
+
+  @override
+  State<_FindChannels> createState() => _FindChannelsState();
+}
+
+class _FindChannelsState extends State<_FindChannels> {
+  var _focused = false;
 
   @override
   Widget build(BuildContext context) => Semantics(
     button: true,
     label: 'Find channels',
     // InkWell rather than a gesture detector, so keyboard and switch
-    // access can focus it.
+    // access can focus it; its focus shows as an outline, since the bar
+    // covers the ink.
     child: InkWell(
-      onTap: onTap,
+      onTap: widget.onTap,
+      onFocusChange: (focused) => setState(() => _focused = focused),
       customBorder: const StadiumBorder(),
-      child: const AbsorbPointer(
-        child: ExcludeSemantics(
-          child: SearchBar(
-            hintText: 'Find channels',
-            leading: Icon(Icons.search),
-            elevation: WidgetStatePropertyAll(0),
+      child: DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: ShapeDecoration(
+          shape: StadiumBorder(
+            side: _focused
+                ? BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  )
+                : BorderSide.none,
+          ),
+        ),
+        child: const AbsorbPointer(
+          child: ExcludeFocus(
+            child: ExcludeSemantics(
+              child: SearchBar(
+                hintText: 'Find channels',
+                leading: Icon(Icons.search),
+                elevation: WidgetStatePropertyAll(0),
+              ),
+            ),
           ),
         ),
       ),
@@ -676,7 +716,9 @@ class _CategoryHeader extends StatelessWidget {
 
   final CategorySection section;
   final VoidCallback onToggle;
-  final VoidCallback onMenu;
+
+  /// Opens the menu, next to the global rect given.
+  final ValueChanged<Rect?> onMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -685,7 +727,8 @@ class _CategoryHeader extends StatelessWidget {
       color: Theme.of(context).scaffoldBackgroundColor,
       child: InkWell(
         onTap: onToggle,
-        onLongPress: onMenu,
+        onLongPress: () => onMenu(null),
+        onSecondaryTapUp: (d) => onMenu(d.globalPosition & Size.zero),
         child: Semantics(
           expanded: !section.collapsed,
           button: true,
@@ -714,12 +757,14 @@ class _CategoryHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                IconButton(
-                  tooltip: '${section.title} options',
-                  iconSize: 18,
-                  color: tokens.muted,
-                  icon: const Icon(Icons.more_horiz),
-                  onPressed: onMenu,
+                Builder(
+                  builder: (button) => IconButton(
+                    tooltip: '${section.title} options',
+                    iconSize: 18,
+                    color: tokens.muted,
+                    icon: const Icon(Icons.more_horiz),
+                    onPressed: () => onMenu(globalRectOf(button)),
+                  ),
                 ),
               ],
             ),

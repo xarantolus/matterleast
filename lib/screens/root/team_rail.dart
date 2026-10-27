@@ -7,6 +7,7 @@ import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/you_page.dart';
+import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/team_icon.dart';
@@ -35,46 +36,48 @@ class TeamRail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selection = ref.read(railSelectionProvider.notifier);
     final current = servers.where((s) => s.url == target?.url).firstOrNull;
-    return SizedBox(
-      width: 72,
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-              children: [
-                _RailButton(
-                  tooltip: 'Home',
-                  selected: target == null,
-                  onPressed: () => selection.select(null),
-                  child: InitialsBadge(
-                    name: 'Home',
-                    icon: target == null ? Icons.home : Icons.home_outlined,
+    return FocusRegion(
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                children: [
+                  _RailButton(
+                    tooltip: 'Home',
                     selected: target == null,
+                    onPressed: () => selection.select(null),
+                    child: InitialsBadge(
+                      name: 'Home',
+                      icon: target == null ? Icons.home : Icons.home_outlined,
+                      selected: target == null,
+                    ),
                   ),
-                ),
-                for (final server in servers) ...[
-                  const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
-                  _ServerTeams(
-                    server: server,
-                    selectedTeam: server.url == target?.url ? teamId : null,
-                    serverSelected: server.url == target?.url,
-                  ),
+                  for (final server in servers) ...[
+                    const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
+                    _ServerTeams(
+                      server: server,
+                      selectedTeam: server.url == target?.url ? teamId : null,
+                      serverSelected: server.url == target?.url,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Add a server',
-            icon: const Icon(Icons.add),
-            onPressed: () => Navigator.of(
-              context,
-            ).push(SlideRoute<void>(builder: (_) => const AddServerScreen())),
-          ),
-          const SizedBox(height: Spacing.sm),
-          _YouButton(url: (current ?? _mostRecent(servers)).url),
-          const SizedBox(height: Spacing.md),
-        ],
+            IconButton(
+              tooltip: 'Add a server',
+              icon: const Icon(Icons.add),
+              onPressed: () => Navigator.of(
+                context,
+              ).push(SlideRoute<void>(builder: (_) => const AddServerScreen())),
+            ),
+            const SizedBox(height: Spacing.sm),
+            _YouButton(url: (current ?? _mostRecent(servers)).url),
+            const SizedBox(height: Spacing.md),
+          ],
+        ),
       ),
     );
   }
