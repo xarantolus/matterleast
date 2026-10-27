@@ -133,4 +133,41 @@ void main() {
     );
     semantics.dispose();
   });
+
+  testWidgets('at the largest text size the time has a line of its own and '
+      'the message keeps two lines', (tester) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: MatterleastApp.lightTheme,
+          home: MediaQuery(
+            data: const MediaQueryData(
+              size: Size(400, 900),
+              textScaler: TextScaler.linear(3.5),
+            ),
+            child: Scaffold(
+              body: MessagePreviewTile(
+                item: _mention().copyWith(
+                  preview: 'Lunch at noon on the quay by the old harbour?',
+                ),
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    // The message alone on its lines, the time not in front of it.
+    final text = find.text(
+      'wren: Lunch at noon on the quay by the old harbour?',
+      findRichText: true,
+    );
+    expect(text, findsOneWidget);
+    final message = tester.getRect(text);
+    final lineHeight = 14 * 3.5;
+    expect(message.height, greaterThanOrEqualTo(lineHeight * 1.9));
+  });
 }

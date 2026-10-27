@@ -98,21 +98,28 @@ class MessagePreviewTile extends ConsumerWidget {
           ],
         ],
       ),
-      subtitle: Text.rich(
-        TextSpan(
-          children: [
-            if (large) TextSpan(text: '$when · '),
-            if (item.author case final author?)
-              TextSpan(
-                text: '$author: ',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            TextSpan(text: item.preview),
-          ],
-        ),
-        maxLines: large ? 2 : 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: item.unread ? tokens.text : tokens.muted),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // At large sizes the time takes a line of its own, so the
+          // message keeps two lines instead of a few letters after it.
+          if (large) Text(when, style: TextStyle(color: tokens.muted)),
+          Text.rich(
+            TextSpan(
+              children: [
+                if (item.author case final author?)
+                  TextSpan(
+                    text: '$author: ',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                TextSpan(text: item.preview),
+              ],
+            ),
+            maxLines: large ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: item.unread ? tokens.text : tokens.muted),
+          ),
+        ],
       ),
       trailing: marker,
     );
