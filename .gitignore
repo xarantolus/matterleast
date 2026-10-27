@@ -69,6 +69,7 @@ setup-specific-guide.md
 !.devcontainer/*.sh
 !.devcontainer/server/*.sh
 !tool/*.sh
+!tool/linux/*.sh
 node_modules/
 .lane.pid
 .desktop.pid
