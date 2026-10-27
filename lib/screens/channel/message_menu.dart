@@ -70,6 +70,10 @@ Future<void> showMessageMenu(
   ),
 );
 
+/// How many recent emoji fit in a row [width] wide next to "More
+/// reactions": six where there is room, fewer on a narrow sheet.
+int quickReactionCount(double width) => (width ~/ 48 - 1).clamp(3, 6);
+
 class MessageMenu extends ConsumerWidget {
   const MessageMenu({
     required this.url,
@@ -125,13 +129,6 @@ class MessageMenu extends ConsumerWidget {
         ),
       );
     }
-    // Six recent emoji where they fit next to "More reactions", fewer on
-    // a narrow phone.
-    final room = (MediaQuery.sizeOf(context).width - 2 * Spacing.lg) ~/ 48 - 1;
-    final quick = {
-      ...recent,
-      ..._defaultQuickReactions,
-    }.take(room.clamp(3, 6)).toList();
     final rights = facts.rights;
     final unsent = post.sendState != null;
     final permalink = facts.teamName.isEmpty
@@ -150,52 +147,68 @@ class MessageMenu extends ConsumerWidget {
           if (!unsent && !post.isEphemeral && rights.react)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  for (final name in quick)
-                    IconButton.outlined(
-                      style: IconButton.styleFrom(
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.outlineVariant,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final quick = {
+                    ...recent,
+                    ..._defaultQuickReactions,
+                  }.take(quickReactionCount(constraints.maxWidth)).toList();
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      for (final name in quick)
+                        IconButton.outlined(
+                          style: IconButton.styleFrom(
+                            side: BorderSide(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outlineVariant,
+                            ),
+                          ),
+                          tooltip: ':$name:',
+                          onPressed: () {
+                            close();
+                            unawaited(
+                              _run(ref.read(postActionsProvider(url).future), (
+                                a,
+                              ) async {
+                                final group = post.reactions
+                                    .where((g) => g.emojiName == name && g.mine)
+                                    .firstOrNull;
+                                if (group == null) {
+                                  await a.addReaction(post.id, name);
+                                }
+                              }, "Couldn't add the reaction."),
+                            );
+                          },
+                          icon: EmojiGlyph(
+                            name: name,
+                            size: 28,
+                            serverUrl: url,
+                          ),
                         ),
+                      IconButton.filledTonal(
+                        tooltip: 'More reactions',
+                        onPressed: () async {
+                          final navigator = Navigator.of(context);
+                          final actions = ref.read(
+                            postActionsProvider(url).future,
+                          );
+                          final picked = await showEmojiPicker(context, url);
+                          navigator.pop();
+                          if (picked != null) {
+                            await _run(
+                              actions,
+                              (a) => a.addReaction(post.id, picked),
+                              "Couldn't add the reaction.",
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.add_reaction_outlined),
                       ),
-                      tooltip: ':$name:',
-                      onPressed: () {
-                        close();
-                        unawaited(
-                          _run(ref.read(postActionsProvider(url).future), (
-                            a,
-                          ) async {
-                            final group = post.reactions
-                                .where((g) => g.emojiName == name && g.mine)
-                                .firstOrNull;
-                            if (group == null) {
-                              await a.addReaction(post.id, name);
-                            }
-                          }, "Couldn't add the reaction."),
-                        );
-                      },
-                      icon: EmojiGlyph(name: name, size: 28, serverUrl: url),
-                    ),
-                  IconButton.filledTonal(
-                    tooltip: 'More reactions',
-                    onPressed: () async {
-                      final navigator = Navigator.of(context);
-                      final actions = ref.read(postActionsProvider(url).future);
-                      final picked = await showEmojiPicker(context, url);
-                      navigator.pop();
-                      if (picked != null) {
-                        await _run(
-                          actions,
-                          (a) => a.addReaction(post.id, picked),
-                          "Couldn't add the reaction.",
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.add_reaction_outlined),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           if (onReply != null && !unsent && rights.reply && !burns)

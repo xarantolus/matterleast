@@ -81,6 +81,59 @@ Future<void> _open(
 }
 
 void main() {
+  testWidgets(
+    'quick reactions follow the width the sheet has, not the screen',
+    (tester) async {
+      tester.view.physicalSize = const Size(1800, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final post = _post('other');
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            postMenuFactsProvider(_url, post, 'team1').overrideWith(
+              (ref) async => (
+                myId: 'me',
+                saved: false,
+                following: false,
+                teamName: 'crew',
+                rights: _all,
+                reminders: false,
+              ),
+            ),
+            recentEmojiProvider(_url).overrideWith((ref) async => const []),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: 240,
+                  child: Builder(
+                    builder: (context) => MessageMenu(
+                      url: _url,
+                      teamId: 'team1',
+                      post: post,
+                      messenger: ScaffoldMessenger.of(context),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byTooltip(RegExp(r'^:[^:]+:$')), findsNWidgets(3));
+    },
+  );
+
+  test('six quick reactions fit a wide row, three a narrow one', () {
+    expect(quickReactionCount(640), 6);
+    expect(quickReactionCount(300), 5);
+    expect(quickReactionCount(100), 3);
+  });
+
   testWidgets('the menu offers what the rights allow', (tester) async {
     await _open(tester, _post('me'));
     expect(find.text('Edit'), findsOneWidget);
