@@ -71,11 +71,17 @@ RUN flutter precache --android --universal \
     && flutter doctor -v || true
 RUN yes | flutter doctor --android-licenses > /dev/null 2>&1 || true
 
-# Ubuntu's node is too old for the Claude CLI tooling.
+# Ubuntu's node is too old for the Claude CLI tooling. The setup script is
+# downloaded to a file rather than piped: with `curl | bash` a failed download
+# exits 0, apt then quietly installs Ubuntu's nodejs (no npm), and that layer
+# gets cached.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs
+    curl -fsSL -o /tmp/nodesource_setup.sh https://deb.nodesource.com/setup_20.x \
+    && bash /tmp/nodesource_setup.sh \
+    && rm -f /tmp/nodesource_setup.sh \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm --version
 RUN curl -fsSL https://claude.ai/install.sh | bash \
     && ln -sf /root/.local/bin/claude /usr/local/bin/claude
 
