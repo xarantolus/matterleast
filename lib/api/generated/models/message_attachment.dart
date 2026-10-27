@@ -79,7 +79,6 @@ class MessageAttachment {
   @LenientString()
   @JsonKey(name: 'FooterIcon')
   final String? footerIcon;
-
   @LenientString()
   @JsonKey(name: 'Timestamp')
   final String? timestamp;

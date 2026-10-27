@@ -19,7 +19,6 @@ class RetentionPolicyForTeamList {
 
   @LenientListOfDataRetentionPolicyForTeam()
   final List<DataRetentionPolicyForTeam> policies;
-
   @LenientInt()
   @JsonKey(name: 'total_count')
   final int? totalCount;

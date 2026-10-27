@@ -23,19 +23,14 @@ class ApiV4TeamsTeamIdPostsSearchRequestBody {
   ) => _$ApiV4TeamsTeamIdPostsSearchRequestBodyFromJson(json);
 
   final String terms;
-
   @JsonKey(name: 'is_or_search')
   final bool isOrSearch;
-
   @JsonKey(name: 'time_zone_offset')
   final int timeZoneOffset;
-
   @LenientBool()
   @JsonKey(name: 'include_deleted_channels')
   final bool? includeDeletedChannels;
-
   final int page;
-
   @JsonKey(name: 'per_page')
   final int perPage;
 

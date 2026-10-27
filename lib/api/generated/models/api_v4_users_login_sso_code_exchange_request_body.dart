@@ -20,10 +20,8 @@ class ApiV4UsersLoginSsoCodeExchangeRequestBody {
 
   @JsonKey(name: 'login_code')
   final String loginCode;
-
   @JsonKey(name: 'code_verifier')
   final String codeVerifier;
-
   final String state;
 
   Map<String, Object?> toJson() =>

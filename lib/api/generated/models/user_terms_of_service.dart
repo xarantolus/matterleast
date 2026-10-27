@@ -17,11 +17,9 @@ class UserTermsOfService {
   @LenientString()
   @JsonKey(name: 'user_id')
   final String? userId;
-
   @LenientString()
   @JsonKey(name: 'terms_of_service_id')
   final String? termsOfServiceId;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;

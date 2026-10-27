@@ -16,15 +16,12 @@ class TermsOfService {
 
   @LenientString()
   final String? id;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @LenientString()
   @JsonKey(name: 'user_id')
   final String? userId;
-
   @LenientString()
   final String? text;
 

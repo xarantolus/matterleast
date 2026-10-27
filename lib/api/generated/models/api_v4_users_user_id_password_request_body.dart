@@ -21,7 +21,6 @@ class ApiV4UsersUserIdPasswordRequestBody {
   @LenientString()
   @JsonKey(name: 'current_password')
   final String? currentPassword;
-
   @JsonKey(name: 'new_password')
   final String newPassword;
 

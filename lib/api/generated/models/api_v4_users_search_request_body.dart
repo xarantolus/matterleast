@@ -26,39 +26,30 @@ class ApiV4UsersSearchRequestBody {
       _$ApiV4UsersSearchRequestBodyFromJson(json);
 
   final String term;
-
   @LenientString()
   @JsonKey(name: 'team_id')
   final String? teamId;
-
   @LenientString()
   @JsonKey(name: 'not_in_team_id')
   final String? notInTeamId;
-
   @LenientString()
   @JsonKey(name: 'in_channel_id')
   final String? inChannelId;
-
   @LenientString()
   @JsonKey(name: 'not_in_channel_id')
   final String? notInChannelId;
-
   @LenientString()
   @JsonKey(name: 'in_group_id')
   final String? inGroupId;
-
   @LenientBool()
   @JsonKey(name: 'group_constrained')
   final bool? groupConstrained;
-
   @LenientBool()
   @JsonKey(name: 'allow_inactive')
   final bool? allowInactive;
-
   @LenientBool()
   @JsonKey(name: 'without_team')
   final bool? withoutTeam;
-
   final int limit;
 
   Map<String, Object?> toJson() => _$ApiV4UsersSearchRequestBodyToJson(this);

@@ -22,7 +22,6 @@ class ApiV4CommandsExecuteRequestBody {
 
   @JsonKey(name: 'channel_id')
   final String channelId;
-
   final String command;
   @LenientString()
   @JsonKey(name: 'team_id')

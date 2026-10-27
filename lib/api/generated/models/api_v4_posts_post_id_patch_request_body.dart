@@ -24,18 +24,14 @@ class ApiV4PostsPostIdPatchRequestBody {
   @LenientBool()
   @JsonKey(name: 'is_pinned')
   final bool? isPinned;
-
   @LenientString()
   final String? message;
-
   @LenientStringList()
   @JsonKey(name: 'file_ids')
   final List<String> fileIds;
-
   @LenientBool()
   @JsonKey(name: 'has_reactions')
   final bool? hasReactions;
-
   @LenientString()
   final String? props;
 

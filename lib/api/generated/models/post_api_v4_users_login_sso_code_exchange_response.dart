@@ -17,7 +17,6 @@ class PostApiV4UsersLoginSsoCodeExchangeResponse {
 
   @LenientString()
   final String? token;
-
   @LenientString()
   final String? csrf;
 

@@ -27,11 +27,9 @@ class FileInfoList {
   @LenientMapOfFileInfo()
   @JsonKey(name: 'file_infos')
   final Map<String, FileInfo>? fileInfos;
-
   @LenientString()
   @JsonKey(name: 'next_file_id')
   final String? nextFileId;
-
   @LenientString()
   @JsonKey(name: 'prev_file_id')
   final String? prevFileId;

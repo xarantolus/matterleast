@@ -26,26 +26,20 @@ class TeamMember {
   @LenientString()
   @JsonKey(name: 'team_id')
   final String? teamId;
-
   @LenientString()
   @JsonKey(name: 'user_id')
   final String? userId;
-
   @LenientString()
   final String? roles;
-
   @MillisDateTime()
   @JsonKey(name: 'delete_at')
   final DateTime? deleteAt;
-
   @LenientBool()
   @JsonKey(name: 'scheme_user')
   final bool? schemeUser;
-
   @LenientBool()
   @JsonKey(name: 'scheme_admin')
   final bool? schemeAdmin;
-
   @LenientString()
   @JsonKey(name: 'explicit_roles')
   final String? explicitRoles;

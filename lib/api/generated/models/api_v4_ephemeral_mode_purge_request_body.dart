@@ -22,11 +22,9 @@ class ApiV4EphemeralModePurgeRequestBody {
   @LenientInt()
   @JsonKey(name: 'offline_time_minutes')
   final int? offlineTimeMinutes;
-
   @MillisDateTime()
   @JsonKey(name: 'purge_at')
   final DateTime? purgeAt;
-
   @LenientString()
   @JsonKey(name: 'error_reason')
   final String? errorReason;

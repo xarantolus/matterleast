@@ -16,7 +16,6 @@ class Options {
 
   @LenientString()
   final String? text;
-
   @LenientString()
   final String? value;
 

@@ -48,15 +48,12 @@ class User {
 
   @LenientString()
   final String? id;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @MillisDateTime()
   @JsonKey(name: 'update_at')
   final DateTime? updateAt;
-
   @MillisDateTime()
   @JsonKey(name: 'delete_at')
   final DateTime? deleteAt;
@@ -101,11 +98,9 @@ class User {
   final bool? mfaActive;
   @LenientTimezone()
   final Timezone? timezone;
-
   @LenientString()
   @JsonKey(name: 'terms_of_service_id')
   final String? termsOfServiceId;
-
   @MillisDateTime()
   @JsonKey(name: 'terms_of_service_create_at')
   final DateTime? termsOfServiceCreateAt;

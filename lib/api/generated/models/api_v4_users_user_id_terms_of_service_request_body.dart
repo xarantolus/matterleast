@@ -18,7 +18,6 @@ class ApiV4UsersUserIdTermsOfServiceRequestBody {
   ) => _$ApiV4UsersUserIdTermsOfServiceRequestBodyFromJson(json);
 
   final String serviceTermsId;
-
   final String accepted;
 
   Map<String, Object?> toJson() =>

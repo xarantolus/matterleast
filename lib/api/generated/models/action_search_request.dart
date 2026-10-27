@@ -26,7 +26,6 @@ class ActionSearchRequest {
 
   @LenientAccessControlResource()
   final AccessControlResource? resource;
-
   @LenientStringList()
   final List<String> actions;
   @LenientActionSearchSubject()

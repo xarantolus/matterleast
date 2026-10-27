@@ -40,7 +40,6 @@ class ChannelMember {
   final String? userId;
   @LenientString()
   final String? roles;
-
   @MillisDateTime()
   @JsonKey(name: 'last_viewed_at')
   final DateTime? lastViewedAt;
@@ -53,7 +52,6 @@ class ChannelMember {
   @LenientChannelNotifyProps()
   @JsonKey(name: 'notify_props')
   final ChannelNotifyProps? notifyProps;
-
   @MillisDateTime()
   @JsonKey(name: 'last_update_at')
   final DateTime? lastUpdateAt;

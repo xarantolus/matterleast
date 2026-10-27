@@ -16,10 +16,8 @@ class RenderPermissionDecision {
 
   @LenientBool()
   final bool? allowed;
-
   @LenientBool()
   final bool? evaluated;
-
   @LenientString()
   final String? reason;
 

@@ -19,7 +19,6 @@ class PluginManifestWebapp {
 
   @LenientString()
   final String? id;
-
   @LenientString()
   final String? version;
   @LenientWebapp2()

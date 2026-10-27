@@ -22,7 +22,6 @@ class PostApiV4ChannelsSearchResponse {
 
   @LenientListOfChannel()
   final List<Channel> channels;
-
   @LenientDouble()
   @JsonKey(name: 'total_count')
   final num? totalCount;

@@ -30,31 +30,24 @@ class ApiV4ChannelsChannelIdPatchRequestBody {
 
   @LenientString()
   final String? name;
-
   @LenientString()
   @JsonKey(name: 'display_name')
   final String? displayName;
-
   @LenientString()
   final String? purpose;
-
   @LenientString()
   final String? header;
-
   @LenientBool()
   @JsonKey(name: 'group_constrained')
   final bool? groupConstrained;
-
   @LenientBool()
   final bool? autotranslation;
   @LenientChannelBanner()
   @JsonKey(name: 'banner_info')
   final ChannelBanner? bannerInfo;
-
   @LenientString()
   @JsonKey(name: 'managed_category_name')
   final String? managedCategoryName;
-
   @LenientString()
   @JsonKey(name: 'default_category_name')
   final String? defaultCategoryName;

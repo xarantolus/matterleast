@@ -23,15 +23,12 @@ class ApiV4EphemeralModeCleanupRequestBody {
   @LenientInt()
   @JsonKey(name: 'posts_deleted')
   final int? postsDeleted;
-
   @LenientInt()
   @JsonKey(name: 'playbook_runs_deleted')
   final int? playbookRunsDeleted;
-
   @MillisDateTime()
   @JsonKey(name: 'cleanup_at')
   final DateTime? cleanupAt;
-
   @LenientString()
   @JsonKey(name: 'error_reason')
   final String? errorReason;

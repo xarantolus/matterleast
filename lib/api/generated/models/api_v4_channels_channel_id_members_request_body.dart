@@ -21,7 +21,6 @@ class ApiV4ChannelsChannelIdMembersRequestBody {
   @LenientString()
   @JsonKey(name: 'user_id')
   final String? userId;
-
   @LenientString()
   @JsonKey(name: 'post_root_id')
   final String? postRootId;

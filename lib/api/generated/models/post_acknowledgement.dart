@@ -17,11 +17,9 @@ class PostAcknowledgement {
   @LenientString()
   @JsonKey(name: 'user_id')
   final String? userId;
-
   @LenientString()
   @JsonKey(name: 'post_id')
   final String? postId;
-
   @MillisDateTime()
   @JsonKey(name: 'acknowledged_at')
   final DateTime? acknowledgedAt;
