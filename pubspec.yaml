@@ -83,6 +83,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon/legacy.png
+    - assets/icon/tray_unread.png
 
 flutter_launcher_icons:
   android: true

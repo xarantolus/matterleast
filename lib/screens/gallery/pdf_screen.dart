@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/ui/post_files.dart';
+import 'package:matterleast/ui/window_bar.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 Route<void> pdfRoute(
@@ -28,7 +29,7 @@ class PdfScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
+    appBar: WindowAppBar(
       title: Text(file.name, maxLines: 1),
       actions: [FileActionsMenu(url: url, file: file)],
     ),

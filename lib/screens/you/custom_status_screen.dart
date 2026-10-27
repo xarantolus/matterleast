@@ -9,6 +9,7 @@ import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 typedef _Suggestion = ({String emoji, String text, String duration});
 
@@ -149,7 +150,7 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
         ref.watch(recentCustomStatusesProvider(widget.url)).value ?? const [];
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
-      appBar: AppBar(
+      appBar: WindowAppBar(
         title: const Text('Custom status'),
         actions: [
           TextButton(

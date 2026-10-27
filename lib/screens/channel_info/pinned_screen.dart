@@ -8,7 +8,9 @@ import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// A channel's pinned messages: the stored ones at once, fetched again
 /// behind them.
@@ -87,11 +89,11 @@ class PinnedScreen extends ConsumerWidget {
       );
     }
     return Scaffold(
-      appBar: AppBar(
+      appBar: WindowAppBar(
         title: Text('Pinned in $title'),
         bottom: ProgressSlot(active: refresh.isLoading && items.isNotEmpty),
       ),
-      body: RefreshIndicator(onRefresh: pull, child: body),
+      body: RefreshArea(onRefresh: pull, child: body),
     );
   }
 }

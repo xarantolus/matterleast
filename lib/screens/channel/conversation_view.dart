@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/server_features.dart';
@@ -13,10 +14,10 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/message_environment.dart';
+import 'package:matterleast/screens/channel/message_hover.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/reading_places.dart';
 import 'package:matterleast/ui/anchored_list.dart';
-import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/post_tile.dart';
@@ -292,20 +293,23 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
         child: MessageEnvironment(
           url: widget.url,
           teamId: state.window?.teamId ?? '',
-          child: AnchoredList<ListRow>(
-            key: ValueKey(state.generation),
-            rows: state.rows,
-            keyOf: _keyOf,
-            controller: _list,
-            initialAnchor: _openAt(state, height),
-            onViewChanged: _onView,
-            olderEdge: _OlderEdge(
-              state: state,
-              host: Uri.parse(widget.url).host,
-              startText: widget.startText,
-              onRetry: _controller.retryOlder,
+          // The hover toolbar floats over the rows, clipped to the list.
+          child: Overlay.wrap(
+            child: AnchoredList<ListRow>(
+              key: ValueKey(state.generation),
+              rows: state.rows,
+              keyOf: _keyOf,
+              controller: _list,
+              initialAnchor: _openAt(state, height),
+              onViewChanged: _onView,
+              olderEdge: _OlderEdge(
+                state: state,
+                host: Uri.parse(widget.url).host,
+                startText: widget.startText,
+                onRetry: _controller.retryOlder,
+              ),
+              itemBuilder: _row,
             ),
-            itemBuilder: _row,
           ),
         ),
       ),
@@ -416,10 +420,14 @@ extension on _ConversationViewState {
         post.sendState == null && !(_state.window?.archived ?? false);
     void openThread() => widget.onOpenThread?.call(post);
     void reply() => widget.onOpenThread?.call(post, reply: true);
-    void open() => unawaited(_menu(post, _state.window?.teamId ?? ''));
+    final target = _target(post);
+    void open() => unawaited(showMessageMenu(context, target));
 
     final failed = post.sendState == 'failed';
     final tappable = usable && threads && post.sendState == null;
+    // With a mouse a click selects text; the toolbar, the right click and
+    // the replies bar take over what a tap and a long press do on a phone.
+    final desktop = isDesktop;
     final tile = PostTile(
       post: post,
       compact: compact,
@@ -431,32 +439,48 @@ extension on _ConversationViewState {
                 (await ref.read(composerActionsProvider(widget.url).future))
                     .dismissEphemeral(post.id)
           : null,
-      onToggleReaction: reacts ? (name) => _toggleReaction(post, name) : null,
-      onAddReaction: reacts ? () => _pickReaction(post) : null,
+      onToggleReaction: reacts
+          ? (name) => unawaited(toggleReaction(context, widget.url, post, name))
+          : null,
+      onAddReaction: reacts
+          ? () => unawaited(pickReaction(context, widget.url, post))
+          : null,
       onAcknowledge: reacts ? () => _toggleAcknowledged(post) : null,
       onTap: failed
           ? () => showFailedPostSheet(context, url: widget.url, post: post)
-          : tappable
+          : tappable && !desktop
           ? openThread
           : null,
       tapHint: failed ? 'try again or delete' : 'open thread',
-      onLongPress: usable && !failed ? open : null,
+      onLongPress: usable && !failed && !desktop ? open : null,
+      onContextMenu: usable && !failed && desktop
+          ? (position, selection) => unawaited(
+              showMessageContextMenu(
+                context,
+                target,
+                position,
+                selection: selection,
+              ),
+            )
+          : null,
       actions: usable && post.sendState == null
           ? {
               if (threads) _replyAction: reply,
-              if (reacts) _reactAction: () => _pickReaction(post),
+              if (reacts)
+                _reactAction: () =>
+                    unawaited(pickReaction(context, widget.url, post)),
               _menuAction: open,
             }
           : const {},
     );
     if (failed || !usable) return tile;
+    if (desktop) return MessageHover(target: target, child: tile);
     return SwipeToOpen(onOpen: open, child: tile);
   }
 
-  Future<void> _menu(PostItem post, String teamId) => showMessageMenu(
-    context,
+  MessageTarget _target(PostItem post) => MessageTarget(
     url: widget.url,
-    teamId: teamId,
+    teamId: _state.window?.teamId ?? '',
     post: post,
     onReply: widget.onOpenThread == null
         ? null
@@ -474,28 +498,6 @@ extension on _ConversationViewState {
       null => null,
     },
   );
-
-  Future<void> _toggleReaction(PostItem post, String name) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final actions = await ref.read(postActionsProvider(widget.url).future);
-    final mine = post.reactions.any((g) => g.emojiName == name && g.mine);
-    try {
-      if (mine) {
-        await actions.removeReaction(post.id, name);
-      } else {
-        await actions.addReaction(post.id, name);
-      }
-    } on ApiError catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't change the reaction. "
-            '${requestProblemText(e, Uri.parse(widget.url).host)}',
-          ),
-        ),
-      );
-    }
-  }
 
   Future<void> _toggleAcknowledged(PostItem post) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -518,15 +520,6 @@ extension on _ConversationViewState {
         ),
       );
     }
-  }
-
-  Future<void> _pickReaction(PostItem post) async {
-    final actions = ref.read(postActionsProvider(widget.url).future);
-    final picked = await showEmojiPicker(context, widget.url);
-    if (picked == null) return;
-    await (await actions)
-        .addReaction(post.id, picked)
-        .catchError((Object _) {});
   }
 }
 

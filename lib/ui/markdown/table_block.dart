@@ -4,6 +4,7 @@ import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 const _previewHeight = 300.0;
 const _cellMaxWidth = 240.0;
@@ -121,7 +122,7 @@ class TableScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Table')),
+    appBar: WindowAppBar(title: const Text('Table')),
     body: SafeArea(
       top: false,
       child: SingleChildScrollView(

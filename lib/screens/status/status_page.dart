@@ -11,6 +11,7 @@ import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// Per signed-in server: the connection, the last refresh, what is stored,
 /// and a way to refresh now.
@@ -25,7 +26,7 @@ class StatusPage extends ConsumerWidget {
     ];
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
-      appBar: AppBar(title: const Text('Status')),
+      appBar: WindowAppBar(title: const Text('Status')),
       body: servers.isEmpty
           ? EmptyState(
               icon: Icons.dns_outlined,

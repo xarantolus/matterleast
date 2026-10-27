@@ -13,8 +13,10 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// Talk to an agent: pick one, ask, and find earlier conversations. Each
 /// conversation is a thread in the direct message with the agent.
@@ -125,7 +127,7 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
     final bot = bots == null ? null : pickAgent(bots, saved: _botId);
     final busy = _opening || botsValue.isLoading || threadsValue.isLoading;
     return Scaffold(
-      appBar: AppBar(
+      appBar: WindowAppBar(
         title: const Text('Agents'),
         bottom: ProgressSlot(active: busy && bots != null),
         actions: [
@@ -235,7 +237,7 @@ class _History extends ConsumerWidget {
     final today = ref.watch(todayProvider);
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
-    return RefreshIndicator(
+    return RefreshArea(
       onRefresh: () => ref.refresh(agentThreadsProvider(url).future),
       child: ListView.builder(
         itemCount: list.length,

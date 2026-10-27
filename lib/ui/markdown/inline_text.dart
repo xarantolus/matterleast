@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/link_gestures.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -114,6 +118,9 @@ class _InlineTextState extends State<InlineText> {
         TapOrHoldRecognizer(
           onTapped: () => env.onLink(classifyLink(link, env.server)),
           onHeld: () => showLinkSheet(context, link, env),
+          onRightClick: isDesktop
+              ? (at) => showLinkMenu(context, link, env, at)
+              : null,
         ),
       );
     }
@@ -250,6 +257,32 @@ String? mentionedUsername(String typed, Set<String> usernames) {
     name = name.substring(0, name.length - 1);
   }
   return null;
+}
+
+/// Right click on a link: open it, or copy the address, at the pointer.
+void showLinkMenu(
+  BuildContext context,
+  String url,
+  PostEnvironment env,
+  Offset position,
+) {
+  final isMail = url.startsWith('mailto:');
+  final shown = isMail ? url.substring(7) : url;
+  unawaited(
+    showMenuAt<VoidCallback>(context, position, [
+      PopupMenuItem(
+        value: () => env.onLink(classifyLink(url, env.server)),
+        child: const MenuEntry(icon: Icons.open_in_new, label: 'Open link'),
+      ),
+      PopupMenuItem(
+        value: () => unawaited(Clipboard.setData(ClipboardData(text: shown))),
+        child: MenuEntry(
+          icon: Icons.copy,
+          label: isMail ? 'Copy email address' : 'Copy link',
+        ),
+      ),
+    ]).then((picked) => picked?.call()),
+  );
 }
 
 /// Long press on a link: open it, or copy the address.
