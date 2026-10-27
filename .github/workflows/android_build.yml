@@ -228,3 +228,11 @@ jobs:
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Rebuilds the F-Droid repository at once instead of at its nightly
+      # run. FDROID_REPO_TOKEN is a fine-grained token scoped to
+      # xarantolus/fdroid alone, with Contents: write (what dispatches need).
+      - name: Tell the F-Droid repository about the release
+        env:
+          GH_TOKEN: ${{ secrets.FDROID_REPO_TOKEN }}
+        run: gh api repos/xarantolus/fdroid/dispatches -f event_type=app-released
