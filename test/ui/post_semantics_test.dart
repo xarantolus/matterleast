@@ -76,4 +76,24 @@ void main() {
     expect(replied, isTrue);
     handle.dispose();
   });
+
+  testWidgets('a post whose thread has a draft reply shows it and opens the '
+      'thread on tap', (tester) async {
+    var opened = false;
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: MatterleastApp.lightTheme,
+          home: Scaffold(
+            body: PostTile(
+              post: _post().copyWith(hasDraftReply: true),
+              onOpenThread: () => opened = true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Draft'));
+    expect(opened, isTrue);
+  });
 }

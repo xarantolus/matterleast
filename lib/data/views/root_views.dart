@@ -197,6 +197,7 @@ class RootViews {
         await (db.select(db.drafts)..where(
               (d) =>
                   d.channelId.isIn(channels.keys) &
+                  d.rootId.equals('') &
                   (d.message.equals('').not() | d.files.equals('[]').not()),
             ))
             .get();

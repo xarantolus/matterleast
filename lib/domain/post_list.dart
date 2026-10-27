@@ -37,6 +37,9 @@ abstract class PostItem with _$PostItem {
     /// Replies in a followed thread the reader hasn't seen.
     @Default(0) int unreadReplies,
 
+    /// The reader has an unsent reply in this post's thread.
+    @Default(false) bool hasDraftReply,
+
     /// The people who replied, newest first, as far as they are known.
     @Default(<PostPerson>[]) List<PostPerson> participants,
     @Default('') String authorUsername,
