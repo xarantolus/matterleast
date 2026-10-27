@@ -13,6 +13,7 @@ Future<void> showAskAgentsSheet(
   BuildContext context, {
   required String url,
   required String channelId,
+  DateTime? unreadSince,
 }) => showModalBottomSheet<void>(
   context: context,
   showDragHandle: true,
@@ -20,6 +21,7 @@ Future<void> showAskAgentsSheet(
   builder: (_) => _AskAgentsSheet(
     url: url,
     channelId: channelId,
+    unreadSince: unreadSince,
     navigator: Navigator.of(context),
   ),
 );
@@ -28,11 +30,13 @@ class _AskAgentsSheet extends ConsumerStatefulWidget {
   const _AskAgentsSheet({
     required this.url,
     required this.channelId,
+    required this.unreadSince,
     required this.navigator,
   });
 
   final String url;
   final String channelId;
+  final DateTime? unreadSince;
   final NavigatorState navigator;
 
   @override
@@ -46,7 +50,7 @@ class _AskAgentsSheetState extends ConsumerState<_AskAgentsSheet> {
   Future<void> _summarize(
     AgentBot bot, {
     int? days,
-    bool unreads = false,
+    DateTime? unreadsSince,
   }) async {
     final messenger = ScaffoldMessenger.of(context);
     final sheet = Navigator.of(context);
@@ -57,7 +61,7 @@ class _AskAgentsSheetState extends ConsumerState<_AskAgentsSheet> {
         widget.channelId,
         bot,
         days: days,
-        unreadsOnly: unreads,
+        unreadsSince: unreadsSince,
       );
       sheet.pop();
       final channelId = answer.channelId;
@@ -136,16 +140,17 @@ class _AskAgentsSheetState extends ConsumerState<_AskAgentsSheet> {
                   ],
                 ),
               ),
-            for (final (label, days, unreads) in const [
-              ('Summarize unreads', null, true),
-              ('Summarize the last 7 days', 7, false),
-              ('Summarize the last 14 days', 14, false),
+            for (final (label, days, since) in [
+              if (widget.unreadSince != null)
+                ('Summarize unreads', null, widget.unreadSince),
+              ('Summarize the last 7 days', 7, null),
+              ('Summarize the last 14 days', 14, null),
             ])
               ListTile(
                 leading: const Icon(Icons.auto_awesome_outlined),
                 title: Text(label),
                 enabled: !_running,
-                onTap: () => _summarize(bot, days: days, unreads: unreads),
+                onTap: () => _summarize(bot, days: days, unreadsSince: since),
               ),
           ],
         ],

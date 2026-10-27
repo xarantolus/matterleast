@@ -81,6 +81,7 @@ class Conversation extends _$Conversation {
     if (!ref.mounted) return;
     state = state.copyWith(myUserId: _me);
     _lastViewedAt = facts.lastViewedAt;
+    state = state.copyWith(lastViewedAt: _lastViewedAt);
     if (!_isThread) {
       // Stay in the stretch of history stored now, even if the refresh
       // finds a gap and stores the newest messages apart.
@@ -176,6 +177,7 @@ class Conversation extends _$Conversation {
   void markedUnread(PostItem post) {
     _lastViewedAt = post.createAt.subtract(const Duration(milliseconds: 1));
     _unreadUntil = null;
+    state = state.copyWith(lastViewedAt: _lastViewedAt);
     final window = state.window;
     if (window == null) return;
     state = state.copyWith(rows: _rows(window));

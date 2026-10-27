@@ -36,6 +36,10 @@ abstract class ConversationState with _$ConversationState {
     SavedPlace? saved,
     String? highlightKey,
 
+    /// When the channel was last read before it was opened, or since the
+    /// reader marked a message unread.
+    DateTime? lastViewedAt,
+
     /// The signed-in user, once the database answered.
     String? myUserId,
   }) = _ConversationState;
