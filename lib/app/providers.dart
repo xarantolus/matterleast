@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
+import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/secure/token_store.dart';
@@ -42,6 +43,22 @@ Future<RailTarget?> savedRailTarget(Ref ref) =>
 TokenStore tokenStore(Ref ref) => TokenStore();
 
 @Riverpod(keepAlive: true)
+NetworkState networkState(Ref ref) {
+  final network = NetworkState.device();
+  ref.onDispose(network.close);
+  return network;
+}
+
+/// True while the device has no network, so nothing shows as loading.
+@Riverpod(keepAlive: true)
+bool offline(Ref ref) {
+  final online = ref.watch(networkStateProvider).online;
+  online.addListener(ref.invalidateSelf);
+  ref.onDispose(() => online.removeListener(ref.invalidateSelf));
+  return !online.value;
+}
+
+@Riverpod(keepAlive: true)
 ServerManager serverManager(Ref ref) {
   final notifier = ref.watch(notifierProvider);
   final manager = appServerManager(
@@ -51,6 +68,7 @@ ServerManager serverManager(Ref ref) {
     onWiped: notifier.clearServer,
     // What the app showed until now never comes back as a notification.
     onHidden: (session) => markSeen(session.db, DateTime.now().toUtc()),
+    network: ref.watch(networkStateProvider),
   );
   ref.onDispose(manager.dispose);
   return manager;

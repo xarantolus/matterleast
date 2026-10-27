@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/coalesce.dart';
 import 'package:matterleast/api/generated/export.dart' show MattermostClient;
+import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/api/server_paths.dart';
 import 'package:matterleast/api/trusted_authorities.dart';
 
@@ -19,7 +20,10 @@ Future<T> cancellable<T>(CancelToken cancel, Future<T> Function() body) =>
     runZoned(body, zoneValues: {_cancelKey: cancel});
 
 /// One HTTP client per server: base URL, auth header, deadlines, error
-/// mapping, and identical GETs in flight sharing one round trip. The generated
+/// mapping, and identical GETs in flight sharing one round trip. While
+/// [network] reports none nothing is sent, and what is in flight stops when
+/// it goes away, so nothing waits for a timeout to say "offline". The
+/// generated
 /// [MattermostClient] sits on top; nothing above the data layer touches Dio.
 class ServerApi {
   ServerApi({
@@ -27,6 +31,7 @@ class ServerApi {
     required this._token,
     String? preAuthSecret,
     this.deadline = defaultDeadline,
+    this.network,
     Dio? dio,
   }) : dio = dio ?? (Dio()..httpClientAdapter = TrustingAdapter(baseUrl)) {
     this.dio.options = BaseOptions(
@@ -43,6 +48,17 @@ class ServerApi {
     this.dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          if (network?.offline ?? false) {
+            handler.reject(
+              DioException(
+                requestOptions: options,
+                type: DioExceptionType.connectionError,
+                error: const NoNetwork(),
+              ),
+              true,
+            );
+            return;
+          }
           if (Zone.current[_cancelKey] case final CancelToken cancel) {
             final own = options.cancelToken;
             if (own == null) {
@@ -58,9 +74,18 @@ class ServerApi {
           if (token != null && carriesToken(options.uri, baseUrl)) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          if (network != null) {
+            options.cancelToken ??= CancelToken();
+            _live.add(options);
+          }
           handler.next(options);
         },
+        onResponse: (response, handler) {
+          _live.remove(response.requestOptions);
+          handler.next(response);
+        },
         onError: (e, handler) {
+          _live.remove(e.requestOptions);
           final error = ApiError.from(e);
           if (error is ServerError &&
               error.isUnauthorized &&
@@ -73,6 +98,7 @@ class ServerApi {
     );
     this.dio.httpClientAdapter = _SameGets(this.dio.httpClientAdapter);
     client = MattermostClient(this.dio);
+    network?.online.addListener(_networkChanged);
   }
 
   /// How long [call] lets a request run in total, unless the call says
@@ -87,7 +113,11 @@ class ServerApi {
   final Duration deadline;
   final Dio dio;
   final TokenProvider _token;
+  final NetworkState? network;
   late final MattermostClient client;
+
+  /// Requests between being sent and their answer (or failure).
+  final _live = Set<RequestOptions>.identity();
 
   final _inFlight = <String, Future<Object?>>{};
   final _sessionEnded = StreamController<void>.broadcast();
@@ -189,7 +219,15 @@ class ServerApi {
         () => runZoned(() => call(request), zoneValues: {_cancelKey: null}),
       ).then((v) => v as T);
 
+  void _networkChanged() {
+    if (!network!.offline) return;
+    for (final options in _live.toList()) {
+      options.cancelToken?.cancel(const NoNetwork());
+    }
+  }
+
   void close() {
+    network?.online.removeListener(_networkChanged);
     dio.close(force: true);
     _sessionEnded.close();
   }

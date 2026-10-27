@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/secure/token_store.dart';
@@ -20,9 +21,10 @@ import 'package:workmanager/workmanager.dart';
 /// The app without its UI, for engines that run while it is closed: the
 /// periodic check, notification actions and the stay-connected service.
 class BackgroundApp {
-  BackgroundApp._(this.db, this.manager, this.notifier);
+  BackgroundApp._(this.db, this.manager, this.notifier, this.network);
 
   final AppDatabase db;
+  final NetworkState network;
   final ServerManager manager;
   final Notifier notifier;
 
@@ -32,14 +34,16 @@ class BackgroundApp {
     final notifier = Notifier();
     await notifier.init(onAction: onNoticeAction);
     final db = AppDatabase.open(shared: false);
+    final network = NetworkState.device();
     final manager = appServerManager(
       db: db,
       tokens: TokenStore(),
       shared: false,
       onRead: (url, mark) => unawaited(clearOnRead(notifier, url, mark)),
       onWiped: notifier.clearServer,
+      network: network,
     );
-    return BackgroundApp._(db, manager, notifier);
+    return BackgroundApp._(db, manager, notifier, network);
   }
 
   /// Opens the app, runs [work] and closes it again, whatever happens.
@@ -90,6 +94,7 @@ class BackgroundApp {
 
   Future<void> close() async {
     await manager.dispose();
+    await network.close();
     await db.close();
   }
 }

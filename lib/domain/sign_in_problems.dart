@@ -35,6 +35,8 @@ const mfaSetupNeededText =
 
 /// Words for a request that never got a usable answer from [host].
 String connectionProblemText(ApiError error, String host) => switch (error) {
+  Unreachable(noNetwork: true) =>
+    "You're offline. The app updates when the connection is back.",
   Unreachable() =>
     "Couldn't reach $host. Check the address and your connection.",
   RequestTimeout() => "$host didn't answer in time. Try again.",
@@ -65,6 +67,7 @@ String shortProblemText(ApiError error) => switch (error) {
   ServerError(statusCode: 413) => 'Too large for the server',
   ServerError(statusCode: 501) => 'Turned off on this server',
   ServerError(:final statusCode) => 'Server error $statusCode',
+  Unreachable(noNetwork: true) => 'Offline',
   Unreachable() => 'No connection',
   RequestTimeout() => 'No answer in time',
   UntrustedCertificate() => 'Untrusted certificate',

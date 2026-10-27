@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/api/trusted_authorities.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/secure/token_store.dart';
@@ -35,6 +36,7 @@ class ServerManager {
     this._onRead = _ignoreRead,
     this._onWiped = _ignoreUrl,
     this._onHidden = _ignoreSession,
+    this._network,
   });
 
   final AppDatabase _db;
@@ -46,6 +48,7 @@ class ServerManager {
   final OpenServerDatabase _openDatabase;
   final DateTime Function() _clock;
   final Future<void> Function() _clearShared;
+  final NetworkState? _network;
 
   /// A conversation of the server at the URL was read, here or elsewhere.
   final void Function(String url, ReadMark mark) _onRead;
@@ -148,6 +151,7 @@ class ServerManager {
       mediaBudget: _mediaBudget,
       filesBudget: _filesBudget,
       tokens: _tokens,
+      network: _network,
     );
     _subscriptions[url] = [
       session.api.sessionEnded.listen((_) => _onSessionEnded(url)),

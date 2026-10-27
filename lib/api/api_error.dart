@@ -30,6 +30,7 @@ sealed class ApiError implements Exception {
       );
     }
     return switch (e.type) {
+      _ when e.error is NoNetwork => const Unreachable(noNetwork: true),
       DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
       DioExceptionType.receiveTimeout => const RequestTimeout(),
@@ -82,9 +83,18 @@ final class RequestTimeout extends ApiError {
   const RequestTimeout();
 }
 
+/// No answer arrived. [noNetwork]: the device had no network, so the
+/// request was never sent or was stopped when the network went away.
 final class Unreachable extends ApiError {
-  const Unreachable({this.detail});
+  const Unreachable({this.detail, this.noNetwork = false});
   final String? detail;
+  final bool noNetwork;
+}
+
+/// Why a request was refused or stopped without a network; [ApiError.from]
+/// makes it an [Unreachable].
+final class NoNetwork implements Exception {
+  const NoNetwork();
 }
 
 final class UntrustedCertificate extends ApiError {

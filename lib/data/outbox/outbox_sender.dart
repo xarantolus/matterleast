@@ -28,18 +28,24 @@ class PostRejected {
 }
 
 /// Sends one server's queued posts, one at a time, first in first out per
-/// channel, retrying with backoff while the server can't be reached. The
+/// channel, retrying with backoff while the server can't be reached. While
+/// [offline] says so it waits for [wake] without using up attempts. The
 /// queue lives in the database, so it survives the app being stopped.
 class OutboxSender {
   OutboxSender({
     required this.server,
     required this.store,
     DateTime Function()? clock,
-  }) : _clock = clock ?? (() => DateTime.now().toUtc());
+    bool Function()? offline,
+  }) : _clock = clock ?? (() => DateTime.now().toUtc()),
+       _offline = offline ?? _never;
+
+  static bool _never() => false;
 
   final ServerApi server;
   final ServerStore store;
   final DateTime Function() _clock;
+  final bool Function() _offline;
 
   final _rejected = StreamController<PostRejected>.broadcast();
   Timer? _timer;
@@ -81,7 +87,7 @@ class OutboxSender {
     _timer?.cancel();
     do {
       _again = false;
-      while (!_closed) {
+      while (!_closed && !_offline()) {
         final rows = await store.outboxRows();
         final step = nextOutboxStep([
           for (final r in rows)
@@ -156,6 +162,14 @@ class OutboxSender {
 
   Future<void> _failed(OutboxRow row, ApiError error) async {
     final id = row.pendingPostId;
+    if (error case Unreachable(noNetwork: true)) {
+      await store.markSendRetry(
+        id,
+        attempts: row.attempts,
+        nextAttemptAt: _clock(),
+      );
+      return;
+    }
     final failures = row.attempts + 1;
     final message = error is ServerError ? error.message : null;
     switch (classifySendError(error, failures)) {
