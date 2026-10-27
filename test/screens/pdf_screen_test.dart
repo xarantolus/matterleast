@@ -13,6 +13,12 @@ const _server = 'http://localhost:8065';
 
 void main() {
   setUpAll(() async {
+    // pdfium_dart looks for the library next to flutter_tester or through
+    // dartdev's .dart_tool/native_assets.yaml, but flutter test puts the
+    // build hook's output here.
+    Pdfrx.pdfiumModulePath = File('build/native_assets/linux/libpdfium.so')
+        .absolute
+        .path;
     Pdfrx.cacheDirectoryPath = Directory.systemTemp.path;
     await pdfrxFlutterInitialize();
   });
