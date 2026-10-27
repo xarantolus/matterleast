@@ -30,6 +30,10 @@ abstract class LoginOptions with _$LoginOptions {
     required String serverVersion,
     required String diagnosticId,
     required bool externalBrowserForSso,
+
+    /// The address the server knows itself by (`SiteURL`), which it names
+    /// in an SSO redirect; it may differ from the one the user entered.
+    Uri? siteUrl,
   }) = _LoginOptions;
 
   const LoginOptions._();
@@ -113,7 +117,14 @@ LoginOptions loginOptionsFrom(ClientConfig config, ClientLicense license) {
     serverVersion: _text(config.version, ''),
     diagnosticId: _text(config.diagnosticId, ''),
     externalBrowserForSso: config.mobileExternalBrowser == true,
+    siteUrl: _webUrl(config.siteUrl),
   );
+}
+
+Uri? _webUrl(String? text) {
+  final uri = Uri.tryParse(text?.trim() ?? '');
+  if (uri == null || uri.host.isEmpty) return null;
+  return uri.isScheme('https') || uri.isScheme('http') ? uri : null;
 }
 
 String _joinWithOr(List<String> parts) {

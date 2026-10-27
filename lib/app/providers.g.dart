@@ -486,7 +486,7 @@ final class BrowserAuthSessionProvider
 }
 
 String _$browserAuthSessionHash() =>
-    r'5d2a45f9a687b1ad12029f424db8a1a45add9852';
+    r'5a35068e1772ba7d282b416c28deaf86dc17a2fc';
 
 @ProviderFor(signIn)
 final signInProvider = SignInProvider._();

@@ -16,22 +16,12 @@ class SignedIn {
   final api.User me;
 }
 
-/// Opens [url] in an auth session and returns the redirect it ended on. A
-/// session that hears redirects it didn't ask for waits for the first one
-/// that `accepts`.
-typedef OpenAuthSession = Future<Uri> Function(
-  Uri url,
-  String scheme,
-  bool Function(Uri) accepts,
-);
+/// Opens [url] in an auth session and returns the redirect it ended on.
+typedef OpenAuthSession = Future<Uri> Function(Uri url, String scheme);
 
 // A plain Custom Tab sharing the browser session, as the official Android
 // app does; the redirect comes back through the plugin's CallbackActivity.
-Future<Uri> _openAuthTab(
-  Uri url,
-  String scheme,
-  bool Function(Uri) accepts,
-) async => Uri.parse(
+Future<Uri> _openAuthTab(Uri url, String scheme) async => Uri.parse(
   await FlutterWebAuth2.authenticate(
     url: url.toString(),
     callbackUrlScheme: scheme,
@@ -89,17 +79,11 @@ class SignIn {
     SsoButton button, {
     String scheme = defaultSsoScheme,
   }) async {
-    SsoResult check(Uri callback) => parseSsoCallback(
-      callback,
-      server: server.url,
-      serverVersion: server.options.serverVersion,
-    );
     final Uri callback;
     try {
       callback = await _openAuthSession(
         ssoStartUrl(server: server.url, path: button.path, scheme: scheme),
         scheme,
-        (link) => check(link) is SsoToken,
       );
     } on PlatformException catch (e) {
       if (e.code == 'CANCELED') return null;
@@ -108,7 +92,14 @@ class SignIn {
         'installed and try again.',
       );
     }
-    return switch (check(callback)) {
+    final result = parseSsoCallback(
+      callback,
+      scheme: scheme,
+      server: server.url,
+      siteUrl: server.options.siteUrl,
+      serverVersion: server.options.serverVersion,
+    );
+    return switch (result) {
       SsoToken(:final token) => await _confirm(server, token),
       SsoRejected(:final reason) => throw LoginRejected('$reason Try again.'),
     };

@@ -50,18 +50,36 @@ sealed class SsoResult with _$SsoResult {
 /// Servers from 12.0 name themselves in `srv` (their configured site URL), so
 /// a redirect planted by another site or app cannot hand us its token; only
 /// servers known to be older may leave it out, as the official app accepts.
+/// The site URL may differ from the address the user entered (another host
+/// name for the same server), so either counts when the server reported it.
 /// The scheme is ignored because the site URL may be configured as http
 /// behind a proxy.
 SsoResult parseSsoCallback(
   Uri callback, {
+  required String scheme,
   required Uri server,
+  required Uri? siteUrl,
   required String serverVersion,
 }) {
+  if (!isSsoCallbackFor(callback, scheme)) {
+    return const SsoResult.rejected(
+      "The sign-in came back in a form the app doesn't expect.",
+    );
+  }
   final srv = callback.queryParameters['srv'];
   if (srv != null && srv.isNotEmpty) {
     final claimed = Uri.tryParse(srv);
-    if (claimed == null || !_sameServer(claimed, server)) {
-      return const SsoResult.rejected('The redirect came from another server.');
+    if (claimed == null || claimed.host.isEmpty) {
+      return const SsoResult.rejected(
+        'The sign-in came back without a server address the app can read.',
+      );
+    }
+    if (!_sameServer(claimed, server) &&
+        (siteUrl == null || !_sameServer(claimed, siteUrl))) {
+      return SsoResult.rejected(
+        'The sign-in came back from ${_hostOf(claimed)}, but this server is '
+        '${_hostOf(server)}.',
+      );
     }
   } else if (isVersionAtLeast(serverVersion, (12, 0)) != false) {
     return const SsoResult.rejected(
@@ -75,11 +93,17 @@ SsoResult parseSsoCallback(
   return SsoResult.token(token);
 }
 
+String _hostOf(Uri u) {
+  final host = u.host.toLowerCase();
+  return u.hasPort ? '$host:${u.port}' : host;
+}
+
 bool _sameServer(Uri a, Uri b) =>
     a.host.toLowerCase() == b.host.toLowerCase() &&
     _port(a) == _port(b) &&
     _trimSlash(a.path) == _trimSlash(b.path);
 
+// http and https count alike, so a missing port means the https default.
 int _port(Uri u) => u.hasPort ? u.port : 443;
 
 String _trimSlash(String path) =>

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 import 'package:matterleast/api/network_state.dart';
+import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
@@ -98,6 +99,7 @@ ServerProbe serverProbe(Ref ref) => ServerProbe();
 @Riverpod(keepAlive: true)
 BrowserAuthSession browserAuthSession(Ref ref) => BrowserAuthSession(
   launch: (url) => launchUrl(url, mode: LaunchMode.externalApplication),
+  onReturn: () => unawaited(DesktopShell.open()),
 );
 
 @riverpod
