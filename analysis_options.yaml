@@ -11,6 +11,8 @@ analyzer:
     - lib/api/generated/**
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - windows/**
+    - linux/**
   language:
     strict-casts: true
     strict-inference: true
