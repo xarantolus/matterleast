@@ -111,34 +111,38 @@ class PostTile extends StatelessWidget {
                 child: Semantics(
                   label: status,
                   customSemanticsActions: actions,
-                  child: Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: Spacing.sm,
-                    children: [
-                      _ToProfile(
-                        post: post,
-                        details: details,
-                        child: Text(
+                  // The whole line, so a tap between name and time opens
+                  // the profile instead of the thread.
+                  child: _ToProfile(
+                    post: post,
+                    details: details,
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: Spacing.sm,
+                      children: [
+                        Text(
                           name,
                           style: text.titleSmall?.copyWith(color: tokens.text),
                         ),
-                      ),
-                      if (bot)
-                        const _Tag('BOT')
-                      else if (post.authorIsGuest)
-                        const _Tag('GUEST'),
-                      Text(
-                        time,
-                        style: text.bodySmall?.copyWith(color: tokens.muted),
-                      ),
-                      if (details.priority case final priority?)
-                        _PriorityLabel(priority: priority),
-                      if (post.isEphemeral)
+                        if (bot)
+                          const _Tag('BOT')
+                        else if (post.authorIsGuest)
+                          const _Tag('GUEST'),
                         Text(
-                          '(Only visible to you)',
+                          time,
                           style: text.bodySmall?.copyWith(color: tokens.muted),
                         ),
-                    ],
+                        if (details.priority case final priority?)
+                          _PriorityLabel(priority: priority),
+                        if (post.isEphemeral)
+                          Text(
+                            '(Only visible to you)',
+                            style: text.bodySmall?.copyWith(
+                              color: tokens.muted,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
