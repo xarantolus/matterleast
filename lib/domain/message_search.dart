@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/domain/post_files.dart';
 
 part 'message_search.freezed.dart';
 
@@ -119,7 +120,23 @@ abstract class FileHit with _$FileHit {
     /// Where it was posted, such as `#town-square` or a person's name.
     required String place,
     DateTime? createAt,
+    int? width,
+    int? height,
+    @Default(false) bool hasPreview,
   }) = _FileHit;
+
+  const FileHit._();
+
+  PostFile get postFile => PostFile(
+    id: id,
+    name: name,
+    extension: extension,
+    mimeType: mimeType,
+    size: size,
+    width: width,
+    height: height,
+    hasPreview: hasPreview,
+  );
 }
 
 /// Pure: the terms sent to the server for [query] within [scope].

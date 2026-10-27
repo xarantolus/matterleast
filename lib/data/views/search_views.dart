@@ -202,6 +202,9 @@ class SearchViews {
             channelId: p.channelId,
             place: places[p.channelId] ?? '',
             createAt: p.createAt,
+            width: f.width,
+            height: f.height,
+            hasPreview: f.hasPreview,
           );
         }(),
     ];

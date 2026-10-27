@@ -218,8 +218,10 @@ class Conversation extends _$Conversation {
         await _actions!.refreshThread(rootId!, owner: this);
         await _showReplyAsked();
       } else {
-        await _actions!.refreshChannel(channelId, owner: this);
+        // Centre on the asked-for message before the catch-up, so the
+        // slim bar covers the wait and nothing moves afterwards.
         await _openHighlight();
+        await _actions!.refreshChannel(channelId, owner: this);
       }
       _fetched();
       if (ref.mounted) state = state.copyWith(refreshing: false);

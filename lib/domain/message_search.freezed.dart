@@ -325,7 +325,7 @@ as FileKind?,
 mixin _$FileHit {
 
  String get id; String get name; String get extension; String get mimeType; int get size; String get postId; String get channelId;/// Where it was posted, such as `#town-square` or a person's name.
- String get place; DateTime? get createAt;
+ String get place; DateTime? get createAt; int? get width; int? get height; bool get hasPreview;
 /// Create a copy of FileHit
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -337,20 +337,20 @@ $FileHitCopyWith<FileHit> get copyWith => _$FileHitCopyWithImpl<FileHit>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as FileHit;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FileHit&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.extension, _this.extension) || other.extension == _this.extension)&&(identical(other.mimeType, _this.mimeType) || other.mimeType == _this.mimeType)&&(identical(other.size, _this.size) || other.size == _this.size)&&(identical(other.postId, _this.postId) || other.postId == _this.postId)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.place, _this.place) || other.place == _this.place)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FileHit&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.extension, _this.extension) || other.extension == _this.extension)&&(identical(other.mimeType, _this.mimeType) || other.mimeType == _this.mimeType)&&(identical(other.size, _this.size) || other.size == _this.size)&&(identical(other.postId, _this.postId) || other.postId == _this.postId)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.place, _this.place) || other.place == _this.place)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.width, _this.width) || other.width == _this.width)&&(identical(other.height, _this.height) || other.height == _this.height)&&(identical(other.hasPreview, _this.hasPreview) || other.hasPreview == _this.hasPreview));
 }
 
 
 @override
 int get hashCode {
   final _this = this as FileHit;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.extension,_this.mimeType,_this.size,_this.postId,_this.channelId,_this.place,_this.createAt);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.extension,_this.mimeType,_this.size,_this.postId,_this.channelId,_this.place,_this.createAt,_this.width,_this.height,_this.hasPreview);
 }
 
 @override
 String toString() {
   final _this = this as FileHit;
-  return 'FileHit(id: ${_this.id}, name: ${_this.name}, extension: ${_this.extension}, mimeType: ${_this.mimeType}, size: ${_this.size}, postId: ${_this.postId}, channelId: ${_this.channelId}, place: ${_this.place}, createAt: ${_this.createAt})';
+  return 'FileHit(id: ${_this.id}, name: ${_this.name}, extension: ${_this.extension}, mimeType: ${_this.mimeType}, size: ${_this.size}, postId: ${_this.postId}, channelId: ${_this.channelId}, place: ${_this.place}, createAt: ${_this.createAt}, width: ${_this.width}, height: ${_this.height}, hasPreview: ${_this.hasPreview})';
 }
 
 
@@ -361,7 +361,7 @@ abstract mixin class $FileHitCopyWith<$Res>  {
   factory $FileHitCopyWith(FileHit value, $Res Function(FileHit) _then) = _$FileHitCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String extension, String mimeType, int size, String postId, String channelId, String place, DateTime? createAt
+ String id, String name, String extension, String mimeType, int size, String postId, String channelId, String place, DateTime? createAt, int? width, int? height, bool hasPreview
 });
 
 
@@ -378,7 +378,7 @@ class _$FileHitCopyWithImpl<$Res>
 
 /// Create a copy of FileHit
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? extension = null,Object? mimeType = null,Object? size = null,Object? postId = null,Object? channelId = null,Object? place = null,Object? createAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? extension = null,Object? mimeType = null,Object? size = null,Object? postId = null,Object? channelId = null,Object? place = null,Object? createAt = freezed,Object? width = freezed,Object? height = freezed,Object? hasPreview = null,}) {
   return _then(FileHit(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -389,7 +389,10 @@ as int,postId: null == postId ? _self.postId : postId // ignore: cast_nullable_t
 as String,channelId: null == channelId ? _self.channelId : channelId // ignore: cast_nullable_to_non_nullable
 as String,place: null == place ? _self.place : place // ignore: cast_nullable_to_non_nullable
 as String,createAt: freezed == createAt ? _self.createAt : createAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
+as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
+as int?,hasPreview: null == hasPreview ? _self.hasPreview : hasPreview // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -474,10 +477,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt,  int? width,  int? height,  bool hasPreview)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _FileHit() when $default != null:
-return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt);case _:
+return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt,_that.width,_that.height,_that.hasPreview);case _:
   return orElse();
 
 }
@@ -495,10 +498,10 @@ return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt,  int? width,  int? height,  bool hasPreview)  $default,) {final _that = this;
 switch (_that) {
 case _FileHit():
-return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt);case _:
+return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt,_that.width,_that.height,_that.hasPreview);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -515,10 +518,10 @@ return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt,  int? width,  int? height,  bool hasPreview)?  $default,) {final _that = this;
 switch (_that) {
 case _FileHit() when $default != null:
-return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt);case _:
+return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt,_that.width,_that.height,_that.hasPreview);case _:
   return null;
 
 }
@@ -529,8 +532,8 @@ return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_t
 /// @nodoc
 
 
-class _FileHit implements FileHit {
-  const _FileHit({required this.id, required this.name, required this.extension, required this.mimeType, required this.size, required this.postId, required this.channelId, required this.place, this.createAt});
+class _FileHit extends FileHit {
+  const _FileHit({required this.id, required this.name, required this.extension, required this.mimeType, required this.size, required this.postId, required this.channelId, required this.place, this.createAt, this.width, this.height, this.hasPreview = false}): super._();
   
 
 @override final  String id;
@@ -543,6 +546,9 @@ class _FileHit implements FileHit {
 /// Where it was posted, such as `#town-square` or a person's name.
 @override final  String place;
 @override final  DateTime? createAt;
+@override final  int? width;
+@override final  int? height;
+@override@JsonKey() final  bool hasPreview;
 
 /// Create a copy of FileHit
 /// with the given fields replaced by the non-null parameter values.
@@ -554,18 +560,18 @@ _$FileHitCopyWith<_FileHit> get copyWith => __$FileHitCopyWithImpl<_FileHit>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _FileHit&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.extension, extension) || other.extension == extension)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.size, size) || other.size == size)&&(identical(other.postId, postId) || other.postId == postId)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.place, place) || other.place == place)&&(identical(other.createAt, createAt) || other.createAt == createAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _FileHit&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.extension, extension) || other.extension == extension)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.size, size) || other.size == size)&&(identical(other.postId, postId) || other.postId == postId)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.place, place) || other.place == place)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.hasPreview, hasPreview) || other.hasPreview == hasPreview));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,extension,mimeType,size,postId,channelId,place,createAt);
+    return Object.hash(runtimeType,id,name,extension,mimeType,size,postId,channelId,place,createAt,width,height,hasPreview);
 }
 
 @override
 String toString() {
-    return 'FileHit(id: $id, name: $name, extension: $extension, mimeType: $mimeType, size: $size, postId: $postId, channelId: $channelId, place: $place, createAt: $createAt)';
+    return 'FileHit(id: $id, name: $name, extension: $extension, mimeType: $mimeType, size: $size, postId: $postId, channelId: $channelId, place: $place, createAt: $createAt, width: $width, height: $height, hasPreview: $hasPreview)';
 }
 
 
@@ -576,7 +582,7 @@ abstract mixin class _$FileHitCopyWith<$Res> implements $FileHitCopyWith<$Res> {
   factory _$FileHitCopyWith(_FileHit value, $Res Function(_FileHit) _then) = __$FileHitCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String extension, String mimeType, int size, String postId, String channelId, String place, DateTime? createAt
+ String id, String name, String extension, String mimeType, int size, String postId, String channelId, String place, DateTime? createAt, int? width, int? height, bool hasPreview
 });
 
 
@@ -593,7 +599,7 @@ class __$FileHitCopyWithImpl<$Res>
 
 /// Create a copy of FileHit
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? extension = null,Object? mimeType = null,Object? size = null,Object? postId = null,Object? channelId = null,Object? place = null,Object? createAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? extension = null,Object? mimeType = null,Object? size = null,Object? postId = null,Object? channelId = null,Object? place = null,Object? createAt = freezed,Object? width = freezed,Object? height = freezed,Object? hasPreview = null,}) {
   return _then(_FileHit(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -604,7 +610,10 @@ as int,postId: null == postId ? _self.postId : postId // ignore: cast_nullable_t
 as String,channelId: null == channelId ? _self.channelId : channelId // ignore: cast_nullable_to_non_nullable
 as String,place: null == place ? _self.place : place // ignore: cast_nullable_to_non_nullable
 as String,createAt: freezed == createAt ? _self.createAt : createAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
+as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
+as int?,hasPreview: null == hasPreview ? _self.hasPreview : hasPreview // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
