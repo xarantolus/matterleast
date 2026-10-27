@@ -15,6 +15,7 @@ import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/gallery/video_player_view.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:video_player/video_player.dart';
@@ -247,7 +248,7 @@ class _Bars extends StatelessWidget {
       ignoring: !visible,
       child: AnimatedOpacity(
         opacity: visible ? 1 : 0,
-        duration: const Duration(milliseconds: 200),
+        duration: motion(context, const Duration(milliseconds: 200)),
         child: Column(
           children: [
             ColoredBox(

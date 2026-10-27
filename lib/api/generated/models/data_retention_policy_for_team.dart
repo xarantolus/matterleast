@@ -17,7 +17,6 @@ class DataRetentionPolicyForTeam {
   @LenientString()
   @JsonKey(name: 'team_id')
   final String? teamId;
-
   @LenientInt()
   @JsonKey(name: 'post_duration')
   final int? postDuration;

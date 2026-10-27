@@ -32,16 +32,12 @@ class SharedChannel {
   @LenientString()
   @JsonKey(name: 'team_id')
   final String? teamId;
-
   @LenientBool()
   final bool? home;
-
   @LenientBool()
   final bool? readonly;
-
   @LenientString()
   final String? name;
-
   @LenientString()
   @JsonKey(name: 'display_name')
   final String? displayName;
@@ -49,19 +45,15 @@ class SharedChannel {
   final String? purpose;
   @LenientString()
   final String? header;
-
   @LenientString()
   @JsonKey(name: 'creator_id')
   final String? creatorId;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @MillisDateTime()
   @JsonKey(name: 'update_at')
   final DateTime? updateAt;
-
   @LenientString()
   @JsonKey(name: 'remote_id')
   final String? remoteId;

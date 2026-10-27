@@ -22,17 +22,13 @@ class ApiV4ChannelsChannelIdRequestBody {
   ) => _$ApiV4ChannelsChannelIdRequestBodyFromJson(json);
 
   final String id;
-
   @LenientString()
   final String? name;
-
   @LenientString()
   @JsonKey(name: 'display_name')
   final String? displayName;
-
   @LenientString()
   final String? purpose;
-
   @LenientString()
   final String? header;
 

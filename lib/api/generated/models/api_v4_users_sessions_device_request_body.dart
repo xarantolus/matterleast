@@ -23,14 +23,11 @@ class ApiV4UsersSessionsDeviceRequestBody {
   @LenientString()
   @JsonKey(name: 'device_id')
   final String? deviceId;
-
   @LenientString()
   @JsonKey(name: 'voip_device_id')
   final String? voipDeviceId;
-
   @LenientString()
   final String? deviceNotificationDisabled;
-
   @LenientString()
   final String? mobileVersion;
 

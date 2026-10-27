@@ -19,7 +19,6 @@ class UserThreads {
 
   @LenientInt()
   final int? total;
-
   @LenientListOfUserThread()
   final List<UserThread> threads;
 

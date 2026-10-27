@@ -11,6 +11,7 @@ import 'package:matterleast/domain/post_files.dart'
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
@@ -20,6 +21,7 @@ import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/pane_label.dart';
+import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -645,17 +647,7 @@ class _FileResults extends ConsumerWidget {
             return switch (rows[i - 1]) {
               final DateTime day => _DayHeader(day: day),
               final PaneLabel label => label,
-              final FileHit file => _FileTile(
-                file: file,
-                onTap: () => openConversation(
-                  Navigator.of(context),
-                  url: url,
-                  channelId: file.channelId,
-                  title: file.place.replaceFirst('#', ''),
-                  teamId: scope.teamId,
-                  highlightPostId: file.postId,
-                ),
-              ),
+              final FileHit file => _FileTile(url: url, file: file),
               _ => const SizedBox.shrink(),
             };
           },
@@ -685,36 +677,77 @@ class _DayHeader extends ConsumerWidget {
   );
 }
 
-class _FileTile extends StatelessWidget {
-  const _FileTile({required this.file, required this.onTap});
+class _FileTile extends ConsumerStatefulWidget {
+  const _FileTile({required this.url, required this.file});
 
+  final String url;
   final FileHit file;
-  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    onTap: onTap,
-    leading: SizedBox(
-      width: 40,
-      child: Icon(
-        fileIcon(
-          fileKindOf(extension: file.extension, mimeType: file.mimeType),
-          file.extension,
-        ),
-        color: context.tokens.accent,
+  ConsumerState<_FileTile> createState() => _FileTileState();
+}
+
+class _FileTileState extends ConsumerState<_FileTile> {
+  bool _locating = false;
+
+  Future<void> _openInChannel() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+    try {
+      await openPost(Navigator.of(context), widget.url, widget.file.postId);
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final file = widget.file;
+    return ListTile(
+      onTap: () => openFile(
+        context,
+        ref,
+        url: widget.url,
+        file: file.postFile,
+        author: file.place,
+        sentAt: file.createAt ?? DateTime.now(),
       ),
-    ),
-    title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-    subtitle: Text(
-      [
-        formatBytes(file.size),
-        if (file.place.isNotEmpty) file.place,
-      ].join(' · '),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(color: context.tokens.muted),
-    ),
-  );
+      leading: SizedBox(
+        width: 40,
+        child: Icon(
+          fileIcon(
+            fileKindOf(extension: file.extension, mimeType: file.mimeType),
+            file.extension,
+          ),
+          color: context.tokens.accent,
+        ),
+      ),
+      title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(
+        [
+          formatBytes(file.size),
+          if (file.place.isNotEmpty) file.place,
+        ].join(' · '),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(color: context.tokens.muted),
+      ),
+      trailing: _locating
+          ? const SizedBox.square(
+              dimension: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : PopupMenuButton<void>(
+              tooltip: 'More',
+              itemBuilder: (_) => [
+                PopupMenuItem<void>(
+                  onTap: _openInChannel,
+                  child: const Text('Open in channel'),
+                ),
+              ],
+            ),
+    );
+  }
 }
 
 class _NoResults extends StatelessWidget {

@@ -21,7 +21,6 @@ class ApiV4ChannelsMembersUserIdViewRequestBody {
 
   @JsonKey(name: 'channel_id')
   final String channelId;
-
   @LenientString()
   @JsonKey(name: 'prev_channel_id')
   final String? prevChannelId;

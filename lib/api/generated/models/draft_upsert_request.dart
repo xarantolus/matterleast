@@ -31,7 +31,6 @@ class DraftUpsertRequest {
   @LenientString()
   @JsonKey(name: 'root_id')
   final String? rootId;
-
   @LenientString()
   final String? message;
   @LenientString()

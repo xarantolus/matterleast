@@ -13,6 +13,7 @@ import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/sheet_header.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -71,13 +72,13 @@ Size integrationImageBox(
   ImageBlock block, {
   required ImageSize? measured,
   required double maxWidth,
-  required double screenHeight,
+  required double maxImageHeight,
 }) {
   final caps = _caps(block.size);
   final capWidth = block.maxWidth ?? caps?.$1;
   final capHeight = block.maxHeight ?? caps?.$2;
   final width = capWidth == null || capWidth > maxWidth ? maxWidth : capWidth;
-  final height = capHeight ?? screenHeight * 0.45;
+  final height = capHeight ?? maxImageHeight;
   final box = measured == null
       ? null
       : imageBox(
@@ -257,7 +258,7 @@ class _Image extends StatelessWidget {
           b,
           measured: message.imageSizes[b.url],
           maxWidth: constraints.maxWidth,
-          screenHeight: MediaQuery.sizeOf(context).height,
+          maxImageHeight: imageMaxHeight(MediaQuery.sizeOf(context)),
         );
         final image = SizedBox.fromSize(
           size: box,
@@ -414,9 +415,7 @@ class _CollapsibleState extends State<_Collapsible> {
 
   @override
   Widget build(BuildContext context) {
-    final duration = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 200);
+    final duration = motion(context, const Duration(milliseconds: 200));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

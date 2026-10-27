@@ -30,7 +30,6 @@ class Status {
   @MillisDateTime()
   @JsonKey(name: 'last_activity_at')
   final DateTime? lastActivityAt;
-
   @LenientInt()
   @JsonKey(name: 'dnd_end_time')
   final int? dndEndTime;

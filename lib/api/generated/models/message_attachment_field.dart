@@ -17,7 +17,6 @@ class MessageAttachmentField {
   @LenientString()
   @JsonKey(name: 'Title')
   final String? title;
-
   @LenientString()
   @JsonKey(name: 'Value')
   final String? value;

@@ -63,6 +63,26 @@ Future<void> openLinkFromMessage(
   }
 }
 
+/// Opens the message [postId] on the server [url] in its channel (or its
+/// thread under collapsed threads), joining first when needed. Says why in
+/// a snackbar when the server refuses.
+Future<void> openPost(
+  NavigatorState navigator,
+  String url,
+  String postId,
+) async {
+  if (!navigator.mounted) return;
+  final ref = ProviderScope.containerOf(navigator.context, listen: false);
+  try {
+    await _openPost(navigator, ref, url, postId);
+  } on ApiError catch (e) {
+    _say(
+      navigator,
+      "Couldn't open the message. ${requestProblemText(e, Uri.parse(url).host)}",
+    );
+  }
+}
+
 Future<void> _openPost(
   NavigatorState navigator,
   ProviderContainer ref,

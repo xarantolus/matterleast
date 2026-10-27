@@ -45,35 +45,38 @@ npx -y openapi-format@1.33.8 "$work/bundled.yaml" \
 echo "==> linting (errors fail the update)"
 npx -y @redocly/cli@1 lint "$work/patched.yaml" --format summary
 
-echo "==> preparing tool/api/spec.json"
-dart run tool/api/prepare.dart "$work/patched.yaml" tool/api/spec.json
+echo "==> preparing the spec (kept out of the repository: CC BY-NC-SA)"
+spec=$work/spec.json
+dart run tool/api/prepare.dart "$work/patched.yaml" "$spec"
 
 echo "==> drift against the Go models (report only)"
-dart run tool/api/drift_report.dart tool/api/spec.json "$work/mm/server/public/model"
+dart run tool/api/drift_report.dart "$spec" "$work/mm/server/public/model"
 
 compose() {
     {
-        cat tool/api/swagger_parser.base.yaml
+        sed "s|^  schema_path: .*|  schema_path: $spec|" tool/api/swagger_parser.base.yaml
         if [ -s "$1" ]; then sed 's/^/    /' "$1"; fi
         echo "  include_paths:"
         sed 's/^/    /' tool/api/include-paths.yaml
-    } > tool/api/swagger_parser.yaml
+    } > "$work/swagger_parser.yaml"
 }
 
 echo "==> generating (pass 1: model list)"
 compose /dev/null
 rm -rf lib/api/generated
-dart run swagger_parser -f tool/api/swagger_parser.yaml >/dev/null
+dart run swagger_parser -f "$work/swagger_parser.yaml" >/dev/null
 dart run tool/api/lenient_models.dart lib/api/generated/models \
     lib/api/json/lenient_models.dart "$work/lenient_parsers.yaml"
 
 echo "==> generating (pass 2: with lenient model parsers)"
 compose "$work/lenient_parsers.yaml"
 rm -rf lib/api/generated
-dart run swagger_parser -f tool/api/swagger_parser.yaml | grep -E 'clients|files' || true
+dart run swagger_parser -f "$work/swagger_parser.yaml" | grep -E 'clients|files' || true
 # No dynamic past the boundary.
 find lib/api/generated -name '*.dart' ! -name '*.g.dart' -exec sed -i \
     's/Map<String, dynamic>/Map<String, Object?>/g; s/final dynamic /final Object? /g' {} +
+# Generated code carries no upstream documentation text (blank lines stay).
+find lib/api/generated -name '*.dart' -exec sed -i -E 's/^[ \t]*\/\/\/.*$//' {} +
 dart run tool/api/lenient_models.dart lib/api/generated/models \
     lib/api/json/lenient_models.dart "$work/lenient_parsers.yaml" >/dev/null
 

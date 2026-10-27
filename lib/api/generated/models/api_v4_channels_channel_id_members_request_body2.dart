@@ -20,7 +20,6 @@ class ApiV4ChannelsChannelIdMembersRequestBody2 {
 
   @LenientStringList()
   final List<String> members;
-
   @JsonKey(name: 'channel_admins')
   final List<String>? channelAdmins;
 

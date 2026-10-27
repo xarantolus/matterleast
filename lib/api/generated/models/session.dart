@@ -36,11 +36,9 @@ class Session {
   @LenientString()
   @JsonKey(name: 'device_id')
   final String? deviceId;
-
   @LenientString()
   @JsonKey(name: 'voip_device_id')
   final String? voipDeviceId;
-
   @MillisDateTime()
   @JsonKey(name: 'expires_at')
   final DateTime? expiresAt;
@@ -49,7 +47,6 @@ class Session {
   @LenientBool()
   @JsonKey(name: 'is_oauth')
   final bool? isOauth;
-
   @MillisDateTime()
   @JsonKey(name: 'last_activity_at')
   final DateTime? lastActivityAt;

@@ -30,49 +30,36 @@ class ApiV4ChannelsSearchRequestBody {
       _$ApiV4ChannelsSearchRequestBodyFromJson(json);
 
   final String term;
-
   @LenientString()
   @JsonKey(name: 'not_associated_to_group')
   final String? notAssociatedToGroup;
-
   @LenientBool()
   @JsonKey(name: 'exclude_default_channels')
   final bool? excludeDefaultChannels;
-
   @LenientStringList()
   @JsonKey(name: 'team_ids')
   final List<String> teamIds;
-
   @LenientBool()
   @JsonKey(name: 'group_constrained')
   final bool? groupConstrained;
-
   @LenientBool()
   @JsonKey(name: 'exclude_group_constrained')
   final bool? excludeGroupConstrained;
-
   @LenientBool()
   final bool? public;
-
   @LenientBool()
   final bool? private;
-
   @LenientBool()
   final bool? deleted;
-
   @LenientString()
   final String? page;
-
   @LenientString()
   @JsonKey(name: 'per_page')
   final String? perPage;
-
   @JsonKey(name: 'exclude_policy_constrained')
   final bool excludePolicyConstrained;
-
   @JsonKey(name: 'include_search_by_id')
   final bool includeSearchById;
-
   @JsonKey(name: 'exclude_remote')
   final bool excludeRemote;
 

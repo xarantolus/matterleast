@@ -41,23 +41,18 @@ class RemoteCluster {
   @LenientString()
   @JsonKey(name: 'display_name')
   final String? displayName;
-
   @LenientString()
   @JsonKey(name: 'site_url')
   final String? siteUrl;
-
   @LenientString()
   @JsonKey(name: 'default_team_id')
   final String? defaultTeamId;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @MillisDateTime()
   @JsonKey(name: 'delete_at')
   final DateTime? deleteAt;
-
   @MillisDateTime()
   @JsonKey(name: 'last_ping_at')
   final DateTime? lastPingAt;
@@ -74,7 +69,6 @@ class RemoteCluster {
   @LenientString()
   @JsonKey(name: 'plugin_id')
   final String? pluginId;
-
   @LenientInt()
   final int? options;
 

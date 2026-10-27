@@ -20,11 +20,8 @@ class ApiV4UsersUserIdStatusCustomRecentDeleteRequestBody {
   ) => _$ApiV4UsersUserIdStatusCustomRecentDeleteRequestBodyFromJson(json);
 
   final String emoji;
-
   final String text;
-
   final String duration;
-
   @JsonKey(name: 'expires_at')
   final String expiresAt;
 

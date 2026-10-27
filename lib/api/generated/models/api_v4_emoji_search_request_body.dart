@@ -15,7 +15,6 @@ class ApiV4EmojiSearchRequestBody {
       _$ApiV4EmojiSearchRequestBodyFromJson(json);
 
   final String term;
-
   @LenientString()
   @JsonKey(name: 'prefix_only')
   final String? prefixOnly;

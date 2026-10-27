@@ -22,20 +22,15 @@ class Role {
 
   @LenientString()
   final String? id;
-
   @LenientString()
   final String? name;
-
   @LenientString()
   @JsonKey(name: 'display_name')
   final String? displayName;
-
   @LenientString()
   final String? description;
-
   @LenientStringList()
   final List<String> permissions;
-
   @LenientBool()
   @JsonKey(name: 'scheme_managed')
   final bool? schemeManaged;

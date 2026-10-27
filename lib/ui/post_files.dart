@@ -128,8 +128,7 @@ class _MediaGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final screen = MediaQuery.sizeOf(context);
-      final maxHeight = screen.longestSide * 0.45;
+      final maxHeight = imageMaxHeight(MediaQuery.sizeOf(context));
       final width = constraints.maxWidth;
       final grid = mediaGridRows(media.length);
       Widget tile(int index, Size size) => _MediaTile(

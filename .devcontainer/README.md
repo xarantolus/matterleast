@@ -59,7 +59,7 @@ adb exec-out screencap -p > shot.png
 ```
 
 This needs `/dev/kvm` inside the container, which `run-container.sh` passes
-through when the host user can open it (join the `kvm` group if not). AVDs are
+through; the host user needs to be in the `kvm` group. AVDs are
 stored on a volume so extra API levels persist.
 
 ## Local Mattermost server

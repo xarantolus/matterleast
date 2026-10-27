@@ -22,15 +22,12 @@ class GlobalDataRetentionPolicy {
   @LenientBool()
   @JsonKey(name: 'message_deletion_enabled')
   final bool? messageDeletionEnabled;
-
   @LenientBool()
   @JsonKey(name: 'file_deletion_enabled')
   final bool? fileDeletionEnabled;
-
   @LenientInt()
   @JsonKey(name: 'message_retention_cutoff')
   final int? messageRetentionCutoff;
-
   @LenientInt()
   @JsonKey(name: 'file_retention_cutoff')
   final int? fileRetentionCutoff;

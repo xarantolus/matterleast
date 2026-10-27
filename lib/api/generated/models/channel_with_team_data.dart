@@ -41,15 +41,12 @@ class ChannelWithTeamData {
 
   @LenientString()
   final String? id;
-
   @MillisDateTime()
   @JsonKey(name: 'create_at')
   final DateTime? createAt;
-
   @MillisDateTime()
   @JsonKey(name: 'update_at')
   final DateTime? updateAt;
-
   @MillisDateTime()
   @JsonKey(name: 'delete_at')
   final DateTime? deleteAt;
@@ -67,14 +64,12 @@ class ChannelWithTeamData {
   final String? header;
   @LenientString()
   final String? purpose;
-
   @MillisDateTime()
   @JsonKey(name: 'last_post_at')
   final DateTime? lastPostAt;
   @LenientInt()
   @JsonKey(name: 'total_msg_count')
   final int? totalMsgCount;
-
   @MillisDateTime()
   @JsonKey(name: 'extra_update_at')
   final DateTime? extraUpdateAt;
@@ -96,19 +91,15 @@ class ChannelWithTeamData {
   @JsonKey(name: 'scheme_id')
   final String? schemeId;
   final Object? props;
-
   @LenientString()
   @JsonKey(name: 'team_display_name')
   final String? teamDisplayName;
-
   @LenientString()
   @JsonKey(name: 'team_name')
   final String? teamName;
-
   @MillisDateTime()
   @JsonKey(name: 'team_update_at')
   final DateTime? teamUpdateAt;
-
   @LenientString()
   @JsonKey(name: 'policy_id')
   final String? policyId;

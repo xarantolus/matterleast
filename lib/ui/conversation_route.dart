@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/panes.dart';
+import 'package:matterleast/ui/motion.dart';
 
 /// A conversation whose [ConversationPane] slides in from the right over
 /// the screen below it, which stays visible, while its app bar stays in
@@ -30,7 +31,11 @@ class ConversationRoute<T> extends PageRoute<T> {
   }
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 250);
+  Duration get transitionDuration {
+    const duration = Duration(milliseconds: 250);
+    final context = navigator?.context;
+    return context == null ? duration : motion(context, duration);
+  }
 
   @override
   bool get maintainState => true;

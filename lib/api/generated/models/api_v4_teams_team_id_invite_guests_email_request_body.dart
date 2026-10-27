@@ -21,10 +21,8 @@ class ApiV4TeamsTeamIdInviteGuestsEmailRequestBody {
 
   @LenientStringList()
   final List<String> emails;
-
   @LenientStringList()
   final List<String> channels;
-
   @LenientString()
   final String? message;
 

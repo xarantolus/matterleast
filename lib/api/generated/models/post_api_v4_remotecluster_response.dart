@@ -24,10 +24,8 @@ class PostApiV4RemoteclusterResponse {
   @LenientRemoteCluster()
   @JsonKey(name: 'remote_cluster')
   final RemoteCluster? remoteCluster;
-
   @LenientString()
   final String? invite;
-
   @LenientString()
   final String? password;
 

@@ -20,7 +20,6 @@ class PostApiV4ChannelsMembersUserIdViewResponse {
 
   @LenientString()
   final String? status;
-
   @JsonMap()
   @JsonKey(name: 'last_viewed_at_times')
   final Map<String, Object?>? lastViewedAtTimes;

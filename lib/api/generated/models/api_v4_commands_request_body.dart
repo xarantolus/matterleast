@@ -20,11 +20,8 @@ class ApiV4CommandsRequestBody {
 
   @JsonKey(name: 'team_id')
   final String teamId;
-
   final String method;
-
   final String trigger;
-
   final String url;
 
   Map<String, Object?> toJson() => _$ApiV4CommandsRequestBodyToJson(this);

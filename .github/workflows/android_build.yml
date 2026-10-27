@@ -83,6 +83,10 @@ jobs:
           git add --intent-to-add .
           git diff --exit-code --stat
 
+      - name: Check that generated code has no documentation comments
+        # The upstream API docs are CC BY-NC-SA; tool/update-api.sh strips them.
+        run: "! grep -rn '^[[:space:]]*///' lib/api/generated"
+
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
 
@@ -224,3 +228,11 @@ jobs:
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Rebuilds the F-Droid repository at once instead of at its nightly
+      # run. FDROID_REPO_TOKEN is a fine-grained token scoped to
+      # xarantolus/fdroid alone, with Contents: write (what dispatches need).
+      - name: Tell the F-Droid repository about the release
+        env:
+          GH_TOKEN: ${{ secrets.FDROID_REPO_TOKEN }}
+        run: gh api repos/xarantolus/fdroid/dispatches -f event_type=app-released

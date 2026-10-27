@@ -25,7 +25,6 @@ class PostListWithSearchMatches {
   final List<String> order;
   @LenientMapOfPost()
   final Map<String, Post>? posts;
-
   final Map<String, List<String>>? matches;
 
   Map<String, Object?> toJson() => _$PostListWithSearchMatchesToJson(this);

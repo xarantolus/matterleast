@@ -18,7 +18,6 @@ class UserAutocomplete {
 
   @LenientListOfUser()
   final List<User> users;
-
   @LenientListOfUser()
   @JsonKey(name: 'out_of_channel')
   final List<User> outOfChannel;

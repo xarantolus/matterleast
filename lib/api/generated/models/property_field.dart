@@ -46,35 +46,25 @@ class PropertyField {
   final String? groupId;
   @LenientString()
   final String? name;
-
   final PropertyFieldType? type;
-
   @JsonKey(name: 'object_type')
   final PropertyFieldObjectType? objectType;
-
   @JsonMap()
   final Map<String, Object?>? attrs;
-
   @LenientString()
   @JsonKey(name: 'target_id')
   final String? targetId;
-
   @LenientString()
   @JsonKey(name: 'target_type')
   final String? targetType;
-
   @LenientBool()
   final bool? protected;
-
   @JsonKey(name: 'permission_field')
   final PropertyFieldPermissionField? permissionField;
-
   @JsonKey(name: 'permission_values')
   final PropertyFieldPermissionValues? permissionValues;
-
   @JsonKey(name: 'permission_options')
   final PropertyFieldPermissionOptions? permissionOptions;
-
   @LenientString()
   @JsonKey(name: 'linked_field_id')
   final String? linkedFieldId;
@@ -87,11 +77,9 @@ class PropertyField {
   @MillisDateTime()
   @JsonKey(name: 'delete_at')
   final DateTime? deleteAt;
-
   @LenientString()
   @JsonKey(name: 'created_by')
   final String? createdBy;
-
   @LenientString()
   @JsonKey(name: 'updated_by')
   final String? updatedBy;

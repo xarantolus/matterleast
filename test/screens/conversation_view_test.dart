@@ -23,6 +23,10 @@ void main() {
   late ServerSession session;
   late Completer<void> olderAsked;
   late Completer<void> answerOlder;
+  late int olderAsks;
+
+  /// What the next older page holds; a server error when null.
+  List<int>? olderPage;
 
   final start = DateTime.utc(2026, 10, 26, 8);
   const linkRow = 50;
@@ -39,6 +43,7 @@ void main() {
     HttpOverrides.global = null;
     olderAsked = Completer();
     answerOlder = Completer();
+    olderAsks = 0;
     (server, session) = (await tester.runAsync(() async {
       final server = await FakeServer.start();
       final session = await testSession(server);
@@ -54,9 +59,16 @@ void main() {
       server.handle = (r) async {
         if (r.path == '/api/v4/channels/$channelId/posts') {
           if (r.raw.uri.queryParameters.containsKey('before')) {
+            olderAsks++;
             if (!olderAsked.isCompleted) olderAsked.complete();
             await answerOlder.future;
-            return error(500, 'app.post.get_posts.app_error');
+            final page = olderPage;
+            if (page == null) return error(500, 'app.post.get_posts.app_error');
+            olderPage = null;
+            return ok({
+              'order': [for (final i in page) 'n$i'],
+              'posts': {for (final i in page) 'n$i': post(i)},
+            });
           }
           return ok({'order': <String>[], 'posts': <String, Object?>{}});
         }
@@ -126,6 +138,88 @@ void main() {
     }
     expect(notice, findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('an older page at the top leaves the reader where they were', (
+    tester,
+  ) async {
+    olderPage = [for (var i = -1; i >= -60; i--) i];
+    await open(tester);
+    while (!olderAsked.isCompleted) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
+      await settle(tester);
+    }
+    // Up to the oldest message, as a reader waiting for more would be.
+    await tester.fling(
+      find.byType(Scrollable).first,
+      const Offset(0, 800),
+      3000,
+    );
+    await settle(tester);
+    final shown = [
+      for (var i = 0; i < 60; i++)
+        if (find.text('message $i').evaluate().isNotEmpty) i,
+    ];
+    expect(shown, contains(0));
+    final before = {
+      for (final i in shown) i: tester.getTopLeft(find.text('message $i')).dy,
+    };
+
+    answerOlder.complete();
+    await settle(tester);
+
+    // The oldest message lost its name and avatar to the ones above it.
+    for (final i in shown.where((i) => i > 0)) {
+      expect(
+        tester.getTopLeft(find.text('message $i')).dy,
+        closeTo(before[i]!, 0.5),
+        reason: 'message $i',
+      );
+    }
+    expect(olderAsks, 1);
+    await close(tester);
+  });
+
+  testWidgets('a list at rest asks for no frames', (tester) async {
+    await open(tester);
+    expect(find.text('message 59'), findsOneWidget);
+    expect(tester.binding.hasScheduledFrame, isFalse);
+    await close(tester);
+  });
+
+  testWidgets('the start of the channel takes the place of the spinner', (
+    tester,
+  ) async {
+    olderPage = [];
+    await open(tester);
+    while (!olderAsked.isCompleted) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
+      await settle(tester);
+    }
+    await tester.fling(
+      find.byType(Scrollable).first,
+      const Offset(0, 800),
+      3000,
+    );
+    await settle(tester);
+    final spinner = find.bySemanticsLabel('Loading older messages');
+    expect(tester.getTopLeft(spinner).dy, greaterThanOrEqualTo(0));
+    final oldest = tester.getTopLeft(find.text('message 0')).dy;
+
+    answerOlder.complete();
+    await settle(tester);
+
+    expect(find.text('This is the start of Boats.'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('message 0')).dy, closeTo(oldest, 0.5));
+    // Still at the top: nothing of the start text is hidden above.
+    await tester.fling(
+      find.byType(Scrollable).first,
+      const Offset(0, 300),
+      3000,
+    );
+    await settle(tester);
+    expect(tester.getTopLeft(find.text('message 0')).dy, closeTo(oldest, 0.5));
     await close(tester);
   });
 

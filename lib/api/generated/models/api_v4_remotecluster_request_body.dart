@@ -25,7 +25,6 @@ class ApiV4RemoteclusterRequestBody {
   final String? displayName;
   @JsonKey(name: 'default_team_id')
   final String defaultTeamId;
-
   @LenientString()
   final String? password;
 

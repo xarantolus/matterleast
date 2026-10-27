@@ -21,15 +21,11 @@ class ApiV4GroupsRequestBody {
       _$ApiV4GroupsRequestBodyFromJson(json);
 
   final String name;
-
   @JsonKey(name: 'display_name')
   final String displayName;
-
   final String source;
-
   @JsonKey(name: 'allow_reference')
   final bool allowReference;
-
   @LenientStringList()
   @JsonKey(name: 'user_ids')
   final List<String> userIds;

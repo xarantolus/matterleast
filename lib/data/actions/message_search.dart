@@ -112,6 +112,9 @@ class MessageSearch {
               channelId: f.channelId ?? '',
               place: places[f.channelId] ?? '',
               createAt: f.createAt,
+              width: f.width,
+              height: f.height,
+              hasPreview: f.hasPreviewImage ?? false,
             ),
         ];
       });
