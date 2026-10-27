@@ -42,6 +42,11 @@ Alternatively, you can also scan this QR code:
 Alternatively, you can [download the APK file](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast.apk), and install the app manually. Please note that you will not receive any update notifications when going this route. You can also watch this repository to get notified for releases.
 
 
+### Desktop
+- **Windows:** [download `matterleast-setup.exe`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast-setup.exe) and run it. The installer is unsigned, so SmartScreen shows "More info", then "Run anyway".
+- **Linux (experimental):** [download `matterleast-linux-x64.tar.gz`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast-linux-x64.tar.gz) and unpack it. It needs GTK 3, libsecret with a running keyring (GNOME Keyring or KWallet), libayatana-appindicator3 and WebKitGTK 4.1. Videos open in your system player.
+
+
 ### Development
 Matterleast is a Flutter app. [Install Flutter](https://docs.flutter.dev/get-started/install) with the Android toolchain, then:
 
