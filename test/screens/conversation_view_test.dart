@@ -181,6 +181,13 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('a list at rest asks for no frames', (tester) async {
+    await open(tester);
+    expect(find.text('message 59'), findsOneWidget);
+    expect(tester.binding.hasScheduledFrame, isFalse);
+    await close(tester);
+  });
+
   testWidgets('the start of the channel takes the place of the spinner', (
     tester,
   ) async {
