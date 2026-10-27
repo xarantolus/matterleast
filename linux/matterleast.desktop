@@ -1,4 +1,4 @@
-# Template for the Linux packages: Exec needs the installed path.
+# install.sh replaces Exec with the installed absolute path.
 [Desktop Entry]
 Type=Application
 Name=Matterleast
