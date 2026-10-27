@@ -215,6 +215,48 @@ void main() {
     });
   });
 
+  group('the answer is over without an end', () {
+    test('the error stored after only progress leaves nothing streaming', () {
+      final waiting = _play([
+        {'control': 'progress'},
+      ]);
+      expect(waiting.busy, isTrue);
+      expect(agentStreamAfterEdit(waiting, message: ''), same(waiting));
+      expect(agentStreamAfterEdit(waiting, message: 'Sorry!'), isNull);
+    });
+
+    test('a stored message ends a stream that has text and keeps the text', () {
+      final ended = agentStreamAfterEdit(
+        _play([
+          {'control': 'start'},
+          {'next': 'Two piers'},
+        ]),
+        message: 'Two piers',
+      );
+      expect(ended!.busy, isFalse);
+      expect(ended.live!.text, 'Two piers');
+    });
+
+    test('a lost connection ends what ran and drops what had nothing', () {
+      expect(
+        agentStreamAfterReconnect(
+          _play([
+            {'control': 'start'},
+          ]),
+        ),
+        isNull,
+      );
+      final kept = agentStreamAfterReconnect(
+        _play([
+          {'control': 'start'},
+          {'next': 'Two'},
+        ]),
+      );
+      expect(kept!.busy, isFalse);
+      expect(kept.live!.text, 'Two');
+    });
+  });
+
   group('rounds from the conversation', () {
     test('an answer is its own turns, not the earlier answer', () {
       final rounds = roundsFromConversation(_conversation, 'answer1');
