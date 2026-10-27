@@ -69,9 +69,8 @@ static gboolean my_application_local_command_line(GApplication* application,
   // Strip out the first argument as it is the binary name.
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
 
-  // A link comes alone: the browser starts us with an mmauth:// sign-in
-  // callback as the only argument. app_links reads the first argument of
-  // any command line, so a longer one is passed on without arguments.
+  // app_links takes the first argument of any command line for a link, and
+  // only a lone argument is one (the browser's sign-in callback).
   if (g_strv_length(*arguments) > 2) {
     for (gchar** extra = *arguments + 1; *extra != nullptr; extra++) {
       g_clear_pointer(extra, g_free);

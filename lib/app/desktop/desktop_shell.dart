@@ -62,6 +62,11 @@ class DesktopShell with WindowListener {
         center: placement?.x == null,
       ),
     );
+    // A GTK window has no icon of its own (Windows takes the exe's), and
+    // panels without an installed launcher entry would show a generic one.
+    if (defaultTargetPlatform == TargetPlatform.linux) {
+      await windowManager.setIcon(appIconAsset);
+    }
     if (placement case WindowPlacement(:final x?, :final y?)) {
       await windowManager.setPosition(Offset(x, y));
     }
