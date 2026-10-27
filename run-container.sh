@@ -15,47 +15,37 @@ podman build -f .devcontainer/Dockerfile -t "$IMAGE" .
 
 args=(
   -it --rm
-  # keep-id fails at create on this host's podman store; as root the default
-  # rootless mapping already yields host-UID-owned files.
   --net=host
-  -v "$PWD":"$REPO":Z
+  --security-opt label=disable
+  -v "$PWD":"$REPO"
   -v "${NAME}-gradle":/root/.gradle
   -v "${NAME}-pub":/root/.pub-cache
   -v "${NAME}-avd":/root/.android
+  -v "$CLAUDE_STATE":/root/.claude
+  -e CLAUDE_CONFIG_DIR=/root/.claude
+  -w "$REPO"
   # Podman inside the container (.devcontainer/server/): image store on a
   # volume (overlay can't sit on the container's own overlay root), SYS_ADMIN
   # for mount namespaces, unmasked /proc so a nested procfs can be mounted,
   # /dev/fuse for the fuse-overlayfs fallback.
   -v "${NAME}-containers":/var/lib/containers
-  # Each emulator runs ~200 threads; the default cap of 2048 fits about five
-  # lanes next to Gradle and the Dart tools.
-  --pids-limit 16384
   --cap-add SYS_ADMIN
   --cap-add SYS_PTRACE
   --security-opt unmask=ALL
-  --security-opt label=disable
   --device /dev/fuse
-  -e CLAUDE_CONFIG_DIR=/root/.claude
-  --mount "type=bind,source=$CLAUDE_STATE,target=/root/.claude,consistency=cached"
-  -w "$REPO"
+  # Each emulator runs ~200 threads; the default cap of 2048 fits about five
+  # lanes next to Gradle and the Dart tools.
+  --pids-limit 16384
 )
-# Emulator needs KVM. A shell started before you joined the kvm group won't have
-# it, so re-exec through sg to pick it up.
+# The emulator needs KVM, through the host user's kvm group.
 if [ -e /dev/kvm ]; then
-  if [ ! -r /dev/kvm ] || [ ! -w /dev/kvm ]; then
-    if id -nG | grep -qw kvm || ! getent group kvm | grep -qw "$(id -un)"; then
-      echo "warning: /dev/kvm not accessible; the emulator will not start" >&2
-    else
-      exec sg kvm -c "$(printf '%q ' "$0" "$@")"
-    fi
-  fi
+  [ -r /dev/kvm ] && [ -w /dev/kvm ] ||
+    echo "warning: no access to /dev/kvm (join the kvm group and log in again); the emulator won't start" >&2
   args+=(--device /dev/kvm --group-add keep-groups)
 fi
-if [ -d /dev/bus/usb ]; then
-  args+=(--cap-add SYS_RAWIO --cap-add CAP_MKNOD --device /dev/bus/usb:/dev/bus/usb)
-fi
-[ -d "$HOME/.ssh" ] && args+=(--mount "type=bind,source=$HOME/.ssh,target=/root/.ssh,consistency=cached")
+[ -d /dev/bus/usb ] && args+=(--cap-add SYS_RAWIO --cap-add MKNOD --device /dev/bus/usb)
+[ -d "$HOME/.ssh" ] && args+=(-v "$HOME/.ssh":/root/.ssh)
 # gh credentials, so .ci-watch/ci-watch.sh can read Actions runs.
-[ -d "$HOME/.config/gh" ] && args+=(--mount "type=bind,source=$HOME/.config/gh,target=/root/.config/gh,readonly")
+[ -d "$HOME/.config/gh" ] && args+=(-v "$HOME/.config/gh":/root/.config/gh:ro)
 
 exec podman run "${args[@]}" "$@" "$IMAGE" bash -c 'bash .devcontainer/post-create.sh; exec bash'
