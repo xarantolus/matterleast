@@ -11,6 +11,7 @@ AgentBot _$AgentBotFromJson(Map<String, dynamic> json) => AgentBot(
   displayName: json['displayName'] == null ? '' : _string(json['displayName']),
   username: json['username'] == null ? '' : _string(json['username']),
   lastIconUpdate: const LenientInt().fromJson(json['lastIconUpdate']),
+  dmChannelId: const LenientString().fromJson(json['dmChannelID']),
   isDefault: const LenientBool().fromJson(json['isDefault']),
   isDefaultSnake: const LenientBool().fromJson(json['is_default']),
 );
@@ -21,13 +22,11 @@ AgentBotsAnswer _$AgentBotsAnswerFromJson(Map<String, dynamic> json) =>
     );
 
 AgentThread _$AgentThreadFromJson(Map<String, dynamic> json) => AgentThread(
-  id: json['id'] == null ? '' : _string(json['id']),
+  root: _rootOf(json, 'root') == null ? '' : _string(_rootOf(json, 'root')),
   title: const LenientString().fromJson(json['title']),
   message: const LenientString().fromJson(json['message']),
   channelId: const LenientString().fromJson(json['channel_id']),
-  rootPostId: const LenientString().fromJson(json['root_post_id']),
   botId: const LenientString().fromJson(json['bot_id']),
-  replyCount: const LenientInt().fromJson(json['reply_count']),
   updateAt: const MillisDateTime().fromJson(json['update_at']),
 );
 
