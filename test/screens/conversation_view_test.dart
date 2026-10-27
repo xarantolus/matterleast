@@ -258,7 +258,10 @@ void main() {
     await arrive('p1', 'my reply', 300);
     await settle(tester);
     expect(find.text('my reply'), findsOneWidget);
-    expect(tester.getBottomLeft(find.text('my reply')).dy, lessThan(list.bottom));
+    expect(
+      tester.getBottomLeft(find.text('my reply')).dy,
+      lessThan(list.bottom),
+    );
 
     await arrive('p2', 'the next answer', 301);
     await settle(tester);
