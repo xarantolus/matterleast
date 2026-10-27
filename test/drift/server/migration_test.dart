@@ -10,6 +10,7 @@ import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v4.dart' as v4;
 import 'generated/schema_v5.dart' as v5;
 import 'generated/schema_v6.dart' as v6;
+import 'generated/schema_v7.dart' as v7;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -87,6 +88,42 @@ void main() {
         expect((await newDb.select(newDb.users).getSingle()).username, 'wren');
         expect(await newDb.select(newDb.channelBookmarks).get(), isEmpty);
         expect(await newDb.select(newDb.profileFields).get(), isEmpty);
+      },
+    );
+  });
+
+  test('drops stored edit-history copies when going from v6 to v7', () async {
+    await verifier.testWithDataIntegrity(
+      oldVersion: 6,
+      newVersion: 7,
+      createOld: v6.DatabaseAtV6.new,
+      createNew: v7.DatabaseAtV7.new,
+      openTestedDatabase: ServerDatabase.new,
+      createItems: (batch, oldDb) {
+        batch.insert(
+          oldDb.posts,
+          const v6.PostsCompanion(
+            id: Value('p1'),
+            channelId: Value('c1'),
+            userId: Value('u1'),
+            createAt: Value(1000),
+            message: Value('edited text'),
+          ),
+        );
+        batch.insert(
+          oldDb.posts,
+          const v6.PostsCompanion(
+            id: Value('old1'),
+            channelId: Value('c1'),
+            userId: Value('u1'),
+            createAt: Value(1500),
+            originalId: Value('p1'),
+          ),
+        );
+      },
+      validateItems: (newDb) async {
+        final rows = await newDb.select(newDb.posts).get();
+        expect([for (final r in rows) r.id], ['p1']);
       },
     );
   });

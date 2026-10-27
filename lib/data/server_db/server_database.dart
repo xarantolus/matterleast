@@ -103,7 +103,7 @@ class ServerDatabase extends _$ServerDatabase {
       );
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -128,6 +128,12 @@ class ServerDatabase extends _$ServerDatabase {
         await m.createIndex(schema.bookmarksByChannel);
         await m.createTable(schema.profileFields);
         await m.createTable(schema.profileValues);
+      },
+      // Edit-history copies were stored as messages and are never re-sent.
+      from6To7: (m, schema) async {
+        await m.database.customStatement(
+          "DELETE FROM posts WHERE original_id != ''",
+        );
       },
     ),
   );
