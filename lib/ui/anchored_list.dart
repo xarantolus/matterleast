@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/motion.dart';
 
 /// Where the reader is in an [AnchoredList], reported after each scroll and
 /// each change of rows. Indexes count from the newest row (0).
@@ -451,7 +452,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     if (p.pixels - p.minScrollExtent < p.viewportDimension * 3) {
       await _scroll.animateTo(
         p.minScrollExtent,
-        duration: const Duration(milliseconds: 300),
+        duration: motion(context, const Duration(milliseconds: 300)),
         curve: Curves.easeOutCubic,
       );
     }

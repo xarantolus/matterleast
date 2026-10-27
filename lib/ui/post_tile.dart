@@ -22,6 +22,7 @@ import 'package:matterleast/ui/link_preview_card.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/permalink_card.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
@@ -245,7 +246,7 @@ class PostTile extends StatelessWidget {
     return Opacity(
       opacity: post.sendState == null || failed ? 1 : 0.5,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 400),
+        duration: motion(context, const Duration(milliseconds: 400)),
         color: highlighted
             ? tokens.accentWash
             : marked
@@ -832,6 +833,7 @@ class AppearOnce extends StatefulWidget {
 
 class _AppearOnceState extends State<AppearOnce>
     with SingleTickerProviderStateMixin {
+  var _started = false;
   late final _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 200),
@@ -843,9 +845,15 @@ class _AppearOnceState extends State<AppearOnce>
   );
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.animate) _controller.forward();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    if (widget.animate && !MediaQuery.disableAnimationsOf(context)) {
+      unawaited(_controller.forward());
+    } else {
+      _controller.value = 1;
+    }
   }
 
   @override
@@ -856,9 +864,11 @@ class _AppearOnceState extends State<AppearOnce>
   }
 
   @override
-  Widget build(BuildContext context) => SizeTransition(
-    sizeFactor: _curve,
-    alignment: AlignmentDirectional.topStart,
-    child: FadeTransition(opacity: _curve, child: widget.child),
-  );
+  Widget build(BuildContext context) {
+    return SizeTransition(
+      sizeFactor: _curve,
+      alignment: AlignmentDirectional.topStart,
+      child: FadeTransition(opacity: _curve, child: widget.child),
+    );
+  }
 }

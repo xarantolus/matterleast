@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 OverlayEntry? _shown;
@@ -47,11 +48,12 @@ class _TopNotice extends StatefulWidget {
 
 class _TopNoticeState extends State<_TopNotice>
     with SingleTickerProviderStateMixin {
+  static const _slideTime = Duration(milliseconds: 200);
   static const _shownFor = Duration(milliseconds: 2500);
 
   late final _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 200),
+    duration: _slideTime,
   );
   late final _curve = CurvedAnimation(
     parent: _controller,
@@ -62,8 +64,14 @@ class _TopNoticeState extends State<_TopNotice>
   @override
   void initState() {
     super.initState();
-    unawaited(_controller.forward());
     _timer = Timer(_shownFor, _hide);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controller.duration = motion(context, _slideTime);
+    if (_controller.isDismissed) unawaited(_controller.forward());
   }
 
   Future<void> _hide() async {
