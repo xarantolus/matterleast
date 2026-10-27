@@ -66,8 +66,9 @@ ENV PATH=${PATH}:${FLUTTER_ROOT}/bin:${FLUTTER_ROOT}/bin/cache/dart-sdk/bin:/roo
 RUN git config --global --add safe.directory '*' \
     && flutter config --no-analytics --android-sdk "${ANDROID_HOME}" \
     && dart --disable-analytics || true
-# Warm the Android artifacts so the first build in a fresh container is fast.
-RUN flutter precache --android --universal \
+# Warm the Android and Linux artifacts so the first build in a fresh
+# container is fast.
+RUN flutter precache --android --linux --universal \
     && flutter doctor -v || true
 RUN yes | flutter doctor --android-licenses > /dev/null 2>&1 || true
 
@@ -112,6 +113,21 @@ ENV PATH=${PATH}:${ANDROID_HOME}/emulator
 
 # Drives the emulator (tap, type, screenshot) over MCP. Pinned.
 RUN npm install -g @mobilenext/mobile-mcp@1.0.13
+
+# Linux desktop build (`flutter build linux`: CMake, Ninja, GTK and the
+# plugins' native libraries; clang is installed above) and a virtual desktop
+# session to run it in (tool/desktop.sh): Xvfb, openbox as the window manager,
+# xfce4-panel for the task list and a StatusNotifier/XEmbed tray, dunst for
+# notifications, a D-Bus session and gnome-keyring for libsecret, xdotool and
+# ImageMagick for input and screenshots. librsvg2-common loads SVG icons,
+# the emoji font gives Flutter's text fallback colour emoji.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get install -y --no-install-recommends \
+        cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev \
+        libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
+        xvfb openbox xfce4-panel dunst libnotify-bin dbus-x11 gnome-keyring \
+        x11-utils xdotool imagemagick librsvg2-common fonts-noto-color-emoji
 
 # Podman for the local Mattermost test server (.devcontainer/server/). It runs
 # rootful inside this container, which needs CAP_SYS_ADMIN, an unmasked /proc
