@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:matterleast/data/app_db/app_database.dart';
+import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/rail.dart';
 
@@ -103,6 +104,15 @@ abstract final class Settings {
     _encodeRailTarget,
   );
 
+  /// The conversation open on top when the app last ran, reopened at
+  /// launch; null when the channel list showed.
+  static const lastConversation = Setting<SavedConversation?>(
+    'lastConversation',
+    null,
+    _decodeConversation,
+    _encodeConversation,
+  );
+
   static const all = <Setting<Object?>>[
     imagesOnMobileData,
     mediaCacheBytes,
@@ -114,6 +124,7 @@ abstract final class Settings {
     wrapCode,
     notificationsAsked,
     lastRailTarget,
+    lastConversation,
   ];
 
   static bool _decodeBool(String raw) => switch (raw) {
@@ -142,6 +153,21 @@ abstract final class Settings {
     }
     throw FormatException('rail target', raw);
   }
+
+  static SavedConversation? _decodeConversation(String raw) {
+    if (raw.isEmpty) return null;
+    try {
+      if (jsonDecode(raw) case final Map<String, Object?> json) {
+        return SavedConversation.fromJson(json);
+      }
+    } on Object {
+      // Falls through to the format error below.
+    }
+    throw FormatException('conversation', raw);
+  }
+
+  static String _encodeConversation(SavedConversation? value) =>
+      value == null ? '' : jsonEncode(value.toJson());
 
   static String _encodeRailTarget(RailTarget? value) =>
       value == null ? '' : jsonEncode(value.toJson());

@@ -1,17 +1,25 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:drift/drift.dart' show DatabaseConnection;
+import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/app/restore_conversation.dart';
+import 'package:matterleast/data/app_db/app_database.dart';
+import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/rail.dart';
+import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/composer.dart';
@@ -19,6 +27,7 @@ import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
+import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
@@ -40,8 +49,12 @@ void main() {
   late FakeServer server;
   late ServerSession session;
   late ProviderContainer container;
+  late WidgetRef widgetRef;
 
-  Future<void> start(WidgetTester tester) async {
+  Future<void> start(
+    WidgetTester tester, {
+    List<Override> Function(String url)? more,
+  }) async {
     HttpOverrides.global = null;
     (server, session) = (await tester.runAsync(() async {
       final server = await FakeServer.start();
@@ -54,6 +67,7 @@ void main() {
           serverSessionProvider(server.url.toString())
               .overrideWith((ref) async => session),
           railSelectionProvider.overrideWith(_Rail.new),
+          ...?more?.call(server.url.toString()),
           serverImageCachesProvider(server.url.toString())
               .overrideWith((ref) => Completer<ServerImageCaches>().future),
           userProfileProvider(
@@ -69,6 +83,7 @@ void main() {
           theme: MatterleastApp.lightTheme,
           home: Consumer(
             builder: (context, ref, _) {
+              widgetRef = ref;
               container = ProviderScope.containerOf(context);
               return const Scaffold(
                 body: ReopenSwipe(child: SizedBox.expand()),
@@ -216,6 +231,81 @@ void main() {
     final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
     expect(screen.channelId, channelId);
     expect(screen.highlightPostId, isNull);
+    navigator(tester).pop();
+    await settle(tester);
+    await finish(tester);
+  });
+
+  testWidgets('a restored channel opens like any other: team picked, '
+      'remembered, and a left swipe brings it back', (tester) async {
+    final db = AppDatabase(DatabaseConnection(NativeDatabase.memory()));
+    addTearDown(db.close);
+    await start(
+      tester,
+      more: (url) => [
+        appDatabaseProvider.overrideWithValue(db),
+        serversProvider.overrideWith((ref) {
+          ref.keepAlive();
+          return Stream.value([
+            ServerEntry(
+              url: url,
+              displayName: 'Test',
+              siteName: null,
+              serverVersion: null,
+              diagnosticId: null,
+              lastActiveAt: DateTime(2026),
+              ssoScheme: null,
+            ),
+          ]);
+        }),
+        switchItemsProvider(url).overrideWith((ref) {
+          ref.keepAlive();
+          return Stream.value([
+            SwitchItem(
+              serverUrl: url,
+              kind: SwitchKind.channel,
+              id: channelId,
+              title: 'Boats',
+              teamId: teamId,
+            ),
+          ]);
+        }),
+      ],
+    );
+    final url = server.url.toString();
+    await tester.runAsync(
+      () => db.writeSetting(
+        Settings.lastConversation.key,
+        '{"url":"$url","channelId":"$channelId","title":"Old",'
+        '"teamId":"$teamId"}',
+      ),
+    );
+    container
+      ..listen(serversProvider, (_, _) {})
+      ..listen(switchItemsProvider(url), (_, _) {});
+    await tester.pump();
+    final restoring = restoreConversation(
+      widgetRef,
+      navigator(tester),
+      launchedByIntent: Future.value(false),
+    );
+    await settle(tester);
+    await restoring;
+    expect(find.byType(ChannelScreen), findsOneWidget);
+    expect(
+      container.read(railSelectionProvider),
+      RailTarget(url: url, teamId: teamId),
+    );
+    final last = await tester.runAsync(
+      () => session.db.syncText(SyncKeys.lastChannel(teamId)),
+    );
+    expect(last, channelId);
+    navigator(tester).pop();
+    await settle(tester);
+    expect(find.byType(ChannelScreen), findsNothing);
+    await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
+    await settle(tester);
+    expect(find.byType(ChannelScreen), findsOneWidget);
     navigator(tester).pop();
     await settle(tester);
     await finish(tester);
