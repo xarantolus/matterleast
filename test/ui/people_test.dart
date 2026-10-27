@@ -114,6 +114,41 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Message'), findsOneWidget);
   });
 
+  testWidgets('tapping the name inside a tappable row opens the profile only', (
+    tester,
+  ) async {
+    var threadOpened = false;
+    await _show(
+      tester,
+      InkWell(
+        onTap: () => threadOpened = true,
+        child: PostTile(post: _post()),
+      ),
+    );
+    await tester.tap(find.text('Pat Doe'));
+    await tester.pumpAndSettle();
+    expect(find.byType(UserProfileSheet), findsOneWidget);
+    expect(threadOpened, isFalse);
+  });
+
+  testWidgets('tapping between the name and the time opens the profile only', (
+    tester,
+  ) async {
+    var threadOpened = false;
+    await _show(
+      tester,
+      InkWell(
+        onTap: () => threadOpened = true,
+        child: PostTile(post: _post()),
+      ),
+    );
+    final name = tester.getTopRight(find.text('Pat Doe'));
+    await tester.tapAt(name + const Offset(3, 6));
+    await tester.pumpAndSettle();
+    expect(find.byType(UserProfileSheet), findsOneWidget);
+    expect(threadOpened, isFalse);
+  });
+
   testWidgets("tapping the author's picture opens their profile", (
     tester,
   ) async {
