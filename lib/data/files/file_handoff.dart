@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:background_downloader/background_downloader.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
@@ -27,6 +29,22 @@ abstract final class FileHandoff {
       filePath: copy.path,
       mimeType: _mime(file),
     );
+  }
+
+  /// Asks where to save the file (desktop), then copies it there; the path,
+  /// or null when the person cancelled. [pick] is the Save As dialog.
+  static Future<String?> saveAs(
+    File cached,
+    PostFile file, {
+    Future<String?> Function(String name, String mimeType) pick = _pickPath,
+  }) async {
+    final path = await pick(
+      _safeName(file),
+      _mime(file) ?? 'application/octet-stream',
+    );
+    if (path == null) return null;
+    await cached.copy(path);
+    return path;
   }
 
   static Future<void> share(
@@ -60,11 +78,44 @@ abstract final class FileHandoff {
   }
 }
 
+/// The plugin requires bytes and writes them itself after the person has
+/// confirmed an overwrite; none are passed, the file is copied over them.
+Future<String?> _pickPath(String name, String mimeType) async {
+  final uri = await FilePicker.saveFile(
+    fileName: name,
+    bytes: Uint8List(0),
+    mimeType: mimeType,
+  );
+  return uri?.toFilePath();
+}
+
 String? _mime(PostFile file) => file.mimeType.isEmpty ? null : file.mimeType;
 
-/// Pure: [file]'s name without path separators, never empty.
-String _safeName(PostFile file) {
-  final name = file.name.replaceAll(RegExp(r'[/\\\x00]'), '_').trim();
-  if (name.isNotEmpty && name != '.' && name != '..') return name;
-  return file.extension.isEmpty ? file.id : '${file.id}.${file.extension}';
+/// Pure: [file]'s name as a file name every platform accepts, never empty.
+String _safeName(PostFile file) =>
+    safeFileName(file.name, file.id, file.extension);
+
+final _unsafe = RegExp(r'[/\\:*?"<>|\x00-\x1f\x7f]');
+final _deviceName = RegExp(
+  r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$',
+  caseSensitive: false,
+);
+const _longestName = 120;
+
+/// Pure: [name] without characters Windows or Linux reject, trailing dots
+/// and spaces, or a device name; [id] and [extension] stand in when nothing
+/// usable is left.
+String safeFileName(String name, String id, String extension) {
+  var safe = name.replaceAll(_unsafe, '_').trim();
+  safe = safe.replaceFirst(RegExp(r'[. ]+$'), '');
+  if (safe.isEmpty || safe == '.' || safe == '..') {
+    return extension.isEmpty ? id : '$id.$extension';
+  }
+  if (_deviceName.hasMatch(safe)) safe = '_$safe';
+  if (safe.length > _longestName) {
+    final dot = safe.lastIndexOf('.');
+    final ext = dot > 0 && safe.length - dot <= 16 ? safe.substring(dot) : '';
+    safe = safe.substring(0, _longestName - ext.length) + ext;
+  }
+  return safe;
 }
