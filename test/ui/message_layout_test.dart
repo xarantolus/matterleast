@@ -12,6 +12,11 @@ import 'package:matterleast/ui/markdown/show_more.dart';
 
 void main() {
   group('image boxes', () {
+    test('the height cap is 45 % of the longer side in either orientation', () {
+      expect(imageMaxHeight(const Size(400, 800)), 360);
+      expect(imageMaxHeight(const Size(800, 400)), 360);
+    });
+
     test('the measured size shrinks to the width, keeping the ratio', () {
       expect(
         imageBox(
