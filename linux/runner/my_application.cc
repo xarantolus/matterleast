@@ -93,17 +93,26 @@ static gboolean my_application_local_command_line(GApplication* application,
   // Strip out the first argument as it is the binary name.
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
 
-  g_autoptr(GError) error = nullptr;
-  if (!g_application_register(application, nullptr, &error)) {
-    g_warning("Failed to register: %s", error->message);
-    *exit_status = 1;
-    return TRUE;
+  // A link comes alone: the browser starts us with an mmauth:// sign-in
+  // callback as the only argument. app_links reads the first argument of
+  // any command line, so a longer one is passed on without arguments.
+  if (g_strv_length(*arguments) > 2) {
+    for (gchar** extra = *arguments + 1; *extra != nullptr; extra++) {
+      g_clear_pointer(extra, g_free);
+    }
   }
 
-  g_application_activate(application);
-  *exit_status = 0;
+  // Registers and sends the command line to the primary instance, this one
+  // or the one already running, where app_links reads it.
+  return G_APPLICATION_CLASS(my_application_parent_class)
+      ->local_command_line(application, arguments, exit_status);
+}
 
-  return TRUE;
+// Implements GApplication::command_line, in the primary instance.
+static int my_application_command_line(GApplication* application,
+                                       GApplicationCommandLine* command_line) {
+  g_application_activate(application);
+  return 0;
 }
 
 // Implements GApplication::startup.
@@ -135,6 +144,7 @@ static void my_application_class_init(MyApplicationClass* klass) {
   G_APPLICATION_CLASS(klass)->activate = my_application_activate;
   G_APPLICATION_CLASS(klass)->local_command_line =
       my_application_local_command_line;
+  G_APPLICATION_CLASS(klass)->command_line = my_application_command_line;
   G_APPLICATION_CLASS(klass)->startup = my_application_startup;
   G_APPLICATION_CLASS(klass)->shutdown = my_application_shutdown;
   G_OBJECT_CLASS(klass)->dispose = my_application_dispose;
@@ -149,8 +159,10 @@ MyApplication* my_application_new() {
   // the application to be recognized beyond its binary name.
   g_set_prgname(APPLICATION_ID);
 
-  // Unique, so a second launch reaches this instance over D-Bus.
+  // Unique, so a second launch hands its command line to this instance over
+  // D-Bus.
   return MY_APPLICATION(g_object_new(my_application_get_type(),
                                      "application-id", APPLICATION_ID, "flags",
-                                     G_APPLICATION_DEFAULT_FLAGS, nullptr));
+                                     G_APPLICATION_HANDLES_COMMAND_LINE,
+                                     nullptr));
 }

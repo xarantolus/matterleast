@@ -1,0 +1,11 @@
+# Template for the Linux packages: Exec needs the installed path.
+[Desktop Entry]
+Type=Application
+Name=Matterleast
+Comment=Chat on Mattermost servers
+Exec=matterleast %u
+Icon=io.github.xarantolus.matterleast
+Terminal=false
+Categories=Network;Chat;InstantMessaging;
+StartupWMClass=io.github.xarantolus.matterleast
+MimeType=x-scheme-handler/mmauth;
