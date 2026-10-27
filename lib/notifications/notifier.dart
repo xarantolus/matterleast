@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/notice_format.dart';
 import 'package:matterleast/notifications/notify_rules.dart';
@@ -194,9 +195,7 @@ class Notifier {
     required DidReceiveBackgroundNotificationResponseCallback onAction,
   }) async {
     await _plugin.initialize(
-      settings: const InitializationSettings(
-        android: AndroidInitializationSettings('ic_notification'),
-      ),
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: onTap,
       onDidReceiveBackgroundNotificationResponse: onAction,
     );
@@ -215,9 +214,30 @@ class Notifier {
     }
   }
 
+  /// Every platform the app runs on; the plugin refuses to start on one
+  /// without its settings.
+  static final initializationSettings = InitializationSettings(
+    android: const AndroidInitializationSettings('ic_notification'),
+    linux: LinuxInitializationSettings(
+      defaultActionName: 'Open',
+      defaultIcon: AssetsLinuxIcon(appIconAsset),
+    ),
+    windows: const WindowsInitializationSettings(
+      appName: 'Matterleast',
+      appUserModelId: 'io.github.xarantolus.matterleast',
+      guid: 'd220ee6f-3493-4113-9ba0-46177298cccf',
+    ),
+  );
+
   /// The notification the app was opened from, if any.
   Future<NoticeTarget?> launchTarget() async {
-    final details = await _plugin.getNotificationAppLaunchDetails();
+    final NotificationAppLaunchDetails? details;
+    try {
+      details = await _plugin.getNotificationAppLaunchDetails();
+    } on UnimplementedError {
+      // Linux: a notification never launches the app there.
+      return null;
+    }
     if (!(details?.didNotificationLaunchApp ?? false)) return null;
     return NoticeTarget.decode(details?.notificationResponse?.payload);
   }

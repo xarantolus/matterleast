@@ -44,6 +44,14 @@ android {
         versionName = flutter.versionName
     }
 
+    // The tray plugin's native library (nativeapi) is for desktops;
+    // nothing on Android loads it.
+    packaging {
+        jniLibs {
+            excludes += "**/libcnativeapi.so"
+        }
+    }
+
     signingConfigs {
         if (releaseStoreFile != null) {
             create("release") {

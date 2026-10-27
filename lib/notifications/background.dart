@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:matterleast/api/network_state.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/secure/token_store.dart';
@@ -149,11 +150,14 @@ Future<void> onNoticeAction(NotificationResponse response) async {
   });
 }
 
-/// The periodic check: one unique work, kept across launches.
+/// The periodic check: one unique work, kept across launches. Never on
+/// desktop, where WorkManager would install a timer that starts the app
+/// while it is closed.
 abstract final class PeriodicCheck {
   static const name = 'notification-check';
 
   static Future<void> schedule() async {
+    if (isDesktop) return;
     await Workmanager().initialize(backgroundDispatcher);
     await Workmanager().registerPeriodicTask(
       name,
@@ -165,6 +169,7 @@ abstract final class PeriodicCheck {
   }
 
   static Future<void> cancel() async {
+    if (isDesktop) return;
     await Workmanager().initialize(backgroundDispatcher);
     await Workmanager().cancelByUniqueName(name);
   }

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/server_entry.dart';
@@ -85,7 +86,10 @@ class _NotificationSettingsPageState
     return ListView(
       padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
       children: [
-        const PhoneNotifications(),
+        if (isDesktop)
+          const ComputerNotifications()
+        else
+          const PhoneNotifications(),
         SettingsHeader('Saved on the server · ${widget.server.displayName}'),
         ListTile(
           enabled: enabled,

@@ -42,6 +42,15 @@ Future<RailTarget?> savedRailTarget(Ref ref) =>
 @Riverpod(keepAlive: true)
 TokenStore tokenStore(Ref ref) => TokenStore();
 
+/// Whether the token storage stopped answering (a locked or missing
+/// keyring), as it changes.
+@riverpod
+Stream<bool> keyringUnavailable(Ref ref) async* {
+  final tokens = ref.watch(tokenStoreProvider);
+  yield tokens.unavailable;
+  yield* tokens.unavailableChanges;
+}
+
 @Riverpod(keepAlive: true)
 NetworkState networkState(Ref ref) {
   final network = NetworkState.device();
@@ -139,6 +148,10 @@ Stream<MessageTextSize> messageTextSize(Ref ref) =>
 @Riverpod(keepAlive: true)
 Stream<bool> wrapCode(Ref ref) =>
     ref.watch(settingsStoreProvider).watch(Settings.wrapCode);
+
+@riverpod
+Stream<bool> closeToTray(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.closeToTray);
 
 /// Reads [provider] (a `.future`) once from outside a build, held until it
 /// answers: an auto-disposed provider nothing else listens to would be

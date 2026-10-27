@@ -70,7 +70,13 @@ class ServerApi {
           if (preAuthSecret != null && options.uri.origin == baseUrl.origin) {
             options.headers['X-Mattermost-Preauth-Secret'] = preAuthSecret;
           }
-          final token = await _token();
+          final String? token;
+          try {
+            token = await _token();
+          } on ApiError catch (e) {
+            handler.reject(DioException(requestOptions: options, error: e));
+            return;
+          }
           if (token != null && carriesToken(options.uri, baseUrl)) {
             options.headers['Authorization'] = 'Bearer $token';
           }

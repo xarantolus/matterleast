@@ -180,5 +180,9 @@ ThemeData _build({
     listTileTheme: const ListTileThemeData(
       contentPadding: EdgeInsets.symmetric(horizontal: Spacing.lg),
     ),
+    // Material's widest dialog; a desktop window would stretch it further.
+    dialogTheme: const DialogThemeData(
+      constraints: BoxConstraints(minWidth: 280, maxWidth: 560),
+    ),
   );
 }

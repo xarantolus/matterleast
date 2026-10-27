@@ -129,7 +129,8 @@ class ServerSession {
     NetworkState? network,
   }) {
     final key = url.toString();
-    unawaited(tokens.read(key));
+    // A keyring that doesn't answer fails each request with its reason.
+    unawaited(tokens.read(key).then((_) {}, onError: (Object _) {}));
     final api = ServerApi(
       baseUrl: url,
       token: () => tokens.read(key),
