@@ -306,7 +306,7 @@ class PostActions {
     final crt = await _db.collapsedThreads();
     if (crt && post != null && post.rootId.isNotEmpty) {
       final team = await ConversationViews(_db).threadTeam(post.channelId);
-      if (team != null) return _markThreadUnread(team, post);
+      if (team != null) return _markThreadUnread(team, post.rootId, post);
     }
     final unread = await _call(
       () => _client.posts.setPostUnread(
@@ -330,11 +330,22 @@ class PostActions {
     await _store.applyMarkedUnread(await member);
   }
 
-  Future<void> _markThreadUnread(String teamId, PostRow post) async {
+  /// Marks a whole thread unread, from its first post, as the official
+  /// app's thread options do.
+  Future<void> markThreadUnread(String teamId, String rootId) async {
+    final root = await _store.post(rootId);
+    if (root != null) await _markThreadUnread(teamId, rootId, root);
+  }
+
+  Future<void> _markThreadUnread(
+    String teamId,
+    String threadId,
+    PostRow post,
+  ) async {
     // Not in the generated client: its answer is typed as empty.
     final answer = await _call(
       () => session.api.dio.post<Object?>(
-        '/api/v4/users/me/teams/$teamId/threads/${post.rootId}'
+        '/api/v4/users/me/teams/$teamId/threads/$threadId'
         '/set_unread/${post.id}',
       ),
     );
@@ -344,7 +355,7 @@ class PostActions {
         : null;
     await _store.applyThreadRead(
       teamId: teamId,
-      threadId: post.rootId,
+      threadId: threadId,
       lastViewedAt: post.createAt.subtract(const Duration(milliseconds: 1)),
       unreadReplies: thread?.unreadReplies ?? 1,
       unreadMentions: thread?.unreadMentions ?? 0,

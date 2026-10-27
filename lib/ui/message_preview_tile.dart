@@ -1,3 +1,4 @@
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/today_provider.dart';
@@ -14,12 +15,16 @@ class MessagePreviewTile extends ConsumerWidget {
   const MessagePreviewTile({
     required this.item,
     required this.onTap,
+    this.onLongPress,
     this.serverName,
     super.key,
   });
 
   final InboxItem item;
   final VoidCallback onTap;
+
+  /// Opens the row's options, when it has any.
+  final VoidCallback? onLongPress;
 
   /// Shown on the row when more than one server is signed in.
   final String? serverName;
@@ -40,9 +45,10 @@ class MessagePreviewTile extends ConsumerWidget {
     // otherwise have room for a few letters only.
     final large = MediaQuery.textScalerOf(context).scale(10) > 15;
     final marker = _marker(context, item);
-    return ListTile(
+    final tile = ListTile(
       contentPadding: Spacing.row,
       onTap: onTap,
+      onLongPress: onLongPress,
       // Pictures are decoration here; presence is read after the name.
       leading: ExcludeSemantics(
         child: Stack(
@@ -122,6 +128,14 @@ class MessagePreviewTile extends ConsumerWidget {
         ],
       ),
       trailing: marker,
+    );
+    final options = onLongPress;
+    if (options == null) return tile;
+    return Semantics(
+      customSemanticsActions: {
+        const CustomSemanticsAction(label: 'Thread options'): options,
+      },
+      child: tile,
     );
   }
 }

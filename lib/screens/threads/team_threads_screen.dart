@@ -10,6 +10,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/threads/thread_options_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
@@ -165,6 +166,7 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
                 key: ValueKey(items[i].key),
                 item: items[i],
                 onTap: () => openInboxItem(context, items[i]),
+                onLongPress: () => showThreadOptions(context, items[i]),
               ),
             ),
           SliverToBoxAdapter(
