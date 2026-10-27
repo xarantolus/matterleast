@@ -12,7 +12,7 @@ import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
-import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
@@ -570,15 +570,7 @@ class _PostList extends ConsumerWidget {
           final PaneLabel label => label,
           final InboxItem item => MessagePreviewTile(
             item: item,
-            onTap: () => openConversation(
-              Navigator.of(context),
-              url: url,
-              channelId: item.channelId,
-              title: item.title.replaceFirst('#', ''),
-              teamId: item.teamId,
-              highlightPostId: item.postId,
-              rootId: item.rootId,
-            ),
+            onTap: () => openInboxItem(context, item),
           ),
           _ => const SizedBox.shrink(),
         };

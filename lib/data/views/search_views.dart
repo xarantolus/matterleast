@@ -71,6 +71,7 @@ class SearchViews {
         },
         savedIds: ids,
         nameFormat: await db.nameFormat(),
+        collapsedThreads: await db.collapsedThreads(),
       ),
     );
     // Results keep the server's order, which is newest first anyway.

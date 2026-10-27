@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/data/actions/message_search.dart';
+import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/search_views.dart';
 
@@ -70,5 +71,45 @@ void main() {
     await search.posts(teamId, 'harbour');
     expect(server.paths, isNot(contains('/api/v4/posts/search')));
     expect(server.paths, contains('/api/v4/teams/$teamId/posts/search'));
+  });
+
+  group('a reply found', () {
+    const rootId = 'po000000000000000000000p00';
+
+    setUp(() {
+      final reply = {
+        ...(postList['posts']! as Map<String, Object?>)[postId]!
+            as Map<String, Object?>,
+        'root_id': rootId,
+      };
+      server.handle = (r) => switch (r.path) {
+        '/api/v4/posts/search' => ok({
+          'order': [postId],
+          'posts': {postId: reply},
+        }),
+        '/api/v4/users/ids' => ok(<Object>[]),
+        _ => error(404, 'not_found'),
+      };
+    });
+
+    Future<bool> opensInThread() async {
+      await search.posts(null, 'harbour');
+      final items = await SearchViews(
+        session.db,
+        serverUrl: server.url.toString(),
+      ).postItems([postId]).first;
+      return items.single.inThread;
+    }
+
+    test('opens in its thread under collapsed threads', () async {
+      await session.store.applyConfig(ConfigKeys.clientConfig, {
+        'CollapsedThreads': 'always_on',
+      });
+      expect(await opensInThread(), isTrue);
+    });
+
+    test('opens in its channel without collapsed threads', () async {
+      expect(await opensInThread(), isFalse);
+    });
   });
 }
