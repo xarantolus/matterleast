@@ -3,6 +3,16 @@
 // Used by Runner.rc
 //
 #define IDI_APP_ICON                    101
+#define IDI_BADGE_1                     201
+#define IDI_BADGE_2                     202
+#define IDI_BADGE_3                     203
+#define IDI_BADGE_4                     204
+#define IDI_BADGE_5                     205
+#define IDI_BADGE_6                     206
+#define IDI_BADGE_7                     207
+#define IDI_BADGE_8                     208
+#define IDI_BADGE_9                     209
+#define IDI_BADGE_MORE                  210
 
 // Next default values for new objects
 //

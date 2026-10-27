@@ -13,6 +13,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// Shows the dialogs integrations open for this device while the screen
 /// that calls it is visible.
@@ -138,7 +139,7 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
         if (!popped && !_sending) unawaited(_submit(cancelled: true));
       },
       child: Scaffold(
-        appBar: AppBar(
+        appBar: WindowAppBar(
           title: Text(_form.title ?? 'Form'),
           actions: [
             TextButton(

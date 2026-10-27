@@ -19,6 +19,7 @@ import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// The user's picture, names, nickname, position and username on one
 /// server, and a way to change their password.
@@ -188,7 +189,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         (const <AttributeField>[], const <String, List<String>>{});
     String? by(bool? locked) => (locked ?? false) ? locks!.source : null;
     return Scaffold(
-      appBar: AppBar(
+      appBar: WindowAppBar(
         title: const Text('Edit profile'),
         actions: [
           TextButton(
@@ -385,7 +386,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
+    appBar: WindowAppBar(
       title: const Text('Change password'),
       actions: [
         TextButton(

@@ -11,6 +11,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/slide_route.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// Who is in a channel, admins first, with search and presence.
 class MembersScreen extends ConsumerStatefulWidget {
@@ -85,7 +86,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
         ? ref.watch(myUserIdProvider(url)).value
         : null;
     return Scaffold(
-      appBar: AppBar(
+      appBar: WindowAppBar(
         title: Text('Members of ${widget.title}'),
         actions: [
           if (widget.canAdd)

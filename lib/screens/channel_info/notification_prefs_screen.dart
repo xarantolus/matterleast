@@ -8,6 +8,7 @@ import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 /// How the user is notified about one channel. Each change is saved at
 /// once and shown before the server confirms it.
@@ -42,7 +43,7 @@ class NotificationPrefsScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: WindowAppBar(title: const Text('Notifications')),
       body: info == null
           ? ChannelMissing(
               state: infoState,

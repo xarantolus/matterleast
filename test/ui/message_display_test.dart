@@ -6,6 +6,7 @@ import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/message_display.dart';
+import 'package:matterleast/ui/window_bar.dart';
 
 const _longLine =
     'final answer = computeTheAnswerToEverything(lifeTheUniverse, '
@@ -186,7 +187,7 @@ void main() {
       expect(find.byType(CodeScreen), findsOneWidget);
       expect(
         find.descendant(
-          of: find.byType(AppBar),
+          of: find.byType(WindowAppBar),
           matching: find.byTooltip("Don't wrap lines"),
         ),
         findsOneWidget,
@@ -196,7 +197,7 @@ void main() {
 
       await tester.tap(
         find.descendant(
-          of: find.byType(AppBar),
+          of: find.byType(WindowAppBar),
           matching: find.byTooltip("Don't wrap lines"),
         ),
       );

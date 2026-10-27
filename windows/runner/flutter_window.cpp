@@ -1,5 +1,7 @@
 #include "flutter_window.h"
 
+#include <flutter/standard_method_codec.h>
+
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
@@ -25,6 +27,26 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  taskbar_ = std::make_unique<Taskbar>(GetHandle());
+  taskbar_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(), "matterleast/taskbar",
+          &flutter::StandardMethodCodec::GetInstance());
+  taskbar_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+                 result) {
+        if (call.method_name() == "setOverlay") {
+          const auto* badge = std::get_if<int32_t>(call.arguments());
+          taskbar_->SetOverlay(badge ? *badge : 0);
+          result->Success();
+        } else if (call.method_name() == "flash") {
+          taskbar_->Flash();
+          result->Success();
+        } else {
+          result->NotImplemented();
+        }
+      });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -40,6 +62,8 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  taskbar_channel_ = nullptr;
+  taskbar_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -59,6 +83,10 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     if (result) {
       return *result;
     }
+  }
+
+  if (taskbar_) {
+    taskbar_->HandleMessage(message);
   }
 
   switch (message) {

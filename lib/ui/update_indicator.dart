@@ -18,6 +18,11 @@ class WindowCorner extends InheritedWidget {
   static bool contains(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<WindowCorner>()?.here ?? false;
 
+  /// Whether an app bar here sits in the window's top right corner: in the
+  /// marked pane, or on a page pushed over the whole window.
+  static bool atTop(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<WindowCorner>()?.here ?? true;
+
   @override
   bool updateShouldNotify(WindowCorner old) => old.here != here;
 }
