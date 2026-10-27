@@ -200,8 +200,56 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       _anchor = newest;
     } else if (_anchor != _pastOldest && !_indexOf.containsKey(_anchor)) {
       _anchor = _survivor(old.rows, old.keyOf, oldIndex);
+    } else if (_keptRow(old.rows.map(old.keyOf).toList(), oldIndex)
+        case final kept?) {
+      _keepBottomOf(kept);
     }
     _scheduleReport();
+  }
+
+  /// When rows were inserted right below the anchor, they would push the
+  /// reader's rows down: older rows arriving while the reader is at the
+  /// oldest one, or a day separator moving up above them. The row that
+  /// stays put instead is the first one, from the row below the anchor
+  /// towards the newest, whose newer neighbour is unchanged.
+  Object? _keptRow(List<Object> oldKeys, Map<Object, int> oldIndex) {
+    final anchor = _anchor;
+    final oldAt = anchor == _pastOldest ? oldKeys.length : oldIndex[anchor];
+    final newAt = _anchorIndex;
+    if (oldAt == null || oldAt == 0) return null;
+    final newKeys = [for (final row in widget.rows) widget.keyOf(row)];
+    for (var i = oldAt - 1; i >= 0; i--) {
+      final at = _indexOf[oldKeys[i]];
+      if (at == null) continue;
+      final newer = at > 0 ? newKeys[at - 1] : null;
+      if (newer != (i > 0 ? oldKeys[i - 1] : null)) continue;
+      final unchanged = i == oldAt - 1 && at == newAt - 1;
+      return unchanged ? null : oldKeys[i];
+    }
+    return null;
+  }
+
+  /// Anchors at row [key] so its bottom edge stays where it is drawn now; a
+  /// change of its height, such as a header it loses to the rows above,
+  /// goes upwards.
+  void _keepBottomOf(Object key) {
+    final height = _viewportHeight;
+    final row = _rowAt(key);
+    if (height == null || row == null) return;
+    _moved('kept row ${_indexOf[key]} in place', 0, shifts: false);
+    _anchor = key;
+    final p = _scroll.position;
+    p.correctPixels(row.bottom - height);
+    // A fling runs on from where it would have been without the correction.
+    if (p is ScrollPositionWithSingleContext &&
+        p.activity is BallisticScrollActivity) {
+      final velocity = p.activity!.velocity;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && p.activity is BallisticScrollActivity) {
+          p.goBallistic(velocity);
+        }
+      });
+    }
   }
 
   @override
