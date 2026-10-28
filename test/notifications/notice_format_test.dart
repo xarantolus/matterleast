@@ -307,17 +307,21 @@ void main() {
     });
 
     test("a payload that isn't ours is ignored", () {
-      expect(
-        noticeActionOf(
-          const NotificationResponse(
-            notificationResponseType:
-                NotificationResponseType.selectedNotificationAction,
-            payload: 'something else',
-            actionId: NoticeActions.read,
+      for (final payload in ['something else', '[1, 2]', '{"s": 1}', '42']) {
+        expect(
+          noticeActionOf(
+            NotificationResponse(
+              notificationResponseType:
+                  NotificationResponseType.selectedNotificationAction,
+              payload: payload,
+              actionId: payload,
+            ),
           ),
-        ),
-        isNull,
-      );
+          isNull,
+          reason: payload,
+        );
+        expect(NoticeTarget.decode(payload), isNull, reason: payload);
+      }
     });
   });
 

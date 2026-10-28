@@ -2,10 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/notice_format.dart';
 import 'package:matterleast/notifications/notify_rules.dart';
+
+part 'notifier.g.dart';
 
 /// One message line in a notification.
 class NoticeMessage {
@@ -69,6 +72,7 @@ class ConversationNotice {
 }
 
 /// Where a notification leads, carried in its payload.
+@JsonSerializable(checked: true, includeIfNull: false)
 class NoticeTarget {
   const NoticeTarget({
     required this.serverUrl,
@@ -77,59 +81,63 @@ class NoticeTarget {
     required this.newestAt,
     this.rootId = '',
     this.teamId = '',
+    this.action,
   });
 
+  factory NoticeTarget.fromJson(Map<String, Object?> json) =>
+      _$NoticeTargetFromJson(json);
+
+  @JsonKey(name: 's')
   final String serverUrl;
+  @JsonKey(name: 'c')
   final String channelId;
+  @JsonKey(name: 'r')
   final String rootId;
+  @JsonKey(name: 'p')
   final String postId;
+  @JsonKey(name: 't')
   final String teamId;
+  @JsonKey(name: 'n', fromJson: _fromMillis, toJson: _toMillis)
   final DateTime newestAt;
+
+  /// Set on a Windows toast button, which hands back only its own payload.
+  @JsonKey(name: 'a')
+  final String? action;
 
   ConversationKey get key => ConversationKey(channelId, rootId);
 
-  /// With [action], the payload of a Windows toast button, which hands
-  /// back only its own arguments.
-  String encode({String? action}) => jsonEncode({
-    's': serverUrl,
-    'c': channelId,
-    'r': rootId,
-    'p': postId,
-    't': teamId,
-    'n': newestAt.millisecondsSinceEpoch,
-    'a': ?action,
-  });
+  NoticeTarget withAction(String action) => NoticeTarget(
+    serverUrl: serverUrl,
+    channelId: channelId,
+    rootId: rootId,
+    postId: postId,
+    teamId: teamId,
+    newestAt: newestAt,
+    action: action,
+  );
 
-  /// Our own payload; anything else is not ours and reads as null.
+  Map<String, Object?> toJson() => _$NoticeTargetToJson(this);
+
+  String encode() => jsonEncode(toJson());
+
+  /// Our own payload; anything else reads as null.
   static NoticeTarget? decode(String? payload) {
     if (payload == null || payload.isEmpty) return null;
     try {
       final json = jsonDecode(payload);
-      if (json is! Map<String, Object?>) return null;
-      final (s, c, r, p, t, n) = (
-        json['s'],
-        json['c'],
-        json['r'],
-        json['p'],
-        json['t'],
-        json['n'],
-      );
-      if (s is! String || c is! String || p is! String || n is! int) {
-        return null;
-      }
-      return NoticeTarget(
-        serverUrl: s,
-        channelId: c,
-        rootId: r is String ? r : '',
-        postId: p,
-        teamId: t is String ? t : '',
-        newestAt: DateTime.fromMillisecondsSinceEpoch(n, isUtc: true),
-      );
+      return json is Map<String, Object?> ? NoticeTarget.fromJson(json) : null;
     } on FormatException {
+      return null;
+    } on CheckedFromJsonException {
       return null;
     }
   }
 }
+
+DateTime _fromMillis(int millis) =>
+    DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true);
+
+int _toMillis(DateTime time) => time.millisecondsSinceEpoch;
 
 /// The fixed Android channels; the user tunes each in the system settings.
 /// The message channels start at one importance: Android orders by
@@ -190,34 +198,27 @@ typedef NoticeAction = ({
   String text,
 });
 
-/// Pure: the action [response] asks for, or null for a tap on the
-/// notification itself or a payload that isn't ours. Android and Linux
-/// name the action and keep the notification's payload; a Windows button
-/// hands back its own arguments as both, and its text box in `data`.
+/// The Reply or Mark as read [response] asks for; null for a tap on the
+/// notification itself or a payload that isn't ours.
 NoticeAction? noticeActionOf(NotificationResponse response) {
   final target = NoticeTarget.decode(response.payload);
   if (target == null) return null;
-  var action = response.actionId;
-  var text = response.input;
-  if (action != null && action == response.payload) {
-    // decode() above read it as a JSON object already.
-    final json = jsonDecode(action) as Map<String, Object?>;
-    action = switch (json['a']) {
-      final String a => a,
-      _ => null,
-    };
-    text = switch (response.data[NoticeActions.reply]) {
-      final String t => t,
-      _ => null,
-    };
-  }
-  final kind = switch (action) {
+  // A Windows button's payload names the action and its text box is in
+  // `data`; Android and Linux name the action beside the payload.
+  final windows = target.action != null;
+  final kind = switch (target.action ?? response.actionId) {
     NoticeActions.reply => NoticeActionKind.reply,
     NoticeActions.read => NoticeActionKind.read,
     _ => null,
   };
   if (kind == null) return null;
-  return (kind: kind, target: target, text: text?.trim() ?? '');
+  final text = switch (windows
+      ? response.data[NoticeActions.reply]
+      : response.input) {
+    final String text => text.trim(),
+    _ => '',
+  };
+  return (kind: kind, target: target, text: text);
 }
 
 /// Shows and removes message notifications. One instance per isolate;
@@ -380,12 +381,12 @@ class Notifier {
       actions: [
         WindowsAction(
           content: 'Reply',
-          arguments: target.encode(action: NoticeActions.reply),
+          arguments: target.withAction(NoticeActions.reply).encode(),
           inputId: NoticeActions.reply,
         ),
         WindowsAction(
           content: 'Mark as read',
-          arguments: target.encode(action: NoticeActions.read),
+          arguments: target.withAction(NoticeActions.read).encode(),
         ),
       ],
     ),
