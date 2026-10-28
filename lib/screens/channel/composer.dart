@@ -181,7 +181,6 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   final _text = TextEditingController();
   late final _focus = widget.focusNode ?? FocusNode();
   final _suggestionsShown = OverlayPortalController()..show();
-  Timer? _focusLater;
 
   /// The suggestion Enter and Tab take.
   int _highlight = 0;
@@ -214,12 +213,6 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     if (old.teamId != widget.teamId) {
       ref.read(_provider.notifier).inTeam(widget.teamId);
     }
-  }
-
-  /// After the message menu has closed, which would take the focus back.
-  void _focusSoon() {
-    _focusLater?.cancel();
-    _focusLater = Timer(const Duration(milliseconds: 350), _focus.requestFocus);
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
@@ -378,7 +371,6 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   @override
   void dispose() {
     if (isDesktop) HardwareKeyboard.instance.removeHandler(_typeToFocus);
-    _focusLater?.cancel();
     _text.removeListener(_typed);
     _text.dispose();
     if (widget.focusNode == null) _focus.dispose();
@@ -402,12 +394,11 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       final startedEditing =
           next.editing != null && before?.editing != next.editing;
       if (startedEditing) {
-        // The cursor goes to the end of the message at once; the soon call
-        // takes the focus back from a menu that is still closing.
-        _focus.requestFocus();
         _text.selection = TextSelection.collapsed(offset: _text.text.length);
       }
-      if (startedEditing || next.quotes > (before?.quotes ?? 0)) _focusSoon();
+      if (startedEditing || next.quotes > (before?.quotes ?? 0)) {
+        _focus.requestFocus();
+      }
     });
     final value = ref.watch(_provider);
     final suggestions = value.suggestions;
@@ -587,6 +578,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 ),
               ),
             Padding(
+              // Keeps the field itself when bars appear above it.
+              key: const ValueKey('composer-field'),
               padding: const EdgeInsets.fromLTRB(
                 Spacing.xs,
                 Spacing.sm,
