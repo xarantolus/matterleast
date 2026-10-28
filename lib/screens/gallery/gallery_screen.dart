@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
@@ -11,8 +13,10 @@ import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
+import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/file_handoff.dart';
 import 'package:matterleast/data/images/image_rules.dart';
+import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
@@ -82,10 +86,94 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   final _originals = <String>{};
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _preloadAround(_index));
+  }
+
+  @override
   void dispose() {
     _pages.dispose();
     super.dispose();
   }
+
+  /// The picture of page [i] as the gallery shows it, once the caches are
+  /// open.
+  ImageProvider? _imageOf(int i) {
+    final caches = ref.read(serverImageCachesProvider(widget.url)).value;
+    final downloads = ref.read(fileDownloadsProvider(widget.url)).value;
+    final proxy = ref.read(imageProxyProvider(widget.url)).value;
+    if (caches == null || downloads == null) return null;
+    return _imageFor(widget.files[i], caches, downloads, proxy);
+  }
+
+  ImageProvider? _imageFor(
+    PostFile item,
+    ServerImageCaches caches,
+    FileDownloads downloads,
+    bool? proxy,
+  ) {
+    if (item.kind == FileKind.video) return null;
+    final original =
+        item.kind == FileKind.gif ||
+        !item.hasPreview ||
+        _originals.contains(item.id);
+    final source = switch (item.link) {
+      final link? when proxy != null => imageRequestUri(
+        link,
+        Uri.parse(widget.url),
+        proxy: proxy,
+      ),
+      _? => null,
+      null =>
+        original
+            ? downloads.originalUri(item.id)
+            : downloads.previewUri(item.id),
+    };
+    if (source == null) return null;
+    return CachedNetworkImageProvider(
+      source.toString(),
+      cacheManager: caches.media,
+    );
+  }
+
+  /// Loads the pictures beside page [i], so a swipe rarely waits.
+  void _preloadAround(int i) {
+    if (!mounted) return;
+    for (final next in [i - 1, i + 1]) {
+      if (next < 0 || next >= widget.files.length) continue;
+      if (_imageOf(next) case final image?) {
+        unawaited(precacheImage(image, context, onError: (_, _) {}));
+      }
+    }
+  }
+
+  void _pageChanged(int i) {
+    setState(() => _index = i);
+    _preloadAround(i);
+  }
+
+  /// While a picture loads, its stand-in; when it failed, why, and Retry.
+  Widget? _loadState(
+    ExtendedImageState state,
+    PostFile item,
+  ) => switch (state.extendedImageLoadState) {
+    LoadState.completed => null,
+    // The picture it replaces stays until this one is there.
+    LoadState.loading when state.extendedImageInfo != null => null,
+    LoadState.loading => GalleryStandIn(
+      url: widget.url,
+      file: item,
+      progress: state.loadingProgress,
+    ),
+    LoadState.failed => _Message(
+      text:
+          "The picture didn't load. "
+          '${imageProblemText(state.lastException, Uri.parse(widget.url).host)}',
+      action: 'Retry',
+      onPressed: state.reLoadImage,
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -99,117 +187,119 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         data: Theme.of(context)
             .copyWith(iconTheme: const IconThemeData(color: Colors.white)),
         // A Scaffold, so snack bars about saving show above the pictures.
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: ExtendedImageSlidePage(
-            slideAxis: SlideAxis.vertical,
-            slideType: SlideType.onlyImage,
-            resetPageDuration: motion(
-              context,
-              const Duration(milliseconds: 250),
+        // Esc closes it, like any viewer on a desktop.
+        child: Actions(
+          actions: {
+            DismissIntent: CallbackAction<DismissIntent>(
+              onInvoke: (_) => Navigator.of(context).maybePop(),
             ),
-            slideEndHandler: slideEndCloses,
-            slidePageBackgroundHandler: (offset, size) =>
-                Colors.black.withValues(
-                  alpha: (1 - offset.dy.abs() / (size.height / 2)).clamp(0, 1),
+          },
+          child: Focus(
+            autofocus: true,
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: ExtendedImageSlidePage(
+                slideAxis: SlideAxis.vertical,
+                slideType: SlideType.onlyImage,
+                resetPageDuration: motion(
+                  context,
+                  const Duration(milliseconds: 250),
                 ),
-            child: Stack(
-              children: [
-                GestureDetector(
-                  onTap: () => setState(() => _bars = !_bars),
-                  child: ExtendedImageGesturePageView.builder(
-                    controller: _pages,
-                    itemCount: widget.files.length,
-                    onPageChanged: (i) => setState(() => _index = i),
-                    itemBuilder: (context, i) {
-                      final item = widget.files[i];
-                      final heroTag = '${widget.heroPrefix}:${item.id}';
-                      if (item.kind == FileKind.video) {
-                        return Hero(
-                          tag: heroTag,
-                          child: _VideoPage(
-                            url: widget.url,
-                            file: item,
-                            autoplay: i == widget.initialIndex,
-                            onControlsChanged: (visible) {
-                              if (i == _index) setState(() => _bars = visible);
+                slideEndHandler: slideEndCloses,
+                slidePageBackgroundHandler: (offset, size) =>
+                    Colors.black.withValues(
+                      alpha: (1 - offset.dy.abs() / (size.height / 2)).clamp(
+                        0,
+                        1,
+                      ),
+                    ),
+                child: Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => _bars = !_bars),
+                      child: ExtendedImageGesturePageView.builder(
+                        controller: _pages,
+                        itemCount: widget.files.length,
+                        onPageChanged: _pageChanged,
+                        itemBuilder: (context, i) {
+                          final item = widget.files[i];
+                          final heroTag = '${widget.heroPrefix}:${item.id}';
+                          if (item.kind == FileKind.video) {
+                            return Hero(
+                              tag: heroTag,
+                              child: _VideoPage(
+                                url: widget.url,
+                                file: item,
+                                autoplay: i == widget.initialIndex,
+                                onControlsChanged: (visible) {
+                                  if (i == _index) {
+                                    setState(() => _bars = visible);
+                                  }
+                                },
+                              ),
+                            );
+                          }
+                          final image = caches == null || downloads == null
+                              ? null
+                              : _imageFor(item, caches, downloads, proxy);
+                          if (image == null) {
+                            return GalleryStandIn(url: widget.url, file: item);
+                          }
+                          return ExtendedImage(
+                            image: image,
+                            fit: BoxFit.contain,
+                            handleLoadingProgress: true,
+                            loadStateChanged: (state) =>
+                                _loadState(state, item),
+                            semanticLabel: item.name,
+                            mode: ExtendedImageMode.gesture,
+                            enableSlideOutPage: true,
+                            gaplessPlayback: true,
+                            heroBuilderForSlidingPage: (child) => i == _index
+                                ? Hero(tag: heroTag, child: child)
+                                : child,
+                            initGestureConfigHandler: (state) => GestureConfig(
+                              maxScale: 5,
+                              animationMaxScale: 6,
+                              inPageView: true,
+                              gestureDetailsIsChanged: (details) =>
+                                  _zoomed(item, details),
+                            ),
+                            onDoubleTap: (state) {
+                              final scale =
+                                  state.gestureDetails?.totalScale ?? 1;
+                              state.handleDoubleTap(
+                                scale: scale > 1.05 ? 1 : 2.5,
+                                doubleTapPosition: state.pointerDownPosition,
+                              );
                             },
-                          ),
-                        );
-                      }
-                      if (caches == null || downloads == null) {
-                        return const SizedBox.expand();
-                      }
-                      final original =
-                          item.kind == FileKind.gif ||
-                          !item.hasPreview ||
-                          _originals.contains(item.id);
-                      final source = switch (item.link) {
-                        final link? when proxy != null => imageRequestUri(
-                          link,
-                          Uri.parse(widget.url),
-                          proxy: proxy,
-                        ),
-                        _? => null,
-                        null =>
-                          original
-                              ? downloads.originalUri(item.id)
-                              : downloads.previewUri(item.id),
-                      };
-                      if (source == null) return const SizedBox.expand();
-                      return ExtendedImage(
-                        image: CachedNetworkImageProvider(
-                          source.toString(),
-                          cacheManager: caches.media,
-                        ),
-                        fit: BoxFit.contain,
-                        semanticLabel: item.name,
-                        mode: ExtendedImageMode.gesture,
-                        enableSlideOutPage: true,
-                        gaplessPlayback: true,
-                        heroBuilderForSlidingPage: (child) => i == _index
-                            ? Hero(tag: heroTag, child: child)
-                            : child,
-                        initGestureConfigHandler: (state) => GestureConfig(
-                          maxScale: 5,
-                          animationMaxScale: 6,
-                          inPageView: true,
-                          cacheGesture: true,
-                          gestureDetailsIsChanged: (details) =>
-                              _zoomed(item, details),
-                        ),
-                        onDoubleTap: (state) {
-                          final scale = state.gestureDetails?.totalScale ?? 1;
-                          state.handleDoubleTap(
-                            scale: scale > 1.05 ? 1 : 2.5,
-                            doubleTapPosition: state.pointerDownPosition,
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                    _Bars(
+                      visible: _bars,
+                      title: widget.author,
+                      subtitle: whenLabel(
+                        widget.sentAt,
+                        ref.watch(todayProvider),
+                        use24: MediaQuery.alwaysUse24HourFormatOf(context),
+                      ),
+                      position: widget.files.length > 1
+                          ? '${_index + 1} of ${widget.files.length}'
+                          : null,
+                      // An image from a message's text is no file to save.
+                      menu: file.link == null
+                          ? FileActionsMenu(
+                              url: widget.url,
+                              file: file,
+                              color: Colors.white,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
-                _Bars(
-                  visible: _bars,
-                  title: widget.author,
-                  subtitle: whenLabel(
-                    widget.sentAt,
-                    ref.watch(todayProvider),
-                    use24: MediaQuery.alwaysUse24HourFormatOf(context),
-                  ),
-                  position: widget.files.length > 1
-                      ? '${_index + 1} of ${widget.files.length}'
-                      : null,
-                  // An image from a message's text is no file to save.
-                  menu: file.link == null
-                      ? FileActionsMenu(
-                          url: widget.url,
-                          file: file,
-                          color: Colors.white,
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -423,7 +513,7 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
       );
     }
     if (!_ready || video == null) {
-      return const Center(child: CircularProgressIndicator());
+      return GalleryStandIn(url: widget.url, file: widget.file);
     }
     return VideoPlayerView(
       video: video,
@@ -462,6 +552,85 @@ class _Message extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Pure: where a picture of [file] will sit in a [page], fitted whole; the
+/// whole page while its size is unknown.
+Size galleryFit(PostFile file, Size page) {
+  final width = file.width ?? 0;
+  final height = file.height ?? 0;
+  if (width <= 0 || height <= 0) return page;
+  return applyBoxFit(
+    BoxFit.contain,
+    Size(width.toDouble(), height.toDouble()),
+    page,
+  ).destination;
+}
+
+/// Pure: why a picture didn't load, in the words for any failed request.
+String imageProblemText(Object? error, String host) => switch (error) {
+  ImageTooLargeException() =>
+    'It is too large to show here. Use Save as to keep it.',
+  HttpExceptionWithStatus(:final statusCode) => requestProblemText(
+    ServerError(statusCode: statusCode),
+    host,
+  ),
+  DioException() => requestProblemText(ApiError.from(error), host),
+  null => requestProblemText(const UnexpectedFailure('none'), host),
+  _ => requestProblemText(error, host),
+};
+
+/// Where a picture or video will be until it is ready: the chat's preview,
+/// else its blurred tiny preview, else a neutral box, at the size the
+/// picture will have, with the download's progress over it.
+class GalleryStandIn extends StatelessWidget {
+  const GalleryStandIn({
+    required this.url,
+    required this.file,
+    this.progress,
+    super.key,
+  });
+
+  final String url;
+  final PostFile file;
+  final ImageChunkEvent? progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = progress?.expectedTotalBytes;
+    final done = progress?.cumulativeBytesLoaded;
+    final share = total == null || total <= 0 || done == null
+        ? null
+        : (done / total).clamp(0.0, 1.0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = galleryFit(file, constraints.biggest);
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox.fromSize(
+              size: size,
+              child: MediaPicture(
+                url: url,
+                file: file,
+                size: size,
+                fit: BoxFit.contain,
+              ),
+            ),
+            SizedBox.square(
+              dimension: 36,
+              child: CircularProgressIndicator(
+                value: share,
+                strokeWidth: 3,
+                color: Colors.white,
+                backgroundColor: share == null ? null : Colors.white24,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

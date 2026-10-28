@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -138,20 +139,33 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(offCentre(), closeTo(0, 0.5));
 
-    // Zoomed in, the page pans to either edge.
-    await controller.setZoom(
-      controller.centerPosition,
-      controller.currentZoom * 3,
-    );
+    // Zoomed in as Ctrl+plus does, the page pans to either edge. The
+    // zoom's future runs on the real clock.
+    for (var i = 0; i < 3; i++) {
+      unawaited(controller.zoomUp(duration: Duration.zero));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.dragFrom(viewer, const Offset(2000, 0));
-    await tester.pump(const Duration(seconds: 1));
-    expect(controller.visibleRect.left, closeTo(0, 1));
-    await tester.dragFrom(viewer, const Offset(-4000, 0));
-    await tester.pump(const Duration(seconds: 1));
+    for (var i = 0; i < 3; i++) {
+      await tester.timedDragFrom(
+        viewer,
+        const Offset(800, 0),
+        const Duration(milliseconds: 600),
+      );
+      await tester.pump(const Duration(seconds: 1));
+    }
+    expect(controller.visibleRect.left, closeTo(0, 2));
+    for (var i = 0; i < 6; i++) {
+      await tester.timedDragFrom(
+        viewer,
+        const Offset(-800, 0),
+        const Duration(milliseconds: 600),
+      );
+      await tester.pump(const Duration(seconds: 1));
+    }
     expect(
       controller.visibleRect.right,
-      closeTo(controller.documentSize.width, 1),
+      closeTo(controller.documentSize.width, 2),
     );
     await close(tester);
   });
