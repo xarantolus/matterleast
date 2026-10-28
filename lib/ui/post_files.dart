@@ -71,7 +71,7 @@ class PostFiles extends StatelessWidget {
             child: _MediaGrid(
               url: url,
               media: media,
-              onOpen: (index) {
+              onOpen: (index, tileWidth) {
                 final before = leading?.call() ?? const <PostFile>[];
                 openGallery(
                   context,
@@ -81,6 +81,7 @@ class PostFiles extends StatelessWidget {
                   heroPrefix: heroPrefix,
                   author: author,
                   sentAt: sentAt,
+                  tileWidth: tileWidth,
                 );
               },
               heroPrefix: heroPrefix,
@@ -102,6 +103,7 @@ void openGallery(
   required String heroPrefix,
   required String author,
   required DateTime sentAt,
+  double? tileWidth,
 }) {
   // Coming back must not bring the keyboard up for a field that kept its
   // focus behind the gallery.
@@ -115,6 +117,7 @@ void openGallery(
         heroPrefix: heroPrefix,
         author: author,
         sentAt: sentAt,
+        tileWidth: tileWidth,
       ),
     ),
   );
@@ -130,7 +133,7 @@ class _MediaGrid extends StatelessWidget {
 
   final String url;
   final List<PostFile> media;
-  final ValueChanged<int> onOpen;
+  final void Function(int index, double tileWidth) onOpen;
   final String heroPrefix;
 
   @override
@@ -145,7 +148,7 @@ class _MediaGrid extends StatelessWidget {
         size: size,
         heroTag: '$heroPrefix:${media[index].id}',
         more: index == 3 ? grid.hidden : 0,
-        onTap: () => onOpen(index),
+        onTap: () => onOpen(index, size.width),
       );
       if (media.length == 1) {
         final file = media.single;
@@ -301,6 +304,7 @@ class MediaPicture extends ConsumerWidget {
     required this.file,
     required this.size,
     this.fit = BoxFit.cover,
+    this.decodeWidth,
     super.key,
   });
 
@@ -308,6 +312,9 @@ class MediaPicture extends ConsumerWidget {
   final PostFile file;
   final Size size;
   final BoxFit fit;
+
+  /// The width the picture is decoded at when that isn't [size]'s.
+  final double? decodeWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -357,6 +364,7 @@ class MediaPicture extends ConsumerWidget {
       width: size.width,
       height: size.height,
       fit: fit,
+      decodeWidth: decodeWidth,
       semanticLabel: file.name,
       placeholder: SizedBox.fromSize(size: size, child: placeholder),
     );

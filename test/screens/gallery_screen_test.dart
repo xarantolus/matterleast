@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:file/local.dart';
 import 'package:flutter/services.dart';
@@ -72,10 +73,12 @@ const _photo = PostFile(
 );
 
 void main() {
-  Future<void> show(
+  Future<CacheManager> show(
     WidgetTester tester,
-    Stream<FileResponse> Function(String url) answer,
-  ) async {
+    Stream<FileResponse> Function(String url) answer, {
+    double? tileWidth,
+  }) async {
+    final media = _Media(answer);
     final temp = Directory.systemTemp.createTempSync().path;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
@@ -88,7 +91,7 @@ void main() {
       ProviderScope(
         overrides: [
           serverImageCachesProvider(_server)
-              .overrideWith((ref) async => _Caches(_Media(answer))),
+              .overrideWith((ref) async => _Caches(media)),
           fileDownloadsProvider(_server)
               .overrideWith((ref) async => _Downloads()),
           imageProxyProvider(_server)
@@ -109,6 +112,7 @@ void main() {
                   heroPrefix: 'test',
                   author: 'Ada',
                   sentAt: DateTime.utc(2026, 10, 27, 9),
+                  tileWidth: tileWidth,
                 ),
               ),
               child: const Text('Open'),
@@ -124,6 +128,7 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    return media;
   }
 
   testWidgets('a picture still loading shows a stand-in at its size and the '
@@ -149,6 +154,42 @@ void main() {
       find.descendant(of: standIn.first, matching: find.byType(SizedBox)).first,
     );
     expect(box, const Size(800, 400));
+  });
+
+  testWidgets('a picture still loading shows the tile\'s own decoded picture, '
+      'not a fading copy', (tester) async {
+    final progress = StreamController<FileResponse>();
+    addTearDown(progress.close);
+    final media = await show(tester, (url) => progress.stream, tileWidth: 200);
+
+    final standIn = find.byType(GalleryStandIn);
+    final shown = tester.widget<Image>(
+      find.descendant(of: standIn.first, matching: find.byType(Image)),
+    );
+    expect(
+      shown.image,
+      ResizeImage(
+        CachedNetworkImageProvider(
+          '$_server/api/v4/files/f1/preview',
+          cacheManager: media,
+        ),
+        width: 200,
+      ),
+    );
+    final page = find.byType(GalleryScreen);
+    for (final fade in [
+      find.byType(FadeTransition),
+      find.byType(AnimatedOpacity),
+      find.byType(Opacity),
+    ]) {
+      expect(
+        find.descendant(
+          of: page,
+          matching: find.ancestor(of: standIn.first, matching: fade),
+        ),
+        findsNothing,
+      );
+    }
   });
 
   testWidgets('a picture that failed says so and offers Retry', (tester) async {

@@ -1,11 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/notifications/stay_connected.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
+import 'package:matterleast/ui/tokens.dart';
 
 /// Notifications on this phone, for every server: whether Android lets the
 /// app notify, and the opt-in stay-connected service.
@@ -109,7 +113,10 @@ class _PhoneNotificationsState extends ConsumerState<PhoneNotifications> {
 /// Notifications on this computer: they come while the app runs, also
 /// with its window closed into the tray.
 class ComputerNotifications extends ConsumerWidget {
-  const ComputerNotifications({super.key});
+  const ComputerNotifications({this.hasTray, super.key});
+
+  /// Whether a tray is there; the desktop's own answer when null.
+  final ValueListenable<bool>? hasTray;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -130,6 +137,26 @@ class ComputerNotifications extends ConsumerWidget {
           onChanged: closeToTray == null
               ? null
               : (on) => store.write(Settings.closeToTray, on),
+        ),
+        ValueListenableBuilder<bool>(
+          valueListenable: hasTray ?? DesktopShell.hasTray,
+          builder: (context, present, _) => present
+              ? const SizedBox.shrink()
+              : Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Spacing.lg,
+                    0,
+                    Spacing.lg,
+                    Spacing.sm,
+                  ),
+                  child: Text(
+                    'No tray on this desktop. On GNOME, enable the '
+                    'AppIndicator extension; until then closing quits '
+                    'Matterleast.',
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: context.tokens.muted),
+                  ),
+                ),
         ),
       ],
     );

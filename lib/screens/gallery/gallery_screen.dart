@@ -36,6 +36,7 @@ Route<void> galleryRoute({
   required String heroPrefix,
   required String author,
   required DateTime sentAt,
+  double? tileWidth,
 }) => PageRouteBuilder<void>(
   opaque: false,
   transitionDuration: const Duration(milliseconds: 250),
@@ -47,6 +48,7 @@ Route<void> galleryRoute({
     heroPrefix: heroPrefix,
     author: author,
     sentAt: sentAt,
+    tileWidth: tileWidth,
   ),
   transitionsBuilder: (_, animation, _, child) =>
       FadeTransition(opacity: animation, child: child),
@@ -63,9 +65,13 @@ class GalleryScreen extends ConsumerStatefulWidget {
     required this.heroPrefix,
     required this.author,
     required this.sentAt,
+    this.tileWidth,
     super.key,
   });
 
+  /// The width of the tile that was tapped; its decoded picture is the first
+  /// thing the gallery shows.
+  final double? tileWidth;
   final String url;
   final List<PostFile> files;
   final int initialIndex;
@@ -156,19 +162,24 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     _preloadAround(i);
   }
 
+  GalleryStandIn _standIn(PostFile item, int i, [ImageChunkEvent? progress]) =>
+      GalleryStandIn(
+        url: widget.url,
+        file: item,
+        progress: progress,
+        tileWidth: i == widget.initialIndex ? widget.tileWidth : null,
+      );
+
   /// While a picture loads, its stand-in; when it failed, why, and Retry.
   Widget? _loadState(
     ExtendedImageState state,
     PostFile item,
+    int i,
   ) => switch (state.extendedImageLoadState) {
     LoadState.completed => null,
     // The picture it replaces stays until this one is there.
     LoadState.loading when state.extendedImageInfo != null => null,
-    LoadState.loading => GalleryStandIn(
-      url: widget.url,
-      file: item,
-      progress: state.loadingProgress,
-    ),
+    LoadState.loading => _standIn(item, i, state.loadingProgress),
     LoadState.failed => _Message(
       text:
           "The picture didn't load. "
@@ -247,14 +258,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                               ? null
                               : _imageFor(item, caches, downloads, proxy);
                           if (image == null) {
-                            return GalleryStandIn(url: widget.url, file: item);
+                            return _standIn(item, i);
                           }
                           return ExtendedImage(
                             image: image,
                             fit: BoxFit.contain,
                             handleLoadingProgress: true,
                             loadStateChanged: (state) =>
-                                _loadState(state, item),
+                                _loadState(state, item, i),
                             semanticLabel: item.name,
                             mode: ExtendedImageMode.gesture,
                             enableSlideOutPage: true,
@@ -594,11 +605,16 @@ class GalleryStandIn extends StatelessWidget {
     required this.url,
     required this.file,
     this.progress,
+    this.tileWidth,
     super.key,
   });
 
   final String url;
   final PostFile file;
+
+  /// Decodes the picture like the tile it opened from, so that tile's cached
+  /// picture is on screen at once.
+  final double? tileWidth;
   final ImageChunkEvent? progress;
 
   @override
@@ -621,6 +637,7 @@ class GalleryStandIn extends StatelessWidget {
                 file: file,
                 size: size,
                 fit: BoxFit.contain,
+                decodeWidth: tileWidth,
               ),
             ),
             SizedBox.square(
