@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/ui/anchored_list.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/markdown/code_highlight.dart';
 import 'package:matterleast/ui/message_display.dart';
@@ -77,6 +78,7 @@ class _CodePreviewState extends State<CodePreview> {
         borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
+          mouseCursor: clickCursor,
           onTap: () =>
               openCode(context, widget.code, widget.language, wrap: wrap),
           child: Padding(
@@ -240,23 +242,26 @@ class _DesktopCodeBlockState extends State<DesktopCodeBlock> {
                       Row(
                         children: [
                           if (long)
-                            TextButton.icon(
-                              style: TextButton.styleFrom(
-                                foregroundColor: tokens.accent,
-                                visualDensity: VisualDensity.compact,
-                                padding: EdgeInsets.zero,
-                              ),
-                              onPressed: _toggle,
-                              icon: Icon(
-                                _expanded
-                                    ? Icons.expand_less
-                                    : Icons.expand_more,
-                              ),
-                              label: Text(
-                                _expanded
-                                    ? 'Show less'
-                                    : 'Show more · ${count - _desktopCutLines} '
-                                          'more lines',
+                            Flexible(
+                              child: TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: tokens.accent,
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                ),
+                                onPressed: _toggle,
+                                icon: Icon(
+                                  _expanded
+                                      ? Icons.expand_less
+                                      : Icons.expand_more,
+                                ),
+                                label: Text(
+                                  _expanded
+                                      ? 'Show less'
+                                      : 'Show more · ${count - _desktopCutLines} '
+                                            'more lines',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           const Spacer(),

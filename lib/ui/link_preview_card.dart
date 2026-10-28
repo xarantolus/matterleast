@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/markdown/links.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -24,6 +25,7 @@ class LinkPreviewCard extends StatelessWidget {
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
+          mouseCursor: clickCursor,
           onTap: env == null || preview.url.isEmpty
               ? null
               : () => env.onLink(classifyLink(preview.url, env.server)),

@@ -19,6 +19,7 @@ import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/acknowledge_button.dart';
 import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/burn_on_read_view.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/initials_badge.dart';
@@ -430,6 +431,7 @@ class PostTile extends StatelessWidget {
       child: onTap == null && onLongPress == null
           ? tile
           : InkWell(
+              mouseCursor: clickCursor,
               // Links, images, files, reactions and names take their own
               // taps.
               onTap: onTap,
@@ -748,7 +750,7 @@ class _ToProfile extends ConsumerWidget {
               if (context.mounted) run?.call();
             }
           : null,
-      child: child,
+      child: Clickable(child: child),
     );
   }
 }
@@ -847,7 +849,8 @@ class _SelectableState extends State<_Selectable> {
       onSelectionChanged: (content) => _selected = content?.plainText,
       child: GestureDetector(
         onSecondaryTapUp: (d) => menu(d.globalPosition, _selected),
-        child: widget.child,
+        // Links, buttons and pictures inside show their own cursors.
+        child: Clickable(cursor: SystemMouseCursors.text, child: widget.child),
       ),
     );
   }
@@ -990,6 +993,7 @@ class _ThreadBar extends ConsumerWidget {
         borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
+          mouseCursor: clickCursor,
           onTap: onPressed,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 44),
@@ -1079,6 +1083,7 @@ class _DraftMarker extends StatelessWidget {
   Widget build(BuildContext context) => Align(
     alignment: Alignment.centerLeft,
     child: InkWell(
+      mouseCursor: clickCursor,
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
       child: ConstrainedBox(

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/person_tile.dart';
@@ -37,6 +38,7 @@ class ReactionsBar extends StatelessWidget {
         ? null
         : Builder(
             builder: (chip) => ActionChip(
+              mouseCursor: clickCursor,
               tooltip: 'Add reaction',
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -79,6 +81,7 @@ class ReactionsBar extends StatelessWidget {
             )
           : null,
       child: FilterChip(
+        mouseCursor: clickCursor,
         // A long press on a phone shows who reacted instead.
         tooltip: isDesktop ? ':${group.emojiName}:' : null,
         showCheckmark: false,

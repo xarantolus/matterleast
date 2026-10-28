@@ -217,7 +217,6 @@ class _RailButton extends StatelessWidget {
           : details == null
           ? tooltip
           : '$tooltip · $details',
-      mouseCursor: SystemMouseCursors.click,
       onPressed: onPressed,
       icon: child,
     );

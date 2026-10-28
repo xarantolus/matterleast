@@ -15,6 +15,7 @@ import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/thread_options_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
@@ -245,6 +246,7 @@ class _FilterChips extends StatelessWidget {
       children: [
         if (notice case final notice?)
           ActionChip(
+            mouseCursor: clickCursor,
             avatar: const Icon(Icons.cloud_off),
             label: Text(notice),
             tooltip: 'Retry',
@@ -252,6 +254,7 @@ class _FilterChips extends StatelessWidget {
           ),
         for (final filter in InboxFilter.values)
           ChoiceChip(
+            mouseCursor: clickCursor,
             label: Text(switch (filter) {
               InboxFilter.unread => 'Unread',
               InboxFilter.mentions => 'Mentions',

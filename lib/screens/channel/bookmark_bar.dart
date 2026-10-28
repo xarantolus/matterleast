@@ -12,6 +12,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/file_icon.dart';
@@ -111,6 +112,7 @@ class _BookmarkChip extends ConsumerWidget {
           ? (d) => _showMenu(context, ref, d.globalPosition & Size.zero)
           : null,
       child: ActionChip(
+        mouseCursor: clickCursor,
         avatar: avatar,
         label: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 200),

@@ -9,6 +9,7 @@ import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
@@ -424,6 +425,7 @@ class _CollapsibleState extends State<_Collapsible> {
           button: true,
           expanded: _open,
           child: InkWell(
+            mouseCursor: clickCursor,
             onTap: () => setState(() => _open = !_open),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

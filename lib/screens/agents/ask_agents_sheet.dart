@@ -6,6 +6,7 @@ import 'package:matterleast/domain/agent_stream.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// "Ask Agents" for a channel: an agent writes a summary into its direct
@@ -132,6 +133,7 @@ class _AskAgentsSheetState extends ConsumerState<_AskAgentsSheet> {
                   children: [
                     for (final b in list)
                       ChoiceChip(
+                        mouseCursor: clickCursor,
                         label: Text(b.name),
                         selected: b.id == bot.id,
                         onSelected: _running

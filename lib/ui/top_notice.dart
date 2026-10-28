@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -113,6 +114,7 @@ class _TopNoticeState extends State<_TopNotice>
                 elevation: 3,
                 shape: const StadiumBorder(),
                 child: InkWell(
+                  mouseCursor: clickCursor,
                   customBorder: const StadiumBorder(),
                   onTap: _hide,
                   child: Padding(

@@ -33,6 +33,7 @@ import 'package:matterleast/screens/channel/posting_rules.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/schedule_picker.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
@@ -783,6 +784,7 @@ class PriorityChip extends StatelessWidget {
     final urgent = priority.priority == api.PostPriorityPriority.urgent;
     final colors = Theme.of(context).colorScheme;
     return InputChip(
+      mouseCursor: clickCursor,
       visualDensity: VisualDensity.compact,
       avatar: Icon(
         urgent ? Icons.error : Icons.info,
