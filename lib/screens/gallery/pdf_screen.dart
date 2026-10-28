@@ -254,8 +254,7 @@ class _PdfScreenState extends State<PdfScreen> {
         const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
             _startSearch,
       },
-      // Esc closes it, like any viewer on a desktop; in the search field it
-      // ends the search first.
+      // In the search field Esc ends the search first.
       child: Actions(
         actions: {
           DismissIntent: CallbackAction<DismissIntent>(
@@ -377,8 +376,7 @@ class _PdfScreenState extends State<PdfScreen> {
 /// Pages are no wider than this in a wide window; the rest is margin.
 const pdfReadingWidth = 960.0;
 
-/// Pure: the zoom that fits the page width [fitWidth] into a view
-/// [viewWidth] wide, or [pdfReadingWidth] of it when the view is wider.
+/// Pure: the zoom fitting [fitWidth] into [viewWidth], capped for reading.
 double readingZoom({required double fitWidth, required double viewWidth}) =>
     viewWidth <= pdfReadingWidth
     ? fitWidth

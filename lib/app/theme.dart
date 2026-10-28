@@ -13,9 +13,7 @@ const _brandLight = Color(0xFF00695C);
 /// brand against a dark page while white stays at 5.2:1.
 const _brandDark = Color(0xFF00796B);
 
-/// The app's typeface, bundled in assets/fonts with its licence. Code keeps
-/// monospace, and emoji come from the system's emoji font, which Rubik
-/// falls back to.
+/// The bundled typeface; emoji fall back to the system's emoji font.
 const appFont = 'Rubik';
 
 /// Rubik's licence on the app's licence page.
@@ -229,8 +227,7 @@ ThemeData desktopTheme(ThemeData theme) {
   ButtonStyle clickable(ButtonStyle? style) =>
       (style ?? const ButtonStyle()).copyWith(mouseCursor: click);
   return theme.copyWith(
-    // A click tints what it presses, hovers and focuses; ripples are for
-    // fingers.
+    // Ripples are for fingers.
     splashFactory: NoSplash.splashFactory,
     visualDensity: VisualDensity.compact,
     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

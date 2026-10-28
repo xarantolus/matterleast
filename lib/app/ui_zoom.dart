@@ -8,10 +8,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/ui_zoom.dart';
 
-/// Pure: [data] for a window zoomed by [zoom]: fewer logical pixels, each
-/// drawn larger, so layouts reflow for the smaller size instead of
-/// stretching, and pictures decode for the larger one. The text size the
-/// system asks for stays as it is, on top.
+/// Pure: [data] with fewer, larger logical pixels, so layouts reflow.
 MediaQueryData zoomedMediaQuery(MediaQueryData data, double zoom) =>
     data.copyWith(
       size: data.size / zoom,
@@ -22,9 +19,7 @@ MediaQueryData zoomedMediaQuery(MediaQueryData data, double zoom) =>
       systemGestureInsets: data.systemGestureInsets / zoom,
     );
 
-/// The desktop window's zoom (Ctrl+plus, Ctrl+minus, Ctrl+0) over
-/// [child], which takes the whole window but [ZoomIntent]s. Phones keep
-/// their own sizes.
+/// The desktop window's zoom over [child]; phones keep their sizes.
 class UiZoom extends ConsumerWidget {
   const UiZoom({required this.child, super.key});
 
@@ -45,8 +40,7 @@ class UiZoom extends ConsumerWidget {
           ),
         ),
       },
-      // The same widgets at every zoom, so nothing below is rebuilt from
-      // scratch when it changes.
+      // One tree at every zoom, so nothing below is rebuilt.
       child: LayoutBuilder(
         builder: (context, constraints) => FittedBox(
           fit: BoxFit.fill,

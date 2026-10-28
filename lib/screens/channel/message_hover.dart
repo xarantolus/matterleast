@@ -254,8 +254,7 @@ class MessageToolbar extends ConsumerWidget {
                 visualDensity: density,
                 tooltip: 'More actions',
                 onPressed: () {
-                  // The menu opens below the button, its right edge under
-                  // the button's, so it stays over the message.
+                  // Right-aligned under the button, over the message.
                   if (globalRectOf(button) case final rect?) {
                     onMore(rect.bottomRight);
                   }

@@ -5,12 +5,10 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// How quickly a wheel tick's distance is covered: after this long about
-/// two thirds of it, after three times as long 95 %.
+/// The time constant of a wheel tick's glide.
 const wheelGlide = Duration(milliseconds: 55);
 
-/// Pure: the part of [left] to scroll in a frame [elapsed] long, easing out
-/// so the motion starts at once and glides to a stop.
+/// Pure: the share of [left] to scroll in a frame [elapsed] long.
 Offset wheelStep(Offset left, Duration elapsed) {
   final micros = elapsed.inMicroseconds;
   if (micros <= 0) return Offset.zero;
@@ -18,13 +16,8 @@ Offset wheelStep(Offset left, Duration elapsed) {
   return (left - step).distance < 0.5 ? left : step;
 }
 
-/// Mouse wheel ticks spread over the next frames, the way browsers scroll:
-/// each tick adds its distance to what is still to go, and every frame
-/// sends on a share of it as an ordinary [PointerScrollEvent] at the
-/// pointer. So every scroll view, the PDF viewer and anything else that
-/// reads the wheel moves smoothly without its own handling, and lists keep
-/// whatever they do with a wheel tick. Trackpads, which scroll with
-/// inertia of their own, and Ctrl+wheel zooming are passed on as they are.
+/// Spreads mouse wheel ticks over the next frames as ordinary scroll
+/// events, so every scroll view glides; trackpads have their own inertia.
 class WheelSmoother {
   WheelSmoother(this._send);
 
@@ -34,8 +27,7 @@ class WheelSmoother {
   var _lastFrame = Duration.zero;
   PointerScrollEvent? _tickEvent;
 
-  /// Takes [event] when it is a wheel tick to smooth; false to handle it as
-  /// usual.
+  /// Whether [event] was taken to be smoothed.
   bool take(PointerEvent event) {
     if (event is! PointerScrollEvent ||
         event.kind != PointerDeviceKind.mouse ||
@@ -73,8 +65,7 @@ class WheelSmoother {
   void dispose() => _ticker.dispose();
 }
 
-/// The binding on desktop: wheel ticks go through [WheelSmoother] before
-/// they reach the widgets.
+/// The desktop binding, with a smoothed wheel.
 class DesktopBinding extends WidgetsFlutterBinding {
   late final _wheel = WheelSmoother(super.handlePointerEvent);
 

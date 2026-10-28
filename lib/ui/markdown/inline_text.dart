@@ -318,9 +318,8 @@ class _InlineTextState extends State<InlineText> {
   }
 }
 
-/// Pure: the code background as a see-through shade of the text colour
-/// that looks the same on the page. A text selection is drawn under the
-/// text, so an opaque background would hide it on inline code.
+/// Pure: the code background as a see-through text shade, so a selection
+/// (drawn under the text) still shows.
 Color seeThroughCode(AppTokens tokens) {
   final page = tokens.page;
   final text = tokens.text;

@@ -155,8 +155,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       // For the buttons and slider, which look for one.
       child: Material(
         type: MaterialType.transparency,
-        // A mouse brings the controls back while it moves, as in any
-        // desktop player; they hide again once it rests.
+        // A moving mouse shows the controls; they hide once it rests.
         child: MouseRegion(
           onHover: (event) {
             if (event.kind == PointerDeviceKind.mouse) _setControls(true);

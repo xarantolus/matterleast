@@ -274,9 +274,7 @@ void listenForRejectedPosts(
   );
 });
 
-/// Caps the message column at a readable width, centred in wider panes, on
-/// a tablet. A desktop window uses its whole width, as Mattermost's desktop
-/// app does.
+/// A readable column width on a tablet; the whole width on desktop.
 class _Readable extends StatelessWidget {
   const _Readable({required this.child});
 

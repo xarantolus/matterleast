@@ -81,7 +81,7 @@ class WindowStrip extends StatelessWidget {
                       'Matterleast',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         fontSize: nameSize,
                         fontWeight: FontWeight.w600,
                         color: colours.text,

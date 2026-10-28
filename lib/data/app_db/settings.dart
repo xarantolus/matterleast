@@ -166,8 +166,7 @@ abstract final class Settings {
     _encodePaneWidths,
   );
 
-  /// How much larger than at 100 % the desktop window draws everything, in
-  /// percent; one of [zoomSteps].
+  /// The desktop window's zoom in percent, one of [zoomSteps].
   static const uiZoom = Setting<int>('uiZoom', 100, _decodeZoom, _encodeInt);
 
   static const all = <Setting<Object?>>[

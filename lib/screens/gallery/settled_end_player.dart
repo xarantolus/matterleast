@@ -2,27 +2,21 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
-/// Puts [SettledEndPlayer] in front of the platform's player where it
-/// replays on a seek after the end.
+/// Puts [SettledEndPlayer] in front of the Windows player.
 void settleVideoEnds() {
   if (defaultTargetPlatform != TargetPlatform.windows) return;
   VideoPlayerPlatform.instance = SettledEndPlayer(VideoPlayerPlatform.instance);
 }
 
-/// Pure: whether a seek to [to] would only replay the end of a video that
-/// has [ended], [duration] long.
+/// Pure: whether a seek to [to] only replays the end of an [ended] video.
 bool seeksPastEnd({
   required bool ended,
   required Duration to,
   required Duration? duration,
 }) => ended && duration != null && to >= duration;
 
-/// The platform's video player with one seek left out. video_player answers
-/// a finished video by seeking to its end, so the last frame shows; the
-/// Windows player starts playing again on any seek after the end, so that
-/// seek replays the last moment, finishes again and is answered again, and
-/// the picture flickers between frames for ever. Everything else is passed
-/// on as it is.
+/// video_player seeks a finished video to its end, and the Windows player
+/// plays again on any seek after the end, so the end loops; drops that seek.
 class SettledEndPlayer extends VideoPlayerPlatform {
   SettledEndPlayer(this._player);
 

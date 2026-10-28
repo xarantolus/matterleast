@@ -4,8 +4,7 @@ import 'package:matterleast/ui/motion.dart';
 /// The shade over a picture under the mouse.
 const pictureHoverTint = Color(0x1F000000);
 
-/// Shades [child], a picture that opens on a click, while the mouse is over
-/// it, fading in and out. Touch leaves it as it is.
+/// Fades a shade over [child] while the mouse is over it.
 class HoverTint extends StatefulWidget {
   const HoverTint({
     required this.child,

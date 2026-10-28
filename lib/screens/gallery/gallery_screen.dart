@@ -97,8 +97,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     super.dispose();
   }
 
-  /// The picture of page [i] as the gallery shows it, once the caches are
-  /// open.
+  /// The picture of page [i], once the caches are open.
   ImageProvider? _imageOf(int i) {
     final caches = ref.read(serverImageCachesProvider(widget.url)).value;
     final downloads = ref.read(fileDownloadsProvider(widget.url)).value;
@@ -187,7 +186,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         data: Theme.of(context)
             .copyWith(iconTheme: const IconThemeData(color: Colors.white)),
         // A Scaffold, so snack bars about saving show above the pictures.
-        // Esc closes it, like any viewer on a desktop.
         child: Actions(
           actions: {
             DismissIntent: CallbackAction<DismissIntent>(
@@ -556,8 +554,7 @@ class _Message extends StatelessWidget {
   }
 }
 
-/// Pure: where a picture of [file] will sit in a [page], fitted whole; the
-/// whole page while its size is unknown.
+/// Pure: [file]'s picture fitted whole into [page], or [page] if unknown.
 Size galleryFit(PostFile file, Size page) {
   final width = file.width ?? 0;
   final height = file.height ?? 0;
@@ -582,9 +579,7 @@ String imageProblemText(Object? error, String host) => switch (error) {
   _ => requestProblemText(error, host),
 };
 
-/// Where a picture or video will be until it is ready: the chat's preview,
-/// else its blurred tiny preview, else a neutral box, at the size the
-/// picture will have, with the download's progress over it.
+/// A loading picture's stand-in at its final size, with progress over it.
 class GalleryStandIn extends StatelessWidget {
   const GalleryStandIn({
     required this.url,
