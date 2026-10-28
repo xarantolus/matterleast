@@ -577,7 +577,7 @@ final class ActiveCustomStatusProvider
 }
 
 String _$activeCustomStatusHash() =>
-    r'd858a63db3d195440a6bd9e915493ed3270c34e4';
+    r'9b3dfd891c76b60866cd07ee6aa108d0488d60de';
 
 /// [userId]'s custom status while it is set and not expired by the clock;
 /// it goes at its expiry without a refetch. Nothing where the server has
@@ -603,4 +603,90 @@ final class ActiveCustomStatusFamily extends $Family
 
   @override
   String toString() => r'activeCustomStatusProvider';
+}
+
+/// Whether [status] still holds by the clock; turns false at its expiry.
+
+@ProviderFor(customStatusHolds)
+final customStatusHoldsProvider = CustomStatusHoldsFamily._();
+
+/// Whether [status] still holds by the clock; turns false at its expiry.
+
+final class CustomStatusHoldsProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Whether [status] still holds by the clock; turns false at its expiry.
+  CustomStatusHoldsProvider._({
+    required CustomStatusHoldsFamily super.from,
+    required CustomStatus super.argument,
+  }) : super(
+         retry: null,
+         name: r'customStatusHoldsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customStatusHoldsHash();
+
+  @override
+  String toString() {
+    return r'customStatusHoldsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as CustomStatus;
+    return customStatusHolds(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomStatusHoldsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customStatusHoldsHash() => r'9407e05774235ed05768c24bfe4a788f0be1dd63';
+
+/// Whether [status] still holds by the clock; turns false at its expiry.
+
+final class CustomStatusHoldsFamily extends $Family
+    with $FunctionalFamilyOverride<bool, CustomStatus> {
+  CustomStatusHoldsFamily._()
+    : super(
+        retry: null,
+        name: r'customStatusHoldsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether [status] still holds by the clock; turns false at its expiry.
+
+  CustomStatusHoldsProvider call(CustomStatus status) =>
+      CustomStatusHoldsProvider._(argument: status, from: this);
+
+  @override
+  String toString() => r'customStatusHoldsProvider';
 }

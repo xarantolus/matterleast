@@ -71,12 +71,18 @@ CustomStatus? activeCustomStatus(Ref ref, String url, String userId) {
     customStatusesProvider(url).select((s) => s.value?[userId]),
   );
   if (status == null) return null;
+  return ref.watch(customStatusHoldsProvider(status)) ? status : null;
+}
+
+/// Whether [status] still holds by the clock; turns false at its expiry.
+@riverpod
+bool customStatusHolds(Ref ref, CustomStatus status) {
   final now = ref.watch(wallClockProvider)();
-  if (!customStatusActive(status, now)) return null;
+  if (!customStatusActive(status, now)) return false;
   final ends = customStatusEnds(status);
   if (ends != null) {
     final timer = Timer(ends.difference(now), ref.invalidateSelf);
     ref.onDispose(timer.cancel);
   }
-  return status;
+  return true;
 }

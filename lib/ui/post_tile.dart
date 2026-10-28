@@ -138,10 +138,11 @@ class PostTile extends StatelessWidget {
                   ),
                   // An integration posting under another name isn't the
                   // person whose status it would be.
-                  if (env != null && !webhook && post.userId.isNotEmpty)
-                    CustomStatusEmoji(
+                  if (post.authorStatus case final status?
+                      when env != null && !webhook)
+                    CustomStatusGlyph(
                       serverUrl: env.server.toString(),
-                      userId: post.userId,
+                      status: status,
                       size: (text.titleSmall?.fontSize ?? 14) * 1.15,
                     ),
                 ],

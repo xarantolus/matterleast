@@ -2,14 +2,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
+import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/inbox.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/screens/channel_list/channel_tile.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 
+/// The server is live and told wren's presence.
 Future<void> _show(WidgetTester tester, Widget child) => tester.pumpWidget(
   ProviderScope(
+    overrides: [
+      knownPresenceProvider('https://chat.example.test')
+          .overrideWithValue(const {'u1'}),
+      featuresProvider('https://chat.example.test')
+          .overrideWith((ref) => Stream.value(const ServerFeatures())),
+    ],
     child: MaterialApp(
       theme: MatterleastApp.lightTheme,
       home: Scaffold(body: child),
@@ -75,6 +85,7 @@ void main() {
       favorite: false,
       hasDraft: true,
       status: status,
+      userId: kind == ChannelKind.direct ? 'u1' : null,
     );
     await _show(
       tester,
@@ -117,6 +128,7 @@ void main() {
         item: _mention().copyWith(
           kind: InboxKind.direct,
           title: 'wren',
+          avatarUserId: 'u1',
           author: null,
           status: 'online',
           count: 2,
@@ -132,6 +144,8 @@ void main() {
       findsOne,
     );
     semantics.dispose();
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
   });
 
   testWidgets('at the largest text size the time has a line of its own and '

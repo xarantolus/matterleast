@@ -55,7 +55,49 @@ class FakeServer {
 
   Iterable<String> get paths => seen.map((r) => r.path);
 
+  /// Accept WebSocket connections at `/api/v4/websocket` and answer their
+  /// pings, so a session's socket connects as to a real server.
+  var acceptSockets = false;
+  final sockets = <WebSocket>[];
+
+  /// Sends [frame] on every open WebSocket.
+  void sendToSockets(Map<String, Object?> frame) {
+    for (final socket in sockets) {
+      socket.add(jsonEncode(frame));
+    }
+  }
+
+  /// Closes every open WebSocket, as a server that went away would.
+  Future<void> dropSockets() async {
+    for (final socket in [...sockets]) {
+      await socket.close();
+    }
+    sockets.clear();
+  }
+
   Future<void> _serve(HttpRequest raw) async {
+    if (acceptSockets &&
+        raw.uri.path == '/api/v4/websocket' &&
+        WebSocketTransformer.isUpgradeRequest(raw)) {
+      final socket = await WebSocketTransformer.upgrade(raw);
+      sockets.add(socket);
+      socket.listen((message) {
+        final json = jsonDecode(message as String) as Map<String, Object?>;
+        if (json['action'] != 'ping') return;
+        try {
+          socket.add(
+            jsonEncode({
+              'status': 'OK',
+              'seq_reply': json['seq'],
+              'data': {'text': 'pong'},
+            }),
+          );
+        } on StateError {
+          return;
+        }
+      }, onDone: () => sockets.remove(socket));
+      return;
+    }
     final bytes = await raw.fold<List<int>>(
       [],
       (all, part) => all..addAll(part),
@@ -88,7 +130,10 @@ class FakeServer {
     await raw.response.close();
   }
 
-  Future<void> close() => _server.close(force: true);
+  Future<void> close() async {
+    await dropSockets();
+    await _server.close(force: true);
+  }
 }
 
 Object? fixture(String name) =>
