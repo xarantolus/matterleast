@@ -225,6 +225,10 @@ class ComposerDraft extends _$ComposerDraft {
 
   final _uploads = <String, FileUpload>{};
 
+  /// Files a drop attaches start in the same microsecond, before any of
+  /// them is on the message, so the count alone keeps their ids apart.
+  var _attachCount = 0;
+
   void _setAttachments(List<Attachment> attachments) {
     if (!ref.mounted) return;
     state = ComposerValue(
@@ -251,7 +255,7 @@ class ComposerDraft extends _$ComposerDraft {
     String? path,
   }) async {
     final clientId =
-        '${DateTime.now().microsecondsSinceEpoch}-${state.attachments.length}';
+        '${DateTime.now().microsecondsSinceEpoch}-${_attachCount++}';
     final limit = (await (await ref.read(
       serverSessionProvider(url).future,
     )).db.features()).maxFileSize;

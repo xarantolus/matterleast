@@ -12,6 +12,7 @@ import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/file_handoff.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
 import 'package:matterleast/ui/context_menu.dart';
@@ -524,7 +525,13 @@ Future<void> _runFileAction(
       try {
         final saved = await FileHandoff.saveAs(local, file);
         if (saved != null) say('Saved ${file.name}.');
-      } on Object {
+      } on Object catch (e) {
+        // Not the error itself: a file error names the path.
+        Log.warn(
+          'files',
+          'Save as failed: '
+              '${e is FileSystemException ? e.osError : e.runtimeType}',
+        );
         say("Couldn't save ${file.name}.");
       }
     case _FileAction.share:

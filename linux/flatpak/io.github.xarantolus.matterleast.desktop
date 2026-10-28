@@ -1,4 +1,3 @@
-# For a manual install: set Exec and Icon to the absolute paths. The app writes its own entry at start.
 [Desktop Entry]
 Type=Application
 Name=Matterleast

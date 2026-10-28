@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Rebuilds the README screenshots (.github/screenshots/{d,l}-{list,chat,home}.jpg).
+# Rebuilds the README screenshots (.github/screenshots/{d,l}-{list,chat,home,desktop}.jpg).
 #
-#   .devcontainer/server/readme-shots.sh seed    add the demo conversations
-#   .devcontainer/server/readme-shots.sh shots   drive a lane's emulator and write the JPEGs
+#   .devcontainer/server/readme-shots.sh seed     add the demo conversations
+#   .devcontainer/server/readme-shots.sh shots    drive a lane's emulator and write the JPEGs
+#   .devcontainer/server/readme-shots.sh desktop  the same from the desktop lane (tool/desktop.sh up alice)
 #
 # Run `seed` once on a freshly reset test server that no agent is using
 # (server.sh reset; it is not idempotent), start a lane with
@@ -180,8 +181,51 @@ shots() {
     ls -l "$out"
 }
 
+# The desktop pair, from the desktop lane of the same worktree
+# (`tool/desktop.sh up alice`): the window fills the 1600x1000 screen, the
+# Regatta channel is open through the quick switcher, and the colour scheme
+# is switched through the lane's settings, which the app follows.
+desktop() {
+    local lane=$root/tool/desktop.sh out=$root/.github/screenshots
+    local home=/tmp/matterleast-lanes/$(basename "$root").desktop.d
+    # shellcheck source=/dev/null
+    source "/tmp/matterleast-lanes/$(basename "$root").desktop"
+    scheme() {
+        DISPLAY=$DISPLAY DBUS_SESSION_BUS_ADDRESS=unix:path=$home/run/bus \
+            XDG_RUNTIME_DIR=$home/run XDG_CONFIG_HOME=$home/config \
+            gsettings set org.gnome.desktop.interface color-scheme "$1"
+    }
+    mkdir -p "$out"
+    local win
+    win=$(DISPLAY=$DISPLAY xdotool search --onlyvisible --classname io.github.xarantolus.matterleast | head -n 1)
+    DISPLAY=$DISPLAY xdotool windowmove --sync "$win" 0 0 windowsize --sync "$win" 1600 1000
+    open_regatta() {
+        "$lane" key Escape Escape
+        "$lane" key ctrl+k
+        sleep 1
+        "$lane" type Regatta
+        sleep 2
+        # The channel, the first suggestion (Return would search messages).
+        "$lane" click 120 139
+        sleep 4
+    }
+    # A first visit loads the images and avatars, so no shot shows them
+    # arriving.
+    open_regatta
+    sleep 6
+    for mode in d:prefer-dark l:prefer-light; do
+        scheme "${mode##*:}"
+        open_regatta
+        local png
+        png=$("$lane" shot "${mode%%:*}-desktop" --window | cut -d' ' -f1)
+        echo "${mode%%:*}-desktop: $(dart run "$root/tool/png_to_jpg.dart" "$png" "$out/${mode%%:*}-desktop.jpg" 85)"
+    done
+    scheme default
+}
+
 case ${1:-} in
     seed) seed ;;
     shots) shots ;;
+    desktop) desktop ;;
     *) sed -n '2,13p' "$0" ;;
 esac

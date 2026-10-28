@@ -17,8 +17,13 @@ class NetworkState {
   NetworkState(Stream<List<ConnectivityResult>> reports) {
     _subscription = reports.listen(
       _report,
-      // Without the plugin (some background engines) the app stays online.
-      onError: (Object e) => Log.warn('network', 'No connectivity reports', e),
+      // Without the plugin (some background engines) or NetworkManager the
+      // app stays online, and what waits for a first report (images) goes
+      // ahead as on an unknown network.
+      onError: (Object e) {
+        Log.warn('network', 'No connectivity reports', e);
+        if (_last == null) _report(const []);
+      },
     );
   }
 

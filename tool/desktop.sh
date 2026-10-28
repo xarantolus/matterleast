@@ -171,6 +171,10 @@ wait_for() {
 start_session() {
     local display=$1
     write_panel_config
+    # The desktop portal's GTK backend: the file chooser, and the colour
+    # scheme the app follows (readme-shots.sh switches it).
+    mkdir -p "$home/config/xdg-desktop-portal"
+    printf '[preferred]\ndefault=gtk\n' > "$home/config/xdg-desktop-portal/portals.conf"
     mkdir -p "$home/data" "$home/cache" "$home/run"
     chmod 700 "$home/run"
     export MATTERLEAST_DESKTOP=$name DISPLAY=$display

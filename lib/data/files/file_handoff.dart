@@ -82,6 +82,7 @@ abstract final class FileHandoff {
 /// confirmed an overwrite; none are passed, the file is copied over them.
 Future<String?> _pickPath(String name, String mimeType) async {
   final uri = await FilePicker.saveFile(
+    dialogTitle: 'Save as',
     fileName: name,
     bytes: Uint8List(0),
     mimeType: mimeType,

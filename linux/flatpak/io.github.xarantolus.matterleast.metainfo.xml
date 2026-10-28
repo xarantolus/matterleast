@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.xarantolus.matterleast</id>
+  <name>Matterleast</name>
+  <summary>Unofficial client for Mattermost servers</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <developer id="io.github.xarantolus">
+    <name>xarantolus</name>
+  </developer>
+  <description>
+    <p>
+      Matterleast is an unofficial client for Mattermost servers with a feel
+      closer to Discord. It signs in with a password or single sign-on and
+      keeps several servers side by side.
+    </p>
+    <ul>
+      <li>One Home inbox for unread messages, mentions, threads and saved messages across all servers</li>
+      <li>Threads, reactions, custom emoji, file previews and search</li>
+      <li>Notifications while the app runs, and the unread count in the tray</li>
+      <li>Matterleast colours or your server's theme, in light and dark mode</li>
+    </ul>
+    <p>
+      Matterleast is not affiliated with or endorsed by Mattermost, Inc.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.xarantolus.matterleast.desktop</launchable>
+  <url type="homepage">https://github.com/xarantolus/matterleast</url>
+  <url type="bugtracker">https://github.com/xarantolus/matterleast/issues</url>
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-chat">intense</content_attribute>
+  </content_rating>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+</component>
