@@ -262,6 +262,57 @@ void main() {
     await finish(tester);
   });
 
+  testWidgets('a direct message opened at a message names the other person', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.runAsync(() async {
+      await session.db.setSyncText(SyncKeys.currentUserId, _me);
+      await session.store.applyUsers([
+        api.User.fromJson({
+          'id': _pat.id,
+          'username': 'pat',
+          'first_name': 'Pat',
+          'last_name': 'Doe',
+        }),
+      ]);
+      await session.store.applyChannel(
+        api.Channel.fromJson({
+          'id': _directId,
+          'type': 'D',
+          'name': '${_pat.id}__$_me',
+          'display_name': '',
+        }),
+      );
+      await session.store.applyChannelMember(
+        api.ChannelMember.fromJson({
+          'channel_id': _directId,
+          'user_id': _me,
+          'roles': '',
+        }),
+      );
+    });
+    unawaited(
+      openConversation(
+        navigator(tester),
+        url: server.url.toString(),
+        channelId: _directId,
+        title: '',
+        highlightPostId: 'old1',
+      ),
+    );
+    await settle(tester);
+    expect(
+      find.descendant(
+        of: find.byType(ChannelScreen),
+        matching: find.textContaining('pat'),
+      ),
+      findsWidgets,
+    );
+    await back(tester);
+    await finish(tester);
+  });
+
   testWidgets('another conversation takes the place of the open one', (
     tester,
   ) async {
@@ -1209,6 +1260,7 @@ void main() {
   });
 }
 
+const _me = 'me0000000000000000000000m1';
 const _directId = 'dm000000000000000000000d01';
 
 const _pat = UserProfile(

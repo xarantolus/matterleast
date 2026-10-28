@@ -35,6 +35,23 @@ void main() {
         .primary;
     expect(_side(tester, 0).color, primary);
     expect(_side(tester, 1).color, isNot(primary));
-    expect(_side(tester, 0).width, greaterThan(_side(tester, 1).width));
+  });
+
+  testWidgets('toggling the own reaction leaves the chip the same size', (
+    tester,
+  ) async {
+    Future<Size> size({required bool mine}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: MatterleastApp.lightTheme,
+          home: Scaffold(
+            body: ReactionsBar(reactions: [_group('tada', mine: mine)]),
+          ),
+        ),
+      );
+      return tester.getSize(find.byType(FilterChip));
+    }
+
+    expect(await size(mine: true), await size(mine: false));
   });
 }
