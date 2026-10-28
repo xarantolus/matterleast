@@ -519,7 +519,12 @@ Future<void> _runFileAction(
         ),
       );
     case _FileAction.view || _FileAction.openWith:
-      if (!await FileHandoff.open(local, file, handoff)) {
+      if (!await FileHandoff.open(
+        local,
+        file,
+        handoff,
+        chooseApp: action == _FileAction.openWith,
+      )) {
         say(
           'No app on this ${isDesktop ? 'computer' : 'phone'} opens '
           '${file.name}.',
