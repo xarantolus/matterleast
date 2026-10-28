@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/agent_providers.dart';
+import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/providers.dart';
@@ -105,6 +107,52 @@ void main() {
       await tester.pump();
       expect(find.text('Stop'), findsOneWidget);
     });
+  });
+
+  testWidgets('an agent reply is selectable where the post has a context '
+      'menu', (tester) async {
+    final post = PostItem(
+      id: 'a2',
+      key: 'a2',
+      userId: 'bot1',
+      authorName: 'Pilot',
+      authorUsername: 'pilot',
+      createAt: _created,
+      message: 'High water at noon.',
+      type: 'custom_llmbot',
+      rootId: 'q1',
+      propsJson: '{"llm_requester_user_id":"me1"}',
+    );
+    final overrides = [
+      serverLiveProvider(_url).overrideWith((ref) => true),
+      agentStreamProvider(
+        _url,
+        'a2',
+      ).overrideWith((ref) => Stream.value(const AgentStream())),
+      currentUserProvider(_url).overrideWith((ref) => const Stream.empty()),
+      serverImageCachesProvider(_url)
+          .overrideWith((ref) => Completer<ServerImageCaches>().future),
+    ];
+    await tester.pumpWidget(
+      _host(PostTile(post: post, compact: false), overrides: overrides),
+    );
+    await tester.pump();
+    expect(find.byType(SelectionArea), findsNothing);
+
+    await tester.pumpWidget(
+      _host(
+        PostTile(post: post, compact: false, onContextMenu: (_, _) {}),
+        overrides: overrides,
+      ),
+    );
+    await tester.pump();
+    expect(
+      find.descendant(
+        of: find.byType(SelectionArea),
+        matching: find.byType(AgentPostBody),
+      ),
+      findsOneWidget,
+    );
   });
 
   group('custom status beside the author', () {

@@ -302,7 +302,10 @@ class PostTile extends StatelessWidget {
             ),
           )
         else if (agentPostTypes.contains(post.type) && !post.deleted)
-          AgentPostBody(post: post)
+          _Selectable(
+            onContextMenu: onContextMenu,
+            child: AgentPostBody(post: post),
+          )
         else if (post.type == agentMentionReminderType && !post.deleted)
           AgentMentionReminder(post: post)
         else
