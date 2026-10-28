@@ -8,6 +8,8 @@ import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/window_strip.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../support/tooltips.dart';
+
 /// Runs [body] as [platform]; the override has to be gone before the test
 /// ends.
 Future<void> on(TargetPlatform platform, Future<void> Function() body) async {
@@ -84,6 +86,16 @@ void main() {
         });
       });
     }
+
+    testWidgets('every icon button on the window has a tooltip', (
+      tester,
+    ) async {
+      await on(TargetPlatform.linux, () async {
+        await tester.pumpWidget(app());
+        expect(find.byType(IconButton), findsWidgets);
+        expect(untitledIconButtons(tester), isEmpty);
+      });
+    });
 
     testWidgets('the strip grows with the system text size', (tester) async {
       await on(TargetPlatform.linux, () async {

@@ -12,6 +12,7 @@ import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/emoji_card.dart';
+import 'package:matterleast/ui/link_status.dart';
 import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/link_gestures.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -125,10 +126,14 @@ class _InlineTextState extends State<InlineText> {
           onRightClick: isDesktop
               ? (at) => showLinkMenu(context, link, at)
               : null,
+          onMiddleClick: isDesktop
+              ? () => env.onLink(classifyLink(link, env.server))
+              : null,
         ),
       );
     }
 
+    final status = LinkStatus.maybeOf(context);
     TextSpan hoverable(Object? key, TextSpan span) {
       if (key == null || !isDesktop) return span;
       final style = span.style ?? const TextStyle();
@@ -144,9 +149,15 @@ class _InlineTextState extends State<InlineText> {
                   ?style.decoration,
                 ]),
               ),
-        onEnter: (_) => setState(() => _hovered = key),
+        onEnter: (_) {
+          setState(() => _hovered = key);
+          if (key case ('link', final String link)) status?.value = link;
+        },
         onExit: (_) {
           // Also called when the text goes away under the mouse.
+          if (key case ('link', final String link) when status?.value == link) {
+            status?.value = null;
+          }
           if (mounted && _hovered == key) setState(() => _hovered = null);
         },
       );

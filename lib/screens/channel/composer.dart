@@ -12,6 +12,7 @@ import 'package:image_picker_android/image_picker_android.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/permission_providers.dart';
 import 'package:matterleast/app/platform.dart';
@@ -84,6 +85,7 @@ class Composer extends ConsumerWidget {
     this.archived = false,
     this.autofocus = false,
     this.lastOwnPost,
+    this.onReplyToNewest,
     super.key,
   });
 
@@ -97,6 +99,9 @@ class Composer extends ConsumerWidget {
   /// The newest message of the signed-in user here, for Up in an empty
   /// field.
   final PostItem? Function()? lastOwnPost;
+
+  /// Replies to the newest message, for Shift+Up in an empty field.
+  final VoidCallback? onReplyToNewest;
 
   /// The field takes the keyboard when it first shows.
   final bool autofocus;
@@ -114,6 +119,7 @@ class Composer extends ConsumerWidget {
       hint: hint,
       autofocus: autofocus,
       lastOwnPost: lastOwnPost,
+      onReplyToNewest: onReplyToNewest,
     );
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -140,9 +146,11 @@ class _ComposerField extends ConsumerStatefulWidget {
     required this.hint,
     required this.autofocus,
     required this.lastOwnPost,
+    required this.onReplyToNewest,
   });
 
   final PostItem? Function()? lastOwnPost;
+  final VoidCallback? onReplyToNewest;
   final String url;
   final String channelId;
   final String rootId;
@@ -380,7 +388,19 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
           ),
         );
       },
-      child: _field(context, value),
+      child: Actions(
+        actions: {
+          ReplyToNewestIntent: EnabledAction<ReplyToNewestIntent>(
+            enabled: () =>
+                widget.onReplyToNewest != null &&
+                _text.text.isEmpty &&
+                value.editing == null &&
+                suggestions.isEmpty,
+            onInvoke: () => widget.onReplyToNewest!(),
+          ),
+        },
+        child: _field(context, value),
+      ),
     );
   }
 

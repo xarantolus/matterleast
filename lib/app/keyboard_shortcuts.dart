@@ -39,6 +39,34 @@ class FocusRegionIntent extends AppIntent {
   final bool forward;
 }
 
+/// Shift+Up in an empty composer: the reply to the newest message.
+class ReplyToNewestIntent extends AppIntent {
+  const ReplyToNewestIntent();
+}
+
+/// Searches the messages of the open conversation.
+class SearchChannelIntent extends AppIntent {
+  const SearchChannelIntent();
+}
+
+/// An action that runs [onInvoke] while [enabled] says so; a key it
+/// doesn't take goes on to the field.
+class EnabledAction<T extends Intent> extends Action<T> {
+  EnabledAction({required this.enabled, required this.onInvoke});
+
+  final bool Function() enabled;
+  final VoidCallback onInvoke;
+
+  @override
+  bool isEnabled(T intent) => enabled();
+
+  @override
+  Object? invoke(T intent) {
+    onInvoke();
+    return null;
+  }
+}
+
 @immutable
 class AppShortcut {
   const AppShortcut(this.description, this.keys, this.intent);
@@ -77,6 +105,16 @@ const appShortcuts = <AppShortcut>[
     'Next unread channel',
     SingleActivator(LogicalKeyboardKey.arrowDown, alt: true, shift: true),
     ChannelStepIntent(forward: true, unreadOnly: true),
+  ),
+  AppShortcut(
+    'Search this conversation',
+    SingleActivator(LogicalKeyboardKey.keyF, control: true),
+    SearchChannelIntent(),
+  ),
+  AppShortcut(
+    'Reply to the newest message',
+    SingleActivator(LogicalKeyboardKey.arrowUp, shift: true),
+    ReplyToNewestIntent(),
   ),
   AppShortcut(
     'Profile and settings',

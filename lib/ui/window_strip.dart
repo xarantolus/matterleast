@@ -7,6 +7,7 @@ import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/link_status.dart';
 import 'package:matterleast/ui/update_indicator.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -44,7 +45,7 @@ class WindowFrame extends StatelessWidget {
         child: Column(
           children: [
             const WindowStrip(),
-            Expanded(child: child),
+            Expanded(child: LinkStatus(child: child)),
           ],
         ),
       ),
