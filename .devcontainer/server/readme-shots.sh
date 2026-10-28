@@ -199,8 +199,7 @@ desktop() {
     local win
     win=$(DISPLAY=$DISPLAY xdotool search --onlyvisible --classname io.github.xarantolus.matterleast | head -n 1)
     DISPLAY=$DISPLAY xdotool windowmove --sync "$win" 0 0 windowsize --sync "$win" 1600 1000
-    for mode in d:prefer-dark l:prefer-light; do
-        scheme "${mode##*:}"
+    open_regatta() {
         "$lane" key Escape Escape
         "$lane" key ctrl+k
         sleep 1
@@ -209,6 +208,14 @@ desktop() {
         # The channel, the first suggestion (Return would search messages).
         "$lane" click 120 139
         sleep 4
+    }
+    # A first visit loads the images and avatars, so no shot shows them
+    # arriving.
+    open_regatta
+    sleep 6
+    for mode in d:prefer-dark l:prefer-light; do
+        scheme "${mode##*:}"
+        open_regatta
         local png
         png=$("$lane" shot "${mode%%:*}-desktop" --window | cut -d' ' -f1)
         echo "${mode%%:*}-desktop: $(dart run "$root/tool/png_to_jpg.dart" "$png" "$out/${mode%%:*}-desktop.jpg" 85)"

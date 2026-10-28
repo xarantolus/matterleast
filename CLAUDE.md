@@ -123,9 +123,11 @@ notes, and they win over this summary.
   commits. Imperative, plain-sentence commit messages.
 - Never commit secrets, signing material, server credentials, `reference/` or
   the gitignored local notes.
-- README screenshots (`.github/screenshots/{d,l}-{list,chat,home}.jpg`) come
-  from `.devcontainer/server/readme-shots.sh`: `seed` once on a freshly
-  reset test server, then `shots` with a lane running as alice. Retake them
+- README screenshots (`.github/screenshots/{d,l}-{list,chat,home,desktop}.jpg`)
+  come from `.devcontainer/server/readme-shots.sh`: `seed` once on a freshly
+  reset test server, then `shots` with a lane running as alice (once: a
+  second run expands the Channels category again) and `desktop` with a
+  desktop lane running as alice. Retake them
   before a release when a change visibly alters the channel list, a
   conversation or Home (layout, colours, icons, avatars); it only rewrites
   images that actually changed.
