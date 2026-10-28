@@ -11,6 +11,7 @@ import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/app_servers.dart';
 import 'package:matterleast/data/servers/server_manager.dart';
+import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/app_visibility.dart';
@@ -118,36 +119,45 @@ Future<void> clearOnRead(Notifier notifier, String url, ReadMark mark) async {
   }
 }
 
-/// Reply and Mark as read, run in a background engine of their own.
+/// Reply and Mark as read on Android, run in a background engine of their
+/// own. Desktops run them in the window's sessions ([runNoticeAction]).
 @pragma('vm:entry-point')
 Future<void> onNoticeAction(NotificationResponse response) async {
-  final target = NoticeTarget.decode(response.payload);
-  if (target == null) return;
+  final action = noticeActionOf(response);
+  if (action == null) return;
   await BackgroundApp.run((app) async {
-    final session = await app.manager.session(target.serverUrl);
-    switch (response.actionId) {
-      case NoticeActions.reply:
-        final text = response.input?.trim() ?? '';
-        if (text.isEmpty) return;
-        await session.composer.send(
-          target.channelId,
-          rootId: target.rootId,
-          message: text,
-        );
-        // The session may still be starting its outbox; this waits for
-        // the post to be tried before the engine goes away.
-        await session.outbox.start();
-        await session.outbox.kick();
-      case NoticeActions.read when target.rootId.isNotEmpty:
-        final team = target.teamId.isNotEmpty
-            ? target.teamId
-            : await session.db.syncText(SyncKeys.currentTeamId);
-        if (team == null) return;
-        await ConversationActions(session).markThreadRead(team, target.rootId);
-      case NoticeActions.read:
-        await session.channels.markRead(target.channelId);
+    final session = await app.manager.session(action.target.serverUrl);
+    await runNoticeAction(session, action);
+    if (action.kind == NoticeActionKind.reply) {
+      // The session may still be starting its outbox; this waits for the
+      // post to be tried before the engine goes away.
+      await session.outbox.start();
+      await session.outbox.kick();
     }
   });
+}
+
+/// Sends the reply or marks the conversation read, as the conversation's
+/// own composer and read marking do.
+Future<void> runNoticeAction(ServerSession session, NoticeAction action) async {
+  final target = action.target;
+  switch (action.kind) {
+    case NoticeActionKind.reply:
+      if (action.text.isEmpty) return;
+      await session.composer.send(
+        target.channelId,
+        rootId: target.rootId,
+        message: action.text,
+      );
+    case NoticeActionKind.read when target.rootId.isNotEmpty:
+      final team = target.teamId.isNotEmpty
+          ? target.teamId
+          : await session.db.syncText(SyncKeys.currentTeamId);
+      if (team == null) return;
+      await ConversationActions(session).markThreadRead(team, target.rootId);
+    case NoticeActionKind.read:
+      await session.channels.markRead(target.channelId);
+  }
 }
 
 /// The periodic check: one unique work, kept across launches. Never on

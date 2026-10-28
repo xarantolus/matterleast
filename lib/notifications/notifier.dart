@@ -88,13 +88,16 @@ class NoticeTarget {
 
   ConversationKey get key => ConversationKey(channelId, rootId);
 
-  String encode() => jsonEncode({
+  /// With [action], the payload of a Windows toast button, which hands
+  /// back only its own arguments.
+  String encode({String? action}) => jsonEncode({
     's': serverUrl,
     'c': channelId,
     'r': rootId,
     'p': postId,
     't': teamId,
     'n': newestAt.millisecondsSinceEpoch,
+    'a': ?action,
   });
 
   /// Our own payload; anything else is not ours and reads as null.
@@ -177,6 +180,46 @@ abstract final class NoticeActions {
   static const read = 'read';
 }
 
+enum NoticeActionKind { reply, read }
+
+/// A Reply or Mark as read from a notification: what to do, where, and the
+/// reply's text.
+typedef NoticeAction = ({
+  NoticeActionKind kind,
+  NoticeTarget target,
+  String text,
+});
+
+/// Pure: the action [response] asks for, or null for a tap on the
+/// notification itself or a payload that isn't ours. Android and Linux
+/// name the action and keep the notification's payload; a Windows button
+/// hands back its own arguments as both, and its text box in `data`.
+NoticeAction? noticeActionOf(NotificationResponse response) {
+  final target = NoticeTarget.decode(response.payload);
+  if (target == null) return null;
+  var action = response.actionId;
+  var text = response.input;
+  if (action != null && action == response.payload) {
+    // decode() above read it as a JSON object already.
+    final json = jsonDecode(action) as Map<String, Object?>;
+    action = switch (json['a']) {
+      final String a => a,
+      _ => null,
+    };
+    text = switch (response.data[NoticeActions.reply]) {
+      final String t => t,
+      _ => null,
+    };
+  }
+  final kind = switch (action) {
+    NoticeActions.reply => NoticeActionKind.reply,
+    NoticeActions.read => NoticeActionKind.read,
+    _ => null,
+  };
+  if (kind == null) return null;
+  return (kind: kind, target: target, text: text?.trim() ?? '');
+}
+
 /// Shows and removes message notifications. One instance per isolate;
 /// [init] once before use.
 class Notifier {
@@ -232,8 +275,9 @@ class Notifier {
     ),
   );
 
-  /// The notification the app was opened from, if any.
-  Future<NoticeTarget?> launchTarget() async {
+  /// What the app was opened from, if a notification or one of its
+  /// buttons started it.
+  Future<NotificationResponse?> launchResponse() async {
     final NotificationAppLaunchDetails? details;
     try {
       details = await _plugin.getNotificationAppLaunchDetails();
@@ -242,7 +286,7 @@ class Notifier {
       return null;
     }
     if (!(details?.didNotificationLaunchApp ?? false)) return null;
-    return NoticeTarget.decode(details?.notificationResponse?.payload);
+    return details?.notificationResponse;
   }
 
   Future<bool> permitted() async =>
@@ -302,11 +346,7 @@ class Notifier {
             ? const HtmlEscape(HtmlEscapeMode.element).convert(text.body)
             : text.body,
         payload: target.encode(),
-        notificationDetails: const NotificationDetails(
-          linux: LinuxNotificationDetails(
-            category: LinuxNotificationCategory.imReceived,
-          ),
-        ),
+        notificationDetails: desktopDetailsOf(target),
       );
       return;
     }
@@ -320,6 +360,36 @@ class Notifier {
       ),
     );
   }
+
+  /// The buttons of a desktop toast. Windows toasts take a reply too;
+  /// Linux notification servers mostly have no text field, so only Mark
+  /// as read there.
+  static NotificationDetails desktopDetailsOf(
+    NoticeTarget target,
+  ) => NotificationDetails(
+    linux: const LinuxNotificationDetails(
+      category: LinuxNotificationCategory.imReceived,
+      actions: [
+        LinuxNotificationAction(key: NoticeActions.read, label: 'Mark as read'),
+      ],
+    ),
+    windows: WindowsNotificationDetails(
+      inputs: const [
+        WindowsTextInput(id: NoticeActions.reply, placeHolderContent: 'Reply'),
+      ],
+      actions: [
+        WindowsAction(
+          content: 'Reply',
+          arguments: target.encode(action: NoticeActions.reply),
+          inputId: NoticeActions.reply,
+        ),
+        WindowsAction(
+          content: 'Mark as read',
+          arguments: target.encode(action: NoticeActions.read),
+        ),
+      ],
+    ),
+  );
 
   /// How Android shows [notice]: a conversation in the messaging style,
   /// dated by its newest message.
