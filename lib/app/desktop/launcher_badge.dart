@@ -10,7 +10,7 @@ import 'package:matterleast/log.dart';
 class LauncherBadge {
   DBusClient? _bus;
 
-  static const _app = 'application://matterleast.desktop';
+  static const _app = 'application://io.github.xarantolus.matterleast.desktop';
 
   Future<void> show(LauncherEntry entry) async {
     if (!Platform.isLinux) return;
