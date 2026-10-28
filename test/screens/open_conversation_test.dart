@@ -32,6 +32,7 @@ import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/gone_channels.dart';
+import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/pane_layout.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
@@ -606,6 +607,55 @@ void main() {
         )
         .map((w) => w.channelId)
         .firstOrNull;
+
+    Future<void> openShips(WidgetTester tester, String url) async {
+      unawaited(
+        openConversation(
+          navigator(tester),
+          url: url,
+          channelId: shipsId,
+          title: 'Ships',
+          teamId: otherTeam,
+        ),
+      );
+      await settle(tester);
+    }
+
+    Future<void> step(WidgetTester tester, {required bool forward}) async {
+      unawaited(stepHistory(container, forward: forward));
+      await settle(tester);
+    }
+
+    testWidgets('Back and Forward walk what was opened, across teams', (
+      tester,
+    ) async {
+      final url = await begin(tester);
+      await open(tester);
+      await openShips(tester, url);
+      expect(container.read(railSelectionProvider)?.teamId, otherTeam);
+      await step(tester, forward: false);
+      expect(shownChannel(tester), channelId);
+      expect(container.read(railSelectionProvider)?.teamId, teamId);
+      await step(tester, forward: true);
+      expect(shownChannel(tester), shipsId);
+      expect(container.read(railSelectionProvider)?.teamId, otherTeam);
+      await step(tester, forward: false);
+      await open(tester, channel: _directId);
+      await step(tester, forward: true);
+      expect(shownChannel(tester), _directId);
+      await finish(tester);
+    });
+
+    testWidgets('Back skips a channel that is gone', (tester) async {
+      final url = await begin(tester);
+      await open(tester);
+      await openShips(tester, url);
+      listed.add(channels(url, boats: false));
+      await settle(tester);
+      await step(tester, forward: false);
+      expect(shownChannel(tester), shipsId);
+      await finish(tester);
+    });
 
     testWidgets('switching team closes the open conversation, and switching '
         'back opens it again', (tester) async {

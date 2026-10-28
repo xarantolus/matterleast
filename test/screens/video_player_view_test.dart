@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/screens/gallery/settled_end_player.dart';
@@ -333,6 +334,42 @@ void main() {
 
     await tester.pump(controlsHideDelay);
     expect(controlsShown(tester), isFalse);
+    await close(tester);
+  });
+
+  testWidgets('the pointer hides with the controls of a playing video and '
+      'comes back when it moves', (tester) async {
+    await open(tester, play: true);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: onVideo(tester));
+    addTearDown(mouse.removePointer);
+    await mouse.moveBy(const Offset(20, 0));
+    await tester.pump();
+    MouseCursor? cursor() =>
+        RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1);
+    expect(cursor(), isNot(SystemMouseCursors.none));
+
+    await tester.pump(controlsHideDelay);
+    await tester.pump();
+    expect(controlsShown(tester), isFalse);
+    expect(cursor(), SystemMouseCursors.none);
+
+    await mouse.moveBy(const Offset(20, 0));
+    await tester.pump();
+    expect(cursor(), isNot(SystemMouseCursors.none));
+    await close(tester);
+  });
+
+  testWidgets('a paused video keeps the pointer', (tester) async {
+    await open(tester);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: onVideo(tester));
+    addTearDown(mouse.removePointer);
+    await tester.pump(const Duration(seconds: 5));
+    expect(
+      RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1),
+      isNot(SystemMouseCursors.none),
+    );
     await close(tester);
   });
 
