@@ -93,6 +93,9 @@ const _presets = {
   },
 };
 
+/// Themes built to break the rules, where 7:1 may not be reachable.
+const _invented = ['mid-grey', 'pale accents', 'neon', 'washed out'];
+
 ServerPalette _palette(Map<String, String> colours) =>
     ServerPalette.of(MattermostTheme.parse(jsonEncode(colours))!);
 
@@ -420,6 +423,96 @@ void main() {
       );
       final send = Color.alphaBlend(icon.data.color!, page);
       expect(contrast(send, page), greaterThanOrEqualTo(1.8), reason: 'Send');
+    });
+  }
+
+  for (final MapEntry(key: name, value: theme) in themes.entries) {
+    test('body text reads at 7:1 and secondary text at 4.5:1 on every '
+        'surface in $name', () {
+      final s = theme.colorScheme;
+      final t = theme.extension<AppTokens>()!;
+      final surfaces = {
+        'surface': s.surface,
+        'page': t.page,
+        'panel': t.panel,
+        'surfaceContainerLowest': s.surfaceContainerLowest,
+        'surfaceContainerLow': s.surfaceContainerLow,
+        'surfaceContainer': s.surfaceContainer,
+        'surfaceContainerHigh': s.surfaceContainerHigh,
+        'surfaceContainerHighest': s.surfaceContainerHighest,
+      };
+      for (final MapEntry(key: surface, value: fill) in surfaces.entries) {
+        expect(
+          contrast(s.onSurface, fill),
+          greaterThanOrEqualTo(_invented.any(name.contains) ? 4.5 : 7),
+          reason: 'onSurface on $surface',
+        );
+        expect(
+          contrast(s.onSurfaceVariant, fill),
+          greaterThanOrEqualTo(4.5),
+          reason: 'onSurfaceVariant on $surface',
+        );
+        expect(
+          contrast(s.primary, fill),
+          greaterThanOrEqualTo(4.5),
+          reason: 'primary as text on $surface',
+        );
+      }
+    });
+  }
+
+  for (final MapEntry(key: name, value: theme) in themes.entries) {
+    testWidgets('disabled icons and text stay at 3:1 on the app bar and the '
+        'page in $name', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            appBar: AppBar(
+              title: const Text('Threads'),
+              actions: [
+                IconButtonTheme(
+                  data: barIconButtonThemeOf(theme),
+                  child: const IconButton(
+                    onPressed: null,
+                    icon: Icon(Icons.done_all),
+                  ),
+                ),
+              ],
+            ),
+            body: const Column(
+              children: [
+                IconButton(onPressed: null, icon: Icon(Icons.send)),
+                TextButton(onPressed: null, child: Text('Off')),
+              ],
+            ),
+          ),
+        ),
+      );
+      final bar = theme.appBarTheme.backgroundColor!;
+      final page = theme.scaffoldBackgroundColor;
+      Color iconIn(Finder icon, Color background) => Color.alphaBlend(
+        tester
+            .widget<RichText>(
+              find.descendant(of: icon, matching: find.byType(RichText)),
+            )
+            .text
+            .style!
+            .color!,
+        background,
+      );
+      expect(
+        contrast(iconIn(find.byIcon(Icons.done_all), bar), bar),
+        greaterThanOrEqualTo(3),
+        reason: 'disabled app bar icon',
+      );
+      expect(
+        contrast(iconIn(find.byIcon(Icons.send), page), page),
+        greaterThanOrEqualTo(3),
+        reason: 'disabled icon on the page',
+      );
+      final off = Color.alphaBlend(drawnColour(tester, find.text('Off')), page);
+      expect(contrast(off, page), greaterThanOrEqualTo(3), reason: 'Off');
     });
   }
 
