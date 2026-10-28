@@ -19,14 +19,11 @@ const _brandDark = Color(0xFF00796B);
 const appFont = 'Rubik';
 
 /// Rubik's licence on the app's licence page.
-void registerFontLicence() => LicenseRegistry.addLicense(
-  () async* {
-    yield LicenseEntryWithLineBreaks(
-      const [appFont],
-      await rootBundle.loadString('assets/fonts/Rubik-OFL.txt'),
-    );
-  },
-);
+void registerFontLicence() => LicenseRegistry.addLicense(() async* {
+  yield LicenseEntryWithLineBreaks(const [
+    appFont,
+  ], await rootBundle.loadString('assets/fonts/Rubik-OFL.txt'));
+});
 
 ThemeData buildTheme(Brightness brightness) {
   final brand = brightness == Brightness.dark ? _brandDark : _brandLight;
