@@ -16,17 +16,13 @@ class OpenPanes extends _$OpenPanes {
   Panes build() => Panes.none;
 
   void open(ConversationTarget target) {
-    ref.read(forwardHistoryProvider).opened();
     state = state.open(target);
   }
 
-  /// Closes the thread, or else the channel; Forward opens it again.
-  void back() {
-    final before = state;
-    if (before.isEmpty) return;
-    state = before.back();
-    ref.read(forwardHistoryProvider).closed(() => state = before);
-  }
+  void closeThread() => state = Panes(channel: state.channel);
+
+  /// Closes the thread, or else the channel.
+  void back() => state = state.back();
 
   void close(String url, String channelId) =>
       state = state.without(url, channelId);
@@ -38,7 +34,7 @@ class OpenPanes extends _$OpenPanes {
 /// oldest first.
 @Riverpod(keepAlive: true)
 ConversationRoutes conversationRoutes(Ref ref) {
-  final routes = ConversationRoutes(ref.watch(forwardHistoryProvider));
+  final routes = ConversationRoutes();
   ref.onDispose(routes.close);
   return routes;
 }
@@ -48,43 +44,13 @@ ConversationRoutes conversationRoutes(Ref ref) {
 /// wide.
 @Riverpod(keepAlive: true)
 ConversationRoutes paneRoutes(Ref ref) {
-  final routes = ConversationRoutes(ref.watch(forwardHistoryProvider));
+  final routes = ConversationRoutes();
   ref.onDispose(routes.close);
   return routes;
 }
 
-/// What Back closed, most recent last, for Forward to open again. Opening
-/// anything else forgets it, as a browser does.
-@Riverpod(keepAlive: true)
-ForwardHistory forwardHistory(Ref ref) => ForwardHistory();
-
-class ForwardHistory {
-  final _closed = <VoidCallback>[];
-  var _reopening = false;
-
-  void closed(VoidCallback reopen) => _closed.add(reopen);
-
-  void opened() {
-    if (!_reopening) _closed.clear();
-  }
-
-  /// Opens what Back closed last.
-  void forward() {
-    if (_closed.isEmpty) return;
-    _reopening = true;
-    try {
-      _closed.removeLast()();
-    } finally {
-      _reopening = false;
-    }
-  }
-}
-
 /// Keeps track of the [SlideRoute]s of one navigator.
 class ConversationRoutes extends NavigatorObserver {
-  ConversationRoutes(this._history);
-
-  final ForwardHistory _history;
   final _stack = <SlideRoute<dynamic>>[];
   final _changes = StreamController<void>.broadcast();
 
@@ -109,22 +75,12 @@ class ConversationRoutes extends NavigatorObserver {
   }
 
   @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    if (route is SlideRoute) _history.opened();
-    _add(route);
-  }
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _add(route);
 
   @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    final navigator = this.navigator;
-    if (navigator != null && route is SlideRoute && _stack.contains(route)) {
-      final again = reopened(route);
-      _history.closed(() {
-        if (navigator.mounted) unawaited(navigator.push(again()));
-      });
-    }
-    _remove(route);
-  }
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _remove(route);
 
   @override
   void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>

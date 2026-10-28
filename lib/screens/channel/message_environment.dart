@@ -16,6 +16,8 @@ import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -207,6 +209,17 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
 
   void _onChannel(String name) => widget._openChannel(context, ref, name);
 
+  void _onHashtag(String tag) => unawaited(
+    openPage(
+      Navigator.of(context),
+      SearchResultsScreen(
+        url: widget.url,
+        teamId: widget.teamId,
+        query: '#$tag',
+      ),
+    ),
+  );
+
   void _onLink(LinkTarget target) => widget._openLink(context, ref, target);
 
   Future<void> _onAction(PostActionRequest request) =>
@@ -260,6 +273,7 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
       onMention: _onMention,
       onChannel: _onChannel,
       onLink: _onLink,
+      onHashtag: _onHashtag,
       customEmoji: _emojiLookup(emoji.value ?? const {}, resolver),
       image: _image,
       linkPreviews: display?.linkPreviews ?? true,

@@ -27,8 +27,10 @@ List<DeviceOrientation> fullScreenOrientations({
     : const [];
 
 /// Hides the system bars and, for wide content when the user allows
-/// rotation, turns the screen to landscape.
+/// rotation, turns the screen to landscape. On desktop the window is
+/// never touched: the content fills the app's window itself.
 Future<void> enterFullScreen({required bool wide}) async {
+  if (isDesktop) return;
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   final orientations = fullScreenOrientations(
     wide: wide,
@@ -40,6 +42,7 @@ Future<void> enterFullScreen({required bool wide}) async {
 }
 
 Future<void> leaveFullScreen() async {
+  if (isDesktop) return;
   await SystemChrome.setPreferredOrientations(const []);
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 }

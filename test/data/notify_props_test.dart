@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/channel_actions.dart';
+import 'package:matterleast/domain/notify_props.dart';
 
 void main() {
   test('a change keeps every other setting and fills the unknown ones', () {
@@ -18,6 +19,39 @@ void main() {
     expect(json['mark_unread'], 'all');
     expect(json.values, everyElement(isA<String>()));
   });
+
+  test('the desktop sound is on unless the server says false', () {
+    expect(const NotifyProps({}).desktopSound, isTrue);
+    expect(const NotifyProps({'desktop_sound': 'true'}).desktopSound, isTrue);
+    expect(const NotifyProps({'desktop_sound': 'false'}).desktopSound, isFalse);
+  });
+
+  test(
+    'the username mention is read from and written to the mention words',
+    () {
+      for (final (keys, on) in [
+        (null, false),
+        ('', false),
+        ('anchor', false),
+        ('river', true),
+        ('anchor, river', true),
+        ('@river', false),
+      ]) {
+        final props = NotifyProps({'mention_keys': ?keys});
+        expect(props.usernameMention('river'), on, reason: '$keys');
+      }
+      final off = const NotifyProps({'mention_keys': 'anchor,river,buoy'})
+          .withUsernameMention('river', false);
+      expect(off.raw['mention_keys'], 'anchor,buoy');
+      final on = const NotifyProps({'mention_keys': 'anchor,river'})
+          .withUsernameMention('river', true);
+      expect(on.raw['mention_keys'], 'river,anchor');
+      expect(on.mentionKeys('river'), ['anchor']);
+      expect(const NotifyProps({}).withUsernameMention('river', true).raw, {
+        'mention_keys': 'river',
+      });
+    },
+  );
 
   test('nothing stored becomes the server defaults', () {
     final json = completeNotifyProps(const api.ChannelNotifyProps()).toJson();

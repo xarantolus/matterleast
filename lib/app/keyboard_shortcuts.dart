@@ -24,6 +24,13 @@ class ChannelStepIntent extends AppIntent {
   final bool unreadOnly;
 }
 
+/// The conversation opened before (or after) the one shown.
+class HistoryStepIntent extends AppIntent {
+  const HistoryStepIntent({required this.forward});
+
+  final bool forward;
+}
+
 class OpenAccountIntent extends AppIntent {
   const OpenAccountIntent();
 }
@@ -165,6 +172,16 @@ const appShortcuts = <AppShortcut>[
     ChannelStepIntent(forward: true, unreadOnly: true),
   ),
   AppShortcut(
+    'Back to the previous conversation',
+    SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true),
+    HistoryStepIntent(forward: false),
+  ),
+  AppShortcut(
+    'Forward to the next conversation',
+    SingleActivator(LogicalKeyboardKey.arrowRight, alt: true),
+    HistoryStepIntent(forward: true),
+  ),
+  AppShortcut(
     'Search this conversation',
     SingleActivator(LogicalKeyboardKey.keyF, control: true),
     SearchChannelIntent(),
@@ -276,6 +293,8 @@ const appShortcuts = <AppShortcut>[
 final _keyNames = {
   LogicalKeyboardKey.arrowUp: 'Up',
   LogicalKeyboardKey.arrowDown: 'Down',
+  LogicalKeyboardKey.arrowLeft: 'Left',
+  LogicalKeyboardKey.arrowRight: 'Right',
   LogicalKeyboardKey.escape: 'Esc',
   LogicalKeyboardKey.slash: '/',
   LogicalKeyboardKey.equal: '+',

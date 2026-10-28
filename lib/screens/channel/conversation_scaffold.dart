@@ -225,6 +225,7 @@ class ConversationTitle extends StatelessWidget {
     this.statusOf,
     this.url,
     this.opensDetails = false,
+    this.opensSubtitle = false,
     super.key,
   });
 
@@ -232,6 +233,9 @@ class ConversationTitle extends StatelessWidget {
 
   /// Shows a small chevron after the title, which opens the details.
   final bool opensDetails;
+
+  /// Shows a small chevron after the subtitle, which opens what it names.
+  final bool opensSubtitle;
   final String? subtitle;
 
   /// The person whose custom status emoji goes before the subtitle, on
@@ -280,6 +284,15 @@ class ConversationTitle extends StatelessWidget {
                     ),
                   ),
                 TextSpan(text: subtitle),
+                if (opensSubtitle)
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Icon(
+                      Icons.chevron_right,
+                      size: (style?.fontSize ?? 12) * 1.4,
+                      color: style?.color,
+                    ),
+                  ),
               ],
             ),
             maxLines: 1,

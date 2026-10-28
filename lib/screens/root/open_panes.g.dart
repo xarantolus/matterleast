@@ -46,7 +46,7 @@ final class OpenPanesProvider extends $NotifierProvider<OpenPanes, Panes> {
   }
 }
 
-String _$openPanesHash() => r'e52e20436e631e5866f765964a6e416b3ef68b84';
+String _$openPanesHash() => r'6f7d128250ba97244eedca393d9359d0b31ff02a';
 
 /// The conversations shown beside the channel list on a wide screen. On a
 /// narrow one the [ConversationRoute]s on the navigator are the truth.
@@ -123,7 +123,7 @@ final class ConversationRoutesProvider
 }
 
 String _$conversationRoutesHash() =>
-    r'00ab83a1402ae9069bf1d3a7a0b74b7796fe1eec';
+    r'8f3527ad344721e4c3461b7a90ac8a1f1a788564';
 
 /// The content views open in the conversation pane of a wide window, over
 /// the conversation; their navigator is there only while the window is
@@ -181,53 +181,4 @@ final class PaneRoutesProvider
   }
 }
 
-String _$paneRoutesHash() => r'4380ebec024df0e6c4d0bb37b2de8d51b7a72ad7';
-
-/// What Back closed, most recent last, for Forward to open again. Opening
-/// anything else forgets it, as a browser does.
-
-@ProviderFor(forwardHistory)
-final forwardHistoryProvider = ForwardHistoryProvider._();
-
-/// What Back closed, most recent last, for Forward to open again. Opening
-/// anything else forgets it, as a browser does.
-
-final class ForwardHistoryProvider
-    extends $FunctionalProvider<ForwardHistory, ForwardHistory, ForwardHistory>
-    with $Provider<ForwardHistory> {
-  /// What Back closed, most recent last, for Forward to open again. Opening
-  /// anything else forgets it, as a browser does.
-  ForwardHistoryProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'forwardHistoryProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$forwardHistoryHash();
-
-  @$internal
-  @override
-  $ProviderElement<ForwardHistory> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  ForwardHistory create(Ref ref) {
-    return forwardHistory(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ForwardHistory value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ForwardHistory>(value),
-    );
-  }
-}
-
-String _$forwardHistoryHash() => r'3d4b8860ba78a2de44b37168ea7ae7430f6ea1c9';
+String _$paneRoutesHash() => r'2d02464c70c8bb1301a55e31a033569ae72288ba';

@@ -21,6 +21,7 @@ class PostEnvironment extends InheritedWidget {
     this.iconOverride = false,
     this.mmBlocks = false,
     this.onAction,
+    this.onHashtag,
     this.acknowledgements = false,
     super.key,
   });
@@ -31,6 +32,9 @@ class PostEnvironment extends InheritedWidget {
   final ValueChanged<String> onMention;
   final ValueChanged<String> onChannel;
   final ValueChanged<LinkTarget> onLink;
+
+  /// Searches for a hashtag; null leaves hashtags as plain text.
+  final ValueChanged<String>? onHashtag;
 
   /// The image of a custom emoji in a square of [size], or null when the
   /// name is not a known custom emoji.
@@ -73,5 +77,6 @@ class PostEnvironment extends InheritedWidget {
       iconOverride != old.iconOverride ||
       mmBlocks != old.mmBlocks ||
       onAction != old.onAction ||
+      onHashtag != old.onHashtag ||
       acknowledgements != old.acknowledgements;
 }

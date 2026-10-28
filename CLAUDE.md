@@ -148,7 +148,8 @@ notes, and they win over this summary.
   `dart run build_runner build` (always, since CI fails on stale generated
   code; never with `--build-filter`), `dart format .`, `flutter analyze`,
   `dart analyze`, `flutter test`. No local APK build: the lane's
-  `flutter run` and CI cover it.
+  `flutter run` and CI cover it. `tool/gate.sh` runs the gate detached
+  (log and status file in /tmp); `tool/gate.sh wait` blocks for the result.
 - Commit after every feature or fix, so history shows when each change
   landed and a regression can be bisected. Push after committing.
 - Watch CI after pushing but don't block on it; come back to it, and fix it
