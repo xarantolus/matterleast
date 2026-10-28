@@ -152,7 +152,9 @@ class NotificationCheck {
     for (final update in updates) {
       if (shownNow(update.key)) continue;
       try {
-        await notifier.show(await _notice(update, posts, myId));
+        await notifier.show(
+          await _notice(update, posts, myId, sound: user.props.desktopSound),
+        );
       } on Object catch (e) {
         Log.warn('notify', 'Showing a notification failed', e);
       }
@@ -335,8 +337,9 @@ class NotificationCheck {
   Future<ConversationNotice> _notice(
     ConversationUpdate update,
     Map<String, api.Post> posts,
-    String myId,
-  ) async {
+    String myId, {
+    required bool sound,
+  }) async {
     final row = await (_db.select(_db.channels).join([
       innerJoin(
         _db.myChannels,
@@ -391,6 +394,7 @@ class NotificationCheck {
       title: heading.title,
       group: heading.group,
       largeIcon: avatars[partner],
+      sound: sound,
       teamId: channel.teamId,
       teamName: await _teamName(channel),
       serverName: serverName,

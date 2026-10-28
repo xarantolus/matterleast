@@ -68,6 +68,9 @@ class NotifyProps {
 
   bool get channelWide => raw['channel'] != 'false';
 
+  /// Desktop notifications make a sound.
+  bool get desktopSound => raw['desktop_sound'] != 'false';
+
   bool get firstName => raw['first_name'] == 'true';
 
   /// Notification emails, where the server sends them.

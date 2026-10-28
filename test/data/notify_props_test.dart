@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/channel_actions.dart';
+import 'package:matterleast/domain/notify_props.dart';
 
 void main() {
   test('a change keeps every other setting and fills the unknown ones', () {
@@ -17,6 +18,12 @@ void main() {
     expect(json['ignore_channel_mentions'], 'on');
     expect(json['mark_unread'], 'all');
     expect(json.values, everyElement(isA<String>()));
+  });
+
+  test('the desktop sound is on unless the server says false', () {
+    expect(const NotifyProps({}).desktopSound, isTrue);
+    expect(const NotifyProps({'desktop_sound': 'true'}).desktopSound, isTrue);
+    expect(const NotifyProps({'desktop_sound': 'false'}).desktopSound, isFalse);
   });
 
   test('nothing stored becomes the server defaults', () {
