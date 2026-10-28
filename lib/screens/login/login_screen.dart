@@ -11,7 +11,6 @@ import 'package:matterleast/screens/login/login_controller.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
-import 'package:matterleast/ui/window_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Signs in to a checked server with the methods it offers.
@@ -95,7 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final error = Theme.of(context).colorScheme.error;
     final enabled = !state.busy;
     return Scaffold(
-      appBar: WindowAppBar(
+      appBar: AppBar(
         title: Text(widget.target.displayName),
         bottom: ProgressSlot(active: state.busy),
       ),
@@ -228,10 +227,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 alignment: AlignmentDirectional.centerStart,
                 child: TextButton(
                   onPressed: _forgotPassword,
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(0, 48),
-                    padding: EdgeInsets.zero,
-                  ),
                   child: const Text('Forgot password?'),
                 ),
               ),

@@ -14,18 +14,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // tray, and exits. The running app decides whether the link counts.
   ::CreateMutexW(nullptr, TRUE, L"io.github.xarantolus.matterleast");
   if (::GetLastError() == ERROR_ALREADY_EXISTS) {
-    HWND running =
-        ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", L"Matterleast");
-    // Seen with DebugView; the link itself carries a token, so never it.
-    if (running == nullptr) {
-      ::OutputDebugStringW(L"Matterleast: no running window for the link\n");
-      return EXIT_SUCCESS;
-    }
-    ::OutputDebugStringW(SendAppLink(running)
-                             ? L"Matterleast: link handed to the window\n"
-                             : L"Matterleast: the window didn't take the link\n");
-    ::ShowWindow(running, ::IsIconic(running) ? SW_RESTORE : SW_SHOW);
-    ::SetForegroundWindow(running);
+    // app_links finds the window by this exe's path, not by its title, and
+    // brings it to the front. Seen with DebugView; the link itself carries
+    // a token, so never it.
+    ::OutputDebugStringW(
+        SendAppLinkToInstance()
+            ? L"Matterleast: launch handed to the running window\n"
+            : L"Matterleast: no running window took the launch\n");
     return EXIT_SUCCESS;
   }
 

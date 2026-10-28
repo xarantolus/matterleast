@@ -16,7 +16,6 @@ import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
-import 'package:matterleast/ui/window_bar.dart';
 
 /// The threads the user follows in one team.
 class TeamThreadsScreen extends ConsumerStatefulWidget {
@@ -91,7 +90,7 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
               if (!_unreadOnly || item.unread) item,
           ];
     return Scaffold(
-      appBar: WindowAppBar(
+      appBar: AppBar(
         title: Text(
           'Threads · ${widget.teamName}',
           maxLines: 1,

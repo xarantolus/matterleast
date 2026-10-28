@@ -25,7 +25,6 @@ import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
-import 'package:matterleast/ui/window_bar.dart';
 
 enum _Tab { messages, files }
 
@@ -132,7 +131,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   ))
             .isLoading;
     return Scaffold(
-      appBar: WindowAppBar(
+      appBar: AppBar(
         title: TextField(
           controller: _text,
           textInputAction: TextInputAction.search,

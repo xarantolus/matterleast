@@ -8,7 +8,6 @@ import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/status/status_page.dart';
 import 'package:matterleast/ui/slide_route.dart';
-import 'package:matterleast/ui/window_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final _sourceCode = Uri.parse('https://github.com/xarantolus/matterleast');
@@ -28,7 +27,7 @@ class SettingsPage extends ConsumerWidget {
     void push(Widget page) =>
         Navigator.of(context).push(SlideRoute<void>(builder: (_) => page));
     return Scaffold(
-      appBar: WindowAppBar(title: const Text('Settings')),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
         children: [

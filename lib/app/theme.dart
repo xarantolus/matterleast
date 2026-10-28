@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/wallpaper_colours.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -183,6 +184,55 @@ ThemeData _build({
     // Material's widest dialog; a desktop window would stretch it further.
     dialogTheme: const DialogThemeData(
       constraints: BoxConstraints(minWidth: 280, maxWidth: 560),
+    ),
+  );
+}
+
+/// [theme] as it is on a phone, at desktop sizes on desktop.
+ThemeData themeForPlatform(ThemeData theme) =>
+    isDesktop ? desktopTheme(theme) : theme;
+
+/// [theme] at mouse and keyboard sizes for a desktop window, near Discord's
+/// and the Mattermost desktop app's at 100 %: 14 px text, 36 to 44 px list rows,
+/// 48 px app bars and 32 px icon buttons. Phones keep [theme] as it is.
+ThemeData desktopTheme(ThemeData theme) {
+  final text = theme.textTheme;
+  final colours = theme.colorScheme;
+  TextStyle? sized(TextStyle? style, double size) =>
+      style?.copyWith(fontSize: size);
+  final textTheme = text.copyWith(
+    headlineSmall: sized(text.headlineSmall, 20),
+    titleLarge: sized(text.titleLarge, 18),
+    titleMedium: sized(text.titleMedium, 15),
+    bodyLarge: sized(text.bodyLarge, 14),
+  );
+  return theme.copyWith(
+    visualDensity: VisualDensity.compact,
+    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    textTheme: textTheme,
+    appBarTheme: theme.appBarTheme.copyWith(toolbarHeight: 48),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        iconSize: 20,
+        minimumSize: const Size.square(32),
+        padding: const EdgeInsets.all(6),
+      ),
+    ),
+    listTileTheme: theme.listTileTheme.copyWith(
+      // One line 36 px dense and 44 px otherwise, two lines 60 px.
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -3),
+      titleTextStyle: textTheme.bodyLarge?.copyWith(color: colours.onSurface),
+      subtitleTextStyle: sized(
+        textTheme.bodyMedium,
+        13,
+      )?.copyWith(color: colours.onSurfaceVariant),
+    ),
+    searchBarTheme: theme.searchBarTheme.copyWith(
+      constraints: const BoxConstraints(
+        minWidth: 360,
+        maxWidth: 800,
+        minHeight: 40,
+      ),
     ),
   );
 }

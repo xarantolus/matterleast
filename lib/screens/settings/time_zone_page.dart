@@ -9,7 +9,6 @@ import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
-import 'package:matterleast/ui/window_bar.dart';
 
 /// The account's time zone on one server: the phone's, or one picked by
 /// hand. Scheduled messages and other people's view of the user's local
@@ -67,7 +66,7 @@ class _TimeZonePageState extends ConsumerState<TimeZonePage> {
     final automatic = setting?.automatic ?? true;
     final manual = setting?.manualZone;
     return Scaffold(
-      appBar: WindowAppBar(
+      appBar: AppBar(
         title: const Text('Time zone'),
         bottom: ProgressSlot(active: _saving),
       ),

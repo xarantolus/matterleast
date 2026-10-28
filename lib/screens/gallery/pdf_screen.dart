@@ -10,7 +10,6 @@ import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/post_files.dart';
-import 'package:matterleast/ui/window_bar.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 Route<void> pdfRoute(
@@ -258,7 +257,7 @@ class _PdfScreenState extends State<PdfScreen> {
     ),
   );
 
-  PreferredSizeWidget _titleBar() => WindowAppBar(
+  PreferredSizeWidget _titleBar() => AppBar(
     title: Text(widget.file.name, maxLines: 1),
     actions: [
       if (_searcher != null)
@@ -283,7 +282,7 @@ class _PdfScreenState extends State<PdfScreen> {
     final theme = Theme.of(context);
     final onBar =
         theme.appBarTheme.foregroundColor ?? theme.colorScheme.onPrimary;
-    return WindowAppBar(
+    return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         tooltip: 'Close search',

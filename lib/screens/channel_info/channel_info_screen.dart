@@ -30,7 +30,6 @@ import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
-import 'package:matterleast/ui/window_bar.dart';
 
 /// What a channel is about and what the user can do with it.
 class ChannelInfoScreen extends ConsumerStatefulWidget {
@@ -173,7 +172,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
         .isLoading;
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
-      appBar: WindowAppBar(
+      appBar: AppBar(
         title: Text(info?.title ?? 'Channel'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(3),
