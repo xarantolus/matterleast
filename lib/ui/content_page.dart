@@ -149,6 +149,7 @@ class _Header extends StatelessWidget {
                   icon: const Icon(Icons.close),
                   onPressed: popout.onClose,
                 ),
+              ?InPane.endButton(context),
             ],
           ),
         ),

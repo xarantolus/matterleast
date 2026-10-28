@@ -146,7 +146,9 @@ class ComposerDraft extends _$ComposerDraft {
 
   @override
   ComposerValue build(String url, String channelId, String rootId) {
+    final actions = _actions;
     ref.onDispose(() {
+      unawaited(actions.then((a) => a.leaveDraft(channelId, rootId: rootId)));
       unawaited(_suggesting?.cancel());
       for (final u in _uploads.values) {
         u.cancel();

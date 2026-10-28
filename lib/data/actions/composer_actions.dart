@@ -30,7 +30,12 @@ class ComposerActions {
   ServerStore get _store => session.store;
 
   DateTime? _lastQueuedAt;
-  late final _drafts = DraftSaver(_store, clock: _clock, onWritten: _synced);
+  late final _drafts = DraftSaver(
+    _store,
+    clock: _clock,
+    onWritten: session.connection.drafts.changedSoon,
+    onCleared: _synced,
+  );
 
   void _synced(String channelId, String rootId) =>
       unawaited(session.connection.drafts.changed(channelId, rootId));
@@ -157,8 +162,18 @@ class ComposerActions {
     _synced(row.channelId, row.rootId);
   }
 
-  /// Writes waiting drafts now, e.g. when the app goes to the background.
-  Future<void> flushDrafts() => _drafts.flush();
+  /// Writes waiting drafts now and sends them to the server, e.g. when the
+  /// app goes to the background.
+  Future<void> flushDrafts() async {
+    await _drafts.flush();
+    session.connection.drafts.flushAll();
+  }
+
+  /// The user left a conversation: its draft goes to the server now.
+  Future<void> leaveDraft(String channelId, {String rootId = ''}) async {
+    await _drafts.flush();
+    session.connection.drafts.flush(channelId, rootId);
+  }
 
   Future<void> dispose() => _drafts.dispose();
 

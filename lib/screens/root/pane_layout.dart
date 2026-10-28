@@ -203,6 +203,7 @@ class _PaneLayoutState extends ConsumerState<PaneLayout> {
                   onClose: notifier.back,
                   closeIcon: Icons.close,
                   closeTooltip: 'Close the thread',
+                  closeAtEnd: true,
                   child: _pane(side),
                 ),
               ),
