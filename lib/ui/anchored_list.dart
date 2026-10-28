@@ -46,8 +46,11 @@ typedef AnchoredPosition = ({Object key, double offset});
 class AnchoredListController {
   _AnchoredListState<Object?>? _state;
 
-  /// The bottom-most visible row and where it sits, to restore later.
-  AnchoredPosition? get position => _state?._measuredAnchor();
+  AnchoredPosition? _atRest;
+
+  /// The bottom-most visible row and where it sits, to restore later. Once
+  /// the list is gone, where it last came to rest.
+  AnchoredPosition? get position => _state?._measuredAnchor() ?? _atRest;
 
   bool get pinned => _state?._lastView?.pinned ?? true;
 
@@ -665,6 +668,10 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       oldest = oldest == null ? index : math.max(oldest, index);
     }
     if (isDesktop) _span.value = _spanOf(newest, oldest, height);
+    // The rows can't be measured once the list is being torn down.
+    if (!p.isScrollingNotifier.value) {
+      widget.controller._atRest = _measuredAnchor();
+    }
     final view = AnchoredListView(
       pinned: _isPinned(),
       nearOlderEnd: _maxPixels - p.pixels < p.viewportDimension * 1.5,
