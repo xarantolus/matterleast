@@ -18,6 +18,7 @@ import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 
 import '../support/fake_server.dart';
+import '../support/memory_database.dart';
 import '../support/test_session.dart';
 
 /// Remembers what was picked without touching settings.
@@ -78,10 +79,13 @@ void main() {
       );
       return (server, session);
     }))!;
+    final db = memoryAppDatabase();
+    addTearDown(db.close);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           railSelectionProvider.overrideWith(_Rail.new),
+          appDatabaseProvider.overrideWithValue(db),
           serverSessionProvider(server.url.toString())
               .overrideWith((ref) async => session),
           serverImageCachesProvider(server.url.toString())
