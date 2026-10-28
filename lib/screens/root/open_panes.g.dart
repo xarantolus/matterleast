@@ -46,7 +46,7 @@ final class OpenPanesProvider extends $NotifierProvider<OpenPanes, Panes> {
   }
 }
 
-String _$openPanesHash() => r'd074beda4624a992c15dcb5a4e7cdb554083a474';
+String _$openPanesHash() => r'e52e20436e631e5866f765964a6e416b3ef68b84';
 
 /// The conversations shown beside the channel list on a wide screen. On a
 /// narrow one the [ConversationRoute]s on the navigator are the truth.
@@ -69,74 +69,14 @@ abstract class _$OpenPanes extends $Notifier<Panes> {
   }
 }
 
-/// The conversation the user last closed on a narrow screen; a left swipe
-/// on the channel list or Home brings it back.
-
-@ProviderFor(LastClosed)
-final lastClosedProvider = LastClosedProvider._();
-
-/// The conversation the user last closed on a narrow screen; a left swipe
-/// on the channel list or Home brings it back.
-final class LastClosedProvider
-    extends $NotifierProvider<LastClosed, ConversationTarget?> {
-  /// The conversation the user last closed on a narrow screen; a left swipe
-  /// on the channel list or Home brings it back.
-  LastClosedProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'lastClosedProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$lastClosedHash();
-
-  @$internal
-  @override
-  LastClosed create() => LastClosed();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ConversationTarget? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ConversationTarget?>(value),
-    );
-  }
-}
-
-String _$lastClosedHash() => r'429d8b9f35d97b3461ad0a963d79af26938d921d';
-
-/// The conversation the user last closed on a narrow screen; a left swipe
-/// on the channel list or Home brings it back.
-
-abstract class _$LastClosed extends $Notifier<ConversationTarget?> {
-  ConversationTarget? build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<ConversationTarget?, ConversationTarget?>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<ConversationTarget?, ConversationTarget?>,
-              ConversationTarget?,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
-
-/// The conversation routes on the app's navigator, oldest first.
+/// The conversation routes and content views on the app's navigator,
+/// oldest first.
 
 @ProviderFor(conversationRoutes)
 final conversationRoutesProvider = ConversationRoutesProvider._();
 
-/// The conversation routes on the app's navigator, oldest first.
+/// The conversation routes and content views on the app's navigator,
+/// oldest first.
 
 final class ConversationRoutesProvider
     extends
@@ -146,7 +86,8 @@ final class ConversationRoutesProvider
           ConversationRoutes
         >
     with $Provider<ConversationRoutes> {
-  /// The conversation routes on the app's navigator, oldest first.
+  /// The conversation routes and content views on the app's navigator,
+  /// oldest first.
   ConversationRoutesProvider._()
     : super(
         from: null,
@@ -182,4 +123,111 @@ final class ConversationRoutesProvider
 }
 
 String _$conversationRoutesHash() =>
-    r'8f3527ad344721e4c3461b7a90ac8a1f1a788564';
+    r'00ab83a1402ae9069bf1d3a7a0b74b7796fe1eec';
+
+/// The content views open in the conversation pane of a wide window, over
+/// the conversation; their navigator is there only while the window is
+/// wide.
+
+@ProviderFor(paneRoutes)
+final paneRoutesProvider = PaneRoutesProvider._();
+
+/// The content views open in the conversation pane of a wide window, over
+/// the conversation; their navigator is there only while the window is
+/// wide.
+
+final class PaneRoutesProvider
+    extends
+        $FunctionalProvider<
+          ConversationRoutes,
+          ConversationRoutes,
+          ConversationRoutes
+        >
+    with $Provider<ConversationRoutes> {
+  /// The content views open in the conversation pane of a wide window, over
+  /// the conversation; their navigator is there only while the window is
+  /// wide.
+  PaneRoutesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paneRoutesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$paneRoutesHash();
+
+  @$internal
+  @override
+  $ProviderElement<ConversationRoutes> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ConversationRoutes create(Ref ref) {
+    return paneRoutes(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ConversationRoutes value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ConversationRoutes>(value),
+    );
+  }
+}
+
+String _$paneRoutesHash() => r'4380ebec024df0e6c4d0bb37b2de8d51b7a72ad7';
+
+/// What Back closed, most recent last, for Forward to open again. Opening
+/// anything else forgets it, as a browser does.
+
+@ProviderFor(forwardHistory)
+final forwardHistoryProvider = ForwardHistoryProvider._();
+
+/// What Back closed, most recent last, for Forward to open again. Opening
+/// anything else forgets it, as a browser does.
+
+final class ForwardHistoryProvider
+    extends $FunctionalProvider<ForwardHistory, ForwardHistory, ForwardHistory>
+    with $Provider<ForwardHistory> {
+  /// What Back closed, most recent last, for Forward to open again. Opening
+  /// anything else forgets it, as a browser does.
+  ForwardHistoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'forwardHistoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$forwardHistoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<ForwardHistory> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ForwardHistory create(Ref ref) {
+    return forwardHistory(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ForwardHistory value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ForwardHistory>(value),
+    );
+  }
+}
+
+String _$forwardHistoryHash() => r'3d4b8860ba78a2de44b37168ea7ae7430f6ea1c9';

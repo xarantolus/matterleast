@@ -8,16 +8,18 @@ part of 'conversation_memory.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Writes the conversation on top to the settings whenever the open ones
-/// change, in routes on a narrow window or in panes on a wide one, so the
-/// next launch can open it again. Read it once the launch has restored.
+/// Writes the conversation on top, for the place the rail shows, to the
+/// settings whenever the open ones change, in routes on a narrow window or
+/// in panes on a wide one, so switching back to that place and the next
+/// launch can open it again. Read it once the launch has restored.
 
 @ProviderFor(conversationMemory)
 final conversationMemoryProvider = ConversationMemoryProvider._();
 
-/// Writes the conversation on top to the settings whenever the open ones
-/// change, in routes on a narrow window or in panes on a wide one, so the
-/// next launch can open it again. Read it once the launch has restored.
+/// Writes the conversation on top, for the place the rail shows, to the
+/// settings whenever the open ones change, in routes on a narrow window or
+/// in panes on a wide one, so switching back to that place and the next
+/// launch can open it again. Read it once the launch has restored.
 
 final class ConversationMemoryProvider
     extends
@@ -27,9 +29,10 @@ final class ConversationMemoryProvider
           ConversationMemory
         >
     with $Provider<ConversationMemory> {
-  /// Writes the conversation on top to the settings whenever the open ones
-  /// change, in routes on a narrow window or in panes on a wide one, so the
-  /// next launch can open it again. Read it once the launch has restored.
+  /// Writes the conversation on top, for the place the rail shows, to the
+  /// settings whenever the open ones change, in routes on a narrow window or
+  /// in panes on a wide one, so switching back to that place and the next
+  /// launch can open it again. Read it once the launch has restored.
   ConversationMemoryProvider._()
     : super(
         from: null,
@@ -65,4 +68,4 @@ final class ConversationMemoryProvider
 }
 
 String _$conversationMemoryHash() =>
-    r'9138add2980a6b0e5bbb4ad6c9006f31a08f0300';
+    r'749574965dd169d7c5636e569f5bc258fd748a9f';

@@ -16,6 +16,7 @@ import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 
 import 'fake_server.dart';
+import 'memory_database.dart';
 import 'test_session.dart';
 
 /// A fake server and a seeded session behind a widget under test.
@@ -81,9 +82,12 @@ Future<ServerHarness> pumpWithServer(
     return ServerHarness(server, session);
   }))!;
   final url = harness.url;
+  final appDb = memoryAppDatabase();
+  addTearDown(appDb.close);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        appDatabaseProvider.overrideWithValue(appDb),
         serverSessionProvider(url).overrideWith((ref) async => harness.session),
         serverImageCachesProvider(url)
             .overrideWith((ref) => Completer<ServerImageCaches>().future),

@@ -31,7 +31,7 @@ Future<void> openIncomingLink(NavigatorState navigator, Uri uri) async {
             ? SnackBarAction(
                 label: 'Add server',
                 onPressed: () => navigator.push(
-                  SlideRoute<void>(
+                  SlideRoute<void>.page(
                     builder: (_) => AddServerScreen(initialUrl: uri.toString()),
                   ),
                 ),

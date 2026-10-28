@@ -7,11 +7,11 @@ import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/sheet_header.dart';
-import 'package:matterleast/ui/slide_route.dart';
 
 /// The long-press sheet of a channel row; on desktop a popup next to
 /// [anchor] (global), where it was right-clicked.
@@ -71,11 +71,10 @@ class _ChannelActionsSheet extends ConsumerWidget {
               final navigator = Navigator.of(context);
               navigator.pop();
               unawaited(
-                navigator.push(
-                  SlideRoute<void>(
-                    builder: (_) =>
-                        ChannelInfoScreen(url: url, channelId: item.id),
-                  ),
+                openPage(
+                  navigator,
+                  ChannelInfoScreen(url: url, channelId: item.id),
+                  popout: true,
                 ),
               );
             },

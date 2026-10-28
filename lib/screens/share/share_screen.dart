@@ -222,7 +222,9 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                     'until you send it or go back.',
                 action: FilledButton.tonal(
                   onPressed: () => Navigator.of(context).push(
-                    SlideRoute<void>(builder: (_) => const AddServerScreen()),
+                    SlideRoute<void>.page(
+                      builder: (_) => const AddServerScreen(),
+                    ),
                   ),
                   child: const Text('Add server'),
                 ),

@@ -108,13 +108,13 @@ abstract final class Settings {
     _encodeRailTarget,
   );
 
-  /// The conversation open on top when the app last ran, reopened at
-  /// launch; null when the channel list showed.
-  static const lastConversation = Setting<SavedConversation?>(
-    'lastConversation',
-    null,
-    _decodeConversation,
-    _encodeConversation,
+  /// The conversation open last in each place of the rail; the one of
+  /// [lastRailTarget] reopens at launch.
+  static const openConversations = Setting<OpenConversations>(
+    'openConversations',
+    OpenConversations.none,
+    _decodeConversations,
+    _encodeConversations,
   );
 
   /// Closing the desktop window keeps the app running in the tray.
@@ -180,7 +180,7 @@ abstract final class Settings {
     wrapCode,
     notificationsAsked,
     lastRailTarget,
-    lastConversation,
+    openConversations,
     closeToTray,
     windowPlacement,
     lastUpdateCheck,
@@ -243,11 +243,11 @@ abstract final class Settings {
     throw FormatException('rail target', raw);
   }
 
-  static SavedConversation? _decodeConversation(String raw) {
-    if (raw.isEmpty) return null;
+  static OpenConversations _decodeConversations(String raw) {
+    if (raw.isEmpty) return OpenConversations.none;
     try {
       if (jsonDecode(raw) case final Map<String, Object?> json) {
-        return SavedConversation.fromJson(json);
+        return OpenConversations.fromJson(json);
       }
     } on Object {
       // Falls through to the format error below.
@@ -284,8 +284,8 @@ abstract final class Settings {
   static String _encodeWindowPlacement(WindowPlacement? value) =>
       value == null ? '' : jsonEncode(value.toJson());
 
-  static String _encodeConversation(SavedConversation? value) =>
-      value == null ? '' : jsonEncode(value.toJson());
+  static String _encodeConversations(OpenConversations value) =>
+      jsonEncode(value.toJson());
 
   static String _encodeRailTarget(RailTarget? value) =>
       value == null ? '' : jsonEncode(value.toJson());

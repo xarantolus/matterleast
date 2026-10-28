@@ -9,8 +9,8 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/settings/phone_notifications.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 
 /// The account's notification settings on one server.
 class NotificationSettingsPage extends ConsumerStatefulWidget {
@@ -53,11 +53,9 @@ class _NotificationSettingsPageState
     final me = ref.watch(currentUserProvider(_url)).value;
     final features = ref.watch(featuresProvider(_url)).value;
     final shown = props != null && !props.isEmpty;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        bottom: ProgressSlot(active: _saving || (shown && refresh.isLoading)),
-      ),
+    return ContentPage(
+      title: const Text('Notifications'),
+      progress: _saving || (shown && refresh.isLoading),
       body: shown
           ? _list(context, props, me?.username ?? '', features)
           : refresh.hasError && !refresh.isLoading

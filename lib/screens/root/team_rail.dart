@@ -6,9 +6,10 @@ import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
-import 'package:matterleast/screens/root/rail_selection.dart';
+import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/you_page.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/mention_badge.dart';
@@ -37,7 +38,6 @@ class TeamRail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selection = ref.read(railSelectionProvider.notifier);
     final current = servers.where((s) => s.url == target?.url).firstOrNull;
     return FocusRegion(
       child: SizedBox(
@@ -51,7 +51,7 @@ class TeamRail extends ConsumerWidget {
                   _RailButton(
                     tooltip: 'Home',
                     selected: target == null,
-                    onPressed: () => selection.select(null),
+                    onPressed: () => showPlace(Navigator.of(context), null),
                     child: InitialsBadge(
                       name: 'Home',
                       icon: target == null ? Icons.home : Icons.home_outlined,
@@ -72,9 +72,9 @@ class TeamRail extends ConsumerWidget {
             IconButton(
               tooltip: 'Add a server',
               icon: const Icon(Icons.add),
-              onPressed: () => Navigator.of(
-                context,
-              ).push(SlideRoute<void>(builder: (_) => const AddServerScreen())),
+              onPressed: () => Navigator.of(context).push(
+                SlideRoute<void>.page(builder: (_) => const AddServerScreen()),
+              ),
             ),
             const SizedBox(height: Spacing.sm),
             _YouButton(url: (current ?? _mostRecent(servers)).url),
@@ -102,14 +102,14 @@ class _ServerTeams extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selection = ref.read(railSelectionProvider.notifier);
     final teams = ref.watch(railTeamsProvider(server.url)).value ?? const [];
     if (teams.isEmpty) {
       // Teams arrive with the first sync; until then the server stands in.
       return _RailButton(
         tooltip: server.displayName,
         selected: serverSelected,
-        onPressed: () => selection.select(RailTarget(url: server.url)),
+        onPressed: () =>
+            showPlace(Navigator.of(context), RailTarget(url: server.url)),
         child: InitialsBadge(
           name: server.displayName,
           selected: serverSelected,
@@ -134,8 +134,10 @@ class _ServerTeams extends ConsumerWidget {
                 'unread',
             ].join(' · '),
             selected: team.id == selectedTeam,
-            onPressed: () =>
-                selection.select(RailTarget(url: server.url, teamId: team.id)),
+            onPressed: () => showPlace(
+              Navigator.of(context),
+              RailTarget(url: server.url, teamId: team.id),
+            ),
             child: _TeamBadge(
               serverUrl: server.url,
               team: team,
@@ -263,9 +265,7 @@ class _YouButton extends ConsumerWidget {
     final me = ref.watch(currentUserProvider(url)).value;
     return IconButton(
       tooltip: 'You',
-      onPressed: () =>
-          Navigator.of(context)
-              .push(SlideRoute<void>(builder: (_) => const YouPage())),
+      onPressed: () => openYou(context, anchor: globalRectOf(context)),
       icon: me == null
           ? const InitialsBadge(
               name: '',

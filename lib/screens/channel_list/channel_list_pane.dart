@@ -16,6 +16,7 @@ import 'package:matterleast/screens/channel_list/reorder_view.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/drafts_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
@@ -25,7 +26,6 @@ import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/pane_label.dart';
-import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// One team's channels by category, with Threads and Drafts on top.
@@ -331,13 +331,12 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 icon: Icons.forum_outlined,
                 title: 'Threads',
                 count: unread,
-                onTap: () => Navigator.of(context).push(
-                  SlideRoute<void>(
-                    builder: (_) => TeamThreadsScreen(
-                      url: widget.url,
-                      teamId: widget.teamId,
-                      teamName: list.teamName,
-                    ),
+                onTap: () => openPage(
+                  Navigator.of(context),
+                  TeamThreadsScreen(
+                    url: widget.url,
+                    teamId: widget.teamId,
+                    teamName: list.teamName,
                   ),
                 ),
               ),
@@ -348,13 +347,12 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 icon: Icons.edit_note,
                 title: 'Drafts',
                 count: list.drafts + scheduled,
-                onTap: () => Navigator.of(context).push(
-                  SlideRoute<void>(
-                    builder: (_) => DraftsScreen(
-                      url: widget.url,
-                      teamId: widget.teamId,
-                      teamName: list.teamName,
-                    ),
+                onTap: () => openPage(
+                  Navigator.of(context),
+                  DraftsScreen(
+                    url: widget.url,
+                    teamId: widget.teamId,
+                    teamName: list.teamName,
                   ),
                 ),
               ),
@@ -365,10 +363,9 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 icon: Icons.smart_toy_outlined,
                 title: 'Agents',
                 count: 0,
-                onTap: () => Navigator.of(context).push(
-                  SlideRoute<void>(
-                    builder: (_) => AgentsScreen(url: widget.url),
-                  ),
+                onTap: () => openPage(
+                  Navigator.of(context),
+                  AgentsScreen(url: widget.url),
                 ),
               ),
             ),
@@ -390,12 +387,11 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                             ?.join ??
                         true
                     ? FilledButton.tonal(
-                        onPressed: () => Navigator.of(context).push(
-                          SlideRoute<void>(
-                            builder: (_) => BrowseChannelsScreen(
-                              url: widget.url,
-                              teamId: widget.teamId,
-                            ),
+                        onPressed: () => openPage(
+                          Navigator.of(context),
+                          BrowseChannelsScreen(
+                            url: widget.url,
+                            teamId: widget.teamId,
                           ),
                         ),
                         child: const Text('Browse channels'),

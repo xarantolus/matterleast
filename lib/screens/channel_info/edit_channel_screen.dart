@@ -8,8 +8,8 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/narrow_page.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Creates a channel in a team, or edits one's name, purpose and header
@@ -139,24 +139,22 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
     final canPublic = rights.value?.public ?? true;
     final canPrivate = rights.value?.private ?? true;
     final slug = channelSlug(_name.text);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _creating
-              ? 'New channel'
-              : _headerOnly
-              ? 'Edit header'
-              : 'Edit channel',
-        ),
-        actions: [
-          TextButton(
-            style: context.barButtonStyle,
-            onPressed: _saving || !_valid || !_changed ? null : _save,
-            child: Text(_creating ? 'Create' : 'Save'),
-          ),
-        ],
-        bottom: ProgressSlot(active: _saving),
+    return ContentPage(
+      title: Text(
+        _creating
+            ? 'New channel'
+            : _headerOnly
+            ? 'Edit header'
+            : 'Edit channel',
       ),
+      actions: [
+        TextButton(
+          style: context.barButtonStyle,
+          onPressed: _saving || !_valid || !_changed ? null : _save,
+          child: Text(_creating ? 'Create' : 'Save'),
+        ),
+      ],
+      progress: _saving,
       body: NarrowPage(
         children: [
           if (_creating && canPublic && canPrivate) ...[

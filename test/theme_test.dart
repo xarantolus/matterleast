@@ -12,7 +12,7 @@ import 'package:matterleast/app/wallpaper_colours.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
-import 'package:matterleast/ui/bar_tabs.dart';
+import 'package:matterleast/ui/page_tabs.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/window_strip.dart';
 
@@ -264,7 +264,7 @@ void main() {
   }
 
   for (final MapEntry(key: name, value: theme) in themes.entries) {
-    testWidgets('tabs under the app bar read on the bar in $name', (
+    testWidgets('tabs at the top of a page read on the page in $name', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -273,26 +273,24 @@ void main() {
           home: DefaultTabController(
             length: 2,
             child: Scaffold(
-              appBar: AppBar(
-                title: const Text('Threads'),
-                bottom: const BarTabs(
-                  tabs: [
-                    Tab(text: 'All'),
-                    Tab(text: 'Unread'),
-                  ],
-                ),
+              appBar: AppBar(title: const Text('Threads')),
+              body: const PageTabs(
+                tabs: [
+                  Tab(text: 'All'),
+                  Tab(text: 'Unread'),
+                ],
               ),
             ),
           ),
         ),
       );
-      final bar = theme.appBarTheme.backgroundColor!;
+      final page = theme.scaffoldBackgroundColor;
       for (final label in ['All', 'Unread']) {
         final drawn = Color.alphaBlend(
           drawnColour(tester, find.text(label)),
-          bar,
+          page,
         );
-        expect(contrast(drawn, bar), greaterThanOrEqualTo(4.5), reason: label);
+        expect(contrast(drawn, page), greaterThanOrEqualTo(4.5), reason: label);
       }
     });
   }

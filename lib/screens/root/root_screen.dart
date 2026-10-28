@@ -11,6 +11,7 @@ import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/channel_list/channel_list_pane.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/home/home_pane.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/pane_layout.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -20,9 +21,9 @@ import 'package:matterleast/screens/root/team_screens.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
-import 'package:matterleast/ui/slide_route.dart';
 
 /// The rail of teams beside Home or the picked team's channel list.
 class RootScreen extends ConsumerStatefulWidget {
@@ -159,15 +160,12 @@ class _RootLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => PaneLayout(
-    list: Scaffold(
-      appBar: AppBar(
-        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: actions,
-        bottom: ProgressSlot(
-          active: refreshing,
-          delay: ProgressSlot.settleDelay,
-        ),
-      ),
+    list: ContentPage(
+      focusRegion: false,
+      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      actions: actions,
+      progress: refreshing,
+      progressDelay: ProgressSlot.settleDelay,
       body: SafeArea(
         top: false,
         child: Row(
@@ -205,8 +203,11 @@ class _NoTeam extends ConsumerWidget {
       alignment: WrapAlignment.center,
       children: [
         FilledButton(
-          onPressed: () => Navigator.of(context)
-              .push(SlideRoute<void>(builder: (_) => JoinTeamScreen(url: url))),
+          onPressed: () => openPage(
+            Navigator.of(context),
+            JoinTeamScreen(url: url),
+            popout: true,
+          ),
           child: const Text('Join a team'),
         ),
         FilledButton.tonal(
@@ -230,27 +231,42 @@ class _NewMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rights = ref.watch(teamRightsProvider(url, teamId)).value;
     void open(Widget screen) =>
-        Navigator.of(context).push(SlideRoute<void>(builder: (_) => screen));
+        openPage(Navigator.of(context), screen, popout: true);
+    final choices = [
+      if (rights?.join ?? true)
+        (
+          icon: Icons.travel_explore,
+          label: 'Browse channels',
+          open: () => open(BrowseChannelsScreen(url: url, teamId: teamId)),
+        ),
+      if ((rights?.public ?? true) || (rights?.private ?? true))
+        (
+          icon: Icons.add_circle_outline,
+          label: 'Create channel',
+          open: () => open(EditChannelScreen(url: url, teamId: teamId)),
+        ),
+      (
+        icon: Icons.edit_outlined,
+        label: 'New message',
+        open: () => open(newMessageScreen(url: url, teamId: teamId)),
+      ),
+    ];
+    // A menu of one is a button.
+    if (choices case [final only]) {
+      return IconButton(
+        tooltip: only.label,
+        icon: Icon(only.icon),
+        onPressed: only.open,
+      );
+    }
     return MenuAnchor(
       menuChildren: [
-        if (rights?.join ?? true)
+        for (final c in choices)
           MenuItemButton(
-            leadingIcon: const Icon(Icons.travel_explore),
-            onPressed: () =>
-                open(BrowseChannelsScreen(url: url, teamId: teamId)),
-            child: const Text('Browse channels'),
+            leadingIcon: Icon(c.icon),
+            onPressed: c.open,
+            child: Text(c.label),
           ),
-        if ((rights?.public ?? true) || (rights?.private ?? true))
-          MenuItemButton(
-            leadingIcon: const Icon(Icons.add_circle_outline),
-            onPressed: () => open(EditChannelScreen(url: url, teamId: teamId)),
-            child: const Text('Create channel'),
-          ),
-        MenuItemButton(
-          leadingIcon: const Icon(Icons.edit_outlined),
-          onPressed: () => open(newMessageScreen(url: url, teamId: teamId)),
-          child: const Text('New message'),
-        ),
       ],
       builder: (context, controller, _) => IconButton(
         tooltip: 'New',

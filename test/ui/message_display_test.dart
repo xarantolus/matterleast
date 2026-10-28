@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
@@ -172,9 +173,11 @@ void main() {
     testWidgets('the whole block opens the way the preview showed it and '
         'switches on its own', (tester) async {
       await tester.pumpWidget(
-        _app(
-          const CodePreview(code: '$_longLine\nreturn answer;', language: ''),
-          width: 320,
+        ProviderScope(
+          child: _app(
+            const CodePreview(code: '$_longLine\nreturn answer;', language: ''),
+            width: 320,
+          ),
         ),
       );
       await tester.tap(find.byTooltip('Wrap lines'));

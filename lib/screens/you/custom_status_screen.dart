@@ -5,10 +5,10 @@ import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/pane_label.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 typedef _Suggestion = ({String emoji, String text, String duration});
@@ -149,21 +149,19 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
     final recent =
         ref.watch(recentCustomStatusesProvider(widget.url)).value ?? const [];
     final bottom = MediaQuery.paddingOf(context).bottom;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Custom status'),
-        actions: [
-          TextButton(
-            style: context.barButtonStyle,
-            onPressed:
-                _saving || _endMissing || (_empty && widget.current == null)
-                ? null
-                : _done,
-            child: Text(_empty && widget.current != null ? 'Clear' : 'Done'),
-          ),
-        ],
-        bottom: ProgressSlot(active: _saving),
-      ),
+    return ContentPage(
+      title: const Text('Custom status'),
+      actions: [
+        TextButton(
+          style: context.barButtonStyle,
+          onPressed:
+              _saving || _endMissing || (_empty && widget.current == null)
+              ? null
+              : _done,
+          child: Text(_empty && widget.current != null ? 'Clear' : 'Done'),
+        ),
+      ],
+      progress: _saving,
       body: ListView(
         padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
         children: [

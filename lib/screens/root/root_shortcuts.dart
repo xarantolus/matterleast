@@ -10,7 +10,6 @@ import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/you_page.dart';
-import 'package:matterleast/ui/slide_route.dart';
 
 /// Pure: the channel [forward] of [current] in [list]'s shown rows, or
 /// before it, wrapping round; only unread ones with [unreadOnly]. From no
@@ -92,27 +91,35 @@ class RootShortcuts extends ConsumerWidget {
         onInvoke: (intent) => _step(context, ref, intent),
       ),
       OpenAccountIntent: CallbackAction<OpenAccountIntent>(
-        onInvoke: (_) =>
-            Navigator.of(context)
-                .push(SlideRoute<void>(builder: (_) => const YouPage())),
+        onInvoke: (_) => openYou(context),
       ),
-      DismissIntent: _CloseThread(ref),
+      DismissIntent: _CloseOnTop(ref),
     },
     // Lets the keys find these actions while nothing below has the focus.
     child: Focus(canRequestFocus: false, skipTraversal: true, child: child),
   );
 }
 
-class _CloseThread extends Action<DismissIntent> {
-  _CloseThread(this.ref);
+/// Esc with nothing nearer to close: the content view over the
+/// conversation, else the thread, else the conversation.
+class _CloseOnTop extends Action<DismissIntent> {
+  _CloseOnTop(this.ref);
 
   final WidgetRef ref;
 
   @override
   bool isEnabled(DismissIntent intent) =>
-      ref.read(openPanesProvider).thread != null;
+      ref.read(paneRoutesProvider).stack.isNotEmpty ||
+      !ref.read(openPanesProvider).isEmpty;
 
   @override
-  void invoke(DismissIntent intent) =>
+  void invoke(DismissIntent intent) {
+    final content = ref.read(paneRoutesProvider);
+    final pane = content.navigator;
+    if (content.stack.isNotEmpty && pane != null) {
+      unawaited(pane.maybePop());
+    } else {
       ref.read(openPanesProvider.notifier).back();
+    }
+  }
 }

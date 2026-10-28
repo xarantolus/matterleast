@@ -16,6 +16,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/file_icon.dart';
@@ -24,7 +25,6 @@ import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
-import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:pasteboard/pasteboard.dart';
 
@@ -107,7 +107,7 @@ void openGallery(
   // focus behind the gallery.
   FocusManager.instance.primaryFocus?.unfocus();
   unawaited(
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       galleryRoute(
         url: url,
         files: media,
@@ -471,6 +471,8 @@ Future<void> _runFileAction(
 ) async {
   final messenger = ScaffoldMessenger.of(context);
   final navigator = Navigator.of(context);
+  // Viewers cover the window, not the pane or popout they open from.
+  final viewers = Navigator.of(context, rootNavigator: true);
   void say(String message) =>
       messenger.showSnackBar(SnackBar(content: Text(message)));
   final features = await ref.read(featuresProvider(url).future);
@@ -506,7 +508,7 @@ Future<void> _runFileAction(
   final handoff = (await downloads).handoffDirectory;
   switch (action) {
     case _FileAction.view when file.kind == FileKind.pdf:
-      unawaited(navigator.push(pdfRoute(local, url: url, file: file)));
+      unawaited(viewers.push(pdfRoute(local, url: url, file: file)));
     case _FileAction.view
         when file.kind == FileKind.text && file.size <= _textViewerLimit:
       final text = await local.readAsString().catchError((_) => '');
@@ -514,14 +516,13 @@ Future<void> _runFileAction(
           ? text.substring(0, text.length - 1)
           : text;
       unawaited(
-        navigator.push(
-          SlideRoute<void>(
-            builder: (_) => CodeScreen(
-              code: code,
-              language: languageOfExtension(file.extension),
-              title: file.name,
-              actions: [FileActionsMenu(url: url, file: file)],
-            ),
+        openPage(
+          navigator,
+          CodeScreen(
+            code: code,
+            language: languageOfExtension(file.extension),
+            title: file.name,
+            actions: [FileActionsMenu(url: url, file: file)],
           ),
         ),
       );

@@ -6,6 +6,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_missing.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -41,8 +42,8 @@ class NotificationPrefsScreen extends ConsumerWidget {
       }
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+    return ContentPage(
+      title: const Text('Notifications'),
       body: info == null
           ? ChannelMissing(
               state: infoState,

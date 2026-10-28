@@ -27,7 +27,7 @@ void listenForDialogs(
   final dialog = next.value;
   if (dialog == null || !(ModalRoute.of(context)?.isCurrent ?? false)) return;
   unawaited(
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         fullscreenDialog: true,
         builder: (_) => DialogScreen(

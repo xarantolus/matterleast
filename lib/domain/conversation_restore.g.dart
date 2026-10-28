@@ -23,3 +23,23 @@ Map<String, dynamic> _$SavedConversationToJson(_SavedConversation instance) =>
       'teamId': instance.teamId,
       'rootId': instance.rootId,
     };
+
+_OpenConversations _$OpenConversationsFromJson(
+  Map<String, dynamic> json,
+) => _OpenConversations(
+  open:
+      (json['open'] as Map<String, dynamic>?)?.map(
+        (k, e) =>
+            MapEntry(k, SavedConversation.fromJson(e as Map<String, dynamic>)),
+      ) ??
+      const <String, SavedConversation>{},
+  closed:
+      (json['closed'] as Map<String, dynamic>?)?.map(
+        (k, e) =>
+            MapEntry(k, SavedConversation.fromJson(e as Map<String, dynamic>)),
+      ) ??
+      const <String, SavedConversation>{},
+);
+
+Map<String, dynamic> _$OpenConversationsToJson(_OpenConversations instance) =>
+    <String, dynamic>{'open': instance.open, 'closed': instance.closed};

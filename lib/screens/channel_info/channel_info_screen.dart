@@ -22,13 +22,14 @@ import 'package:matterleast/screens/channel_info/notification_prefs_screen.dart'
 import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/channel_info/pinned_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
-import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
@@ -90,12 +91,11 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
     }
   }
 
-  void _push(Widget screen) => unawaited(
-    Navigator.of(context).push(SlideRoute<void>(builder: (_) => screen)),
-  );
+  void _push(Widget screen) =>
+      unawaited(openPage(Navigator.of(context), screen));
 
   Future<void> _leave(ChannelInfo info) async {
-    final navigator = Navigator.of(context);
+    final navigator = Navigator.of(context, rootNavigator: true);
     final ok = await confirmLeave(
       context,
       info.title,
@@ -172,19 +172,9 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
         .watch(channelStatsProvider(widget.url, widget.channelId))
         .isLoading;
     final bottom = MediaQuery.paddingOf(context).bottom;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(info?.title ?? 'Channel'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(3),
-          child: SizedBox(
-            height: 3,
-            child: loading && info != null
-                ? const LinearProgressIndicator(minHeight: 3)
-                : null,
-          ),
-        ),
-      ),
+    return ContentPage(
+      title: Text(info?.title ?? 'Channel'),
+      progress: loading && info != null,
       body: info == null
           ? ChannelMissing(
               state: infoState,

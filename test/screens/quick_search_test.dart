@@ -111,4 +111,29 @@ void main() {
     expect(opened, isEmpty);
     expect(searched, ['lunch']);
   });
+
+  testWidgets('the first match is highlighted as the user types, and again '
+      'after typing more', (tester) async {
+    bool selected(String title) => tester
+        .widget<ListTile>(
+          find.ancestor(of: find.text(title), matching: find.byType(ListTile)),
+        )
+        .selected;
+    await show(tester, [
+      _channel('c1', 'Boathouse'),
+      _channel('c2', 'Boats'),
+      _channel('c3', 'Boatswain'),
+    ]);
+    await type(tester, 'boat');
+    expect(selected('Boathouse'), isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(selected('Boatswain'), isTrue);
+    await type(tester, 'boats');
+    expect(selected('Boats'), isTrue);
+    expect(selected('Boatswain'), isFalse);
+    await pressReturn(tester);
+    expect(opened, ['c2']);
+  });
 }

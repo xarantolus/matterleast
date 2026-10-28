@@ -19,16 +19,12 @@ import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
-import 'package:matterleast/ui/conversation_route.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/progress_slot.dart';
-import 'package:matterleast/ui/slide_route.dart';
-
-/// Text in a toolbar grows with the system font size only this far, as
-/// Android's own toolbars do; the bar grows with it.
-const _maxBarTextScale = 1.3;
 
 /// What a channel and a thread have in common: the app bar with its
 /// progress slot and Retry, the messages, the typing line and the
@@ -91,47 +87,9 @@ class ConversationScaffold extends ConsumerWidget {
           onInvoke: () => unawaited(_searchHere(context, info!)),
         ),
       },
-      child: _scaffold(context, ref, state),
-    );
-  }
-
-  Future<void> _searchHere(BuildContext context, ChannelInfo info) async {
-    await Navigator.of(context).push(
-      SlideRoute<void>(
-        builder: (_) => SearchResultsScreen(
-          url: url,
-          teamId: info.teamId,
-          query: '',
-          scope: SearchScope(
-            teamId: info.teamId,
-            channelId: info.id,
-            channelName: info.name,
-            channelLabel: info.conversation ? info.title : '#${info.title}',
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _scaffold(
-    BuildContext context,
-    WidgetRef ref,
-    ConversationState state,
-  ) {
-    final window = state.window;
-    final scale = MediaQuery.textScalerOf(context)
-        .clamp(maxScaleFactor: _maxBarTextScale)
-        .scale(1);
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: InPane.closeButton(context),
-        toolbarHeight:
-            (AppBarTheme.of(context).toolbarHeight ?? kToolbarHeight) * scale,
-        title: MediaQuery.withClampedTextScaling(
-          maxScaleFactor: _maxBarTextScale,
-          child: title,
-        ),
+      child: ContentPage(
+        focusRegion: false,
+        title: title,
         actions: [
           if (staleFailure(state) != null)
             IconButton(
@@ -141,19 +99,15 @@ class ConversationScaffold extends ConsumerWidget {
             ),
           ...actions,
         ],
-        bottom: ProgressSlot(
-          active:
-              (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
-              showsMessages(state),
-          delay: ProgressSlot.settleDelay,
-        ),
-      ),
-      body: ConversationDropTarget(
-        url: url,
-        channelId: channelId,
-        rootId: rootId,
-        target: dropTarget,
-        child: ConversationPane(
+        progress:
+            (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
+            showsMessages(state),
+        progressDelay: ProgressSlot.settleDelay,
+        body: ConversationDropTarget(
+          url: url,
+          channelId: channelId,
+          rootId: rootId,
+          target: dropTarget,
           child: _Readable(
             child: SafeArea(
               top: false,
@@ -230,6 +184,21 @@ class ConversationScaffold extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _searchHere(BuildContext context, ChannelInfo info) => openPage(
+    Navigator.of(context),
+    SearchResultsScreen(
+      url: url,
+      teamId: info.teamId,
+      query: '',
+      scope: SearchScope(
+        teamId: info.teamId,
+        channelId: info.id,
+        channelName: info.name,
+        channelLabel: info.conversation ? info.title : '#${info.title}',
+      ),
+    ),
+  );
 }
 
 /// A title with a quiet line under it.

@@ -10,7 +10,7 @@ import 'package:matterleast/domain/server_link.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/open_channel.dart';
-import 'package:matterleast/screens/root/rail_selection.dart';
+import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -52,8 +52,7 @@ Future<void> openLinkFromMessage(
           fromOutside: fromOutside,
         );
       case ServerHomeLink():
-        ref.read(railSelectionProvider.notifier).select(RailTarget(url: url));
-        navigator.popUntil((route) => route.isFirst);
+        await showPlace(navigator, RailTarget(url: url));
     }
   } on ApiError catch (e) {
     _say(
