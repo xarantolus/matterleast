@@ -713,9 +713,8 @@ void main() {
       await close(tester);
     }, variant: desktop);
 
-    testWidgets('Alt+click marks the message unread from there', (
-      tester,
-    ) async {
+    testWidgets('a click never marks a message unread, whatever the Alt '
+        'key looks like', (tester) async {
       await open(tester);
       final unread = <String>[];
       final inner = server.handle;
@@ -723,21 +722,15 @@ void main() {
         if (r.path.endsWith('/set_unread')) unread.add(r.path);
         return inner(r);
       };
-      await tester.tapAt(
-        tester.getCenter(find.text('message 57')),
-        kind: PointerDeviceKind.mouse,
-      );
-      await settle(tester);
-      expect(unread, isEmpty);
-
+      // Alt went down in another window and its release never arrived.
       await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
       await tester.tapAt(
         tester.getCenter(find.text('message 57')),
         kind: PointerDeviceKind.mouse,
       );
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
       await settle(tester);
-      expect(unread.single, endsWith('/posts/n57/set_unread'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      expect(unread, isEmpty);
       await close(tester);
     }, variant: desktop);
 

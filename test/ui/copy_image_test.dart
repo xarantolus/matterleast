@@ -85,6 +85,13 @@ void main() {
     );
   }
 
+  /// The file is read on the real clock; waits for it under load.
+  Future<void> copiedBy(WidgetTester tester) async {
+    for (var i = 0; i < 100 && copied.isEmpty; i++) {
+      await h.settle(tester, rounds: 1);
+    }
+  }
+
   Future<void> rightClick(WidgetTester tester, Finder on) async {
     final mouse = await tester.createGesture(
       kind: PointerDeviceKind.mouse,
@@ -102,7 +109,7 @@ void main() {
     await show(tester, _file('harbour.png', 'png', 'image/png'));
     await rightClick(tester, find.text('harbour.png'));
     await tester.tap(find.text('Copy image'));
-    await h.settle(tester);
+    await copiedBy(tester);
     expect(copied, [pixels]);
     expect(find.text('Copied the image.'), findsOneWidget);
     await h.close(tester);
@@ -113,7 +120,7 @@ void main() {
     await tester.tap(find.byType(PopupMenuButton<MediaAction>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Copy image'));
-    await h.settle(tester);
+    await copiedBy(tester);
     expect(copied, [pixels]);
     await h.close(tester);
   }, variant: desktop);
