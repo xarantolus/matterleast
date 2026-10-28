@@ -206,8 +206,7 @@ ThemeData desktopTheme(ThemeData theme) {
     titleMedium: sized(text.titleMedium, 15),
     bodyLarge: sized(text.bodyLarge, 14),
   );
-  // Flutter's desktop default is the arrow over buttons too; a hand says
-  // what a click acts on (see clickCursor).
+  // Flutter's desktop default over buttons is the arrow.
   const click = WidgetStateMouseCursor.clickable;
   ButtonStyle clickable(ButtonStyle? style) =>
       (style ?? const ButtonStyle()).copyWith(mouseCursor: click);

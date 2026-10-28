@@ -1,14 +1,9 @@
 import 'package:flutter/widgets.dart';
 
-/// The hand a mouse shows over anything a click acts on; the arrow where
-/// the control is disabled. Flutter's own default on desktop is the arrow,
-/// so the desktop theme gives it to Material's buttons, [InkWell]s and
-/// chips take it as `mouseCursor`, and plain gestures get it from
-/// [Clickable]. Text spans with a recognizer show it by themselves.
+/// The hand over enabled controls; Flutter's desktop default is the arrow.
 const MouseCursor clickCursor = WidgetStateMouseCursor.clickable;
 
-/// [child] with the hand cursor (or [cursor]), for a plain gesture that a
-/// click acts on, such as a [GestureDetector]'s `onTap`.
+/// The hand (or [cursor]) over a plain gesture's [child].
 class Clickable extends StatelessWidget {
   const Clickable({
     required this.child,
@@ -19,7 +14,6 @@ class Clickable extends StatelessWidget {
 
   final Widget child;
 
-  /// Without it, the cursor is left to what is around.
   final bool enabled;
   final MouseCursor cursor;
 

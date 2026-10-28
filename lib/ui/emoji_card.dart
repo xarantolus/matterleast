@@ -7,7 +7,7 @@ import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/tokens.dart';
 
-/// A tapped emoji, large, with its name, laid out like a profile card.
+/// A tapped emoji, large, with its name.
 Future<void> showEmojiCard(
   BuildContext context, {
   required String name,

@@ -15,8 +15,6 @@ import 'package:matterleast/ui/tokens.dart';
 
 const _previewLines = 4;
 
-/// On desktop, blocks up to [_desktopFullLines] lines show whole; longer
-/// ones start at [_desktopCutLines].
 const _desktopFullLines = 15;
 const _desktopCutLines = 10;
 
@@ -41,8 +39,7 @@ TextSpan _coloured(BuildContext context, String code, String language) {
 }
 
 /// The first lines of a code block with its language and a wrap toggle;
-/// tap shows all of it. On desktop the block stays in the message instead:
-/// long ones expand in place, and copying is a button away.
+/// tap shows all of it. Desktop uses [DesktopCodeBlock].
 class CodePreview extends StatefulWidget {
   const CodePreview({
     required this.code,
@@ -54,8 +51,7 @@ class CodePreview extends StatefulWidget {
   final String code;
   final String language;
 
-  /// Remembers on desktop that the block is expanded, under this name in
-  /// [ShowMoreMemory].
+  /// Key in [ShowMoreMemory] for the desktop expanded state.
   final String? id;
 
   @override
@@ -146,11 +142,8 @@ class _CodePreviewState extends State<CodePreview> {
   }
 }
 
-/// A code block on desktop, in the message: the first lines of a long one
-/// with "Show more", which expands it in place, and Copy and full view in
-/// the top corner while the mouse is over it or a button has the focus.
-/// Lines wrap as the setting says; there's no switch per block, since a
-/// wide window rarely needs one and the wheel with Shift scrolls sideways.
+/// A code block that expands in place, with copy on hover. No per-block
+/// wrap switch: wide windows rarely need it and Shift+wheel scrolls.
 class DesktopCodeBlock extends StatefulWidget {
   const DesktopCodeBlock({
     required this.code,
@@ -162,7 +155,6 @@ class DesktopCodeBlock extends StatefulWidget {
   final String code;
   final String language;
 
-  /// See [CodePreview.id].
   final String? id;
 
   @override
@@ -170,7 +162,7 @@ class DesktopCodeBlock extends StatefulWidget {
 }
 
 class _DesktopCodeBlockState extends State<DesktopCodeBlock> {
-  // Rows can be built afresh, such as when the list moves its anchor.
+  // The list rebuilds rows when it moves its anchor.
   late var _expanded =
       widget.id != null &&
       (ShowMoreMemory.of(context)?.contains(widget.id) ?? false);

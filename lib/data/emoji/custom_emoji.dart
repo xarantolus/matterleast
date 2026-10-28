@@ -24,8 +24,7 @@ Stream<Map<String, String>> watchCustomEmoji(ServerStore store) {
   ).distinct(_sameMap);
 }
 
-/// Who added the custom emoji [name], once it is stored; empty when the
-/// server didn't say.
+/// The creator id of custom emoji [name], once stored.
 Stream<String?> watchEmojiCreator(ServerStore store, String name) {
   final db = store.db;
   return (db.select(db.customEmoji)..where((e) => e.name.equals(name)))

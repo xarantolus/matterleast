@@ -27,8 +27,7 @@ class MessagePreviewTile extends ConsumerWidget {
   final InboxItem item;
   final VoidCallback onTap;
 
-  /// Opens the row's options, when it has any: on a long press, or on
-  /// desktop on a right click, next to the point given.
+  /// Long press, or right click with the point on desktop.
   final ValueChanged<Rect?>? onOptions;
 
   /// Shown on the row when more than one server is signed in.

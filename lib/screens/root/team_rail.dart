@@ -202,7 +202,7 @@ class _RailButton extends StatelessWidget {
 
   final String tooltip;
 
-  /// A second line under [tooltip], such as the team's server.
+  /// A second tooltip line, such as the server.
   final String? details;
   final bool selected;
   final VoidCallback onPressed;
@@ -226,7 +226,6 @@ class _RailButton extends StatelessWidget {
       child: MergeSemantics(
         child: Semantics(
           selected: selected,
-          // Beside the rail, like a chat app's, with the name in bold.
           child: isDesktop
               ? Tooltip(
                   richMessage: TextSpan(
@@ -248,8 +247,7 @@ class _RailButton extends StatelessWidget {
   }
 }
 
-/// A tooltip to the right of what it names, as rail tooltips sit, centred
-/// on it.
+/// Places a tooltip to the right of its target.
 Offset besideTarget(TooltipPositionContext at) => Offset(
   at.target.dx + at.targetSize.width / 2 + Spacing.sm,
   at.target.dy - at.tooltipSize.height / 2,

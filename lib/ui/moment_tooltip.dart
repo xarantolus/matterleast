@@ -2,9 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/time_labels.dart';
 
-/// On desktop, a mouse resting on [child] names [at] in full, in the app's
-/// clock, after [prefix] (such as "Edited "). A phone has no hover, and a
-/// long press there belongs to the message.
+/// On desktop, hovering [child] shows [at] in full after [prefix].
 class MomentTooltip extends StatelessWidget {
   const MomentTooltip({
     required this.at,

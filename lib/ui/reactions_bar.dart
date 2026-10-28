@@ -129,8 +129,7 @@ String reactionLabel(ReactionGroup group) => [
   if (group.mine) 'including you',
 ].join(', ');
 
-/// Who reacted, one tab per emoji, starting at [initial]; on desktop next
-/// to [anchor] when given.
+/// Who reacted, one tab per emoji, starting at [initial].
 void showReactions(
   BuildContext context,
   List<ReactionGroup> reactions,

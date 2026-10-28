@@ -13,8 +13,7 @@ Stream<Map<String, String>> customEmoji(Ref ref, String url) async* {
   yield* watchCustomEmoji(session.store);
 }
 
-/// Who added the custom emoji [name] on [url], fetched when no stored
-/// message brought that person in.
+/// Who added custom emoji [name]; loads that person if not stored.
 @riverpod
 Stream<String?> customEmojiCreator(Ref ref, String url, String name) async* {
   final session = await ref.watch(serverSessionProvider(url).future);

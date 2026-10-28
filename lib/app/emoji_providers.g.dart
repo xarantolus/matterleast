@@ -94,20 +94,17 @@ final class CustomEmojiFamily extends $Family
   String toString() => r'customEmojiProvider';
 }
 
-/// Who added the custom emoji [name] on [url], fetched when no stored
-/// message brought that person in.
+/// Who added custom emoji [name]; loads that person if not stored.
 
 @ProviderFor(customEmojiCreator)
 final customEmojiCreatorProvider = CustomEmojiCreatorFamily._();
 
-/// Who added the custom emoji [name] on [url], fetched when no stored
-/// message brought that person in.
+/// Who added custom emoji [name]; loads that person if not stored.
 
 final class CustomEmojiCreatorProvider
     extends $FunctionalProvider<AsyncValue<String?>, String?, Stream<String?>>
     with $FutureModifier<String?>, $StreamProvider<String?> {
-  /// Who added the custom emoji [name] on [url], fetched when no stored
-  /// message brought that person in.
+  /// Who added custom emoji [name]; loads that person if not stored.
   CustomEmojiCreatorProvider._({
     required CustomEmojiCreatorFamily super.from,
     required (String, String) super.argument,
@@ -154,8 +151,7 @@ final class CustomEmojiCreatorProvider
 String _$customEmojiCreatorHash() =>
     r'ecc14ef6208686aad4e34a1c81472964d336115b';
 
-/// Who added the custom emoji [name] on [url], fetched when no stored
-/// message brought that person in.
+/// Who added custom emoji [name]; loads that person if not stored.
 
 final class CustomEmojiCreatorFamily extends $Family
     with $FunctionalFamilyOverride<Stream<String?>, (String, String)> {
@@ -168,8 +164,7 @@ final class CustomEmojiCreatorFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Who added the custom emoji [name] on [url], fetched when no stored
-  /// message brought that person in.
+  /// Who added custom emoji [name]; loads that person if not stored.
 
   CustomEmojiCreatorProvider call(String url, String name) =>
       CustomEmojiCreatorProvider._(argument: (url, name), from: this);

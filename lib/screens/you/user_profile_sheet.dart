@@ -149,8 +149,7 @@ class UserProfileSheet extends ConsumerWidget {
   }
 }
 
-/// Opens the direct messages with [userId] on [url], once their channel is
-/// known; [before] runs just before, such as to close a sheet.
+/// Opens the DM with [userId]; [before] runs just before, e.g. a sheet pop.
 Future<void> messagePerson(
   BuildContext context,
   WidgetRef ref, {

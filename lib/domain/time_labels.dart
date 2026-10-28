@@ -117,8 +117,7 @@ String momentLabel(DateTime at, DateTime now, {required bool use24}) {
   return '${dateLabel(local, now)}, $time';
 }
 
-/// One moment in full, as a tooltip names it: "Tuesday, 27 October 2026
-/// at 14:05".
+/// "Tuesday, 27 October 2026 at 14:05".
 String fullMomentLabel(DateTime at, {required bool use24}) {
   final local = at.toLocal();
   return '${_weekdayNames[local.weekday - 1]}, ${local.day} '

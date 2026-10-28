@@ -9,7 +9,7 @@ bool get isDesktop => switch (defaultTargetPlatform) {
   _ => false,
 };
 
-/// What the app runs on, as a sentence names it: "phone" or "computer".
+/// "phone" or "computer", for sentences.
 String get deviceWord => isDesktop ? 'computer' : 'phone';
 
 /// The app icon as a Flutter asset, for the tray and notifications on

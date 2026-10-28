@@ -195,7 +195,6 @@ class _DraftTile extends ConsumerWidget {
   final DraftItem draft;
   final VoidCallback onTap;
 
-  /// On a long press, or on desktop on a right click next to the point.
   final ValueChanged<Rect?> onOptions;
 
   @override
