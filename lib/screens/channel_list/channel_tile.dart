@@ -1,12 +1,15 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// A dense channel row: type icon or avatar, name (bold with a dot when
 /// unread), and the draft, muted and mention markers.
-class ChannelTile extends StatelessWidget {
+class ChannelTile extends ConsumerWidget {
   const ChannelTile({
     required this.serverUrl,
     required this.item,
@@ -29,9 +32,24 @@ class ChannelTile extends StatelessWidget {
   final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
     final color = item.muted ? tokens.muted : tokens.text;
+    final partner = item.kind == ChannelKind.direct ? item.userId : null;
+    final presenceKnown =
+        partner != null && ref.watch(presenceKnownProvider(serverUrl, partner));
+    final name = Text(
+      item.title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: channelRowTextSize(context),
+        color: color,
+        fontWeight: item.unread || item.mentions > 0
+            ? FontWeight.w700
+            : FontWeight.w400,
+      ),
+    );
     final tile = ListTile(
       dense: true,
       contentPadding: Spacing.row,
@@ -42,21 +60,25 @@ class ChannelTile extends StatelessWidget {
         child: _ChannelIcon(serverUrl: serverUrl, item: item, color: color),
       ),
       title: Semantics(
-        label: channelRowLabel(item, markers: trailing == null),
+        label: channelRowLabel(
+          item,
+          markers: trailing == null,
+          presenceKnown: presenceKnown,
+        ),
         onLongPressHint: onLongPress == null ? null : 'channel options',
         child: ExcludeSemantics(
-          child: Text(
-            item.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: channelRowTextSize(context),
-              color: color,
-              fontWeight: item.unread || item.mentions > 0
-                  ? FontWeight.w700
-                  : FontWeight.w400,
-            ),
-          ),
+          child: partner == null
+              ? name
+              : Row(
+                  children: [
+                    Flexible(child: name),
+                    CustomStatusEmoji(
+                      serverUrl: serverUrl,
+                      userId: partner,
+                      size: channelRowTextSize(context) * 1.1,
+                    ),
+                  ],
+                ),
         ),
       ),
       trailing: trailing ?? ExcludeSemantics(child: _Markers(item: item)),
@@ -79,16 +101,21 @@ double channelRowTextSize(BuildContext context) =>
     ListTileTheme.of(context).titleTextStyle?.fontSize ?? 15;
 
 /// Pure: a channel row in words: the name, what kind of channel or how
-/// the other person is, then, with [markers], the draft, muted and unread
-/// state.
-String channelRowLabel(ChannelItem item, {bool markers = true}) => [
+/// the other person is (while [presenceKnown]), then, with [markers], the
+/// draft, muted and unread state.
+String channelRowLabel(
+  ChannelItem item, {
+  bool markers = true,
+  bool presenceKnown = false,
+}) => [
   item.title,
   switch (item.kind) {
     ChannelKind.public => null,
     ChannelKind.private => 'private channel',
     ChannelKind.archived => 'archived channel',
     ChannelKind.group => 'group message',
-    ChannelKind.direct => presenceLabel(item.status).toLowerCase(),
+    ChannelKind.direct =>
+      presenceKnown ? presenceLabel(item.status).toLowerCase() : null,
   },
   if (markers) ...[
     if (item.hasDraft) 'draft',
@@ -184,7 +211,11 @@ class _ChannelIcon extends StatelessWidget {
             PositionedDirectional(
               end: 0,
               bottom: 0,
-              child: PresenceDot(status: item.status),
+              child: LivePresenceDot(
+                serverUrl: serverUrl,
+                userId: item.userId ?? '',
+                status: item.status,
+              ),
             ),
           ],
         ),

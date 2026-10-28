@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/system_message.dart';
+import 'package:matterleast/domain/user_profile.dart';
 
 part 'post_list.freezed.dart';
 
@@ -46,6 +47,9 @@ abstract class PostItem with _$PostItem {
     @Default(false) bool authorIsBot,
     @Default(false) bool authorIsGuest,
     int? authorPictureAt,
+
+    /// The author's custom status as stored, expired or not.
+    CustomStatus? authorStatus,
 
     /// The post's props and metadata as the server sent them; decoded when
     /// the row is drawn.

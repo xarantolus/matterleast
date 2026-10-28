@@ -12,6 +12,7 @@ import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_link.dart';
 import 'package:matterleast/domain/teams.dart';
+import 'package:matterleast/domain/user_profile.dart';
 
 /// What the message menu needs to know beyond the post itself.
 typedef PostMenuFacts = ({
@@ -439,10 +440,14 @@ class ConversationViews {
               .get())
         pref.name,
     };
+    final users = await (db.select(
+      db.users,
+    )..where((u) => u.id.isIn(ids))).get();
+    final statuses = features.customStatus
+        ? {for (final u in users) u.id: ?storedCustomStatus(u.props)}
+        : const <String, CustomStatus>{};
     final people = {
-      for (final u in await (db.select(
-        db.users,
-      )..where((u) => u.id.isIn(ids))).get())
+      for (final u in users)
         u.id: (
           username: u.username,
           firstName: u.firstName,
@@ -573,6 +578,7 @@ class ConversationViews {
           authorIsBot: people[p.userId]?.isBot ?? false,
           authorIsGuest: people[p.userId]?.isGuest ?? false,
           authorPictureAt: people[p.userId]?.pictureAt,
+          authorStatus: statuses[p.userId],
           propsJson: p.propsJson,
           metadataJson: p.metadataJson,
           decodeProblem: p.decodeProblem,

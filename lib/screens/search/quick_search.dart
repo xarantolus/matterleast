@@ -14,6 +14,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
+import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/person_tile.dart';
@@ -437,11 +438,21 @@ class SwitchTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       leading: SizedBox.square(dimension: 40, child: _leading(context)),
-      title: Text(
-        item.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: strong ? const TextStyle(fontWeight: FontWeight.w700) : null,
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              item.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: strong
+                  ? const TextStyle(fontWeight: FontWeight.w700)
+                  : null,
+            ),
+          ),
+          if (item.kind == SwitchKind.direct && item.userId != null)
+            CustomStatusEmoji(serverUrl: item.serverUrl, userId: item.userId!),
+        ],
       ),
       subtitle: details.isEmpty
           ? null
@@ -477,11 +488,17 @@ class SwitchTile extends StatelessWidget {
               )
             else
               InitialsBadge(name: item.title, round: true),
-            PositionedDirectional(
-              end: 0,
-              bottom: 0,
-              child: PresenceDot(status: item.status, size: 12),
-            ),
+            if (userId != null)
+              PositionedDirectional(
+                end: 0,
+                bottom: 0,
+                child: LivePresenceDot(
+                  serverUrl: item.serverUrl,
+                  userId: userId,
+                  status: item.status,
+                  size: 12,
+                ),
+              ),
           ],
         );
       case SwitchKind.group:

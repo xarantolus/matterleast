@@ -33,6 +33,7 @@ class ProfileActions {
     await session.store.applyUsers([await user]);
     if ((await status).status case final s?) {
       await session.store.applyStatuses({userId: s});
+      session.connection.presence.confirm([userId]);
     }
   }
 

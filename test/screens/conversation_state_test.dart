@@ -114,14 +114,32 @@ void main() {
       ),
     );
     expect(conversationSubtitle(direct), isNull);
-    expect(conversationSubtitle(direct, partner: partner('away')), 'Away');
+    expect(
+      conversationSubtitle(
+        direct,
+        partner: partner('away'),
+        presenceKnown: true,
+      ),
+      'Away',
+    );
+    expect(
+      conversationSubtitle(
+        direct,
+        partner: partner('dnd', const CustomStatus(text: 'In a meeting')),
+        presenceKnown: true,
+      ),
+      'Do not disturb · In a meeting',
+    );
+    // While the server isn't live the stored presence isn't told, but the
+    // line stays so the title doesn't move.
     expect(
       conversationSubtitle(
         direct,
         partner: partner('dnd', const CustomStatus(text: 'In a meeting')),
       ),
-      'Do not disturb · In a meeting',
+      'In a meeting',
     );
+    expect(conversationSubtitle(direct, partner: partner('away')), '');
     expect(
       conversationSubtitle(
         const ConversationState(
@@ -185,7 +203,7 @@ void main() {
       refreshFailure: failure,
     );
     expect(
-      conversationSubtitle(direct(), partner: partner),
+      conversationSubtitle(direct(), partner: partner, presenceKnown: true),
       'Online · Launch day',
     );
     expect(conversationSubtitleEmoji(direct(), partner: partner), 'partyblob');

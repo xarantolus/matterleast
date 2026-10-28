@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
@@ -12,7 +13,7 @@ import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/ui/conversation_route.dart';
-import 'package:matterleast/ui/emoji_glyph.dart';
+import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
@@ -95,7 +96,12 @@ class ConversationScaffold extends ConsumerWidget {
             ),
           ...actions,
         ],
-        bottom: ProgressSlot(active: state.refreshing && showsMessages(state)),
+        bottom: ProgressSlot(
+          active:
+              (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
+              showsMessages(state),
+          delay: ProgressSlot.settleDelay,
+        ),
       ),
       body: ConversationDropTarget(
         url: url,
@@ -176,7 +182,7 @@ class ConversationTitle extends StatelessWidget {
   const ConversationTitle({
     required this.title,
     this.subtitle,
-    this.subtitleEmoji,
+    this.statusOf,
     this.url,
     this.opensDetails = false,
     super.key,
@@ -188,15 +194,17 @@ class ConversationTitle extends StatelessWidget {
   final bool opensDetails;
   final String? subtitle;
 
-  /// An emoji before the subtitle, from the server at [url].
-  final String? subtitleEmoji;
+  /// The person whose custom status emoji goes before the subtitle, on
+  /// the server at [url].
+  final String? statusOf;
   final String? url;
 
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.bodySmall
         ?.copyWith(color: Theme.of(context).appBarTheme.foregroundColor);
-    final emoji = subtitleEmoji;
+    final person = statusOf;
+    final server = url;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -221,17 +229,16 @@ class ConversationTitle extends StatelessWidget {
           Text.rich(
             TextSpan(
               children: [
-                if (emoji != null) ...[
+                if (person != null && server != null)
                   WidgetSpan(
                     alignment: PlaceholderAlignment.middle,
-                    child: EmojiGlyph(
-                      name: emoji,
+                    child: CustomStatusEmoji(
+                      serverUrl: server,
+                      userId: person,
                       size: (style?.fontSize ?? 12) * 1.25,
-                      serverUrl: url,
+                      padding: const EdgeInsetsDirectional.only(end: 4),
                     ),
                   ),
-                  const TextSpan(text: ' '),
-                ],
                 TextSpan(text: subtitle),
               ],
             ),

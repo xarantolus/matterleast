@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
@@ -75,7 +76,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         servers: servers,
         title: 'Home',
         refreshing: servers.any(
-          (s) => ref.watch(syncStatusProvider(s.url)).value is SyncRefreshing,
+          (s) =>
+              ref.watch(syncStatusProvider(s.url)).value is SyncRefreshing ||
+              ref.watch(serverCatchingUpProvider(s.url)),
         ),
         actions: [
           QuickSearchAnchor(
@@ -105,7 +108,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       servers: servers,
       teamId: teamId,
       title: team?.displayName ?? server.displayName,
-      refreshing: status is SyncRefreshing,
+      refreshing:
+          status is SyncRefreshing ||
+          ref.watch(serverCatchingUpProvider(server.url)),
       actions: [
         QuickSearchAnchor(
           controller: _search,
@@ -158,7 +163,10 @@ class _RootLayout extends ConsumerWidget {
       appBar: AppBar(
         title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: actions,
-        bottom: ProgressSlot(active: refreshing),
+        bottom: ProgressSlot(
+          active: refreshing,
+          delay: ProgressSlot.settleDelay,
+        ),
       ),
       body: SafeArea(
         top: false,

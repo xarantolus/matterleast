@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/trusted_authorities.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/rail.dart';
@@ -108,8 +109,12 @@ class _Profile extends ConsumerWidget {
         ? null
         : ref.watch(userProfileProvider(server.url, me.id)).value;
     final name = profile?.name ?? me?.displayName ?? '';
-    final status = profile?.status ?? me?.status;
-    final custom = profile?.customStatus;
+    final known =
+        me != null && ref.watch(presenceKnownProvider(server.url, me.id));
+    final status = known ? profile?.status ?? me.status : null;
+    final custom = me == null
+        ? null
+        : ref.watch(activeCustomStatusProvider(server.url, me.id));
     final customStatusOn =
         ref.watch(featuresProvider(server.url)).value?.customStatus ?? true;
     final text = Theme.of(context).textTheme;
@@ -142,7 +147,9 @@ class _Profile extends ConsumerWidget {
                   PositionedDirectional(
                     end: 0,
                     bottom: 0,
-                    child: PresenceDot(status: status, size: 18),
+                    child: known
+                        ? PresenceDot(status: status, size: 18)
+                        : const SizedBox.square(dimension: 18),
                   ),
                 ],
               ),
@@ -170,16 +177,18 @@ class _Profile extends ConsumerWidget {
             leading: SizedBox(
               width: 40,
               child: Center(
-                child: PresenceDot(status: status, size: 16, announce: false),
+                child: known
+                    ? PresenceDot(status: status, size: 16, announce: false)
+                    : const SizedBox.square(dimension: 16),
               ),
             ),
-            title: Text(presenceLabel(status)),
+            title: Text(known ? presenceLabel(status) : 'Status'),
             subtitle: const Text('Tap to change'),
             onTap: () => showStatusSheet(
               context,
               ref,
               url: server.url,
-              current: status ?? 'offline',
+              current: profile?.status ?? me.status,
             ),
           ),
           if (customStatusOn)

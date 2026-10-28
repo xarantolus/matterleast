@@ -89,16 +89,24 @@ ConversationBody conversationBody(ConversationState s, {required String host}) {
 }
 
 /// The quiet line under the title: why the shown messages may be stale,
-/// else the partner's presence and custom status for a direct message,
-/// the members' names for a group message, the member count otherwise.
-String? conversationSubtitle(ConversationState s, {UserProfile? partner}) {
+/// else the partner's presence (while [presenceKnown]) and custom status
+/// for a direct message, the members' names for a group message, the
+/// member count otherwise. A direct message keeps the line, empty if need
+/// be, so the title doesn't move when presence comes and goes.
+String? conversationSubtitle(
+  ConversationState s, {
+  UserProfile? partner,
+  bool presenceKnown = false,
+}) {
   if (staleFailure(s) case final cause?) return staleDataNotice(cause);
   switch (s.window?.channelType) {
     case 'D':
       if (partner == null) return null;
-      final presence = presenceLabel(partner.status);
       final text = partner.customStatus?.text ?? '';
-      return text.isEmpty ? presence : '$presence · $text';
+      return [
+        if (presenceKnown) presenceLabel(partner.status),
+        if (text.isNotEmpty) text,
+      ].join(' · ');
     case 'G':
       final names = s.window?.channelName ?? '';
       return names.isEmpty ? null : names;

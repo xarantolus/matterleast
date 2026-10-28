@@ -59,6 +59,20 @@ class TypingTracker {
 
   List<String> _now((String, String) key) => [...?_typing[key]?.keys];
 
+  /// Forgets everyone, such as when the server stops being live and no
+  /// stop would arrive.
+  void clear() {
+    final keys = [..._typing.keys];
+    for (final people in _typing.values) {
+      for (final timer in people.values) {
+        timer.cancel();
+      }
+    }
+    _typing.clear();
+    if (_closed) return;
+    keys.forEach(_changed.add);
+  }
+
   void close() {
     _closed = true;
     for (final people in _typing.values) {

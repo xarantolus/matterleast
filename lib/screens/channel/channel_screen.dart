@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/bookmark_bar.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
@@ -52,7 +53,16 @@ class ChannelScreen extends ConsumerWidget {
     final partnerId = window?.partnerId;
     final partner = partnerId == null
         ? null
-        : ref.watch(userProfileProvider(url, partnerId)).value;
+        : ref
+              .watch(userProfileProvider(url, partnerId))
+              .value
+              ?.copyWith(
+                customStatus: ref.watch(
+                  activeCustomStatusProvider(url, partnerId),
+                ),
+              );
+    final presenceKnown =
+        partnerId != null && ref.watch(presenceKnownProvider(url, partnerId));
     void openInfo() => Navigator.of(context).push(
       SlideRoute<void>(
         builder: (_) => ChannelInfoScreen(
@@ -74,8 +84,14 @@ class ChannelScreen extends ConsumerWidget {
           onTap: openInfo,
           child: ConversationTitle(
             title: name,
-            subtitle: conversationSubtitle(state, partner: partner),
-            subtitleEmoji: conversationSubtitleEmoji(state, partner: partner),
+            subtitle: conversationSubtitle(
+              state,
+              partner: partner,
+              presenceKnown: presenceKnown,
+            ),
+            statusOf: conversationSubtitleEmoji(state, partner: partner) == null
+                ? null
+                : partnerId,
             url: url,
             opensDetails: true,
           ),

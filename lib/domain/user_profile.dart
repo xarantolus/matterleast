@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/today.dart';
 
 part 'user_profile.freezed.dart';
@@ -34,6 +35,12 @@ String? _dateJson(DateTime? value) => value?.toUtc().toIso8601String();
 /// or it has expired by [now]. Other people's JSON: anything odd is no
 /// status.
 CustomStatus? customStatusOf(Map<String, Object?>? props, DateTime now) {
+  final status = storedCustomStatus(props);
+  return status != null && customStatusActive(status, now) ? status : null;
+}
+
+/// Pure: the custom status in a user's props whether or not it expired.
+CustomStatus? storedCustomStatus(Map<String, Object?>? props) {
   final raw = props?['customStatus'];
   if (raw is! String || raw.isEmpty) return null;
   final Object? decoded;
@@ -48,14 +55,35 @@ CustomStatus? customStatusOf(Map<String, Object?>? props, DateTime now) {
       if (e.value is String) e.key: e.value,
   });
   if (status.emoji.isEmpty && status.text.isEmpty) return null;
+  return status;
+}
+
+/// Pure: when [status] clears, or null when it stays until changed. A
+/// status without a duration never clears, whatever its date says.
+DateTime? customStatusEnds(CustomStatus status) {
   final expires = status.expiresAt;
-  if (status.duration.isNotEmpty &&
-      expires != null &&
-      expires.year > 1 &&
-      !expires.isAfter(now)) {
+  if (status.duration.isEmpty || expires == null || expires.year <= 1) {
     return null;
   }
-  return status;
+  return expires;
+}
+
+/// Pure: whether [status] still holds at [now].
+bool customStatusActive(CustomStatus status, DateTime now) =>
+    customStatusEnds(status)?.isAfter(now) ?? true;
+
+/// Pure: a custom status as a tooltip: its text, then when it clears in
+/// local time ("Until 17:00", "Until tomorrow at 09:00").
+String customStatusTooltip(
+  CustomStatus status,
+  DateTime now, {
+  required bool use24,
+}) {
+  final ends = customStatusEnds(status);
+  final until = ends == null
+      ? null
+      : 'Until ${untilLabel(ends, now, use24: use24)}';
+  return [if (status.text.isNotEmpty) status.text, ?until].join('\n');
 }
 
 /// Pure: the custom statuses the user set lately, newest first, from the
