@@ -116,6 +116,8 @@ class ServerManager {
     if (!foreground) {
       for (final pending in _sessions.values.toList()) {
         final session = await pending;
+        // Shown again while this waited: its connection stays up.
+        if (_foreground) return;
         session.connection.background();
         await _onHidden(session);
       }

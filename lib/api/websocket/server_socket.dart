@@ -79,9 +79,10 @@ class ServerSocket {
   Future<void> stop() async {
     _running = false;
     _retryTimer?.cancel();
-    _attempt++;
+    final attempt = ++_attempt;
     await _drop();
-    _state.value = SocketState.disconnected;
+    // A start while the old connection was still closing owns the state.
+    if (attempt == _attempt) _state.value = SocketState.disconnected;
   }
 
   Future<void> dispose() async {

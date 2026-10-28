@@ -36,6 +36,7 @@ class ServerConnection {
     required String? Function() token,
     Duration pingInterval = const Duration(seconds: 30),
     Duration Function(int failCount) retryDelayOf = jitteredRetryDelay,
+    this.catchUpLimit = const Duration(seconds: 20),
     this.online,
   }) {
     drafts = DraftSync(server: server, store: store);
@@ -129,6 +130,11 @@ class ServerConnection {
 
   static const backgroundGrace = Duration(seconds: 15);
 
+  /// How long coming back may show as catching up; what is still missing
+  /// after that is fetched without the bar.
+  final Duration catchUpLimit;
+  Timer? _catchUpTimer;
+
   final _live = ValueNotifier(false);
 
   /// Whether the server is live: its socket is connected and it answers.
@@ -144,13 +150,21 @@ class ServerConnection {
   ValueListenable<bool> get catchingUp => _catchingUp;
   var _resyncing = false;
 
+  void _setCatchingUp({required bool value}) {
+    _catchUpTimer?.cancel();
+    _catchUpTimer = value
+        ? Timer(catchUpLimit, () => _catchingUp.value = false)
+        : null;
+    _catchingUp.value = value;
+  }
+
   void _updateLive() {
     final socketState = socket.state.value;
     final live =
         socketState == SocketState.connected && server.reach.reachable.value;
     if (socketState == SocketState.disconnected ||
         !server.reach.reachable.value) {
-      _catchingUp.value = false;
+      _setCatchingUp(value: false);
     }
     if (live == _live.value) return;
     _live.value = live;
@@ -176,17 +190,19 @@ class ServerConnection {
     _startTimer?.cancel();
     _startTimer = Timer(delay, () {
       _active = true;
-      _catchingUp.value =
-          socket.state.value != SocketState.connected &&
-          (online?.value ?? true) &&
-          server.reach.reachable.value;
+      _setCatchingUp(
+        value:
+            socket.state.value != SocketState.connected &&
+            (online?.value ?? true) &&
+            server.reach.reachable.value,
+      );
       socket.start();
       presence.start();
     });
   }
 
   void background() {
-    _catchingUp.value = false;
+    _setCatchingUp(value: false);
     _startTimer?.cancel();
     _stopTimer?.cancel();
     _stopTimer = Timer(backgroundGrace, () => unawaited(_stop()));
@@ -196,7 +212,7 @@ class ServerConnection {
   void receive(ServerEvent event) {
     // The first event after connecting: replayed events follow at once,
     // and anything lost is fetched by the refresh it started.
-    if (!_resyncing) _catchingUp.value = false;
+    if (!_resyncing) _setCatchingUp(value: false);
     switch (event) {
       // Streamed answers live in memory only; they skip the queue so text
       // keeps flowing while the database is busy.
@@ -261,7 +277,7 @@ class ServerConnection {
   void _caughtUpNow() {
     if (!_resyncing) return;
     _resyncing = false;
-    _catchingUp.value = false;
+    _setCatchingUp(value: false);
   }
 
   void _networkChanged() {
@@ -285,6 +301,7 @@ class ServerConnection {
     server.reach.reachable.removeListener(_updateLive);
     _startTimer?.cancel();
     _stopTimer?.cancel();
+    _catchUpTimer?.cancel();
     await _stop();
     await socket.dispose();
     await drafts.close();

@@ -16,6 +16,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
@@ -312,6 +313,24 @@ void main() {
     );
     await settle(tester);
     expect(tester.getTopLeft(find.text('message 0')).dy, closeTo(oldest, 0.5));
+    await close(tester);
+  });
+
+  testWidgets('closing a conversation saves where the reader was', (
+    tester,
+  ) async {
+    await open(tester, count: 200);
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
+      await settle(tester);
+    }
+    expect(find.text('message 199'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    await settle(tester);
+    final facts = await tester.runAsync(
+      () => ConversationViews(session.db).openFacts(channelId),
+    );
+    expect(facts!.saved, isNotNull, reason: 'the place is saved on close');
     await close(tester);
   });
 
