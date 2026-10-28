@@ -62,27 +62,26 @@ ComposerKey? composerKey({
 int movedHighlight(int current, int step, int count) =>
     count == 0 ? 0 : (current + step) % count;
 
-/// The newest message of [userId] that can be edited: not a system message,
-/// not deleted and not still being sent.
-PostItem? lastOwnPost(List<ListRow> rows, String? userId) {
-  if (userId == null) return null;
-  PostItem? newest;
-  for (final row in rows) {
-    if (row is! MessageRow) continue;
-    final post = row.post;
-    if (post.userId != userId ||
-        post.type.isNotEmpty ||
-        post.deleted ||
-        post.sendState != null ||
-        post.isEphemeral) {
-      continue;
-    }
-    if (newest == null || post.createAt.isAfter(newest.createAt)) {
-      newest = post;
-    }
-  }
-  return newest;
+/// The messages of [userId] that can be edited, newest first: not system
+/// messages, not deleted and not still being sent.
+List<PostItem> ownPosts(List<ListRow> rows, String? userId) {
+  if (userId == null) return const [];
+  final own = [
+    for (final row in rows)
+      if (row is MessageRow &&
+          row.post.userId == userId &&
+          row.post.type.isEmpty &&
+          !row.post.deleted &&
+          row.post.sendState == null &&
+          !row.post.isEphemeral)
+        row.post,
+  ];
+  return own..sort((a, b) => b.createAt.compareTo(a.createAt));
 }
+
+/// The newest message of [userId] that can be edited.
+PostItem? lastOwnPost(List<ListRow> rows, String? userId) =>
+    ownPosts(rows, userId).firstOrNull;
 
 /// The newest message that can be replied to: not a system message, not
 /// deleted and not still being sent.

@@ -63,6 +63,9 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   final _lineSeen = ValueNotifier(false);
   ({int generation, AnchoredPosition? anchor})? _opened;
   Object? _highlighted;
+
+  /// The message being edited in the composer.
+  String? _editing;
   Timer? _highlightTimer;
   final _expanded = <String>{};
   late ConversationState _state;
@@ -199,6 +202,10 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     ref.listen(widget.conversation, _changed);
     final state = ref.watch(widget.conversation);
     _state = state;
+    final composer = widget.composer;
+    _editing = composer == null
+        ? null
+        : ref.watch(composer.select((v) => v.editing?.id));
     final host = Uri.parse(widget.url).host;
     return switch (conversationBody(state, host: host)) {
       BodyLoading() => const Center(child: CircularProgressIndicator()),
@@ -238,7 +245,9 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
       final index = rows.indexOf(row);
       dividerBelow = index > 0 && rows[index - 1] is! DaySeparator;
     }
-    final highlighted = _highlighted == row.key;
+    final highlighted =
+        _highlighted == row.key ||
+        (row is MessageRow && row.post.id == _editing);
     final gap = conversationBottomGap(context);
     final cached = _built[row.key];
     if (cached != null &&

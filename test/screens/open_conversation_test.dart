@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show DatabaseConnection;
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/restore_conversation.dart';
@@ -44,6 +46,7 @@ import 'package:matterleast/screens/root/pane_layout.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/root/root_shortcuts.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
@@ -75,6 +78,7 @@ void main() {
     WidgetTester tester, {
     List<Override> Function(String url)? more,
     bool panes = false,
+    bool keys = false,
   }) async {
     HttpOverrides.global = null;
     (server, session) = (await tester.runAsync(() async {
@@ -107,6 +111,7 @@ void main() {
           builder: (context, ref, _) => MaterialApp(
             theme: MatterleastApp.lightTheme,
             navigatorObservers: [ref.watch(conversationRoutesProvider)],
+            builder: keys ? (_, child) => AppShortcuts(child: child!) : null,
             home: Consumer(
               builder: (context, ref, _) {
                 widgetRef = ref;
@@ -114,7 +119,10 @@ void main() {
                 const list = Scaffold(
                   body: ReopenSwipe(child: SizedBox.expand()),
                 );
-                return panes ? const PaneLayout(list: list) : list;
+                final layout = panes ? const PaneLayout(list: list) : list;
+                return keys
+                    ? RootShortcuts(onSwitcher: () {}, child: layout)
+                    : layout;
               },
             ),
           ),
@@ -330,6 +338,79 @@ void main() {
     await back(tester);
     expect(conversations(), findsNothing);
     await finish(tester);
+  });
+
+  group('Esc on a wide window', () {
+    final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
+
+    Future<void> focusIn(WidgetTester tester, Type screen) async {
+      tester
+          .widget<Focus>(
+            find
+                .descendant(
+                  of: find.byType(screen),
+                  matching: find.byWidgetPredicate(
+                    (w) => w is Focus && w.focusNode?.debugLabel == 'Region',
+                  ),
+                )
+                .first,
+          )
+          .focusNode!
+          .requestFocus();
+      await tester.pump();
+    }
+
+    Future<void> esc(WidgetTester tester) async {
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settle(tester);
+    }
+
+    testWidgets('closes the thread, then the channel, from the message list', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await start(tester, panes: true, keys: true);
+      await open(tester);
+      await open(tester, rootId: 'old1');
+      expect(find.byType(ThreadScreen), findsOneWidget);
+      await focusIn(tester, ThreadScreen);
+      await esc(tester);
+      expect(find.byType(ThreadScreen), findsNothing);
+      expect(find.byType(ChannelScreen), findsOneWidget);
+      await focusIn(tester, ChannelScreen);
+      await esc(tester);
+      expect(find.byType(ChannelScreen), findsNothing);
+      await finish(tester);
+      await tester.pump(Duration.zero);
+    }, variant: desktop);
+
+    testWidgets('from an empty composer the first Esc leaves it, the second '
+        'closes the thread', (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await start(tester, panes: true, keys: true);
+      await mayPost(tester);
+      await open(tester);
+      await open(tester, rootId: 'old1');
+      final field = find.descendant(
+        of: find.byType(ThreadScreen),
+        matching: find.byType(EditableText),
+      );
+      tester.widget<EditableText>(field).focusNode.requestFocus();
+      await tester.pump();
+      await esc(tester);
+      expect(tester.widget<EditableText>(field).focusNode.hasFocus, isFalse);
+      expect(find.byType(ThreadScreen), findsOneWidget);
+      await esc(tester);
+      expect(find.byType(ThreadScreen), findsNothing);
+      closeConversations(navigator(tester));
+      await settle(tester);
+      await finish(tester);
+      await tester.pump(Duration.zero);
+    }, variant: desktop);
   });
 
   testWidgets('a thread opens over its channel; a right swipe goes back to '

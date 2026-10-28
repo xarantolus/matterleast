@@ -650,6 +650,41 @@ void main() {
       await close(tester);
     }, variant: desktop);
 
+    testWidgets('a message that opens its thread keeps the text cursor, and '
+        'only a link in it shows the hand', (tester) async {
+      await open(tester);
+      answerOlder.complete();
+      final mouse = await mouseAt(tester, Offset.zero);
+      MouseCursor cursor() =>
+          tester.binding.mouseTracker.debugDeviceActiveCursor(1)!;
+      await mouse.moveTo(tester.getCenter(find.text('message 57')));
+      await tester.pump();
+      expect(cursor(), SystemMouseCursors.text);
+
+      final linkText = find.textContaining('tide table');
+      for (var i = 0; i < 10 && linkText.evaluate().isEmpty; i++) {
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
+        await settle(tester);
+      }
+      final range = find.textRange.ofSubstring(link).evaluate().single;
+      final onLink = range.renderObject.localToGlobal(
+        range.renderObject
+            .getBoxesForSelection(
+              TextSelection(
+                baseOffset: range.textRange.start,
+                extentOffset: range.textRange.end,
+              ),
+            )
+            .first
+            .toRect()
+            .center,
+      );
+      await mouse.moveTo(onLink);
+      await tester.pump();
+      expect(cursor(), SystemMouseCursors.click);
+      await close(tester);
+    }, variant: desktop);
+
     testWidgets('moving over the list rebuilds only the rows the mouse '
         'enters and leaves', (tester) async {
       await open(tester);
@@ -887,9 +922,8 @@ void main() {
       await close(tester);
     }, variant: desktop);
 
-    testWidgets('Alt+click marks the message unread from there', (
-      tester,
-    ) async {
+    testWidgets('a click never marks a message unread, whatever the Alt '
+        'key looks like', (tester) async {
       await open(tester);
       final unread = <String>[];
       final inner = server.handle;
@@ -897,21 +931,15 @@ void main() {
         if (r.path.endsWith('/set_unread')) unread.add(r.path);
         return inner(r);
       };
-      await tester.tapAt(
-        tester.getCenter(find.text('message 57')),
-        kind: PointerDeviceKind.mouse,
-      );
-      await settle(tester);
-      expect(unread, isEmpty);
-
+      // Alt went down in another window and its release never arrived.
       await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
       await tester.tapAt(
         tester.getCenter(find.text('message 57')),
         kind: PointerDeviceKind.mouse,
       );
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
       await settle(tester);
-      expect(unread.single, endsWith('/posts/n57/set_unread'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      expect(unread, isEmpty);
       await close(tester);
     }, variant: desktop);
 

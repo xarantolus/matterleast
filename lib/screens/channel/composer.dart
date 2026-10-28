@@ -23,6 +23,7 @@ import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/server_features.dart';
+import 'package:matterleast/domain/text_wrap.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/composer_desktop.dart';
@@ -85,7 +86,9 @@ class Composer extends ConsumerWidget {
     this.archived = false,
     this.autofocus = false,
     this.lastOwnPost,
+    this.ownTexts,
     this.onReplyToNewest,
+    this.focusNode,
     super.key,
   });
 
@@ -100,8 +103,14 @@ class Composer extends ConsumerWidget {
   /// field.
   final PostItem? Function()? lastOwnPost;
 
+  /// The user's own messages here, newest first, for Ctrl+Up.
+  final List<String> Function()? ownTexts;
+
   /// Replies to the newest message, for Shift+Up in an empty field.
   final VoidCallback? onReplyToNewest;
+
+  /// The field's focus, when the screen has to move it there.
+  final FocusNode? focusNode;
 
   /// The field takes the keyboard when it first shows.
   final bool autofocus;
@@ -119,7 +128,9 @@ class Composer extends ConsumerWidget {
       hint: hint,
       autofocus: autofocus,
       lastOwnPost: lastOwnPost,
+      ownTexts: ownTexts,
       onReplyToNewest: onReplyToNewest,
+      focusNode: focusNode,
     );
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -146,11 +157,15 @@ class _ComposerField extends ConsumerStatefulWidget {
     required this.hint,
     required this.autofocus,
     required this.lastOwnPost,
+    required this.ownTexts,
     required this.onReplyToNewest,
+    required this.focusNode,
   });
 
   final PostItem? Function()? lastOwnPost;
+  final List<String> Function()? ownTexts;
   final VoidCallback? onReplyToNewest;
+  final FocusNode? focusNode;
   final String url;
   final String channelId;
   final String rootId;
@@ -164,12 +179,18 @@ class _ComposerField extends ConsumerStatefulWidget {
 
 class _ComposerFieldState extends ConsumerState<_ComposerField> {
   final _text = TextEditingController();
-  final _focus = FocusNode();
+  late final _focus = widget.focusNode ?? FocusNode();
   final _suggestionsShown = OverlayPortalController()..show();
   Timer? _focusLater;
 
   /// The suggestion Enter and Tab take.
   int _highlight = 0;
+
+  /// Which of the user's own messages Ctrl+Up put in the field, or -1, and
+  /// what was typed before.
+  int _historyAt = -1;
+  String _historyDraft = '';
+  String? _historyText;
 
   ComposerDraftProvider get _provider =>
       composerDraftProvider(widget.url, widget.channelId, widget.rootId);
@@ -324,7 +345,31 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     ref.read(_provider.notifier).startEditing(post);
   }
 
+  void _format(Format format) {
+    _text.value = switch (format) {
+      Format.bold => toggleWrap(_text.value, '**'),
+      Format.italic => toggleWrap(_text.value, '_'),
+      Format.strike => toggleWrap(_text.value, '~~'),
+      Format.link => insertLink(_text.value),
+    };
+  }
+
+  void _stepHistory({required bool older}) {
+    final texts = widget.ownTexts?.call() ?? const [];
+    final at = steppedHistory(texts.length, _historyAt, older: older);
+    if (at == _historyAt) return;
+    if (_historyAt == -1) _historyDraft = _text.text;
+    _historyAt = at;
+    final text = at == -1 ? _historyDraft : texts[at];
+    _historyText = text;
+    _text.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
   void _typed() {
+    if (_text.text != _historyText) _historyAt = -1;
     if (_text.value != ref.read(_provider).text) {
       ref.read(_provider.notifier).changed(_text.value);
     }
@@ -336,7 +381,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     _focusLater?.cancel();
     _text.removeListener(_typed);
     _text.dispose();
-    _focus.dispose();
+    if (widget.focusNode == null) _focus.dispose();
     for (final path in _picked) {
       unawaited(_deletePicked(path));
     }
@@ -354,10 +399,15 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     ref.listen(_provider, (before, next) {
       if (_text.value != next.text) _text.value = next.text;
       if (before?.suggestions != next.suggestions) _highlight = 0;
-      if ((next.editing != null && before?.editing != next.editing) ||
-          next.quotes > (before?.quotes ?? 0)) {
-        _focusSoon();
+      final startedEditing =
+          next.editing != null && before?.editing != next.editing;
+      if (startedEditing) {
+        // The cursor goes to the end of the message at once; the soon call
+        // takes the focus back from a menu that is still closing.
+        _focus.requestFocus();
+        _text.selection = TextSelection.collapsed(offset: _text.text.length);
       }
+      if (startedEditing || next.quotes > (before?.quotes ?? 0)) _focusSoon();
     });
     final value = ref.watch(_provider);
     final suggestions = value.suggestions;
@@ -396,7 +446,15 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 _text.text.isEmpty &&
                 value.editing == null &&
                 suggestions.isEmpty,
-            onInvoke: () => widget.onReplyToNewest!(),
+            onInvoke: (_) => widget.onReplyToNewest!(),
+          ),
+          FormatIntent: EnabledAction<FormatIntent>(
+            enabled: () => _focus.hasFocus,
+            onInvoke: (intent) => _format(intent.format),
+          ),
+          StepHistoryIntent: EnabledAction<StepHistoryIntent>(
+            enabled: () => _focus.hasFocus && value.editing == null,
+            onInvoke: (intent) => _stepHistory(older: intent.older),
           ),
         },
         child: _field(context, value),
@@ -439,9 +497,19 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                     Icon(Icons.edit, size: 18, color: tokens.muted),
                     const SizedBox(width: Spacing.sm),
                     Expanded(
-                      child: Text(
-                        'Editing message',
-                        style: Theme.of(context).textTheme.labelLarge,
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'Editing message',
+                          style: Theme.of(context).textTheme.labelLarge,
+                          children: [
+                            if (isDesktop)
+                              TextSpan(
+                                text: '  Esc to cancel · Enter to save',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: tokens.muted),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                     IconButton(

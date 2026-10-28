@@ -5,6 +5,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/app/clipboard_providers.dart';
 import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/platform.dart';
@@ -26,7 +27,6 @@ import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
 import 'package:matterleast/ui/tokens.dart';
-import 'package:pasteboard/pasteboard.dart';
 
 const _gap = 4.0;
 const _unknownBox = 48.0;
@@ -557,7 +557,7 @@ Future<void> _runFileAction(
       }
     case _FileAction.copyImage:
       try {
-        await Pasteboard.writeImage(await local.readAsBytes());
+        await ref.read(imageClipboardProvider)(await local.readAsBytes());
         say('Copied the image.');
       } on Object catch (e) {
         Log.warn('files', 'Copying an image failed: ${e.runtimeType}');
