@@ -37,6 +37,50 @@ String metadataWithAcknowledgement(
   return storedJson(metadata);
 }
 
+/// Whether [metadata] carries what the server fetched from a linked page:
+/// its OpenGraph card or the image itself. Without it the server sends a
+/// bare `link` embed, or none.
+bool _hasPreview(Map<String, Object?> metadata) =>
+    (metadata['embeds'] is List) &&
+    (metadata['embeds']! as List).any(
+      (e) => e is Map && (e['type'] == 'opengraph' || e['type'] == 'image'),
+    );
+
+Map<String, Object?>? _jsonObject(String? json) {
+  if (json == null) return null;
+  try {
+    final decoded = jsonDecode(json);
+    return decoded is Map<String, Object?> ? decoded : null;
+  } on FormatException {
+    return null;
+  }
+}
+
+/// Pure: the metadata to store for a new copy of a post whose text is
+/// unchanged. The server answers with no preview when fetching the linked
+/// page timed out, and with it again on a later request; a preview already
+/// stored stays meanwhile, with the image sizes it needs, so the card
+/// doesn't vanish and come back under the reader. Null when [incoming]
+/// stays as it is.
+String? metadataKeepingPreview({
+  required String incoming,
+  required String? stored,
+}) {
+  final now = _jsonObject(incoming);
+  final was = _jsonObject(stored);
+  if (now == null || was == null || _hasPreview(now) || !_hasPreview(was)) {
+    return null;
+  }
+  return storedJson({
+    ...now,
+    'embeds': was['embeds'],
+    'images': {
+      if (was['images'] case final Map<String, Object?> images) ...images,
+      if (now['images'] case final Map<String, Object?> images) ...images,
+    },
+  });
+}
+
 UsersCompanion userCompanion(api.User u) => UsersCompanion(
   id: Value(u.id!),
   username: Value(u.username ?? ''),

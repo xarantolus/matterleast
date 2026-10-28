@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 
 import '../support/memory_database.dart';
@@ -403,6 +404,71 @@ void main() {
       final channel = await db.select(db.channels).getSingle();
       final mine = await db.select(db.myChannels).getSingle();
       expect(channel.totalMsgCount - mine.msgCount, 0);
+    });
+
+    api.Post linkPost({
+      required String message,
+      required List<Object> embeds,
+    }) => api.Post.fromJson({
+      'id': 'p5',
+      'channel_id': 'c1',
+      'user_id': 'u2',
+      'create_at': 500,
+      'message': message,
+      'metadata': jsonDecode(jsonEncode({'embeds': embeds})),
+    });
+    const link = 'https://garden.example/notes';
+    const card = {
+      'type': 'opengraph',
+      'url': link,
+      'data': {'title': 'Garden notes', 'description': 'Tomatoes and basil'},
+    };
+    Future<String?> previewTitle() async => PostDetails.decode(
+      null,
+      (await (db.select(
+        db.posts,
+      )..where((p) => p.id.equals('p5'))).getSingle()).metadataJson,
+    ).preview?.title;
+
+    test('a copy without the link preview keeps the stored one', () async {
+      await store.applyLivePost(
+        linkPost(message: 'Look: $link', embeds: [card]),
+        fromSelf: false,
+        mentionsMe: false,
+      );
+      // The server's fetch of the linked page timed out this time.
+      await store.applyChannelPage(
+        channelId: 'c1',
+        page: api.PostList.fromJson({
+          'order': ['p5'],
+          'posts': {
+            'p5': jsonDecode(
+              jsonEncode(
+                linkPost(
+                  message: 'Look: $link',
+                  embeds: [
+                    {'type': 'link', 'url': link},
+                  ],
+                ),
+              ),
+            ),
+          },
+        }),
+        kind: PageKind.page,
+      );
+      expect(await previewTitle(), 'Garden notes');
+      await store.applyEdit(linkPost(message: 'Look: $link', embeds: []));
+      expect(await previewTitle(), 'Garden notes');
+    });
+
+    test('an edit that drops the link drops its preview', () async {
+      await store.applyLivePost(
+        linkPost(message: 'Look: $link', embeds: [card]),
+        fromSelf: false,
+        mentionsMe: false,
+      );
+      await store.applyEdit(linkPost(message: 'Never mind', embeds: []));
+      expect(await previewTitle(), isNull);
     });
 
     test('edits update in place and deletes leave a placeholder', () async {
