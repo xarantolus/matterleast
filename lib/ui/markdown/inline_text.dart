@@ -134,9 +134,9 @@ class _InlineTextState extends State<InlineText> {
         i,
       ), TapOrHoldRecognizer.new)..update(
         onTapped: () => env.onLink(classifyLink(link, env.server)),
-        onHeld: () => showLinkSheet(context, link, env),
+        onHeld: () => showCopyLink(context, link),
         onRightClick: isDesktop
-            ? (at) => showLinkMenu(context, link, at)
+            ? (at) => showCopyLink(context, link, at: at)
             : null,
         onMiddleClick: isDesktop
             ? () => env.onLink(classifyLink(link, env.server))
@@ -399,66 +399,34 @@ String? mentionedUsername(String typed, Set<String> usernames) {
   return null;
 }
 
-/// Right click on a link: copy the address, at the pointer.
-void showLinkMenu(BuildContext context, String url, Offset position) {
+/// Holding or right-clicking a link or its preview: only a way to copy the
+/// address, in a menu at the pointer when there is one, else a small sheet.
+void showCopyLink(BuildContext context, String url, {Offset? at}) {
   final isMail = url.startsWith('mailto:');
   final shown = isMail ? url.substring(7) : url;
-  // A left click opens it, so the menu only copies.
-  unawaited(
-    showMenuAt<VoidCallback>(context, position, [
-      PopupMenuItem(
-        value: () => unawaited(Clipboard.setData(ClipboardData(text: shown))),
-        child: MenuEntry(
-          icon: Icons.copy,
-          label: isMail ? 'Copy email address' : 'Copy link',
+  final label = isMail ? 'Copy email address' : 'Copy link';
+  void copy() => unawaited(Clipboard.setData(ClipboardData(text: shown)));
+  if (at != null) {
+    unawaited(
+      showMenuAt<VoidCallback>(context, at, [
+        PopupMenuItem(
+          value: copy,
+          child: MenuEntry(icon: Icons.copy, label: label),
         ),
-      ),
-    ]).then((picked) => picked?.call()),
-  );
-}
-
-/// Long press on a link: open it, or copy the address.
-void showLinkSheet(BuildContext context, String url, PostEnvironment env) {
-  final isMail = url.startsWith('mailto:');
-  final shown = isMail ? url.substring(7) : url;
+      ]).then((picked) => picked?.call()),
+    );
+    return;
+  }
   showAppSheet<void>(
     context: context,
-    showDragHandle: true,
     builder: (sheet) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Spacing.lg,
-              0,
-              Spacing.lg,
-              Spacing.sm,
-            ),
-            child: Text(
-              shown,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(sheet).textTheme.bodySmall,
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.open_in_new),
-            title: const Text('Open'),
-            onTap: () {
-              Navigator.pop(sheet);
-              env.onLink(classifyLink(url, env.server));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.copy),
-            title: Text(isMail ? 'Copy email address' : 'Copy link'),
-            onTap: () {
-              Clipboard.setData(ClipboardData(text: shown));
-              Navigator.pop(sheet);
-            },
-          ),
-        ],
+      child: ListTile(
+        leading: const Icon(Icons.copy),
+        title: Text(label),
+        onTap: () {
+          copy();
+          Navigator.pop(sheet);
+        },
       ),
     ),
   );

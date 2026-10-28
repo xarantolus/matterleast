@@ -5,24 +5,16 @@ import 'package:flutter/gestures.dart';
 
 /// A tap recognizer for one span of text that also reports a long press
 /// and a right click (at its global position). A span takes a single
-/// recognizer, so the long press is timed here. [update] swaps what it
-/// calls, so one recognizer lives on across rebuilds of its text.
+/// recognizer, so the long press is timed here, from the pointer down like
+/// an enclosing message's own long press, and claims the gesture so that
+/// one doesn't fire as well. [update] swaps what it calls, so one
+/// recognizer lives on across rebuilds of its text.
 class TapOrHoldRecognizer extends TapGestureRecognizer {
   TapOrHoldRecognizer() {
-    onTapDown = (_) {
-      _held = false;
-      if (_onHeld == null) return;
-      _timer?.cancel();
-      _timer = Timer(kLongPressTimeout, () {
-        _held = true;
-        _onHeld?.call();
-      });
-    };
     onTapUp = (_) {
       _timer?.cancel();
       if (!_held) _onTapped();
     };
-    onTapCancel = () => _timer?.cancel();
   }
 
   VoidCallback _onTapped = () {};
@@ -42,6 +34,25 @@ class TapOrHoldRecognizer extends TapGestureRecognizer {
     onSecondaryTapUp = onRightClick == null
         ? null
         : (d) => onRightClick(d.globalPosition);
+  }
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    _held = false;
+    _timer?.cancel();
+    if (_onHeld == null || event.buttons != kPrimaryButton) return;
+    _timer = Timer(kLongPressTimeout, () {
+      _held = true;
+      resolve(GestureDisposition.accepted);
+      _onHeld?.call();
+    });
+  }
+
+  @override
+  void rejectGesture(int pointer) {
+    _timer?.cancel();
+    super.rejectGesture(pointer);
   }
 
   @override
