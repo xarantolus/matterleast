@@ -4,6 +4,7 @@ import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/slide_route.dart';
+import 'package:matterleast/ui/tokens.dart';
 
 /// Text in a toolbar grows with the system font size only this far, as
 /// Android's own toolbars do; the bar grows with it.
@@ -136,13 +137,21 @@ class _Header extends StatelessWidget {
         ),
       ),
       actions: [
-        for (final action in actions) fade(action),
-        if (popout != null)
-          IconButton(
-            tooltip: 'Close',
-            icon: const Icon(Icons.close),
-            onPressed: popout.onClose,
+        IconButtonTheme(
+          data: barIconButtonThemeOf(Theme.of(context)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final action in actions) fade(action),
+              if (popout != null)
+                IconButton(
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close),
+                  onPressed: popout.onClose,
+                ),
+            ],
           ),
+        ),
       ],
       bottom: PreferredSize(
         preferredSize: bottom.preferredSize,

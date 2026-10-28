@@ -148,7 +148,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
           border: InputBorder.none,
           hintStyle: TextStyle(
             color: Theme.of(context).appBarTheme.foregroundColor
-                ?.withValues(alpha: 0.7),
+                ?.withValues(alpha: 0.8),
           ),
         ),
       ),

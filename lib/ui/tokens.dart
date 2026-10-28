@@ -173,15 +173,36 @@ extension AppTokensContext on BuildContext {
   ButtonStyle get barButtonStyle => barButtonStyleOf(Theme.of(this));
 }
 
+/// [colour] made translucent for a disabled control, as far as it still
+/// has [minShapeContrast] on [background].
+Color dimmed(Color colour, Color background) {
+  var dim = colour.withValues(alpha: 0.6);
+  while (dim.a < 0.9 &&
+      contrastRatio(Color.alphaBlend(dim, background), background) <
+          minShapeContrast) {
+    dim = colour.withValues(alpha: dim.a + 0.05);
+  }
+  return dim;
+}
+
+/// Icon buttons on the app bar: the bar's colour, dimmed when disabled.
+IconButtonThemeData barIconButtonThemeOf(ThemeData theme) {
+  final colour =
+      theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
+  final bar = theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface;
+  return IconButtonThemeData(
+    style: IconButton.styleFrom(
+      foregroundColor: colour,
+      disabledForegroundColor: dimmed(colour, bar),
+    ),
+  );
+}
+
 ButtonStyle barButtonStyleOf(ThemeData theme) {
   final colour =
       theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
   final bar = theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface;
-  var disabled = colour.withValues(alpha: 0.6);
-  while (disabled.a < 0.9 &&
-      contrastRatio(Color.alphaBlend(disabled, bar), bar) < minShapeContrast) {
-    disabled = colour.withValues(alpha: disabled.a + 0.05);
-  }
+  final disabled = dimmed(colour, bar);
   return TextButton.styleFrom(
     foregroundColor: colour,
     disabledForegroundColor: disabled,
