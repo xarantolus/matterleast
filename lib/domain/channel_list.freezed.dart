@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChannelItem {
 
- String get id; String get title; ChannelKind get kind; bool get unread; int get mentions; bool get muted; bool get favorite; bool get hasDraft;/// Presence of the other person in a direct message.
+ String get id; String get title; ChannelKind get kind; bool get unread; int get mentions; bool get muted; bool get favorite; bool get hasDraft; bool get urgent;/// Presence of the other person in a direct message.
  String? get status;/// Other members of a group message.
  int? get others;/// The other person of a direct message and their picture's version.
  String? get userId; int? get pictureUpdate;
@@ -30,20 +30,20 @@ $ChannelItemCopyWith<ChannelItem> get copyWith => _$ChannelItemCopyWithImpl<Chan
 @override
 bool operator ==(Object other) {
   final _this = this as ChannelItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChannelItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.unread, _this.unread) || other.unread == _this.unread)&&(identical(other.mentions, _this.mentions) || other.mentions == _this.mentions)&&(identical(other.muted, _this.muted) || other.muted == _this.muted)&&(identical(other.favorite, _this.favorite) || other.favorite == _this.favorite)&&(identical(other.hasDraft, _this.hasDraft) || other.hasDraft == _this.hasDraft)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.others, _this.others) || other.others == _this.others)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.pictureUpdate, _this.pictureUpdate) || other.pictureUpdate == _this.pictureUpdate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChannelItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.unread, _this.unread) || other.unread == _this.unread)&&(identical(other.mentions, _this.mentions) || other.mentions == _this.mentions)&&(identical(other.muted, _this.muted) || other.muted == _this.muted)&&(identical(other.favorite, _this.favorite) || other.favorite == _this.favorite)&&(identical(other.hasDraft, _this.hasDraft) || other.hasDraft == _this.hasDraft)&&(identical(other.urgent, _this.urgent) || other.urgent == _this.urgent)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.others, _this.others) || other.others == _this.others)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.pictureUpdate, _this.pictureUpdate) || other.pictureUpdate == _this.pictureUpdate));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ChannelItem;
-  return Object.hash(runtimeType,_this.id,_this.title,_this.kind,_this.unread,_this.mentions,_this.muted,_this.favorite,_this.hasDraft,_this.status,_this.others,_this.userId,_this.pictureUpdate);
+  return Object.hash(runtimeType,_this.id,_this.title,_this.kind,_this.unread,_this.mentions,_this.muted,_this.favorite,_this.hasDraft,_this.urgent,_this.status,_this.others,_this.userId,_this.pictureUpdate);
 }
 
 @override
 String toString() {
   final _this = this as ChannelItem;
-  return 'ChannelItem(id: ${_this.id}, title: ${_this.title}, kind: ${_this.kind}, unread: ${_this.unread}, mentions: ${_this.mentions}, muted: ${_this.muted}, favorite: ${_this.favorite}, hasDraft: ${_this.hasDraft}, status: ${_this.status}, others: ${_this.others}, userId: ${_this.userId}, pictureUpdate: ${_this.pictureUpdate})';
+  return 'ChannelItem(id: ${_this.id}, title: ${_this.title}, kind: ${_this.kind}, unread: ${_this.unread}, mentions: ${_this.mentions}, muted: ${_this.muted}, favorite: ${_this.favorite}, hasDraft: ${_this.hasDraft}, urgent: ${_this.urgent}, status: ${_this.status}, others: ${_this.others}, userId: ${_this.userId}, pictureUpdate: ${_this.pictureUpdate})';
 }
 
 
@@ -54,7 +54,7 @@ abstract mixin class $ChannelItemCopyWith<$Res>  {
   factory $ChannelItemCopyWith(ChannelItem value, $Res Function(ChannelItem) _then) = _$ChannelItemCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, ChannelKind kind, bool unread, int mentions, bool muted, bool favorite, bool hasDraft, String? status, int? others, String? userId, int? pictureUpdate
+ String id, String title, ChannelKind kind, bool unread, int mentions, bool muted, bool favorite, bool hasDraft, bool urgent, String? status, int? others, String? userId, int? pictureUpdate
 });
 
 
@@ -71,7 +71,7 @@ class _$ChannelItemCopyWithImpl<$Res>
 
 /// Create a copy of ChannelItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? kind = null,Object? unread = null,Object? mentions = null,Object? muted = null,Object? favorite = null,Object? hasDraft = null,Object? status = freezed,Object? others = freezed,Object? userId = freezed,Object? pictureUpdate = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? kind = null,Object? unread = null,Object? mentions = null,Object? muted = null,Object? favorite = null,Object? hasDraft = null,Object? urgent = null,Object? status = freezed,Object? others = freezed,Object? userId = freezed,Object? pictureUpdate = freezed,}) {
   return _then(ChannelItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -81,6 +81,7 @@ as bool,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_n
 as int,muted: null == muted ? _self.muted : muted // ignore: cast_nullable_to_non_nullable
 as bool,favorite: null == favorite ? _self.favorite : favorite // ignore: cast_nullable_to_non_nullable
 as bool,hasDraft: null == hasDraft ? _self.hasDraft : hasDraft // ignore: cast_nullable_to_non_nullable
+as bool,urgent: null == urgent ? _self.urgent : urgent // ignore: cast_nullable_to_non_nullable
 as bool,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String?,others: freezed == others ? _self.others : others // ignore: cast_nullable_to_non_nullable
 as int?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -170,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  ChannelKind kind,  bool unread,  int mentions,  bool muted,  bool favorite,  bool hasDraft,  String? status,  int? others,  String? userId,  int? pictureUpdate)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  ChannelKind kind,  bool unread,  int mentions,  bool muted,  bool favorite,  bool hasDraft,  bool urgent,  String? status,  int? others,  String? userId,  int? pictureUpdate)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChannelItem() when $default != null:
-return $default(_that.id,_that.title,_that.kind,_that.unread,_that.mentions,_that.muted,_that.favorite,_that.hasDraft,_that.status,_that.others,_that.userId,_that.pictureUpdate);case _:
+return $default(_that.id,_that.title,_that.kind,_that.unread,_that.mentions,_that.muted,_that.favorite,_that.hasDraft,_that.urgent,_that.status,_that.others,_that.userId,_that.pictureUpdate);case _:
   return orElse();
 
 }
@@ -191,10 +192,10 @@ return $default(_that.id,_that.title,_that.kind,_that.unread,_that.mentions,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  ChannelKind kind,  bool unread,  int mentions,  bool muted,  bool favorite,  bool hasDraft,  String? status,  int? others,  String? userId,  int? pictureUpdate)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  ChannelKind kind,  bool unread,  int mentions,  bool muted,  bool favorite,  bool hasDraft,  bool urgent,  String? status,  int? others,  String? userId,  int? pictureUpdate)  $default,) {final _that = this;
 switch (_that) {
 case _ChannelItem():
-return $default(_that.id,_that.title,_that.kind,_that.unread,_that.mentions,_that.muted,_that.favorite,_that.hasDraft,_that.status,_that.others,_that.userId,_that.pictureUpdate);case _:
+return $default(_that.id,_that.title,_that.kind,_that.unread,_that.mentions,_that.muted,_that.favorite,_that.hasDraft,_that.urgent,_that.status,_that.others,_that.userId,_that.pictureUpdate);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -211,10 +212,10 @@ return $default(_that.id,_that.title,_that.kind,_that.unread,_that.mentions,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  ChannelKind kind,  bool unread,  int mentions,  bool muted,  bool favorite,  bool hasDraft,  String? status,  int? others,  String? userId,  int? pictureUpdate)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  ChannelKind kind,  bool unread,  int mentions,  bool muted,  bool favorite,  bool hasDraft,  bool urgent,  String? status,  int? others,  String? userId,  int? pictureUpdate)?  $default,) {final _that = this;
 switch (_that) {
 case _ChannelItem() when $default != null:
-return $default(_that.id,_that.title,_that.kind,_that.unread,_that.mentions,_that.muted,_that.favorite,_that.hasDraft,_that.status,_that.others,_that.userId,_that.pictureUpdate);case _:
+return $default(_that.id,_that.title,_that.kind,_that.unread,_that.mentions,_that.muted,_that.favorite,_that.hasDraft,_that.urgent,_that.status,_that.others,_that.userId,_that.pictureUpdate);case _:
   return null;
 
 }
@@ -226,7 +227,7 @@ return $default(_that.id,_that.title,_that.kind,_that.unread,_that.mentions,_tha
 
 
 class _ChannelItem implements ChannelItem {
-  const _ChannelItem({required this.id, required this.title, required this.kind, required this.unread, required this.mentions, required this.muted, required this.favorite, required this.hasDraft, this.status, this.others, this.userId, this.pictureUpdate});
+  const _ChannelItem({required this.id, required this.title, required this.kind, required this.unread, required this.mentions, required this.muted, required this.favorite, required this.hasDraft, this.urgent = false, this.status, this.others, this.userId, this.pictureUpdate});
   
 
 @override final  String id;
@@ -237,6 +238,7 @@ class _ChannelItem implements ChannelItem {
 @override final  bool muted;
 @override final  bool favorite;
 @override final  bool hasDraft;
+@override@JsonKey() final  bool urgent;
 /// Presence of the other person in a direct message.
 @override final  String? status;
 /// Other members of a group message.
@@ -255,18 +257,18 @@ _$ChannelItemCopyWith<_ChannelItem> get copyWith => __$ChannelItemCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChannelItem&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.unread, unread) || other.unread == unread)&&(identical(other.mentions, mentions) || other.mentions == mentions)&&(identical(other.muted, muted) || other.muted == muted)&&(identical(other.favorite, favorite) || other.favorite == favorite)&&(identical(other.hasDraft, hasDraft) || other.hasDraft == hasDraft)&&(identical(other.status, status) || other.status == status)&&(identical(other.others, others) || other.others == others)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.pictureUpdate, pictureUpdate) || other.pictureUpdate == pictureUpdate));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChannelItem&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.unread, unread) || other.unread == unread)&&(identical(other.mentions, mentions) || other.mentions == mentions)&&(identical(other.muted, muted) || other.muted == muted)&&(identical(other.favorite, favorite) || other.favorite == favorite)&&(identical(other.hasDraft, hasDraft) || other.hasDraft == hasDraft)&&(identical(other.urgent, urgent) || other.urgent == urgent)&&(identical(other.status, status) || other.status == status)&&(identical(other.others, others) || other.others == others)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.pictureUpdate, pictureUpdate) || other.pictureUpdate == pictureUpdate));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,title,kind,unread,mentions,muted,favorite,hasDraft,status,others,userId,pictureUpdate);
+    return Object.hash(runtimeType,id,title,kind,unread,mentions,muted,favorite,hasDraft,urgent,status,others,userId,pictureUpdate);
 }
 
 @override
 String toString() {
-    return 'ChannelItem(id: $id, title: $title, kind: $kind, unread: $unread, mentions: $mentions, muted: $muted, favorite: $favorite, hasDraft: $hasDraft, status: $status, others: $others, userId: $userId, pictureUpdate: $pictureUpdate)';
+    return 'ChannelItem(id: $id, title: $title, kind: $kind, unread: $unread, mentions: $mentions, muted: $muted, favorite: $favorite, hasDraft: $hasDraft, urgent: $urgent, status: $status, others: $others, userId: $userId, pictureUpdate: $pictureUpdate)';
 }
 
 
@@ -277,7 +279,7 @@ abstract mixin class _$ChannelItemCopyWith<$Res> implements $ChannelItemCopyWith
   factory _$ChannelItemCopyWith(_ChannelItem value, $Res Function(_ChannelItem) _then) = __$ChannelItemCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, ChannelKind kind, bool unread, int mentions, bool muted, bool favorite, bool hasDraft, String? status, int? others, String? userId, int? pictureUpdate
+ String id, String title, ChannelKind kind, bool unread, int mentions, bool muted, bool favorite, bool hasDraft, bool urgent, String? status, int? others, String? userId, int? pictureUpdate
 });
 
 
@@ -294,7 +296,7 @@ class __$ChannelItemCopyWithImpl<$Res>
 
 /// Create a copy of ChannelItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? kind = null,Object? unread = null,Object? mentions = null,Object? muted = null,Object? favorite = null,Object? hasDraft = null,Object? status = freezed,Object? others = freezed,Object? userId = freezed,Object? pictureUpdate = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? kind = null,Object? unread = null,Object? mentions = null,Object? muted = null,Object? favorite = null,Object? hasDraft = null,Object? urgent = null,Object? status = freezed,Object? others = freezed,Object? userId = freezed,Object? pictureUpdate = freezed,}) {
   return _then(_ChannelItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -304,6 +306,7 @@ as bool,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_n
 as int,muted: null == muted ? _self.muted : muted // ignore: cast_nullable_to_non_nullable
 as bool,favorite: null == favorite ? _self.favorite : favorite // ignore: cast_nullable_to_non_nullable
 as bool,hasDraft: null == hasDraft ? _self.hasDraft : hasDraft // ignore: cast_nullable_to_non_nullable
+as bool,urgent: null == urgent ? _self.urgent : urgent // ignore: cast_nullable_to_non_nullable
 as bool,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String?,others: freezed == others ? _self.others : others // ignore: cast_nullable_to_non_nullable
 as int?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable

@@ -21,6 +21,8 @@ abstract class ChannelItem with _$ChannelItem {
     required bool favorite,
     required bool hasDraft,
 
+    @Default(false) bool urgent,
+
     /// Presence of the other person in a direct message.
     String? status,
 
@@ -102,9 +104,16 @@ typedef ChannelInput = ({
   int msgCountRoot,
   int mentionCount,
   int mentionCountRoot,
+  int urgentMentionCount,
   bool muted,
   DateTime? lastViewedAt,
 });
+
+bool urgentMentions({
+  required bool postPriority,
+  required int mentions,
+  required int urgent,
+}) => postPriority && mentions > 0 && urgent > 0;
 
 typedef PersonInput = ({
   String username,
@@ -133,10 +142,12 @@ class ChannelListSource {
     this.currentChannelId,
     this.directLimit = defaultDirectLimit,
     this.viewTimes = const {},
+    this.postPriority = false,
   });
 
   final String myId;
   final String teamName;
+  final bool postPriority;
 
   /// In the user's order.
   final List<CategoryInput> categories;
@@ -256,6 +267,11 @@ ChannelItem _item(ChannelListSource source, ChannelInput c, bool favorite) {
     kind: kind,
     unread: !c.muted && unreadCount > 0,
     mentions: crt ? c.mentionCountRoot : c.mentionCount,
+    urgent: urgentMentions(
+      postPriority: source.postPriority,
+      mentions: crt ? c.mentionCountRoot : c.mentionCount,
+      urgent: c.urgentMentionCount,
+    ),
     muted: c.muted,
     favorite: favorite,
     hasDraft: source.draftChannels.contains(c.id),

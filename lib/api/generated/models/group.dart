@@ -20,6 +20,8 @@ class Group {
     this.updateAt,
     this.deleteAt,
     this.hasSyncables,
+    this.memberCount,
+    this.allowReference,
   });
 
   factory Group.fromJson(Map<String, Object?> json) => _$GroupFromJson(json);
@@ -50,6 +52,12 @@ class Group {
   @LenientBool()
   @JsonKey(name: 'has_syncables')
   final bool? hasSyncables;
+  @LenientInt()
+  @JsonKey(name: 'member_count')
+  final int? memberCount;
+  @LenientBool()
+  @JsonKey(name: 'allow_reference')
+  final bool? allowReference;
 
   Map<String, Object?> toJson() => _$GroupToJson(this);
 }

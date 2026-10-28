@@ -233,6 +233,7 @@ ChannelInput _channel(String id, String name) => (
   msgCountRoot: 0,
   mentionCount: 0,
   mentionCountRoot: 0,
+  urgentMentionCount: 0,
   muted: false,
   lastViewedAt: null,
 );

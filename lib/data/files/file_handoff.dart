@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:matterleast/data/files/open_file_portal.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
@@ -22,9 +23,18 @@ abstract final class FileHandoff {
     return cached.copy(p.join(dir.path, _safeName(file)));
   }
 
-  /// Opens the file in an app that can show it; false when none can.
-  static Future<bool> open(File cached, PostFile file, String directory) async {
+  /// Opens the file in an app; false when none can. [chooseApp] asks which.
+  static Future<bool> open(
+    File cached,
+    PostFile file,
+    String directory, {
+    bool chooseApp = false,
+  }) async {
     final copy = await _namedCopy(cached, file, directory);
+    if (Platform.isLinux &&
+        await openFileWithPortal(copy.path, ask: chooseApp)) {
+      return true;
+    }
     return FileDownloader().openFile(
       filePath: copy.path,
       mimeType: _mime(file),

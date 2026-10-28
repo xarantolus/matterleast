@@ -5,6 +5,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/domain/autocomplete.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
@@ -179,7 +180,14 @@ void main() {
         'out_of_channel': <Object?>[],
       }),
       '/api/v4/groups' => ok([
-        {'id': 'g1', 'name': 'makers', 'display_name': 'Makers'},
+        {
+          'id': 'g1',
+          'name': 'makers',
+          'display_name': 'Makers',
+          'source': 'custom',
+          'member_count': 7,
+          'allow_reference': true,
+        },
       ]),
       _ => error(404, 'not_found'),
     };
@@ -196,6 +204,23 @@ void main() {
           .queryParameters;
       expect(asked['q'], 'ma');
       expect(asked['filter_allow_reference'], 'true');
+      expect(asked['include_member_count'], 'true');
+    });
+
+    test('a group is mentioned by its name and counts its members', () async {
+      await groupsAllowed(licensed: true);
+      server.handle = answer;
+      final lists = await actions
+          .suggestions(
+            channelId: channelId,
+            teamId: teamId,
+            text: '@mak',
+            cursor: 4,
+          )
+          .toList();
+      final group = lists.last.single as GroupSuggestion;
+      expect(group.replacement, '@makers');
+      expect(group.memberCount, 7);
     });
 
     test('without a licence or the permission no group is asked', () async {
@@ -210,15 +235,26 @@ void main() {
       expect(server.paths, isNot(contains('/api/v4/groups')));
     });
 
-    test('a server without groups turns them off quietly', () async {
-      await groupsAllowed(licensed: true);
-      server.handle = (r) => r.path == '/api/v4/groups'
-          ? error(501, 'api.ldap_groups.license_error')
-          : answer(r);
-      expect((await suggest('@ma')).last, ['@mabel']);
-      expect((await session.db.features()).groupMentions, isFalse);
-      await suggest('@mab');
-      expect(server.paths.where((p) => p == '/api/v4/groups'), hasLength(1));
-    });
+    for (final (status, id) in [
+      (501, 'api.ldap_groups.license_error'),
+      (403, 'api.context.permissions.app_error'),
+      (404, 'api.context.404.app_error'),
+    ]) {
+      test(
+        'a server answering $status for groups turns them off quietly',
+        () async {
+          await groupsAllowed(licensed: true);
+          server.handle = (r) =>
+              r.path == '/api/v4/groups' ? error(status, id) : answer(r);
+          expect((await suggest('@ma')).last, ['@mabel']);
+          expect((await session.db.features()).groupMentions, isFalse);
+          await suggest('@mab');
+          expect(
+            server.paths.where((p) => p == '/api/v4/groups'),
+            hasLength(1),
+          );
+        },
+      );
+    }
   });
 }

@@ -161,6 +161,7 @@ class InboxViews {
     return InboxSource(
       serverUrl: serverUrl,
       myId: myId,
+      postPriority: (await db.features()).postPriority,
       currentTeamId: await db.syncText(SyncKeys.currentTeamId),
       channels: channels,
       teams: teams,

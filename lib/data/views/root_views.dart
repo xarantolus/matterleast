@@ -59,6 +59,7 @@ class RootViews {
       innerJoin(db.myTeams, db.myTeams.teamId.equalsExp(db.teams.id)),
     ]).get();
     final crt = await db.collapsedThreads();
+    final postPriority = (await db.features()).postPriority;
     final channels = await _myChannels((c) => c.teamId.equals('').not());
     final synced = {
       for (final s in await (db.select(
@@ -111,12 +112,17 @@ class RootViews {
                 : mine[team.id]!.msgCount,
             threadMentions: threads[team.id]?.mentions ?? 0,
             anyThreadUnread: threads[team.id]?.unread ?? false,
+            channelUrgent: own
+                .where((c) => !c.input.muted)
+                .fold(0, (sum, c) => sum + c.input.urgentMentionCount),
+            postPriority: postPriority,
           );
           return RailTeam(
             id: team.id,
             displayName: team.displayName,
             unread: badge.unread,
             mentions: badge.mentions,
+            urgent: badge.urgent,
             iconUpdate: iconUpdates[team.id],
           );
         }(),
@@ -256,6 +262,7 @@ class RootViews {
     }
     return buildChannelList(
       ChannelListSource(
+        postPriority: (await db.features()).postPriority,
         myId: myId,
         teamName: team?.displayName ?? '',
         categories: [

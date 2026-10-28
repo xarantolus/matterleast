@@ -82,8 +82,13 @@ class _PaneLayoutState extends ConsumerState<PaneLayout> {
     }
   }
 
+  // Sibling Scaffolds each show the snack bar; one around them all shows
+  // it once.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      Scaffold(resizeToAvoidBottomInset: false, body: _layout(context));
+
+  Widget _layout(BuildContext context) {
     final windowClass = windowClassOf(MediaQuery.sizeOf(context).width);
     final wide = windowClass.showsPanes;
     if (_wasWide != null && _wasWide != wide) {

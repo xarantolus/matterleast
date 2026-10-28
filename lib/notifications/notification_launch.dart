@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/desktop_shell.dart';
@@ -25,23 +26,44 @@ Future<bool> startNotifications(WidgetRef ref, NavigatorState navigator) async {
   final notifier = ref.read(notifierProvider);
   try {
     await notifier.init(
-      onTap: (response) {
-        final target = NoticeTarget.decode(response.payload);
-        if (target == null) return;
-        // A toast may be clicked while the window is in the tray.
-        if (isDesktop) unawaited(DesktopShell.open());
-        unawaited(openNotice(navigator, ref, target));
-      },
+      onTap: (response) => unawaited(_onNotice(navigator, ref, response)),
       onAction: onNoticeAction,
     );
-    final launch = await notifier.launchTarget();
-    if (launch != null) await openNotice(navigator, ref, launch);
+    final launch = await notifier.launchResponse();
+    final opened = launch != null && await _onNotice(navigator, ref, launch);
     await StayConnected.resume();
-    return launch != null;
+    return opened;
   } on Object catch (e) {
     Log.warn('notify', 'Setting up notifications failed', e);
     return false;
   }
+}
+
+/// Opens the tapped notification's conversation; true when it does.
+/// Desktop toast buttons arrive here too and act through the window's
+/// sessions: a second database in this isolate would fight the window's.
+Future<bool> _onNotice(
+  NavigatorState navigator,
+  WidgetRef ref,
+  NotificationResponse response,
+) async {
+  if (noticeActionOf(response) case final action?) {
+    try {
+      final session = await ref
+          .read(serverManagerProvider)
+          .session(action.target.serverUrl);
+      await runNoticeAction(session, action);
+    } on Object catch (e) {
+      Log.warn('notify', 'A notification action failed', e);
+    }
+    return false;
+  }
+  final target = NoticeTarget.decode(response.payload);
+  if (target == null) return false;
+  // A toast may be clicked while the window is in the tray.
+  if (isDesktop) unawaited(DesktopShell.open());
+  await openNotice(navigator, ref, target);
+  return true;
 }
 
 /// The app left the screen. On a phone the connections go quiet a little

@@ -4,6 +4,7 @@ import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
+import 'package:matterleast/screens/channel_list/channel_tile.dart';
 
 ChannelInput channel(
   String id, {
@@ -17,6 +18,7 @@ ChannelInput channel(
   int readRoot = 10,
   int mentions = 0,
   int mentionsRoot = 0,
+  int urgent = 0,
   bool muted = false,
   int lastPost = 0,
   int? lastViewed = 1,
@@ -35,6 +37,7 @@ ChannelInput channel(
   msgCountRoot: readRoot,
   mentionCount: mentions,
   mentionCountRoot: mentionsRoot,
+  urgentMentionCount: urgent,
   muted: muted,
   lastViewedAt: lastViewed == null
       ? null
@@ -71,10 +74,12 @@ ChannelList build(
   Set<String> hiddenDirect = const {},
   Set<String> hiddenGroups = const {},
   bool crt = false,
+  bool postPriority = false,
 }) {
   final cats = categories ?? [category('all')];
   return buildChannelList(
     ChannelListSource(
+      postPriority: postPriority,
       myId: 'me',
       teamName: 'Team',
       categories: cats,
@@ -278,7 +283,7 @@ void main() {
         teamMentions: 4,
         teamUnreadMessages: 9,
       ),
-      (unread: true, mentions: 4),
+      (unread: true, mentions: 4, urgent: false),
     );
     expect(
       teamBadge(
@@ -288,8 +293,48 @@ void main() {
         teamMentions: 4,
         teamUnreadMessages: 9,
       ),
-      (unread: false, mentions: 1),
+      (unread: false, mentions: 1, urgent: false),
     );
+  });
+
+  test('a team badge is urgent only from fetched channels on a server with '
+      'message priority', () {
+    ({bool unread, int mentions, bool urgent}) badge({
+      bool synced = true,
+      bool priority = true,
+      int urgent = 1,
+    }) => teamBadge(
+      channelsSynced: synced,
+      channelMentions: 2,
+      anyChannelUnread: true,
+      teamMentions: 2,
+      teamUnreadMessages: 2,
+      channelUrgent: urgent,
+      postPriority: priority,
+    );
+    expect(badge().urgent, isTrue);
+    expect(badge(urgent: 0).urgent, isFalse);
+    expect(badge(priority: false).urgent, isFalse);
+    expect(badge(synced: false).urgent, isFalse);
+  });
+
+  test('a channel with urgent mentions has an urgent badge where the server '
+      'marks messages urgent', () {
+    final channels = [
+      channel('alarm', mentions: 3, urgent: 1),
+      channel('plain', mentions: 2),
+      channel('read', urgent: 1),
+    ];
+    ChannelItem row(ChannelList list, String id) =>
+        list.sections.expand((s) => s.rows).firstWhere((r) => r.id == id);
+    final withPriority = build(channels, postPriority: true);
+    expect(row(withPriority, 'alarm').urgent, isTrue);
+    expect(row(withPriority, 'plain').urgent, isFalse);
+    // Read: no mentions left to mark.
+    expect(row(withPriority, 'read').urgent, isFalse);
+    expect(channelRowLabel(row(withPriority, 'alarm')), contains('urgent'));
+    final without = build(channels);
+    expect(row(without, 'alarm').urgent, isFalse);
   });
 
   test('the unreads filter shows only channels with something new, in one '

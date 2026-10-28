@@ -205,33 +205,67 @@ class _SlideToPopState extends State<_SlideToPop> with WidgetsBindingObserver {
     widget.route._dragEnd(velocity);
   }
 
+  /// Tabs win a sideways drag over the route, so on the first tab the drag
+  /// that would go past it moves the page instead.
+  bool _onPageScroll(ScrollNotification n) {
+    if (n.metrics is! PageMetrics || n.metrics.axis != Axis.horizontal) {
+      return false;
+    }
+    final width = MediaQuery.sizeOf(context).width;
+    switch (n) {
+      case OverscrollNotification(
+            overscroll: < 0,
+            dragDetails: DragUpdateDetails(:final delta),
+          )
+          when _dragging || _enabled:
+        if (!_dragging) {
+          _dragging = true;
+          widget.route.navigator?.didStartUserGesture();
+        }
+        widget.route._dragUpdate(delta.dx / width);
+      case ScrollUpdateNotification(
+            dragDetails: DragUpdateDetails(:final delta),
+          )
+          when _dragging:
+        widget.route._dragUpdate(delta.dx / width);
+      case ScrollEndNotification(:final dragDetails) when _dragging:
+        _end(dragDetails?.velocity.pixelsPerSecond.dx ?? 0);
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    return RawGestureDetector(
-      behavior: HitTestBehavior.translucent,
-      gestures: {
-        OneWayDragRecognizer:
-            GestureRecognizerFactoryWithHandlers<OneWayDragRecognizer>(
-              () => OneWayDragRecognizer(rightward: true, debugOwner: this),
-              (r) => r
-                ..onStart = (_) {
-                  if (!_enabled) return;
-                  _dragging = true;
-                  widget.route.navigator?.didStartUserGesture();
-                }
-                ..onUpdate = (d) {
-                  if (_dragging) widget.route._dragUpdate(d.delta.dx / width);
-                }
-                ..onEnd = (d) {
-                  if (_dragging) _end(d.velocity.pixelsPerSecond.dx);
-                }
-                ..onCancel = () {
-                  if (_dragging) _end(0);
-                },
-            ),
-      },
-      child: widget.child,
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onPageScroll,
+      child: RawGestureDetector(
+        behavior: HitTestBehavior.translucent,
+        gestures: {
+          OneWayDragRecognizer:
+              GestureRecognizerFactoryWithHandlers<OneWayDragRecognizer>(
+                () => OneWayDragRecognizer(rightward: true, debugOwner: this),
+                (r) => r
+                  ..onStart = (_) {
+                    if (!_enabled) return;
+                    _dragging = true;
+                    widget.route.navigator?.didStartUserGesture();
+                  }
+                  ..onUpdate = (d) {
+                    if (_dragging) {
+                      widget.route._dragUpdate(d.delta.dx / width);
+                    }
+                  }
+                  ..onEnd = (d) {
+                    if (_dragging) _end(d.velocity.pixelsPerSecond.dx);
+                  }
+                  ..onCancel = () {
+                    if (_dragging) _end(0);
+                  },
+              ),
+        },
+        child: widget.child,
+      ),
     );
   }
 }

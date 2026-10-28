@@ -12,6 +12,7 @@ import 'package:matterleast/app/wallpaper_colours.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
+import 'package:matterleast/ui/bar_tabs.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/window_strip.dart';
 
@@ -259,6 +260,40 @@ void main() {
         lessThan(contrast(drawn(find.text('Create')), bar)),
         reason: 'a disabled action looks different from an enabled one',
       );
+    });
+  }
+
+  for (final MapEntry(key: name, value: theme) in themes.entries) {
+    testWidgets('tabs under the app bar read on the bar in $name', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: DefaultTabController(
+            length: 2,
+            child: Scaffold(
+              appBar: AppBar(
+                title: const Text('Threads'),
+                bottom: const BarTabs(
+                  tabs: [
+                    Tab(text: 'All'),
+                    Tab(text: 'Unread'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final bar = theme.appBarTheme.backgroundColor!;
+      for (final label in ['All', 'Unread']) {
+        final drawn = Color.alphaBlend(
+          drawnColour(tester, find.text(label)),
+          bar,
+        );
+        expect(contrast(drawn, bar), greaterThanOrEqualTo(4.5), reason: label);
+      }
     });
   }
 

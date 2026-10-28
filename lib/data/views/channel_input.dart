@@ -17,6 +17,7 @@ ChannelInput channelInputOf(ChannelRow c, MyChannelRow m) => (
   msgCountRoot: m.msgCountRoot,
   mentionCount: m.mentionCount,
   mentionCountRoot: m.mentionCountRoot,
+  urgentMentionCount: m.urgentMentionCount,
   // Muted channels only count mentions as unread.
   muted: m.notifyProps?.markUnread == 'mention',
   lastViewedAt: m.lastViewedAt,

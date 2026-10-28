@@ -219,6 +219,112 @@ void main() {
     });
   });
 
+  group('notification actions', () {
+    final target = NoticeTarget(
+      serverUrl: 'https://chat.example.test',
+      channelId: 'town',
+      rootId: 'root1',
+      postId: 'p9',
+      teamId: 't1',
+      newestAt: _t0,
+    );
+
+    test('a Windows Reply hands back its arguments and the typed text', () {
+      final details = Notifier.desktopDetailsOf(target).windows!;
+      final reply = details.actions.firstWhere((a) => a.content == 'Reply');
+      expect(details.inputs.single.id, reply.inputId);
+      final action = noticeActionOf(
+        NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotificationAction,
+          payload: reply.arguments,
+          actionId: reply.arguments,
+          data: {reply.inputId!: '  On my way  '},
+        ),
+      )!;
+      expect(action.kind, NoticeActionKind.reply);
+      expect(action.text, 'On my way');
+      expect(action.target.channelId, 'town');
+      expect(action.target.rootId, 'root1');
+    });
+
+    test('a Windows Mark as read names its conversation', () {
+      final read = Notifier.desktopDetailsOf(target).windows!.actions
+          .firstWhere((a) => a.content == 'Mark as read');
+      final action = noticeActionOf(
+        NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotificationAction,
+          payload: read.arguments,
+          actionId: read.arguments,
+        ),
+      )!;
+      expect(action.kind, NoticeActionKind.read);
+      expect(action.target.postId, 'p9');
+    });
+
+    test('a click on a Windows toast itself is no action', () {
+      final payload = target.encode();
+      expect(
+        noticeActionOf(
+          NotificationResponse(
+            notificationResponseType:
+                NotificationResponseType.selectedNotification,
+            payload: payload,
+            actionId: payload,
+          ),
+        ),
+        isNull,
+      );
+      expect(NoticeTarget.decode(payload)!.channelId, 'town');
+    });
+
+    test('Linux offers only Mark as read, which names the action', () {
+      final linux = Notifier.desktopDetailsOf(target).linux!;
+      expect(linux.actions.map((a) => a.key), [NoticeActions.read]);
+      final action = noticeActionOf(
+        NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotificationAction,
+          payload: target.encode(),
+          actionId: NoticeActions.read,
+        ),
+      )!;
+      expect(action.kind, NoticeActionKind.read);
+    });
+
+    test('an Android reply carries its input', () {
+      final action = noticeActionOf(
+        NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotificationAction,
+          payload: target.encode(),
+          actionId: NoticeActions.reply,
+          input: 'Thanks',
+        ),
+      )!;
+      expect((action.kind, action.text), (NoticeActionKind.reply, 'Thanks'));
+    });
+
+    test("a payload that isn't ours is ignored", () {
+      for (final payload in ['something else', '[1, 2]', '{"s": 1}', '42']) {
+        expect(
+          noticeActionOf(
+            NotificationResponse(
+              notificationResponseType:
+                  NotificationResponseType.selectedNotificationAction,
+              payload: payload,
+              actionId: payload,
+            ),
+          ),
+          isNull,
+          reason: payload,
+        );
+        expect(NoticeTarget.decode(payload), isNull, reason: payload);
+      }
+    });
+  });
+
   group('avatar', () {
     test('comes out round and at the asked size', () {
       final round = img.decodePng(roundAvatar(_png(300, 200), size: 64)!)!;

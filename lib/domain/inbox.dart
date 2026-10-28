@@ -52,6 +52,7 @@ abstract class InboxItem with _$InboxItem {
 
     /// Presence of the other person in a direct message.
     String? status,
+    @Default(false) bool urgent,
   }) = _InboxItem;
 
   const InboxItem._();
@@ -129,9 +130,11 @@ class InboxSource {
     this.collapsedThreads = false,
     this.nameFormat = NameFormat.username,
     this.known = const {},
+    this.postPriority = false,
   });
 
   final String serverUrl;
+  final bool postPriority;
   final String myId;
   final String? currentTeamId;
 
@@ -269,6 +272,11 @@ ServerInbox buildServerInbox(InboxSource s) {
         unread: true,
         postId: current ? latest.id : null,
         status: name.status,
+        urgent: urgentMentions(
+          postPriority: s.postPriority,
+          mentions: mentions,
+          urgent: c.urgentMentionCount,
+        ),
       ),
     );
   }

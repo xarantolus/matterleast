@@ -116,6 +116,23 @@ void main() {
       expect(rankUsers('h', const []).single, isA<SpecialMention>());
     });
 
+    test('groups follow the channel members and say whom they notify', () {
+      final ranked = rankUsers(
+        'ma',
+        [user('1', 'mabel'), user('2', 'marco', inChannel: false)],
+        groups: [
+          (id: 'g1', name: 'makers', displayName: 'Makers', memberCount: 12),
+          (id: 'g2', name: 'mates', displayName: 'mates', memberCount: null),
+        ],
+      );
+      expect(
+        [for (final s in ranked) s.replacement],
+        ['@mabel', '@makers', '@mates', '@marco'],
+      );
+      expect(groupDetails(ranked[1] as GroupSuggestion), 'Makers · 12 members');
+      expect(groupDetails(ranked[2] as GroupSuggestion), '');
+    });
+
     test('a last name or a word of the nickname matches', () {
       expect(
         rankUsers('sto', [user('1', 'r1', last: 'Stone')]).first.replacement,

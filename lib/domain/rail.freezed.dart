@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RailTeam {
 
- String get id; String get displayName; bool get unread; int get mentions;/// The team's `last_team_icon_update`; null or 0 when it has no icon.
+ String get id; String get displayName; bool get unread; int get mentions; bool get urgent;/// The team's `last_team_icon_update`; null or 0 when it has no icon.
  int? get iconUpdate;
 /// Create a copy of RailTeam
 /// with the given fields replaced by the non-null parameter values.
@@ -28,20 +28,20 @@ $RailTeamCopyWith<RailTeam> get copyWith => _$RailTeamCopyWithImpl<RailTeam>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as RailTeam;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RailTeam&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.unread, _this.unread) || other.unread == _this.unread)&&(identical(other.mentions, _this.mentions) || other.mentions == _this.mentions)&&(identical(other.iconUpdate, _this.iconUpdate) || other.iconUpdate == _this.iconUpdate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RailTeam&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.unread, _this.unread) || other.unread == _this.unread)&&(identical(other.mentions, _this.mentions) || other.mentions == _this.mentions)&&(identical(other.urgent, _this.urgent) || other.urgent == _this.urgent)&&(identical(other.iconUpdate, _this.iconUpdate) || other.iconUpdate == _this.iconUpdate));
 }
 
 
 @override
 int get hashCode {
   final _this = this as RailTeam;
-  return Object.hash(runtimeType,_this.id,_this.displayName,_this.unread,_this.mentions,_this.iconUpdate);
+  return Object.hash(runtimeType,_this.id,_this.displayName,_this.unread,_this.mentions,_this.urgent,_this.iconUpdate);
 }
 
 @override
 String toString() {
   final _this = this as RailTeam;
-  return 'RailTeam(id: ${_this.id}, displayName: ${_this.displayName}, unread: ${_this.unread}, mentions: ${_this.mentions}, iconUpdate: ${_this.iconUpdate})';
+  return 'RailTeam(id: ${_this.id}, displayName: ${_this.displayName}, unread: ${_this.unread}, mentions: ${_this.mentions}, urgent: ${_this.urgent}, iconUpdate: ${_this.iconUpdate})';
 }
 
 
@@ -52,7 +52,7 @@ abstract mixin class $RailTeamCopyWith<$Res>  {
   factory $RailTeamCopyWith(RailTeam value, $Res Function(RailTeam) _then) = _$RailTeamCopyWithImpl;
 @useResult
 $Res call({
- String id, String displayName, bool unread, int mentions, int? iconUpdate
+ String id, String displayName, bool unread, int mentions, bool urgent, int? iconUpdate
 });
 
 
@@ -69,13 +69,14 @@ class _$RailTeamCopyWithImpl<$Res>
 
 /// Create a copy of RailTeam
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? displayName = null,Object? unread = null,Object? mentions = null,Object? iconUpdate = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? displayName = null,Object? unread = null,Object? mentions = null,Object? urgent = null,Object? iconUpdate = freezed,}) {
   return _then(RailTeam(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,unread: null == unread ? _self.unread : unread // ignore: cast_nullable_to_non_nullable
 as bool,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_nullable_to_non_nullable
-as int,iconUpdate: freezed == iconUpdate ? _self.iconUpdate : iconUpdate // ignore: cast_nullable_to_non_nullable
+as int,urgent: null == urgent ? _self.urgent : urgent // ignore: cast_nullable_to_non_nullable
+as bool,iconUpdate: freezed == iconUpdate ? _self.iconUpdate : iconUpdate // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
 }
@@ -161,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String displayName,  bool unread,  int mentions,  int? iconUpdate)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String displayName,  bool unread,  int mentions,  bool urgent,  int? iconUpdate)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RailTeam() when $default != null:
-return $default(_that.id,_that.displayName,_that.unread,_that.mentions,_that.iconUpdate);case _:
+return $default(_that.id,_that.displayName,_that.unread,_that.mentions,_that.urgent,_that.iconUpdate);case _:
   return orElse();
 
 }
@@ -182,10 +183,10 @@ return $default(_that.id,_that.displayName,_that.unread,_that.mentions,_that.ico
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String displayName,  bool unread,  int mentions,  int? iconUpdate)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String displayName,  bool unread,  int mentions,  bool urgent,  int? iconUpdate)  $default,) {final _that = this;
 switch (_that) {
 case _RailTeam():
-return $default(_that.id,_that.displayName,_that.unread,_that.mentions,_that.iconUpdate);case _:
+return $default(_that.id,_that.displayName,_that.unread,_that.mentions,_that.urgent,_that.iconUpdate);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +203,10 @@ return $default(_that.id,_that.displayName,_that.unread,_that.mentions,_that.ico
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String displayName,  bool unread,  int mentions,  int? iconUpdate)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String displayName,  bool unread,  int mentions,  bool urgent,  int? iconUpdate)?  $default,) {final _that = this;
 switch (_that) {
 case _RailTeam() when $default != null:
-return $default(_that.id,_that.displayName,_that.unread,_that.mentions,_that.iconUpdate);case _:
+return $default(_that.id,_that.displayName,_that.unread,_that.mentions,_that.urgent,_that.iconUpdate);case _:
   return null;
 
 }
@@ -217,13 +218,14 @@ return $default(_that.id,_that.displayName,_that.unread,_that.mentions,_that.ico
 
 
 class _RailTeam implements RailTeam {
-  const _RailTeam({required this.id, required this.displayName, required this.unread, required this.mentions, this.iconUpdate});
+  const _RailTeam({required this.id, required this.displayName, required this.unread, required this.mentions, this.urgent = false, this.iconUpdate});
   
 
 @override final  String id;
 @override final  String displayName;
 @override final  bool unread;
 @override final  int mentions;
+@override@JsonKey() final  bool urgent;
 /// The team's `last_team_icon_update`; null or 0 when it has no icon.
 @override final  int? iconUpdate;
 
@@ -237,18 +239,18 @@ _$RailTeamCopyWith<_RailTeam> get copyWith => __$RailTeamCopyWithImpl<_RailTeam>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RailTeam&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.unread, unread) || other.unread == unread)&&(identical(other.mentions, mentions) || other.mentions == mentions)&&(identical(other.iconUpdate, iconUpdate) || other.iconUpdate == iconUpdate));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RailTeam&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.unread, unread) || other.unread == unread)&&(identical(other.mentions, mentions) || other.mentions == mentions)&&(identical(other.urgent, urgent) || other.urgent == urgent)&&(identical(other.iconUpdate, iconUpdate) || other.iconUpdate == iconUpdate));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,displayName,unread,mentions,iconUpdate);
+    return Object.hash(runtimeType,id,displayName,unread,mentions,urgent,iconUpdate);
 }
 
 @override
 String toString() {
-    return 'RailTeam(id: $id, displayName: $displayName, unread: $unread, mentions: $mentions, iconUpdate: $iconUpdate)';
+    return 'RailTeam(id: $id, displayName: $displayName, unread: $unread, mentions: $mentions, urgent: $urgent, iconUpdate: $iconUpdate)';
 }
 
 
@@ -259,7 +261,7 @@ abstract mixin class _$RailTeamCopyWith<$Res> implements $RailTeamCopyWith<$Res>
   factory _$RailTeamCopyWith(_RailTeam value, $Res Function(_RailTeam) _then) = __$RailTeamCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String displayName, bool unread, int mentions, int? iconUpdate
+ String id, String displayName, bool unread, int mentions, bool urgent, int? iconUpdate
 });
 
 
@@ -276,13 +278,14 @@ class __$RailTeamCopyWithImpl<$Res>
 
 /// Create a copy of RailTeam
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? displayName = null,Object? unread = null,Object? mentions = null,Object? iconUpdate = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? displayName = null,Object? unread = null,Object? mentions = null,Object? urgent = null,Object? iconUpdate = freezed,}) {
   return _then(_RailTeam(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,unread: null == unread ? _self.unread : unread // ignore: cast_nullable_to_non_nullable
 as bool,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_nullable_to_non_nullable
-as int,iconUpdate: freezed == iconUpdate ? _self.iconUpdate : iconUpdate // ignore: cast_nullable_to_non_nullable
+as int,urgent: null == urgent ? _self.urgent : urgent // ignore: cast_nullable_to_non_nullable
+as bool,iconUpdate: freezed == iconUpdate ? _self.iconUpdate : iconUpdate // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
 }

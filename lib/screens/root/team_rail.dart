@@ -10,6 +10,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/you_page.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/ui/mention_badge.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/team_icon.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -122,7 +123,12 @@ class _ServerTeams extends ConsumerWidget {
               team.displayName,
               server.displayName,
               if (team.id != selectedTeam && team.mentions > 0)
-                team.mentions == 1 ? '1 mention' : '${team.mentions} mentions'
+                [
+                  team.mentions == 1
+                      ? '1 mention'
+                      : '${team.mentions} mentions',
+                  if (team.urgent) 'urgent',
+                ].join(', ')
               else if (team.id != selectedTeam && team.unread)
                 'unread',
             ].join(' · '),
@@ -166,7 +172,11 @@ class _TeamBadge extends StatelessWidget {
     // replace it.
     if (team.mentions > 0) {
       return ExcludeSemantics(
-        child: Badge.count(count: team.mentions, child: icon),
+        child: MentionBadge(
+          count: team.mentions,
+          urgent: team.urgent,
+          child: icon,
+        ),
       );
     }
     if (team.unread) {

@@ -11,6 +11,7 @@ import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/scheduled_list.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/bar_tabs.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -58,7 +59,7 @@ class DraftsScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: title,
-          bottom: TabBar(
+          bottom: BarTabs(
             tabs: [
               const Tab(text: 'Drafts'),
               Tab(
