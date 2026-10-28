@@ -82,9 +82,8 @@ class _PaneLayoutState extends ConsumerState<PaneLayout> {
     }
   }
 
-  // The list and every pane are Scaffolds side by side, and each one that
-  // isn't inside another shows the app's snack bars. This one holds them all
-  // so a snack bar shows once per window.
+  // Sibling Scaffolds each show the snack bar; one around them all shows
+  // it once.
   @override
   Widget build(BuildContext context) =>
       Scaffold(resizeToAvoidBottomInset: false, body: _layout(context));

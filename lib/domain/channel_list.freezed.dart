@@ -15,8 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChannelItem {
 
- String get id; String get title; ChannelKind get kind; bool get unread; int get mentions; bool get muted; bool get favorite; bool get hasDraft;/// Some of the [mentions] are in urgent messages.
- bool get urgent;/// Presence of the other person in a direct message.
+ String get id; String get title; ChannelKind get kind; bool get unread; int get mentions; bool get muted; bool get favorite; bool get hasDraft; bool get urgent;/// Presence of the other person in a direct message.
  String? get status;/// Other members of a group message.
  int? get others;/// The other person of a direct message and their picture's version.
  String? get userId; int? get pictureUpdate;
@@ -239,7 +238,6 @@ class _ChannelItem implements ChannelItem {
 @override final  bool muted;
 @override final  bool favorite;
 @override final  bool hasDraft;
-/// Some of the [mentions] are in urgent messages.
 @override@JsonKey() final  bool urgent;
 /// Presence of the other person in a direct message.
 @override final  String? status;

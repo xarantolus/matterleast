@@ -135,15 +135,13 @@ final class GroupSuggestion extends Suggestion {
   final String name;
   final String displayName;
 
-  /// Null when the server didn't say.
   final int? memberCount;
 
   @override
   String get replacement => '@$name';
 }
 
-/// Pure: what a group's row says under `@name`: its display name when it
-/// differs, and how many it notifies.
+/// The line under a group's `@name`.
 String groupDetails(GroupSuggestion group) => [
   if (group.displayName.isNotEmpty && group.displayName != group.name)
     group.displayName,

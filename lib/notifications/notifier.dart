@@ -190,16 +190,13 @@ abstract final class NoticeActions {
 
 enum NoticeActionKind { reply, read }
 
-/// A Reply or Mark as read from a notification: what to do, where, and the
-/// reply's text.
 typedef NoticeAction = ({
   NoticeActionKind kind,
   NoticeTarget target,
   String text,
 });
 
-/// The Reply or Mark as read [response] asks for; null for a tap on the
-/// notification itself or a payload that isn't ours.
+/// Null for a tap on the notification itself or a payload that isn't ours.
 NoticeAction? noticeActionOf(NotificationResponse response) {
   final target = NoticeTarget.decode(response.payload);
   if (target == null) return null;
@@ -276,8 +273,6 @@ class Notifier {
     ),
   );
 
-  /// What the app was opened from, if a notification or one of its
-  /// buttons started it.
   Future<NotificationResponse?> launchResponse() async {
     final NotificationAppLaunchDetails? details;
     try {
@@ -362,9 +357,7 @@ class Notifier {
     );
   }
 
-  /// The buttons of a desktop toast. Windows toasts take a reply too;
-  /// Linux notification servers mostly have no text field, so only Mark
-  /// as read there.
+  /// Most Linux notification servers have no text field: no Reply there.
   static NotificationDetails desktopDetailsOf(
     NoticeTarget target,
   ) => NotificationDetails(

@@ -25,8 +25,7 @@ mixin _$InboxItem {
  String? get team; DateTime get time;/// Unread messages or new replies; 0 shows a dot when [unread].
  int get count; bool get unread; String? get postId; String? get rootId;/// A reply under collapsed threads: it opens in its thread.
  bool get inThread;/// Presence of the other person in a direct message.
- String? get status;/// The conversation has urgent mentions.
- bool get urgent;
+ String? get status; bool get urgent;
 /// Create a copy of InboxItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -274,7 +273,6 @@ class _InboxItem extends InboxItem {
 @override@JsonKey() final  bool inThread;
 /// Presence of the other person in a direct message.
 @override final  String? status;
-/// The conversation has urgent mentions.
 @override@JsonKey() final  bool urgent;
 
 /// Create a copy of InboxItem

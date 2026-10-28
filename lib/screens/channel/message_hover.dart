@@ -12,10 +12,8 @@ import 'package:matterleast/ui/tokens.dart';
 
 /// A message with a mouse: tinted while the pointer is over it, with a
 /// small toolbar floating at its top right, and the message menu at the
-/// pointer on a right click. Tab and the arrow keys stop at the message
-/// too, which shows the toolbar with its buttons next in the tab order;
-/// Esc gives the focus back to the list. The hover and focus live here,
-/// so only this row rebuilds when they change.
+/// pointer on a right click. Keyboard focus shows the toolbar too; Esc
+/// leaves it. Hover and focus live here, so only this row rebuilds.
 class MessageHover extends StatefulWidget {
   const MessageHover({required this.target, required this.child, super.key});
 
@@ -54,8 +52,7 @@ class _MessageHoverState extends State<MessageHover> {
     super.dispose();
   }
 
-  /// The message itself or its toolbar has the keyboard; not a link or the
-  /// text selection inside it, which a tap focuses.
+  // Not the text selection inside the message, which a tap focuses.
   void _focusChanged() {
     final focused = _focus.hasPrimaryFocus || _toolbarFocus.hasFocus;
     if (focused != _focused) _pointer(focused: focused);
@@ -99,8 +96,7 @@ class _MessageHoverState extends State<MessageHover> {
     return KeyEventResult.handled;
   }
 
-  // Tab goes from the message to its toolbar's buttons, then to what is
-  // inside the message, such as its links.
+  // The toolbar floats above the message; reading order would put it first.
   @override
   Widget build(BuildContext context) => FocusTraversalGroup(
     policy: OrderedTraversalPolicy(),

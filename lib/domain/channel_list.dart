@@ -21,7 +21,6 @@ abstract class ChannelItem with _$ChannelItem {
     required bool favorite,
     required bool hasDraft,
 
-    /// Some of the [mentions] are in urgent messages.
     @Default(false) bool urgent,
 
     /// Presence of the other person in a direct message.
@@ -105,16 +104,11 @@ typedef ChannelInput = ({
   int msgCountRoot,
   int mentionCount,
   int mentionCountRoot,
-
-  /// Mentions in messages marked urgent; 0 where the server has no message
-  /// priority.
   int urgentMentionCount,
   bool muted,
   DateTime? lastViewedAt,
 });
 
-/// Pure: whether a mention badge says some mentions are urgent: only on a
-/// server with message priority, and only while there are mentions.
 bool urgentMentions({
   required bool postPriority,
   required int mentions,
@@ -153,8 +147,6 @@ class ChannelListSource {
 
   final String myId;
   final String teamName;
-
-  /// The server marks messages urgent, so mention badges can say so.
   final bool postPriority;
 
   /// In the user's order.

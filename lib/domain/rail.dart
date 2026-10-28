@@ -12,8 +12,6 @@ abstract class RailTeam with _$RailTeam {
     required String displayName,
     required bool unread,
     required int mentions,
-
-    /// Some of the [mentions] are in urgent messages.
     @Default(false) bool urgent,
 
     /// The team's `last_team_icon_update`; null or 0 when it has no icon.
@@ -46,8 +44,6 @@ String? shownTeam(RailTarget? target, List<RailTeam> teams) {
 /// fetched, else the server's team counts from the entry sync. With
 /// collapsed threads the team's followed threads count too, as in the
 /// official app.
-/// [channelUrgent] counts the channels' urgent mentions, known only once
-/// they were fetched.
 ({bool unread, int mentions, bool urgent}) teamBadge({
   required bool channelsSynced,
   required int channelMentions,

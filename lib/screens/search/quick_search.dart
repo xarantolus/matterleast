@@ -215,9 +215,8 @@ typedef _Matches = ({
   bool offline,
 });
 
-/// The full-screen search: its field, where to go before anything is
-/// typed, and matches as the user types. Return opens the highlighted
-/// match, or searches messages on that row or when nothing matches.
+/// The full-screen search. Return opens the highlighted match, or
+/// searches messages on that row or when nothing matches.
 class QuickSearchView extends ConsumerStatefulWidget {
   const QuickSearchView({
     required this.controller,
@@ -305,7 +304,6 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
     );
   }
 
-  /// The matches, then null for the message search row.
   List<SwitchItem?> _choices(_Matches m) => [
     ...m.local,
     ...m.extra,
@@ -581,7 +579,6 @@ class SwitchTile extends StatelessWidget {
   final SwitchItem item;
   final VoidCallback onTap;
 
-  /// The row Return would open.
   final bool selected;
 
   /// Says "Not joined" or "Archived" on such channels; pointless in a list

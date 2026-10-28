@@ -52,8 +52,6 @@ abstract class InboxItem with _$InboxItem {
 
     /// Presence of the other person in a direct message.
     String? status,
-
-    /// The conversation has urgent mentions.
     @Default(false) bool urgent,
   }) = _InboxItem;
 
@@ -136,8 +134,6 @@ class InboxSource {
   });
 
   final String serverUrl;
-
-  /// The server marks messages urgent, so badges can say so.
   final bool postPriority;
   final String myId;
   final String? currentTeamId;

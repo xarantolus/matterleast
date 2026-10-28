@@ -23,8 +23,7 @@ abstract final class FileHandoff {
     return cached.copy(p.join(dir.path, _safeName(file)));
   }
 
-  /// Opens the file in an app that can show it; false when none can. With
-  /// [chooseApp] the desktop asks which app, where it can (Linux).
+  /// Opens the file in an app; false when none can. [chooseApp] asks which.
   static Future<bool> open(
     File cached,
     PostFile file,

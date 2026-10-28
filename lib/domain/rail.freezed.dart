@@ -15,8 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RailTeam {
 
- String get id; String get displayName; bool get unread; int get mentions;/// Some of the [mentions] are in urgent messages.
- bool get urgent;/// The team's `last_team_icon_update`; null or 0 when it has no icon.
+ String get id; String get displayName; bool get unread; int get mentions; bool get urgent;/// The team's `last_team_icon_update`; null or 0 when it has no icon.
  int? get iconUpdate;
 /// Create a copy of RailTeam
 /// with the given fields replaced by the non-null parameter values.
@@ -226,7 +225,6 @@ class _RailTeam implements RailTeam {
 @override final  String displayName;
 @override final  bool unread;
 @override final  int mentions;
-/// Some of the [mentions] are in urgent messages.
 @override@JsonKey() final  bool urgent;
 /// The team's `last_team_icon_update`; null or 0 when it has no icon.
 @override final  int? iconUpdate;

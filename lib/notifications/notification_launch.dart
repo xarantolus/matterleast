@@ -39,10 +39,9 @@ Future<bool> startNotifications(WidgetRef ref, NavigatorState navigator) async {
   }
 }
 
-/// A tap on a notification opens its conversation. Desktop toast buttons
-/// arrive here too, in the window's own isolate, so they act through its
-/// sessions; a second database there would fight the window's. True when
-/// a conversation is being opened.
+/// Opens the tapped notification's conversation; true when it does.
+/// Desktop toast buttons arrive here too and act through the window's
+/// sessions: a second database in this isolate would fight the window's.
 Future<bool> _onNotice(
   NavigatorState navigator,
   WidgetRef ref,

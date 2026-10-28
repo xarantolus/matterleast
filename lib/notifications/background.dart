@@ -119,8 +119,7 @@ Future<void> clearOnRead(Notifier notifier, String url, ReadMark mark) async {
   }
 }
 
-/// Reply and Mark as read on Android, run in a background engine of their
-/// own. Desktops run them in the window's sessions ([runNoticeAction]).
+/// Reply and Mark as read on Android, in a background engine of their own.
 @pragma('vm:entry-point')
 Future<void> onNoticeAction(NotificationResponse response) async {
   final action = noticeActionOf(response);
@@ -137,8 +136,6 @@ Future<void> onNoticeAction(NotificationResponse response) async {
   });
 }
 
-/// Sends the reply or marks the conversation read, as the conversation's
-/// own composer and read marking do.
 Future<void> runNoticeAction(ServerSession session, NoticeAction action) async {
   final target = action.target;
   switch (action.kind) {

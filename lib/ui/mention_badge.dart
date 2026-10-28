@@ -1,7 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-/// A count badge, marked with an exclamation mark when some of it is
-/// urgent, like the official app's urgent mention badge.
+/// A count badge, marked when some of it is urgent, as upstream does.
 class MentionBadge extends StatelessWidget {
   const MentionBadge({
     required this.count,
@@ -28,7 +27,6 @@ class MentionBadge extends StatelessWidget {
         child: child,
       );
     }
-    // Urgent mentions notify like any mention, muted or not.
     final scheme = Theme.of(context).colorScheme;
     return Badge(
       backgroundColor: scheme.error,
