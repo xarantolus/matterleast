@@ -134,16 +134,22 @@ class _InlineTextState extends State<InlineText> {
     }
 
     final status = LinkStatus.maybeOf(context);
-    TextSpan hoverable(Object? key, TextSpan span) {
+    // Hover recolours a span, or only underlines it with [underlineOnly].
+    TextSpan hoverable(
+      Object? key,
+      TextSpan span, {
+      bool underlineOnly = false,
+    }) {
       if (key == null || !isDesktop) return span;
       final style = span.style ?? const TextStyle();
       return TextSpan(
         text: span.text,
         recognizer: span.recognizer,
+        mouseCursor: span.mouseCursor,
         style: _hovered != key
             ? style
             : style.copyWith(
-                color: tokens.hoveredAccent,
+                color: underlineOnly ? null : tokens.hoveredAccent,
                 decoration: TextDecoration.combine([
                   TextDecoration.underline,
                   ?style.decoration,
@@ -214,6 +220,9 @@ class _InlineTextState extends State<InlineText> {
                         TapGestureRecognizer()
                           ..onTap = () => env.onMention(name),
                       ),
+                mouseCursor: env == null || _specialMentions.contains(lower)
+                    ? null
+                    : SystemMouseCursors.click,
               ),
             ),
           );
@@ -230,17 +239,28 @@ class _InlineTextState extends State<InlineText> {
                         TapGestureRecognizer()
                           ..onTap = () => env.onChannel(name),
                       ),
+                mouseCursor: env == null ? null : SystemMouseCursors.click,
               ),
             ),
           );
         case HashtagPart(:final tag, :final marks):
+          final onHashtag = env?.onHashtag;
           spans.add(
             hoverable(
               ('part', i),
               TextSpan(
                 text: '#$tag',
-                style: styled(marks).copyWith(color: tokens.accent),
+                style: styled(marks),
+                recognizer: onHashtag == null
+                    ? null
+                    : _keep(
+                        TapGestureRecognizer()..onTap = () => onHashtag(tag),
+                      ),
+                mouseCursor: onHashtag == null
+                    ? null
+                    : SystemMouseCursors.click,
               ),
+              underlineOnly: true,
             ),
           );
         case EmojiPart(:final name, :final literal, :final marks, :final link):

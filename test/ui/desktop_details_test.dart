@@ -21,7 +21,11 @@ import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/moment_tooltip.dart';
 
-Widget _app(Widget child, {bool use24 = true}) => ProviderScope(
+Widget _app(
+  Widget child, {
+  bool use24 = true,
+  ValueChanged<String>? onHashtag,
+}) => ProviderScope(
   child: MaterialApp(
     theme: themeForPlatform(MatterleastApp.lightTheme),
     builder: (context, home) => MediaQuery(
@@ -36,6 +40,7 @@ Widget _app(Widget child, {bool use24 = true}) => ProviderScope(
         onMention: (_) {},
         onChannel: (_) {},
         onLink: (_) {},
+        onHashtag: onHashtag,
         child: Align(alignment: Alignment.topLeft, child: child),
       ),
     ),
@@ -122,6 +127,55 @@ void main() {
       );
       await _hover(tester, find.textContaining('the docs', findRichText: true));
       expect(_cursor(), SystemMouseCursors.click);
+    }, variant: desktop);
+
+    for (final (label, part, text) in [
+      ('a mention', const Inline.mention('pat'), '@pat'),
+      ('a channel link', const Inline.channel('boats'), '~boats'),
+      ('a hashtag', const Inline.hashtag('release'), '#release'),
+    ]) {
+      testWidgets('$label shows the hand cursor', (tester) async {
+        await tester.pumpWidget(
+          _app(
+            InlineText(inlines: [part], style: const TextStyle(fontSize: 14)),
+            onHashtag: (_) {},
+          ),
+        );
+        await _hover(tester, find.textContaining(text, findRichText: true));
+        expect(_cursor(), SystemMouseCursors.click);
+      }, variant: desktop);
+    }
+
+    testWidgets('a hashtag searches when tapped, has the text colour and is '
+        'underlined only under the mouse', (tester) async {
+      final searched = <String>[];
+      await tester.pumpWidget(
+        _app(
+          const InlineText(
+            inlines: [Inline.hashtag('release')],
+            style: TextStyle(fontSize: 14),
+          ),
+          onHashtag: searched.add,
+        ),
+      );
+      final tag = find.textContaining('#release', findRichText: true);
+      TextStyle? styleOf() {
+        TextStyle? found;
+        tester.widget<RichText>(tag).text.visitChildren((span) {
+          if (span is TextSpan && span.text == '#release') found = span.style;
+          return true;
+        });
+        return found;
+      }
+
+      expect(styleOf()?.color, isNull);
+      expect(styleOf()?.decoration, isNull);
+      final mouse = await _hover(tester, tag);
+      expect(styleOf()?.decoration?.contains(TextDecoration.underline), isTrue);
+      expect(styleOf()?.color, isNull);
+      await mouse.down(tester.getCenter(tag));
+      await mouse.up();
+      expect(searched, ['release']);
     }, variant: desktop);
 
     testWidgets('hovering a link underlines it and rebuilds only its text', (
