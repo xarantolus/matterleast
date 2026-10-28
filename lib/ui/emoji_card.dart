@@ -45,9 +45,12 @@ class EmojiCard extends ConsumerWidget {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ExcludeSemantics(
-              child: EmojiGlyph(name: name, size: 96, serverUrl: url),
+              child: Center(
+                child: EmojiGlyph(name: name, size: 96, serverUrl: url),
+              ),
             ),
             const SizedBox(height: Spacing.md),
             Text(
