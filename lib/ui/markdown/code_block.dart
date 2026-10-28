@@ -7,6 +7,7 @@ import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/markdown/code_highlight.dart';
+import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/slide_route.dart';
@@ -43,10 +44,19 @@ TextSpan _coloured(BuildContext context, String code, String language) {
 /// tap shows all of it. On desktop the block stays in the message instead:
 /// long ones expand in place, and copying is a button away.
 class CodePreview extends StatefulWidget {
-  const CodePreview({required this.code, required this.language, super.key});
+  const CodePreview({
+    required this.code,
+    required this.language,
+    this.id,
+    super.key,
+  });
 
   final String code;
   final String language;
+
+  /// Remembers on desktop that the block is expanded, under this name in
+  /// [ShowMoreMemory].
+  final String? id;
 
   @override
   State<CodePreview> createState() => _CodePreviewState();
@@ -59,7 +69,11 @@ class _CodePreviewState extends State<CodePreview> {
   @override
   Widget build(BuildContext context) {
     if (isDesktop) {
-      return DesktopCodeBlock(code: widget.code, language: widget.language);
+      return DesktopCodeBlock(
+        code: widget.code,
+        language: widget.language,
+        id: widget.id,
+      );
     }
     final tokens = context.tokens;
     final wrap = _wrap ?? MessageDisplay.of(context).wrapCode;
@@ -141,24 +155,39 @@ class DesktopCodeBlock extends StatefulWidget {
   const DesktopCodeBlock({
     required this.code,
     required this.language,
+    this.id,
     super.key,
   });
 
   final String code;
   final String language;
 
+  /// See [CodePreview.id].
+  final String? id;
+
   @override
   State<DesktopCodeBlock> createState() => _DesktopCodeBlockState();
 }
 
 class _DesktopCodeBlockState extends State<DesktopCodeBlock> {
-  var _expanded = false;
+  // Rows can be built afresh, such as when the list moves its anchor.
+  late var _expanded =
+      widget.id != null &&
+      (ShowMoreMemory.of(context)?.contains(widget.id) ?? false);
   var _hovered = false;
   var _focused = false;
 
   void _toggle() {
     final expand = !_expanded;
     AnchoredList.keepTopOf(context, unlessAbove: !expand);
+    if (widget.id case final id?) {
+      final memory = ShowMoreMemory.of(context);
+      if (expand) {
+        memory?.add(id);
+      } else {
+        memory?.remove(id);
+      }
+    }
     setState(() => _expanded = expand);
   }
 
