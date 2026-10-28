@@ -1,7 +1,8 @@
 # Matterleast
 
-A Flutter (Android first) client for Mattermost servers, rebuilding the
-official mattermost-mobile app on the REST API v4 and the WebSocket API.
+A Flutter client for Mattermost servers on Android, Windows and Linux from
+one codebase, rebuilding the official mattermost-mobile app on the REST API
+v4 and the WebSocket API.
 
 If `setup-specific-guide.md` and `CLAUDE.local.md` exist next to this file,
 read them first. They hold the detailed working agreement and machine-local
@@ -60,10 +61,41 @@ notes, and they win over this summary.
   logs, deep links and intents validated, and nothing sensitive in
   notifications beyond what the server is configured to send.
 
+## Platforms
+
+- One codebase, one behaviour per fact; platforms differ only where the
+  platform's own conventions differ, decided in pure functions, never by
+  forking screens.
+- Desktop must feel like a desktop program, not a phone app in a window:
+  mouse and keyboard first; hover states, tooltips on every icon-only
+  control, pointer cursors on everything clickable, right-click menus where
+  a desktop program has them; desktop density (compact bars, no ripples,
+  hover and pressed tints instead); smooth wheel scrolling at one speed
+  everywhere; focus rings only after keyboard use; Esc closes what is on
+  top; mouse back/forward; a sensible Tab order; fades instead of slides;
+  short tasks (settings, channel info, switcher, pickers) as popouts over
+  the window instead of pages; window title, tray and notifications behave
+  like the platform's. Compare against Mattermost's desktop app and common
+  desktop programs.
+- Phones keep gestures, sheets and slide-in content.
+- Shortcuts live in one registry (`lib/app/keyboard_shortcuts.dart`), act
+  through Intents and Actions owned by the widget that does the work, and
+  are all listed under Ctrl+/. No global key handlers.
+- Navigation: every content view opens through `openPage` as a
+  `ContentPage` under the one shared header (same height everywhere);
+  only previews (gallery, PDF), login and add-server are full screen.
+- Releases ship an APK, a Windows installer and a Linux Flatpak from CI.
+  Keep CI to build, test, package and cache; no GUI or probe harnesses.
+
 ## Code style
 
 - Minimal comments. Only the non-obvious why, never what the code says or
-  how it got there. Plain everyday names.
+  how it got there; a short line of documentation on public API is fine,
+  multi-line docs per member are not. Plain everyday names.
+- No hacks: no casts or `jsonDecode` past the boundary, no element-tree
+  walks, no fixed delays racing the framework, no GlobalKeys reaching into
+  another widget's state, no state written in `build`, no `// ignore`.
+  Fix the cause or drop the feature.
 - Small single-purpose classes; decisions in pure, testable functions;
   widgets only render state.
 - No `BuildContext` after an `await`; cancel timers and subscriptions.
@@ -86,6 +118,9 @@ notes, and they win over this summary.
   Tests survive refactors that don't change behaviour.
 - Tests use recorded fixtures or the local test server, never real servers.
 - A new test must fail when the behaviour it checks is broken.
+- Server-backed widget tests use `pumpWithServer`
+  (`test/support/pump_with_server.dart`); no real waits, inject durations
+  or drive the clock.
 
 ## UI
 
@@ -158,8 +193,15 @@ notes, and they win over this summary.
   `log`, `down` as for lane.sh.
 - Agents read only what the brief names, not the whole plan, reviews or
   `setup-specific-guide.md`.
-- Done = gate passed, branch `lane/<topic>` pushed, a pull request opened
-  with `gh pr create` (what changed, what was checked on the device with
-  screenshot paths, what wasn't). The main session merges with
-  `gh pr merge --rebase --delete-branch` once CI is green, or fixes and
-  merges itself. Agents never bump the version or push to main.
+- Done = gate passed, origin/main merged in (never rebase or force-push),
+  branch `lane/<topic>` pushed, and a report: what changed, what was
+  checked on the device with screenshot paths, what wasn't, and where the
+  time went (the 3–5 longest steps and what would have saved them). No
+  pull requests: the main session reviews the diff, merges with
+  `git merge --no-ff` into main, pushes and releases. Agents never bump
+  the version or push to main.
+- Verify lean: affected tests while iterating, one device pass at the end
+  for what tests can't show (feel, layout, gestures, platform
+  integration), the full gate once.
+- The first desktop build can take 30–60 minutes on a loaded machine:
+  start `desktop.sh up` first and work while it builds.
