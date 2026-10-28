@@ -63,9 +63,15 @@ abstract final class PostListNames {
 /// The only write path into a server database. Each method is one
 /// transaction, so a watcher wakes once per logical change.
 class ServerStore {
-  ServerStore(this.db);
+  ServerStore(this.db, {DateTime Function()? clock})
+    : _clock = clock ?? (() => DateTime.now().toUtc());
 
   final ServerDatabase db;
+  final DateTime Function() _clock;
+
+  /// When each channel was last stored here, so a refresh that started
+  /// before that, and so may not know the channel yet, doesn't remove it.
+  final _storedAt = <String, DateTime>{};
 
   final _read = StreamController<ReadMark>.broadcast(sync: true);
 
@@ -186,6 +192,10 @@ class ServerStore {
     required Iterable<api.ChannelMember> members,
     api.OrderedSidebarCategories? categories,
   }) => db.transaction(() async {
+    final at = _clock();
+    for (final c in channels) {
+      if (c.id != null) _storedAt[c.id!] = at;
+    }
     await db.batch((b) {
       b.insertAllOnConflictUpdate(db.channels, [
         for (final c in channels)
@@ -346,6 +356,7 @@ class ServerStore {
             ))
             .get();
     for (final channel in stale) {
+      if (_storedAt[channel.id]?.isAfter(syncedAt) ?? false) continue;
       await removeChannel(channel.id);
     }
     await applyChannels(
