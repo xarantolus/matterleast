@@ -526,7 +526,7 @@ Future<void> _runFileAction(
         chooseApp: action == _FileAction.openWith,
       )) {
         say(
-          'No app on this ${isDesktop ? 'computer' : 'phone'} opens '
+          'No app on this $deviceWord opens '
           '${file.name}.',
         );
       }

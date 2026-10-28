@@ -13,6 +13,20 @@ const _weekdayNames = [
   'Saturday',
   'Sunday',
 ];
+const _monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 const _months = [
   'Jan',
   'Feb',
@@ -101,6 +115,15 @@ String momentLabel(DateTime at, DateTime now, {required bool use24}) {
   if (days == 0) return time;
   if (days == 1) return 'Yesterday, $time';
   return '${dateLabel(local, now)}, $time';
+}
+
+/// One moment in full, as a tooltip names it: "Tuesday, 27 October 2026
+/// at 14:05".
+String fullMomentLabel(DateTime at, {required bool use24}) {
+  final local = at.toLocal();
+  return '${_weekdayNames[local.weekday - 1]}, ${local.day} '
+      '${_monthNames[local.month - 1]} ${local.year} at '
+      '${timeLabel(local, use24: use24)}';
 }
 
 /// A date without a time: "20 Oct", with the year when it isn't this one

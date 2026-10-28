@@ -94,6 +94,90 @@ final class CustomEmojiFamily extends $Family
   String toString() => r'customEmojiProvider';
 }
 
+/// Who added the custom emoji [name] on [url], fetched when no stored
+/// message brought that person in.
+
+@ProviderFor(customEmojiCreator)
+final customEmojiCreatorProvider = CustomEmojiCreatorFamily._();
+
+/// Who added the custom emoji [name] on [url], fetched when no stored
+/// message brought that person in.
+
+final class CustomEmojiCreatorProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, Stream<String?>>
+    with $FutureModifier<String?>, $StreamProvider<String?> {
+  /// Who added the custom emoji [name] on [url], fetched when no stored
+  /// message brought that person in.
+  CustomEmojiCreatorProvider._({
+    required CustomEmojiCreatorFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'customEmojiCreatorProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customEmojiCreatorHash();
+
+  @override
+  String toString() {
+    return r'customEmojiCreatorProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<String?> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return customEmojiCreator(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomEmojiCreatorProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customEmojiCreatorHash() =>
+    r'ecc14ef6208686aad4e34a1c81472964d336115b';
+
+/// Who added the custom emoji [name] on [url], fetched when no stored
+/// message brought that person in.
+
+final class CustomEmojiCreatorFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<String?>, (String, String)> {
+  CustomEmojiCreatorFamily._()
+    : super(
+        retry: null,
+        name: r'customEmojiCreatorProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Who added the custom emoji [name] on [url], fetched when no stored
+  /// message brought that person in.
+
+  CustomEmojiCreatorProvider call(String url, String name) =>
+      CustomEmojiCreatorProvider._(argument: (url, name), from: this);
+
+  @override
+  String toString() => r'customEmojiCreatorProvider';
+}
+
 /// Names the server has no custom emoji for, as far as asked.
 
 @ProviderFor(customEmojiMissing)

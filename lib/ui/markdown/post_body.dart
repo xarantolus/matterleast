@@ -15,6 +15,7 @@ import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/markdown/table_block.dart';
 import 'package:matterleast/ui/message_display.dart';
+import 'package:matterleast/ui/moment_tooltip.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/top_notice.dart';
 
@@ -373,7 +374,11 @@ class EditedMark extends StatelessWidget {
         text:
             'Edited ${momentLabel(editAt, DateTime.now(), use24: MediaQuery.alwaysUse24HourFormatOf(context))}',
       ),
-      child: Text(' (edited)', style: style),
+      child: MomentTooltip(
+        at: editAt,
+        prefix: 'Edited ',
+        child: Text(' (edited)', style: style),
+      ),
     ),
   );
 }

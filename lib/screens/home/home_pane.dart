@@ -197,8 +197,12 @@ class _HomePaneState extends ConsumerState<HomePane> {
                           item: item,
                           serverName: names[item.serverUrl],
                           onTap: () => openInboxItem(context, item),
-                          onLongPress: item.kind == InboxKind.thread
-                              ? () => showThreadOptions(context, item)
+                          onOptions: item.kind == InboxKind.thread
+                              ? (anchor) => showThreadOptions(
+                                  context,
+                                  item,
+                                  anchor: anchor,
+                                )
                               : null,
                         );
                       },

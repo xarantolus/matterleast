@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
@@ -460,13 +461,13 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
                     padding: const EdgeInsets.all(Spacing.lg),
                     child: Text(switch ((m.failedHost, shown.isEmpty)) {
                       (_?, true) when m.offline =>
-                        "You're offline, and nothing saved on this phone "
-                            'matches “$term”.',
+                        "You're offline, and nothing saved on this "
+                            '$deviceWord matches “$term”.',
                       (_?, false) when m.offline =>
                         "You're offline · showing saved matches",
                       (final host?, true) =>
                         "Couldn't search $host, and nothing saved on this "
-                            'phone matches “$term”.',
+                            '$deviceWord matches “$term”.',
                       (final host?, false) =>
                         "Couldn't search $host · showing saved matches",
                       _ => 'No channels or people match “$term”.',

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/extras_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/bookmark_actions.dart';
 import 'package:matterleast/domain/bookmarks.dart';
@@ -106,6 +107,9 @@ class _BookmarkChip extends ConsumerWidget {
           );
     return GestureDetector(
       onLongPress: () => _showMenu(context, ref),
+      onSecondaryTapUp: isDesktop
+          ? (d) => _showMenu(context, ref, d.globalPosition & Size.zero)
+          : null,
       child: ActionChip(
         avatar: avatar,
         label: ConstrainedBox(
@@ -141,11 +145,12 @@ class _BookmarkChip extends ConsumerWidget {
     }
   }
 
-  void _showMenu(BuildContext context, WidgetRef ref) {
+  void _showMenu(BuildContext context, WidgetRef ref, [Rect? anchor]) {
     final link = bookmark.linkUrl;
     unawaited(
       showAppSheet<void>(
         context: context,
+        anchor: anchor,
         showDragHandle: true,
         builder: (sheet) => SafeArea(
           child: Column(

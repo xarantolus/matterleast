@@ -11,6 +11,7 @@ import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/context_menu.dart';
+import 'package:matterleast/ui/emoji_card.dart';
 import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/link_gestures.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -119,7 +120,7 @@ class _InlineTextState extends State<InlineText> {
           onTapped: () => env.onLink(classifyLink(link, env.server)),
           onHeld: () => showLinkSheet(context, link, env),
           onRightClick: isDesktop
-              ? (at) => showLinkMenu(context, link, env, at)
+              ? (at) => showLinkMenu(context, link, at)
               : null,
         ),
       );
@@ -190,18 +191,45 @@ class _InlineTextState extends State<InlineText> {
           final custom = unicode == null
               ? env?.customEmoji?.call(name, emojiBox)
               : null;
-          if (unicode != null) {
+          // An emoji in a link stays part of the link.
+          final named = link == null;
+          void showCard() => showEmojiCard(
+            context,
+            name: name,
+            serverUrl: env?.server.toString(),
+          );
+          if (unicode != null && named && isDesktop) {
+            // A span can't carry a tooltip, so the glyph is a widget, set
+            // on the text's baseline.
+            spans.add(
+              WidgetSpan(
+                alignment: PlaceholderAlignment.baseline,
+                baseline: TextBaseline.alphabetic,
+                child: Tooltip(
+                  message: ':$name:',
+                  child: Text(unicode, style: base.merge(styled(marks))),
+                ),
+              ),
+            );
+          } else if (unicode != null) {
             spans.add(
               TextSpan(
                 text: unicode,
                 style: styled(marks, link: link),
+                recognizer: named
+                    ? _keep(TapGestureRecognizer()..onTap = showCard)
+                    : linkTap(link),
               ),
             );
           } else if (custom != null) {
             spans.add(
               WidgetSpan(
                 alignment: PlaceholderAlignment.middle,
-                child: Tooltip(message: ':$name:', child: custom),
+                child: !named
+                    ? custom
+                    : isDesktop
+                    ? Tooltip(message: ':$name:', child: custom)
+                    : GestureDetector(onTap: showCard, child: custom),
               ),
             );
           } else {
@@ -259,21 +287,13 @@ String? mentionedUsername(String typed, Set<String> usernames) {
   return null;
 }
 
-/// Right click on a link: open it, or copy the address, at the pointer.
-void showLinkMenu(
-  BuildContext context,
-  String url,
-  PostEnvironment env,
-  Offset position,
-) {
+/// Right click on a link: copy the address, at the pointer.
+void showLinkMenu(BuildContext context, String url, Offset position) {
   final isMail = url.startsWith('mailto:');
   final shown = isMail ? url.substring(7) : url;
+  // A left click opens it, so the menu only copies.
   unawaited(
     showMenuAt<VoidCallback>(context, position, [
-      PopupMenuItem(
-        value: () => env.onLink(classifyLink(url, env.server)),
-        child: const MenuEntry(icon: Icons.open_in_new, label: 'Open link'),
-      ),
       PopupMenuItem(
         value: () => unawaited(Clipboard.setData(ClipboardData(text: shown))),
         child: MenuEntry(
