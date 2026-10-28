@@ -203,8 +203,9 @@ class _PdfScreenState extends State<PdfScreen> {
     _paramsColors = colors;
     return _params = PdfViewerParams(
       backgroundColor: colors.surfaceContainerHighest,
-      // The default physics stop a fling much sooner than a list does.
-      scrollPhysics: PdfViewerParams.getScrollPhysics(context),
+      // pdfrx's default physics stop a fling early, and its Android ones let
+      // the page be dragged 200 px past its edges.
+      scrollPhysics: const ClampingScrollPhysics(),
       textSelectionParams: const PdfTextSelectionParams(),
       linkHandlerParams: PdfLinkHandlerParams(
         onLinkTap: _onLink,
