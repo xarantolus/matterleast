@@ -34,6 +34,8 @@ void main() {
   final start = DateTime.utc(2026, 10, 26, 8);
   const linkRow = 50;
   const codeRow = 53;
+  var longRow = 60;
+  final long = [for (var i = 1; i <= 60; i++) 'line $i'].join('\n\n');
   const code = 'ebb `low water` chart\n\n```\nhigh water\n```\n\nmessage end';
   const link = 'https://example.test/tide';
   Map<String, Object?> post(int i) => {
@@ -41,11 +43,13 @@ void main() {
     'channel_id': channelId,
     'user_id': 'someone',
     'create_at': start.add(Duration(minutes: i)).millisecondsSinceEpoch,
-    'message': switch (i) {
-      linkRow => 'tide table at $link',
-      codeRow => code,
-      _ => 'message $i',
-    },
+    'message': i == longRow
+        ? long
+        : switch (i) {
+            linkRow => 'tide table at $link',
+            codeRow => code,
+            _ => 'message $i',
+          },
   };
 
   Future<void> open(WidgetTester tester, {int count = 60}) async {
@@ -324,6 +328,45 @@ void main() {
     }
     await close(tester);
   });
+
+  for (final short in [false, true]) {
+    testWidgets(
+      'at the bottom, Show more opens the newest message downwards '
+      'from where its top is${short ? ', in a short channel' : ''}',
+      (tester) async {
+        longRow = short ? 1 : 60;
+        addTearDown(() => longRow = 60);
+        await open(tester, count: short ? 2 : 61);
+        olderPage = const [];
+        answerOlder.complete();
+        await settle(tester);
+        double top() => tester.getTopLeft(find.text('line 1')).dy;
+        final before = top();
+        expect(find.text('Show more'), findsOneWidget);
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await mouse.addPointer(
+          location: tester.getCenter(find.text('Show more')),
+        );
+        addTearDown(mouse.removePointer);
+        await tester.pump(const Duration(milliseconds: 300));
+        await mouse.down(tester.getCenter(find.text('Show more')));
+        await tester.pump(const Duration(milliseconds: 50));
+        await mouse.up();
+        for (var i = 0; i < 15; i++) {
+          await tester.pump(const Duration(milliseconds: 20));
+          expect(top(), closeTo(before, 0.5), reason: 'frame $i');
+        }
+        await settle(tester);
+        expect(top(), closeTo(before, 0.5));
+        await close(tester);
+      },
+      variant: TargetPlatformVariant(const {
+        TargetPlatform.android,
+        TargetPlatform.linux,
+      }),
+    );
+  }
 
   group('with a mouse on desktop', () {
     final desktop = TargetPlatformVariant.only(TargetPlatform.linux);

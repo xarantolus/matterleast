@@ -145,8 +145,23 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
 
     final above =
         extentOf(_centerKey.currentContext) + extentOf(_edgeKey.currentContext);
-    return math.max(p.minScrollExtent, above - p.viewportDimension);
+    final top = math.max(p.minScrollExtent, above - p.viewportDimension);
+    // A row the reader opened grows downwards from where its top is, even
+    // when that leaves the space above the oldest row that a short list
+    // had; scrolling towards the newest rows takes that space up.
+    if (_openedAt case (:final anchor, :final pixels) when anchor == _anchor) {
+      if (!_splitPending && p.pixels <= top + 0.5) {
+        _openedAt = null;
+      } else {
+        return math.max(top, pixels);
+      }
+    }
+    return top;
   }
+
+  /// Where the reader's view was when they opened a row, under the anchor
+  /// it was kept at.
+  ({Object? anchor, double pixels})? _openedAt;
 
   double get _maxPixels {
     final p = _scroll.position;
@@ -433,6 +448,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       _setAnchor((key: key, pixels: row.bottom - height));
     } else if (_aboveOf(key, row.top - height) case final to?) {
       _setAnchor(to);
+      _openedAt = (anchor: to.key, pixels: to.pixels);
     }
   }
 

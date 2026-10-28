@@ -446,4 +446,74 @@ void main() {
     await tester.pumpAndSettle();
     expect(topOf(tester, reading), closeTo(before, 0.01));
   });
+
+  for (final expanding in [100, 99]) {
+    testWidgets('at the bottom, row $expanding opened by the reader keeps '
+        'its top and grows downwards', (tester) async {
+      final rows = rowsFrom(100, 1);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              height: 600,
+              child: AnchoredList<Item>(
+                rows: rows,
+                keyOf: (r) => r.id,
+                controller: controller,
+                itemBuilder: (_, r) =>
+                    _Opens(label: 'row ${r.id}', height: r.height),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(controller.pinned, isTrue);
+      final before = topOf(tester, expanding);
+
+      await tester.tap(find.text('row $expanding'));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(topOf(tester, expanding), closeTo(before, 0.5));
+      }
+      await tester.pumpAndSettle();
+      expect(topOf(tester, expanding), closeTo(before, 0.5));
+    });
+  }
+}
+
+/// A row that grows by 400 px over 200 ms when tapped, like "Show more".
+class _Opens extends StatefulWidget {
+  const _Opens({required this.label, required this.height});
+
+  final String label;
+  final double height;
+
+  @override
+  State<_Opens> createState() => _OpensState();
+}
+
+class _OpensState extends State<_Opens> with SingleTickerProviderStateMixin {
+  late final _open = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 200),
+  )..addListener(() => setState(() {}));
+
+  @override
+  void dispose() {
+    _open.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: () {
+      AnchoredList.keepTopOf(context);
+      _open.forward();
+    },
+    child: SizedBox(
+      height: widget.height + 400 * _open.value,
+      child: Align(alignment: Alignment.topLeft, child: Text(widget.label)),
+    ),
+  );
 }

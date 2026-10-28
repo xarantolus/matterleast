@@ -122,6 +122,11 @@ class _PdfScreenState extends State<PdfScreen> {
     LogicalKeyboardKey key,
     bool isRealKeyPress,
   ) {
+    // The viewer keeps Esc to itself otherwise.
+    if (key == LogicalKeyboardKey.escape && isRealKeyPress) {
+      unawaited(Navigator.of(context).maybePop());
+      return true;
+    }
     final keyboard = HardwareKeyboard.instance;
     if (!keyboard.isControlPressed && !keyboard.isMetaPressed) return null;
     switch (key) {
@@ -249,17 +254,26 @@ class _PdfScreenState extends State<PdfScreen> {
         const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
             _startSearch,
       },
-      child: Scaffold(
-        appBar: switch (_searcher) {
-          final searcher? when _searching => _searchBar(searcher),
-          _ => _titleBar(),
+      // Esc closes it, like any viewer on a desktop; in the search field it
+      // ends the search first.
+      child: Actions(
+        actions: {
+          DismissIntent: CallbackAction<DismissIntent>(
+            onInvoke: (_) => Navigator.of(context).maybePop(),
+          ),
         },
-        body: PdfViewer.file(
-          widget.local.path,
-          key: ValueKey(_attempt),
-          controller: _controller,
-          passwordProvider: _askPassword,
-          params: _paramsFor(context),
+        child: Scaffold(
+          appBar: switch (_searcher) {
+            final searcher? when _searching => _searchBar(searcher),
+            _ => _titleBar(),
+          },
+          body: PdfViewer.file(
+            widget.local.path,
+            key: ValueKey(_attempt),
+            controller: _controller,
+            passwordProvider: _askPassword,
+            params: _paramsFor(context),
+          ),
         ),
       ),
     ),
