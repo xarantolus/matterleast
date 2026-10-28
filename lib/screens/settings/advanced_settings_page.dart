@@ -7,7 +7,6 @@ import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/ui/content_page.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 
 const _mediaBudgets = [100, 250, 500, 1000];
 const _filesBudgets = [250, 500, 1000, 2000];
@@ -44,7 +43,7 @@ class AdvancedSettingsPage extends ConsumerWidget {
 
     return ContentPage(
       title: const Text('Storage'),
-      bottom: ProgressSlot(active: usage.isLoading),
+      progress: usage.isLoading,
       body: ListView(
         padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
         children: [

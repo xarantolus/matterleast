@@ -164,7 +164,8 @@ class _RootLayout extends ConsumerWidget {
       focusRegion: false,
       title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: actions,
-      bottom: ProgressSlot(active: refreshing, delay: ProgressSlot.settleDelay),
+      progress: refreshing,
+      progressDelay: ProgressSlot.settleDelay,
       body: SafeArea(
         top: false,
         child: Row(

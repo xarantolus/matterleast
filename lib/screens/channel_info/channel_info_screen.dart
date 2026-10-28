@@ -173,15 +173,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
     final bottom = MediaQuery.paddingOf(context).bottom;
     return ContentPage(
       title: Text(info?.title ?? 'Channel'),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(3),
-        child: SizedBox(
-          height: 3,
-          child: loading && info != null
-              ? const LinearProgressIndicator(minHeight: 3)
-              : null,
-        ),
-      ),
+      progress: loading && info != null,
       body: info == null
           ? ChannelMissing(
               state: infoState,

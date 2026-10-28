@@ -8,7 +8,6 @@ import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/pane_label.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 typedef _Suggestion = ({String emoji, String text, String duration});
@@ -161,7 +160,7 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
           child: Text(_empty && widget.current != null ? 'Clear' : 'Done'),
         ),
       ],
-      bottom: ProgressSlot(active: _saving),
+      progress: _saving,
       body: ListView(
         padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
         children: [

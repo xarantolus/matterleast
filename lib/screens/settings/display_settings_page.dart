@@ -15,7 +15,6 @@ import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/settings/time_zone_page.dart';
 import 'package:matterleast/ui/content_page.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 
 enum _Clock {
   system(null, 'Like the phone'),
@@ -87,7 +86,7 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
     final server = widget.server;
     return ContentPage(
       title: const Text('Display'),
-      bottom: ProgressSlot(active: _saving),
+      progress: _saving,
       body: ListView(
         padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
         children: [

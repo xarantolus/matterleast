@@ -13,7 +13,6 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -128,7 +127,7 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
     final busy = _opening || botsValue.isLoading || threadsValue.isLoading;
     return ContentPage(
       title: const Text('Agents'),
-      bottom: ProgressSlot(active: busy && bots != null),
+      progress: busy && bots != null,
       actions: [
         if (bots != null && bots.length > 1 && bot != null)
           PopupMenuButton<String>(

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/focus_region.dart';
+import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
 /// Text in a toolbar grows with the system font size only this far, as
@@ -10,7 +11,8 @@ const _maxBarTextScale = 1.3;
 
 /// A page under the one shared header: the channel list, a conversation
 /// and every content view. The page gives the header its [title],
-/// [subtitle], [leading], [actions] and [bottom]. In a [SlideRoute] the
+/// [subtitle], [leading], [actions] and whether it is [progress]ing; the
+/// header is the same height on every page. In a [SlideRoute] the
 /// header stays in place and fades over from the page below while only
 /// [body] slides; in a pane the header shows the pane's close button.
 class ContentPage extends StatelessWidget {
@@ -20,7 +22,8 @@ class ContentPage extends StatelessWidget {
     this.subtitle,
     this.leading,
     this.actions = const [],
-    this.bottom,
+    this.progress = false,
+    this.progressDelay = Duration.zero,
     this.focusRegion = true,
     this.backgroundColor,
     super.key,
@@ -35,8 +38,9 @@ class ContentPage extends StatelessWidget {
   final Widget? leading;
   final List<Widget> actions;
 
-  /// Under the toolbar, such as tabs or a progress bar.
-  final PreferredSizeWidget? bottom;
+  /// The slim bar under the toolbar runs, after [progressDelay].
+  final bool progress;
+  final Duration progressDelay;
   final Widget body;
 
   /// The body is one region for F6; false when it holds regions of its own.
@@ -52,19 +56,18 @@ class ContentPage extends StatelessWidget {
         .scale(1);
     final height =
         (AppBarTheme.of(context).toolbarHeight ?? kToolbarHeight) * scale;
+    final slot = ProgressSlot(active: progress, delay: progressDelay);
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(
-          height + (bottom?.preferredSize.height ?? 0),
-        ),
+        preferredSize: Size.fromHeight(height + slot.preferredSize.height),
         child: _Header(
           toolbarHeight: height,
           title: title,
           subtitle: subtitle,
           leading: leading,
           actions: actions,
-          bottom: bottom,
+          bottom: slot,
         ),
       ),
       body: SlidingBody(child: focusRegion ? FocusRegion(child: body) : body),
@@ -87,7 +90,7 @@ class _Header extends StatelessWidget {
   final String? subtitle;
   final Widget? leading;
   final List<Widget> actions;
-  final PreferredSizeWidget? bottom;
+  final ProgressSlot bottom;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +122,6 @@ class _Header extends StatelessWidget {
             ? const BackButton()
             : null);
     final subtitle = this.subtitle;
-    final bottom = this.bottom;
     return AppBar(
       automaticallyImplyLeading: false,
       primary: popout == null,
@@ -142,12 +144,10 @@ class _Header extends StatelessWidget {
             onPressed: popout.onClose,
           ),
       ],
-      bottom: bottom == null
-          ? null
-          : PreferredSize(
-              preferredSize: bottom.preferredSize,
-              child: fade(bottom),
-            ),
+      bottom: PreferredSize(
+        preferredSize: bottom.preferredSize,
+        child: fade(bottom),
+      ),
     );
   }
 }

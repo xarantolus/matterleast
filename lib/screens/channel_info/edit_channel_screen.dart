@@ -10,7 +10,6 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/narrow_page.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Creates a channel in a team, or edits one's name, purpose and header
@@ -155,7 +154,7 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
           child: Text(_creating ? 'Create' : 'Save'),
         ),
       ],
-      bottom: ProgressSlot(active: _saving),
+      progress: _saving,
       body: NarrowPage(
         children: [
           if (_creating && canPublic && canPrivate) ...[

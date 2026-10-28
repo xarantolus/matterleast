@@ -17,7 +17,6 @@ import 'package:matterleast/screens/you/profile_attributes_list.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/narrow_page.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
@@ -197,7 +196,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: const Text('Save'),
         ),
       ],
-      bottom: ProgressSlot(active: _saving),
+      progress: _saving,
       body: NarrowPage(
         children: [
           Center(
@@ -391,7 +390,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         child: const Text('Save'),
       ),
     ],
-    bottom: ProgressSlot(active: _saving),
+    progress: _saving,
     body: NarrowPage(
       children: [
         _field(_current, 'Current password'),

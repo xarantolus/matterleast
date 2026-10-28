@@ -8,7 +8,6 @@ import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -90,7 +89,7 @@ class PinnedScreen extends ConsumerWidget {
     }
     return ContentPage(
       title: Text('Pinned in $title'),
-      bottom: ProgressSlot(active: refresh.isLoading && items.isNotEmpty),
+      progress: refresh.isLoading && items.isNotEmpty,
       body: RefreshArea(onRefresh: pull, child: body),
     );
   }

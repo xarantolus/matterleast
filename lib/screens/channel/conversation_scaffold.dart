@@ -82,12 +82,10 @@ class ConversationScaffold extends ConsumerWidget {
           ),
         ...actions,
       ],
-      bottom: ProgressSlot(
-        active:
-            (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
-            showsMessages(state),
-        delay: ProgressSlot.settleDelay,
-      ),
+      progress:
+          (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
+          showsMessages(state),
+      progressDelay: ProgressSlot.settleDelay,
       body: ConversationDropTarget(
         url: url,
         channelId: channelId,

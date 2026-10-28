@@ -12,12 +12,11 @@ import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/thread_options_sheet.dart';
-import 'package:matterleast/ui/bar_tabs.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
-import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/page_tabs.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The threads the user follows in one team.
@@ -85,7 +84,7 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
     final all = ref.watch(teamThreadsProvider(widget.url, widget.teamId)).value;
     final refreshing =
         ref.watch(syncStatusProvider(widget.url)).value is SyncRefreshing;
-    const tabs = BarTabs(
+    const tabs = PageTabs(
       tabs: [
         Tab(text: 'All'),
         Tab(text: 'Unread'),
@@ -117,17 +116,16 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
             icon: const Icon(Icons.done_all),
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(tabs.preferredSize.height + 3),
-          child: Column(
-            children: [
-              tabs,
-              ProgressSlot(active: refreshing),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [list(unreadOnly: false), list(unreadOnly: true)],
+        progress: refreshing,
+        body: Column(
+          children: [
+            tabs,
+            Expanded(
+              child: TabBarView(
+                children: [list(unreadOnly: false), list(unreadOnly: true)],
+              ),
+            ),
+          ],
         ),
       ),
     );

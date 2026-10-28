@@ -8,7 +8,6 @@ import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
-import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The account's time zone on one server: the phone's, or one picked by
@@ -68,7 +67,7 @@ class _TimeZonePageState extends ConsumerState<TimeZonePage> {
     final manual = setting?.manualZone;
     return ContentPage(
       title: const Text('Time zone'),
-      bottom: ProgressSlot(active: _saving),
+      progress: _saving,
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(

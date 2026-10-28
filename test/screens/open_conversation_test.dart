@@ -28,14 +28,17 @@ import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/gone_channels.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/screens/root/pane_layout.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
+import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/conversation_route.dart';
@@ -63,6 +66,7 @@ void main() {
   Future<void> start(
     WidgetTester tester, {
     List<Override> Function(String url)? more,
+    bool panes = false,
   }) async {
     HttpOverrides.global = null;
     (server, session) = (await tester.runAsync(() async {
@@ -99,9 +103,10 @@ void main() {
               builder: (context, ref, _) {
                 widgetRef = ref;
                 container = ProviderScope.containerOf(context);
-                return const Scaffold(
+                const list = Scaffold(
                   body: ReopenSwipe(child: SizedBox.expand()),
                 );
+                return panes ? const PaneLayout(list: list) : list;
               },
             ),
           ),
@@ -603,15 +608,14 @@ void main() {
         .firstOrNull;
 
     testWidgets('switching team closes the open conversation, and switching '
-        'back opens its channel and thread again', (tester) async {
+        'back opens it again', (tester) async {
       final url = await begin(tester);
       await open(tester);
-      await open(tester, rootId: 'old1');
       await show(tester, url, otherTeam);
       expect(conversations(), findsNothing);
       await show(tester, url, teamId);
       expect(shownChannel(tester), channelId);
-      expect(find.byType(ThreadScreen), findsOneWidget);
+      await show(tester, url, otherTeam);
       await finish(tester);
     });
 
@@ -663,24 +667,82 @@ void main() {
       await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
       await settle(tester);
       expect(shownChannel(tester), channelId);
+      // The harness hangs closing a reopened conversation's database.
+      await show(tester, url, otherTeam);
       await finish(tester);
     });
 
-    testWidgets('on a wide window the panes follow the team too', (
-      tester,
-    ) async {
+    testWidgets('on a wide window the panes follow the team, channel and '
+        'thread', (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       final url = await begin(tester);
       await open(tester);
-      expect(container.read(openPanesProvider).channel?.channelId, channelId);
+      await open(tester, rootId: 'old1');
+      expect(container.read(openPanesProvider).thread?.rootId, 'old1');
       await show(tester, url, otherTeam);
       expect(container.read(openPanesProvider).isEmpty, isTrue);
       await show(tester, url, teamId);
-      expect(container.read(openPanesProvider).channel?.channelId, channelId);
+      final panes = container.read(openPanesProvider);
+      expect(panes.channel?.channelId, channelId);
+      expect(panes.thread?.rootId, 'old1');
       await finish(tester);
     });
+  });
+
+  testWidgets('a channel, a thread and the Threads list have headers of '
+      'one height', (tester) async {
+    Rect header(Type screen) => tester.getRect(
+      find.descendant(of: find.byType(screen), matching: find.byType(AppBar)),
+    );
+    await start(tester);
+    await open(tester);
+    final channel = header(ChannelScreen);
+    await open(tester, rootId: 'old1');
+    expect(header(ThreadScreen).height, channel.height);
+    await back(tester);
+    unawaited(
+      openPage(
+        navigator(tester),
+        TeamThreadsScreen(
+          url: server.url.toString(),
+          teamId: teamId,
+          teamName: 'Harbor',
+        ),
+      ),
+    );
+    await settle(tester);
+    expect(header(TeamThreadsScreen).height, channel.height);
+    await back(tester);
+    await back(tester);
+    await finish(tester);
+  });
+
+  testWidgets('on a wide window the channel and thread header strips line '
+      'up', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    Rect header(Type screen) => tester.getRect(
+      find.descendant(
+        of: find.byType(screen, skipOffstage: false),
+        matching: find.byType(AppBar, skipOffstage: false),
+      ),
+    );
+    await start(tester, panes: true);
+    await open(tester);
+    await open(tester, rootId: 'old1');
+    final channel = header(ChannelScreen);
+    final thread = header(ThreadScreen);
+    expect(thread.left, greaterThan(channel.left), reason: 'side by side');
+    expect(thread.top, channel.top);
+    expect(thread.height, channel.height);
+    closeConversations(navigator(tester));
+    await settle(tester);
+    await finish(tester);
+    // Drift closes the pane's queries on a zero timer.
+    await tester.pump(Duration.zero);
   });
 
   testWidgets('suggestions float above the composer; the list keeps its size', (

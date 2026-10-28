@@ -11,10 +11,10 @@ import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/scheduled_list.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/app_sheet.dart';
-import 'package:matterleast/ui/bar_tabs.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/ui/page_tabs.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
@@ -56,21 +56,27 @@ class DraftsScreen extends ConsumerWidget {
       initialIndex: scheduledFirst ? 1 : 0,
       child: ContentPage(
         title: title,
-        bottom: BarTabs(
-          tabs: [
-            const Tab(text: 'Drafts'),
-            Tab(
-              text: switch (scheduled?.length ?? 0) {
-                0 => 'Scheduled',
-                final n => 'Scheduled ($n)',
-              },
-            ),
-          ],
-        ),
-        body: TabBarView(
+        body: Column(
           children: [
-            _drafts(context, ref),
-            ScheduledList(url: url, teamId: teamId),
+            PageTabs(
+              tabs: [
+                const Tab(text: 'Drafts'),
+                Tab(
+                  text: switch (scheduled?.length ?? 0) {
+                    0 => 'Scheduled',
+                    final n => 'Scheduled ($n)',
+                  },
+                ),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _drafts(context, ref),
+                  ScheduledList(url: url, teamId: teamId),
+                ],
+              ),
+            ),
           ],
         ),
       ),
