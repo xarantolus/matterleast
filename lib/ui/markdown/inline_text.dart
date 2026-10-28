@@ -46,6 +46,9 @@ class InlineText extends StatefulWidget {
 class _InlineTextState extends State<InlineText> {
   final _recognizers = <GestureRecognizer>[];
 
+  /// The link or name under the mouse.
+  Object? _hovered;
+
   void _clear() {
     for (final r in _recognizers) {
       r.dispose();
@@ -126,26 +129,58 @@ class _InlineTextState extends State<InlineText> {
       );
     }
 
-    for (final part in widget.inlines) {
+    TextSpan hoverable(Object? key, TextSpan span) {
+      if (key == null || !isDesktop) return span;
+      final style = span.style ?? const TextStyle();
+      return TextSpan(
+        text: span.text,
+        recognizer: span.recognizer,
+        style: _hovered != key
+            ? style
+            : style.copyWith(
+                color: tokens.hoveredAccent,
+                decoration: TextDecoration.combine([
+                  TextDecoration.underline,
+                  ?style.decoration,
+                ]),
+              ),
+        onEnter: (_) => setState(() => _hovered = key),
+        onExit: (_) {
+          // Also called when the text goes away under the mouse.
+          if (mounted && _hovered == key) setState(() => _hovered = null);
+        },
+      );
+    }
+
+    Object? linkKey(String? link) =>
+        link == null || isInlineActionLink(link) ? null : ('link', link);
+
+    for (final (i, part) in widget.inlines.indexed) {
       switch (part) {
         case TextPart(:final text, :final marks, :final link):
           spans.add(
-            TextSpan(
-              text: text,
-              style: styled(marks, link: link),
-              recognizer: linkTap(link),
+            hoverable(
+              linkKey(link),
+              TextSpan(
+                text: text,
+                style: styled(marks, link: link),
+                recognizer: linkTap(link),
+              ),
             ),
           );
         case CodePart(:final text, :final marks, :final link):
           spans.add(
-            TextSpan(
-              text: text,
-              style: styled(marks, link: link).copyWith(
-                fontFamily: 'monospace',
-                fontSize: fontSize * 0.92,
-                backgroundColor: tokens.codeBackground,
+            hoverable(
+              linkKey(link),
+              TextSpan(
+                text: text,
+                style: styled(marks, link: link).copyWith(
+                  fontFamily: 'monospace',
+                  fontSize: fontSize * 0.92,
+                  backgroundColor: tokens.codeBackground,
+                ),
+                recognizer: linkTap(link),
               ),
-              recognizer: linkTap(link),
             ),
           );
         case MentionPart(:final name, :final marks):
@@ -154,36 +189,47 @@ class _InlineTextState extends State<InlineText> {
               _specialMentions.contains(lower) ||
               mentionedUsername(lower, {env?.myUsername ?? ''}) != null;
           spans.add(
-            TextSpan(
-              text: '@$name',
-              style: styled(marks).copyWith(
-                color: tokens.accent,
-                backgroundColor: mine ? tokens.accentWash : null,
+            hoverable(
+              ('part', i),
+              TextSpan(
+                text: '@$name',
+                style: styled(marks).copyWith(
+                  color: tokens.accent,
+                  backgroundColor: mine ? tokens.accentWash : null,
+                ),
+                recognizer: env == null || _specialMentions.contains(lower)
+                    ? null
+                    : _keep(
+                        TapGestureRecognizer()
+                          ..onTap = () => env.onMention(name),
+                      ),
               ),
-              recognizer: env == null || _specialMentions.contains(lower)
-                  ? null
-                  : _keep(
-                      TapGestureRecognizer()..onTap = () => env.onMention(name),
-                    ),
             ),
           );
         case ChannelPart(:final name, :final marks):
           spans.add(
-            TextSpan(
-              text: '~${widget.channelNames[name] ?? name}',
-              style: styled(marks).copyWith(color: tokens.accent),
-              recognizer: env == null
-                  ? null
-                  : _keep(
-                      TapGestureRecognizer()..onTap = () => env.onChannel(name),
-                    ),
+            hoverable(
+              ('part', i),
+              TextSpan(
+                text: '~${widget.channelNames[name] ?? name}',
+                style: styled(marks).copyWith(color: tokens.accent),
+                recognizer: env == null
+                    ? null
+                    : _keep(
+                        TapGestureRecognizer()
+                          ..onTap = () => env.onChannel(name),
+                      ),
+              ),
             ),
           );
         case HashtagPart(:final tag, :final marks):
           spans.add(
-            TextSpan(
-              text: '#$tag',
-              style: styled(marks).copyWith(color: tokens.accent),
+            hoverable(
+              ('part', i),
+              TextSpan(
+                text: '#$tag',
+                style: styled(marks).copyWith(color: tokens.accent),
+              ),
             ),
           );
         case EmojiPart(:final name, :final literal, :final marks, :final link):
@@ -199,8 +245,7 @@ class _InlineTextState extends State<InlineText> {
             serverUrl: env?.server.toString(),
           );
           if (unicode != null && named && isDesktop) {
-            // A span can't carry a tooltip, so the glyph is a widget, set
-            // on the text's baseline.
+            // A span can't carry a tooltip.
             spans.add(
               WidgetSpan(
                 alignment: PlaceholderAlignment.baseline,

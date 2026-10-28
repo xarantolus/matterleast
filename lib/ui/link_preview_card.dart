@@ -7,13 +7,21 @@ import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The server's OpenGraph preview of a link in the message.
-class LinkPreviewCard extends StatelessWidget {
+class LinkPreviewCard extends StatefulWidget {
   const LinkPreviewCard({required this.preview, super.key});
 
   final LinkPreview preview;
 
   @override
+  State<LinkPreviewCard> createState() => _LinkPreviewCardState();
+}
+
+class _LinkPreviewCardState extends State<LinkPreviewCard> {
+  var _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    final preview = widget.preview;
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
     final env = PostEnvironment.maybeOf(context);
@@ -26,6 +34,7 @@ class LinkPreviewCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           mouseCursor: clickCursor,
+          onHover: (on) => setState(() => _hovered = on),
           onTap: env == null || preview.url.isEmpty
               ? null
               : () => env.onLink(classifyLink(preview.url, env.server)),
@@ -41,7 +50,10 @@ class LinkPreviewCard extends StatelessWidget {
                     preview.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: text.titleSmall?.copyWith(color: tokens.accent),
+                    style: text.titleSmall?.copyWith(
+                      color: _hovered ? tokens.hoveredAccent : tokens.accent,
+                      decoration: _hovered ? TextDecoration.underline : null,
+                    ),
                   ),
                 if (preview.description.isNotEmpty)
                   Text(

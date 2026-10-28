@@ -122,6 +122,75 @@ void main() {
       expect(_cursor(), SystemMouseCursors.click);
     }, variant: desktop);
 
+    testWidgets('hovering a link underlines it and rebuilds only its text', (
+      tester,
+    ) async {
+      final builds = <String, int>{};
+      Widget row(String name, List<Inline> inlines) => Builder(
+        builder: (context) {
+          builds.update(name, (n) => n + 1, ifAbsent: () => 1);
+          return InlineText(
+            inlines: inlines,
+            style: const TextStyle(fontSize: 14),
+          );
+        },
+      );
+      await tester.pumpWidget(
+        _app(
+          Column(
+            children: [
+              row('above', const [TextPart('first message')]),
+              row('link', const [
+                TextPart('read '),
+                TextPart('the docs', link: 'https://docs.example.test'),
+              ]),
+              row('below', const [TextPart('last message')]),
+            ],
+          ),
+        ),
+      );
+      TextStyle? docsStyle() {
+        TextStyle? found;
+        tester
+            .widget<RichText>(
+              find.byWidgetPredicate(
+                (w) =>
+                    w is RichText && w.text.toPlainText().contains('the docs'),
+              ),
+            )
+            .text
+            .visitChildren((span) {
+              if (span is TextSpan && span.text == 'the docs') {
+                found = span.style;
+              }
+              return true;
+            });
+        return found;
+      }
+
+      expect(docsStyle()?.decoration, isNull);
+      final before = Map.of(builds);
+      final mouse = await _hover(
+        tester,
+        find.textContaining('the docs', findRichText: true),
+      );
+      // Over "the docs" itself, at the end of the line.
+      final line = tester.getRect(
+        find.textContaining('the docs', findRichText: true),
+      );
+      await mouse.moveTo(line.centerRight - const Offset(10, 0));
+      await tester.pump();
+      expect(
+        docsStyle()?.decoration?.contains(TextDecoration.underline),
+        isTrue,
+      );
+      expect(builds, before);
+
+      await mouse.moveTo(Offset.zero);
+      await tester.pump();
+      expect(docsStyle()?.decoration, isNull);
+    }, variant: desktop);
+
     testWidgets('a plain gesture made clickable shows the hand, and none '
         'when disabled', (tester) async {
       await tester.pumpWidget(
