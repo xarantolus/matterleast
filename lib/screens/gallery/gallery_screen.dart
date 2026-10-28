@@ -16,6 +16,7 @@ import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/screens/gallery/slide_to_close.dart';
 import 'package:matterleast/screens/gallery/video_player_view.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/post_files.dart';
@@ -103,6 +104,20 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           body: ExtendedImageSlidePage(
             slideAxis: SlideAxis.vertical,
             slideType: SlideType.onlyImage,
+            resetPageDuration: motion(
+              context,
+              const Duration(milliseconds: 250),
+            ),
+            slideEndHandler:
+                (
+                  offset, {
+                  ExtendedImageSlidePageState? state,
+                  ScaleEndDetails? details,
+                }) => slideCloses(
+                  offset: offset.dy,
+                  velocity: details?.velocity.pixelsPerSecond.dy ?? 0,
+                  height: MediaQuery.sizeOf(context).height,
+                ),
             slidePageBackgroundHandler: (offset, size) =>
                 Colors.black.withValues(
                   alpha: (1 - offset.dy.abs() / (size.height / 2)).clamp(0, 1),
