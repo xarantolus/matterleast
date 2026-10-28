@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/domain/channel_list.dart';
 
 part 'rail.freezed.dart';
 part 'rail.g.dart';
@@ -11,6 +12,9 @@ abstract class RailTeam with _$RailTeam {
     required String displayName,
     required bool unread,
     required int mentions,
+
+    /// Some of the [mentions] are in urgent messages.
+    @Default(false) bool urgent,
 
     /// The team's `last_team_icon_update`; null or 0 when it has no icon.
     int? iconUpdate,
@@ -42,7 +46,9 @@ String? shownTeam(RailTarget? target, List<RailTeam> teams) {
 /// fetched, else the server's team counts from the entry sync. With
 /// collapsed threads the team's followed threads count too, as in the
 /// official app.
-({bool unread, int mentions}) teamBadge({
+/// [channelUrgent] counts the channels' urgent mentions, known only once
+/// they were fetched.
+({bool unread, int mentions, bool urgent}) teamBadge({
   required bool channelsSynced,
   required int channelMentions,
   required bool anyChannelUnread,
@@ -50,6 +56,8 @@ String? shownTeam(RailTarget? target, List<RailTeam> teams) {
   required int teamUnreadMessages,
   int threadMentions = 0,
   bool anyThreadUnread = false,
+  int channelUrgent = 0,
+  bool postPriority = false,
 }) {
   final channels = channelsSynced
       ? (unread: anyChannelUnread, mentions: channelMentions)
@@ -57,5 +65,10 @@ String? shownTeam(RailTarget? target, List<RailTeam> teams) {
   return (
     unread: channels.unread || anyThreadUnread,
     mentions: channels.mentions + threadMentions,
+    urgent: urgentMentions(
+      postPriority: postPriority,
+      mentions: channels.mentions,
+      urgent: channelsSynced ? channelUrgent : 0,
+    ),
   );
 }

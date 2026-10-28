@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
+import 'package:matterleast/ui/mention_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -121,9 +122,9 @@ String channelRowLabel(
     if (item.hasDraft) 'draft',
     if (item.muted) 'muted',
     if (item.mentions == 1)
-      '1 mention'
+      item.urgent ? '1 mention, urgent' : '1 mention'
     else if (item.mentions > 1)
-      '${item.mentions} mentions'
+      '${item.mentions} mentions${item.urgent ? ', urgent' : ''}'
     else if (item.unread)
       'unread',
   ],
@@ -144,8 +145,9 @@ class _Markers extends StatelessWidget {
       if (item.muted)
         Icon(Icons.notifications_off_outlined, size: 16, color: tokens.muted),
       if (item.mentions > 0)
-        Badge.count(
+        MentionBadge(
           count: item.mentions,
+          urgent: item.urgent,
           backgroundColor: item.muted ? tokens.muted : scheme.error,
           textColor: item.muted ? tokens.page : scheme.onError,
         )

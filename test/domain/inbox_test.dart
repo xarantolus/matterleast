@@ -64,6 +64,33 @@ void main() {
     expect(mention.avatarPictureUpdate, 22);
   });
 
+  test('a direct message with urgent mentions is marked urgent on Home where '
+      'the server marks messages urgent', () {
+    InboxItem dm({required bool priority}) => buildServerInbox(
+      InboxSource(
+        serverUrl: 's1',
+        myId: 'me',
+        people: people,
+        postPriority: priority,
+        channels: {
+          'dm': (
+            teamId: '',
+            input: channel(
+              'dm',
+              type: 'D',
+              name: 'bob__me',
+              read: 8,
+              mentions: 2,
+              urgent: 1,
+            ),
+          ),
+        },
+      ),
+    ).unread.single;
+    expect(dm(priority: true).urgent, isTrue);
+    expect(dm(priority: false).urgent, isFalse);
+  });
+
   test('rows name the team only when the server has several', () {
     final inbox = buildServerInbox(
       InboxSource(

@@ -7,6 +7,7 @@ import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/initials_badge.dart';
+import 'package:matterleast/ui/mention_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -172,8 +173,10 @@ Widget? _marker(BuildContext context, InboxItem item) {
         ? '${item.count} new ${item.count == 1 ? 'reply' : 'replies'}'
         : '${item.count} unread';
     return Semantics(
-      label: label,
-      child: ExcludeSemantics(child: Badge.count(count: item.count)),
+      label: item.urgent ? '$label, urgent' : label,
+      child: ExcludeSemantics(
+        child: MentionBadge(count: item.count, urgent: item.urgent),
+      ),
     );
   }
   if (item.unread) {
