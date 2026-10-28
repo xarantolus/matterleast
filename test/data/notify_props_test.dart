@@ -26,6 +26,33 @@ void main() {
     expect(const NotifyProps({'desktop_sound': 'false'}).desktopSound, isFalse);
   });
 
+  test(
+    'the username mention is read from and written to the mention words',
+    () {
+      for (final (keys, on) in [
+        (null, false),
+        ('', false),
+        ('anchor', false),
+        ('river', true),
+        ('anchor, river', true),
+        ('@river', false),
+      ]) {
+        final props = NotifyProps({'mention_keys': ?keys});
+        expect(props.usernameMention('river'), on, reason: '$keys');
+      }
+      final off = const NotifyProps({'mention_keys': 'anchor,river,buoy'})
+          .withUsernameMention('river', false);
+      expect(off.raw['mention_keys'], 'anchor,buoy');
+      final on = const NotifyProps({'mention_keys': 'anchor,river'})
+          .withUsernameMention('river', true);
+      expect(on.raw['mention_keys'], 'river,anchor');
+      expect(on.mentionKeys('river'), ['anchor']);
+      expect(const NotifyProps({}).withUsernameMention('river', true).raw, {
+        'mention_keys': 'river',
+      });
+    },
+  );
+
   test('nothing stored becomes the server defaults', () {
     final json = completeNotifyProps(const api.ChannelNotifyProps()).toJson();
     expect(json['desktop'], 'default');

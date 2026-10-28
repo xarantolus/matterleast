@@ -124,6 +124,20 @@ void main() {
       );
     });
 
+    test('the plain username counts, in any case, only when it is a mention '
+        'word', () {
+      final on = _me(props: {'push': 'mention', 'mention_keys': 'kim'});
+      final off = _me();
+      for (final text in ['hey kim', 'Hey KIM, look']) {
+        expect(
+          notifyKindOf(_post('a', message: text), _open, on),
+          NotifyKind.direct,
+        );
+        expect(notifyKindOf(_post('a', message: text), _open, off), isNull);
+      }
+      expect(notifyKindOf(_post('b', message: 'kimono'), _open, on), isNull);
+    });
+
     test('everything in a channel set to all, as other messages', () {
       expect(
         notifyKindOf(

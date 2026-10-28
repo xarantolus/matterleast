@@ -88,6 +88,14 @@ class NotifyProps {
   static const defaultAutoReply =
       'Hello, I am out of office and unable to respond to messages.';
 
+  /// The plain username, without the @, counts as a mention.
+  bool usernameMention(String username) => _keys.contains(username);
+
+  Iterable<String> get _keys => (raw['mention_keys'] ?? '')
+      .split(',')
+      .map((k) => k.trim())
+      .where((k) => k.isNotEmpty);
+
   /// Extra words that count as a mention, without the username ones the
   /// server always adds.
   List<String> mentionKeys(String username) => [
@@ -123,6 +131,17 @@ class NotifyProps {
         ? defaultAutoReply
         : (message ?? autoReplyMessage).trim(),
   });
+
+  /// The username as a mention word, first in the list as the official app
+  /// puts it, or without it.
+  NotifyProps withUsernameMention(String username, bool on) => withValue(
+    'mention_keys',
+    [
+      if (on) username,
+      for (final key in _keys)
+        if (key != username) key,
+    ].join(','),
+  );
 
   NotifyProps withMentionKeys(String username, Iterable<String> keys) {
     final kept = (raw['mention_keys'] ?? '')
