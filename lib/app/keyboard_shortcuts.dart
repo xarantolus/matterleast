@@ -52,6 +52,38 @@ class ReplyToNewestIntent extends AppIntent {
   const ReplyToNewestIntent();
 }
 
+/// Recent mentions, on Home.
+class OpenMentionsIntent extends AppIntent {
+  const OpenMentionsIntent();
+}
+
+/// The direct message picker.
+class NewMessageIntent extends AppIntent {
+  const NewMessageIntent();
+}
+
+/// The cursor into the message field of the open conversation.
+class FocusComposerIntent extends AppIntent {
+  const FocusComposerIntent();
+}
+
+enum Format { bold, italic, strike, link }
+
+/// Formats the composer's selection.
+class FormatIntent extends AppIntent {
+  const FormatIntent(this.format);
+
+  final Format format;
+}
+
+/// Replaces the composer's text with an older (or newer) message of the
+/// user's own.
+class StepHistoryIntent extends AppIntent {
+  const StepHistoryIntent({required this.older});
+
+  final bool older;
+}
+
 /// Searches the messages of the open conversation.
 class SearchChannelIntent extends AppIntent {
   const SearchChannelIntent();
@@ -63,14 +95,14 @@ class EnabledAction<T extends Intent> extends Action<T> {
   EnabledAction({required this.enabled, required this.onInvoke});
 
   final bool Function() enabled;
-  final VoidCallback onInvoke;
+  final void Function(T intent) onInvoke;
 
   @override
   bool isEnabled(T intent) => enabled();
 
   @override
   Object? invoke(T intent) {
-    onInvoke();
+    onInvoke(intent);
     return null;
   }
 }
@@ -133,6 +165,51 @@ const appShortcuts = <AppShortcut>[
     ReplyToNewestIntent(),
   ),
   AppShortcut(
+    'Focus the message field',
+    SingleActivator(LogicalKeyboardKey.keyL, control: true, shift: true),
+    FocusComposerIntent(),
+  ),
+  AppShortcut(
+    'Recent mentions',
+    SingleActivator(LogicalKeyboardKey.keyM, control: true, shift: true),
+    OpenMentionsIntent(),
+  ),
+  AppShortcut(
+    'New message',
+    SingleActivator(LogicalKeyboardKey.keyK, control: true, shift: true),
+    NewMessageIntent(),
+  ),
+  AppShortcut(
+    'Bold',
+    SingleActivator(LogicalKeyboardKey.keyB, control: true),
+    FormatIntent(Format.bold),
+  ),
+  AppShortcut(
+    'Italic',
+    SingleActivator(LogicalKeyboardKey.keyI, control: true),
+    FormatIntent(Format.italic),
+  ),
+  AppShortcut(
+    'Strikethrough',
+    SingleActivator(LogicalKeyboardKey.keyX, control: true, shift: true),
+    FormatIntent(Format.strike),
+  ),
+  AppShortcut(
+    'Link',
+    SingleActivator(LogicalKeyboardKey.keyK, control: true, alt: true),
+    FormatIntent(Format.link),
+  ),
+  AppShortcut(
+    'Your previous message',
+    SingleActivator(LogicalKeyboardKey.arrowUp, control: true),
+    StepHistoryIntent(older: true),
+  ),
+  AppShortcut(
+    'Your next message',
+    SingleActivator(LogicalKeyboardKey.arrowDown, control: true),
+    StepHistoryIntent(older: false),
+  ),
+  AppShortcut(
     'Profile and settings',
     SingleActivator(LogicalKeyboardKey.keyA, control: true, shift: true),
     OpenAccountIntent(),
@@ -148,7 +225,7 @@ const appShortcuts = <AppShortcut>[
     FocusRegionIntent(forward: false),
   ),
   AppShortcut(
-    'Close the popup, thread or page',
+    'Mark as read, or close the popup, thread or page',
     SingleActivator(LogicalKeyboardKey.escape),
     DismissIntent(),
   ),
@@ -244,9 +321,9 @@ class _AppShortcutsState extends State<AppShortcuts> {
   }
 }
 
-/// When nothing on the page on top has the focus, as after a page above
-/// it closed, the keys still reach that page's actions: the first widget on
-/// it that provides one takes the key.
+/// When the focus is outside what provides an action, as after a page above
+/// it closed or in the channel list, the keys still reach that page's
+/// actions: the first widget on it that provides one takes the key.
 class _ShortcutManager extends ShortcutManager {
   _ShortcutManager(Map<ShortcutActivator, Intent> shortcuts)
     : super(shortcuts: shortcuts);
@@ -254,16 +331,18 @@ class _ShortcutManager extends ShortcutManager {
   @override
   KeyEventResult handleKeypress(BuildContext context, KeyEvent event) {
     final result = super.handleKeypress(context, event);
-    final scope = FocusManager.instance.primaryFocus;
-    if (result != KeyEventResult.ignored || scope is! FocusScopeNode) {
-      return result;
-    }
+    final scope = FocusManager.instance.primaryFocus?.nearestScope;
+    if (result != KeyEventResult.ignored || scope == null) return result;
     final intent = shortcuts.entries
         .where((e) => e.key.accepts(event, HardwareKeyboard.instance))
         .firstOrNull
         ?.value;
     if (intent is! AppIntent) return result;
-    for (final node in scope.descendants) {
+    // A page whose widgets live in nested navigators has none of its own.
+    final nodes = scope.descendants.isEmpty
+        ? FocusManager.instance.rootScope.descendants
+        : scope.descendants;
+    for (final node in nodes) {
       final at = node.context;
       if (at == null || !(ModalRoute.of(at)?.isCurrent ?? false)) continue;
       final action = Actions.maybeFind<AppIntent>(at, intent: intent);

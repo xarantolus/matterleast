@@ -14,6 +14,7 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/composer_desktop.dart';
 import 'package:matterleast/screens/channel/composer_keys.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
+import 'package:matterleast/screens/channel/conversation_keys.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
@@ -84,7 +85,7 @@ class ConversationScaffold extends ConsumerWidget {
       actions: {
         SearchChannelIntent: EnabledAction<SearchChannelIntent>(
           enabled: () => info != null,
-          onInvoke: () => unawaited(_searchHere(context, info!)),
+          onInvoke: (_) => unawaited(_searchHere(context, info!)),
         ),
       },
       child: ContentPage(
@@ -103,80 +104,95 @@ class ConversationScaffold extends ConsumerWidget {
             (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
             showsMessages(state),
         progressDelay: ProgressSlot.settleDelay,
-        body: ConversationDropTarget(
-          url: url,
-          channelId: channelId,
-          rootId: rootId,
-          target: dropTarget,
-          child: _Readable(
-            child: SafeArea(
-              top: false,
-              bottom: window == null,
-              child: Column(
-                children: [
-                  ?header,
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: FocusRegion(
-                            entry: RegionEntry.self,
-                            child: ConversationView(
-                              url: url,
-                              conversation: conversation,
-                              composer: window == null || window.archived
-                                  ? null
-                                  : composerDraftProvider(
-                                      url,
-                                      channelId,
-                                      rootId,
-                                    ),
-                              startText: startText,
-                              onOpenThread: onOpenThread,
+        body: ConversationKeys(
+          conversation: conversation,
+          isThread: rootId.isNotEmpty,
+          builder: (composerFocus) => ConversationDropTarget(
+            url: url,
+            channelId: channelId,
+            rootId: rootId,
+            target: dropTarget,
+            child: _Readable(
+              child: SafeArea(
+                top: false,
+                bottom: window == null,
+                child: Column(
+                  children: [
+                    ?header,
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: FocusRegion(
+                              entry: RegionEntry.self,
+                              child: ConversationView(
+                                url: url,
+                                conversation: conversation,
+                                composer: window == null || window.archived
+                                    ? null
+                                    : composerDraftProvider(
+                                        url,
+                                        channelId,
+                                        rootId,
+                                      ),
+                                startText: startText,
+                                onOpenThread: onOpenThread,
+                              ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: TypingLine(
-                            url: url,
-                            channelId: channelId,
-                            rootId: rootId,
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: TypingLine(
+                              url: url,
+                              channelId: channelId,
+                              rootId: rootId,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (window != null)
-                    FocusRegion(
-                      entry: RegionEntry.textField,
-                      child: Composer(
-                        url: url,
-                        channelId: channelId,
-                        rootId: rootId,
-                        teamId: window.teamId,
-                        hint: composerHint,
-                        archived: window.archived,
-                        autofocus: focusComposer,
-                        lastOwnPost: () {
-                          final now = ref.read(conversation);
-                          return lastOwnPost(now.rows, now.myUserId);
-                        },
-                        onReplyToNewest: onOpenThread == null
-                            ? null
-                            : () {
-                                final post = newestReplyable(
-                                  ref.read(conversation).rows,
-                                );
-                                if (post != null) {
-                                  onOpenThread!(post, reply: true);
-                                }
-                              },
+                        ],
                       ),
                     ),
-                ],
+                    if (window != null)
+                      FocusRegion(
+                        entry: RegionEntry.textField,
+                        child: Composer(
+                          url: url,
+                          channelId: channelId,
+                          rootId: rootId,
+                          teamId: window.teamId,
+                          hint: composerHint,
+                          archived: window.archived,
+                          autofocus: focusComposer,
+                          focusNode: composerFocus,
+                          lastOwnPost: () {
+                            final now = ref.read(conversation);
+                            return lastOwnPost(now.rows, now.myUserId);
+                          },
+                          ownTexts: () {
+                            final now = ref.read(conversation);
+                            return [
+                              for (final post in ownPosts(
+                                now.rows,
+                                now.myUserId,
+                              ))
+                                post.message,
+                            ];
+                          },
+                          onReplyToNewest: onOpenThread == null
+                              ? null
+                              : () {
+                                  final post = newestReplyable(
+                                    ref.read(conversation).rows,
+                                  );
+                                  if (post != null) {
+                                    onOpenThread!(post, reply: true);
+                                  }
+                                },
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

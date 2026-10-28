@@ -4,10 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/rail.dart';
+import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
+import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
+import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/you_page.dart';
 
@@ -81,9 +86,35 @@ class RootShortcuts extends ConsumerWidget {
     );
   }
 
+  void _newMessage(BuildContext context, WidgetRef ref) {
+    final target = ref.read(railSelectionProvider);
+    if (target == null) return;
+    final teams = ref.read(railTeamsProvider(target.url)).value ?? const [];
+    final teamId = shownTeam(target, teams);
+    if (teamId == null) return;
+    unawaited(
+      openPage(
+        Navigator.of(context),
+        newMessageScreen(url: target.url, teamId: teamId),
+        popout: true,
+      ),
+    );
+  }
+
+  void _showMentions(BuildContext context, WidgetRef ref) {
+    ref.read(homeFilterSelectionProvider.notifier).select(InboxFilter.mentions);
+    unawaited(showPlace(Navigator.of(context), null));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) => Actions(
     actions: {
+      OpenMentionsIntent: CallbackAction<OpenMentionsIntent>(
+        onInvoke: (_) => _showMentions(context, ref),
+      ),
+      NewMessageIntent: CallbackAction<NewMessageIntent>(
+        onInvoke: (_) => _newMessage(context, ref),
+      ),
       OpenSwitcherIntent: CallbackAction<OpenSwitcherIntent>(
         onInvoke: (_) => onSwitcher(),
       ),
