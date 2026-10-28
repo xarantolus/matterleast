@@ -163,10 +163,10 @@ return home(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( Uri server,  String team,  String postId)?  post,TResult Function( Uri server,  String team,  String name)?  channel,TResult Function( Uri server,  String team,  String username)?  directMessage,TResult Function( Uri server,  String? team)?  home,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( Uri server,  String postId,  String? team)?  post,TResult Function( Uri server,  String team,  String name)?  channel,TResult Function( Uri server,  String team,  String username)?  directMessage,TResult Function( Uri server,  String? team)?  home,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case PostLink() when post != null:
-return post(_that.server,_that.team,_that.postId);case ChannelNameLink() when channel != null:
+return post(_that.server,_that.postId,_that.team);case ChannelNameLink() when channel != null:
 return channel(_that.server,_that.team,_that.name);case DirectMessageLink() when directMessage != null:
 return directMessage(_that.server,_that.team,_that.username);case ServerHomeLink() when home != null:
 return home(_that.server,_that.team);case _:
@@ -187,10 +187,10 @@ return home(_that.server,_that.team);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( Uri server,  String team,  String postId)  post,required TResult Function( Uri server,  String team,  String name)  channel,required TResult Function( Uri server,  String team,  String username)  directMessage,required TResult Function( Uri server,  String? team)  home,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( Uri server,  String postId,  String? team)  post,required TResult Function( Uri server,  String team,  String name)  channel,required TResult Function( Uri server,  String team,  String username)  directMessage,required TResult Function( Uri server,  String? team)  home,}) {final _that = this;
 switch (_that) {
 case PostLink():
-return post(_that.server,_that.team,_that.postId);case ChannelNameLink():
+return post(_that.server,_that.postId,_that.team);case ChannelNameLink():
 return channel(_that.server,_that.team,_that.name);case DirectMessageLink():
 return directMessage(_that.server,_that.team,_that.username);case ServerHomeLink():
 return home(_that.server,_that.team);}
@@ -207,10 +207,10 @@ return home(_that.server,_that.team);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( Uri server,  String team,  String postId)?  post,TResult? Function( Uri server,  String team,  String name)?  channel,TResult? Function( Uri server,  String team,  String username)?  directMessage,TResult? Function( Uri server,  String? team)?  home,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( Uri server,  String postId,  String? team)?  post,TResult? Function( Uri server,  String team,  String name)?  channel,TResult? Function( Uri server,  String team,  String username)?  directMessage,TResult? Function( Uri server,  String? team)?  home,}) {final _that = this;
 switch (_that) {
 case PostLink() when post != null:
-return post(_that.server,_that.team,_that.postId);case ChannelNameLink() when channel != null:
+return post(_that.server,_that.postId,_that.team);case ChannelNameLink() when channel != null:
 return channel(_that.server,_that.team,_that.name);case DirectMessageLink() when directMessage != null:
 return directMessage(_that.server,_that.team,_that.username);case ServerHomeLink() when home != null:
 return home(_that.server,_that.team);case _:
@@ -225,12 +225,12 @@ return home(_that.server,_that.team);case _:
 
 
 class PostLink implements ServerLink {
-  const PostLink({required this.server, required this.team, required this.postId});
+  const PostLink({required this.server, required this.postId, this.team});
   
 
 @override final  Uri server;
-@override final  String team;
  final  String postId;
+@override final  String? team;
 
 /// Create a copy of ServerLink
 /// with the given fields replaced by the non-null parameter values.
@@ -242,18 +242,18 @@ $PostLinkCopyWith<PostLink> get copyWith => _$PostLinkCopyWithImpl<PostLink>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is PostLink&&(identical(other.server, server) || other.server == server)&&(identical(other.team, team) || other.team == team)&&(identical(other.postId, postId) || other.postId == postId));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is PostLink&&(identical(other.server, server) || other.server == server)&&(identical(other.postId, postId) || other.postId == postId)&&(identical(other.team, team) || other.team == team));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,server,team,postId);
+    return Object.hash(runtimeType,server,postId,team);
 }
 
 @override
 String toString() {
-    return 'ServerLink.post(server: $server, team: $team, postId: $postId)';
+    return 'ServerLink.post(server: $server, postId: $postId, team: $team)';
 }
 
 
@@ -264,7 +264,7 @@ abstract mixin class $PostLinkCopyWith<$Res> implements $ServerLinkCopyWith<$Res
   factory $PostLinkCopyWith(PostLink value, $Res Function(PostLink) _then) = _$PostLinkCopyWithImpl;
 @override @useResult
 $Res call({
- Uri server, String team, String postId
+ Uri server, String postId, String? team
 });
 
 
@@ -281,12 +281,12 @@ class _$PostLinkCopyWithImpl<$Res>
 
 /// Create a copy of ServerLink
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? server = null,Object? team = null,Object? postId = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? server = null,Object? postId = null,Object? team = freezed,}) {
   return _then(PostLink(
 server: null == server ? _self.server : server // ignore: cast_nullable_to_non_nullable
-as Uri,team: null == team ? _self.team : team // ignore: cast_nullable_to_non_nullable
-as String,postId: null == postId ? _self.postId : postId // ignore: cast_nullable_to_non_nullable
-as String,
+as Uri,postId: null == postId ? _self.postId : postId // ignore: cast_nullable_to_non_nullable
+as String,team: freezed == team ? _self.team : team // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

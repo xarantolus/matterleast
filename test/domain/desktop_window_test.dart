@@ -10,11 +10,8 @@ void main() {
       expect(closeAction(closeToTray: true, hasTray: true), CloseAction.hide);
     });
 
-    test('only minimises it without a tray, so it stays reachable', () {
-      expect(
-        closeAction(closeToTray: true, hasTray: false),
-        CloseAction.minimize,
-      );
+    test('quits without a tray, so no window gets lost', () {
+      expect(closeAction(closeToTray: true, hasTray: false), CloseAction.quit);
     });
 
     test('quits when the user switched close to tray off', () {

@@ -1,8 +1,10 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
+import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -35,6 +37,12 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
         child: InkWell(
           mouseCursor: clickCursor,
           onHover: (on) => setState(() => _hovered = on),
+          onLongPress: preview.url.isEmpty
+              ? null
+              : () => showCopyLink(context, preview.url),
+          onSecondaryTapUp: preview.url.isEmpty || !isDesktop
+              ? null
+              : (d) => showCopyLink(context, preview.url, at: d.globalPosition),
           onTap: env == null || preview.url.isEmpty
               ? null
               : () => env.onLink(classifyLink(preview.url, env.server)),
@@ -68,8 +76,16 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
                       final box = imageBox(
                         measuredWidth: size.width,
                         measuredHeight: size.height,
-                        maxWidth: constraints.maxWidth,
-                        maxHeight: 200,
+                        maxWidth: imageMaxWidth(
+                          constraints.maxWidth,
+                          desktop: isDesktop,
+                        ),
+                        maxHeight: isDesktop
+                            ? gridMaxHeight(
+                                MediaQuery.sizeOf(context),
+                                desktop: true,
+                              )
+                            : 200,
                       );
                       return box == null
                           ? const SizedBox.shrink()

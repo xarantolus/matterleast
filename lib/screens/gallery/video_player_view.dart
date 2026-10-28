@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/ui/full_screen.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -21,7 +22,8 @@ String playbackTime(Duration d) {
 }
 
 /// An opened video with a small overlay: play and pause in the middle, a
-/// scrubber at the bottom, hidden while playing until the next tap. Holding
+/// scrubber at the bottom, hidden while playing until the next tap (on
+/// desktop, until the mouse moves). Holding
 /// plays at double speed; sliding the picture up or down closes the
 /// gallery.
 class VideoPlayerView extends StatefulWidget {
@@ -180,7 +182,16 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                   // handler's own scale gesture or the pages' horizontal one.
                   onVerticalDragUpdate: _slide,
                   onVerticalDragEnd: _endSlide,
-                  onTap: () => _setControls(!_controls),
+                  // A mouse click plays and pauses and a double click fills
+                  // the window, like desktop players; a touch shows the
+                  // controls.
+                  onTap: isDesktop
+                      ? () {
+                          _setControls(true);
+                          unawaited(_playPause());
+                        }
+                      : () => _setControls(!_controls),
+                  onDoubleTap: isDesktop ? _toggleFullScreen : null,
                   onLongPressStart: (_) => _holdStart(),
                   onLongPressEnd: (_) => _holdEnd(),
                   child: Center(

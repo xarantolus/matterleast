@@ -6,6 +6,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/sync/draft_push_scheduler.dart';
 import 'package:matterleast/domain/draft_sync.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_features.dart';
@@ -31,6 +32,24 @@ class DraftSync {
   /// One request at a time per draft, so an older save can't land last.
   final _queues = <DraftKey, Future<void>>{};
 
+  late final _waiting = DraftPushScheduler(
+    clock: _clock,
+    push: (key) => unawaited(changed(key.channelId, key.rootId)),
+  );
+
+  /// The user typed in the draft: the local copy is saved already, the
+  /// server gets it once it has been quiet for [draftQuietTime], or at
+  /// [flush].
+  void changedSoon(String channelId, String rootId) =>
+      _waiting.changed((channelId: channelId, rootId: rootId));
+
+  /// The user left the draft's conversation: push it now if it waits.
+  void flush(String channelId, String rootId) =>
+      _waiting.flush((channelId: channelId, rootId: rootId));
+
+  /// Pushes every waiting draft, e.g. when the app goes to the background.
+  void flushAll() => _waiting.flushAll();
+
   Future<bool> enabled() async {
     if (!(await _db.features()).syncedDrafts) return false;
     return await _db.preference(Prefs.syncDrafts.$1, Prefs.syncDrafts.$2) !=
@@ -50,8 +69,13 @@ class DraftSync {
   }
 
   /// Waits for pushes in flight, so closing doesn't leave one writing to a
-  /// closed database.
-  Future<void> close() => Future.wait([
+  /// closed database; drafts still waiting for quiet stay local.
+  Future<void> close() async {
+    _waiting.dispose();
+    await _drain();
+  }
+
+  Future<void> _drain() => Future.wait([
     for (final push in _queues.values.toList()) push.catchError((Object _) {}),
   ]);
 

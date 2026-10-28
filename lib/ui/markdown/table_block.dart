@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/ui/clickable.dart';
@@ -10,8 +11,9 @@ import 'package:matterleast/ui/tokens.dart';
 const _previewHeight = 300.0;
 const _cellMaxWidth = 240.0;
 
-/// A table in a message: scrolls sideways, at most [_previewHeight] tall;
-/// tap shows it whole.
+/// A table in a message. Where panes show, the whole table sits in the
+/// message and scrolls sideways when it is wider; elsewhere a preview that
+/// scrolls sideways, at most [_previewHeight] tall, and a tap shows it whole.
 class TablePreview extends StatelessWidget {
   const TablePreview({required this.table, super.key});
 
@@ -19,6 +21,9 @@ class TablePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (windowClassOf(MediaQuery.sizeOf(context).width).showsPanes) {
+      return _InlineTable(table: table);
+    }
     final tokens = context.tokens;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
@@ -45,6 +50,59 @@ class TablePreview extends StatelessWidget {
                     table: table,
                     maxCellWidth: _cellMaxWidth,
                   ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineTable extends StatefulWidget {
+  const _InlineTable({required this.table});
+
+  final TableBlock table;
+
+  @override
+  State<_InlineTable> createState() => _InlineTableState();
+}
+
+class _InlineTableState extends State<_InlineTable> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: tokens.hairline),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: LayoutBuilder(
+            builder: (context, constraints) => Scrollbar(
+              controller: _scroll,
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                controller: _scroll,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(bottom: Spacing.sm),
+                child: MessageTable(
+                  table: widget.table,
+                  // A cell wraps before it takes more than half the message.
+                  maxCellWidth: constraints.maxWidth / 2,
                 ),
               ),
             ),

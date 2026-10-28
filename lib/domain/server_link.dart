@@ -6,11 +6,13 @@ part 'server_link.freezed.dart';
 /// instead of the browser.
 @freezed
 sealed class ServerLink with _$ServerLink {
-  /// `/<team>/pl/<post id>`, or a thread's `/<team>/threads/<post id>`.
+  /// `/<team>/pl/<post id>`, or a thread's `/<team>/threads/<post id>`;
+  /// `/_redirect/pl/<post id>` (what agents link to) has no team, the post's
+  /// own is meant.
   const factory ServerLink.post({
     required Uri server,
-    required String team,
     required String postId,
+    String? team,
   }) = PostLink;
 
   /// `/<team>/channels/<name>`, or a group message's
@@ -76,6 +78,10 @@ ServerLink? parseServerLink(Uri uri, Iterable<Uri> knownServers) {
   return switch (rest) {
     [] => ServerLink.home(server: server),
     [final team] => ServerLink.home(server: server, team: team),
+    ['_redirect', 'pl', final id] when _postId.hasMatch(id) => ServerLink.post(
+      server: server,
+      postId: id,
+    ),
     [final team, 'pl' || 'threads', final id] when _postId.hasMatch(id) =>
       ServerLink.post(server: server, team: team, postId: id),
     [final team, 'channels', final name] => ServerLink.channel(

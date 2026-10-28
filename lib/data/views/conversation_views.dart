@@ -11,6 +11,7 @@ import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_link.dart';
+import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/domain/user_profile.dart';
 
@@ -203,8 +204,9 @@ class ConversationViews {
   }
 
   /// The newest [limit] messages of the loaded range containing [rangeAt]
-  /// (the newest range when null), and at least those after [unreadAfter],
-  /// so the new-messages line is in the window. Messages deleted before
+  /// (the newest range when null), and at least those after [unreadAfter]
+  /// and from [keepAt], so the new-messages line and the message asked for
+  /// stay in the window as newer ones arrive. Messages deleted before
   /// [openedAt] are left out; those deleted since stay as placeholders.
   Stream<ConversationWindow> channel(
     String channelId, {
@@ -212,9 +214,10 @@ class ConversationViews {
     required DateTime openedAt,
     DateTime? rangeAt,
     DateTime? unreadAfter,
+    DateTime? keepAt,
   }) => throttledWatch(
     _changes(),
-    () => _channel(channelId, limit, openedAt, rangeAt, unreadAfter),
+    () => _channel(channelId, limit, openedAt, rangeAt, unreadAfter, keepAt),
     interval: _interval,
   ).distinct();
 
@@ -261,6 +264,7 @@ class ConversationViews {
     DateTime openedAt,
     DateTime? rangeAt,
     DateTime? unreadAfter,
+    DateTime? keepAt,
   ) async {
     final channel = await (db.select(
       db.channels,
@@ -315,20 +319,22 @@ class ConversationViews {
             ownLocal(p));
 
     var window = limit;
-    if (unreadAfter != null) {
+    // The window reaches back at least this far, so the line of unread
+    // messages, or a message the reader came for, is in it.
+    for (final from in [?unreadAfter, ?keepAt]) {
       final count = db.posts.id.count();
-      final unread =
+      final newer =
           await (db.selectOnly(db.posts)
                 ..addColumns([count])
                 ..where(
                   inRange(db.posts) &
-                      db.posts.createAt.isBiggerThanValue(
-                        unreadAfter.millisecondsSinceEpoch,
+                      db.posts.createAt.isBiggerOrEqualValue(
+                        from.millisecondsSinceEpoch,
                       ),
                 ))
               .map((row) => row.read(count) ?? 0)
               .getSingle();
-      window = window < unread + 20 ? (unread + 20).clamp(0, 500) : window;
+      window = window < newer + 20 ? (newer + 20).clamp(0, 1000) : window;
     }
     final rows =
         await (db.select(db.posts)
@@ -428,6 +434,9 @@ class ConversationViews {
       for (final d in details.values)
         for (final a in d.acknowledgements) a.userId,
       for (final l in links.values) l.authorId,
+      for (final p in posts)
+        if (p.type.startsWith('system_'))
+          ...systemMessageUserIds(p.userId, details[p.id]!.props),
     };
     final saved = {
       for (final pref
@@ -575,6 +584,15 @@ class ConversationViews {
           replyCount: p.replyCount,
           lastReplyAt: p.lastReplyAt,
           authorUsername: people[p.userId]?.username ?? '',
+          systemUsernames: p.type.startsWith('system_')
+              ? {
+                  for (final id in systemMessageUserIds(
+                    p.userId,
+                    details[p.id]!.props,
+                  ))
+                    if (people[id] case final person?) id: person.username,
+                }
+              : const {},
           authorIsBot: people[p.userId]?.isBot ?? false,
           authorIsGuest: people[p.userId]?.isGuest ?? false,
           authorPictureAt: people[p.userId]?.pictureAt,
@@ -650,7 +668,7 @@ class ConversationViews {
       if (row == null || channel == null) continue;
       linked[id] = (
         postId: link.postId,
-        teamName: link.team,
+        teamName: link.team ?? '',
         authorId: row.userId,
         channelName: channel.displayName,
         direct: channel.type == 'D',

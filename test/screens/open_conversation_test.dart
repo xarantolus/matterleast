@@ -20,6 +20,7 @@ import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/data/store/server_store.dart' show PageKind;
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/quick_switch.dart';
@@ -270,6 +271,57 @@ void main() {
     await finish(tester);
   });
 
+  testWidgets('a direct message opened at a message names the other person', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.runAsync(() async {
+      await session.db.setSyncText(SyncKeys.currentUserId, _me);
+      await session.store.applyUsers([
+        api.User.fromJson({
+          'id': _pat.id,
+          'username': 'pat',
+          'first_name': 'Pat',
+          'last_name': 'Doe',
+        }),
+      ]);
+      await session.store.applyChannel(
+        api.Channel.fromJson({
+          'id': _directId,
+          'type': 'D',
+          'name': '${_pat.id}__$_me',
+          'display_name': '',
+        }),
+      );
+      await session.store.applyChannelMember(
+        api.ChannelMember.fromJson({
+          'channel_id': _directId,
+          'user_id': _me,
+          'roles': '',
+        }),
+      );
+    });
+    unawaited(
+      openConversation(
+        navigator(tester),
+        url: server.url.toString(),
+        channelId: _directId,
+        title: '',
+        highlightPostId: 'old1',
+      ),
+    );
+    await settle(tester);
+    expect(
+      find.descendant(
+        of: find.byType(ChannelScreen),
+        matching: find.textContaining('pat'),
+      ),
+      findsWidgets,
+    );
+    await back(tester);
+    await finish(tester);
+  });
+
   testWidgets('another conversation takes the place of the open one', (
     tester,
   ) async {
@@ -497,6 +549,57 @@ void main() {
     final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
     expect(screen.channelId, channelId);
     expect(screen.highlightPostId, isNull);
+    navigator(tester).pop();
+    await settle(tester);
+    await finish(tester);
+  });
+
+  testWidgets('an agent citation link opens its post highlighted', (
+    tester,
+  ) async {
+    const postId = 'harbourpost0000000000000a1';
+    await start(tester, more: known());
+    await tester.runAsync(
+      () => session.store.applyChannelPage(
+        channelId: channelId,
+        page: api.PostList.fromJson({
+          'order': [postId],
+          'posts': {
+            postId: {
+              'id': postId,
+              'channel_id': channelId,
+              'user_id': 'someone',
+              'create_at': DateTime.utc(
+                2026,
+                10,
+                25,
+                10,
+              ).millisecondsSinceEpoch,
+              'message': 'cited',
+            },
+          },
+        }),
+        kind: PageKind.page,
+      ),
+    );
+    // The rail keeps the server list alive in the app.
+    final servers = container.listen(serversProvider, (_, _) {});
+    addTearDown(servers.close);
+    await settle(tester);
+    unawaited(
+      openLinkFromMessage(
+        navigator(tester),
+        server.url.replace(
+          path: '/_redirect/pl/$postId',
+          query: 'view=citation',
+        ),
+      ),
+    );
+    await settle(tester);
+    expect(
+      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
+      postId,
+    );
     navigator(tester).pop();
     await settle(tester);
     await finish(tester);
@@ -989,6 +1092,35 @@ void main() {
     await tester.pump(Duration.zero);
   });
 
+  testWidgets('on a wide window the thread pane closes at the end of its '
+      'header', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await start(tester, panes: true);
+    await open(tester);
+    await open(tester, rootId: 'old1');
+    final thread = find.byType(ThreadScreen);
+    final close = find.descendant(
+      of: thread,
+      matching: find.byTooltip('Close the thread'),
+    );
+    final title = find.descendant(of: thread, matching: find.text('Thread'));
+    expect(
+      tester.getRect(close).left,
+      greaterThan(tester.getRect(title).right),
+    );
+    expect(
+      tester.getRect(close).right,
+      closeTo(tester.getRect(thread).right, 24),
+      reason: 'at the pane edge',
+    );
+    closeConversations(navigator(tester));
+    await settle(tester);
+    await finish(tester);
+    await tester.pump(Duration.zero);
+  });
+
   testWidgets('suggestions float above the composer; the list keeps its size', (
     tester,
   ) async {
@@ -1290,6 +1422,7 @@ void main() {
   });
 }
 
+const _me = 'me0000000000000000000000m1';
 const _directId = 'dm000000000000000000000d01';
 
 const _pat = UserProfile(

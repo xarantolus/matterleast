@@ -31,6 +31,7 @@ class Conversation extends _$Conversation {
   StreamSubscription<void>? _caughtUp;
   var _limit = _step;
   DateTime? _rangeAt;
+  DateTime? _keepAt;
   DateTime? _lastViewedAt;
   String? _me;
   var _loadingNewer = false;
@@ -153,6 +154,7 @@ class Conversation extends _$Conversation {
                     limit: _limit,
                     openedAt: _openedAt,
                     rangeAt: _rangeAt,
+                    keepAt: _keepAt,
                     unreadAfter: _lastViewedAt,
                   ))
             .listen(_onWindow);
@@ -302,14 +304,23 @@ class Conversation extends _$Conversation {
   /// around it and move there.
   Future<void> _openHighlight() async {
     final key = state.highlightKey;
-    if (key == null || state.rows.any((r) => r.key == key)) return;
+    if (key == null) return;
     var at = await ConversationViews(_session!.db).postCreatedAt(key);
+    if (state.rows.any((r) => r.key == key)) {
+      // Newer messages arriving must not push it out of the window.
+      if (at != null && ref.mounted) {
+        _keepAt = at;
+        _watch();
+      }
+      return;
+    }
     final ranges = await _session!.store.rangesFor('channel', channelId);
     if (at == null || rangeContaining(ranges, at) == null) {
       at = await _actions!.aroundInChannel(channelId, key, owner: this);
     }
     if (at == null || !ref.mounted) return;
     _rangeAt = at;
+    _keepAt = at;
     _limit = _step;
     _moved = true;
     _watch();
@@ -440,6 +451,7 @@ class Conversation extends _$Conversation {
     if (session == null) return;
     unawaited(session.store.clearViewState(_scope, _scopeId));
     final apart = state.window?.newerApart ?? false;
+    _keepAt = null;
     state = state.copyWith(
       saved: null,
       highlightKey: null,

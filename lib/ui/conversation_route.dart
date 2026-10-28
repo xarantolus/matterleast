@@ -23,6 +23,7 @@ class InPane extends InheritedWidget {
     required this.onClose,
     required this.closeIcon,
     required this.closeTooltip,
+    this.closeAtEnd = false,
     required super.child,
   });
 
@@ -30,12 +31,23 @@ class InPane extends InheritedWidget {
   final IconData closeIcon;
   final String closeTooltip;
 
+  /// A side pane closes at the end of its header; a main pane goes back
+  /// from the start, like a route.
+  final bool closeAtEnd;
+
   /// The app bar's leading button for a conversation in a pane; null in a
-  /// route, which brings its own back button.
-  static Widget? closeButton(BuildContext context) {
+  /// route, which brings its own back button, and in a side pane.
+  static Widget? closeButton(BuildContext context) =>
+      _button(context, atEnd: false);
+
+  /// The button at the end of a side pane's app bar.
+  static Widget? endButton(BuildContext context) =>
+      _button(context, atEnd: true);
+
+  static Widget? _button(BuildContext context, {required bool atEnd}) {
     final pane = context.dependOnInheritedWidgetOfExactType<InPane>();
     final close = pane?.onClose;
-    if (pane == null || close == null) return null;
+    if (pane == null || close == null || pane.closeAtEnd != atEnd) return null;
     return IconButton(
       icon: Icon(pane.closeIcon),
       tooltip: pane.closeTooltip,
@@ -47,5 +59,6 @@ class InPane extends InheritedWidget {
   bool updateShouldNotify(InPane old) =>
       (old.onClose == null) != (onClose == null) ||
       old.closeIcon != closeIcon ||
+      old.closeAtEnd != closeAtEnd ||
       old.closeTooltip != closeTooltip;
 }

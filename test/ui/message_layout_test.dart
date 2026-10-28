@@ -13,8 +13,49 @@ import 'package:matterleast/ui/markdown/show_more.dart';
 void main() {
   group('image boxes', () {
     test('the height cap is 45 % of the longer side in either orientation', () {
-      expect(imageMaxHeight(const Size(400, 800)), 360);
-      expect(imageMaxHeight(const Size(800, 400)), 360);
+      expect(imageMaxHeight(const Size(400, 800), desktop: false), 360);
+      expect(imageMaxHeight(const Size(800, 400), desktop: false), 360);
+    });
+
+    test('on desktop a preview fits 40 % of the window height and 60 % of '
+        'the column', () {
+      Size? box(Size window, double column, int w, int h) => imageBox(
+        measuredWidth: w,
+        measuredHeight: h,
+        maxWidth: imageMaxWidth(column, desktop: true),
+        maxHeight: imageMaxHeight(window, desktop: true),
+      );
+      const big = Size(1600, 1000);
+      expect(box(big, 800, 2400, 1200), const Size(480, 240));
+      expect(box(big, 800, 1200, 2400), const Size(200, 400));
+      expect(box(big, 800, 200, 100), const Size(200, 100));
+      const small = Size(1100, 700);
+      expect(box(small, 500, 2400, 1200), const Size(300, 150));
+      expect(box(small, 500, 1200, 2400), const Size(140, 280));
+    });
+
+    test('a video of unknown size is 16:9 within the same caps', () {
+      const window = Size(1100, 700);
+      final box = unmeasuredVideoBox(
+        imageMaxWidth(900, desktop: true),
+        imageMaxHeight(window, desktop: true),
+      );
+      expect(box.height, 280);
+      expect(box.width, closeTo(280 * 16 / 9, 0.001));
+      expect(unmeasuredVideoBox(300, 400), const Size(300, 168.75));
+    });
+
+    test('a tiny window keeps a floor so something still shows', () {
+      expect(imageMaxHeight(const Size(600, 300), desktop: true), 160);
+      expect(imageMaxWidth(200, desktop: true), 160);
+      expect(imageMaxWidth(100, desktop: true), 100);
+    });
+
+    test('phones keep the full width and grids are smaller on desktop', () {
+      expect(imageMaxWidth(900, desktop: false), 900);
+      expect(gridMaxHeight(const Size(1600, 1000), desktop: true), 220);
+      expect(gridMaxHeight(const Size(1100, 700), desktop: true), 154);
+      expect(gridMaxHeight(const Size(400, 800), desktop: false), 360);
     });
 
     test('the measured size shrinks to the width, keeping the ratio', () {

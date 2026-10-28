@@ -97,6 +97,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     'accent on page': (accent, page),
     'hovered link on page': (hoveredAccent, page),
     'accent on wash': (accent, accentWash),
+    'text on wash (the open channel row)': (text, accentWash),
     'text on code': (text, codeBackground),
     'muted on code': (muted, codeBackground),
     'accent on panel': (accent, panel),

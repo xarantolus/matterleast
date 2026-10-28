@@ -429,6 +429,41 @@ void main() {
     expect(await fling(grow: true), closeTo(undisturbed, 1));
   });
 
+  testWidgets(
+    'a short list stays on screen when pulled past either end',
+    (tester) async {
+      await tester.pumpWidget(list(rowsFrom(3, 1)));
+      await tester.pumpAndSettle();
+      final rest = [for (var id = 1; id <= 3; id++) topOf(tester, id)];
+      void expectInPlace() =>
+          expect([for (var id = 1; id <= 3; id++) topOf(tester, id)], rest);
+
+      for (final dy in [300.0, -300.0, 900.0, -900.0]) {
+        final gesture = await tester.startGesture(const Offset(400, 300));
+        await gesture.moveBy(Offset(0, dy / 2));
+        await tester.pump();
+        expectInPlace();
+        await gesture.moveBy(Offset(0, dy / 2));
+        await tester.pump();
+        expectInPlace();
+        await gesture.up();
+        await tester.pump(const Duration(milliseconds: 100));
+        expectInPlace();
+        await tester.pumpAndSettle();
+        expectInPlace();
+        await tester.fling(find.byType(Scrollable), Offset(0, dy), 3000);
+        await tester.pump(const Duration(milliseconds: 100));
+        expectInPlace();
+        await tester.pumpAndSettle();
+        expectInPlace();
+      }
+    },
+    variant: TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.linux,
+    }),
+  );
+
   testWidgets('a scroll up from the bottom stays where it stopped', (
     tester,
   ) async {

@@ -436,8 +436,8 @@ extension on _ConversationViewState {
 
     final failed = post.sendState == 'failed';
     final tappable = usable && threads && post.sendState == null;
-    // With a mouse a click selects text; the toolbar, the right click and
-    // the replies bar take over what a tap and a long press do on a phone.
+    // With a mouse the toolbar and the right click take over what a long
+    // press does on a phone; a click still opens the thread, a drag selects.
     final desktop = isDesktop;
     final tile = PostTile(
       post: post,
@@ -461,7 +461,7 @@ extension on _ConversationViewState {
       onAcknowledge: reacts ? () => _toggleAcknowledged(post) : null,
       onTap: failed
           ? () => showFailedPostSheet(context, url: widget.url, post: post)
-          : tappable && !desktop
+          : tappable
           ? openThread
           : null,
       tapHint: failed ? 'try again or delete' : 'open thread',

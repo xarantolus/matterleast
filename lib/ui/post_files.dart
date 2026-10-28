@@ -136,8 +136,8 @@ class _MediaGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final maxHeight = imageMaxHeight(MediaQuery.sizeOf(context));
-      final width = constraints.maxWidth;
+      final screen = MediaQuery.sizeOf(context);
+      final width = imageMaxWidth(constraints.maxWidth, desktop: isDesktop);
       final grid = mediaGridRows(media.length);
       Widget tile(int index, Size size) => _MediaTile(
         url: url,
@@ -154,10 +154,13 @@ class _MediaGrid extends StatelessWidget {
               measuredWidth: file.width,
               measuredHeight: file.height,
               maxWidth: width,
-              maxHeight: maxHeight,
+              maxHeight: imageMaxHeight(screen, desktop: isDesktop),
             ) ??
             (file.kind == FileKind.video
-                ? Size(width, width * 9 / 16)
+                ? unmeasuredVideoBox(
+                    width,
+                    imageMaxHeight(screen, desktop: isDesktop),
+                  )
                 : const Size.square(_unknownBox));
         return Align(
           alignment: AlignmentDirectional.centerStart,
@@ -167,7 +170,8 @@ class _MediaGrid extends StatelessWidget {
       final rows = grid.rows;
       final rowHeight = [
         (width - _gap) / 2,
-        (maxHeight - _gap * (rows.length - 1)) / rows.length,
+        (gridMaxHeight(screen, desktop: isDesktop) - _gap * (rows.length - 1)) /
+            rows.length,
       ].reduce((a, b) => a < b ? a : b);
       return Column(
         children: [

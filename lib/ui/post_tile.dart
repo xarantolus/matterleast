@@ -291,6 +291,7 @@ class PostTile extends StatelessWidget {
             post: post,
             child: _Selectable(
               onContextMenu: onContextMenu,
+              onTap: onTap,
               child: MessageImageOpener(
                 open: (url) => _openImage(context, url, details, name),
                 child: PostTextActions(
@@ -302,7 +303,11 @@ class PostTile extends StatelessWidget {
             ),
           )
         else if (agentPostTypes.contains(post.type) && !post.deleted)
-          AgentPostBody(post: post)
+          _Selectable(
+            onContextMenu: onContextMenu,
+            onTap: onTap,
+            child: AgentPostBody(post: post),
+          )
         else if (post.type == agentMentionReminderType && !post.deleted)
           AgentMentionReminder(post: post)
         else
@@ -310,6 +315,7 @@ class PostTile extends StatelessWidget {
             excluding: mergedText,
             child: _Selectable(
               onContextMenu: onContextMenu,
+              onTap: onTap,
               child: MessageImageOpener(
                 open: (url) => _openImage(context, url, details, name),
                 child: PostTextActions(
@@ -827,9 +833,17 @@ class _PriorityLabel extends StatelessWidget {
 /// selectable within this one message; elsewhere just [child] ("Copy text"
 /// is in the menu).
 class _Selectable extends StatefulWidget {
-  const _Selectable({required this.onContextMenu, required this.child});
+  const _Selectable({
+    required this.onContextMenu,
+    required this.onTap,
+    required this.child,
+  });
 
   final void Function(Offset position, String? selection)? onContextMenu;
+
+  /// Inside the selection area, so a click on the text still gets here
+  /// instead of being taken as a click that places the caret.
+  final VoidCallback? onTap;
   final Widget child;
 
   @override
@@ -848,6 +862,7 @@ class _SelectableState extends State<_Selectable> {
       contextMenuBuilder: null,
       onSelectionChanged: (content) => _selected = content?.plainText,
       child: GestureDetector(
+        onTap: widget.onTap,
         onSecondaryTapUp: (d) => menu(d.globalPosition, _selected),
         // Links, buttons and pictures inside show their own cursors.
         child: Clickable(cursor: SystemMouseCursors.text, child: widget.child),
@@ -916,9 +931,20 @@ class _SystemLine extends StatelessWidget {
     final line = activity != null
         ? activityText(activity, [
             for (final p in [post, ...combined])
-              activityEntry(activity, detailsOf(p).props),
+              activityEntry(
+                activity,
+                detailsOf(p).props,
+                userId: p.userId,
+                names: p.systemUsernames,
+              ),
           ])
-        : systemMessageText(post.type, detailsOf(post).props, post.message);
+        : systemMessageText(
+            post.type,
+            detailsOf(post).props,
+            post.message,
+            userId: post.userId,
+            names: post.systemUsernames,
+          );
     final style = Theme.of(context).textTheme.bodySmall
         ?.copyWith(color: tokens.muted);
     final id = '${post.id}:system:${combined.length}';

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/post_extras.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/domain/post_details.dart';
@@ -259,8 +260,11 @@ class _Image extends StatelessWidget {
         final box = integrationImageBox(
           b,
           measured: message.imageSizes[b.url],
-          maxWidth: constraints.maxWidth,
-          maxImageHeight: imageMaxHeight(MediaQuery.sizeOf(context)),
+          maxWidth: imageMaxWidth(constraints.maxWidth, desktop: isDesktop),
+          maxImageHeight: imageMaxHeight(
+            MediaQuery.sizeOf(context),
+            desktop: isDesktop,
+          ),
         );
         final image = SizedBox.fromSize(
           size: box,

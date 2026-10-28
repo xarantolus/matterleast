@@ -26,6 +26,7 @@ Future<ServerSession> testSession(
   ServerDatabase? db,
   QueryInterceptor? interceptor,
   NetworkState? network,
+  Duration catchUpLimit = const Duration(seconds: 20),
 }) async {
   var connection = DatabaseConnection(NativeDatabase.memory());
   if (interceptor != null) connection = connection.interceptWith(interceptor);
@@ -55,6 +56,7 @@ Future<ServerSession> testSession(
     ),
     token: () => 'token',
     retryDelayOf: (_) => const Duration(milliseconds: 50),
+    catchUpLimit: catchUpLimit,
   );
   if (db != null) return session;
   final store = session.store;

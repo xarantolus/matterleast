@@ -1,15 +1,37 @@
 import 'package:matterleast/api/json/post_extras.dart';
 
+/// Current usernames by user id, for the people a system message names.
+typedef Usernames = Map<String, String>;
+
 /// A username as a markdown mention, so it renders tappable.
 String _mention(String? username) =>
     username == null ? 'Someone' : '@$username';
+
+/// The person's current username when their id is known, else the one the
+/// server stored in the post.
+String? _current(String? id, String? stored, Usernames names) =>
+    (id == null ? null : names[id]) ?? stored;
+
+/// Pure: the ids of the people a system message names.
+Set<String> systemMessageUserIds(String userId, PostProps props) => {
+  if (userId.isNotEmpty) userId,
+  ?props.userId,
+  ?props.addedUserId,
+  ?props.removedUserId,
+};
 
 /// Pure: the markdown shown for a system message, in the wording of
 /// Mattermost's apps. Headers and purposes stay markdown, as the official
 /// apps render them. Types without their own wording use the server's
 /// [message].
-String systemMessageText(String type, PostProps props, String message) {
-  final who = _mention(props.username);
+String systemMessageText(
+  String type,
+  PostProps props,
+  String message, {
+  String userId = '',
+  Usernames names = const {},
+}) {
+  final who = _mention(_current(userId, props.username, names));
   String change(String what, String? from, String? to) {
     final old = from ?? '';
     final now = to ?? '';
@@ -83,13 +105,21 @@ bool isJoinLeave(String? type) =>
 typedef ActivityEntry = ({String? subject, String? actor});
 
 /// Pure: the subject and actor of a membership message.
-ActivityEntry activityEntry(Activity activity, PostProps props) =>
-    activity.byActor
+ActivityEntry activityEntry(
+  Activity activity,
+  PostProps props, {
+  String userId = '',
+  Usernames names = const {},
+}) => activity.byActor
     ? (
-        subject: props.addedUsername ?? props.removedUsername,
-        actor: props.username,
+        subject: _current(
+          props.addedUserId ?? props.removedUserId,
+          props.addedUsername ?? props.removedUsername,
+          names,
+        ),
+        actor: _current(props.userId, props.username, names),
       )
-    : (subject: props.username, actor: null);
+    : (subject: _current(userId, props.username, names), actor: null);
 
 /// Pure: one markdown sentence for consecutive membership messages of the
 /// same kind ("@alice, @bob and @carol joined the channel.").

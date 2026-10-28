@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
+import 'package:matterleast/app/desktop/window_title.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/screens/channel_list/channel_tile.dart';
@@ -70,6 +72,51 @@ void main() {
     );
     expect(find.text('#Town Square · Harbour'), findsOneWidget);
     expect(find.text('wren: Lunch at noon?'), findsOneWidget);
+  });
+
+  testWidgets('only the row of the open conversation is selected', (
+    tester,
+  ) async {
+    ChannelItem item(String id, String title) => ChannelItem(
+      id: id,
+      title: title,
+      kind: ChannelKind.public,
+      unread: false,
+      mentions: 0,
+      muted: false,
+      favorite: false,
+      hasDraft: false,
+    );
+    await _show(
+      tester,
+      Column(
+        children: [
+          ChannelTile(
+            serverUrl: 'https://chat.example.test',
+            item: item('c1', 'Boats'),
+          ),
+          ChannelTile(
+            serverUrl: 'https://chat.example.test',
+            item: item('c2', 'Harbour'),
+          ),
+        ],
+      ),
+    );
+    bool selected(String title) =>
+        tester.widget<ListTile>(find.widgetWithText(ListTile, title)).selected;
+    expect([selected('Boats'), selected('Harbour')], [false, false]);
+
+    ProviderScope.containerOf(tester.element(find.byType(Column)))
+        .read(openConversationProvider.notifier)
+        .set(
+          const SavedConversation(
+            url: 'https://chat.example.test',
+            channelId: 'c2',
+            title: 'Harbour',
+          ),
+        );
+    await tester.pump();
+    expect([selected('Boats'), selected('Harbour')], [false, true]);
   });
 
   testWidgets('a channel row reads as one sentence, name first, counts in '

@@ -19,6 +19,7 @@ Future<ComposerActions> composerActions(Ref ref, String url) async {
   final actions = (await ref.watch(serverSessionProvider(url).future)).composer;
   final lifecycle = AppLifecycleListener(
     onHide: () => unawaited(actions.flushDrafts()),
+    onInactive: () => unawaited(actions.flushDrafts()),
   );
   ref.onDispose(lifecycle.dispose);
   return actions;
