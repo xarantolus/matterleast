@@ -399,10 +399,15 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     ref.listen(_provider, (before, next) {
       if (_text.value != next.text) _text.value = next.text;
       if (before?.suggestions != next.suggestions) _highlight = 0;
-      if ((next.editing != null && before?.editing != next.editing) ||
-          next.quotes > (before?.quotes ?? 0)) {
-        _focusSoon();
+      final startedEditing =
+          next.editing != null && before?.editing != next.editing;
+      if (startedEditing) {
+        // The cursor goes to the end of the message at once; the soon call
+        // takes the focus back from a menu that is still closing.
+        _focus.requestFocus();
+        _text.selection = TextSelection.collapsed(offset: _text.text.length);
       }
+      if (startedEditing || next.quotes > (before?.quotes ?? 0)) _focusSoon();
     });
     final value = ref.watch(_provider);
     final suggestions = value.suggestions;
@@ -492,9 +497,19 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                     Icon(Icons.edit, size: 18, color: tokens.muted),
                     const SizedBox(width: Spacing.sm),
                     Expanded(
-                      child: Text(
-                        'Editing message',
-                        style: Theme.of(context).textTheme.labelLarge,
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'Editing message',
+                          style: Theme.of(context).textTheme.labelLarge,
+                          children: [
+                            if (isDesktop)
+                              TextSpan(
+                                text: '  Esc to cancel · Enter to save',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: tokens.muted),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                     IconButton(
