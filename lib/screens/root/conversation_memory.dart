@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:matterleast/app/desktop/window_title.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
@@ -18,6 +19,7 @@ ConversationMemory conversationMemory(Ref ref) {
     store: ref.watch(settingsStoreProvider),
     routes: ref.watch(conversationRoutesProvider),
     panes: () => ref.read(openPanesProvider),
+    onOpen: ref.read(openConversationProvider.notifier).set,
   );
   ref.listen(openPanesProvider, (_, _) => memory.update());
   final changes = memory.routes.changes.listen((_) => memory.update());
@@ -30,11 +32,13 @@ class ConversationMemory {
     required this.store,
     required this.routes,
     required this.panes,
+    this.onOpen,
   });
 
   final SettingsStore store;
   final ConversationRoutes routes;
   final Panes Function() panes;
+  final void Function(SavedConversation?)? onOpen;
 
   /// What the settings hold now.
   SavedConversation? saved;
@@ -52,6 +56,7 @@ class ConversationMemory {
       panes: panes(),
     );
     final now = conversationToSave(open);
+    onOpen?.call(now);
     if (now == saved) return;
     saved = now;
     unawaited(store.write(Settings.lastConversation, now));

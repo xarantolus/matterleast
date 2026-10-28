@@ -8,6 +8,7 @@ import 'package:matterleast/app/theme_providers.dart';
 import 'package:matterleast/app/ui_zoom.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/ui/keyboard_focus_rings.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/window_strip.dart';
 
@@ -38,7 +39,7 @@ class MatterleastApp extends ConsumerWidget {
             child: MessageDisplay(
               textScale: (textSize ?? MessageTextSize.normal).scale,
               wrapCode: wrapCode,
-              child: AppShortcuts(child: child!),
+              child: KeyboardFocusRings(child: AppShortcuts(child: child!)),
             ),
           ),
         ),

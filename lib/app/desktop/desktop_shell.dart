@@ -21,13 +21,22 @@ bool appInFront() =>
     WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed &&
     (!isDesktop || DesktopShell.focus.value);
 
+/// The presences the tray menu sets, with their labels.
+const trayStatuses = [
+  ('online', 'Online'),
+  ('away', 'Away'),
+  ('dnd', 'Do not disturb'),
+  ('offline', 'Offline'),
+];
+
 /// The desktop window and its tray icon. The window opens where it was
 /// left; closing it hides it to the tray, or minimises it where there is no
 /// tray; the tray's menu brings it back or quits.
 class DesktopShell with WindowListener {
-  DesktopShell._(this._settings, this._host, this._placement);
+  DesktopShell._(this._settings, this._host, this._placement, this._setStatus);
 
   final SettingsStore _settings;
+  final Future<void> Function(String status) _setStatus;
   final TrayHost _host;
   final _launcher = LauncherBadge();
   WindowPlacement? _placement;
@@ -44,13 +53,21 @@ class DesktopShell with WindowListener {
 
   /// Sets the window up before the first frame, so it never shows at the
   /// wrong size first.
-  static Future<DesktopShell> start(SettingsStore settings) async {
+  static Future<DesktopShell> start(
+    SettingsStore settings, {
+    required Future<void> Function(String status) setStatus,
+  }) async {
     await windowManager.ensureInitialized();
     final saved = await settings.read(Settings.windowPlacement);
     final placement = saved == null
         ? null
         : placementOnScreen(saved, await _displays());
-    final shell = DesktopShell._(settings, await TrayHost.watch(), placement);
+    final shell = DesktopShell._(
+      settings,
+      await TrayHost.watch(),
+      placement,
+      setStatus,
+    );
     await windowManager.waitUntilReadyToShow(
       WindowOptions(
         title: 'Matterleast',
@@ -116,8 +133,24 @@ class DesktopShell with WindowListener {
         return item;
       }
 
+      final statuses = tray.Menu.create();
+      final statusItem = tray.MenuItem.createWithLabelAndType(
+        'Set status',
+        tray.MenuItemType.submenu,
+      );
+      if (statuses != null && statusItem != null) {
+        for (final (status, label) in trayStatuses) {
+          statuses.addItem(item(label, () => _setStatus(status)));
+        }
+        statusItem.submenu = statuses;
+        _menu
+          ..add(statuses)
+          ..add(statusItem);
+      }
+
       menu
         ..addItem(item('Open Matterleast', open))
+        ..addItem(statusItem)
         ..addSeparator()
         ..addItem(item('Quit', quit));
       icon
@@ -165,6 +198,15 @@ class DesktopShell with WindowListener {
       unawaited(_launcher.show(launcherEntry(count, urgent: flash)));
     }
     if (flash) unawaited(Taskbar.flash());
+  }
+
+  /// Puts [title] on the window, as the taskbar and Alt+Tab show it.
+  static Future<void> setTitle(String title) async {
+    try {
+      await windowManager.setTitle(title);
+    } on Object catch (e) {
+      Log.warn('desktop', 'Setting the window title failed', e);
+    }
   }
 
   /// Shows and focuses the window, wherever it went.

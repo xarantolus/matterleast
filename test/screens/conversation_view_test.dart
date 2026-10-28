@@ -9,10 +9,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/keyboard_shortcuts.dart';
+import 'package:matterleast/app/permission_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/message_hover.dart';
@@ -20,6 +23,7 @@ import 'package:matterleast/ui/post_tile.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/tooltips.dart';
 
 void main() {
   late FakeServer server;
@@ -52,7 +56,11 @@ void main() {
           },
   };
 
-  Future<void> open(WidgetTester tester, {int count = 60}) async {
+  Future<void> open(
+    WidgetTester tester, {
+    int count = 60,
+    VoidCallback? onReplyToNewest,
+  }) async {
     HttpOverrides.global = null;
     olderAsked = Completer();
     answerOlder = Completer();
@@ -96,16 +104,45 @@ void main() {
         overrides: [
           serverSessionProvider(url).overrideWith((ref) async => session),
           serversProvider.overrideWith((ref) => Stream.value(const [])),
+          channelRightsProvider(url, channelId).overrideWith(
+            (ref) => Stream.value((
+              block: null,
+              react: true,
+              editOwn: true,
+              editOthers: false,
+              deleteOwn: true,
+              deleteOthers: false,
+              channelMentions: true,
+              groupMentions: true,
+            )),
+          ),
           serverImageCachesProvider(url)
               .overrideWith((ref) => Completer<ServerImageCaches>().future),
         ],
         child: MaterialApp(
           theme: MatterleastApp.lightTheme,
+          builder: onReplyToNewest == null
+              ? null
+              : (_, child) => AppShortcuts(child: child!),
           home: Scaffold(
-            body: ConversationView(
-              url: url,
-              conversation: conversationProvider(url, channelId),
-              startText: 'This is the start of Boats.',
+            body: Column(
+              children: [
+                Expanded(
+                  child: ConversationView(
+                    url: url,
+                    conversation: conversationProvider(url, channelId),
+                    startText: 'This is the start of Boats.',
+                  ),
+                ),
+                if (onReplyToNewest != null)
+                  Composer(
+                    url: url,
+                    channelId: channelId,
+                    teamId: 'team1',
+                    hint: 'Write',
+                    onReplyToNewest: onReplyToNewest,
+                  ),
+              ],
             ),
           ),
         ),
@@ -394,6 +431,8 @@ void main() {
 
       expect(find.byTooltip('More actions'), findsOneWidget);
       expect(find.byTooltip('Reply'), findsNothing); // no thread here
+      expect(find.byType(IconButton), findsWidgets);
+      expect(untitledIconButtons(tester), isEmpty);
       expect(tester.getRect(row), before);
       expect(
         tester.getRect(find.text('message 58')).top,
@@ -671,6 +710,93 @@ void main() {
       expect(find.text('Open link'), findsNothing);
       expect(find.text('Copy link'), findsOneWidget);
       expect(find.text('Copy text'), findsNothing);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('Alt+click marks the message unread from there', (
+      tester,
+    ) async {
+      await open(tester);
+      final unread = <String>[];
+      final inner = server.handle;
+      server.handle = (r) {
+        if (r.path.endsWith('/set_unread')) unread.add(r.path);
+        return inner(r);
+      };
+      await tester.tapAt(
+        tester.getCenter(find.text('message 57')),
+        kind: PointerDeviceKind.mouse,
+      );
+      await settle(tester);
+      expect(unread, isEmpty);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.tapAt(
+        tester.getCenter(find.text('message 57')),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await settle(tester);
+      expect(unread.single, endsWith('/posts/n57/set_unread'));
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('Shift+Up in an empty composer replies to the newest '
+        'message, and moves the caret once there is text', (tester) async {
+      var replies = 0;
+      await open(tester, onReplyToNewest: () => replies++);
+      await tester.tap(find.byType(EditableText));
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      expect(replies, 1);
+
+      await tester.enterText(find.byType(EditableText), 'draft');
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      expect(replies, 1);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('a middle click on a link opens it', (tester) async {
+      final launched = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/url_launcher'),
+        (call) async {
+          if (call.method == 'canLaunch') return true;
+          launched.add((call.arguments as Map)['url'] as String);
+          return true;
+        },
+      );
+      await open(tester);
+      answerOlder.complete();
+      final linkText = find.textContaining('tide table');
+      for (var i = 0; i < 10 && linkText.evaluate().isEmpty; i++) {
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
+        await settle(tester);
+      }
+      final range = find.textRange.ofSubstring(link).evaluate().single;
+      final onLink = range.renderObject.localToGlobal(
+        range.renderObject
+            .getBoxesForSelection(
+              TextSelection(
+                baseOffset: range.textRange.start,
+                extentOffset: range.textRange.end,
+              ),
+            )
+            .first
+            .toRect()
+            .center,
+      );
+      await tester.tapAt(
+        onLink,
+        kind: PointerDeviceKind.mouse,
+        buttons: kMiddleMouseButton,
+      );
+      await settle(tester);
+      expect(launched, [link]);
       await close(tester);
     }, variant: desktop);
 

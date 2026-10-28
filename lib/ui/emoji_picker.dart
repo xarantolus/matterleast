@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/emoji_providers.dart';
@@ -110,6 +111,54 @@ List<double> sectionOffsets(
 /// At least 48 dp a cell on a 360 dp phone.
 const _cell = 52.0;
 
+/// Pure: how many cells a row of [width] holds.
+int emojiColumns(double width) =>
+    ((width - 2 * Spacing.sm) / _cell).floor().clamp(1, 1000);
+
+/// Pure: the cell [step] away from [from] in a grid of [count] cells in
+/// [columns] columns, or null when that leaves the grid. Left and right
+/// wrap into the next row; up and down keep the column.
+int? movedCell(
+  int from,
+  LogicalKeyboardKey key, {
+  required int columns,
+  required int count,
+}) {
+  final to = switch (key) {
+    LogicalKeyboardKey.arrowLeft => from - 1,
+    LogicalKeyboardKey.arrowRight => from + 1,
+    LogicalKeyboardKey.arrowUp => from - columns,
+    LogicalKeyboardKey.arrowDown => from + columns,
+    _ => from,
+  };
+  return to < 0 || to >= count ? null : to;
+}
+
+/// Pure: where the row of the cell [index] of the sections starts, in
+/// the scrolled list.
+double cellTop(
+  List<EmojiSection> sections,
+  int index, {
+  required int columns,
+  required double headerExtent,
+}) {
+  final offsets = sectionOffsets(
+    sections,
+    columns: columns,
+    rowExtent: _cell,
+    headerExtent: headerExtent,
+  );
+  var first = 0;
+  for (var i = 0; i < sections.length; i++) {
+    final end = first + sections[i].names.length;
+    if (index < end) {
+      return offsets[i] + headerExtent + ((index - first) ~/ columns) * _cell;
+    }
+    first = end;
+  }
+  return 0;
+}
+
 /// Search, a category bar and every emoji in one list, by category.
 class EmojiPicker extends ConsumerStatefulWidget {
   const EmojiPicker({required this.url, this.keyboard = false, super.key});
@@ -126,7 +175,12 @@ class EmojiPicker extends ConsumerStatefulWidget {
 
 class _EmojiPickerState extends ConsumerState<EmojiPicker> {
   final _scroll = ScrollController();
+  final _searchFocus = FocusNode(debugLabel: 'Emoji search');
+  final _gridFocus = FocusNode(debugLabel: 'Emoji grid');
   var _query = '';
+
+  /// The cell the arrow keys are on, an index into the cells shown.
+  var _cursor = 0;
   var _current = 0;
   var _offsets = const <double>[];
 
@@ -140,11 +194,14 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
   void initState() {
     super.initState();
     _scroll.addListener(_scrolled);
+    _gridFocus.addListener(_gridFocusChanged);
   }
 
   @override
   void dispose() {
     _scroll.dispose();
+    _searchFocus.dispose();
+    _gridFocus.dispose();
     super.dispose();
   }
 
@@ -155,6 +212,89 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
       if (_offsets[i] <= at) current = i;
     }
     if (current != _current) setState(() => _current = current);
+  }
+
+  // The ring shows on the cursor's cell only while the grid has the focus.
+  void _gridFocusChanged() => setState(() {});
+
+  String get _search => _query.trim().toLowerCase().replaceAll(':', '');
+
+  /// The names of the cells shown, in reading order.
+  List<String> _shownNames() => _search.isNotEmpty
+      ? _matches(_search)
+      : [for (final s in _sections ?? const <EmojiSection>[]) ...s.names];
+
+  String? _pickable(int index) {
+    final names = _shownNames();
+    if (index < 0 || index >= names.length) return null;
+    final custom = ref.read(customEmojiProvider(widget.url)).value ?? const {};
+    final tone = ref.read(skinToneProvider(widget.url)).value ?? 0;
+    return _withTone(names[index], custom, tone);
+  }
+
+  KeyEventResult _searchKey(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent ||
+        event.logicalKey != LogicalKeyboardKey.arrowDown ||
+        _shownNames().isEmpty) {
+      return KeyEventResult.ignored;
+    }
+    setState(() => _cursor = 0);
+    _gridFocus.requestFocus();
+    _scrollToCursor();
+    return KeyEventResult.handled;
+  }
+
+  KeyEventResult _gridKey(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter ||
+        key == LogicalKeyboardKey.space) {
+      if (_pickable(_cursor) case final name?) Navigator.of(context).pop(name);
+      return KeyEventResult.handled;
+    }
+    if (![
+      LogicalKeyboardKey.arrowLeft,
+      LogicalKeyboardKey.arrowRight,
+      LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.arrowDown,
+    ].contains(key)) {
+      return KeyEventResult.ignored;
+    }
+    final columns = emojiColumns(context.size?.width ?? 0);
+    final to = movedCell(
+      _cursor,
+      key,
+      columns: columns,
+      count: _shownNames().length,
+    );
+    if (to != null) {
+      setState(() => _cursor = to);
+      _scrollToCursor();
+    } else if (key == LogicalKeyboardKey.arrowUp && _cursor < columns) {
+      _searchFocus.requestFocus();
+    }
+    return KeyEventResult.handled;
+  }
+
+  /// Scrolls the cursor's row into view.
+  void _scrollToCursor() {
+    if (!_scroll.hasClients) return;
+    final columns = emojiColumns(context.size?.width ?? 0);
+    final top = _search.isNotEmpty
+        ? (_cursor ~/ columns) * _cell
+        : cellTop(
+            _sections ?? const [],
+            _cursor,
+            columns: columns,
+            headerExtent: MediaQuery.textScalerOf(context).scale(20) + 16,
+          );
+    final view = _scroll.position.viewportDimension;
+    if (top < _scroll.offset) {
+      _scroll.jumpTo(top);
+    } else if (top + _cell > _scroll.offset + view) {
+      _scroll.jumpTo(top + _cell - view);
+    }
   }
 
   void _jump(int index) {
@@ -216,12 +356,13 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
     final custom = ref.watch(customEmojiProvider(widget.url)).value ?? const {};
     final tone = ref.watch(skinToneProvider(widget.url)).value ?? 0;
     final sections = _sectionsFor(recent, custom);
-    final query = _query.trim().toLowerCase().replaceAll(':', '');
+    final query = _search;
     final headerExtent = MediaQuery.textScalerOf(context).scale(20) + 16;
     final bottom = MediaQuery.paddingOf(context).bottom;
 
-    Widget cell(String name) {
+    Widget cell(String name, int index) {
       final shown = _withTone(name, custom, tone);
+      final ringed = index == _cursor && _gridFocus.hasFocus;
       // Read by its name once, not as the tooltip and the glyph.
       return Semantics(
         button: true,
@@ -230,88 +371,103 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
         child: InkWell(
           mouseCursor: clickCursor,
           customBorder: const CircleBorder(),
+          canRequestFocus: false,
           onTap: () => Navigator.of(context).pop(shown),
           child: Tooltip(
             message: ':$name:',
-            child: Center(
-              child: EmojiGlyph(name: shown, size: 28, serverUrl: widget.url),
+            child: DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: ringed
+                    ? Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 2,
+                      )
+                    : null,
+              ),
+              child: Center(
+                child: EmojiGlyph(name: shown, size: 28, serverUrl: widget.url),
+              ),
             ),
           ),
         ),
       );
     }
 
-    final Widget body;
-    if (query.isNotEmpty) {
-      final names = _matches(query);
-      body = names.isEmpty
-          ? const Center(child: Text('No emoji match.'))
-          : GridView.builder(
-              padding: EdgeInsets.fromLTRB(
-                Spacing.sm,
-                Spacing.sm,
-                Spacing.sm,
-                Spacing.sm + bottom,
-              ),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: _cell,
-              ),
-              itemCount: names.length,
-              itemBuilder: (_, i) => cell(names[i]),
-            );
-    } else {
-      body = LayoutBuilder(
-        builder: (context, constraints) {
-          final columns = ((constraints.maxWidth - 2 * Spacing.sm) / _cell)
-              .floor()
-              .clamp(1, 1000);
-          _offsets = sectionOffsets(
-            sections,
-            columns: columns,
-            rowExtent: _cell,
-            headerExtent: headerExtent,
-          );
-          return CustomScrollView(
-            controller: _scroll,
-            slivers: [
-              for (final section in sections) ...[
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: headerExtent,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Spacing.lg,
-                      ),
-                      child: Align(
-                        alignment: AlignmentDirectional.bottomStart,
-                        child: Text(
-                          _categories[section.category]!.$1.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.tokens.smallCaps,
-                        ),
+    final Widget body = LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = emojiColumns(constraints.maxWidth);
+        if (query.isNotEmpty) {
+          final names = _matches(query);
+          return names.isEmpty
+              ? const Center(child: Text('No emoji match.'))
+              : GridView.builder(
+                  controller: _scroll,
+                  padding: EdgeInsets.fromLTRB(
+                    Spacing.sm,
+                    Spacing.sm,
+                    Spacing.sm,
+                    Spacing.sm + bottom,
+                  ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisExtent: _cell,
+                  ),
+                  itemCount: names.length,
+                  itemBuilder: (_, i) => cell(names[i], i),
+                );
+        }
+        _offsets = sectionOffsets(
+          sections,
+          columns: columns,
+          rowExtent: _cell,
+          headerExtent: headerExtent,
+        );
+        final starts = <int>[];
+        var count = 0;
+        for (final section in sections) {
+          starts.add(count);
+          count += section.names.length;
+        }
+        return CustomScrollView(
+          controller: _scroll,
+          slivers: [
+            for (final (k, section) in sections.indexed) ...[
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: headerExtent,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+                    child: Align(
+                      alignment: AlignmentDirectional.bottomStart,
+                      child: Text(
+                        _categories[section.category]!.$1.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.tokens.smallCaps,
                       ),
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-                  sliver: SliverGrid.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columns,
-                      mainAxisExtent: _cell,
-                    ),
-                    itemCount: section.names.length,
-                    itemBuilder: (_, i) => cell(section.names[i]),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+                sliver: SliverGrid.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisExtent: _cell,
                   ),
+                  itemCount: section.names.length,
+                  itemBuilder: (_, i) => cell(section.names[i], starts[k] + i),
                 ),
-              ],
-              SliverPadding(padding: EdgeInsets.only(bottom: bottom)),
+              ),
             ],
-          );
-        },
-      );
-    }
+            SliverPadding(padding: EdgeInsets.only(bottom: bottom)),
+          ],
+        );
+      },
+    );
 
     return Column(
       children: [
@@ -320,20 +476,29 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
           child: Row(
             children: [
               Expanded(
-                child: SearchBar(
-                  autoFocus: widget.keyboard,
-                  onSubmitted: widget.keyboard
-                      ? (_) {
-                          final first = _matches(query).firstOrNull;
-                          if (query.isEmpty || first == null) return;
-                          Navigator.of(context)
-                              .pop(_withTone(first, custom, tone));
-                        }
-                      : null,
-                  hintText: 'Search emoji',
-                  leading: const Icon(Icons.search),
-                  elevation: const WidgetStatePropertyAll(0),
-                  onChanged: (q) => setState(() => _query = q),
+                child: Focus(
+                  canRequestFocus: false,
+                  skipTraversal: true,
+                  onKeyEvent: _searchKey,
+                  child: SearchBar(
+                    focusNode: _searchFocus,
+                    autoFocus: widget.keyboard,
+                    onSubmitted: widget.keyboard
+                        ? (_) {
+                            final first = _matches(query).firstOrNull;
+                            if (query.isEmpty || first == null) return;
+                            Navigator.of(context)
+                                .pop(_withTone(first, custom, tone));
+                          }
+                        : null,
+                    hintText: 'Search emoji',
+                    leading: const Icon(Icons.search),
+                    elevation: const WidgetStatePropertyAll(0),
+                    onChanged: (q) => setState(() {
+                      _query = q;
+                      _cursor = 0;
+                    }),
+                  ),
                 ),
               ),
               PopupMenuButton<int>(
@@ -379,7 +544,13 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
             ),
           ),
         ProgressSlot(active: loading),
-        Expanded(child: body),
+        Expanded(
+          child: Focus(
+            focusNode: _gridFocus,
+            onKeyEvent: _gridKey,
+            child: body,
+          ),
+        ),
       ],
     );
   }

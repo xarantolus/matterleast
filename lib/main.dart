@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/desktop/smooth_wheel.dart';
+import 'package:matterleast/app/desktop/tray_status.dart';
 import 'package:matterleast/app/desktop/unread_count.dart';
+import 'package:matterleast/app/desktop/window_title.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
@@ -21,10 +25,16 @@ Future<void> main() async {
     settleVideoEnds();
     final shell = await DesktopShell.start(
       container.read(settingsStoreProvider),
+      setStatus: (status) => setStatusEverywhere(container, status),
     );
     container.listen(
       unreadCountProvider,
       (_, count) => shell.showUnread(count),
+      fireImmediately: true,
+    );
+    container.listen(
+      windowTitleTextProvider,
+      (_, title) => unawaited(DesktopShell.setTitle(title)),
       fireImmediately: true,
     );
   }

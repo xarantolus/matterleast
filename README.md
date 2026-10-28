@@ -69,6 +69,7 @@ There is also a dev container with Flutter, the Android SDK, an emulator and a l
 - Calls, Playbooks and Boards are not supported, nor are Apps framework forms and message translation.
 - Notifications don't go through Mattermost's push proxy, so new messages arrive when the app checks (about every 15 minutes) unless "Stay connected" is on.
 - No iOS or macOS version.
+- The Windows and Linux composer has no spell check: Flutter offers none on desktop, and the packages for it ship their own word lists instead of using the system dictionary.
 - The Windows installer and the Linux Flatpak are unsigned and don't update themselves; the app says when a new release is out.
 - Features that need a server setting, a plugin or a licence only show up when your server offers them.
 
