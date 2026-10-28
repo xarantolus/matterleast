@@ -132,14 +132,12 @@ void main() {
     },
   );
 
-  testWidgets('Open in channel from the menu opens the message', (
-    tester,
-  ) async {
+  testWidgets('the one action a file has is a button that opens its '
+      'message', (tester) async {
     await start(tester);
     await settle(tester);
-    await tester.tap(find.byTooltip('More'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Open in channel'));
+    expect(find.byTooltip('More'), findsNothing);
+    await tester.tap(find.byTooltip('Jump to message'));
     await settle(tester);
     final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
     expect(screen.highlightPostId, 'pic1');

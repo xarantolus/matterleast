@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
@@ -89,40 +91,48 @@ class _QuickSearchAnchorState extends ConsumerState<QuickSearchAnchor> {
     final view = _view = PageRouteBuilder<void>(
       transitionDuration: const Duration(milliseconds: 200),
       reverseTransitionDuration: const Duration(milliseconds: 150),
+      // On desktop a card near the top of the window, over the window
+      // dimmed; Esc and a click outside close it.
+      opaque: !isDesktop,
+      barrierDismissible: isDesktop,
+      barrierColor: isDesktop ? Colors.black26 : null,
+      barrierLabel: isDesktop ? 'Close' : null,
       transitionsBuilder: (_, animation, _, child) =>
           FadeTransition(opacity: animation, child: child),
-      pageBuilder: (context, _, _) => QuickSearchView(
-        controller: _text,
-        servers: widget.servers,
-        target: target,
-        onOpen: (item) => _open(context, item),
-        onSearch: (text) => _searchMessages(context, text),
-        startActions: [
-          if (target case final target?) ...[
-            ListTile(
-              leading: const SizedBox(
-                width: 40,
-                child: Icon(Icons.travel_explore),
+      pageBuilder: (context, _, _) => _SwitcherFrame(
+        child: QuickSearchView(
+          controller: _text,
+          servers: widget.servers,
+          target: target,
+          onOpen: (item) => _open(context, item),
+          onSearch: (text) => _searchMessages(context, text),
+          startActions: [
+            if (target case final target?) ...[
+              ListTile(
+                leading: const SizedBox(
+                  width: 40,
+                  child: Icon(Icons.travel_explore),
+                ),
+                title: const Text('Browse channels'),
+                onTap: () => _push(
+                  context,
+                  BrowseChannelsScreen(url: target.url, teamId: target.teamId),
+                ),
               ),
-              title: const Text('Browse channels'),
-              onTap: () => _push(
-                context,
-                BrowseChannelsScreen(url: target.url, teamId: target.teamId),
+              ListTile(
+                leading: const SizedBox(
+                  width: 40,
+                  child: Icon(Icons.edit_outlined),
+                ),
+                title: const Text('New message'),
+                onTap: () => _push(
+                  context,
+                  newMessageScreen(url: target.url, teamId: target.teamId),
+                ),
               ),
-            ),
-            ListTile(
-              leading: const SizedBox(
-                width: 40,
-                child: Icon(Icons.edit_outlined),
-              ),
-              title: const Text('New message'),
-              onTap: () => _push(
-                context,
-                newMessageScreen(url: target.url, teamId: target.teamId),
-              ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
     unawaited(Navigator.of(context).push(view));
@@ -216,6 +226,43 @@ typedef _Matches = ({
 
 /// The full-screen search. Return opens the highlighted match, or
 /// searches messages on that row or when nothing matches.
+/// Popouts like the switcher are as wide as a command palette, and leave
+/// most of the window in view.
+const _switcherWidth = 600.0;
+
+/// The switcher full screen on a phone; on desktop a rounded card near
+/// the top of the window, as in other desktop apps.
+class _SwitcherFrame extends StatelessWidget {
+  const _SwitcherFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isDesktop) return child;
+    final size = MediaQuery.sizeOf(context);
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: EdgeInsets.only(top: size.height * 0.08),
+        child: SizedBox(
+          width: math.min(_switcherWidth, size.width * 0.9),
+          height: size.height * 0.6,
+          child: Material(
+            type: MaterialType.card,
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Spacing.md),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class QuickSearchView extends ConsumerStatefulWidget {
   const QuickSearchView({
     required this.controller,
@@ -371,10 +418,13 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
     height: 72,
     child: Row(
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: Spacing.sm),
-          child: BackButton(),
-        ),
+        if (isDesktop)
+          const SizedBox(width: Spacing.lg)
+        else
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: Spacing.sm),
+            child: BackButton(),
+          ),
         Expanded(
           child: CallbackShortcuts(
             bindings: {

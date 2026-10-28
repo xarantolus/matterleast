@@ -187,9 +187,10 @@ class InPopout extends InheritedWidget {
   bool updateShouldNotify(InPopout old) => false;
 }
 
-/// The part of a page below its header: opaque, and in a content
-/// [SlideRoute] the part that slides. The page's [Scaffold] must be
-/// transparent for the page below to show while it slides.
+/// The part of a page below its header: opaque, the Material its rows ink
+/// on, and in a content [SlideRoute] the part that slides. The page's
+/// [Scaffold] must be transparent for the page below to show while it
+/// slides.
 class SlidingBody extends StatelessWidget {
   const SlidingBody({super.key, required this.child, this.color});
 
@@ -198,7 +199,7 @@ class SlidingBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final body = ColoredBox(
+    final body = Material(
       color: color ?? Theme.of(context).scaffoldBackgroundColor,
       child: child,
     );

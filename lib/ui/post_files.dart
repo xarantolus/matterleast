@@ -104,7 +104,7 @@ void openGallery(
   // focus behind the gallery.
   FocusManager.instance.primaryFocus?.unfocus();
   unawaited(
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       galleryRoute(
         url: url,
         files: media,
@@ -464,6 +464,8 @@ Future<void> _runFileAction(
 ) async {
   final messenger = ScaffoldMessenger.of(context);
   final navigator = Navigator.of(context);
+  // Viewers cover the window, not the pane or popout they open from.
+  final viewers = Navigator.of(context, rootNavigator: true);
   void say(String message) =>
       messenger.showSnackBar(SnackBar(content: Text(message)));
   final features = await ref.read(featuresProvider(url).future);
@@ -499,7 +501,7 @@ Future<void> _runFileAction(
   final handoff = (await downloads).handoffDirectory;
   switch (action) {
     case _FileAction.view when file.kind == FileKind.pdf:
-      unawaited(navigator.push(pdfRoute(local, url: url, file: file)));
+      unawaited(viewers.push(pdfRoute(local, url: url, file: file)));
     case _FileAction.view
         when file.kind == FileKind.text && file.size <= _textViewerLimit:
       final text = await local.readAsString().catchError((_) => '');

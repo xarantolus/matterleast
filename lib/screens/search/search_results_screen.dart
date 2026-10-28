@@ -732,14 +732,10 @@ class _FileTileState extends ConsumerState<_FileTile> {
               dimension: 24,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : PopupMenuButton<void>(
-              tooltip: 'More',
-              itemBuilder: (_) => [
-                PopupMenuItem<void>(
-                  onTap: _openInChannel,
-                  child: const Text('Open in channel'),
-                ),
-              ],
+          : IconButton(
+              tooltip: 'Jump to message',
+              icon: const Icon(Icons.move_down),
+              onPressed: _openInChannel,
             ),
     );
   }

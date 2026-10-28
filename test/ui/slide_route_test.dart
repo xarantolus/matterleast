@@ -3,19 +3,22 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
 void main() {
   Future<NavigatorState> openPage(WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: Text('List'))),
+      const MaterialApp(
+        home: ContentPage(title: Text('Channels'), body: Text('List')),
+      ),
     );
     final navigator = tester.state<NavigatorState>(find.byType(Navigator));
     unawaited(
       navigator.push(
         SlideRoute<void>(
-          builder: (_) => Scaffold(
-            appBar: AppBar(title: const Text('Threads')),
+          builder: (_) => ContentPage(
+            title: const Text('Threads'),
             body: Column(
               children: [
                 SizedBox(
@@ -39,6 +42,41 @@ void main() {
     await tester.pumpAndSettle();
     return navigator;
   }
+
+  testWidgets('a page slides in under the header, which stays and shows '
+      'its title', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: ContentPage(title: Text('Channels'), body: Text('List')),
+      ),
+    );
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    unawaited(
+      navigator.push(
+        SlideRoute<void>(
+          builder: (_) => const ContentPage(
+            title: Text('Threads'),
+            body: Center(child: Text('A thread')),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final width = tester.getSize(find.byType(MaterialApp)).width;
+    // Halfway: the content is still on its way in, its header in place.
+    expect(tester.getCenter(find.text('A thread')).dx, greaterThan(width / 2));
+    final header = find.ancestor(
+      of: find.text('Threads'),
+      matching: find.byType(AppBar),
+    );
+    expect(tester.getTopLeft(header).dx, 0);
+    await tester.pumpAndSettle();
+    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.text('Threads'), findsOneWidget);
+    expect(find.text('Channels'), findsNothing);
+    expect(tester.getCenter(find.text('A thread')).dx, width / 2);
+  });
 
   testWidgets('a right swipe anywhere on a page goes back', (tester) async {
     await openPage(tester);
@@ -120,7 +158,11 @@ void main() {
     });
     await tester.pump();
     final width = tester.getSize(find.byType(MaterialApp)).width;
-    expect(tester.getTopLeft(find.byType(AppBar)).dx, closeTo(width / 2, 1));
+    expect(
+      tester.getCenter(find.text('A thread')).dx,
+      closeTo(width / 2 + width / 2, 1),
+    );
+    expect(tester.getTopLeft(find.byType(AppBar).last).dx, 0);
     await send('commitBackGesture');
     await tester.pumpAndSettle();
     expect(find.text('Threads'), findsNothing);

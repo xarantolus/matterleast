@@ -231,26 +231,41 @@ class _NewMenu extends ConsumerWidget {
     final rights = ref.watch(teamRightsProvider(url, teamId)).value;
     void open(Widget screen) =>
         openPage(Navigator.of(context), screen, popout: true);
+    final choices = [
+      if (rights?.join ?? true)
+        (
+          icon: Icons.travel_explore,
+          label: 'Browse channels',
+          open: () => open(BrowseChannelsScreen(url: url, teamId: teamId)),
+        ),
+      if ((rights?.public ?? true) || (rights?.private ?? true))
+        (
+          icon: Icons.add_circle_outline,
+          label: 'Create channel',
+          open: () => open(EditChannelScreen(url: url, teamId: teamId)),
+        ),
+      (
+        icon: Icons.edit_outlined,
+        label: 'New message',
+        open: () => open(newMessageScreen(url: url, teamId: teamId)),
+      ),
+    ];
+    // A menu of one is a button.
+    if (choices case [final only]) {
+      return IconButton(
+        tooltip: only.label,
+        icon: Icon(only.icon),
+        onPressed: only.open,
+      );
+    }
     return MenuAnchor(
       menuChildren: [
-        if (rights?.join ?? true)
+        for (final c in choices)
           MenuItemButton(
-            leadingIcon: const Icon(Icons.travel_explore),
-            onPressed: () =>
-                open(BrowseChannelsScreen(url: url, teamId: teamId)),
-            child: const Text('Browse channels'),
+            leadingIcon: Icon(c.icon),
+            onPressed: c.open,
+            child: Text(c.label),
           ),
-        if ((rights?.public ?? true) || (rights?.private ?? true))
-          MenuItemButton(
-            leadingIcon: const Icon(Icons.add_circle_outline),
-            onPressed: () => open(EditChannelScreen(url: url, teamId: teamId)),
-            child: const Text('Create channel'),
-          ),
-        MenuItemButton(
-          leadingIcon: const Icon(Icons.edit_outlined),
-          onPressed: () => open(newMessageScreen(url: url, teamId: teamId)),
-          child: const Text('New message'),
-        ),
       ],
       builder: (context, controller, _) => IconButton(
         tooltip: 'New',

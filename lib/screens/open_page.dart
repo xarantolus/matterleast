@@ -104,6 +104,10 @@ class _FirstInPopout extends MaterialPageRoute<void> {
 
   final VoidCallback close;
 
+  /// Lets Esc on the page close the popout; the page covers its barrier.
+  @override
+  bool get barrierDismissible => true;
+
   @override
   void install() {
     super.install();
