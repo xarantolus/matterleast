@@ -63,7 +63,8 @@ void main() {
         expect(tester.getSize(find.byType(AppBar)).height, 48);
         expect(height(tester, 'Town Square'), 36);
         expect(height(tester, 'Display'), 60);
-        expect(fontSize(tester, 'Display'), 14);
+        expect(fontSize(tester, 'Display'), 15);
+        expect(fontSize(tester, 'Clock'), 14);
         expect(tester.getSize(find.byType(IconButton)).height, 36);
       });
     });
@@ -76,6 +77,7 @@ void main() {
       expect(height(tester, 'Town Square'), 48);
       expect(height(tester, 'Display'), 72);
       expect(fontSize(tester, 'Display'), 16);
+      expect(fontSize(tester, 'Clock'), 14);
       expect(tester.getSize(find.byType(IconButton)).height, 48);
     });
   });

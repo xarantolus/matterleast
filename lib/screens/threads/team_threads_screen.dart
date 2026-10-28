@@ -203,7 +203,8 @@ class _ThreadList extends StatelessWidget {
             itemBuilder: (context, i) => MessagePreviewTile(
               key: ValueKey(items[i].key),
               item: items[i],
-              onTap: () => openInboxItem(context, items[i]),
+              onTap: () =>
+                  openInboxItem(context, items[i], besideContent: true),
               onOptions: (anchor) =>
                   showThreadOptions(context, items[i], anchor: anchor),
             ),

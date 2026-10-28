@@ -140,6 +140,7 @@ bool mentionsUser(String text, NotifyUser user, {required bool channelWide}) {
   final words = <String>[
     '@${user.username}',
     if (user.props.firstName && user.firstName.isNotEmpty) user.firstName,
+    if (user.props.usernameMention(user.username)) user.username,
     ...user.props.mentionKeys(user.username),
   ];
   for (final word in words) {

@@ -184,6 +184,19 @@ void main() {
     });
   }
 
+  test('muted text in the dark brand theme reads at 10:1 on the page', () {
+    expect(
+      contrast(AppTokens.dark.muted, AppTokens.dark.page),
+      greaterThanOrEqualTo(10),
+    );
+  });
+
+  test('section headers are at least 12 sp and bold', () {
+    final style = AppTokens.dark.smallCaps;
+    expect(style.fontSize, greaterThanOrEqualTo(12));
+    expect(style.fontWeight!.value, greaterThanOrEqualTo(700));
+  });
+
   for (final MapEntry(key: name, value: theme) in themes.entries) {
     test('the desktop window strip is darker than the app bar in $name', () {
       final bar = theme.appBarTheme.backgroundColor!;

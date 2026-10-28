@@ -44,6 +44,7 @@ class ConversationNotice {
     this.serverName,
     this.teamName,
     this.largeIcon,
+    this.sound = true,
   });
 
   final String serverUrl;
@@ -69,6 +70,9 @@ class ConversationNotice {
 
   /// The other person's picture, for a direct message.
   final Uint8List? largeIcon;
+
+  /// Whether a desktop notification plays the system's message sound.
+  final bool sound;
 }
 
 /// Where a notification leads, carried in its payload.
@@ -342,7 +346,7 @@ class Notifier {
             ? const HtmlEscape(HtmlEscapeMode.element).convert(text.body)
             : text.body,
         payload: target.encode(),
-        notificationDetails: desktopDetailsOf(target),
+        notificationDetails: desktopDetailsOf(target, sound: notice.sound),
       );
       return;
     }
@@ -359,15 +363,21 @@ class Notifier {
 
   /// Most Linux notification servers have no text field: no Reply there.
   static NotificationDetails desktopDetailsOf(
-    NoticeTarget target,
-  ) => NotificationDetails(
-    linux: const LinuxNotificationDetails(
+    NoticeTarget target, {
+    bool sound = true,
+  }) => NotificationDetails(
+    linux: LinuxNotificationDetails(
       category: LinuxNotificationCategory.imReceived,
-      actions: [
+      sound: sound ? ThemeLinuxSound('message-new-instant') : null,
+      suppressSound: !sound,
+      actions: const [
         LinuxNotificationAction(key: NoticeActions.read, label: 'Mark as read'),
       ],
     ),
     windows: WindowsNotificationDetails(
+      audio: sound
+          ? WindowsNotificationAudio.preset(sound: WindowsNotificationSound.im)
+          : WindowsNotificationAudio.silent(),
       inputs: const [
         WindowsTextInput(id: NoticeActions.reply, placeHolderContent: 'Reply'),
       ],

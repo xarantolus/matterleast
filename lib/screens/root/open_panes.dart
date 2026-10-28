@@ -19,6 +19,8 @@ class OpenPanes extends _$OpenPanes {
     state = state.open(target);
   }
 
+  void closeThread() => state = Panes(channel: state.channel);
+
   /// Closes the thread, or else the channel.
   void back() => state = state.back();
 

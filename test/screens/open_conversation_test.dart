@@ -10,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
@@ -17,9 +18,12 @@ import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/data/sync/sync_runner.dart';
+import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/notifications/notifier.dart';
@@ -27,6 +31,7 @@ import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
@@ -37,6 +42,7 @@ import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/pane_layout.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
+import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
@@ -767,6 +773,113 @@ void main() {
     await back(tester);
     await back(tester);
     await finish(tester);
+  });
+
+  group('the Threads list', () {
+    List<Override> threadsOf(String url) => [
+      teamThreadsProvider(url, teamId).overrideWith(
+        (ref) => Stream.value([
+          InboxItem(
+            serverUrl: url,
+            kind: InboxKind.thread,
+            channelId: channelId,
+            teamId: teamId,
+            title: 'Slipway repairs',
+            avatarName: 'wren',
+            author: 'wren',
+            preview: 'Needs two more planks',
+            place: '#boats',
+            time: DateTime.utc(2026, 3, 1, 9),
+            count: 0,
+            unread: false,
+            rootId: 'old1',
+          ),
+        ]),
+      ),
+      syncStatusProvider(url)
+          .overrideWith((ref) => const Stream<SyncStatus>.empty()),
+      knownPresenceProvider(url).overrideWithValue(const {}),
+      featuresProvider(url)
+          .overrideWith((ref) => Stream.value(const ServerFeatures())),
+    ];
+
+    Future<void> openList(WidgetTester tester) async {
+      unawaited(
+        openPage(
+          navigator(tester),
+          TeamThreadsScreen(
+            url: server.url.toString(),
+            teamId: teamId,
+            teamName: 'Harbor',
+          ),
+        ),
+      );
+      await settle(tester);
+    }
+
+    Future<void> pickThread(WidgetTester tester) async {
+      await tester.tap(find.textContaining('Slipway repairs'));
+      await settle(tester);
+    }
+
+    testWidgets('on a large window a picked thread opens beside the list', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await start(tester, panes: true, more: threadsOf);
+      await openList(tester);
+      await pickThread(tester);
+      expect(find.byType(TeamThreadsScreen), findsOneWidget);
+      expect(find.byType(ThreadScreen), findsOneWidget);
+      expect(
+        tester.getRect(find.byType(ThreadScreen)).left,
+        greaterThan(tester.getRect(find.byType(TeamThreadsScreen)).left),
+        reason: 'in the thread pane',
+      );
+      closeConversations(navigator(tester));
+      await settle(tester);
+      await finish(tester);
+      await tester.pump(Duration.zero);
+    });
+
+    testWidgets('on a phone a picked thread slides in over the list', (
+      tester,
+    ) async {
+      await start(tester, more: threadsOf);
+      await openList(tester);
+      await pickThread(tester);
+      expect(find.byType(ThreadScreen), findsOneWidget);
+      await back(tester);
+      expect(find.byType(ThreadScreen), findsNothing);
+      await finish(tester);
+    });
+
+    testWidgets("the channel in a thread's header opens that channel", (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await start(tester, panes: true);
+      await open(tester);
+      await open(tester, rootId: 'old1');
+      expect(find.byType(ThreadScreen), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ThreadScreen),
+          matching: find.textContaining('Boats', findRichText: true),
+        ),
+      );
+      await settle(tester);
+      expect(find.byType(ThreadScreen), findsNothing);
+      expect(find.byType(ChannelScreen), findsOneWidget);
+      closeConversations(navigator(tester));
+      await settle(tester);
+      await finish(tester);
+      await tester.pump(Duration.zero);
+    });
   });
 
   testWidgets('on a wide window the channel and thread header strips line '

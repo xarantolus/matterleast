@@ -137,6 +137,14 @@ class _NotificationSettingsPageState
               : null,
         ),
         SwitchListTile(
+          title: const Text('My username'),
+          subtitle: Text('"$username", any capitalisation'),
+          value: props.usernameMention(username),
+          onChanged: enabled
+              ? (on) => _save(props, props.withUsernameMention(username, on))
+              : null,
+        ),
+        SwitchListTile(
           title: const Text('@channel, @all and @here'),
           value: props.channelWide,
           onChanged: enabled
@@ -146,9 +154,7 @@ class _NotificationSettingsPageState
         ListTile(
           enabled: enabled,
           title: const Text('Other words'),
-          subtitle: Text(
-            keys.isEmpty ? 'None. @$username always counts.' : keys.join(', '),
-          ),
+          subtitle: Text(keys.isEmpty ? 'None' : keys.join(', ')),
           onTap: () async {
             final text = await showDialog<String>(
               context: context,

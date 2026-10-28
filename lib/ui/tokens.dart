@@ -77,7 +77,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
   static const dark = AppTokens(
     page: Color(0xFF131514),
     text: Color(0xFFE6EAE8),
-    muted: Color(0xFFA5ADAA),
+    muted: Color(0xFFC3CAC7),
     hairline: Color(0xFF323735),
     divider: Color(0xFF5F6764),
     accent: Color(0xFF5FD3C4),
@@ -105,10 +105,10 @@ class AppTokens extends ThemeExtension<AppTokens> {
   };
 
   TextStyle get smallCaps => TextStyle(
-    fontSize: 11.5,
+    fontSize: 12,
     height: 1.3,
     letterSpacing: 1.1,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     color: muted,
   );
 

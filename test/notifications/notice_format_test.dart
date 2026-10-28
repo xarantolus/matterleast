@@ -293,6 +293,23 @@ void main() {
       expect(action.kind, NoticeActionKind.read);
     });
 
+    test('desktop notifications play the platform message sound', () {
+      final details = Notifier.desktopDetailsOf(target);
+      final linux = details.linux!;
+      expect((linux.sound! as ThemeLinuxSound).name, 'message-new-instant');
+      expect(linux.suppressSound, isFalse);
+      final audio = details.windows!.audio!;
+      expect(audio.isSilent, isFalse);
+      expect(audio.source, WindowsNotificationSound.im.name);
+    });
+
+    test('with the sound off desktop notifications are silent', () {
+      final details = Notifier.desktopDetailsOf(target, sound: false);
+      expect(details.linux!.sound, isNull);
+      expect(details.linux!.suppressSound, isTrue);
+      expect(details.windows!.audio!.isSilent, isTrue);
+    });
+
     test('an Android reply carries its input', () {
       final action = noticeActionOf(
         NotificationResponse(

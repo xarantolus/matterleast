@@ -293,10 +293,13 @@ ThemeData desktopTheme(ThemeData theme) {
     listTileTheme: theme.listTileTheme.copyWith(
       // One line 36 px dense and 44 px otherwise, two lines 60 px.
       visualDensity: const VisualDensity(horizontal: -2, vertical: -3),
-      titleTextStyle: textTheme.bodyLarge?.copyWith(color: colours.onSurface),
+      titleTextStyle: sized(
+        textTheme.bodyLarge,
+        15,
+      )?.copyWith(color: colours.onSurface),
       subtitleTextStyle: sized(
         textTheme.bodyMedium,
-        13,
+        14,
       )?.copyWith(color: colours.onSurfaceVariant),
     ),
     searchBarTheme: theme.searchBarTheme.copyWith(

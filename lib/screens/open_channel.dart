@@ -26,6 +26,8 @@ import 'package:matterleast/ui/conversation_route.dart';
 /// ([stackStepFor]); on a wide one it opens in the panes. Opened
 /// [fromOutside] the app, Back leads to the list unless it is a thread of
 /// the open channel. With [focusComposer] its composer takes the keyboard.
+/// With [besideContent] a thread opens in the thread pane of a large window
+/// and leaves the content view in the main pane in place.
 /// Opens that aren't the user's own ([recordHistory] false) stay out of the
 /// Back and Forward history. Completes once the conversation closes.
 Future<void> openConversation(
@@ -39,6 +41,7 @@ Future<void> openConversation(
   bool instant = false,
   bool focusComposer = false,
   bool fromOutside = false,
+  bool besideContent = false,
   bool recordHistory = true,
 }) async {
   if (!from.mounted) return;
@@ -86,16 +89,21 @@ Future<void> openConversation(
           highlightPostId: highlightPostId,
           focusComposer: focusComposer,
         );
-  if (windowClassOf(MediaQuery.sizeOf(navigator.context).width).showsPanes) {
+  final windowClass = windowClassOf(MediaQuery.sizeOf(navigator.context).width);
+  if (windowClass.showsPanes) {
     // Whatever covers the panes, and the content views over the
     // conversation, give way to it.
-    for (final routes in [
-      container.read(paneRoutesProvider),
-      container.read(conversationRoutesProvider),
-    ]) {
-      routes.navigator?.popUntil((route) => route.isFirst);
+    if (!(besideContent &&
+        target is ThreadTarget &&
+        windowClass.showsThreadPane)) {
+      for (final routes in [
+        container.read(paneRoutesProvider),
+        container.read(conversationRoutesProvider),
+      ]) {
+        routes.navigator?.popUntil((route) => route.isFirst);
+      }
+      navigator.popUntil((route) => route.isFirst);
     }
-    navigator.popUntil((route) => route.isFirst);
     container.read(openPanesProvider.notifier).open(target);
     return;
   }
