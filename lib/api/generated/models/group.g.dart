@@ -17,6 +17,8 @@ Group _$GroupFromJson(Map<String, dynamic> json) => Group(
   updateAt: const MillisDateTime().fromJson(json['update_at']),
   deleteAt: const MillisDateTime().fromJson(json['delete_at']),
   hasSyncables: const LenientBool().fromJson(json['has_syncables']),
+  memberCount: const LenientInt().fromJson(json['member_count']),
+  allowReference: const LenientBool().fromJson(json['allow_reference']),
 );
 
 Map<String, dynamic> _$GroupToJson(Group instance) => <String, dynamic>{
@@ -30,4 +32,6 @@ Map<String, dynamic> _$GroupToJson(Group instance) => <String, dynamic>{
   'update_at': const MillisDateTime().toJson(instance.updateAt),
   'delete_at': const MillisDateTime().toJson(instance.deleteAt),
   'has_syncables': const LenientBool().toJson(instance.hasSyncables),
+  'member_count': const LenientInt().toJson(instance.memberCount),
+  'allow_reference': const LenientBool().toJson(instance.allowReference),
 };

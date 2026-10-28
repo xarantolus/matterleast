@@ -348,3 +348,8 @@ actions:
       content:
         application/json:
           schema: {$ref: "#/components/schemas/ScheduledPost"}
+  # --- group mentions: the member count asked for with include_member_count (model/group.go) ---
+  - target: "$.components.schemas.Group.properties"
+    update:
+      member_count: {type: integer}
+      allow_reference: {type: boolean}
