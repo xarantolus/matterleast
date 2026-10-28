@@ -88,11 +88,13 @@ class DesktopShell with WindowListener {
     shell._closeSetting = settings
         .watch(Settings.closeToTray)
         .listen((on) => shell._closeToTray = on);
+    _hasTray.value = shell._host.present;
     shell
       ..showTray()
       // An icon registers with the panel that runs when it is made, so a
       // panel started later needs a new one.
       .._hostChanges = shell._host.changes.listen((present) {
+        _hasTray.value = present;
         if (present) shell.showTray();
       });
     await windowManager.show();
@@ -240,6 +242,11 @@ class DesktopShell with WindowListener {
   /// follow the focus on Linux, so this comes from the window events.
   static ValueListenable<bool> get focus => _focus;
   static final _focus = ValueNotifier(true);
+
+  /// Whether a panel shows tray icons; false only on a Linux desktop without
+  /// one, where closing the window quits.
+  static ValueListenable<bool> get hasTray => _hasTray;
+  static final _hasTray = ValueNotifier(true);
 
   /// Whether the window fills the screen, for the maximise button.
   static ValueListenable<bool> get maximized => _maximized;

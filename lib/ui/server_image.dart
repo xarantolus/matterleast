@@ -18,6 +18,7 @@ class ServerImage extends ConsumerStatefulWidget {
     required this.width,
     required this.height,
     this.fit = BoxFit.cover,
+    this.decodeWidth,
     this.semanticLabel,
     this.placeholder,
     super.key,
@@ -30,6 +31,11 @@ class ServerImage extends ConsumerStatefulWidget {
   final double width;
   final double height;
   final BoxFit fit;
+
+  /// The width the bytes are decoded at, [width] when null. Another widget
+  /// showing the same picture bigger passes the first one's, to share its
+  /// decoded image.
+  final double? decodeWidth;
   final String? semanticLabel;
 
   /// Shown while the bytes load, instead of a tonal box.
@@ -65,8 +71,10 @@ class _ServerImageState extends ConsumerState<ServerImage> {
       proxy: proxy,
     );
     if (url == null) return _unavailable;
-    final pixels = (widget.width * MediaQuery.devicePixelRatioOf(context))
-        .round();
+    final pixels =
+        ((widget.decodeWidth ?? widget.width) *
+                MediaQuery.devicePixelRatioOf(context))
+            .round();
     final placeholder =
         widget.placeholder ?? _Box(width: widget.width, height: widget.height);
     return Image(
