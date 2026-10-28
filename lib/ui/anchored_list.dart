@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/ui/anchored_scrollbar.dart';
 import 'package:matterleast/ui/motion.dart';
 
 /// Where the reader is in an [AnchoredList], reported after each scroll and
@@ -128,7 +130,11 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
   late final ScrollController _scroll;
   final _centerKey = GlobalKey();
   final _edgeKey = GlobalKey();
-  late final _physics = _KeepInRangePhysics(oldestTop: _oldestTop);
+  // Desktop has no overscroll: a pulled-past list would leave the screen.
+  late final _physics = _KeepInRangePhysics(
+    oldestTop: _oldestTop,
+    parent: isDesktop ? const ClampingScrollPhysics() : null,
+  );
 
   /// The offset at which the oldest content's top edge meets the top of the
   /// screen. The viewport never reports a maximum below zero, so when less
@@ -167,6 +173,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
   }
 
   final _viewportKey = GlobalKey();
+  final _span = ValueNotifier<RowSpan?>(null);
   final _built = <Object, BuildContext>{};
   var _indexOf = <Object, int>{};
   Object? _anchor;
@@ -279,6 +286,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
   void dispose() {
     if (widget.controller._state == this) widget.controller._state = null;
     _scroll.dispose();
+    _span.dispose();
     super.dispose();
   }
 
@@ -656,6 +664,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       newest = newest == null ? index : math.min(newest, index);
       oldest = oldest == null ? index : math.max(oldest, index);
     }
+    if (isDesktop) _span.value = _spanOf(newest, oldest, height);
     final view = AnchoredListView(
       pinned: _isPinned(),
       nearOlderEnd: _maxPixels - p.pixels < p.viewportDimension * 1.5,
@@ -665,6 +674,35 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     if (view == _lastView) return;
     _lastView = view;
     widget.onViewChanged?.call(view);
+  }
+
+  /// The rows on screen counted from the oldest, partly shown ones in part;
+  /// null before any row is laid out.
+  RowSpan? _spanOf(int? newest, int? oldest, double height) {
+    if (newest == null || oldest == null) return null;
+    final first = _rowAt(widget.keyOf(widget.rows[oldest]));
+    final last = _rowAt(widget.keyOf(widget.rows[newest]));
+    if (first == null || last == null) return null;
+    final total = widget.rows.length;
+    double share(double hidden, double rowHeight) =>
+        rowHeight <= 0 ? 0 : (hidden / rowHeight).clamp(0, 1);
+    final start =
+        total - 1 - oldest + share(-first.top, first.bottom - first.top);
+    final end =
+        total - newest - share(last.bottom - height, last.bottom - last.top);
+    return RowSpan(start: start, extent: end - start, total: total);
+  }
+
+  /// Shows row [fromOldest] (0 is the oldest) at the top, for a dragged
+  /// scrollbar; the list puts it back in range if that leaves a gap.
+  void _showRowAtTop(int fromOldest) {
+    final rows = widget.rows;
+    final height = _viewportHeight;
+    if (rows.isEmpty || height == null) return;
+    // The row above is parked just off the top edge.
+    final above = rows[rows.length - fromOldest];
+    final key = widget.keyOf(fromOldest == 0 ? rows.last : above);
+    _jumpTo(key, fromOldest == 0 ? height - 1 : height);
   }
 
   Widget _row(BuildContext context, int index) {
@@ -690,37 +728,55 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
       return child < 0 ? null : child;
     }
 
+    final scrollView = CustomScrollView(
+      key: _viewportKey,
+      controller: _scroll,
+      reverse: true,
+      center: _centerKey,
+      physics: _physics,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      slivers: [
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, i) => _row(context, anchor - 1 - i),
+            childCount: math.min(anchor, rows.length),
+            findChildIndexCallback: (key) =>
+                indexOfKey(key, (index) => anchor - 1 - index),
+          ),
+        ),
+        SliverList(
+          key: _centerKey,
+          delegate: SliverChildBuilderDelegate(
+            (context, i) => _row(context, anchor + i),
+            childCount: math.max(0, rows.length - anchor),
+            findChildIndexCallback: (key) =>
+                indexOfKey(key, (index) => index - anchor),
+          ),
+        ),
+        if (widget.olderEdge case final edge?)
+          SliverToBoxAdapter(key: _edgeKey, child: edge),
+      ],
+    );
     return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
-      child: CustomScrollView(
-        key: _viewportKey,
-        controller: _scroll,
-        reverse: true,
-        center: _centerKey,
-        physics: _physics,
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        slivers: [
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, i) => _row(context, anchor - 1 - i),
-              childCount: math.min(anchor, rows.length),
-              findChildIndexCallback: (key) =>
-                  indexOfKey(key, (index) => anchor - 1 - index),
-            ),
-          ),
-          SliverList(
-            key: _centerKey,
-            delegate: SliverChildBuilderDelegate(
-              (context, i) => _row(context, anchor + i),
-              childCount: math.max(0, rows.length - anchor),
-              findChildIndexCallback: (key) =>
-                  indexOfKey(key, (index) => index - anchor),
-            ),
-          ),
-          if (widget.olderEdge case final edge?)
-            SliverToBoxAdapter(key: _edgeKey, child: edge),
-        ],
-      ),
+      child: isDesktop
+          ? Stack(
+              children: [
+                ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context)
+                      .copyWith(scrollbars: false),
+                  child: scrollView,
+                ),
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  right: 0,
+                  width: AnchoredScrollbar.width,
+                  child: AnchoredScrollbar(span: _span, onRow: _showRowAtTop),
+                ),
+              ],
+            )
+          : scrollView,
     );
   }
 }

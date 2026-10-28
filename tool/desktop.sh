@@ -5,7 +5,8 @@
 # to the local test server, hot reloaded when lib/ changes. Run from inside
 # the worktree. Coordinates are screen pixels, the same as in `shot` PNGs.
 #
-#   tool/desktop.sh up [user]        start the session, run the app as user (alice)
+#   tool/desktop.sh up [user]        start the session, run the app as user (alice);
+#                                    DESKTOP_MODE=profile for frame timings (no hot reload)
 #   tool/desktop.sh reload           hot reload now and print the result
 #   tool/desktop.sh restart          hot restart now and print the result
 #   tool/desktop.sh shot <label> [--window]
@@ -217,7 +218,7 @@ up)
     : > "$log"
     # A held-open stdin keeps flutter run alive without a terminal; reloads
     # come in as signals through the pid file.
-    (cd "$root" && exec flutter run -d linux --debug \
+    (cd "$root" && exec flutter run -d linux "--${DESKTOP_MODE:-debug}" \
         --pid-file "$pid_file" \
         --dart-define="MATTERLEAST_DEV_LOGIN=http://127.0.0.1:8065|$user|matterleast" \
         < <(tail -f /dev/null 2> /dev/null) >> "$log" 2>&1) > /dev/null 2>&1 &

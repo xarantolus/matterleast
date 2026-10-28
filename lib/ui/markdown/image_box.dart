@@ -1,14 +1,28 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/post_extras.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/hover_tint.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
 
-/// The tallest an inline image may be: 45 % of the screen's longer side, so
-/// a portrait picture takes the same room whichever way the phone is held.
-double imageMaxHeight(Size screen) => screen.longestSide * 0.45;
+/// The tallest an inline image may be: 45 % of the phone screen's longer
+/// side, so a portrait picture takes the same room whichever way the phone
+/// is held; a fixed box on desktop, where windows are large.
+double imageMaxHeight(Size screen, {required bool desktop}) =>
+    desktop ? _desktopBox.height : screen.longestSide * 0.45;
+
+/// The widest an inline image may be, given the room the message leaves.
+double imageMaxWidth(double available, {required bool desktop}) =>
+    desktop && available > _desktopBox.width ? _desktopBox.width : available;
+
+/// Pictures in a grid are smaller than a single one on desktop.
+double gridMaxHeight(Size screen, {required bool desktop}) =>
+    desktop ? _desktopGridHeight : imageMaxHeight(screen, desktop: false);
+
+const _desktopBox = Size(480, 360);
+const _desktopGridHeight = 240.0;
 
 /// Pure: the box an image takes before its bytes arrive. The size typed in
 /// the message (`=WxH`) wins, a missing side follows the measured aspect
@@ -83,13 +97,20 @@ class MessageImage extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxHeight = imageMaxHeight(MediaQuery.sizeOf(context));
+        final maxHeight = imageMaxHeight(
+          MediaQuery.sizeOf(context),
+          desktop: isDesktop,
+        );
+        final maxWidth = imageMaxWidth(
+          constraints.maxWidth,
+          desktop: isDesktop,
+        );
         final known = imageBox(
           measuredWidth: measured?.width,
           measuredHeight: measured?.height,
           width: image.width,
           height: image.height,
-          maxWidth: constraints.maxWidth,
+          maxWidth: maxWidth,
           maxHeight: maxHeight,
         );
         final box =

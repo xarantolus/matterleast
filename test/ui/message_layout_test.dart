@@ -13,8 +13,27 @@ import 'package:matterleast/ui/markdown/show_more.dart';
 void main() {
   group('image boxes', () {
     test('the height cap is 45 % of the longer side in either orientation', () {
-      expect(imageMaxHeight(const Size(400, 800)), 360);
-      expect(imageMaxHeight(const Size(800, 400)), 360);
+      expect(imageMaxHeight(const Size(400, 800), desktop: false), 360);
+      expect(imageMaxHeight(const Size(800, 400), desktop: false), 360);
+    });
+
+    test('on desktop a single preview fits 480 x 360 whatever the window', () {
+      Size? box(double window, int w, int h) => imageBox(
+        measuredWidth: w,
+        measuredHeight: h,
+        maxWidth: imageMaxWidth(window, desktop: true),
+        maxHeight: imageMaxHeight(Size(window, 1000), desktop: true),
+      );
+      expect(box(1400, 2400, 1200), const Size(480, 240));
+      expect(box(1400, 1200, 2400), const Size(180, 360));
+      expect(box(1400, 200, 100), const Size(200, 100));
+      expect(box(300, 2400, 1200), const Size(300, 150));
+    });
+
+    test('phones keep the full width and grids are smaller on desktop', () {
+      expect(imageMaxWidth(900, desktop: false), 900);
+      expect(gridMaxHeight(const Size(1600, 1000), desktop: true), 240);
+      expect(gridMaxHeight(const Size(400, 800), desktop: false), 360);
     });
 
     test('the measured size shrinks to the width, keeping the ratio', () {
