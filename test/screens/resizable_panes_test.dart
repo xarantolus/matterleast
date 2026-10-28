@@ -131,7 +131,8 @@ void main() {
     expect(listWidth(tester), _defaultList + 100);
 
     await drag(tester, listDivider, 2000);
-    expect(listWidth(tester), maxListWidth);
+    // Only the conversation's minimum stops it.
+    expect(listWidth(tester), closeTo(1600 - _rail - minConversationWidth, 2));
 
     await drag(tester, listDivider, -2000);
     expect(listWidth(tester), minListWidth);
@@ -146,6 +147,9 @@ void main() {
 
     await drag(tester, threadDivider, -80);
     expect(threadWidth(tester), 480);
+
+    await drag(tester, threadDivider, -400);
+    expect(threadWidth(tester), greaterThan(720));
     await close(tester);
   });
 

@@ -81,6 +81,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   late var _index = widget.initialIndex;
   late final _pages = ExtendedPageController(initialPage: widget.initialIndex);
   var _bars = true;
+  var _fullScreen = false;
 
   /// Files whose original replaced the preview after zooming in.
   final _originals = <String>{};
@@ -148,7 +149,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   }
 
   void _pageChanged(int i) {
-    setState(() => _index = i);
+    setState(() {
+      _index = i;
+      _fullScreen = false;
+    });
     _preloadAround(i);
   }
 
@@ -229,6 +233,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                                 url: widget.url,
                                 file: item,
                                 autoplay: i == widget.initialIndex,
+                                onFullScreenChanged: (full) =>
+                                    setState(() => _fullScreen = full),
                                 onControlsChanged: (visible) {
                                   if (i == _index) {
                                     setState(() => _bars = visible);
@@ -276,7 +282,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                       ),
                     ),
                     _Bars(
-                      visible: _bars,
+                      visible: _bars && !_fullScreen,
                       title: widget.author,
                       subtitle: whenLabel(
                         widget.sentAt,
@@ -397,12 +403,14 @@ class _VideoPage extends ConsumerStatefulWidget {
     required this.file,
     required this.autoplay,
     required this.onControlsChanged,
+    required this.onFullScreenChanged,
   });
 
   final String url;
   final PostFile file;
   final bool autoplay;
   final ValueChanged<bool> onControlsChanged;
+  final ValueChanged<bool> onFullScreenChanged;
 
   @override
   ConsumerState<_VideoPage> createState() => _VideoPageState();
@@ -516,6 +524,7 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
     return VideoPlayerView(
       video: video,
       onControlsChanged: widget.onControlsChanged,
+      onFullScreenChanged: widget.onFullScreenChanged,
     );
   }
 }

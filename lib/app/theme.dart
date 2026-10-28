@@ -75,7 +75,7 @@ AppTokens serverTokens(ServerPalette palette) {
   return base.copyWith(
     page: page,
     text: text,
-    muted: _readOnAll(mix(0.62), [panel, wash, page]),
+    muted: _readOnAll(mix(0.62), [panel, wash, page], minimum: 6),
     hairline: mix(0.14),
     divider: mix(0.32),
     accent: _readOnAll(palette.accent, [panel, wash, page]),
@@ -89,8 +89,14 @@ AppTokens serverTokens(ServerPalette palette) {
   );
 }
 
-Color _readOnAll(Color colour, List<Color> backgrounds) =>
-    backgrounds.fold(colour, adjustToRead);
+Color _readOnAll(
+  Color colour,
+  List<Color> backgrounds, {
+  double minimum = minContrast,
+}) => backgrounds.fold(
+  colour,
+  (moved, background) => adjustToRead(moved, background, minimum: minimum),
+);
 
 Color _visibleOn(Color colour, Color background) =>
     adjustToRead(colour, background, minimum: minShapeContrast);
@@ -122,7 +128,7 @@ AppTokens wallpaperTokens(ColorScheme scheme) {
   return base.copyWith(
     page: page,
     text: _readOnAll(scheme.onSurface, [code, page]),
-    muted: _readOnAll(scheme.onSurfaceVariant, [panel, code, page]),
+    muted: _readOnAll(scheme.onSurfaceVariant, [panel, code, page], minimum: 6),
     hairline: scheme.outlineVariant,
     divider: scheme.outline,
     accent: _readOnAll(scheme.primary, [panel, wash, page]),
@@ -172,6 +178,11 @@ ThemeData _build({
   return base.copyWith(
     extensions: [tokens],
     scaffoldBackgroundColor: tokens.page,
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        disabledForegroundColor: dimmed(tokens.text, tokens.page),
+      ),
+    ),
     appBarTheme: AppBarTheme(
       backgroundColor: bar,
       foregroundColor: onBar,
@@ -190,7 +201,20 @@ ThemeData _build({
       linearTrackColor: tokens.hairline,
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: tokens.accent),
+      style: TextButton.styleFrom(
+        foregroundColor: tokens.accent,
+        disabledForegroundColor: dimmed(tokens.text, tokens.page),
+      ),
+    ),
+    // Material's off thumb and outline are the divider colour, which is
+    // faint on a dark page.
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected) ? null : tokens.muted,
+      ),
+      trackOutlineColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected) ? null : tokens.muted,
+      ),
     ),
     dividerTheme: DividerThemeData(color: tokens.hairline, space: 1),
     listTileTheme: const ListTileThemeData(
