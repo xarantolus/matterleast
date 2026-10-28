@@ -134,33 +134,48 @@ class UserProfileSheet extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     UserProfile profile,
-  ) async {
+  ) {
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final actions = await ref.read(channelActionsProvider(url).future);
-      final channelId = await actions.directChannel(profile.id);
+    return messagePerson(
+      context,
+      ref,
+      url: url,
+      userId: profile.id,
+      name: profile.name,
       // The sheet goes first: the conversation is pushed at once, so a
       // pop after it would close the conversation instead.
-      navigator.pop();
-      unawaited(
-        openConversation(
-          navigator,
-          url: url,
-          channelId: channelId,
-          title: profile.name,
+      before: navigator.pop,
+    );
+  }
+}
+
+/// Opens the DM with [userId]; [before] runs just before, e.g. a sheet pop.
+Future<void> messagePerson(
+  BuildContext context,
+  WidgetRef ref, {
+  required String url,
+  required String userId,
+  required String name,
+  VoidCallback? before,
+}) async {
+  final navigator = Navigator.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final actions = await ref.read(channelActionsProvider(url).future);
+    final channelId = await actions.directChannel(userId);
+    before?.call();
+    unawaited(
+      openConversation(navigator, url: url, channelId: channelId, title: name),
+    );
+  } on Object catch (e) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          "Couldn't open the conversation. "
+          '${requestProblemText(e, Uri.parse(url).host)}',
         ),
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't open the conversation. "
-            '${requestProblemText(e, Uri.parse(url).host)}',
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
 }
 

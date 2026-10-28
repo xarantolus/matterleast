@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/extras_providers.dart';
 import 'package:matterleast/domain/profile_attributes.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -126,6 +127,7 @@ class AttributeEditors extends StatelessWidget {
             children: [
               for (final o in f.options.entries)
                 FilterChip(
+                  mouseCursor: clickCursor,
                   label: Text(o.value),
                   selected: current.contains(o.key),
                   onSelected: on
@@ -154,6 +156,7 @@ class AttributeEditors extends StatelessWidget {
                 : decoration.suffixIcon,
           ),
           child: InkWell(
+            mouseCursor: clickCursor,
             onTap: on
                 ? () async {
                     final picked = await showDatePicker(

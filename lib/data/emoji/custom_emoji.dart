@@ -24,6 +24,15 @@ Stream<Map<String, String>> watchCustomEmoji(ServerStore store) {
   ).distinct(_sameMap);
 }
 
+/// The creator id of custom emoji [name], once stored.
+Stream<String?> watchEmojiCreator(ServerStore store, String name) {
+  final db = store.db;
+  return (db.select(db.customEmoji)..where((e) => e.name.equals(name)))
+      .watch()
+      .map((rows) => rows.firstOrNull?.creatorId)
+      .distinct();
+}
+
 bool _sameMap(Map<String, String> a, Map<String, String> b) =>
     a.length == b.length && a.entries.every((e) => b[e.key] == e.value);
 

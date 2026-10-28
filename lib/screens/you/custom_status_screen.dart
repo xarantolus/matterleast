@@ -4,6 +4,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/pane_label.dart';
@@ -219,11 +220,13 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                   'this_week',
                 ])
                   ChoiceChip(
+                    mouseCursor: clickCursor,
                     label: Text(durationLabel(d)),
                     selected: _duration == d,
                     onSelected: (_) => setState(() => _duration = d),
                   ),
                 ChoiceChip(
+                  mouseCursor: clickCursor,
                   avatar: const Icon(Icons.event_outlined),
                   label: Text(
                     _duration == customStatusDateAndTime && _chosenEnd != null

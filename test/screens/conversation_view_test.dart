@@ -533,7 +533,7 @@ void main() {
         buttons: kSecondaryMouseButton,
       );
       await settle(tester);
-      expect(find.text('Open link'), findsOneWidget);
+      expect(find.text('Open link'), findsNothing);
       expect(find.text('Copy link'), findsOneWidget);
       expect(find.text('Copy text'), findsNothing);
       await close(tester);

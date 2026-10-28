@@ -33,6 +33,8 @@ import 'package:matterleast/screens/channel/posting_rules.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/schedule_picker.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/message_display.dart';
@@ -782,6 +784,7 @@ class PriorityChip extends StatelessWidget {
     final urgent = priority.priority == api.PostPriorityPriority.urgent;
     final colors = Theme.of(context).colorScheme;
     return InputChip(
+      mouseCursor: clickCursor,
       visualDensity: VisualDensity.compact,
       avatar: Icon(
         urgent ? Icons.error : Icons.info,
@@ -957,94 +960,103 @@ class AttachmentStrip extends StatelessWidget {
           for (final a in attachments)
             Padding(
               padding: const EdgeInsets.only(right: Spacing.sm),
-              child: Semantics(
-                container: true,
-                label: [
-                  a.name,
-                  a.error ?? (a.uploading ? 'uploading' : 'attached'),
-                ].join(', '),
-                child: SizedBox(
-                  width: a.isImage && a.path != null ? 88 : 180,
-                  child: Card.outlined(
-                    margin: EdgeInsets.zero,
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (a.isImage && a.path != null)
-                          ExcludeSemantics(
-                            child: Image.file(
-                              File(a.path!),
-                              fit: BoxFit.cover,
-                              cacheWidth: 264,
-                            ),
-                          )
-                        else
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              Spacing.sm,
-                              Spacing.sm,
-                              Spacing.xl,
-                              Spacing.sm,
-                            ),
-                            child: ExcludeSemantics(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Icon(
-                                    Icons.insert_drive_file_outlined,
-                                    color: tokens.muted,
-                                  ),
-                                  Text(
-                                    a.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: text.labelMedium,
-                                  ),
-                                  Text(
-                                    a.error ?? fileSizeText(a.size),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: text.bodySmall?.copyWith(
-                                      color: a.error != null
-                                          ? Theme.of(context).colorScheme.error
-                                          : tokens.muted,
+              child: GestureDetector(
+                onSecondaryTapUp: isDesktop
+                    ? (d) => _menu(context, a, d.globalPosition)
+                    : null,
+                child: Semantics(
+                  container: true,
+                  label: [
+                    a.name,
+                    a.error ?? (a.uploading ? 'uploading' : 'attached'),
+                  ].join(', '),
+                  child: SizedBox(
+                    width: a.isImage && a.path != null ? 88 : 180,
+                    child: Card.outlined(
+                      margin: EdgeInsets.zero,
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (a.isImage && a.path != null)
+                            ExcludeSemantics(
+                              child: Image.file(
+                                File(a.path!),
+                                fit: BoxFit.cover,
+                                cacheWidth: 264,
+                              ),
+                            )
+                          else
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                Spacing.sm,
+                                Spacing.sm,
+                                Spacing.xl,
+                                Spacing.sm,
+                              ),
+                              child: ExcludeSemantics(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.insert_drive_file_outlined,
+                                      color: tokens.muted,
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      a.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: text.labelMedium,
+                                    ),
+                                    Text(
+                                      a.error ?? fileSizeText(a.size),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: text.bodySmall?.copyWith(
+                                        color: a.error != null
+                                            ? Theme.of(context)
+                                                  .colorScheme
+                                                  .error
+                                            : tokens.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        if (a.error != null && a.isImage && a.path != null)
-                          ColoredBox(
-                            color: Theme.of(context).colorScheme.errorContainer
-                                .withValues(alpha: 0.85),
-                            child: Center(
-                              child: Icon(
-                                Icons.error_outline,
-                                color: Theme.of(context).colorScheme.error,
+                          if (a.error != null && a.isImage && a.path != null)
+                            ColoredBox(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .errorContainer
+                                  .withValues(alpha: 0.85),
+                              child: Center(
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
                               ),
                             ),
-                          ),
-                        if (a.uploading)
+                          if (a.uploading)
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: LinearProgressIndicator(
+                                value: a.progress > 0 && !stalled
+                                    ? a.progress
+                                    : null,
+                              ),
+                            ),
                           Align(
-                            alignment: Alignment.bottomCenter,
-                            child: LinearProgressIndicator(
-                              value: a.progress > 0 && !stalled
-                                  ? a.progress
-                                  : null,
+                            alignment: Alignment.topRight,
+                            child: IconButton.filledTonal(
+                              iconSize: 16,
+                              tooltip: a.uploading ? 'Cancel upload' : 'Remove',
+                              onPressed: () => onRemove(a.clientId),
+                              icon: const Icon(Icons.close),
                             ),
                           ),
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: IconButton.filledTonal(
-                            iconSize: 16,
-                            tooltip: a.uploading ? 'Cancel upload' : 'Remove',
-                            onPressed: () => onRemove(a.clientId),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1053,6 +1065,19 @@ class AttachmentStrip extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _menu(BuildContext context, Attachment a, Offset at) async {
+    final remove = await showMenuAt<bool>(context, at, [
+      PopupMenuItem(
+        value: true,
+        child: MenuEntry(
+          icon: Icons.close,
+          label: a.uploading ? 'Cancel upload' : 'Remove',
+        ),
+      ),
+    ]);
+    if (remove ?? false) onRemove(a.clientId);
   }
 }
 

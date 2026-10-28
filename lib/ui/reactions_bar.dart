@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/person_tile.dart';
@@ -36,6 +38,7 @@ class ReactionsBar extends StatelessWidget {
         ? null
         : Builder(
             builder: (chip) => ActionChip(
+              mouseCursor: clickCursor,
               tooltip: 'Add reaction',
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -69,7 +72,18 @@ class ReactionsBar extends StatelessWidget {
     final mine = group.mine;
     return GestureDetector(
       onLongPress: () => showReactions(context, reactions, group),
+      onSecondaryTapUp: isDesktop
+          ? (d) => showReactions(
+              context,
+              reactions,
+              group,
+              anchor: d.globalPosition & Size.zero,
+            )
+          : null,
       child: FilterChip(
+        mouseCursor: clickCursor,
+        // A long press on a phone shows who reacted instead.
+        tooltip: isDesktop ? ':${group.emojiName}:' : null,
         showCheckmark: false,
         selected: mine,
         // A clear outline, so a lone own reaction reads as yours.
@@ -119,11 +133,13 @@ String reactionLabel(ReactionGroup group) => [
 void showReactions(
   BuildContext context,
   List<ReactionGroup> reactions,
-  ReactionGroup initial,
-) {
+  ReactionGroup initial, {
+  Rect? anchor,
+}) {
   final env = PostEnvironment.maybeOf(context);
   showAppSheet<void>(
     context: context,
+    anchor: anchor,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheet) {

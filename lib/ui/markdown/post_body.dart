@@ -8,6 +8,7 @@ import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/markdown/markdown_cache.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/markdown/spoken_post.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
@@ -15,6 +16,7 @@ import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/markdown/table_block.dart';
 import 'package:matterleast/ui/message_display.dart';
+import 'package:matterleast/ui/moment_tooltip.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/top_notice.dart';
 
@@ -85,6 +87,7 @@ class PostBody extends StatelessWidget {
         style: body,
       ),
       ParsedPost(:final blocks) => _Blocks(
+        postId: postId,
         blocks: blocks,
         style: isJumbo(blocks)
             ? body.copyWith(fontSize: 32 * scale, height: 1.25)
@@ -190,6 +193,7 @@ bool isJumbo(List<Block> blocks) {
 
 class _Blocks extends StatelessWidget {
   const _Blocks({
+    required this.postId,
     required this.blocks,
     required this.style,
     required this.images,
@@ -197,6 +201,7 @@ class _Blocks extends StatelessWidget {
     this.trailing,
   });
 
+  final String postId;
   final List<Block> blocks;
   final TextStyle style;
   final InlineSpan? trailing;
@@ -240,7 +245,11 @@ class _Blocks extends StatelessWidget {
       case Heading(:final level, :final inlines):
         return _text(inlines, headingStyle(style, level), trailing);
       case CodeBlock(:final code, :final language):
-        return CodePreview(code: code, language: language);
+        return CodePreview(
+          code: code,
+          language: language,
+          id: '$postId:code:${code.hashCode}',
+        );
       case MathBlock(:final tex):
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -259,6 +268,7 @@ class _Blocks extends StatelessWidget {
             ),
           ),
           child: _Blocks(
+            postId: postId,
             blocks: blocks,
             style: style.copyWith(color: tokens.muted),
             images: images,
@@ -294,6 +304,7 @@ class _Blocks extends StatelessWidget {
                     ),
                     Expanded(
                       child: _Blocks(
+                        postId: postId,
                         blocks: item.blocks,
                         style: style,
                         images: images,
@@ -373,7 +384,13 @@ class EditedMark extends StatelessWidget {
         text:
             'Edited ${momentLabel(editAt, DateTime.now(), use24: MediaQuery.alwaysUse24HourFormatOf(context))}',
       ),
-      child: Text(' (edited)', style: style),
+      child: Clickable(
+        child: MomentTooltip(
+          at: editAt,
+          prefix: 'Edited ',
+          child: Text(' (edited)', style: style),
+        ),
+      ),
     ),
   );
 }

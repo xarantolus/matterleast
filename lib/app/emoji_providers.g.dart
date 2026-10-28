@@ -94,6 +94,85 @@ final class CustomEmojiFamily extends $Family
   String toString() => r'customEmojiProvider';
 }
 
+/// Who added custom emoji [name]; loads that person if not stored.
+
+@ProviderFor(customEmojiCreator)
+final customEmojiCreatorProvider = CustomEmojiCreatorFamily._();
+
+/// Who added custom emoji [name]; loads that person if not stored.
+
+final class CustomEmojiCreatorProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, Stream<String?>>
+    with $FutureModifier<String?>, $StreamProvider<String?> {
+  /// Who added custom emoji [name]; loads that person if not stored.
+  CustomEmojiCreatorProvider._({
+    required CustomEmojiCreatorFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'customEmojiCreatorProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customEmojiCreatorHash();
+
+  @override
+  String toString() {
+    return r'customEmojiCreatorProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<String?> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return customEmojiCreator(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomEmojiCreatorProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customEmojiCreatorHash() =>
+    r'ecc14ef6208686aad4e34a1c81472964d336115b';
+
+/// Who added custom emoji [name]; loads that person if not stored.
+
+final class CustomEmojiCreatorFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<String?>, (String, String)> {
+  CustomEmojiCreatorFamily._()
+    : super(
+        retry: null,
+        name: r'customEmojiCreatorProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Who added custom emoji [name]; loads that person if not stored.
+
+  CustomEmojiCreatorProvider call(String url, String name) =>
+      CustomEmojiCreatorProvider._(argument: (url, name), from: this);
+
+  @override
+  String toString() => r'customEmojiCreatorProvider';
+}
+
 /// Names the server has no custom emoji for, as far as asked.
 
 @ProviderFor(customEmojiMissing)

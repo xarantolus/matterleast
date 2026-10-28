@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -9,6 +11,18 @@ part 'emoji_providers.g.dart';
 Stream<Map<String, String>> customEmoji(Ref ref, String url) async* {
   final session = await ref.watch(serverSessionProvider(url).future);
   yield* watchCustomEmoji(session.store);
+}
+
+/// Who added custom emoji [name]; loads that person if not stored.
+@riverpod
+Stream<String?> customEmojiCreator(Ref ref, String url, String name) async* {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  yield* watchEmojiCreator(session.store, name).map((id) {
+    if (id != null && id.isNotEmpty) {
+      unawaited(session.users.ensure([id]).catchError((Object _) {}));
+    }
+    return id;
+  });
 }
 
 /// Names the server has no custom emoji for, as far as asked.

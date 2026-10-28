@@ -8,6 +8,7 @@ import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -227,6 +228,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
         label: name.replaceAll('_', ' '),
         excludeSemantics: true,
         child: InkWell(
+          mouseCursor: clickCursor,
           customBorder: const CircleBorder(),
           onTap: () => Navigator.of(context).pop(shown),
           child: Tooltip(
@@ -407,6 +409,7 @@ class _CategoryButton extends StatelessWidget {
         label: label,
         excludeSemantics: true,
         child: InkWell(
+          mouseCursor: clickCursor,
           borderRadius: BorderRadius.circular(Spacing.sm),
           onTap: onTap,
           child: Container(

@@ -9,6 +9,9 @@ bool get isDesktop => switch (defaultTargetPlatform) {
   _ => false,
 };
 
+/// "phone" or "computer", for sentences.
+String get deviceWord => isDesktop ? 'computer' : 'phone';
+
 /// The app icon as a Flutter asset, for the tray and notifications on
 /// desktop.
 const appIconAsset = 'assets/icon/legacy.png';

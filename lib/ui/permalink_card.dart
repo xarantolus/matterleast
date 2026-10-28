@@ -8,6 +8,7 @@ import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/markdown/links.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -70,6 +71,7 @@ class _PermalinkCardState extends ConsumerState<PermalinkCard> {
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
+          mouseCursor: clickCursor,
           onTap: env == null ? null : () => openLinkedPost(env, linked),
           child: Padding(
             padding: const EdgeInsets.all(Spacing.md),

@@ -2,6 +2,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/time_labels.dart';
@@ -18,7 +19,7 @@ class MessagePreviewTile extends ConsumerWidget {
   const MessagePreviewTile({
     required this.item,
     required this.onTap,
-    this.onLongPress,
+    this.onOptions,
     this.serverName,
     super.key,
   });
@@ -26,8 +27,8 @@ class MessagePreviewTile extends ConsumerWidget {
   final InboxItem item;
   final VoidCallback onTap;
 
-  /// Opens the row's options, when it has any.
-  final VoidCallback? onLongPress;
+  /// Long press, or right click with the point on desktop.
+  final ValueChanged<Rect?>? onOptions;
 
   /// Shown on the row when more than one server is signed in.
   final String? serverName;
@@ -58,7 +59,7 @@ class MessagePreviewTile extends ConsumerWidget {
     final tile = ListTile(
       contentPadding: Spacing.row,
       onTap: onTap,
-      onLongPress: onLongPress,
+      onLongPress: onOptions == null ? null : () => onOptions!(null),
       // Pictures are decoration here; presence is read after the name.
       leading: ExcludeSemantics(
         child: Stack(
@@ -154,13 +155,19 @@ class MessagePreviewTile extends ConsumerWidget {
       ),
       trailing: marker,
     );
-    final options = onLongPress;
+    final options = onOptions;
     if (options == null) return tile;
     return Semantics(
       customSemanticsActions: {
-        const CustomSemanticsAction(label: 'Thread options'): options,
+        const CustomSemanticsAction(label: 'Thread options'): () =>
+            options(null),
       },
-      child: tile,
+      child: GestureDetector(
+        onSecondaryTapUp: isDesktop
+            ? (d) => options(d.globalPosition & Size.zero)
+            : null,
+        child: tile,
+      ),
     );
   }
 }

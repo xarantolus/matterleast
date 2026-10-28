@@ -42,6 +42,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color divider;
   final Color accent;
   final Color accentWash;
+
+  /// Towards [text], so contrast only grows.
+  Color get hoveredAccent => Color.lerp(accent, text, 0.35)!;
   final Color codeBackground;
 
   /// Tonal fill of a tappable bar or card sitting on the page.
@@ -92,6 +95,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     'text on page': (text, page),
     'muted on page': (muted, page),
     'accent on page': (accent, page),
+    'hovered link on page': (hoveredAccent, page),
     'accent on wash': (accent, accentWash),
     'text on code': (text, codeBackground),
     'muted on code': (muted, codeBackground),
