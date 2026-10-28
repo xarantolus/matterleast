@@ -203,8 +203,9 @@ class ConversationViews {
   }
 
   /// The newest [limit] messages of the loaded range containing [rangeAt]
-  /// (the newest range when null), and at least those after [unreadAfter],
-  /// so the new-messages line is in the window. Messages deleted before
+  /// (the newest range when null), and at least those after [unreadAfter]
+  /// and from [keepAt], so the new-messages line and the message asked for
+  /// stay in the window as newer ones arrive. Messages deleted before
   /// [openedAt] are left out; those deleted since stay as placeholders.
   Stream<ConversationWindow> channel(
     String channelId, {
@@ -212,9 +213,10 @@ class ConversationViews {
     required DateTime openedAt,
     DateTime? rangeAt,
     DateTime? unreadAfter,
+    DateTime? keepAt,
   }) => throttledWatch(
     _changes(),
-    () => _channel(channelId, limit, openedAt, rangeAt, unreadAfter),
+    () => _channel(channelId, limit, openedAt, rangeAt, unreadAfter, keepAt),
     interval: _interval,
   ).distinct();
 
@@ -261,6 +263,7 @@ class ConversationViews {
     DateTime openedAt,
     DateTime? rangeAt,
     DateTime? unreadAfter,
+    DateTime? keepAt,
   ) async {
     final channel = await (db.select(
       db.channels,
@@ -315,20 +318,22 @@ class ConversationViews {
             ownLocal(p));
 
     var window = limit;
-    if (unreadAfter != null) {
+    // The window reaches back at least this far, so the line of unread
+    // messages, or a message the reader came for, is in it.
+    for (final from in [?unreadAfter, ?keepAt]) {
       final count = db.posts.id.count();
-      final unread =
+      final newer =
           await (db.selectOnly(db.posts)
                 ..addColumns([count])
                 ..where(
                   inRange(db.posts) &
-                      db.posts.createAt.isBiggerThanValue(
-                        unreadAfter.millisecondsSinceEpoch,
+                      db.posts.createAt.isBiggerOrEqualValue(
+                        from.millisecondsSinceEpoch,
                       ),
                 ))
               .map((row) => row.read(count) ?? 0)
               .getSingle();
-      window = window < unread + 20 ? (unread + 20).clamp(0, 500) : window;
+      window = window < newer + 20 ? (newer + 20).clamp(0, 1000) : window;
     }
     final rows =
         await (db.select(db.posts)
