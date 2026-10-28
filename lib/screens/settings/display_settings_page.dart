@@ -10,11 +10,12 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/user_profile.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/settings/time_zone_page.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
-import 'package:matterleast/ui/slide_route.dart';
 
 enum _Clock {
   system(null, 'Like the phone'),
@@ -84,11 +85,9 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
         ref.watch(messageTextSizeProvider).value ?? MessageTextSize.normal;
     final wrapCode = ref.watch(wrapCodeProvider).value ?? false;
     final server = widget.server;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Display'),
-        bottom: ProgressSlot(active: _saving),
-      ),
+    return ContentPage(
+      title: const Text('Display'),
+      bottom: ProgressSlot(active: _saving),
       body: ListView(
         padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
         children: [
@@ -182,9 +181,8 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
         ListTile(
           title: const Text('Time zone'),
           subtitle: Text(zoneSettingLabel(zone)),
-          onTap: () => Navigator.of(context).push(
-            SlideRoute<void>(builder: (_) => TimeZonePage(server: server)),
-          ),
+          onTap: () =>
+              openPage(Navigator.of(context), TimeZonePage(server: server)),
         ),
       if (prefs != null) ...[
         SwitchListTile(

@@ -8,6 +8,7 @@ import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -24,8 +25,8 @@ class StatusPage extends ConsumerWidget {
         if (s.signedIn) s,
     ];
     final bottom = MediaQuery.paddingOf(context).bottom;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Status')),
+    return ContentPage(
+      title: const Text('Status'),
       body: servers.isEmpty
           ? EmptyState(
               icon: Icons.dns_outlined,
@@ -33,7 +34,9 @@ class StatusPage extends ConsumerWidget {
               body: 'Add a server to see its connection and what is saved.',
               action: FilledButton.tonal(
                 onPressed: () => Navigator.of(context).push(
-                  SlideRoute<void>(builder: (_) => const AddServerScreen()),
+                  SlideRoute<void>.page(
+                    builder: (_) => const AddServerScreen(),
+                  ),
                 ),
                 child: const Text('Add server'),
               ),

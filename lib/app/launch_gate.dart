@@ -136,7 +136,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         if (shared == null || !navigator.mounted) return;
         unawaited(
           navigator.push(
-            SlideRoute<void>(builder: (_) => ShareScreen(shared: shared)),
+            SlideRoute<void>.page(builder: (_) => ShareScreen(shared: shared)),
           ),
         );
       }
@@ -202,7 +202,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
               onPressed: () {
                 messenger.hideCurrentMaterialBanner();
                 navigator.push(
-                  SlideRoute<void>(
+                  SlideRoute<void>.page(
                     builder: (_) => AddServerScreen(
                       initialUrl: server.url,
                       initialName: server.displayName,

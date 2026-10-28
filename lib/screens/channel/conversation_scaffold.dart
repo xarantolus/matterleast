@@ -12,14 +12,10 @@ import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/channel/typing_line.dart';
-import 'package:matterleast/ui/conversation_route.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/progress_slot.dart';
-
-/// Text in a toolbar grows with the system font size only this far, as
-/// Android's own toolbars do; the bar grows with it.
-const _maxBarTextScale = 1.3;
 
 /// What a channel and a thread have in common: the app bar with its
 /// progress slot and Retry, the messages, the typing line and the
@@ -74,101 +70,84 @@ class ConversationScaffold extends ConsumerWidget {
       channelId: channelId,
       teamId: window?.teamId ?? '',
     );
-    final scale = MediaQuery.textScalerOf(context)
-        .clamp(maxScaleFactor: _maxBarTextScale)
-        .scale(1);
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: InPane.closeButton(context),
-        toolbarHeight:
-            (AppBarTheme.of(context).toolbarHeight ?? kToolbarHeight) * scale,
-        title: MediaQuery.withClampedTextScaling(
-          maxScaleFactor: _maxBarTextScale,
-          child: title,
-        ),
-        actions: [
-          if (staleFailure(state) != null)
-            IconButton(
-              tooltip: 'Retry',
-              icon: const Icon(Icons.refresh),
-              onPressed: ref.read(conversation.notifier).retry,
-            ),
-          ...actions,
-        ],
-        bottom: ProgressSlot(
-          active:
-              (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
-              showsMessages(state),
-          delay: ProgressSlot.settleDelay,
-        ),
+    return ContentPage(
+      focusRegion: false,
+      title: title,
+      actions: [
+        if (staleFailure(state) != null)
+          IconButton(
+            tooltip: 'Retry',
+            icon: const Icon(Icons.refresh),
+            onPressed: ref.read(conversation.notifier).retry,
+          ),
+        ...actions,
+      ],
+      bottom: ProgressSlot(
+        active:
+            (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
+            showsMessages(state),
+        delay: ProgressSlot.settleDelay,
       ),
       body: ConversationDropTarget(
         url: url,
         channelId: channelId,
         rootId: rootId,
         target: dropTarget,
-        child: ConversationPane(
-          child: _Readable(
-            child: SafeArea(
-              top: false,
-              bottom: window == null,
-              child: Column(
-                children: [
-                  ?header,
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: FocusRegion(
-                            entry: RegionEntry.self,
-                            child: ConversationView(
-                              url: url,
-                              conversation: conversation,
-                              composer: window == null || window.archived
-                                  ? null
-                                  : composerDraftProvider(
-                                      url,
-                                      channelId,
-                                      rootId,
-                                    ),
-                              startText: startText,
-                              onOpenThread: onOpenThread,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: TypingLine(
+        child: _Readable(
+          child: SafeArea(
+            top: false,
+            bottom: window == null,
+            child: Column(
+              children: [
+                ?header,
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: FocusRegion(
+                          entry: RegionEntry.self,
+                          child: ConversationView(
                             url: url,
-                            channelId: channelId,
-                            rootId: rootId,
+                            conversation: conversation,
+                            composer: window == null || window.archived
+                                ? null
+                                : composerDraftProvider(url, channelId, rootId),
+                            startText: startText,
+                            onOpenThread: onOpenThread,
                           ),
                         ),
-                      ],
+                      ),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: TypingLine(
+                          url: url,
+                          channelId: channelId,
+                          rootId: rootId,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (window != null)
+                  FocusRegion(
+                    entry: RegionEntry.textField,
+                    child: Composer(
+                      url: url,
+                      channelId: channelId,
+                      rootId: rootId,
+                      teamId: window.teamId,
+                      hint: composerHint,
+                      archived: window.archived,
+                      autofocus: focusComposer,
+                      lastOwnPost: () {
+                        final now = ref.read(conversation);
+                        return lastOwnPost(now.rows, now.myUserId);
+                      },
                     ),
                   ),
-                  if (window != null)
-                    FocusRegion(
-                      entry: RegionEntry.textField,
-                      child: Composer(
-                        url: url,
-                        channelId: channelId,
-                        rootId: rootId,
-                        teamId: window.teamId,
-                        hint: composerHint,
-                        archived: window.archived,
-                        autofocus: focusComposer,
-                        lastOwnPost: () {
-                          final now = ref.read(conversation);
-                          return lastOwnPost(now.rows, now.myUserId);
-                        },
-                      ),
-                    ),
-                ],
-              ),
+              ],
             ),
           ),
         ),

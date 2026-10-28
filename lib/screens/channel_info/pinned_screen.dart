@@ -4,6 +4,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
@@ -87,11 +88,9 @@ class PinnedScreen extends ConsumerWidget {
         ),
       );
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Pinned in $title'),
-        bottom: ProgressSlot(active: refresh.isLoading && items.isNotEmpty),
-      ),
+    return ContentPage(
+      title: Text('Pinned in $title'),
+      bottom: ProgressSlot(active: refresh.isLoading && items.isNotEmpty),
       body: RefreshArea(onRefresh: pull, child: body),
     );
   }

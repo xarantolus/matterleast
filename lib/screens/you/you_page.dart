@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/trusted_authorities.dart';
 import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/rail.dart';
@@ -9,6 +12,7 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/home/home_providers.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/settings/settings_page.dart';
 import 'package:matterleast/screens/you/custom_status_screen.dart';
@@ -18,6 +22,7 @@ import 'package:matterleast/screens/you/status_sheet.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
@@ -26,11 +31,49 @@ import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/trust_authority.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
+/// Opens the user's own page; on desktop a compact menu next to [anchor],
+/// the rail's avatar, instead.
+void openYou(BuildContext context, {Rect? anchor}) {
+  if (!isDesktop) {
+    unawaited(openPage(Navigator.of(context), const YouPage()));
+    return;
+  }
+  unawaited(
+    showAppSheet<void>(
+      context: context,
+      anchor: anchor,
+      builder: (_) => const _YouList(menu: true),
+    ),
+  );
+}
+
+/// Opens [screen] from the You page or menu; the menu gives way to it.
+void _openFromYou(BuildContext context, Widget screen) {
+  final navigator = Navigator.of(context);
+  if (!isDesktop) {
+    unawaited(openPage(navigator, screen));
+    return;
+  }
+  navigator.pop();
+  unawaited(openPage(navigator, screen, popout: true));
+}
+
 /// The user's own page: who they are on the server picked in the rail,
 /// their saved messages, settings, and the servers with sign in,
 /// sign out and remove.
-class YouPage extends ConsumerWidget {
+class YouPage extends StatelessWidget {
   const YouPage({super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      const ContentPage(title: Text('You'), body: _YouList(menu: false));
+}
+
+class _YouList extends ConsumerWidget {
+  const _YouList({required this.menu});
+
+  /// In a menu the list is as tall as its rows.
+  final bool menu;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,52 +90,58 @@ class YouPage extends ConsumerWidget {
             : signedIn.reduce(
                 (a, b) => b.lastActiveAt!.isAfter(a.lastActiveAt!) ? b : a,
               ));
-    final bottom = MediaQuery.paddingOf(context).bottom;
-    return Scaffold(
-      appBar: AppBar(title: const Text('You')),
-      body: ListView(
-        padding: EdgeInsets.only(top: Spacing.lg, bottom: bottom + Spacing.lg),
-        children: [
-          if (current != null) _Profile(server: current),
-          ListTile(
-            leading: const SizedBox(
-              width: 40,
-              child: Icon(Icons.bookmark_outline),
-            ),
-            title: const Text('Saved messages'),
-            onTap: () {
-              ref.read(railSelectionProvider.notifier).select(null);
-              ref
-                  .read(homeFilterSelectionProvider.notifier)
-                  .select(InboxFilter.saved);
-              Navigator.of(context).pop();
-            },
-          ),
-          ListTile(
-            leading: const SizedBox(
-              width: 40,
-              child: Icon(Icons.settings_outlined),
-            ),
-            title: const Text('Settings'),
-            onTap: () => Navigator.of(context)
-                .push(SlideRoute<void>(builder: (_) => const SettingsPage())),
-          ),
-          const SizedBox(height: Spacing.lg),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-            child: Text('SERVERS', style: context.tokens.smallCaps),
-          ),
-          const SizedBox(height: Spacing.sm),
-          for (final server in servers) _ServerTile(server: server),
-          ListTile(
-            leading: const SizedBox(width: 40, child: Icon(Icons.add)),
-            title: const Text('Add a server'),
-            onTap: () => Navigator.of(
-              context,
-            ).push(SlideRoute<void>(builder: (_) => const AddServerScreen())),
-          ),
-        ],
+    final bottom = menu ? 0.0 : MediaQuery.paddingOf(context).bottom;
+    return ListView(
+      shrinkWrap: menu,
+      padding: EdgeInsets.only(
+        top: menu ? Spacing.sm : Spacing.lg,
+        bottom: bottom + Spacing.lg,
       ),
+      children: [
+        if (current != null) _Profile(server: current),
+        ListTile(
+          leading: const SizedBox(
+            width: 40,
+            child: Icon(Icons.bookmark_outline),
+          ),
+          title: const Text('Saved messages'),
+          onTap: () {
+            ref.read(railSelectionProvider.notifier).select(null);
+            ref
+                .read(homeFilterSelectionProvider.notifier)
+                .select(InboxFilter.saved);
+            Navigator.of(context).pop();
+          },
+        ),
+        ListTile(
+          leading: const SizedBox(
+            width: 40,
+            child: Icon(Icons.settings_outlined),
+          ),
+          title: const Text('Settings'),
+          onTap: () => _openFromYou(context, const SettingsPage()),
+        ),
+        const SizedBox(height: Spacing.lg),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+          child: Text('SERVERS', style: context.tokens.smallCaps),
+        ),
+        const SizedBox(height: Spacing.sm),
+        for (final server in servers) _ServerTile(server: server),
+        ListTile(
+          leading: const SizedBox(width: 40, child: Icon(Icons.add)),
+          title: const Text('Add a server'),
+          onTap: () {
+            final navigator = Navigator.of(context);
+            if (menu) navigator.pop();
+            unawaited(
+              navigator.push(
+                SlideRoute<void>.page(builder: (_) => const AddServerScreen()),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -119,8 +168,7 @@ class _Profile extends ConsumerWidget {
         ref.watch(featuresProvider(server.url)).value?.customStatus ?? true;
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
-    void push(Widget screen) =>
-        Navigator.of(context).push(SlideRoute<void>(builder: (_) => screen));
+    void push(Widget screen) => _openFromYou(context, screen);
     return Column(
       children: [
         Padding(
@@ -365,7 +413,7 @@ class _ServerTile extends ConsumerWidget {
         navigator.pop();
       case _ServerAction.signIn:
         await navigator.push(
-          SlideRoute<void>(
+          SlideRoute<void>.page(
             builder: (_) => AddServerScreen(
               initialUrl: server.url,
               initialName: server.displayName,
@@ -431,7 +479,9 @@ class _ServerTile extends ConsumerWidget {
     final anySignedIn = (await db.allServers()).any(
       (s) => s.lastActiveAt != null,
     );
-    if (done && !anySignedIn) navigator.popUntil((route) => route.isFirst);
+    if (done && !anySignedIn) {
+      outsidePopout(navigator).popUntil((route) => route.isFirst);
+    }
   }
 }
 

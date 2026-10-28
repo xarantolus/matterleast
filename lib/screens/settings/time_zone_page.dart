@@ -7,6 +7,7 @@ import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -65,11 +66,9 @@ class _TimeZonePageState extends ConsumerState<TimeZonePage> {
     final setting = ref.watch(zoneSettingProvider(widget.server.url)).value;
     final automatic = setting?.automatic ?? true;
     final manual = setting?.manualZone;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Time zone'),
-        bottom: ProgressSlot(active: _saving),
-      ),
+    return ContentPage(
+      title: const Text('Time zone'),
+      bottom: ProgressSlot(active: _saving),
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(

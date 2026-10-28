@@ -7,10 +7,11 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_info/people_list.dart';
 import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
-import 'package:matterleast/ui/slide_route.dart';
+import 'package:matterleast/ui/content_page.dart';
 
 /// Who is in a channel, admins first, with search and presence.
 class MembersScreen extends ConsumerStatefulWidget {
@@ -84,27 +85,24 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
     final me = widget.canRemove && !_refused
         ? ref.watch(myUserIdProvider(url)).value
         : null;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Members of ${widget.title}'),
-        actions: [
-          if (widget.canAdd)
-            IconButton(
-              tooltip: 'Add people',
-              icon: const Icon(Icons.person_add_alt),
-              onPressed: () => Navigator.of(context).push(
-                SlideRoute<void>(
-                  builder: (_) => addMembersScreen(
-                    url: url,
-                    teamId: widget.teamId,
-                    channelId: widget.channelId,
-                    channelTitle: widget.title,
-                  ),
-                ),
+    return ContentPage(
+      title: Text('Members of ${widget.title}'),
+      actions: [
+        if (widget.canAdd)
+          IconButton(
+            tooltip: 'Add people',
+            icon: const Icon(Icons.person_add_alt),
+            onPressed: () => openPage(
+              Navigator.of(context),
+              addMembersScreen(
+                url: url,
+                teamId: widget.teamId,
+                channelId: widget.channelId,
+                channelTitle: widget.title,
               ),
             ),
-        ],
-      ),
+          ),
+      ],
       body: SafeArea(
         top: false,
         bottom: false,

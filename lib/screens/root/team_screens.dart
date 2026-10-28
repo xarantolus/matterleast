@@ -5,9 +5,10 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/team_actions.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/teams.dart';
+import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
-import 'package:matterleast/ui/slide_route.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'team_screens.g.dart';
@@ -66,11 +67,9 @@ class _JoinTeamScreenState extends ConsumerState<JoinTeamScreen> {
   @override
   Widget build(BuildContext context) {
     final teams = ref.watch(joinableTeamListProvider(widget.url));
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Join a team'),
-        bottom: ProgressSlot(active: _joining != null),
-      ),
+    return ContentPage(
+      title: const Text('Join a team'),
+      bottom: ProgressSlot(active: _joining != null),
       body: switch (teams) {
         AsyncData(:final value) when value.isEmpty => const EmptyState(
           icon: Icons.groups_outlined,
@@ -208,8 +207,11 @@ class TeamMenu extends ConsumerWidget {
     menuChildren: [
       MenuItemButton(
         leadingIcon: const Icon(Icons.group_add_outlined),
-        onPressed: () => Navigator.of(context)
-            .push(SlideRoute<void>(builder: (_) => JoinTeamScreen(url: url))),
+        onPressed: () => openPage(
+          Navigator.of(context),
+          JoinTeamScreen(url: url),
+          popout: true,
+        ),
         child: const Text('Join another team'),
       ),
       MenuItemButton(

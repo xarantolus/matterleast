@@ -13,6 +13,7 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -138,18 +139,16 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
             : rankSwitchItems(term, list.items, limit: 200));
     final busy = list.busy || _working;
     final bottom = MediaQuery.paddingOf(context).bottom;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Browse channels'),
-        actions: [
-          if (canCreate)
-            TextButton(
-              style: context.barButtonStyle,
-              onPressed: _create,
-              child: const Text('Create'),
-            ),
-        ],
-      ),
+    return ContentPage(
+      title: const Text('Browse channels'),
+      actions: [
+        if (canCreate)
+          TextButton(
+            style: context.barButtonStyle,
+            onPressed: _create,
+            child: const Text('Create'),
+          ),
+      ],
       body: SafeArea(
         top: false,
         bottom: false,

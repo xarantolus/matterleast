@@ -9,6 +9,7 @@ import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_info/people_list.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -86,18 +87,16 @@ class _PeoplePickerScreenState extends ConsumerState<PeoplePickerScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(widget.title),
-      actions: [
-        TextButton(
-          style: context.barButtonStyle,
-          onPressed: _picked.isEmpty || _working ? null : _done,
-          child: Text(widget.action),
-        ),
-      ],
-      bottom: ProgressSlot(active: _working),
-    ),
+  Widget build(BuildContext context) => ContentPage(
+    title: Text(widget.title),
+    actions: [
+      TextButton(
+        style: context.barButtonStyle,
+        onPressed: _picked.isEmpty || _working ? null : _done,
+        child: Text(widget.action),
+      ),
+    ],
+    bottom: ProgressSlot(active: _working),
     body: SafeArea(
       top: false,
       bottom: false,

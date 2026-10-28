@@ -12,11 +12,12 @@ import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/profile_attributes.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/user_profile.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/you/profile_attributes_list.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
-import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
@@ -187,18 +188,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             .value ??
         (const <AttributeField>[], const <String, List<String>>{});
     String? by(bool? locked) => (locked ?? false) ? locks!.source : null;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit profile'),
-        actions: [
-          TextButton(
-            style: context.barButtonStyle,
-            onPressed: _saving || !_dirty ? null : _save,
-            child: const Text('Save'),
-          ),
-        ],
-        bottom: ProgressSlot(active: _saving),
-      ),
+    return ContentPage(
+      title: const Text('Edit profile'),
+      actions: [
+        TextButton(
+          style: context.barButtonStyle,
+          onPressed: _saving || !_dirty ? null : _save,
+          child: const Text('Save'),
+        ),
+      ],
+      bottom: ProgressSlot(active: _saving),
       body: NarrowPage(
         children: [
           Center(
@@ -285,10 +284,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               label: const Text('Change password'),
               onPressed: _saving
                   ? null
-                  : () => Navigator.of(context).push(
-                      SlideRoute<void>(
-                        builder: (_) => ChangePasswordScreen(url: widget.url),
-                      ),
+                  : () => openPage(
+                      Navigator.of(context),
+                      ChangePasswordScreen(url: widget.url),
                     ),
             ),
         ],
@@ -384,18 +382,16 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Change password'),
-      actions: [
-        TextButton(
-          style: context.barButtonStyle,
-          onPressed: _saving || !_ready ? null : _save,
-          child: const Text('Save'),
-        ),
-      ],
-      bottom: ProgressSlot(active: _saving),
-    ),
+  Widget build(BuildContext context) => ContentPage(
+    title: const Text('Change password'),
+    actions: [
+      TextButton(
+        style: context.barButtonStyle,
+        onPressed: _saving || !_ready ? null : _save,
+        child: const Text('Save'),
+      ),
+    ],
+    bottom: ProgressSlot(active: _saving),
     body: NarrowPage(
       children: [
         _field(_current, 'Current password'),

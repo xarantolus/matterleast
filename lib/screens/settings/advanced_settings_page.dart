@@ -6,6 +6,7 @@ import 'package:matterleast/data/images/cache_usage.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 const _mediaBudgets = [100, 250, 500, 1000];
@@ -41,11 +42,9 @@ class AdvancedSettingsPage extends ConsumerWidget {
       if (picked != null) await store.write(setting, picked);
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Storage'),
-        bottom: ProgressSlot(active: usage.isLoading),
-      ),
+    return ContentPage(
+      title: const Text('Storage'),
+      bottom: ProgressSlot(active: usage.isLoading),
       body: ListView(
         padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
         children: [

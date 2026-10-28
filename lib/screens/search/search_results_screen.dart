@@ -16,6 +16,7 @@ import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
@@ -130,32 +131,28 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                     serverFileResultsProvider(widget.url, _scope, _query),
                   ))
             .isLoading;
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _text,
-          textInputAction: TextInputAction.search,
-          onSubmitted: _submit,
-          style: TextStyle(
-            color: Theme.of(context).appBarTheme.foregroundColor,
-          ),
-          cursorColor: Theme.of(context).appBarTheme.foregroundColor,
-          decoration: InputDecoration(
-            hintText: switch ((_tab, _scope.channelLabel)) {
-              (_Tab.files, final where?) => 'Search files in $where',
-              (_Tab.files, null) => 'Search files',
-              (_, final where?) => 'Search in $where',
-              _ => 'Search messages',
-            },
-            border: InputBorder.none,
-            hintStyle: TextStyle(
-              color: Theme.of(context).appBarTheme.foregroundColor
-                  ?.withValues(alpha: 0.7),
-            ),
+    return ContentPage(
+      title: TextField(
+        controller: _text,
+        textInputAction: TextInputAction.search,
+        onSubmitted: _submit,
+        style: TextStyle(color: Theme.of(context).appBarTheme.foregroundColor),
+        cursorColor: Theme.of(context).appBarTheme.foregroundColor,
+        decoration: InputDecoration(
+          hintText: switch ((_tab, _scope.channelLabel)) {
+            (_Tab.files, final where?) => 'Search files in $where',
+            (_Tab.files, null) => 'Search files',
+            (_, final where?) => 'Search in $where',
+            _ => 'Search messages',
+          },
+          border: InputBorder.none,
+          hintStyle: TextStyle(
+            color: Theme.of(context).appBarTheme.foregroundColor
+                ?.withValues(alpha: 0.7),
           ),
         ),
-        bottom: ProgressSlot(active: refreshing),
       ),
+      bottom: ProgressSlot(active: refreshing),
       body: SafeArea(
         top: false,
         bottom: false,

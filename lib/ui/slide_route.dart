@@ -4,24 +4,39 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/ui/motion.dart';
 
-/// A full-screen page, the one route every page but a viewer or a dialog
-/// opens in. It slides in from the right over the screen below it. A
-/// rightward drag anywhere on it that no inner widget claims, the system
-/// back gesture and the back button slide it away again. On desktop it
-/// fades in and out instead, Esc closes it and a drag selects text.
+/// The one route every page but a viewer or a dialog opens in. A content
+/// view, built as a [ContentPage], slides in from the right below a
+/// header that stays in place while its title and actions fade over to
+/// the new page's; a [SlideRoute.page] slides in whole. A rightward drag
+/// anywhere on it that no inner widget claims, the system back gesture and
+/// the back button slide it away again. On desktop it fades in and out
+/// instead, Esc closes it and a drag selects text.
 class SlideRoute<T> extends PageRoute<T> {
-  SlideRoute({required this.builder, this.instant = false, super.settings});
+  SlideRoute({required this.builder, this.instant = false, super.settings})
+    : wholePage = false;
+
+  /// A page of its own rather than a content view, such as signing in.
+  SlideRoute.page({required this.builder, this.instant = false, super.settings})
+    : wholePage = true;
 
   final WidgetBuilder builder;
 
   /// Shown at once rather than sliding in.
   final bool instant;
 
-  /// Whether a part of the page slides by itself, as a conversation's
-  /// messages do under an app bar that stays in place; otherwise the whole
-  /// page slides.
-  @protected
-  bool get slidesItself => false;
+  /// The whole page slides, header and all.
+  final bool wholePage;
+
+  /// Only another slide route fades the header of the page below; a viewer
+  /// over it leaves the header as it is.
+  @override
+  bool canTransitionTo(TransitionRoute<dynamic> nextRoute) =>
+      nextRoute is SlideRoute;
+
+  /// Lets a [MaterialPageRoute] below, such as the first page, follow this
+  /// one with its header, while its own transition stays put.
+  @override
+  DelegatedTransitionBuilder? get delegatedTransition => _keepBelow;
 
   @override
   TickerFuture didPush() {
@@ -76,7 +91,7 @@ class SlideRoute<T> extends PageRoute<T> {
         )
       : _SlideToPop(
           route: this,
-          child: slidesItself ? child : SlidingPart(route: this, child: child),
+          child: wholePage ? SlidingPart(route: this, child: child) : child,
         );
 
   Animation<Offset> get _slide =>
@@ -127,8 +142,7 @@ class SlideRoute<T> extends PageRoute<T> {
   }
 }
 
-/// What slides in a [SlideRoute]: the whole page, or the part of it that
-/// [SlideRoute.slidesItself] names.
+/// What slides in a [SlideRoute]: the whole page, or a content view's body.
 class SlidingPart extends StatelessWidget {
   const SlidingPart({super.key, required this.route, required this.child});
 
@@ -164,10 +178,18 @@ class _SlideToPop extends StatefulWidget {
 class _SlideToPopState extends State<_SlideToPop> with WidgetsBindingObserver {
   var _dragging = false;
 
-  bool get _enabled =>
-      widget.route.isCurrent &&
-      !widget.route.navigator!.userGestureInProgress &&
-      widget.route.popGestureEnabled;
+  /// A route in a pane's navigator is only on top while the page holding
+  /// the pane is.
+  bool get _enabled {
+    final navigator = widget.route.navigator!;
+    return widget.route.isCurrent &&
+        (ModalRoute.of(navigator.context)?.isCurrent ?? true) &&
+        !navigator.userGestureInProgress &&
+        widget.route.popGestureEnabled;
+  }
+
+  // In a pane the page is narrower than the window.
+  double get _width => context.size?.width ?? MediaQuery.sizeOf(context).width;
 
   @override
   void initState() {
@@ -211,7 +233,7 @@ class _SlideToPopState extends State<_SlideToPop> with WidgetsBindingObserver {
     if (n.metrics is! PageMetrics || n.metrics.axis != Axis.horizontal) {
       return false;
     }
-    final width = MediaQuery.sizeOf(context).width;
+    final width = _width;
     switch (n) {
       case OverscrollNotification(
             overscroll: < 0,
@@ -235,40 +257,46 @@ class _SlideToPopState extends State<_SlideToPop> with WidgetsBindingObserver {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    return NotificationListener<ScrollNotification>(
-      onNotification: _onPageScroll,
-      child: RawGestureDetector(
-        behavior: HitTestBehavior.translucent,
-        gestures: {
-          OneWayDragRecognizer:
-              GestureRecognizerFactoryWithHandlers<OneWayDragRecognizer>(
-                () => OneWayDragRecognizer(rightward: true, debugOwner: this),
-                (r) => r
-                  ..onStart = (_) {
-                    if (!_enabled) return;
-                    _dragging = true;
-                    widget.route.navigator?.didStartUserGesture();
-                  }
-                  ..onUpdate = (d) {
-                    if (_dragging) {
-                      widget.route._dragUpdate(d.delta.dx / width);
+  Widget build(BuildContext context) =>
+      NotificationListener<ScrollNotification>(
+        onNotification: _onPageScroll,
+        child: RawGestureDetector(
+          behavior: HitTestBehavior.translucent,
+          gestures: {
+            OneWayDragRecognizer:
+                GestureRecognizerFactoryWithHandlers<OneWayDragRecognizer>(
+                  () => OneWayDragRecognizer(rightward: true, debugOwner: this),
+                  (r) => r
+                    ..onStart = (_) {
+                      if (!_enabled) return;
+                      _dragging = true;
+                      widget.route.navigator?.didStartUserGesture();
                     }
-                  }
-                  ..onEnd = (d) {
-                    if (_dragging) _end(d.velocity.pixelsPerSecond.dx);
-                  }
-                  ..onCancel = () {
-                    if (_dragging) _end(0);
-                  },
-              ),
-        },
-        child: widget.child,
-      ),
-    );
-  }
+                    ..onUpdate = (d) {
+                      if (_dragging) {
+                        widget.route._dragUpdate(d.delta.dx / _width);
+                      }
+                    }
+                    ..onEnd = (d) {
+                      if (_dragging) _end(d.velocity.pixelsPerSecond.dx);
+                    }
+                    ..onCancel = () {
+                      if (_dragging) _end(0);
+                    },
+                ),
+          },
+          child: widget.child,
+        ),
+      );
 }
+
+Widget? _keepBelow(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  bool allowSnapshotting,
+  Widget? child,
+) => child;
 
 /// A horizontal drag that only wins the gesture arena when it moves in one
 /// direction and clearly more sideways than up or down.

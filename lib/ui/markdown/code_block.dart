@@ -1,8 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/markdown/code_highlight.dart';
 import 'package:matterleast/ui/message_display.dart';
-import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _previewLines = 4;
@@ -138,10 +139,9 @@ void openCode(
   String code,
   String language, {
   bool? wrap,
-}) => Navigator.of(context).push(
-  SlideRoute<void>(
-    builder: (_) => CodeScreen(code: code, language: language, wrap: wrap),
-  ),
+}) => openPage(
+  Navigator.of(context),
+  CodeScreen(code: code, language: language, wrap: wrap),
 );
 
 /// A whole code block: selectable, with line numbers unless wrapped, a
@@ -188,23 +188,21 @@ class _CodeScreenState extends State<CodeScreen> {
       _coloured(context, code, widget.language),
       softWrap: wrap,
     );
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title ?? (label.isEmpty ? 'Code' : '$label code')),
-        actions: [
-          WrapToggle(wrap: wrap, onChanged: (on) => setState(() => _wrap = on)),
-          IconButton(
-            tooltip: 'Copy code',
-            icon: const Icon(Icons.copy),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: code));
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text('Code copied')));
-            },
-          ),
-          ...widget.actions,
-        ],
-      ),
+    return ContentPage(
+      title: Text(widget.title ?? (label.isEmpty ? 'Code' : '$label code')),
+      actions: [
+        WrapToggle(wrap: wrap, onChanged: (on) => setState(() => _wrap = on)),
+        IconButton(
+          tooltip: 'Copy code',
+          icon: const Icon(Icons.copy),
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: code));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(const SnackBar(content: Text('Code copied')));
+          },
+        ),
+        ...widget.actions,
+      ],
       // Plain text reads like any other page; code keeps its panel.
       backgroundColor: widget.language.isEmpty ? null : tokens.codeBackground,
       body: SafeArea(

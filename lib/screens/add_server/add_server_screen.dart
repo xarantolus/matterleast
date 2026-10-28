@@ -67,7 +67,7 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
       if (!await _confirmReplace(old, target) || !mounted) return;
     }
     await navigator.push(
-      SlideRoute<void>(builder: (_) => LoginScreen(target: target)),
+      SlideRoute<void>.page(builder: (_) => LoginScreen(target: target)),
     );
   }
 

@@ -8,8 +8,8 @@ import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
-import 'package:matterleast/ui/slide_route.dart';
 
 /// A channel's messages, opened at the new-messages line, a message asked
 /// for, or where the reader left off.
@@ -63,14 +63,14 @@ class ChannelScreen extends ConsumerWidget {
               );
     final presenceKnown =
         partnerId != null && ref.watch(presenceKnownProvider(url, partnerId));
-    void openInfo() => Navigator.of(context).push(
-      SlideRoute<void>(
-        builder: (_) => ChannelInfoScreen(
-          url: url,
-          channelId: channelId,
-          unreadSince: unreadSince(state.rows, state.lastViewedAt),
-        ),
+    void openInfo() => openPage(
+      Navigator.of(context),
+      ChannelInfoScreen(
+        url: url,
+        channelId: channelId,
+        unreadSince: unreadSince(state.rows, state.lastViewedAt),
       ),
+      popout: true,
     );
     return ConversationScaffold(
       url: url,

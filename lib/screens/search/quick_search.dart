@@ -12,6 +12,7 @@ import 'package:matterleast/screens/channel/composer_keys.dart';
 import 'package:matterleast/screens/channel_info/browse_channels_screen.dart';
 import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
@@ -22,7 +23,6 @@ import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/progress_slot.dart';
-import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
@@ -142,7 +142,7 @@ class _QuickSearchAnchorState extends ConsumerState<QuickSearchAnchor> {
   void _push(BuildContext context, Widget screen) {
     final navigator = Navigator.of(context);
     _closeView(navigator, '');
-    unawaited(navigator.push(SlideRoute<void>(builder: (_) => screen)));
+    unawaited(openPage(navigator, screen, popout: true));
   }
 
   void _searchMessages(BuildContext context, String text) {
@@ -151,13 +151,12 @@ class _QuickSearchAnchorState extends ConsumerState<QuickSearchAnchor> {
     final navigator = Navigator.of(context);
     _closeView(navigator, text);
     unawaited(
-      navigator.push(
-        SlideRoute<void>(
-          builder: (_) => SearchResultsScreen(
-            url: target.url,
-            teamId: target.teamId,
-            query: text.trim(),
-          ),
+      openPage(
+        navigator,
+        SearchResultsScreen(
+          url: target.url,
+          teamId: target.teamId,
+          query: text.trim(),
         ),
       ),
     );

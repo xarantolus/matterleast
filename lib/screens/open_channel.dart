@@ -6,6 +6,7 @@ import 'package:matterleast/domain/conversation_stack.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -24,7 +25,7 @@ import 'package:matterleast/ui/conversation_route.dart';
 /// the open channel. With [focusComposer] its composer takes the keyboard.
 /// Completes once the conversation closes.
 Future<void> openConversation(
-  NavigatorState navigator, {
+  NavigatorState from, {
   required String url,
   required String channelId,
   required String title,
@@ -35,7 +36,8 @@ Future<void> openConversation(
   bool focusComposer = false,
   bool fromOutside = false,
 }) async {
-  if (!navigator.mounted) return;
+  if (!from.mounted) return;
+  final navigator = outsidePopout(from);
   final container = ProviderScope.containerOf(navigator.context, listen: false);
   final picked = container.read(railSelectionProvider);
   final team = (teamId?.isNotEmpty ?? false)
@@ -67,6 +69,14 @@ Future<void> openConversation(
           focusComposer: focusComposer,
         );
   if (windowClassOf(MediaQuery.sizeOf(navigator.context).width).showsPanes) {
+    // Whatever covers the panes, and the content views over the
+    // conversation, give way to it.
+    for (final routes in [
+      container.read(paneRoutesProvider),
+      container.read(conversationRoutesProvider),
+    ]) {
+      routes.navigator?.popUntil((route) => route.isFirst);
+    }
     navigator.popUntil((route) => route.isFirst);
     container.read(openPanesProvider.notifier).open(target);
     return;
@@ -133,6 +143,7 @@ void closeChannel(
             r.target.channelId == channelId,
       )
       .firstOrNull;
+  container.read(paneRoutesProvider).navigator?.popUntil((r) => r.isFirst);
   if (lowest == null) return;
   var passed = false;
   navigator.popUntil((route) {

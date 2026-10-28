@@ -2,9 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
-/// A conversation whose [ConversationPane] slides in from the right over
-/// the screen below it, which stays visible, while its app bar stays in
-/// place; it goes back like any [SlideRoute].
+/// A conversation's [SlideRoute], which knows what it shows.
 class ConversationRoute<T> extends SlideRoute<T> {
   ConversationRoute({
     required super.builder,
@@ -15,29 +13,6 @@ class ConversationRoute<T> extends SlideRoute<T> {
 
   /// What it shows, so a wider window can move it into a pane.
   final ConversationTarget target;
-
-  @override
-  bool get slidesItself => true;
-}
-
-/// The part of a conversation below its app bar, which slides in a
-/// [ConversationRoute] and is opaque everywhere else. The screen's
-/// [Scaffold] must be transparent for the screen below to show.
-class ConversationPane extends StatelessWidget {
-  const ConversationPane({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final body = ColoredBox(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: child,
-    );
-    final route = ModalRoute.of(context);
-    if (route is! ConversationRoute) return body;
-    return SlidingPart(route: route, child: body);
-  }
 }
 
 /// Marks a conversation shown in a pane beside the channel list, with the

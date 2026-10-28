@@ -16,13 +16,13 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
-import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _gap = 4.0;
@@ -507,14 +507,13 @@ Future<void> _runFileAction(
           ? text.substring(0, text.length - 1)
           : text;
       unawaited(
-        navigator.push(
-          SlideRoute<void>(
-            builder: (_) => CodeScreen(
-              code: code,
-              language: languageOfExtension(file.extension),
-              title: file.name,
-              actions: [FileActionsMenu(url: url, file: file)],
-            ),
+        openPage(
+          navigator,
+          CodeScreen(
+            code: code,
+            language: languageOfExtension(file.extension),
+            title: file.name,
+            actions: [FileActionsMenu(url: url, file: file)],
           ),
         ),
       );

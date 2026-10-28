@@ -14,6 +14,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/thread_options_sheet.dart';
 import 'package:matterleast/ui/bar_tabs.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/progress_slot.dart';
@@ -101,30 +102,28 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
     );
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Threads · ${widget.teamName}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+      child: ContentPage(
+        title: Text(
+          'Threads · ${widget.teamName}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Mark all as read',
+            onPressed: (all?.any((t) => t.unread) ?? false)
+                ? _markAllRead
+                : null,
+            icon: const Icon(Icons.done_all),
           ),
-          actions: [
-            IconButton(
-              tooltip: 'Mark all as read',
-              onPressed: (all?.any((t) => t.unread) ?? false)
-                  ? _markAllRead
-                  : null,
-              icon: const Icon(Icons.done_all),
-            ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: Size.fromHeight(tabs.preferredSize.height + 3),
-            child: Column(
-              children: [
-                tabs,
-                ProgressSlot(active: refreshing),
-              ],
-            ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(tabs.preferredSize.height + 3),
+          child: Column(
+            children: [
+              tabs,
+              ProgressSlot(active: refreshing),
+            ],
           ),
         ),
         body: TabBarView(

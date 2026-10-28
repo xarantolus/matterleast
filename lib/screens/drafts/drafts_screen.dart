@@ -12,6 +12,7 @@ import 'package:matterleast/screens/drafts/scheduled_list.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/bar_tabs.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -48,28 +49,23 @@ class DraftsScreen extends ConsumerWidget {
       overflow: TextOverflow.ellipsis,
     );
     if (!scheduling && (scheduled?.isEmpty ?? true)) {
-      return Scaffold(
-        appBar: AppBar(title: title),
-        body: _drafts(context, ref),
-      );
+      return ContentPage(title: title, body: _drafts(context, ref));
     }
     return DefaultTabController(
       length: 2,
       initialIndex: scheduledFirst ? 1 : 0,
-      child: Scaffold(
-        appBar: AppBar(
-          title: title,
-          bottom: BarTabs(
-            tabs: [
-              const Tab(text: 'Drafts'),
-              Tab(
-                text: switch (scheduled?.length ?? 0) {
-                  0 => 'Scheduled',
-                  final n => 'Scheduled ($n)',
-                },
-              ),
-            ],
-          ),
+      child: ContentPage(
+        title: title,
+        bottom: BarTabs(
+          tabs: [
+            const Tab(text: 'Drafts'),
+            Tab(
+              text: switch (scheduled?.length ?? 0) {
+                0 => 'Scheduled',
+                final n => 'Scheduled ($n)',
+              },
+            ),
+          ],
         ),
         body: TabBarView(
           children: [
