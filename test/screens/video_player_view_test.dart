@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:extended_image/extended_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -236,6 +237,40 @@ void main() {
     await tester.tapAt(onVideo(tester));
     await tester.pump(kDoubleTapTimeout);
     expect(controlsShown(tester), isFalse);
+    await close(tester);
+  });
+
+  testWidgets('a tap on a phone shows the controls and leaves playback alone', (
+    tester,
+  ) async {
+    await open(tester, play: true);
+    await tester.pump(controlsHideDelay);
+    await tester.tapAt(onVideo(tester));
+    await tester.pump(kDoubleTapTimeout);
+    expect(controlsShown(tester), isTrue);
+    expect(video.value.isPlaying, isTrue);
+    expect(platform.calls, isNot(contains('pause')));
+    await close(tester);
+  });
+
+  testWidgets('a click on desktop plays and pauses', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    await open(tester, play: true);
+    await tester.pump(controlsHideDelay);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: onVideo(tester));
+    addTearDown(mouse.removePointer);
+
+    await mouse.down(onVideo(tester));
+    await mouse.up();
+    await tester.pump(kDoubleTapTimeout);
+    expect(platform.calls, ['pause']);
+
+    await mouse.down(onVideo(tester));
+    await mouse.up();
+    await tester.pump(kDoubleTapTimeout);
+    expect(platform.calls, ['pause', 'play']);
+    debugDefaultTargetPlatformOverride = null;
     await close(tester);
   });
 
