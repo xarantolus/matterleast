@@ -204,7 +204,8 @@ class _ThreadList extends StatelessWidget {
               key: ValueKey(items[i].key),
               item: items[i],
               onTap: () => openInboxItem(context, items[i]),
-              onLongPress: () => showThreadOptions(context, items[i]),
+              onOptions: (anchor) =>
+                  showThreadOptions(context, items[i], anchor: anchor),
             ),
           ),
         SliverToBoxAdapter(

@@ -11,6 +11,7 @@ import 'package:matterleast/domain/dialog_dates.dart';
 import 'package:matterleast/domain/dialog_rules.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -385,6 +386,7 @@ class _DateField extends StatelessWidget {
     ];
     final canClear = value.isNotEmpty && (element.optional ?? false);
     return InkWell(
+      mouseCursor: clickCursor,
       borderRadius: BorderRadius.circular(4),
       onTap: () => _pick(context),
       child: InputDecorator(

@@ -509,13 +509,13 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
                     padding: const EdgeInsets.all(Spacing.lg),
                     child: Text(switch ((m.failedHost, shown.isEmpty)) {
                       (_?, true) when m.offline =>
-                        "You're offline, and nothing saved on this phone "
-                            'matches “$term”.',
+                        "You're offline, and nothing saved on this "
+                            '$deviceWord matches “$term”.',
                       (_?, false) when m.offline =>
                         "You're offline · showing saved matches",
                       (final host?, true) =>
                         "Couldn't search $host, and nothing saved on this "
-                            'phone matches “$term”.',
+                            '$deviceWord matches “$term”.',
                       (final host?, false) =>
                         "Couldn't search $host · showing saved matches",
                       _ => 'No channels or people match “$term”.',

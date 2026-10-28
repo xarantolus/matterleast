@@ -12,6 +12,7 @@ import 'package:matterleast/screens/channel_info/paged_search_controller.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
@@ -177,6 +178,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
                   child: FilterChip(
+                    mouseCursor: clickCursor,
                     avatar: const Icon(Icons.archive_outlined, size: 18),
                     label: const Text('Archived channels'),
                     selected: _archived,

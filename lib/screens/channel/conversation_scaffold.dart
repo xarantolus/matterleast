@@ -1,7 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/domain/channel_info.dart';
+import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
@@ -12,6 +18,9 @@ import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/channel/typing_line.dart';
+import 'package:matterleast/screens/channel_info/channel_providers.dart';
+import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/focus_region.dart';
@@ -70,88 +79,126 @@ class ConversationScaffold extends ConsumerWidget {
       channelId: channelId,
       teamId: window?.teamId ?? '',
     );
-    return ContentPage(
-      focusRegion: false,
-      title: title,
-      actions: [
-        if (staleFailure(state) != null)
-          IconButton(
-            tooltip: 'Retry',
-            icon: const Icon(Icons.refresh),
-            onPressed: ref.read(conversation.notifier).retry,
-          ),
-        ...actions,
-      ],
-      progress:
-          (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
-          showsMessages(state),
-      progressDelay: ProgressSlot.settleDelay,
-      body: ConversationDropTarget(
-        url: url,
-        channelId: channelId,
-        rootId: rootId,
-        target: dropTarget,
-        child: _Readable(
-          child: SafeArea(
-            top: false,
-            bottom: window == null,
-            child: Column(
-              children: [
-                ?header,
-                Expanded(
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: FocusRegion(
-                          entry: RegionEntry.self,
-                          child: ConversationView(
-                            url: url,
-                            conversation: conversation,
-                            composer: window == null || window.archived
-                                ? null
-                                : composerDraftProvider(url, channelId, rootId),
-                            startText: startText,
-                            onOpenThread: onOpenThread,
+    final info = ref.watch(channelInfoProvider(url, channelId)).value;
+    return Actions(
+      actions: {
+        SearchChannelIntent: EnabledAction<SearchChannelIntent>(
+          enabled: () => info != null,
+          onInvoke: () => unawaited(_searchHere(context, info!)),
+        ),
+      },
+      child: ContentPage(
+        focusRegion: false,
+        title: title,
+        actions: [
+          if (staleFailure(state) != null)
+            IconButton(
+              tooltip: 'Retry',
+              icon: const Icon(Icons.refresh),
+              onPressed: ref.read(conversation.notifier).retry,
+            ),
+          ...actions,
+        ],
+        progress:
+            (state.refreshing || ref.watch(serverCatchingUpProvider(url))) &&
+            showsMessages(state),
+        progressDelay: ProgressSlot.settleDelay,
+        body: ConversationDropTarget(
+          url: url,
+          channelId: channelId,
+          rootId: rootId,
+          target: dropTarget,
+          child: _Readable(
+            child: SafeArea(
+              top: false,
+              bottom: window == null,
+              child: Column(
+                children: [
+                  ?header,
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: FocusRegion(
+                            entry: RegionEntry.self,
+                            child: ConversationView(
+                              url: url,
+                              conversation: conversation,
+                              composer: window == null || window.archived
+                                  ? null
+                                  : composerDraftProvider(
+                                      url,
+                                      channelId,
+                                      rootId,
+                                    ),
+                              startText: startText,
+                              onOpenThread: onOpenThread,
+                            ),
                           ),
                         ),
-                      ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: TypingLine(
-                          url: url,
-                          channelId: channelId,
-                          rootId: rootId,
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: TypingLine(
+                            url: url,
+                            channelId: channelId,
+                            rootId: rootId,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (window != null)
-                  FocusRegion(
-                    entry: RegionEntry.textField,
-                    child: Composer(
-                      url: url,
-                      channelId: channelId,
-                      rootId: rootId,
-                      teamId: window.teamId,
-                      hint: composerHint,
-                      archived: window.archived,
-                      autofocus: focusComposer,
-                      lastOwnPost: () {
-                        final now = ref.read(conversation);
-                        return lastOwnPost(now.rows, now.myUserId);
-                      },
+                      ],
                     ),
                   ),
-              ],
+                  if (window != null)
+                    FocusRegion(
+                      entry: RegionEntry.textField,
+                      child: Composer(
+                        url: url,
+                        channelId: channelId,
+                        rootId: rootId,
+                        teamId: window.teamId,
+                        hint: composerHint,
+                        archived: window.archived,
+                        autofocus: focusComposer,
+                        lastOwnPost: () {
+                          final now = ref.read(conversation);
+                          return lastOwnPost(now.rows, now.myUserId);
+                        },
+                        onReplyToNewest: onOpenThread == null
+                            ? null
+                            : () {
+                                final post = newestReplyable(
+                                  ref.read(conversation).rows,
+                                );
+                                if (post != null) {
+                                  onOpenThread!(post, reply: true);
+                                }
+                              },
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
+  Future<void> _searchHere(BuildContext context, ChannelInfo info) => openPage(
+    Navigator.of(context),
+    SearchResultsScreen(
+      url: url,
+      teamId: info.teamId,
+      query: '',
+      scope: SearchScope(
+        teamId: info.teamId,
+        channelId: info.id,
+        channelName: info.name,
+        channelLabel: info.conversation ? info.title : '#${info.title}',
+      ),
+    ),
+  );
 }
 
 /// A title with a quiet line under it.
@@ -250,7 +297,7 @@ void listenForRejectedPosts(
   );
 });
 
-/// Caps the message column at a readable width, centred in wider panes.
+/// A readable column width on a tablet; the whole width on desktop.
 class _Readable extends StatelessWidget {
   const _Readable({required this.child});
 
@@ -260,7 +307,9 @@ class _Readable extends StatelessWidget {
   Widget build(BuildContext context) => Align(
     alignment: Alignment.topCenter,
     child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: readableWidth),
+      constraints: BoxConstraints(
+        maxWidth: isDesktop ? double.infinity : readableWidth,
+      ),
       child: child,
     ),
   );

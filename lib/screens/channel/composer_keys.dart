@@ -83,3 +83,24 @@ PostItem? lastOwnPost(List<ListRow> rows, String? userId) {
   }
   return newest;
 }
+
+/// The newest message that can be replied to: not a system message, not
+/// deleted and not still being sent.
+PostItem? newestReplyable(List<ListRow> rows) {
+  PostItem? newest;
+  for (final row in rows) {
+    if (row is! MessageRow) continue;
+    final post = row.post;
+    if (post.isSystem ||
+        post.deleted ||
+        post.unreadable ||
+        post.sendState != null ||
+        post.isEphemeral) {
+      continue;
+    }
+    if (newest == null || post.createAt.isAfter(newest.createAt)) {
+      newest = post;
+    }
+  }
+  return newest;
+}

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/drafts.dart';
@@ -121,7 +122,7 @@ class DraftsScreen extends ConsumerWidget {
                 teamId: teamId,
                 rootId: draft.rootId.isEmpty ? null : draft.rootId,
               ),
-              onLongPress: () => _options(context, ref, draft),
+              onOptions: (anchor) => _options(context, ref, draft, anchor),
             ),
           );
         },
@@ -133,9 +134,11 @@ class DraftsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     DraftItem draft,
+    Rect? anchor,
   ) async {
     final delete = await showAppSheet<bool>(
       context: context,
+      anchor: anchor,
       showDragHandle: true,
       builder: (sheet) => SafeArea(
         child: ListTile(
@@ -187,13 +190,14 @@ class _DraftTile extends ConsumerWidget {
     required this.url,
     required this.draft,
     required this.onTap,
-    required this.onLongPress,
+    required this.onOptions,
   });
 
   final String url;
   final DraftItem draft;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+
+  final ValueChanged<Rect?> onOptions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -201,9 +205,9 @@ class _DraftTile extends ConsumerWidget {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
     final thread = draft.rootId.isNotEmpty;
-    return ListTile(
+    final tile = ListTile(
       onTap: onTap,
-      onLongPress: onLongPress,
+      onLongPress: () => onOptions(null),
       leading: switch (draft.userId) {
         final userId? => UserAvatar(
           serverUrl: url,
@@ -252,6 +256,12 @@ class _DraftTile extends ConsumerWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(color: tokens.muted),
       ),
+    );
+    return GestureDetector(
+      onSecondaryTapUp: isDesktop
+          ? (d) => onOptions(d.globalPosition & Size.zero)
+          : null,
+      child: tile,
     );
   }
 }

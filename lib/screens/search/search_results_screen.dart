@@ -16,6 +16,7 @@ import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/file_icon.dart';
@@ -245,12 +246,14 @@ class _FileKindChips extends StatelessWidget {
       spacing: Spacing.sm,
       children: [
         ChoiceChip(
+          mouseCursor: clickCursor,
           label: const Text('All types'),
           selected: selected == null,
           onSelected: (_) => onSelected(null),
         ),
         for (final kind in FileKind.values)
           ChoiceChip(
+            mouseCursor: clickCursor,
             label: Text(kind.label),
             selected: kind == selected,
             onSelected: (_) => onSelected(kind),
@@ -296,6 +299,7 @@ class _ScopeChips extends ConsumerWidget {
     }) => Padding(
       padding: const EdgeInsetsDirectional.only(end: Spacing.sm),
       child: InputChip(
+        mouseCursor: clickCursor,
         avatar: icon == null ? null : Icon(icon, size: 18),
         label: Text(label),
         selected: set,

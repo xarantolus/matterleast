@@ -333,7 +333,7 @@ class _ServerTile extends ConsumerWidget {
     final state = server.signedIn
         ? (me == null ? 'Signed in' : 'Signed in as @${me.username}')
         : 'Signed out · tap to sign in';
-    return ListTile(
+    final tile = ListTile(
       leading: InitialsBadge(name: server.displayName, faded: !server.signedIn),
       title: Text(server.displayName),
       subtitle: Text('$details\n$state'),
@@ -347,13 +347,24 @@ class _ServerTile extends ConsumerWidget {
         onPressed: () => _showMenu(context, ref),
       ),
     );
+    return GestureDetector(
+      onSecondaryTapUp: isDesktop
+          ? (d) => _showMenu(context, ref, d.globalPosition & Size.zero)
+          : null,
+      child: tile,
+    );
   }
 
-  Future<void> _showMenu(BuildContext context, WidgetRef ref) async {
+  Future<void> _showMenu(
+    BuildContext context,
+    WidgetRef ref, [
+    Rect? anchor,
+  ]) async {
     final address = Uri.parse(server.url);
     final trusted = TrustedAuthorities.instance.pemFor(address) != null;
     final action = await showAppSheet<_ServerAction>(
       context: context,
+      anchor: anchor,
       showDragHandle: true,
       useSafeArea: true,
       builder: (context) => SafeArea(

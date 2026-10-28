@@ -9,10 +9,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/keyboard_shortcuts.dart';
+import 'package:matterleast/app/permission_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/message_hover.dart';
@@ -20,6 +23,7 @@ import 'package:matterleast/ui/post_tile.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/tooltips.dart';
 
 void main() {
   late FakeServer server;
@@ -33,16 +37,30 @@ void main() {
 
   final start = DateTime.utc(2026, 10, 26, 8);
   const linkRow = 50;
+  const codeRow = 53;
+  var longRow = 60;
+  final long = [for (var i = 1; i <= 60; i++) 'line $i'].join('\n\n');
+  const code = 'ebb `low water` chart\n\n```\nhigh water\n```\n\nmessage end';
   const link = 'https://example.test/tide';
   Map<String, Object?> post(int i) => {
     'id': 'n$i',
     'channel_id': channelId,
     'user_id': 'someone',
     'create_at': start.add(Duration(minutes: i)).millisecondsSinceEpoch,
-    'message': i == linkRow ? 'tide table at $link' : 'message $i',
+    'message': i == longRow
+        ? long
+        : switch (i) {
+            linkRow => 'tide table at $link',
+            codeRow => code,
+            _ => 'message $i',
+          },
   };
 
-  Future<void> open(WidgetTester tester, {int count = 60}) async {
+  Future<void> open(
+    WidgetTester tester, {
+    int count = 60,
+    VoidCallback? onReplyToNewest,
+  }) async {
     HttpOverrides.global = null;
     olderAsked = Completer();
     answerOlder = Completer();
@@ -86,16 +104,45 @@ void main() {
         overrides: [
           serverSessionProvider(url).overrideWith((ref) async => session),
           serversProvider.overrideWith((ref) => Stream.value(const [])),
+          channelRightsProvider(url, channelId).overrideWith(
+            (ref) => Stream.value((
+              block: null,
+              react: true,
+              editOwn: true,
+              editOthers: false,
+              deleteOwn: true,
+              deleteOthers: false,
+              channelMentions: true,
+              groupMentions: true,
+            )),
+          ),
           serverImageCachesProvider(url)
               .overrideWith((ref) => Completer<ServerImageCaches>().future),
         ],
         child: MaterialApp(
           theme: MatterleastApp.lightTheme,
+          builder: onReplyToNewest == null
+              ? null
+              : (_, child) => AppShortcuts(child: child!),
           home: Scaffold(
-            body: ConversationView(
-              url: url,
-              conversation: conversationProvider(url, channelId),
-              startText: 'This is the start of Boats.',
+            body: Column(
+              children: [
+                Expanded(
+                  child: ConversationView(
+                    url: url,
+                    conversation: conversationProvider(url, channelId),
+                    startText: 'This is the start of Boats.',
+                  ),
+                ),
+                if (onReplyToNewest != null)
+                  Composer(
+                    url: url,
+                    channelId: channelId,
+                    teamId: 'team1',
+                    hint: 'Write',
+                    onReplyToNewest: onReplyToNewest,
+                  ),
+              ],
             ),
           ),
         ),
@@ -319,6 +366,45 @@ void main() {
     await close(tester);
   });
 
+  for (final short in [false, true]) {
+    testWidgets(
+      'at the bottom, Show more opens the newest message downwards '
+      'from where its top is${short ? ', in a short channel' : ''}',
+      (tester) async {
+        longRow = short ? 1 : 60;
+        addTearDown(() => longRow = 60);
+        await open(tester, count: short ? 2 : 61);
+        olderPage = const [];
+        answerOlder.complete();
+        await settle(tester);
+        double top() => tester.getTopLeft(find.text('line 1')).dy;
+        final before = top();
+        expect(find.text('Show more'), findsOneWidget);
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await mouse.addPointer(
+          location: tester.getCenter(find.text('Show more')),
+        );
+        addTearDown(mouse.removePointer);
+        await tester.pump(const Duration(milliseconds: 300));
+        await mouse.down(tester.getCenter(find.text('Show more')));
+        await tester.pump(const Duration(milliseconds: 50));
+        await mouse.up();
+        for (var i = 0; i < 15; i++) {
+          await tester.pump(const Duration(milliseconds: 20));
+          expect(top(), closeTo(before, 0.5), reason: 'frame $i');
+        }
+        await settle(tester);
+        expect(top(), closeTo(before, 0.5));
+        await close(tester);
+      },
+      variant: TargetPlatformVariant(const {
+        TargetPlatform.android,
+        TargetPlatform.linux,
+      }),
+    );
+  }
+
   group('with a mouse on desktop', () {
     final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
 
@@ -345,11 +431,48 @@ void main() {
 
       expect(find.byTooltip('More actions'), findsOneWidget);
       expect(find.byTooltip('Reply'), findsNothing); // no thread here
+      expect(find.byType(IconButton), findsWidgets);
+      expect(untitledIconButtons(tester), isEmpty);
       expect(tester.getRect(row), before);
       expect(
         tester.getRect(find.text('message 58')).top,
         greaterThanOrEqualTo(before.bottom),
       );
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('the hover tint fades in a moment after the pointer', (
+      tester,
+    ) async {
+      await open(tester);
+      double tint() {
+        final box = tester.widget<DecoratedBox>(
+          find
+              .descendant(
+                of: rowOf('message 57'),
+                matching: find.byWidgetPredicate(
+                  (w) =>
+                      w is DecoratedBox &&
+                      w.position == DecorationPosition.foreground,
+                ),
+              )
+              .first,
+        );
+        return switch (box.decoration) {
+          BoxDecoration(:final color) => color?.a ?? 0,
+          _ => 0,
+        };
+      }
+
+      final full = Theme.of(tester.element(rowOf('message 57'))).hoverColor.a;
+      await mouseAt(tester, tester.getCenter(find.text('message 57')));
+      await tester.pump();
+      expect(tint(), 0);
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(tint(), greaterThan(0));
+      expect(tint(), lessThan(full / 2));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tint(), closeTo(full, 0.001));
       await close(tester);
     }, variant: desktop);
 
@@ -475,6 +598,57 @@ void main() {
       await close(tester);
     }, variant: desktop);
 
+    testWidgets('a selection across a message takes in its code', (
+      tester,
+    ) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      await open(tester);
+      final from = tester.getTopLeft(find.textContaining('ebb'));
+      final to = tester.getBottomRight(find.text('message end'));
+      final drag = await tester.startGesture(
+        from + const Offset(1, 2),
+        kind: PointerDeviceKind.mouse,
+      );
+      await drag.moveTo(from + const Offset(40, 20));
+      await drag.moveTo(to - const Offset(1, 2));
+      await drag.up();
+      await settle(tester);
+      await tester.tapAt(
+        to - const Offset(10, 4),
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await settle(tester);
+      await tester.tap(find.text('Copy selection'));
+      await settle(tester);
+
+      // The selection is drawn under the text; inline code must not cover
+      // it.
+      Color? codeShade;
+      tester.widget<Text>(find.textContaining('ebb')).textSpan!.visitChildren((
+        span,
+      ) {
+        if (span case TextSpan(text: 'low water', :final style?)) {
+          codeShade = style.backgroundColor;
+        }
+        return true;
+      });
+      expect(codeShade!.a, lessThan(1));
+      expect(copied, contains('low water'));
+      expect(copied, contains('high water'));
+      expect(copied, contains('message end'));
+      await close(tester);
+    }, variant: desktop);
+
     testWidgets('a click on a link opens it and moves nothing', (tester) async {
       final launched = <String>[];
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -533,9 +707,96 @@ void main() {
         buttons: kSecondaryMouseButton,
       );
       await settle(tester);
-      expect(find.text('Open link'), findsOneWidget);
+      expect(find.text('Open link'), findsNothing);
       expect(find.text('Copy link'), findsOneWidget);
       expect(find.text('Copy text'), findsNothing);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('Alt+click marks the message unread from there', (
+      tester,
+    ) async {
+      await open(tester);
+      final unread = <String>[];
+      final inner = server.handle;
+      server.handle = (r) {
+        if (r.path.endsWith('/set_unread')) unread.add(r.path);
+        return inner(r);
+      };
+      await tester.tapAt(
+        tester.getCenter(find.text('message 57')),
+        kind: PointerDeviceKind.mouse,
+      );
+      await settle(tester);
+      expect(unread, isEmpty);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.tapAt(
+        tester.getCenter(find.text('message 57')),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await settle(tester);
+      expect(unread.single, endsWith('/posts/n57/set_unread'));
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('Shift+Up in an empty composer replies to the newest '
+        'message, and moves the caret once there is text', (tester) async {
+      var replies = 0;
+      await open(tester, onReplyToNewest: () => replies++);
+      await tester.tap(find.byType(EditableText));
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      expect(replies, 1);
+
+      await tester.enterText(find.byType(EditableText), 'draft');
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      expect(replies, 1);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('a middle click on a link opens it', (tester) async {
+      final launched = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/url_launcher'),
+        (call) async {
+          if (call.method == 'canLaunch') return true;
+          launched.add((call.arguments as Map)['url'] as String);
+          return true;
+        },
+      );
+      await open(tester);
+      answerOlder.complete();
+      final linkText = find.textContaining('tide table');
+      for (var i = 0; i < 10 && linkText.evaluate().isEmpty; i++) {
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
+        await settle(tester);
+      }
+      final range = find.textRange.ofSubstring(link).evaluate().single;
+      final onLink = range.renderObject.localToGlobal(
+        range.renderObject
+            .getBoxesForSelection(
+              TextSelection(
+                baseOffset: range.textRange.start,
+                extentOffset: range.textRange.end,
+              ),
+            )
+            .first
+            .toRect()
+            .center,
+      );
+      await tester.tapAt(
+        onLink,
+        kind: PointerDeviceKind.mouse,
+        buttons: kMiddleMouseButton,
+      );
+      await settle(tester);
+      expect(launched, [link]);
       await close(tester);
     }, variant: desktop);
 

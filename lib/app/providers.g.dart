@@ -1041,6 +1041,44 @@ final class WrapCodeProvider
 
 String _$wrapCodeHash() => r'29d6ee002f5e077605648ad91b2d08edd0583605';
 
+/// The desktop window's zoom in percent.
+
+@ProviderFor(uiZoom)
+final uiZoomProvider = UiZoomProvider._();
+
+/// The desktop window's zoom in percent.
+
+final class UiZoomProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  /// The desktop window's zoom in percent.
+  UiZoomProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'uiZoomProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$uiZoomHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int> create(Ref ref) {
+    return uiZoom(ref);
+  }
+}
+
+String _$uiZoomHash() => r'5343e0af910298e99526b24e1335179f6b822694';
+
 /// Watched from launch, so the wide layout opens at the stored widths.
 
 @ProviderFor(paneWidths)

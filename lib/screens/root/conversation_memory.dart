@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:matterleast/app/desktop/window_title.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
@@ -22,6 +23,7 @@ ConversationMemory conversationMemory(Ref ref) {
     routes: ref.watch(conversationRoutesProvider),
     panes: () => ref.read(openPanesProvider),
     place: () => ref.read(railSelectionProvider),
+    onOpen: ref.read(openConversationProvider.notifier).set,
   );
   ref.listen(openPanesProvider, (_, _) => memory.update());
   final changes = memory.routes.changes.listen((_) => memory.update());
@@ -35,12 +37,14 @@ class ConversationMemory {
     required this.routes,
     required this.panes,
     required this.place,
+    this.onOpen,
   });
 
   final SettingsStore store;
   final ConversationRoutes routes;
   final Panes Function() panes;
   final RailTarget? Function() place;
+  final void Function(SavedConversation?)? onOpen;
 
   /// What the settings hold now; null until [start].
   OpenConversations? saved;
@@ -80,6 +84,7 @@ class ConversationMemory {
     final here = place();
     // Still the last place's, on its way out after a switch.
     if (open != null && !belongsTo(open, here)) return;
+    onOpen?.call(open);
     _save(before.withOpen(here, open));
   }
 

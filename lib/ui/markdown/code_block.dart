@@ -1,12 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/ui/anchored_list.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/markdown/code_highlight.dart';
+import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/message_display.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _previewLines = 4;
+
+const _desktopFullLines = 15;
+const _desktopCutLines = 10;
 
 TextStyle _codeStyle(BuildContext context) =>
     (Theme.of(context).textTheme.bodySmall ?? const TextStyle())
@@ -29,12 +40,20 @@ TextSpan _coloured(BuildContext context, String code, String language) {
 }
 
 /// The first lines of a code block with its language and a wrap toggle;
-/// tap shows all of it.
+/// tap shows all of it. Desktop uses [DesktopCodeBlock].
 class CodePreview extends StatefulWidget {
-  const CodePreview({required this.code, required this.language, super.key});
+  const CodePreview({
+    required this.code,
+    required this.language,
+    this.id,
+    super.key,
+  });
 
   final String code;
   final String language;
+
+  /// Key in [ShowMoreMemory] for the desktop expanded state.
+  final String? id;
 
   @override
   State<CodePreview> createState() => _CodePreviewState();
@@ -46,6 +65,13 @@ class _CodePreviewState extends State<CodePreview> {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktop) {
+      return DesktopCodeBlock(
+        code: widget.code,
+        language: widget.language,
+        id: widget.id,
+      );
+    }
     final tokens = context.tokens;
     final wrap = _wrap ?? MessageDisplay.of(context).wrapCode;
     final lines = widget.code.split('\n');
@@ -63,6 +89,7 @@ class _CodePreviewState extends State<CodePreview> {
         borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
+          mouseCursor: clickCursor,
           onTap: () =>
               openCode(context, widget.code, widget.language, wrap: wrap),
           child: Padding(
@@ -106,6 +133,210 @@ class _CodePreviewState extends State<CodePreview> {
                       onChanged: (on) => setState(() => _wrap = on),
                     ),
                   ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A code block that expands in place, with copy on hover. No per-block
+/// wrap switch: wide windows rarely need it and Shift+wheel scrolls.
+class DesktopCodeBlock extends StatefulWidget {
+  const DesktopCodeBlock({
+    required this.code,
+    required this.language,
+    this.id,
+    super.key,
+  });
+
+  final String code;
+  final String language;
+
+  final String? id;
+
+  @override
+  State<DesktopCodeBlock> createState() => _DesktopCodeBlockState();
+}
+
+class _DesktopCodeBlockState extends State<DesktopCodeBlock> {
+  // The list rebuilds rows when it moves its anchor.
+  late var _expanded =
+      widget.id != null &&
+      (ShowMoreMemory.of(context)?.contains(widget.id) ?? false);
+  var _hovered = false;
+  var _focused = false;
+
+  void _toggle() {
+    final expand = !_expanded;
+    AnchoredList.keepTopOf(context, unlessAbove: !expand);
+    if (widget.id case final id?) {
+      final memory = ShowMoreMemory.of(context);
+      if (expand) {
+        memory?.add(id);
+      } else {
+        memory?.remove(id);
+      }
+    }
+    setState(() => _expanded = expand);
+  }
+
+  void _copy() {
+    unawaited(Clipboard.setData(ClipboardData(text: widget.code)));
+    ScaffoldMessenger.maybeOf(context)
+        ?.showSnackBar(const SnackBar(content: Text('Code copied')));
+  }
+
+  void _open() => openCode(context, widget.code, widget.language);
+
+  Future<void> _menu(Offset at) async {
+    final run = await showMenuAt<VoidCallback>(context, at, [
+      PopupMenuItem(
+        value: _copy,
+        child: const MenuEntry(icon: Icons.copy, label: 'Copy code'),
+      ),
+      PopupMenuItem(
+        value: _open,
+        child: const MenuEntry(
+          icon: Icons.open_in_full,
+          label: 'Open in full view',
+        ),
+      ),
+    ]);
+    if (mounted) run?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final wrap = MessageDisplay.of(context).wrapCode;
+    final count = '\n'.allMatches(widget.code).length + 1;
+    final long = count > _desktopFullLines;
+    final cut = long && !_expanded;
+    final label = languageLabel(widget.language);
+    final text = Text.rich(
+      _coloured(context, widget.code, widget.language),
+      softWrap: wrap,
+      maxLines: cut ? _desktopCutLines : null,
+      overflow: TextOverflow.clip,
+    );
+    final tools = _hovered || _focused;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onSecondaryTapUp: (d) => _menu(d.globalPosition),
+          child: Material(
+            color: tokens.codeBackground,
+            borderRadius: BorderRadius.circular(8),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Spacing.md,
+                    Spacing.sm,
+                    Spacing.md,
+                    Spacing.xs,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AnimatedSize(
+                        duration: motion(
+                          context,
+                          const Duration(milliseconds: 200),
+                        ),
+                        curve: Curves.easeOutCubic,
+                        alignment: Alignment.topCenter,
+                        child: wrap
+                            ? text
+                            : SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: text,
+                              ),
+                      ),
+                      Row(
+                        children: [
+                          if (long)
+                            Flexible(
+                              child: TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: tokens.accent,
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                ),
+                                onPressed: _toggle,
+                                icon: Icon(
+                                  _expanded
+                                      ? Icons.expand_less
+                                      : Icons.expand_more,
+                                ),
+                                label: Text(
+                                  _expanded
+                                      ? 'Show less'
+                                      : 'Show more · ${count - _desktopCutLines} '
+                                            'more lines',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          const Spacer(),
+                          if (label.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: Spacing.xs,
+                              ),
+                              child: Text(label, style: tokens.smallCaps),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                PositionedDirectional(
+                  top: Spacing.xs,
+                  end: Spacing.xs,
+                  child: Focus(
+                    canRequestFocus: false,
+                    skipTraversal: true,
+                    onFocusChange: (on) => setState(() => _focused = on),
+                    child: AnimatedOpacity(
+                      opacity: tools ? 1 : 0,
+                      duration: motion(
+                        context,
+                        const Duration(milliseconds: 120),
+                      ),
+                      child: Material(
+                        color: tokens.codeBackground,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Open in full view',
+                              visualDensity: VisualDensity.compact,
+                              iconSize: 18,
+                              icon: const Icon(Icons.open_in_full),
+                              onPressed: _open,
+                            ),
+                            IconButton(
+                              tooltip: 'Copy code',
+                              visualDensity: VisualDensity.compact,
+                              iconSize: 18,
+                              icon: const Icon(Icons.copy),
+                              onPressed: _copy,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

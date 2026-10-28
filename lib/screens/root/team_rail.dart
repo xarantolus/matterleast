@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
@@ -119,8 +120,8 @@ class _ServerTeams extends ConsumerWidget {
       children: [
         for (final team in teams)
           _RailButton(
-            tooltip: [
-              team.displayName,
+            tooltip: team.displayName,
+            details: [
               server.displayName,
               if (team.id != selectedTeam && team.mentions > 0)
                 [
@@ -198,25 +199,61 @@ class _RailButton extends StatelessWidget {
     required this.selected,
     required this.onPressed,
     required this.child,
+    this.details,
   });
 
   final String tooltip;
+
+  /// A second tooltip line, such as the server.
+  final String? details;
   final bool selected;
   final VoidCallback onPressed;
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-    // Merged, so the button itself is the selected one.
-    child: MergeSemantics(
-      child: Semantics(
-        selected: selected,
-        child: IconButton(tooltip: tooltip, onPressed: onPressed, icon: child),
+  Widget build(BuildContext context) {
+    final details = this.details;
+    final button = IconButton(
+      tooltip: isDesktop
+          ? null
+          : details == null
+          ? tooltip
+          : '$tooltip · $details',
+      onPressed: onPressed,
+      icon: child,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+      // Merged, so the button itself is the selected one.
+      child: MergeSemantics(
+        child: Semantics(
+          selected: selected,
+          child: isDesktop
+              ? Tooltip(
+                  richMessage: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: tooltip,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      if (details != null) TextSpan(text: '\n$details'),
+                    ],
+                  ),
+                  positionDelegate: besideTarget,
+                  child: button,
+                )
+              : button,
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
+
+/// Places a tooltip to the right of its target.
+Offset besideTarget(TooltipPositionContext at) => Offset(
+  at.target.dx + at.targetSize.width / 2 + Spacing.sm,
+  at.target.dy - at.tooltipSize.height / 2,
+);
 
 class _YouButton extends ConsumerWidget {
   const _YouButton({required this.url});

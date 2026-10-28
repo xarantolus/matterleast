@@ -21,6 +21,7 @@ import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/motion.dart';
@@ -289,6 +290,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                     button: true,
                     onTapHint: 'Retry',
                     child: InkWell(
+                      mouseCursor: clickCursor,
                       onTap: widget.onRetry,
                       child: PaneLabel(widget.label),
                     ),
@@ -597,6 +599,7 @@ class _UnreadChip extends StatelessWidget {
       button: true,
       excludeSemantics: true,
       child: ActionChip(
+        mouseCursor: clickCursor,
         avatar: Icon(icon, size: 18, color: scheme.onPrimaryContainer),
         label: const Text('Unread'),
         labelStyle: TextStyle(
@@ -634,6 +637,7 @@ class _FindChannelsState extends State<_FindChannels> {
     // access can focus it; its focus shows as an outline, since the bar
     // covers the ink.
     child: InkWell(
+      mouseCursor: clickCursor,
       onTap: widget.onTap,
       onFocusChange: (focused) => setState(() => _focused = focused),
       customBorder: const StadiumBorder(),
@@ -722,6 +726,7 @@ class _CategoryHeader extends StatelessWidget {
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: InkWell(
+        mouseCursor: clickCursor,
         onTap: onToggle,
         onLongPress: () => onMenu(null),
         onSecondaryTapUp: (d) => onMenu(d.globalPosition & Size.zero),

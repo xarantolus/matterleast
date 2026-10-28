@@ -178,6 +178,11 @@ Stream<MessageTextSize> messageTextSize(Ref ref) =>
 Stream<bool> wrapCode(Ref ref) =>
     ref.watch(settingsStoreProvider).watch(Settings.wrapCode);
 
+/// The desktop window's zoom in percent.
+@Riverpod(keepAlive: true)
+Stream<int> uiZoom(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.uiZoom);
+
 /// Watched from launch, so the wide layout opens at the stored widths.
 @Riverpod(keepAlive: true)
 Stream<PaneWidths> paneWidths(Ref ref) =>

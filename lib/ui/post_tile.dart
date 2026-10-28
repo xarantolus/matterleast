@@ -4,6 +4,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/agent_stream.dart';
 import 'package:matterleast/domain/burn_on_read.dart';
@@ -18,6 +19,8 @@ import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/acknowledge_button.dart';
 import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/burn_on_read_view.dart';
+import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/interactive_message.dart';
@@ -25,6 +28,7 @@ import 'package:matterleast/ui/link_preview_card.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
+import 'package:matterleast/ui/moment_tooltip.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/permalink_card.dart';
 import 'package:matterleast/ui/post_files.dart';
@@ -151,7 +155,13 @@ class PostTile extends StatelessWidget {
                 const _Tag('BOT')
               else if (post.authorIsGuest)
                 const _Tag('GUEST'),
-              Text(time, style: text.bodySmall?.copyWith(color: tokens.muted)),
+              MomentTooltip(
+                at: post.createAt,
+                child: Text(
+                  time,
+                  style: text.bodySmall?.copyWith(color: tokens.muted),
+                ),
+              ),
               if (details.priority case final priority?)
                 _PriorityLabel(priority: priority),
               if (post.isEphemeral)
@@ -421,6 +431,7 @@ class PostTile extends StatelessWidget {
       child: onTap == null && onLongPress == null
           ? tile
           : InkWell(
+              mouseCursor: clickCursor,
               // Links, images, files, reactions and names take their own
               // taps.
               onTap: onTap,
@@ -681,7 +692,7 @@ class _Avatar extends StatelessWidget {
 
 /// Opens the author's profile on tap; a webhook's post has no author to
 /// show.
-class _ToProfile extends StatelessWidget {
+class _ToProfile extends ConsumerWidget {
   const _ToProfile({
     required this.post,
     required this.details,
@@ -693,21 +704,53 @@ class _ToProfile extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final env = PostEnvironment.maybeOf(context);
     if (env == null || details.fromWebhook || post.userId.isEmpty) {
       return child;
     }
+    final url = env.server.toString();
+    void profile() => showUserProfile(context, url: url, userId: post.userId);
+    final canMessage =
+        !post.authorIsBot && post.authorUsername != env.myUsername;
     // A screen reader finds this among the message's actions.
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       excludeFromSemantics: true,
-      onTap: () => showUserProfile(
-        context,
-        url: env.server.toString(),
-        userId: post.userId,
-      ),
-      child: child,
+      onTap: profile,
+      onSecondaryTapUp: isDesktop
+          ? (d) async {
+              final run = await showMenuAt<VoidCallback>(
+                context,
+                d.globalPosition,
+                [
+                  PopupMenuItem(
+                    value: profile,
+                    child: const MenuEntry(
+                      icon: Icons.person_outline,
+                      label: 'View profile',
+                    ),
+                  ),
+                  if (canMessage)
+                    PopupMenuItem(
+                      value: () => messagePerson(
+                        context,
+                        ref,
+                        url: url,
+                        userId: post.userId,
+                        name: post.authorName,
+                      ),
+                      child: const MenuEntry(
+                        icon: Icons.chat_bubble_outline,
+                        label: 'Message',
+                      ),
+                    ),
+                ],
+              );
+              if (context.mounted) run?.call();
+            }
+          : null,
+      child: Clickable(child: child),
     );
   }
 }
@@ -806,7 +849,8 @@ class _SelectableState extends State<_Selectable> {
       onSelectionChanged: (content) => _selected = content?.plainText,
       child: GestureDetector(
         onSecondaryTapUp: (d) => menu(d.globalPosition, _selected),
-        child: widget.child,
+        // Links, buttons and pictures inside show their own cursors.
+        child: Clickable(cursor: SystemMouseCursors.text, child: widget.child),
       ),
     );
   }
@@ -949,6 +993,7 @@ class _ThreadBar extends ConsumerWidget {
         borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
+          mouseCursor: clickCursor,
           onTap: onPressed,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 44),
@@ -1038,6 +1083,7 @@ class _DraftMarker extends StatelessWidget {
   Widget build(BuildContext context) => Align(
     alignment: Alignment.centerLeft,
     child: InkWell(
+      mouseCursor: clickCursor,
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
       child: ConstrainedBox(

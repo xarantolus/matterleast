@@ -103,4 +103,31 @@ void main() {
       );
     });
   });
+
+  group('the window title', () {
+    test('names the conversation, its team and the unread count', () {
+      expect(
+        windowTitle(
+          conversation: 'Town Square',
+          team: 'Lighthouse Crew',
+          unread: 3,
+        ),
+        '(3) Town Square · Lighthouse Crew – Matterleast',
+      );
+    });
+
+    test('leaves out what there is none of', () {
+      expect(windowTitle(), 'Matterleast');
+      expect(windowTitle(unread: 0), 'Matterleast');
+      expect(windowTitle(unread: 12), '(12) Matterleast');
+      expect(
+        windowTitle(conversation: 'Town Square', unread: 0),
+        'Town Square – Matterleast',
+      );
+      expect(
+        windowTitle(conversation: 'alice', team: ''),
+        'alice – Matterleast',
+      );
+    });
+  });
 }

@@ -5,6 +5,7 @@ import 'package:matterleast/domain/scheduled_posts.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/drafts_screen.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -33,6 +34,7 @@ class BurnOnReadChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InputChip(
+    mouseCursor: clickCursor,
     avatar: Icon(
       Icons.local_fire_department_outlined,
       color: Theme.of(context).colorScheme.error,
@@ -102,6 +104,7 @@ class ScheduledNotice extends ConsumerWidget {
     return Material(
       color: scheme.surfaceContainerHigh,
       child: InkWell(
+        mouseCursor: clickCursor,
         onTap: () => openPage(
           Navigator.of(context),
           DraftsScreen(

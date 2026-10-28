@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:extended_image/extended_image.dart';
+import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/ui/full_screen.dart';
 import 'package:matterleast/ui/motion.dart';
@@ -154,67 +155,73 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       // For the buttons and slider, which look for one.
       child: Material(
         type: MaterialType.transparency,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ExtendedImageSlidePageHandler(
-              key: _slideHandler,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                // A vertical drag wins its gesture sooner than the
-                // handler's own scale gesture or the pages' horizontal one.
-                onVerticalDragUpdate: _slide,
-                onVerticalDragEnd: _endSlide,
-                onTap: () => _setControls(!_controls),
-                onLongPressStart: (_) => _holdStart(),
-                onLongPressEnd: (_) => _holdEnd(),
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: video.value.aspectRatio,
-                    child: VideoPlayer(video),
+        // A moving mouse shows the controls; they hide once it rests.
+        child: MouseRegion(
+          onHover: (event) {
+            if (event.kind == PointerDeviceKind.mouse) _setControls(true);
+          },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ExtendedImageSlidePageHandler(
+                key: _slideHandler,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  // A vertical drag wins its gesture sooner than the
+                  // handler's own scale gesture or the pages' horizontal one.
+                  onVerticalDragUpdate: _slide,
+                  onVerticalDragEnd: _endSlide,
+                  onTap: () => _setControls(!_controls),
+                  onLongPressStart: (_) => _holdStart(),
+                  onLongPressEnd: (_) => _holdEnd(),
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: video.value.aspectRatio,
+                      child: VideoPlayer(video),
+                    ),
                   ),
                 ),
               ),
-            ),
-            if (_fast) const _SpeedBadge(),
-            IgnorePointer(
-              ignoring: !_controls,
-              child: AnimatedOpacity(
-                opacity: _controls ? 1 : 0,
-                duration: fade,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // A slide may start on the button too.
-                    Center(
-                      child: GestureDetector(
-                        onVerticalDragUpdate: _slide,
-                        onVerticalDragEnd: _endSlide,
-                        child: _PlayButton(
-                          playing: _playing,
-                          onPressed: _playPause,
+              if (_fast) const _SpeedBadge(),
+              IgnorePointer(
+                ignoring: !_controls,
+                child: AnimatedOpacity(
+                  opacity: _controls ? 1 : 0,
+                  duration: fade,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // A slide may start on the button too.
+                      Center(
+                        child: GestureDetector(
+                          onVerticalDragUpdate: _slide,
+                          onVerticalDragEnd: _endSlide,
+                          child: _PlayButton(
+                            playing: _playing,
+                            onPressed: _playPause,
+                          ),
                         ),
                       ),
-                    ),
-                    // Positioned, so the slider gets its own height
-                    // rather than the whole screen's.
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: _BottomBar(
-                        video: video,
-                        fullScreen: _fullScreen,
-                        onFullScreen: _toggleFullScreen,
-                        onScrubStart: () => _setControls(true, stay: true),
-                        onScrubEnd: () => _setControls(true),
+                      // Positioned, so the slider gets its own height
+                      // rather than the whole screen's.
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: _BottomBar(
+                          video: video,
+                          fullScreen: _fullScreen,
+                          onFullScreen: _toggleFullScreen,
+                          onScrubStart: () => _setControls(true, stay: true),
+                          onScrubEnd: () => _setControls(true),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

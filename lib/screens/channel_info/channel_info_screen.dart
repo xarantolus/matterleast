@@ -26,6 +26,7 @@ import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
@@ -461,6 +462,7 @@ class _Header extends StatelessWidget {
             children: [
               if (partner != null)
                 InkWell(
+                  mouseCursor: clickCursor,
                   customBorder: const CircleBorder(),
                   onTap: () =>
                       showUserProfile(context, url: url, userId: partner),

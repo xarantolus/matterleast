@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -96,6 +97,44 @@ void main() {
         final shown = tester.getRect(find.text(text));
         expect(tile.top <= shown.top && shown.bottom <= tile.bottom, isTrue);
       }
+    });
+  });
+
+  testWidgets('a click on desktop tints the row without a ripple', (
+    tester,
+  ) async {
+    await on(TargetPlatform.windows, () async {
+      await showPage(tester);
+      final row = find.ancestor(
+        of: find.text('Display'),
+        matching: find.byType(ListTile),
+      );
+      final ink = Material.of(tester.element(row));
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: tester.getCenter(row));
+      addTearDown(mouse.removePointer);
+      await tester.pumpAndSettle();
+      expect(ink, paints..rect());
+
+      await mouse.down(tester.getCenter(row));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(ink, isNot(paints..circle()));
+      await mouse.up();
+      await tester.pumpAndSettle();
+    });
+  });
+
+  testWidgets('a tap on a phone still ripples', (tester) async {
+    await on(TargetPlatform.android, () async {
+      await showPage(tester);
+      final row = find.ancestor(
+        of: find.text('Display'),
+        matching: find.byType(ListTile),
+      );
+      expect(
+        Theme.of(tester.element(row)).splashFactory,
+        isNot(NoSplash.splashFactory),
+      );
     });
   });
 }

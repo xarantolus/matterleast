@@ -18,6 +18,7 @@ import 'package:matterleast/screens/channel/message_hover.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/reading_places.dart';
 import 'package:matterleast/ui/anchored_list.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/post_tile.dart';
@@ -352,6 +353,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
             right: 0,
             child: Center(
               child: ActionChip(
+                mouseCursor: clickCursor,
                 avatar: const Icon(Icons.arrow_upward, size: 18),
                 label: Text(switch ((rows[line] as NewMessagesLine).count) {
                   1 => '1 new message',

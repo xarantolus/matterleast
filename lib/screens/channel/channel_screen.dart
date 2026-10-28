@@ -10,6 +10,7 @@ import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/clickable.dart';
 
 /// A channel's messages, opened at the new-messages line, a message asked
 /// for, or where the reader left off.
@@ -82,18 +83,21 @@ class ChannelScreen extends ConsumerWidget {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: openInfo,
-          child: ConversationTitle(
-            title: name,
-            subtitle: conversationSubtitle(
-              state,
-              partner: partner,
-              presenceKnown: presenceKnown,
+          child: Clickable(
+            child: ConversationTitle(
+              title: name,
+              subtitle: conversationSubtitle(
+                state,
+                partner: partner,
+                presenceKnown: presenceKnown,
+              ),
+              statusOf:
+                  conversationSubtitleEmoji(state, partner: partner) == null
+                  ? null
+                  : partnerId,
+              url: url,
+              opensDetails: true,
             ),
-            statusOf: conversationSubtitleEmoji(state, partner: partner) == null
-                ? null
-                : partnerId,
-            url: url,
-            opensDetails: true,
           ),
         ),
       ),

@@ -17,13 +17,16 @@ import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/file_icon.dart';
+import 'package:matterleast/ui/hover_tint.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:pasteboard/pasteboard.dart';
 
 const _gap = 4.0;
 const _unknownBox = 48.0;
@@ -268,8 +271,12 @@ class _MediaTile extends StatelessWidget {
                 Material(
                   type: MaterialType.transparency,
                   child: InkWell(
+                    mouseCursor: file.kind == FileKind.video
+                        ? clickCursor
+                        : SystemMouseCursors.zoomIn,
                     onTap: onTap,
                     splashColor: scheme.primary.withValues(alpha: 0.2),
+                    hoverColor: pictureHoverTint,
                   ),
                 ),
               ],
@@ -448,7 +455,7 @@ void openFile(
   }
 }
 
-enum _FileAction { view, save, saveAs, share, openWith }
+enum _FileAction { view, save, saveAs, share, openWith, copyImage }
 
 /// Text files larger than this open in another app instead of our viewer.
 const _textViewerLimit = 1024 * 1024;
@@ -527,7 +534,7 @@ Future<void> _runFileAction(
         chooseApp: action == _FileAction.openWith,
       )) {
         say(
-          'No app on this ${isDesktop ? 'computer' : 'phone'} opens '
+          'No app on this $deviceWord opens '
           '${file.name}.',
         );
       }
@@ -543,6 +550,14 @@ Future<void> _runFileAction(
               '${e is FileSystemException ? e.osError : e.runtimeType}',
         );
         say("Couldn't save ${file.name}.");
+      }
+    case _FileAction.copyImage:
+      try {
+        await Pasteboard.writeImage(await local.readAsBytes());
+        say('Copied the image.');
+      } on Object catch (e) {
+        Log.warn('files', 'Copying an image failed: ${e.runtimeType}');
+        say("Couldn't copy the image.");
       }
     case _FileAction.share:
       await FileHandoff.share(local, file, handoff);
@@ -568,9 +583,10 @@ Future<void> runMediaAction(
   MediaAction.saveAs => _FileAction.saveAs,
   MediaAction.share => _FileAction.share,
   MediaAction.openWith => _FileAction.openWith,
+  MediaAction.copyImage => _FileAction.copyImage,
 });
 
-enum MediaAction { save, saveAs, share, openWith }
+enum MediaAction { save, saveAs, share, openWith, copyImage }
 
 /// The three-dot menu every file viewer and card carries.
 class FileActionsMenu extends ConsumerWidget {
@@ -601,9 +617,17 @@ class FileActionsMenu extends ConsumerWidget {
 }
 
 List<PopupMenuEntry<MediaAction>> _fileMenuItems(PostFile file) => [
-  if (isDesktop)
-    const PopupMenuItem(value: MediaAction.saveAs, child: Text('Save as…'))
-  else ...[
+  if (isDesktop) ...[
+    if (file.kind == FileKind.image)
+      const PopupMenuItem(
+        value: MediaAction.copyImage,
+        child: Text('Copy image'),
+      ),
+    PopupMenuItem(
+      value: MediaAction.saveAs,
+      child: Text(file.kind == FileKind.image ? 'Save image as…' : 'Save as…'),
+    ),
+  ] else ...[
     PopupMenuItem(
       value: MediaAction.save,
       child: Text('Save to ${_folderOf(file)}'),

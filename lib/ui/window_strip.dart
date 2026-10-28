@@ -6,6 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/server_theme.dart';
+import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/link_status.dart';
 import 'package:matterleast/ui/update_indicator.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -43,7 +45,7 @@ class WindowFrame extends StatelessWidget {
         child: Column(
           children: [
             const WindowStrip(),
-            Expanded(child: child),
+            Expanded(child: LinkStatus(child: child)),
           ],
         ),
       ),
@@ -80,7 +82,7 @@ class WindowStrip extends StatelessWidget {
                       'Matterleast',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         fontSize: nameSize,
                         fontWeight: FontWeight.w600,
                         color: colours.text,
@@ -178,6 +180,7 @@ class _StripButtonState extends State<StripButton> {
     return Tooltip(
       message: widget.tooltip,
       child: InkWell(
+        mouseCursor: clickCursor,
         onTap: widget.onPressed,
         onHover: widget.danger
             ? (hovered) => setState(() => _hovered = hovered)

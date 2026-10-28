@@ -9,6 +9,7 @@ import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_info/people_list.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -127,6 +128,7 @@ class _PeoplePickerScreenState extends ConsumerState<PeoplePickerScreen> {
                     children: [
                       for (final p in _picked)
                         InputChip(
+                          mouseCursor: clickCursor,
                           label: Text(p.title),
                           onDeleted: () => _toggle(p),
                         ),

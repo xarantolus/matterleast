@@ -12,6 +12,7 @@ import 'package:matterleast/data/live/agent_live.dart';
 import 'package:matterleast/domain/agent_stream.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -280,6 +281,7 @@ class _ReasoningState extends State<_Reasoning> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InkWell(
+          mouseCursor: clickCursor,
           onTap: () => setState(() => _open = !_open),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
@@ -501,6 +503,7 @@ class _ToolCardState extends State<_ToolCard> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             InkWell(
+              mouseCursor: clickCursor,
               onTap: () => setState(() => _open = !_open),
               child: Row(
                 children: [
