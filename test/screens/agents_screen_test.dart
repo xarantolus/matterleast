@@ -1,22 +1,14 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/agent_providers.dart';
-import 'package:matterleast/app/app.dart';
-import 'package:matterleast/app/image_providers.dart';
-import 'package:matterleast/app/providers.dart';
-import 'package:matterleast/data/images/server_image_caches.dart';
-import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/agents/agents_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 
 import '../support/fake_server.dart';
-import '../support/test_session.dart';
+import '../support/pump_with_server.dart';
 
 class _Rail extends RailSelection {
   @override
@@ -79,52 +71,21 @@ final _threads = [
 ];
 
 void main() {
-  late FakeServer server;
-  late ServerSession session;
+  late ServerHarness h;
 
   Future<void> start(
     WidgetTester tester,
     FutureOr<Reply?> Function(SeenRequest request) handle,
   ) async {
-    HttpOverrides.global = null;
-    (server, session) = (await tester.runAsync(() async {
-      final server = await FakeServer.start();
-      server.handle = handle;
-      return (server, await testSession(server));
-    }))!;
-    final url = server.url.toString();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          serverSessionProvider(url).overrideWith((ref) async => session),
-          agentsAvailableProvider(url).overrideWithValue(true),
-          railSelectionProvider.overrideWith(_Rail.new),
-          serverImageCachesProvider(url)
-              .overrideWith((ref) => Completer<ServerImageCaches>().future),
-        ],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: AgentsScreen(url: url),
-        ),
-      ),
+    h = await pumpWithServer(
+      tester,
+      handle: handle,
+      overrides: (url) => [
+        agentsAvailableProvider(url).overrideWithValue(true),
+        railSelectionProvider.overrideWith(_Rail.new),
+      ],
+      home: (url) => AgentsScreen(url: url),
     );
-  }
-
-  Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 20; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-  }
-
-  Future<void> finish(WidgetTester tester) async {
-    await tester.pumpWidget(const SizedBox());
-    await tester.runAsync(() async {
-      await closeTestSession(session);
-      await server.close();
-    });
   }
 
   testWidgets('a channel summary in the history opens its thread', (
@@ -154,16 +115,15 @@ void main() {
         _ => ok(const <String, Object?>{}),
       },
     );
-    await settle(tester);
     expect(find.text('Knots for sailing'), findsOneWidget);
     expect(find.text('Background request'), findsNothing);
 
     await tester.tap(find.text('Summarize Channel'));
-    await settle(tester);
+    await h.settle(tester, rounds: 20);
     final thread = tester.widget<ThreadScreen>(find.byType(ThreadScreen));
     expect(thread.rootId, 'sm000000000000000000000s01');
     expect(thread.channelId, _directId);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('a plugin that refuses the agents list shows no error', (
@@ -175,9 +135,8 @@ void main() {
           ? error(404, 'not_found')
           : ok(const <String, Object?>{}),
     );
-    await settle(tester);
     expect(find.text('No agents for you'), findsOneWidget);
     expect(find.text('Retry'), findsNothing);
-    await finish(tester);
+    await h.close(tester);
   });
 }

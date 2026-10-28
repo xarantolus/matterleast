@@ -12,8 +12,11 @@ import 'package:matterleast/log.dart';
 /// makes it reachable again. While unreachable, [probe] asks cheaply
 /// whether it answers again, so nothing else waits for a long timeout.
 class ServerReach {
-  ServerReach({required this._ping, DateTime Function()? clock})
-    : _clock = clock ?? DateTime.now {
+  ServerReach({
+    required this._ping,
+    this.probeMemory = defaultProbeMemory,
+    DateTime Function()? clock,
+  }) : _clock = clock ?? DateTime.now {
     _reachable.addListener(
       () => Log.info(
         'reach',
@@ -24,7 +27,8 @@ class ServerReach {
 
   /// A failed probe stands for this long, so a burst of requests doesn't
   /// send a burst of pings.
-  static const probeMemory = Duration(seconds: 5);
+  static const defaultProbeMemory = Duration(seconds: 5);
+  final Duration probeMemory;
 
   /// How long a request without an answer counts as evidence when the
   /// socket fails afterwards.

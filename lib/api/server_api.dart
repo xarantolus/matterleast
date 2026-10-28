@@ -34,6 +34,8 @@ class ServerApi {
     required this._token,
     String? preAuthSecret,
     this.deadline = defaultDeadline,
+    this.probeTimeout = defaultProbeTimeout,
+    this.probeMemory = ServerReach.defaultProbeMemory,
     this.network,
     Dio? dio,
   }) : dio = dio ?? (Dio()..httpClientAdapter = TrustingAdapter(baseUrl)) {
@@ -141,7 +143,11 @@ class ServerApi {
 
   /// How long a ping may take while the server is believed down; a server
   /// that answers more slowly counts as down until a request gets through.
-  static const probeTimeout = Duration(seconds: 4);
+  static const defaultProbeTimeout = Duration(seconds: 4);
+  final Duration probeTimeout;
+
+  /// How long a failed ping stands for.
+  final Duration probeMemory;
 
   /// How long [call] lets a request run in total, unless the call says
   /// otherwise.
@@ -160,7 +166,7 @@ class ServerApi {
 
   /// Whether this server answers, from what its requests and its socket
   /// saw.
-  late final reach = ServerReach(ping: _ping);
+  late final reach = ServerReach(ping: _ping, probeMemory: probeMemory);
 
   /// Requests between being sent and their answer (or failure).
   final _live = Set<RequestOptions>.identity();

@@ -6,6 +6,7 @@ import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
+import 'package:matterleast/api/websocket/socket_rules.dart';
 import 'package:matterleast/data/live/agent_live.dart';
 import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/data/live/typing.dart';
@@ -34,6 +35,7 @@ class ServerConnection {
     required this.users,
     required String? Function() token,
     Duration pingInterval = const Duration(seconds: 30),
+    Duration Function(int failCount) retryDelayOf = jitteredRetryDelay,
     this.online,
   }) {
     drafts = DraftSync(server: server, store: store);
@@ -77,6 +79,7 @@ class ServerConnection {
       serverUrl: url,
       token: token,
       pingInterval: pingInterval,
+      retryDelayOf: retryDelayOf,
       onEvent: receive,
       online: online,
       reachable: server.reach.reachable,
