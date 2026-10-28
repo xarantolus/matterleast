@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -83,6 +84,30 @@ void main() {
     await waitFor(tester, find.text('No matches'));
     await close(tester);
   });
+
+  testWidgets('PageDown and Home move by a page on a desktop', (tester) async {
+    await show(tester, 'guide.pdf');
+    await waitFor(tester, find.byTooltip('Search'));
+    final controller = tester
+        .widget<PdfViewer>(find.byType(PdfViewer))
+        .controller!;
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(controller.pageNumber, 1);
+    expect(controller.pageCount, greaterThan(1));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(controller.pageNumber, 2);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.home);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(controller.pageNumber, 1);
+    await close(tester);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
   testWidgets('a PDF with a password asks for it until it opens', (
     tester,

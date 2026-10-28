@@ -4,6 +4,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/screens/gallery/settled_end_player.dart';
@@ -393,6 +394,48 @@ void main() {
     await tester.pump();
     expect(cursor(), isNot(SystemMouseCursors.none));
     await close(tester);
+  });
+
+  group('keys on desktop', () {
+    final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
+
+    testWidgets('Space plays and pauses without a click', (tester) async {
+      await open(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pump();
+      expect(platform.calls, ['play']);
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pump();
+      expect(platform.calls, ['play', 'pause']);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('Shift and the arrows seek by five seconds; the arrows alone '
+        'are left to the gallery', (tester) async {
+      await open(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(platform.seeks, isEmpty);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+      expect(platform.seeks, [const Duration(seconds: 5)]);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('M mutes and unmutes', (tester) async {
+      await open(tester);
+      expect(find.byTooltip('Mute'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+      await tester.pump();
+      expect(find.byTooltip('Unmute'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+      await tester.pump();
+      expect(find.byTooltip('Mute'), findsOneWidget);
+      await close(tester);
+    }, variant: desktop);
   });
 
   testWidgets('a paused video keeps the pointer', (tester) async {

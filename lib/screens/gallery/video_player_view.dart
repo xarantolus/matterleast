@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/ui/full_screen.dart';
@@ -12,6 +13,33 @@ import 'package:video_player/video_player.dart';
 
 const controlsHideDelay = Duration(seconds: 2);
 const _scrim = Color(0x99000000);
+
+enum _VideoKey { playPause, back, forward, fullScreen, mute }
+
+class _VideoKeyIntent extends Intent {
+  const _VideoKeyIntent(this.key);
+
+  final _VideoKey key;
+}
+
+// Left and Right alone are the gallery's, which steps between items.
+const _videoKeys = <ShortcutActivator, Intent>{
+  SingleActivator(LogicalKeyboardKey.space): _VideoKeyIntent(
+    _VideoKey.playPause,
+  ),
+  SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true): _VideoKeyIntent(
+    _VideoKey.back,
+  ),
+  SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): _VideoKeyIntent(
+    _VideoKey.forward,
+  ),
+  SingleActivator(LogicalKeyboardKey.keyF): _VideoKeyIntent(
+    _VideoKey.fullScreen,
+  ),
+  SingleActivator(LogicalKeyboardKey.keyM): _VideoKeyIntent(_VideoKey.mute),
+};
+
+const _seekStep = Duration(seconds: 5);
 
 /// "1:05" or "1:02:05".
 String playbackTime(Duration d) {
@@ -31,8 +59,13 @@ class VideoPlayerView extends StatefulWidget {
     required this.video,
     this.onControlsChanged,
     this.onFullScreenChanged,
+    this.current = true,
     super.key,
   });
+
+  /// Whether this is the page shown; the player's keys need it to hold the
+  /// focus.
+  final bool current;
 
   /// An initialized controller, owned by the caller.
   final VideoPlayerController video;
@@ -51,18 +84,56 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
   var _fullScreen = false;
   late var _playing = widget.video.value.isPlaying;
   var _playingBeforeHold = false;
+  var _muted = false;
   Timer? _hide;
+  final _focus = FocusNode(debugLabel: 'Video');
 
   @override
   void initState() {
     super.initState();
     widget.video.addListener(_videoChanged);
     _setControls(true);
+    if (widget.current) _takeFocus();
+  }
+
+  void _takeFocus() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) _focus.requestFocus();
+  });
+
+  Future<void> _seekBy(Duration by) async {
+    final video = widget.video;
+    final to = video.value.position + by;
+    final end = video.value.duration;
+    await video.seekTo(
+      to < Duration.zero ? Duration.zero : (to > end ? end : to),
+    );
+  }
+
+  Future<void> _toggleMute() async {
+    setState(() => _muted = !_muted);
+    await widget.video.setVolume(_muted ? 0 : 1);
+  }
+
+  void _key(_VideoKey key) {
+    _setControls(true);
+    switch (key) {
+      case _VideoKey.playPause:
+        unawaited(_playPause());
+      case _VideoKey.back:
+        unawaited(_seekBy(-_seekStep));
+      case _VideoKey.forward:
+        unawaited(_seekBy(_seekStep));
+      case _VideoKey.fullScreen:
+        unawaited(_toggleFullScreen());
+      case _VideoKey.mute:
+        unawaited(_toggleMute());
+    }
   }
 
   @override
   void didUpdateWidget(VideoPlayerView old) {
     super.didUpdateWidget(old);
+    if (widget.current && !old.current) _takeFocus();
     if (old.video != widget.video) {
       old.video.removeListener(_videoChanged);
       widget.video.addListener(_videoChanged);
@@ -74,6 +145,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
   void dispose() {
     widget.video.removeListener(_videoChanged);
     _hide?.cancel();
+    _focus.dispose();
     if (_fullScreen) unawaited(leaveFullScreen());
     super.dispose();
   }
@@ -159,88 +231,105 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) unawaited(_toggleFullScreen());
       },
-      // For the buttons and slider, which look for one.
-      child: Material(
-        type: MaterialType.transparency,
-        // A moving mouse shows the controls; they hide once it rests.
-        child: MouseRegion(
-          // Resting over a playing video hides the pointer with the controls.
-          cursor: !_controls && _playing
-              ? SystemMouseCursors.none
-              : MouseCursor.defer,
-          onHover: (event) {
-            if (event.kind == PointerDeviceKind.mouse) _setControls(true);
+      child: Shortcuts(
+        shortcuts: isDesktop ? _videoKeys : const {},
+        child: Actions(
+          actions: {
+            _VideoKeyIntent: CallbackAction<_VideoKeyIntent>(
+              onInvoke: (intent) => _key(intent.key),
+            ),
           },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ExtendedImageSlidePageHandler(
-                key: _slideHandler,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  // A vertical drag wins its gesture sooner than the
-                  // handler's own scale gesture or the pages' horizontal one.
-                  onVerticalDragUpdate: _slide,
-                  onVerticalDragEnd: _endSlide,
-                  // A mouse click plays and pauses and a double click fills
-                  // the window, like desktop players; a touch shows the
-                  // controls.
-                  onTap: isDesktop
-                      ? () {
-                          _setControls(true);
-                          unawaited(_playPause());
-                        }
-                      : () => _setControls(!_controls),
-                  onDoubleTap: isDesktop ? _toggleFullScreen : null,
-                  onLongPressStart: (_) => _holdStart(),
-                  onLongPressEnd: (_) => _holdEnd(),
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: video.value.aspectRatio,
-                      child: VideoPlayer(video),
-                    ),
-                  ),
-                ),
-              ),
-              if (_fast) const _SpeedBadge(),
-              IgnorePointer(
-                ignoring: !_controls,
-                child: AnimatedOpacity(
-                  opacity: _controls ? 1 : 0,
-                  duration: fade,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // A slide may start on the button too.
-                      Center(
-                        child: GestureDetector(
-                          onVerticalDragUpdate: _slide,
-                          onVerticalDragEnd: _endSlide,
-                          child: _PlayButton(
-                            playing: _playing,
-                            onPressed: _playPause,
+          child: Focus(
+            focusNode: _focus,
+            // For the buttons and slider, which look for one.
+            child: Material(
+              type: MaterialType.transparency,
+              // A moving mouse shows the controls; they hide once it rests.
+              child: MouseRegion(
+                // Resting over a playing video hides the pointer with the controls.
+                cursor: !_controls && _playing
+                    ? SystemMouseCursors.none
+                    : MouseCursor.defer,
+                onHover: (event) {
+                  if (event.kind == PointerDeviceKind.mouse) _setControls(true);
+                },
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ExtendedImageSlidePageHandler(
+                      key: _slideHandler,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        // A vertical drag wins its gesture sooner than the
+                        // handler's own scale gesture or the pages' horizontal one.
+                        onVerticalDragUpdate: isDesktop ? null : _slide,
+                        onVerticalDragEnd: isDesktop ? null : _endSlide,
+                        // A mouse click plays and pauses and a double click fills
+                        // the window, like desktop players; a touch shows the
+                        // controls.
+                        onTap: isDesktop
+                            ? () {
+                                _focus.requestFocus();
+                                _setControls(true);
+                                unawaited(_playPause());
+                              }
+                            : () => _setControls(!_controls),
+                        onDoubleTap: isDesktop ? _toggleFullScreen : null,
+                        onLongPressStart: (_) => _holdStart(),
+                        onLongPressEnd: (_) => _holdEnd(),
+                        child: Center(
+                          child: AspectRatio(
+                            aspectRatio: video.value.aspectRatio,
+                            child: VideoPlayer(video),
                           ),
                         ),
                       ),
-                      // Positioned, so the slider gets its own height
-                      // rather than the whole screen's.
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: _BottomBar(
-                          video: video,
-                          fullScreen: _fullScreen,
-                          onFullScreen: _toggleFullScreen,
-                          onScrubStart: () => _setControls(true, stay: true),
-                          onScrubEnd: () => _setControls(true),
+                    ),
+                    if (_fast) const _SpeedBadge(),
+                    IgnorePointer(
+                      ignoring: !_controls,
+                      child: AnimatedOpacity(
+                        opacity: _controls ? 1 : 0,
+                        duration: fade,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // A slide may start on the button too.
+                            Center(
+                              child: GestureDetector(
+                                onVerticalDragUpdate: _slide,
+                                onVerticalDragEnd: _endSlide,
+                                child: _PlayButton(
+                                  playing: _playing,
+                                  onPressed: _playPause,
+                                ),
+                              ),
+                            ),
+                            // Positioned, so the slider gets its own height
+                            // rather than the whole screen's.
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: _BottomBar(
+                                video: video,
+                                fullScreen: _fullScreen,
+                                onFullScreen: _toggleFullScreen,
+                                muted: _muted,
+                                onMute: _toggleMute,
+                                onScrubStart: () =>
+                                    _setControls(true, stay: true),
+                                onScrubEnd: () => _setControls(true),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -310,6 +399,8 @@ class _BottomBar extends StatelessWidget {
     required this.video,
     required this.fullScreen,
     required this.onFullScreen,
+    required this.muted,
+    required this.onMute,
     required this.onScrubStart,
     required this.onScrubEnd,
   });
@@ -317,6 +408,8 @@ class _BottomBar extends StatelessWidget {
   final VideoPlayerController video;
   final bool fullScreen;
   final VoidCallback onFullScreen;
+  final bool muted;
+  final VoidCallback onMute;
   final VoidCallback onScrubStart;
   final VoidCallback onScrubEnd;
 
@@ -337,6 +430,13 @@ class _BottomBar extends StatelessWidget {
               onEnd: onScrubEnd,
             ),
           ),
+          if (isDesktop)
+            IconButton(
+              color: Colors.white,
+              tooltip: muted ? 'Unmute' : 'Mute',
+              onPressed: onMute,
+              icon: Icon(muted ? Icons.volume_off : Icons.volume_up),
+            ),
           IconButton(
             color: Colors.white,
             tooltip: fullScreen ? 'Exit full screen' : 'Full screen',

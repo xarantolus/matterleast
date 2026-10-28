@@ -405,6 +405,24 @@ class CodeScreen extends StatefulWidget {
 
 class _CodeScreenState extends State<CodeScreen> {
   late bool? _wrap = widget.wrap;
+  final _selection = FocusNode(debugLabel: 'Code');
+
+  @override
+  void initState() {
+    super.initState();
+    // Ctrl+A and Ctrl+C work at once, without a click into the text.
+    if (isDesktop) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _selection.requestFocus();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _selection.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -452,6 +470,7 @@ class _CodeScreenState extends State<CodeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(Spacing.md),
                   child: SelectionArea(
+                    focusNode: _selection,
                     child: lines > 1
                         ? Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
