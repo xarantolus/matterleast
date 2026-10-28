@@ -132,6 +132,9 @@ notes, and they win over this summary.
 - Text contrast at least 4.5:1, checked in a theme test.
 - Edge-to-edge with correct insets; layouts hold at font scale 2.0 and on
   wide screens.
+- Size things relative to the window or screen (media previews, caps,
+  popouts, column widths), not in fixed pixels; fixed values only for
+  minimums, hairlines and icon or touch-target sizes.
 - Loading keeps content on screen with a slim progress bar. Errors say what
   happened and what to do. Empty states say how to fill them.
 - Never move content under the reader. Reserve space for everything that
