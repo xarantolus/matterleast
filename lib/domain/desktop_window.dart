@@ -97,19 +97,13 @@ enum CloseAction {
   /// Into the tray; the app keeps running and notifying.
   hide,
 
-  /// To the taskbar or dock, where no tray would show the app again.
-  minimize,
   quit,
 }
 
 /// Pure: what closing the window does. Hiding needs a tray to come back
-/// from; without one the window only minimises, so it can't get lost.
+/// from; without one the app quits rather than leave a window to find.
 CloseAction closeAction({required bool closeToTray, required bool hasTray}) =>
-    !closeToTray
-    ? CloseAction.quit
-    : hasTray
-    ? CloseAction.hide
-    : CloseAction.minimize;
+    closeToTray && hasTray ? CloseAction.hide : CloseAction.quit;
 
 /// Pure: the window's title, such as "(3) Town Square · Lighthouse Crew –
 /// Matterleast": unread [unread] mentions and direct messages first, then
