@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
@@ -11,6 +12,21 @@ const _brandLight = Color(0xFF00695C);
 /// Brand fill for the dark theme, a step lighter so it is still visibly the
 /// brand against a dark page while white stays at 5.2:1.
 const _brandDark = Color(0xFF00796B);
+
+/// The app's typeface, bundled in assets/fonts with its licence. Code keeps
+/// monospace, and emoji come from the system's emoji font, which Rubik
+/// falls back to.
+const appFont = 'Rubik';
+
+/// Rubik's licence on the app's licence page.
+void registerFontLicence() => LicenseRegistry.addLicense(
+  () async* {
+    yield LicenseEntryWithLineBreaks(
+      const [appFont],
+      await rootBundle.loadString('assets/fonts/Rubik-OFL.txt'),
+    );
+  },
+);
 
 ThemeData buildTheme(Brightness brightness) {
   final brand = brightness == Brightness.dark ? _brandDark : _brandLight;
@@ -153,7 +169,11 @@ ThemeData _build({
     outline: tokens.divider,
     outlineVariant: tokens.hairline,
   );
-  final base = ThemeData(colorScheme: colours, brightness: brightness);
+  final base = ThemeData(
+    colorScheme: colours,
+    brightness: brightness,
+    fontFamily: appFont,
+  );
   return base.copyWith(
     extensions: [tokens],
     scaffoldBackgroundColor: tokens.page,

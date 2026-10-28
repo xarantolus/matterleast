@@ -86,6 +86,17 @@ flutter:
   assets:
     - assets/icon/legacy.png
     - assets/icon/tray_unread.png
+    - assets/fonts/Rubik-OFL.txt
+  fonts:
+    - family: Rubik
+      fonts:
+        - asset: assets/fonts/Rubik-Regular.ttf
+        - asset: assets/fonts/Rubik-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Rubik-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Rubik-Bold.ttf
+          weight: 700
 
 flutter_launcher_icons:
   android: true
