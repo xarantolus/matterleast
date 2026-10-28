@@ -18,6 +18,7 @@ import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/data/store/server_store.dart' show PageKind;
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/quick_switch.dart';
@@ -467,6 +468,57 @@ void main() {
     final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
     expect(screen.channelId, channelId);
     expect(screen.highlightPostId, isNull);
+    navigator(tester).pop();
+    await settle(tester);
+    await finish(tester);
+  });
+
+  testWidgets('an agent citation link opens its post highlighted', (
+    tester,
+  ) async {
+    const postId = 'harbourpost0000000000000a1';
+    await start(tester, more: known());
+    await tester.runAsync(
+      () => session.store.applyChannelPage(
+        channelId: channelId,
+        page: api.PostList.fromJson({
+          'order': [postId],
+          'posts': {
+            postId: {
+              'id': postId,
+              'channel_id': channelId,
+              'user_id': 'someone',
+              'create_at': DateTime.utc(
+                2026,
+                10,
+                25,
+                10,
+              ).millisecondsSinceEpoch,
+              'message': 'cited',
+            },
+          },
+        }),
+        kind: PageKind.page,
+      ),
+    );
+    // The rail keeps the server list alive in the app.
+    final servers = container.listen(serversProvider, (_, _) {});
+    addTearDown(servers.close);
+    await settle(tester);
+    unawaited(
+      openLinkFromMessage(
+        navigator(tester),
+        server.url.replace(
+          path: '/_redirect/pl/$postId',
+          query: 'view=citation',
+        ),
+      ),
+    );
+    await settle(tester);
+    expect(
+      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
+      postId,
+    );
     navigator(tester).pop();
     await settle(tester);
     await finish(tester);

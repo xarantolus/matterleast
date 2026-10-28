@@ -25,6 +25,9 @@ class PostProps {
     this.attachments = const [],
     this.channelMentions = const {},
     this.username,
+    this.userId,
+    this.addedUserId,
+    this.removedUserId,
     this.addedUsername,
     this.removedUsername,
     this.oldHeader,
@@ -60,6 +63,17 @@ class PostProps {
   final Map<String, String> channelMentions;
   @LenientString()
   final String? username;
+
+  /// Membership messages name the people by id as well, so a rename shows.
+  @LenientString()
+  @JsonKey(name: 'userId')
+  final String? userId;
+  @LenientString()
+  @JsonKey(name: 'addedUserId')
+  final String? addedUserId;
+  @LenientString()
+  @JsonKey(name: 'removedUserId')
+  final String? removedUserId;
   @LenientString()
   @JsonKey(name: 'addedUsername')
   final String? addedUsername;

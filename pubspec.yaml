@@ -87,7 +87,11 @@ flutter:
     - assets/icon/legacy.png
     - assets/icon/tray_unread.png
     - assets/fonts/Rubik-OFL.txt
+    - assets/fonts/NotoColorEmoji-OFL.txt
   fonts:
+    - family: Noto Color Emoji
+      fonts:
+        - asset: assets/fonts/NotoColorEmoji.ttf
     - family: Rubik
       fonts:
         - asset: assets/fonts/Rubik-Regular.ttf

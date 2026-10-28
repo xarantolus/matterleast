@@ -44,6 +44,9 @@ abstract class PostItem with _$PostItem {
     /// The people who replied, newest first, as far as they are known.
     @Default(<PostPerson>[]) List<PostPerson> participants,
     @Default('') String authorUsername,
+
+    /// The current usernames of the people a system message names.
+    @Default(<String, String>{}) Map<String, String> systemUsernames,
     @Default(false) bool authorIsBot,
     @Default(false) bool authorIsGuest,
     int? authorPictureAt,

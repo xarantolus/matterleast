@@ -157,7 +157,10 @@ class _MediaGrid extends StatelessWidget {
               maxHeight: imageMaxHeight(screen, desktop: isDesktop),
             ) ??
             (file.kind == FileKind.video
-                ? Size(width, width * 9 / 16)
+                ? unmeasuredVideoBox(
+                    width,
+                    imageMaxHeight(screen, desktop: isDesktop),
+                  )
                 : const Size.square(_unknownBox));
         return Align(
           alignment: AlignmentDirectional.centerStart,

@@ -21,6 +21,16 @@ void main() {
     );
   });
 
+  test('an agent citation link opens the message in its own team', () {
+    final link = ServerLink.post(server: chat, postId: id);
+    expect(parse('https://chat.example.test/_redirect/pl/$id'), link);
+    expect(
+      parse('https://chat.example.test/_redirect/pl/$id?view=citation'),
+      link,
+    );
+    expect(parse('https://chat.example.test/_redirect/pl/nope'), isNull);
+  });
+
   test('channel and direct message links name what they open', () {
     expect(
       parse('https://chat.example.test/crew/channels/Town-Square'),
