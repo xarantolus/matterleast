@@ -300,10 +300,16 @@ void main() {
 
     testWidgets('a keyboard-only focus ring shows after Tab, not after a '
         'mouse click', (tester) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
       await tester.pumpWidget(
         _app(
           KeyboardFocusRings(
-            child: FilledButton(onPressed: () {}, child: const Text('go')),
+            child: FilledButton(
+              focusNode: focus,
+              onPressed: () {},
+              child: const Text('go'),
+            ),
           ),
         ),
       );
@@ -312,6 +318,10 @@ void main() {
             FocusHighlightStrategy.automatic,
       );
       await tester.tap(find.text('go'), kind: PointerDeviceKind.mouse);
+      focus.requestFocus();
+      await tester.pump();
+      expect(FocusManager.instance.highlightMode, FocusHighlightMode.touch);
+      await tester.sendKeyEvent(LogicalKeyboardKey.altLeft);
       await tester.pump();
       expect(FocusManager.instance.highlightMode, FocusHighlightMode.touch);
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
