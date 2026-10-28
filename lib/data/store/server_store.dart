@@ -993,12 +993,58 @@ class ServerStore {
     }
   }
 
+  /// [rows] with the link preview each stored copy has kept, where the new
+  /// copy came without one and its text and props are unchanged.
+  Future<List<PostsCompanion>> _keepingPreviews(
+    List<api.Post> posts,
+    List<PostsCompanion> rows,
+  ) async {
+    final withoutPreview = {
+      for (final p in posts)
+        if (p.metadata case final m?
+            when m.embeds.every((e) => e.type?.json == 'link'))
+          p.id,
+    };
+    final bare = {
+      for (final r in rows)
+        if (withoutPreview.contains(r.id.value))
+          if (r.metadataJson case Value(present: true, :final value?))
+            r.id.value: value,
+    };
+    if (bare.isEmpty) return rows;
+    final stored = {
+      for (final p in await (db.select(
+        db.posts,
+      )..where((p) => p.id.isIn(bare.keys))).get())
+        p.id: p,
+    };
+    return [
+      for (final r in rows)
+        switch ((stored[r.id.value], bare[r.id.value])) {
+          (final was?, final incoming?)
+              when was.message == r.message.value &&
+                  was.propsJson == r.propsJson.value =>
+            switch (metadataKeepingPreview(
+              incoming: incoming,
+              stored: was.metadataJson,
+            )) {
+              final kept? => r.copyWith(metadataJson: Value(kept)),
+              null => r,
+            },
+          _ => r,
+        },
+    ];
+  }
+
   Future<void> _upsertPostRows(List<api.Post> posts) async {
     final pendingIds = posts
         .map((p) => p.pendingPostId)
         .where((id) => id != null && id.isNotEmpty)
         .cast<String>()
         .toList();
+    final rows = await _keepingPreviews(posts, [
+      for (final p in posts) safePostCompanion(p),
+    ]);
     await db.batch((b) {
       // Our own optimistic rows are keyed by pending id; the server's copy
       // replaces them under the server id.
@@ -1006,9 +1052,7 @@ class ServerStore {
         b.deleteWhere(db.posts, (p) => p.id.isIn(pendingIds));
         b.deleteWhere(db.outbox, (o) => o.pendingPostId.isIn(pendingIds));
       }
-      b.insertAllOnConflictUpdate(db.posts, [
-        for (final p in posts) safePostCompanion(p),
-      ]);
+      b.insertAllOnConflictUpdate(db.posts, rows);
       b.insertAllOnConflictUpdate(db.users, [
         for (final p in posts)
           for (final u in p.participants)

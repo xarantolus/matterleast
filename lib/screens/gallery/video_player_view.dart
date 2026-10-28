@@ -118,6 +118,19 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
     if (!_playingBeforeHold) unawaited(widget.video.pause());
   }
 
+  final _slideHandler = GlobalKey<ExtendedImageSlidePageHandlerState>();
+
+  ExtendedImageSlidePageState? get _slidePage =>
+      context.findAncestorStateOfType<ExtendedImageSlidePageState>();
+
+  void _slide(DragUpdateDetails details) => _slidePage?.slide(
+    Offset(0, details.delta.dy),
+    extendedImageSlidePageHandlerState: _slideHandler.currentState,
+  );
+
+  void _endSlide(DragEndDetails details) =>
+      _slidePage?.endSlide(ScaleEndDetails(velocity: details.velocity));
+
   Future<void> _toggleFullScreen() async {
     _setControls(true);
     final enter = !_fullScreen;
@@ -145,8 +158,13 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
           fit: StackFit.expand,
           children: [
             ExtendedImageSlidePageHandler(
+              key: _slideHandler,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
+                // A vertical drag wins its gesture sooner than the
+                // handler's own scale gesture or the pages' horizontal one.
+                onVerticalDragUpdate: _slide,
+                onVerticalDragEnd: _endSlide,
                 onTap: () => _setControls(!_controls),
                 onLongPressStart: (_) => _holdStart(),
                 onLongPressEnd: (_) => _holdEnd(),
@@ -167,10 +185,15 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
+                    // A slide may start on the button too.
                     Center(
-                      child: _PlayButton(
-                        playing: _playing,
-                        onPressed: _playPause,
+                      child: GestureDetector(
+                        onVerticalDragUpdate: _slide,
+                        onVerticalDragEnd: _endSlide,
+                        child: _PlayButton(
+                          playing: _playing,
+                          onPressed: _playPause,
+                        ),
                       ),
                     ),
                     // Positioned, so the slider gets its own height

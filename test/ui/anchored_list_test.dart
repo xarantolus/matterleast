@@ -308,4 +308,142 @@ void main() {
     final undisturbed = await flingDown(olderArrive: false);
     expect(await flingDown(olderArrive: true), closeTo(undisturbed, 1));
   });
+
+  testWidgets('a row at the top edge growing mid-drag moves nothing', (
+    tester,
+  ) async {
+    // A link preview arriving late for a message the reader just scrolled
+    // past, while they are still scrolling towards the newest one.
+    final rows = rowsFrom(100, 1);
+    await tester.pumpWidget(list(rows));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 3; i++) {
+      await scrollUpAndSettle(tester);
+    }
+    final drag = await tester.startGesture(const Offset(400, 300));
+    for (var i = 0; i < 10; i++) {
+      await drag.moveBy(const Offset(0, -40));
+      await tester.pump();
+    }
+    final reading = topVisible(tester, rows);
+    // The row the drag is taking off the top of the screen.
+    final above = [
+      for (var id = reading - 1; id > reading - 5; id--)
+        if (find.text('row $id').evaluate().isNotEmpty && topOf(tester, id) < 0)
+          id,
+    ].firstOrNull;
+    expect(above, isNotNull, reason: 'a row cut by the top edge');
+    final before = topOf(tester, reading);
+    await tester.pumpWidget(
+      list([
+        for (final r in rows)
+          r.id == above ? (id: r.id, height: r.height + 150) : r,
+      ]),
+    );
+    await tester.pump();
+    expect(topOf(tester, reading), closeTo(before, 0.01));
+    await drag.up();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+    'a row above the screen growing under a held drag moves nothing',
+    (tester) async {
+      // The reader drags towards the newest message and holds still; a
+      // message they dragged off the top gets its link preview.
+      final rows = rowsFrom(100, 1);
+      await tester.pumpWidget(list(rows));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 4; i++) {
+        await scrollUpAndSettle(tester);
+      }
+      final drag = await tester.startGesture(const Offset(400, 500));
+      for (var i = 0; i < 12; i++) {
+        await drag.moveBy(const Offset(0, -40));
+        await tester.pump();
+      }
+      final reading = topVisible(tester, rows);
+      // Rows in the cache area above the screen count as offstage.
+      double? bottomOf(Item r) {
+        final text = find.text('row ${r.id}', skipOffstage: false);
+        if (text.evaluate().isEmpty) return null;
+        return tester.getTopLeft(text).dy + r.height;
+      }
+
+      final above = rows
+          .where((r) => r.id < reading && (bottomOf(r) ?? 1) < 0)
+          .map((r) => r.id)
+          .firstOrNull;
+      expect(above, isNotNull, reason: 'a built row wholly above the screen');
+      final before = topOf(tester, reading);
+      await tester.pumpWidget(
+        list([
+          for (final r in rows)
+            r.id == above ? (id: r.id, height: r.height + 280) : r,
+        ]),
+      );
+      await tester.pump();
+      expect(topOf(tester, reading), closeTo(before, 0.01));
+      await drag.up();
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('a row at the top edge growing mid-fling leaves the fling', (
+    tester,
+  ) async {
+    final rows = rowsFrom(100, 1);
+    Future<double> fling({required bool grow}) async {
+      await tester.pumpWidget(list(rows));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 3; i++) {
+        await scrollUpAndSettle(tester);
+      }
+      final reading = topVisible(tester, rows);
+      await tester.fling(find.byType(Scrollable), const Offset(0, -150), 800);
+      await tester.pump(const Duration(milliseconds: 16));
+      if (grow) {
+        final cut = [
+          for (var id = reading + 5; id > reading - 10; id--)
+            if (find.text('row $id').evaluate().isNotEmpty &&
+                topOf(tester, id) < 0)
+              id,
+        ].first;
+        await tester.pumpWidget(
+          list([
+            for (final r in rows)
+              r.id == cut ? (id: r.id, height: r.height + 150) : r,
+          ]),
+        );
+      }
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      final top = topOf(tester, reading + 6);
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox());
+      return top;
+    }
+
+    final undisturbed = await fling(grow: false);
+    expect(await fling(grow: true), closeTo(undisturbed, 1));
+  });
+
+  testWidgets('a scroll up from the bottom stays where it stopped', (
+    tester,
+  ) async {
+    final rows = rowsFrom(100, 1);
+    await tester.pumpWidget(list(rows));
+    await tester.pumpAndSettle();
+    final drag = await tester.startGesture(const Offset(400, 300));
+    for (var i = 0; i < 10; i++) {
+      await drag.moveBy(const Offset(0, 40));
+      await tester.pump();
+    }
+    final reading = topVisible(tester, rows);
+    final before = topOf(tester, reading);
+    await drag.up();
+    await tester.pumpAndSettle();
+    expect(topOf(tester, reading), closeTo(before, 0.01));
+  });
 }

@@ -71,10 +71,10 @@ class AnchoredListController {
 ///
 /// The rows are split at an anchor row: the anchor and everything older grow
 /// up from the scroll origin, everything newer grows down from it, so no
-/// insertion shifts the origin. When scrolling settles, the row above the
-/// topmost visible one becomes the anchor, so the top edge of what the
-/// reader sees stays put and a visible row that grows pushes the rows below
-/// it down. A reader at the newest row instead stays pinned to the bottom.
+/// insertion shifts the origin. When scrolling settles, and when rows change
+/// while the reader scrolls, the row above the topmost visible one becomes
+/// the anchor, so the top edge of what the reader sees stays put and a
+/// visible row that grows pushes the rows below it down. A reader at the newest row instead stays pinned to the bottom.
 /// The offset is rewritten in the same frame, so re-anchoring moves nothing.
 class AnchoredList<T> extends StatefulWidget {
   const AnchoredList({
@@ -160,6 +160,12 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
   Object? _pendingCentre;
   AnchoredListView? _lastView;
 
+  /// The reader is scrolling, by a drag or the fling after it.
+  var _dragging = false;
+
+  /// The anchor moved and the rows haven't been laid out around it yet.
+  var _splitPending = false;
+
   @override
   void initState() {
     super.initState();
@@ -213,6 +219,10 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     } else if (_keptRow(old.rows.map(old.keyOf).toList(), oldIndex)
         case final kept?) {
       _keepBottomOf(kept);
+    } else if (_dragging) {
+      // The anchor is where the reader started scrolling; a row changing
+      // height between it and the screen would move what they look at.
+      _reanchor();
     }
     _scheduleReport();
   }
@@ -398,8 +408,13 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     if (to.key == _anchor && (p.pixels - to.pixels).abs() < 0.5) return;
     setState(() => _anchor = to.key);
     p.correctPixels(to.pixels);
-    // Extents are those of the old split until the next layout.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _report());
+    // Extents are those of the old split until the next layout; measured
+    // against them, the new offset would look out of range.
+    _splitPending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _splitPending = false;
+      _report();
+    });
   }
 
   void _reanchor() {
@@ -573,10 +588,12 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
   bool _onScroll(ScrollNotification n) {
     if (n.depth != 0) return false;
     if (n is ScrollUpdateNotification) _intended = true;
-    if (n is ScrollStartNotification && n.dragDetails != null) {
-      widget.onDragStart?.call();
+    if (n is ScrollStartNotification) {
+      _dragging = n.dragDetails != null;
+      if (_dragging) widget.onDragStart?.call();
     }
     if (n is ScrollEndNotification) {
+      _dragging = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_scroll.position.isScrollingNotifier.value) {
           _reanchor();
@@ -602,7 +619,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
   }
 
   void _report() {
-    if (!mounted || !_scroll.hasClients) return;
+    if (!mounted || !_scroll.hasClients || _splitPending) return;
     final p = _scroll.position;
     if (!p.hasContentDimensions) return;
     if (!p.isScrollingNotifier.value &&

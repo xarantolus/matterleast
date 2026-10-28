@@ -4,6 +4,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/screens/gallery/slide_to_close.dart';
 import 'package:matterleast/screens/gallery/video_player_view.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
@@ -105,6 +106,7 @@ void main() {
                     transitionDuration: Duration.zero,
                     pageBuilder: (_, _, _) => ExtendedImageSlidePage(
                       slideAxis: SlideAxis.vertical,
+                      slideEndHandler: slideEndCloses,
                       child: VideoPlayerView(video: video),
                     ),
                   ),
@@ -241,6 +243,35 @@ void main() {
 
     expect(find.byType(VideoPlayerView), findsNothing);
     expect(find.text('Home'), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('a short quick slide from the play button closes the gallery', (
+    tester,
+  ) async {
+    await open(tester);
+    expect(controlsShown(tester), isTrue);
+    await tester.timedDragFrom(
+      tester.getCenter(find.byIcon(Icons.play_arrow)),
+      const Offset(0, 60),
+      const Duration(milliseconds: 50),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VideoPlayerView), findsNothing);
+    await close(tester);
+  });
+
+  testWidgets('a short slow slide springs back', (tester) async {
+    await open(tester);
+    await tester.timedDragFrom(
+      onVideo(tester),
+      const Offset(0, 40),
+      const Duration(milliseconds: 800),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VideoPlayerView), findsOneWidget);
     await close(tester);
   });
 
