@@ -1,6 +1,14 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+
+final _modifiers = LogicalKeyboardKey.expandSynonyms({
+  LogicalKeyboardKey.alt,
+  LogicalKeyboardKey.shift,
+  LogicalKeyboardKey.control,
+  LogicalKeyboardKey.meta,
+});
 
 /// On desktop, focus rings show after the keyboard moved the focus and not
 /// after a mouse click, as the web's `:focus-visible` does. Flutter keeps
@@ -26,9 +34,11 @@ class KeyboardFocusRings extends StatelessWidget {
       child: Focus(
         canRequestFocus: false,
         skipTraversal: true,
-        onKeyEvent: (_, _) {
-          FocusManager.instance.highlightStrategy =
-              FocusHighlightStrategy.automatic;
+        onKeyEvent: (_, event) {
+          if (event is KeyDownEvent && !_modifiers.contains(event.logicalKey)) {
+            FocusManager.instance.highlightStrategy =
+                FocusHighlightStrategy.automatic;
+          }
           return KeyEventResult.ignored;
         },
         child: child,

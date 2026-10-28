@@ -65,6 +65,58 @@ void main() {
 
   tearDown(() => db.close());
 
+  group('a channel created while a refresh is running', () {
+    final empty = api.OrderedSidebarCategories.fromJson({
+      'order': <String>[],
+      'categories': <Object>[],
+    });
+
+    test('is not removed when that refresh was answered without it', () async {
+      final now = DateTime.utc(2026, 1, 1, 12);
+      store = ServerStore(db, clock: () => now);
+      final started = now.subtract(const Duration(seconds: 2));
+      await store.applyChannels(
+        channels: [
+          api.Channel.fromJson({'id': 'dm1', 'name': 'a__b', 'type': 'D'}),
+        ],
+        members: [
+          api.ChannelMember.fromJson({'channel_id': 'dm1', 'user_id': 'me'}),
+        ],
+      );
+      await store.applyTeamChannels(
+        teamId: 't1',
+        channels: const [],
+        members: const [],
+        categories: empty,
+        syncedAt: started,
+      );
+      expect(await db.select(db.channels).get(), hasLength(1));
+      expect(await db.select(db.myChannels).get(), hasLength(1));
+    });
+
+    test('is removed by a refresh that started after it was stored', () async {
+      var now = DateTime.utc(2026, 1, 1, 12);
+      store = ServerStore(db, clock: () => now);
+      await store.applyChannels(
+        channels: [
+          api.Channel.fromJson({'id': 'dm1', 'name': 'a__b', 'type': 'D'}),
+        ],
+        members: [
+          api.ChannelMember.fromJson({'channel_id': 'dm1', 'user_id': 'me'}),
+        ],
+      );
+      now = now.add(const Duration(seconds: 5));
+      await store.applyTeamChannels(
+        teamId: 't1',
+        channels: const [],
+        members: const [],
+        categories: empty,
+        syncedAt: now,
+      );
+      expect(await db.select(db.channels).get(), isEmpty);
+    });
+  });
+
   group('entry data', () {
     test('channels, members and categories land in their tables', () async {
       await store.applyMe(api.User.fromJson(fixtureMap('me')));
