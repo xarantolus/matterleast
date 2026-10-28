@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
@@ -26,8 +25,7 @@ import 'package:matterleast/ui/swipe_to_open.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Opens the thread of [post]; for a [reply] with the keyboard up.
-/// Opens the thread of a message; completes when the user is back.
-typedef OpenThread = Future<void> Function(PostItem post, {bool reply});
+typedef OpenThread = void Function(PostItem post, {bool reply});
 
 /// The message list of a channel or thread with its loading states and the
 /// pills that move through it.
@@ -54,8 +52,6 @@ class ConversationView extends ConsumerStatefulWidget {
   @override
   ConsumerState<ConversationView> createState() => _ConversationViewState();
 }
-
-const _refocusDelay = Duration(milliseconds: 600);
 
 class _ConversationViewState extends ConsumerState<ConversationView> {
   final _list = AnchoredListController();
@@ -191,61 +187,6 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
         Directionality.of(context),
       ),
     );
-  }
-
-  /// Opens the thread of [post] and, when a screen reader had its focus on
-  /// the message, puts it back there once the thread closes. The navigator
-  /// tries that too, but by the message's old semantics node, which is
-  /// gone when the row was rebuilt meanwhile.
-  Future<void> _openThread(PostItem post, {bool reply = false}) async {
-    final open = widget.onOpenThread;
-    if (open == null) return;
-    final focus = ServicesBinding.instance.accessibilityFocus;
-    final before = focus.value;
-    final closed = open(post, reply: reply);
-    // A thread beside the channel in a pane leaves the focus alone.
-    final covered = !(ModalRoute.of(context)?.isCurrent ?? true);
-    await closed;
-    if (before == null || !covered || !mounted) return;
-    await _uncovered();
-    // After the navigator's own attempt, which waits about as long.
-    await Future<void>.delayed(_refocusDelay);
-    await WidgetsBinding.instance.endOfFrame;
-    if (!mounted || focus.value == before) return;
-    _messageRow(post.id)
-        ?.findRenderObject()
-        ?.sendSemanticsEvent(const FocusSemanticEvent());
-  }
-
-  /// Completes once the route over this one has slid away.
-  Future<void> _uncovered() {
-    final cover = ModalRoute.of(context)?.secondaryAnimation;
-    if (cover == null || cover.isDismissed) return Future.value();
-    final done = Completer<void>();
-    void listen(AnimationStatus status) {
-      if (!status.isDismissed) return;
-      cover.removeStatusListener(listen);
-      done.complete();
-    }
-
-    cover.addStatusListener(listen);
-    return done.future;
-  }
-
-  /// The row of [postId], if it is built.
-  Element? _messageRow(String postId) {
-    Element? found;
-    void visit(Element element) {
-      if (found != null) return;
-      if (element.widget case PostTile(:final post) when post.id == postId) {
-        found = element;
-        return;
-      }
-      element.visitChildElements(visit);
-    }
-
-    (context as Element).visitChildElements(visit);
-    return found;
   }
 
   void _showLatest(ConversationState state) {
@@ -477,8 +418,8 @@ extension on _ConversationViewState {
     // An archived channel is read-only, reactions included.
     final reacts =
         post.sendState == null && !(_state.window?.archived ?? false);
-    void openThread() => unawaited(_openThread(post));
-    void reply() => unawaited(_openThread(post, reply: true));
+    void openThread() => widget.onOpenThread?.call(post);
+    void reply() => widget.onOpenThread?.call(post, reply: true);
     final target = _target(post);
     void open() => unawaited(showMessageMenu(context, target));
 
@@ -545,7 +486,7 @@ extension on _ConversationViewState {
     post: post,
     onReply: widget.onOpenThread == null
         ? null
-        : () => unawaited(_openThread(post, reply: true)),
+        : () => widget.onOpenThread!(post, reply: true),
     onEdit: switch (widget.composer) {
       final composer? => () => ref.read(composer.notifier).startEditing(post),
       null => null,
