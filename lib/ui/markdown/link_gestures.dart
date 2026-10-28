@@ -11,7 +11,9 @@ class TapOrHoldRecognizer extends TapGestureRecognizer {
     required VoidCallback onTapped,
     VoidCallback? onHeld,
     ValueChanged<Offset>? onRightClick,
+    VoidCallback? onMiddleClick,
   }) {
+    if (onMiddleClick != null) onTertiaryTapUp = (_) => onMiddleClick();
     if (onRightClick != null) {
       onSecondaryTapUp = (d) => onRightClick(d.globalPosition);
     }

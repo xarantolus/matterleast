@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
+import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
@@ -12,10 +16,13 @@ import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/dialog_screen.dart';
 import 'package:matterleast/screens/channel/typing_line.dart';
+import 'package:matterleast/screens/channel_info/channel_providers.dart';
+import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/progress_slot.dart';
+import 'package:matterleast/ui/slide_route.dart';
 
 /// Text in a toolbar grows with the system font size only this far, as
 /// Android's own toolbars do; the bar grows with it.
@@ -74,6 +81,43 @@ class ConversationScaffold extends ConsumerWidget {
       channelId: channelId,
       teamId: window?.teamId ?? '',
     );
+    return Actions(
+      actions: {
+        SearchChannelIntent: EnabledAction<SearchChannelIntent>(
+          enabled: () => window != null,
+          onInvoke: () => unawaited(_searchHere(context, ref)),
+        ),
+      },
+      child: _scaffold(context, ref, state),
+    );
+  }
+
+  Future<void> _searchHere(BuildContext context, WidgetRef ref) async {
+    final info = await ref.read(channelInfoProvider(url, channelId).future);
+    if (info == null || !context.mounted) return;
+    await Navigator.of(context).push(
+      SlideRoute<void>(
+        builder: (_) => SearchResultsScreen(
+          url: url,
+          teamId: info.teamId,
+          query: '',
+          scope: SearchScope(
+            teamId: info.teamId,
+            channelId: info.id,
+            channelName: info.name,
+            channelLabel: info.conversation ? info.title : '#${info.title}',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _scaffold(
+    BuildContext context,
+    WidgetRef ref,
+    ConversationState state,
+  ) {
+    final window = state.window;
     final scale = MediaQuery.textScalerOf(context)
         .clamp(maxScaleFactor: _maxBarTextScale)
         .scale(1);
@@ -165,6 +209,16 @@ class ConversationScaffold extends ConsumerWidget {
                           final now = ref.read(conversation);
                           return lastOwnPost(now.rows, now.myUserId);
                         },
+                        onReplyToNewest: onOpenThread == null
+                            ? null
+                            : () {
+                                final post = newestReplyable(
+                                  ref.read(conversation).rows,
+                                );
+                                if (post != null) {
+                                  onOpenThread!(post, reply: true);
+                                }
+                              },
                       ),
                     ),
                 ],
