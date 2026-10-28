@@ -40,15 +40,15 @@ void main() {
     children: [for (var i = 0; i < 50; i++) Text('row $i')],
   );
 
-  testWidgets('a swipe left past the distance goes back', (tester) async {
+  testWidgets('a swipe right past the distance goes back', (tester) async {
     await show(tester, plain);
-    await swipe(tester, -swipeDistance - 40);
+    await swipe(tester, swipeDistance + 40);
     expect(steps, [false]);
   }, variant: linuxOnly);
 
-  testWidgets('a swipe right past the distance goes forward', (tester) async {
+  testWidgets('a swipe left past the distance goes forward', (tester) async {
     await show(tester, plain);
-    await swipe(tester, swipeDistance + 40);
+    await swipe(tester, -swipeDistance - 40);
     expect(steps, [true]);
   }, variant: linuxOnly);
 
@@ -63,10 +63,10 @@ void main() {
     final pad = TestPointer(1, PointerDeviceKind.trackpad);
     await tester.sendEventToBinding(pad.panZoomStart(at));
     await tester.sendEventToBinding(
-      pad.panZoomUpdate(at, pan: const Offset(-60, 0)),
+      pad.panZoomUpdate(at, pan: const Offset(60, 0)),
     );
     await tester.sendEventToBinding(
-      pad.panZoomUpdate(at, pan: const Offset(-90, 0)),
+      pad.panZoomUpdate(at, pan: const Offset(90, 0)),
     );
     await tester.pump();
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);

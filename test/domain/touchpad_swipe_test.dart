@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/domain/touchpad_swipe.dart';
 
 void main() {
-  test('left is back and right is forward', () {
-    expect(swipeState(-20).forward, isFalse);
-    expect(swipeState(20).forward, isTrue);
+  test('right is back and left is forward', () {
+    expect(swipeState(20).forward, isFalse);
+    expect(swipeState(-20).forward, isTrue);
     expect(swipeState(0).forward, isNull);
   });
 
@@ -15,7 +15,7 @@ void main() {
 
   test('only a full swipe goes through', () {
     expect(swipeStep(-swipeDistance + 1), isNull);
-    expect(swipeStep(-swipeDistance), isFalse);
-    expect(swipeStep(swipeDistance), isTrue);
+    expect(swipeStep(swipeDistance), isFalse);
+    expect(swipeStep(-swipeDistance), isTrue);
   });
 }

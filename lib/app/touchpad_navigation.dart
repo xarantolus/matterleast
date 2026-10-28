@@ -7,8 +7,8 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/touchpad_swipe.dart';
 import 'package:matterleast/screens/root/open_history.dart';
 
-/// A two-finger sideways swipe on a touchpad goes back (left) or forward
-/// (right) through the conversations opened, as in a browser. The gesture
+/// A two-finger sideways swipe on a touchpad goes back (right) or forward
+/// (left) through the conversations opened, as in a browser. The gesture
 /// competes in the arena, so a scrollable or page view under the pointer
 /// that can use it keeps it. Only on desktop.
 class TouchpadNavigation extends ConsumerWidget {
@@ -16,6 +16,7 @@ class TouchpadNavigation extends ConsumerWidget {
 
   final Widget child;
 
+  // Direction follows Firefox: fingers right go back, left forward.
   /// Replaces the history step, for tests.
   final void Function({required bool forward})? onStep;
 
