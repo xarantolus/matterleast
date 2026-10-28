@@ -1056,6 +1056,14 @@ void main() {
           matching: find.textContaining('Boats', findRichText: true),
         ),
       );
+      // Frame by frame: no step may leave the panes without the channel.
+      for (var i = 0; i < 3; i++) {
+        await tester.pump();
+        final panes = container.read(openPanesProvider);
+        expect(panes.channel?.channelId, channelId);
+        expect(panes.thread, isNull);
+        expect(find.text('No conversation open'), findsNothing);
+      }
       await settle(tester);
       expect(find.byType(ThreadScreen), findsNothing);
       expect(find.byType(ChannelScreen), findsOneWidget);

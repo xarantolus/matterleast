@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
@@ -101,9 +102,15 @@ class DraftSync {
     if (!await enabled()) return;
     final List<api.Draft> remote;
     try {
-      remote = await server.call(
-        () => _users.getDrafts(userId: 'me', teamId: teamId),
-      );
+      // Not the generated call: a server with nothing to say answers null.
+      final body = (await server.call(
+        () => server.dio.get<Object?>('/api/v4/users/me/teams/$teamId/drafts'),
+      )).data;
+      remote = [
+        if (body is List<Object?>)
+          for (final e in body)
+            if (e is Map<String, Object?>) ?decodeOrSkip(e, api.Draft.fromJson),
+      ];
     } on ApiError catch (e) {
       if (await _unavailable(e)) return;
       rethrow;

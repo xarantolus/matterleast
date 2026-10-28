@@ -27,11 +27,12 @@ class MatterleastApp extends ConsumerWidget {
     final use24 = ref.watch(use24HourClockProvider).value;
     final textSize = ref.watch(messageTextSizeProvider).value;
     final wrapCode = ref.watch(wrapCodeProvider).value ?? false;
-    final themes = ref.watch(appThemesProvider).value;
+    final themes = ref.watch(appThemesProvider).value ?? brandSystem;
     return MaterialApp(
       title: 'Matterleast',
-      theme: themeForPlatform(themes?.light ?? lightTheme),
-      darkTheme: themeForPlatform(themes?.dark ?? darkTheme),
+      theme: themeForPlatform(themes.light ?? lightTheme),
+      darkTheme: themeForPlatform(themes.dark ?? darkTheme),
+      themeMode: themes.mode,
       debugShowCheckedModeBanner: false,
       builder: (context, child) => WindowFrame(
         child: MediaQuery(

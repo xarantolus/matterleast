@@ -17,6 +17,7 @@ import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/channel/message_hover.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/reading_places.dart';
+import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/empty_state.dart';
@@ -79,10 +80,6 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   DateTime? _leftBottomAt;
 
   static const _arrivalAnimation = Duration(milliseconds: 250);
-
-  /// Room between the newest message and the composer, which also holds
-  /// the typing line, and keeps the way back down off the newest message.
-  static const _bottomGap = Spacing.xxl + Spacing.lg;
 
   @override
   void initState() {
@@ -251,11 +248,13 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     final highlighted =
         _highlighted == row.key ||
         (row is MessageRow && row.post.id == _editing);
+    final gap = conversationBottomGap(context);
     final cached = _built[row.key];
     if (cached != null &&
         cached.row == row &&
         cached.highlighted == highlighted &&
         cached.newest == newest &&
+        cached.gap == gap &&
         cached.dividerBelow == dividerBelow) {
       return cached.widget;
     }
@@ -278,7 +277,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     }
     if (newest) {
       built = Padding(
-        padding: const EdgeInsets.only(bottom: _bottomGap),
+        padding: EdgeInsets.only(bottom: gap),
         child: built,
       );
     }
@@ -286,6 +285,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
       row: row,
       highlighted: highlighted,
       newest: newest,
+      gap: gap,
       dividerBelow: dividerBelow,
       widget: built,
     );
@@ -413,6 +413,7 @@ typedef _BuiltRow = ({
   ListRow row,
   bool highlighted,
   bool newest,
+  double gap,
   bool dividerBelow,
   Widget widget,
 });
