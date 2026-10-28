@@ -7,6 +7,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/screens/channel/composer_keys.dart';
 import 'package:matterleast/screens/channel_info/browse_channels_screen.dart';
 import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
@@ -31,7 +32,7 @@ typedef SearchTarget = ({String url, String teamId});
 /// The search icon of the app bar. It opens one full-screen view that finds
 /// channels, conversations and people on every signed-in server, and
 /// searches messages.
-class QuickSearchAnchor extends ConsumerWidget {
+class QuickSearchAnchor extends ConsumerStatefulWidget {
   const QuickSearchAnchor({
     required this.controller,
     required this.servers,
@@ -46,7 +47,17 @@ class QuickSearchAnchor extends ConsumerWidget {
   final SearchTarget? target;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => SearchAnchor(
+  ConsumerState<QuickSearchAnchor> createState() => _QuickSearchAnchorState();
+}
+
+class _QuickSearchAnchorState extends ConsumerState<QuickSearchAnchor> {
+  final _view = GlobalKey<QuickSearchViewState>();
+
+  SearchController get controller => widget.controller;
+  SearchTarget? get target => widget.target;
+
+  @override
+  Widget build(BuildContext context) => SearchAnchor(
     searchController: controller,
     isFullScreen: true,
     viewHintText: 'Find channels, people or messages',
@@ -56,10 +67,14 @@ class QuickSearchAnchor extends ConsumerWidget {
       onPressed: controller.openView,
     ),
     suggestionsBuilder: (_, _) => const <Widget>[],
-    viewOnSubmitted: (text) => _searchMessages(context, text),
+    viewOnSubmitted: (text) {
+      if (_view.currentState?.submit() ?? false) return;
+      _searchMessages(context, text);
+    },
     viewBuilder: (_) => QuickSearchView(
+      key: _view,
       controller: controller,
-      servers: servers,
+      servers: widget.servers,
       target: target,
       onOpen: (item) => _open(context, ref, item),
       onSearch: (text) => _searchMessages(context, text),
@@ -181,31 +196,76 @@ class QuickSearchView extends ConsumerStatefulWidget {
   final List<Widget> startActions;
 
   @override
-  ConsumerState<QuickSearchView> createState() => _QuickSearchViewState();
+  ConsumerState<QuickSearchView> createState() => QuickSearchViewState();
 }
 
-class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
+class QuickSearchViewState extends ConsumerState<QuickSearchView> {
   late String _term = widget.controller.text;
   late String _remoteTerm = _term;
   Timer? _debounce;
+
+  /// The matches shown for the term, as last built, and which row Return
+  /// picks: one of them, or the message search row after them.
+  List<SwitchItem> _shown = const [];
+  int _highlight = 0;
+  final _highlighted = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(_changed);
+    HardwareKeyboard.instance.addHandler(_onKey);
   }
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
     widget.controller.removeListener(_changed);
     _debounce?.cancel();
     super.dispose();
   }
 
+  int get _rowCount => _shown.length + (widget.target != null ? 1 : 0);
+
+  /// Acts on Return: opens the highlighted match and says true, or says
+  /// false so the term searches messages.
+  bool submit() {
+    if (_term.trim().isEmpty) return false;
+    final index = _highlight.clamp(0, _rowCount);
+    if (index >= _shown.length) return false;
+    widget.onOpen(_shown[index]);
+    return true;
+  }
+
+  bool _onKey(KeyEvent event) {
+    if (event is KeyUpEvent || _term.trim().isEmpty || _rowCount == 0) {
+      return false;
+    }
+    final step = switch (event.logicalKey) {
+      LogicalKeyboardKey.arrowDown => 1,
+      LogicalKeyboardKey.arrowUp => -1,
+      _ => 0,
+    };
+    if (step == 0) return false;
+    setState(() => _highlight = movedHighlight(_highlight, step, _rowCount));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final row = _highlighted.currentContext;
+      if (row != null && row.mounted) {
+        unawaited(
+          Scrollable.ensureVisible(row, alignmentPolicy: .keepVisibleAtEnd),
+        );
+      }
+    });
+    return true;
+  }
+
   void _changed() {
     final term = widget.controller.text;
     if (term == _term) return;
-    setState(() => _term = term);
+    setState(() {
+      _term = term;
+      _highlight = 0;
+    });
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
       if (mounted) setState(() => _remoteTerm = _term);
@@ -267,51 +327,64 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
       remote.addAll(answer.value ?? const []);
     }
     final extra = extraRemoteItems(term, local, remote);
+    final shown = _shown = [...local, ...extra];
+    final highlight = _highlight.clamp(0, _rowCount);
+    final scheme = Theme.of(context).colorScheme;
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Column(
       children: [
         ProgressSlot(active: searching),
         Expanded(
-          child: ListView(
-            padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
-            children: [
-              for (final item in [...local, ...extra])
-                SwitchTile(
-                  item: item,
-                  serverName: names[item.serverUrl],
-                  onTap: () => widget.onOpen(item),
-                ),
-              if (!searching &&
-                  (failedHost != null || (local.isEmpty && extra.isEmpty)))
-                Padding(
-                  padding: const EdgeInsets.all(Spacing.lg),
-                  child: Text(switch ((
-                    failedHost,
-                    local.isEmpty && extra.isEmpty,
-                  )) {
-                    (_?, true) when offline =>
-                      "You're offline, and nothing saved on this phone "
-                          'matches “$term”.',
-                    (_?, false) when offline =>
-                      "You're offline · showing saved matches",
-                    (final host?, true) =>
-                      "Couldn't search $host, and nothing saved on this "
-                          'phone matches “$term”.',
-                    (final host?, false) =>
-                      "Couldn't search $host · showing saved matches",
-                    _ => 'No channels or people match “$term”.',
-                  }, style: TextStyle(color: context.tokens.muted)),
-                ),
-              if (widget.target != null)
-                ListTile(
-                  leading: const SizedBox(
-                    width: 40,
-                    child: Icon(Icons.manage_search),
+          child: ListTileTheme(
+            data: ListTileThemeData(
+              selectedColor: scheme.onSecondaryContainer,
+              selectedTileColor: scheme.secondaryContainer,
+            ),
+            child: ListView(
+              padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
+              children: [
+                for (final (i, item) in shown.indexed)
+                  SwitchTile(
+                    key: i == highlight ? _highlighted : ValueKey(item.key),
+                    item: item,
+                    selected: i == highlight,
+                    serverName: names[item.serverUrl],
+                    onTap: () => widget.onOpen(item),
                   ),
-                  title: Text('Search messages for “$term”'),
-                  onTap: () => widget.onSearch(term),
-                ),
-            ],
+                if (!searching &&
+                    (failedHost != null || (local.isEmpty && extra.isEmpty)))
+                  Padding(
+                    padding: const EdgeInsets.all(Spacing.lg),
+                    child: Text(switch ((
+                      failedHost,
+                      local.isEmpty && extra.isEmpty,
+                    )) {
+                      (_?, true) when offline =>
+                        "You're offline, and nothing saved on this phone "
+                            'matches “$term”.',
+                      (_?, false) when offline =>
+                        "You're offline · showing saved matches",
+                      (final host?, true) =>
+                        "Couldn't search $host, and nothing saved on this "
+                            'phone matches “$term”.',
+                      (final host?, false) =>
+                        "Couldn't search $host · showing saved matches",
+                      _ => 'No channels or people match “$term”.',
+                    }, style: TextStyle(color: context.tokens.muted)),
+                  ),
+                if (widget.target != null)
+                  ListTile(
+                    key: highlight == shown.length ? _highlighted : null,
+                    selected: highlight == shown.length,
+                    leading: const SizedBox(
+                      width: 40,
+                      child: Icon(Icons.manage_search),
+                    ),
+                    title: Text('Search messages for “$term”'),
+                    onTap: () => widget.onSearch(term),
+                  ),
+              ],
+            ),
           ),
         ),
       ],
@@ -399,11 +472,15 @@ class SwitchTile extends StatelessWidget {
     this.serverName,
     this.trailing,
     this.markKind = true,
+    this.selected = false,
     super.key,
   });
 
   final SwitchItem item;
   final VoidCallback onTap;
+
+  /// The row Return would open.
+  final bool selected;
 
   /// Says "Not joined" or "Archived" on such channels; pointless in a list
   /// of nothing else.
@@ -432,10 +509,12 @@ class SwitchTile extends StatelessWidget {
         pictureUpdate: item.pictureUpdate,
         status: item.status,
         trailing: trailing,
+        selected: selected,
         onTap: onTap,
       );
     }
     return ListTile(
+      selected: selected,
       onTap: onTap,
       leading: SizedBox.square(dimension: 40, child: _leading(context)),
       title: Row(
