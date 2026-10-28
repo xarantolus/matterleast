@@ -356,7 +356,16 @@ void main() {
       await finish(tester);
     });
 
-    Future<void> dropOnPane(WidgetTester tester, List<String> paths) async {
+    ComposerValue attached(WidgetTester tester) =>
+        ProviderScope.containerOf(tester.element(find.byType(TextField)))
+            .read(composerDraftProvider(server.url.toString(), channelId, ''));
+
+    /// Drops [paths] on the conversation and waits until every upload has
+    /// ended; the snack bar messages shown meanwhile.
+    Future<Set<String>> dropOnPane(
+      WidgetTester tester,
+      List<String> paths,
+    ) async {
       const codec = StandardMethodCodec();
       Future<void> send(String method, Object? args) async {
         await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
@@ -372,7 +381,24 @@ void main() {
         paths.map((p) => Uri.file(p).toString()).join('\n'),
         [100.0, 100.0],
       ]);
-      await settle(tester);
+      // A drop reads each file and uploads it to the fake server over real
+      // I/O, which takes as long as the machine is busy; checking or closing
+      // the server before every upload has ended fails at random.
+      final notices = <String>{};
+      for (var i = 0; i < 300; i++) {
+        for (final bar in tester.widgetList<SnackBar>(find.byType(SnackBar))) {
+          notices.add((bar.content as Text).data!);
+        }
+        final attachments = attached(tester).attachments;
+        if (attachments.isNotEmpty && !attachments.any((a) => a.uploading)) {
+          return notices;
+        }
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      fail('The dropped files did not finish uploading');
     }
 
     Future<List<String>> makeFiles(WidgetTester tester, int count) async {
@@ -398,15 +424,9 @@ void main() {
 
     testWidgets('a drop stops at ten files and says so', (tester) async {
       await start(tester);
-      await dropOnPane(tester, await makeFiles(tester, 12));
-      final attached = ProviderScope.containerOf(
-        tester.element(find.byType(TextField)),
-      ).read(composerDraftProvider(server.url.toString(), channelId, ''));
-      expect(attached.attachments, hasLength(maxAttachments));
-      expect(
-        find.text('A message can carry $maxAttachments files at most.'),
-        findsOneWidget,
-      );
+      final notices = await dropOnPane(tester, await makeFiles(tester, 12));
+      expect(attached(tester).attachments, hasLength(maxAttachments));
+      expect(notices, {'A message can carry $maxAttachments files at most.'});
       await finish(tester);
     });
 
