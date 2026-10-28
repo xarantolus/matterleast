@@ -39,6 +39,7 @@ class ServerSession {
     required this.images,
     required String? Function() token,
     Duration Function(int failCount) retryDelayOf = jitteredRetryDelay,
+    Duration catchUpLimit = const Duration(seconds: 20),
     this.network,
   }) : store = ServerStore(db) {
     users = UserLoader(server: api, store: store);
@@ -50,6 +51,7 @@ class ServerSession {
       users: users,
       token: token,
       retryDelayOf: retryDelayOf,
+      catchUpLimit: catchUpLimit,
       online: network?.online,
     );
     outbox = OutboxSender(

@@ -98,6 +98,34 @@ void main() {
     expect(server.paths, isNot(contains('/api/v4/users/me')));
   });
 
+  test('a refresh that never answers does not keep the app catching up '
+      'forever', () async {
+    final server = await FakeServer.start();
+    server.acceptSockets = true;
+    server.handle = (_) => Completer<Reply?>().future;
+    final session = await testSession(
+      server,
+      catchUpLimit: const Duration(milliseconds: 300),
+    );
+    addTearDown(() async {
+      await closeTestSession(session);
+      await server.close();
+    });
+    final catchingUp = session.connection.catchingUp;
+    session.connection.foreground();
+    await eventually(() => catchingUp.value);
+    await eventually(() => session.connection.live.value);
+    // The socket resumes with lost events and the refresh hangs.
+    server.sendToSockets({
+      'event': 'hello',
+      'data': {'connection_id': 'c1'},
+      'broadcast': <String, Object?>{},
+      'seq': 0,
+    });
+    await eventually(() => server.paths.contains('/api/v4/users/me'));
+    await eventually(() => !catchingUp.value);
+  });
+
   group('two servers, one goes away', () {
     late FakeServer harbour;
     late FakeServer lighthouse;
