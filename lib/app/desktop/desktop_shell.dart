@@ -30,8 +30,7 @@ const trayStatuses = [
 ];
 
 /// The desktop window and its tray icon. The window opens where it was
-/// left; closing it hides it to the tray, or minimises it where there is no
-/// tray; the tray's menu brings it back or quits.
+/// left; closing it hides it to the tray, or quits where there is no tray; the tray's menu brings it back or quits.
 class DesktopShell with WindowListener {
   DesktopShell._(this._settings, this._host, this._placement, this._setStatus);
 
@@ -90,11 +89,11 @@ class DesktopShell with WindowListener {
         .watch(Settings.closeToTray)
         .listen((on) => shell._closeToTray = on);
     shell
-      .._showTray()
+      ..showTray()
       // An icon registers with the panel that runs when it is made, so a
       // panel started later needs a new one.
       .._hostChanges = shell._host.changes.listen((present) {
-        if (present) shell._showTray();
+        if (present) shell.showTray();
       });
     await windowManager.show();
     await windowManager.focus();
@@ -113,7 +112,28 @@ class DesktopShell with WindowListener {
     }
   }
 
-  void _showTray() {
+  Future<void> _showing = Future.value();
+
+  /// Makes the tray icon, one at a time. Where the panel doesn't take it
+  /// because another app already holds its name, the next icon gets a new
+  /// one; without any, there is no tray and closing quits.
+  void showTray() => _showing = _showing.then((_) => _makeTray());
+
+  Future<void> _makeTray() async {
+    for (var attempt = 0; attempt < _trayAttempts; attempt++) {
+      final taken = _host.expectItem();
+      _showOneTray();
+      if (_tray == null || await taken) return;
+      Log.warn('desktop', 'The panel did not take the tray icon');
+    }
+    _tray?.dispose();
+    _tray = null;
+    _menu.clear();
+  }
+
+  static const _trayAttempts = 4;
+
+  void _showOneTray() {
     _tray?.dispose();
     _tray = null;
     _menu.clear();
@@ -267,7 +287,6 @@ class DesktopShell with WindowListener {
     );
     unawaited(switch (action) {
       CloseAction.hide => windowManager.hide(),
-      CloseAction.minimize => windowManager.minimize(),
       CloseAction.quit => quit(),
     });
   }

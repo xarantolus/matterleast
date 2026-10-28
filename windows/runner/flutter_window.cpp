@@ -75,6 +75,19 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // The Restart Manager (the installer's "close the app") and a shutdown end
+  // the session with these. Closing the window only hides it to the tray, so
+  // leave for real here, before a plugin can turn it into a hide.
+  switch (message) {
+    case WM_QUERYENDSESSION:
+      return TRUE;
+    case WM_ENDSESSION:
+      if (wparam) {
+        ::DestroyWindow(hwnd);
+      }
+      return 0;
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =

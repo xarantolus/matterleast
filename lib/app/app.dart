@@ -8,6 +8,7 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/app/theme_providers.dart';
+import 'package:matterleast/app/touchpad_navigation.dart';
 import 'package:matterleast/app/ui_zoom.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
@@ -45,7 +46,11 @@ class MatterleastApp extends ConsumerWidget {
               child: KeyboardFocusRings(
                 child: AppShortcuts(
                   child: MouseNavigation(
-                    child: isDesktop ? MiddleAutoscroll(child: child!) : child!,
+                    child: TouchpadNavigation(
+                      child: isDesktop
+                          ? MiddleAutoscroll(child: child!)
+                          : child!,
+                    ),
                   ),
                 ),
               ),
