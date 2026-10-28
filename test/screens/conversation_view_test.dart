@@ -381,6 +381,56 @@ void main() {
       await close(tester);
     }, variant: desktop);
 
+    testWidgets('the keyboard reaches a message and its toolbar; Esc leaves '
+        'it, and other rows stay as they are', (tester) async {
+      await open(tester);
+      expect(find.byTooltip('More actions'), findsNothing);
+      final rebuilt = <String>[];
+      debugOnRebuildDirtyWidget = (element, _) {
+        switch (element.widget) {
+          case PostTile(:final post):
+            rebuilt.add('tile ${post.message}');
+          case MessageHover(:final target):
+            rebuilt.add(target.post.message);
+        }
+      };
+      addTearDown(() => debugOnRebuildDirtyWidget = null);
+      final row = tester.widget<Focus>(
+        find.descendant(
+          of: rowOf('message 57'),
+          matching: find.byWidgetPredicate(
+            (w) => w is Focus && w.focusNode?.debugLabel == 'Message',
+          ),
+        ),
+      );
+      row.focusNode!.requestFocus();
+      await tester.pump();
+      await tester.pump();
+      debugOnRebuildDirtyWidget = null;
+      expect(find.byTooltip('More actions'), findsOneWidget);
+      expect(rebuilt.where((r) => r.startsWith('tile')), isEmpty);
+      expect(rebuilt.toSet(), {'message 57'});
+
+      bool inToolbar() =>
+          FocusManager.instance.primaryFocus?.context
+              ?.findAncestorWidgetOfExactType<MessageToolbar>() !=
+          null;
+      for (var i = 0; i < 6 && !inToolbar(); i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        await tester.pump();
+      }
+      expect(inToolbar(), isTrue);
+      expect(find.byTooltip('More actions'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byTooltip('More actions'), findsNothing);
+      expect(row.focusNode!.hasFocus, isFalse);
+      await close(tester);
+    }, variant: desktop);
+
     testWidgets('a right click on a message opens its menu at the pointer', (
       tester,
     ) async {
