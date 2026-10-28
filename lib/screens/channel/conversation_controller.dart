@@ -7,6 +7,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
+import 'package:matterleast/domain/conversation_read.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/log.dart';
@@ -76,10 +77,35 @@ class Conversation extends _$Conversation {
   /// background; they are read once it has the focus again.
   var _unseen = false;
 
+  /// Whether the newest message is in view; unknown until a list reports.
+  bool? _atNewest;
+
+  /// Something new arrived since the last mark.
+  var _pendingRead = true;
+  var _markedOnce = false;
+
   void _focusChanged() {
     if (!_unseen || _session == null || !appInFront()) return;
     _unseen = false;
-    unawaited(_markRead(seen: true));
+    _pendingRead = true;
+    _maybeMarkRead();
+  }
+
+  /// Reads the conversation once the newest message can be seen; the first
+  /// mark of a visit also clears a "marked unread".
+  void _maybeMarkRead() {
+    if (!shouldMarkRead(
+      atNewest: _atNewest ?? true,
+      inFront: appInFront(),
+      pending: _pendingRead,
+      ready: _session != null && !state.refreshing,
+    )) {
+      return;
+    }
+    _pendingRead = false;
+    final first = !_markedOnce;
+    _markedOnce = true;
+    unawaited(_markRead(seen: !first));
   }
 
   Future<void> _start() async {
@@ -107,7 +133,6 @@ class Conversation extends _$Conversation {
     _caughtUp = session.connection.caughtUp.listen(
       (_) => unawaited(_catchUp()),
     );
-    await _markRead();
     unawaited(_refresh());
     if (!_isThread) {
       unawaited(
@@ -170,8 +195,9 @@ class Conversation extends _$Conversation {
       rows: _rows(window),
     );
     if (fromOthers) {
+      _pendingRead = true;
       if (appInFront()) {
-        unawaited(_markRead(seen: true));
+        _maybeMarkRead();
       } else {
         _unseen = true;
       }
@@ -257,7 +283,11 @@ class Conversation extends _$Conversation {
         await _actions!.refreshChannel(channelId, owner: this);
       }
       _fetched();
-      if (ref.mounted) state = state.copyWith(refreshing: false);
+      if (ref.mounted) {
+        state = state.copyWith(refreshing: false);
+        _pendingRead = true;
+        _maybeMarkRead();
+      }
     } on Object catch (e) {
       if (ref.mounted) {
         state = state.copyWith(
@@ -302,19 +332,20 @@ class Conversation extends _$Conversation {
   Future<void> retry() => _refresh();
 
   /// After a reconnect that may have missed events: fetch what came since
-  /// the newest stored message, as on opening, and mark it read when seen.
+  /// the newest stored message, as on opening.
   Future<void> _catchUp() async {
     if (!ref.mounted || state.refreshing) return;
     await _refresh();
     if (!ref.mounted || state.refreshFailure != null) return;
-    if (appInFront()) await _markRead(seen: true);
   }
 
   /// Follows the reader: more of the stored window, then older pages, near
   /// the top; newer pages near the bottom of an older stretch.
   void onView(AnchoredListView view) {
     final window = state.window;
+    _atNewest = view.pinned && !(window?.newerApart ?? false);
     if (window == null || _actions == null) return;
+    _maybeMarkRead();
     if (view.nearOlderEnd) {
       if (window.moreStored) {
         if (!_growing && window.posts.length >= _limit) {

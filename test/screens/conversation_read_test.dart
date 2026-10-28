@@ -10,6 +10,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
+import 'package:matterleast/ui/anchored_list.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
@@ -107,6 +108,87 @@ void main() {
       await open(rootId: 'root1');
       expect(readAsked(), isTrue);
     });
+  });
+
+  group('reading follows what the reader can see', () {
+    const view = '/api/v4/channels/members/me/view';
+    const posts = '/api/v4/channels/$channelId/posts';
+    final atBottom = const AnchoredListView(
+      pinned: true,
+      nearOlderEnd: false,
+      newestVisible: 0,
+      oldestVisible: 5,
+    );
+    final scrolledUp = const AnchoredListView(
+      pinned: false,
+      nearOlderEnd: false,
+      newestVisible: 8,
+      oldestVisible: 12,
+    );
+
+    int views() => requests(view);
+
+    Future<void> postFromSomeone(int n) async {
+      await session.connection.events.add(
+        decodeEvent(
+          SocketFrame.fromJson({
+            'event': 'posted',
+            'data': {'post': jsonEncode(postJson('q$n', 20 + n))},
+            'broadcast': {'channel_id': channelId},
+            'seq': 1,
+          }),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    }
+
+    test(
+      'what the opening refresh fetches is read after it, not before',
+      () async {
+        server.handle = (r) {
+          if (r.path == posts) {
+            return ok({
+              'order': ['fresh1'],
+              'posts': {'fresh1': postJson('fresh1', 30)},
+            });
+          }
+          return ok({'status': 'OK'});
+        };
+        await open();
+        await eventually(() => views() == 1);
+        final order = server.paths.toList();
+        expect(order.indexOf(view), greaterThan(order.indexOf(posts)));
+      },
+    );
+
+    test('a reader scrolled up leaves new messages unread until they reach '
+        'the newest one', () async {
+      final provider = conversationProvider(server.url.toString(), channelId);
+      container.listen(provider, (_, _) {});
+      container.read(provider.notifier).onView(scrolledUp);
+      await eventually(() {
+        final s = container.read(provider);
+        return s.window != null && !s.refreshing;
+      });
+      await postFromSomeone(1);
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(views(), 0);
+
+      container.read(provider.notifier).onView(atBottom);
+      await eventually(() => views() == 1);
+    });
+
+    test(
+      'a message arriving while the reader is at the bottom is read',
+      () async {
+        await open();
+        final provider = conversationProvider(server.url.toString(), channelId);
+        container.read(provider.notifier).onView(atBottom);
+        await eventually(() => views() == 1);
+        await postFromSomeone(2);
+        await eventually(() => views() == 2);
+      },
+    );
   });
 
   group('an open channel', () {
