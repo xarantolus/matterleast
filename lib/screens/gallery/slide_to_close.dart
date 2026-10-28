@@ -1,3 +1,6 @@
+import 'package:extended_image/extended_image.dart';
+import 'package:flutter/gestures.dart';
+
 /// Pure: whether sliding a gallery picture or video by [offset] (logical
 /// pixels, down positive) and letting go at [velocity] (pixels per second)
 /// closes the gallery. A tenth of the [height] is enough, and so is a quick
@@ -15,3 +18,14 @@ bool slideCloses({
 /// The speed of a let-go slide that closes the gallery, in logical pixels
 /// per second.
 const slideFlingVelocity = 700.0;
+
+/// [slideCloses] as the gallery's slide page asks it.
+bool slideEndCloses(
+  Offset offset, {
+  ExtendedImageSlidePageState? state,
+  ScaleEndDetails? details,
+}) => slideCloses(
+  offset: offset.dy,
+  velocity: details?.velocity.pixelsPerSecond.dy ?? 0,
+  height: state?.pageSize.height ?? 0,
+);

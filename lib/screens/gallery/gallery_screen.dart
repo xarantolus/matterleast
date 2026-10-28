@@ -108,16 +108,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               context,
               const Duration(milliseconds: 250),
             ),
-            slideEndHandler:
-                (
-                  offset, {
-                  ExtendedImageSlidePageState? state,
-                  ScaleEndDetails? details,
-                }) => slideCloses(
-                  offset: offset.dy,
-                  velocity: details?.velocity.pixelsPerSecond.dy ?? 0,
-                  height: MediaQuery.sizeOf(context).height,
-                ),
+            slideEndHandler: slideEndCloses,
             slidePageBackgroundHandler: (offset, size) =>
                 Colors.black.withValues(
                   alpha: (1 - offset.dy.abs() / (size.height / 2)).clamp(0, 1),

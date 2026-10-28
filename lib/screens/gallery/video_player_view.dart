@@ -185,10 +185,15 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
+                    // A slide may start on the button too.
                     Center(
-                      child: _PlayButton(
-                        playing: _playing,
-                        onPressed: _playPause,
+                      child: GestureDetector(
+                        onVerticalDragUpdate: _slide,
+                        onVerticalDragEnd: _endSlide,
+                        child: _PlayButton(
+                          playing: _playing,
+                          onPressed: _playPause,
+                        ),
                       ),
                     ),
                     // Positioned, so the slider gets its own height
