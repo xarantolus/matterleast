@@ -1,5 +1,5 @@
 # Matterleast
-Matterleast is an unofficial Android client for [Mattermost](https://mattermost.com) servers that tries have a feel closer to Discord.
+Matterleast is an unofficial Android, Windows and Linux client for [Mattermost](https://mattermost.com) servers that tries have a feel closer to Discord.
 
 ### Features
 - Discord-style feel and navigation: you can swipe between chats, swipe on messages to react/reply etc.
@@ -68,7 +68,8 @@ There is also a dev container with Flutter, the Android SDK, an emulator and a l
 ### Limitations
 - Calls, Playbooks and Boards are not supported, nor are Apps framework forms and message translation.
 - Notifications don't go through Mattermost's push proxy, so new messages arrive when the app checks (about every 15 minutes) unless "Stay connected" is on.
-- Android only; there is no iOS or desktop version. These are however possible to support in the future, as this is a Flutter app.
+- No iOS or macOS version.
+- The Windows installer and the Linux Flatpak are unsigned and don't update themselves; the app says when a new release is out.
 - Features that need a server setting, a plugin or a licence only show up when your server offers them.
 
 ### License
