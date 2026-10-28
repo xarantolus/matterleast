@@ -13,14 +13,24 @@ const _brandLight = Color(0xFF00695C);
 /// brand against a dark page while white stays at 5.2:1.
 const _brandDark = Color(0xFF00796B);
 
-/// The bundled typeface; emoji fall back to the system's emoji font.
+/// The bundled typeface; emoji fall back to the system's emoji font, except
+/// on Linux where the system's is unreliable.
 const appFont = 'Rubik';
 
-/// Rubik's licence on the app's licence page.
+const emojiFont = 'Noto Color Emoji';
+
+/// Linux has no dependable system emoji font, so it carries its own.
+List<String>? emojiFallback(TargetPlatform platform) =>
+    platform == TargetPlatform.linux ? const [emojiFont] : null;
+
+/// The fonts' licences on the app's licence page.
 void registerFontLicence() => LicenseRegistry.addLicense(() async* {
   yield LicenseEntryWithLineBreaks(const [
     appFont,
   ], await rootBundle.loadString('assets/fonts/Rubik-OFL.txt'));
+  yield LicenseEntryWithLineBreaks(const [
+    emojiFont,
+  ], await rootBundle.loadString('assets/fonts/NotoColorEmoji-OFL.txt'));
 });
 
 ThemeData buildTheme(Brightness brightness) {
@@ -228,8 +238,17 @@ ThemeData _build({
 }
 
 /// [theme] as it is on a phone, at desktop sizes on desktop.
-ThemeData themeForPlatform(ThemeData theme) =>
-    isDesktop ? desktopTheme(theme) : theme;
+ThemeData themeForPlatform(ThemeData theme) {
+  final styled = isDesktop ? desktopTheme(theme) : theme;
+  final fallback = emojiFallback(defaultTargetPlatform);
+  if (fallback == null) return styled;
+  return styled.copyWith(
+    textTheme: styled.textTheme.apply(fontFamilyFallback: fallback),
+    primaryTextTheme: styled.primaryTextTheme.apply(
+      fontFamilyFallback: fallback,
+    ),
+  );
+}
 
 /// [theme] at mouse and keyboard sizes for a desktop window, near Discord's
 /// and the Mattermost desktop app's at 100 %: 14 px text, 36 to 44 px list rows,
