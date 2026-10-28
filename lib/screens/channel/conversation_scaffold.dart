@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/domain/channel_info.dart';
 import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/screens/channel/composer.dart';
@@ -81,20 +82,19 @@ class ConversationScaffold extends ConsumerWidget {
       channelId: channelId,
       teamId: window?.teamId ?? '',
     );
+    final info = ref.watch(channelInfoProvider(url, channelId)).value;
     return Actions(
       actions: {
         SearchChannelIntent: EnabledAction<SearchChannelIntent>(
-          enabled: () => window != null,
-          onInvoke: () => unawaited(_searchHere(context, ref)),
+          enabled: () => info != null,
+          onInvoke: () => unawaited(_searchHere(context, info!)),
         ),
       },
       child: _scaffold(context, ref, state),
     );
   }
 
-  Future<void> _searchHere(BuildContext context, WidgetRef ref) async {
-    final info = await ref.read(channelInfoProvider(url, channelId).future);
-    if (info == null || !context.mounted) return;
+  Future<void> _searchHere(BuildContext context, ChannelInfo info) async {
     await Navigator.of(context).push(
       SlideRoute<void>(
         builder: (_) => SearchResultsScreen(
