@@ -1,0 +1,58 @@
+# Packs the bundle `flutter build linux --release` made into a Flatpak; it
+# builds nothing from source. From the repository root:
+#   flatpak-builder --user --force-clean --repo=build/flatpak/repo \
+#     build/flatpak/app linux/flatpak/io.github.xarantolus.matterleast.yml
+#   flatpak build-bundle build/flatpak/repo matterleast.flatpak \
+#     io.github.xarantolus.matterleast --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+app-id: io.github.xarantolus.matterleast
+# GTK 3, WebKitGTK 4.1 and libsecret come with the runtime. Its glibc must
+# not be older than the one the bundle was built against.
+runtime: org.gnome.Platform
+runtime-version: '51'
+sdk: org.gnome.Sdk
+command: matterleast
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # The tray icon: the plugin speaks StatusNotifierItem itself, under the
+  # name org.kde.StatusNotifierItem-<pid>-<n>; without a watcher it falls
+  # back to minimising.
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --own-name=org.kde.*
+  # flutter_local_notifications talks to the notification server directly,
+  # not through the portal.
+  - --talk-name=org.freedesktop.Notifications
+  # libsecret uses the Secret portal where the desktop offers one and the
+  # keyring itself where it doesn't (KWallet, older GNOME).
+  - --talk-name=org.freedesktop.secrets
+  # connectivity_plus asks NetworkManager whether there is a network.
+  - --system-talk-name=org.freedesktop.NetworkManager
+  # The unread count on the dock icon is a broadcast signal (Unity
+  # LauncherEntry), which needs no permission.
+modules:
+  - name: matterleast
+    buildsystem: simple
+    # Flutter's build is already a release build; there is nothing to split.
+    build-options:
+      no-debuginfo: true
+      strip: false
+    build-commands:
+      - cp -a bundle /app/matterleast
+      - mkdir -p /app/bin
+      - ln -s /app/matterleast/matterleast /app/bin/matterleast
+      - install -Dm644 -t /app/share/applications io.github.xarantolus.matterleast.desktop
+      - install -Dm644 -t /app/share/icons/hicolor/256x256/apps io.github.xarantolus.matterleast.png
+      - install -Dm644 -t /app/share/metainfo io.github.xarantolus.matterleast.metainfo.xml
+    sources:
+      - type: dir
+        path: ../../build/linux/x64/release/bundle
+        dest: bundle
+      - type: file
+        path: io.github.xarantolus.matterleast.desktop
+      - type: file
+        path: io.github.xarantolus.matterleast.png
+      - type: file
+        path: io.github.xarantolus.matterleast.metainfo.xml

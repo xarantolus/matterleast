@@ -25,6 +25,8 @@
 .pub-cache/
 .pub/
 /build/
+# flatpak-builder state (linux/flatpak)
+/.flatpak-builder/
 /coverage/
 
 # Symbolication related
