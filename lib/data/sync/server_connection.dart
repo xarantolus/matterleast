@@ -246,6 +246,8 @@ class ServerConnection {
         .run(quiet: quiet)
         .then((_) {
           _caughtUpNow();
+          // Direct messages it stored may name people not polled yet.
+          presence.refresh();
           if (!_caughtUp.isClosed) _caughtUp.add(null);
           return inbox.refresh(force: true, quiet: quiet);
         })

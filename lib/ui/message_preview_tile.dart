@@ -51,6 +51,9 @@ class MessagePreviewTile extends ConsumerWidget {
     final presenceKnown =
         partner != null &&
         ref.watch(presenceKnownProvider(item.serverUrl, partner));
+    final custom = partner == null
+        ? null
+        : ref.watch(activeCustomStatusProvider(item.serverUrl, partner));
     final tile = ListTile(
       contentPadding: Spacing.row,
       onTap: onTap,
@@ -93,12 +96,14 @@ class MessagePreviewTile extends ConsumerWidget {
                     text: item.title,
                     style: TextStyle(fontWeight: strong),
                   ),
-                  if (partner != null)
+                  // Only with an emoji: an empty span would split the
+                  // row's words for a screen reader.
+                  if (custom != null && custom.emoji.isNotEmpty)
                     WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
-                      child: CustomStatusEmoji(
+                      child: CustomStatusGlyph(
                         serverUrl: item.serverUrl,
-                        userId: partner,
+                        status: custom,
                       ),
                     ),
                   if (detail.isNotEmpty)
