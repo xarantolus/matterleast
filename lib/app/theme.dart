@@ -194,7 +194,8 @@ ThemeData themeForPlatform(ThemeData theme) =>
 
 /// [theme] at mouse and keyboard sizes for a desktop window, near Discord's
 /// and the Mattermost desktop app's at 100 %: 14 px text, 36 to 44 px list rows,
-/// 48 px app bars and 32 px icon buttons. Phones keep [theme] as it is.
+/// 48 px app bars and 32 px icon buttons, and no ripples. Phones keep
+/// [theme] as it is.
 ThemeData desktopTheme(ThemeData theme) {
   final text = theme.textTheme;
   final colours = theme.colorScheme;
@@ -207,6 +208,9 @@ ThemeData desktopTheme(ThemeData theme) {
     bodyLarge: sized(text.bodyLarge, 14),
   );
   return theme.copyWith(
+    // A click tints what it presses, hovers and focuses; ripples are for
+    // fingers.
+    splashFactory: NoSplash.splashFactory,
     visualDensity: VisualDensity.compact,
     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     textTheme: textTheme,

@@ -33,13 +33,19 @@ void main() {
 
   final start = DateTime.utc(2026, 10, 26, 8);
   const linkRow = 50;
+  const codeRow = 53;
+  const code = 'ebb `low water` chart\n\n```\nhigh water\n```\n\nmessage end';
   const link = 'https://example.test/tide';
   Map<String, Object?> post(int i) => {
     'id': 'n$i',
     'channel_id': channelId,
     'user_id': 'someone',
     'create_at': start.add(Duration(minutes: i)).millisecondsSinceEpoch,
-    'message': i == linkRow ? 'tide table at $link' : 'message $i',
+    'message': switch (i) {
+      linkRow => 'tide table at $link',
+      codeRow => code,
+      _ => 'message $i',
+    },
   };
 
   Future<void> open(WidgetTester tester, {int count = 60}) async {
@@ -353,6 +359,41 @@ void main() {
       await close(tester);
     }, variant: desktop);
 
+    testWidgets('the hover tint fades in a moment after the pointer', (
+      tester,
+    ) async {
+      await open(tester);
+      double tint() {
+        final box = tester.widget<DecoratedBox>(
+          find
+              .descendant(
+                of: rowOf('message 57'),
+                matching: find.byWidgetPredicate(
+                  (w) =>
+                      w is DecoratedBox &&
+                      w.position == DecorationPosition.foreground,
+                ),
+              )
+              .first,
+        );
+        return switch (box.decoration) {
+          BoxDecoration(:final color) => color?.a ?? 0,
+          _ => 0,
+        };
+      }
+
+      final full = Theme.of(tester.element(rowOf('message 57'))).hoverColor.a;
+      await mouseAt(tester, tester.getCenter(find.text('message 57')));
+      await tester.pump();
+      expect(tint(), 0);
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(tint(), greaterThan(0));
+      expect(tint(), lessThan(full / 2));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tint(), closeTo(full, 0.001));
+      await close(tester);
+    }, variant: desktop);
+
     testWidgets('moving over the list rebuilds only the rows the mouse '
         'enters and leaves', (tester) async {
       await open(tester);
@@ -472,6 +513,57 @@ void main() {
       await settle(tester);
 
       expect(find.text('Copy selection'), findsOneWidget);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('a selection across a message takes in its code', (
+      tester,
+    ) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      await open(tester);
+      final from = tester.getTopLeft(find.textContaining('ebb'));
+      final to = tester.getBottomRight(find.text('message end'));
+      final drag = await tester.startGesture(
+        from + const Offset(1, 2),
+        kind: PointerDeviceKind.mouse,
+      );
+      await drag.moveTo(from + const Offset(40, 20));
+      await drag.moveTo(to - const Offset(1, 2));
+      await drag.up();
+      await settle(tester);
+      await tester.tapAt(
+        to - const Offset(10, 4),
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await settle(tester);
+      await tester.tap(find.text('Copy selection'));
+      await settle(tester);
+
+      // The selection is drawn under the text; inline code must not cover
+      // it.
+      Color? codeShade;
+      tester.widget<Text>(find.textContaining('ebb')).textSpan!.visitChildren((
+        span,
+      ) {
+        if (span case TextSpan(text: 'low water', :final style?)) {
+          codeShade = style.backgroundColor;
+        }
+        return true;
+      });
+      expect(codeShade!.a, lessThan(1));
+      expect(copied, contains('low water'));
+      expect(copied, contains('high water'));
+      expect(copied, contains('message end'));
       await close(tester);
     }, variant: desktop);
 

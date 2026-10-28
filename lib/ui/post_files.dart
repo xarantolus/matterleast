@@ -18,6 +18,7 @@ import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/file_icon.dart';
+import 'package:matterleast/ui/hover_tint.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -270,6 +271,7 @@ class _MediaTile extends StatelessWidget {
                   child: InkWell(
                     onTap: onTap,
                     splashColor: scheme.primary.withValues(alpha: 0.2),
+                    hoverColor: pictureHoverTint,
                   ),
                 ),
               ],

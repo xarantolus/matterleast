@@ -65,6 +65,10 @@ void main() {
   testWidgets('the shortcut list shows every shortcut with its keys', (
     tester,
   ) async {
+    // Tall enough for the whole list.
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
         builder: (_, child) => AppShortcuts(child: child!),

@@ -8,6 +8,7 @@ import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// A message with a mouse: tinted while the pointer is over it, with a
@@ -141,11 +142,23 @@ class _MessageHoverState extends State<MessageHover> {
       onExit: (_) => _pointer(row: false),
       child: GestureDetector(
         onSecondaryTapUp: (d) => _menuAt(d.globalPosition),
-        child: DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            color: _hovered ? Theme.of(context).hoverColor : null,
-          ),
+        // The tint follows the pointer a moment behind, as in a browser.
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: _hovered ? 1 : 0),
+          duration: motion(context, hoverFade),
+          curve: Curves.easeIn,
+          builder: (context, shown, child) {
+            final tint = Theme.of(context).hoverColor;
+            return DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: BoxDecoration(
+                color: shown == 0
+                    ? null
+                    : tint.withValues(alpha: tint.a * shown),
+              ),
+              child: child,
+            );
+          },
           child: FocusTraversalOrder(
             order: const NumericFocusOrder(2),
             child: widget.child,
@@ -157,6 +170,9 @@ class _MessageHoverState extends State<MessageHover> {
 }
 
 const _toolbarOverlap = 16.0;
+
+/// How long a message's hover tint takes to come and go.
+const hoverFade = Duration(milliseconds: 100);
 
 /// Quick reaction, add reaction, reply and the full menu, taken from the
 /// message's actions. [onRun] runs a pick where it outlives the toolbar;
@@ -238,8 +254,11 @@ class MessageToolbar extends ConsumerWidget {
                 visualDensity: density,
                 tooltip: 'More actions',
                 onPressed: () {
-                  final box = button.findRenderObject()! as RenderBox;
-                  onMore(box.localToGlobal(box.size.bottomLeft(Offset.zero)));
+                  // The menu opens below the button, its right edge under
+                  // the button's, so it stays over the message.
+                  if (globalRectOf(button) case final rect?) {
+                    onMore(rect.bottomRight);
+                  }
                 },
                 icon: const Icon(Icons.more_horiz, size: 20),
               ),

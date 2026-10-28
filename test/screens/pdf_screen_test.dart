@@ -111,6 +111,56 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('in a wide window the page opens at a reading width, centred, '
+      'and stays centred until zoomed in', (tester) async {
+    tester.view.physicalSize = const Size(1600, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await show(tester, 'guide.pdf');
+    await waitFor(tester, find.byTooltip('Search'));
+    final controller = tester
+        .widget<PdfViewer>(find.byType(PdfViewer))
+        .controller!;
+    await tester.pump(const Duration(milliseconds: 300));
+    double pageWidth() =>
+        controller.documentSize.width * controller.currentZoom;
+    double offCentre() =>
+        controller.visibleRect.center.dx - controller.documentSize.width / 2;
+
+    expect(pageWidth(), closeTo(pdfReadingWidth, 2));
+    expect(offCentre(), closeTo(0, 0.5));
+
+    final viewer = tester.getCenter(find.byType(PdfViewer));
+    await tester.dragFrom(viewer, const Offset(300, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(offCentre(), closeTo(0, 0.5));
+    await tester.dragFrom(viewer, const Offset(-300, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(offCentre(), closeTo(0, 0.5));
+
+    // Zoomed in, the page pans to either edge.
+    await controller.setZoom(
+      controller.centerPosition,
+      controller.currentZoom * 3,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.dragFrom(viewer, const Offset(2000, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(controller.visibleRect.left, closeTo(0, 1));
+    await tester.dragFrom(viewer, const Offset(-4000, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+      controller.visibleRect.right,
+      closeTo(controller.documentSize.width, 1),
+    );
+    await close(tester);
+  });
+
+  test('a page is fitted to the width, up to a reading width', () {
+    expect(readingZoom(fitWidth: 0.6, viewWidth: 400), 0.6);
+    expect(readingZoom(fitWidth: 2, viewWidth: 1920), 2 * 960 / 1920);
+  });
+
   test('the match count reads like a sentence', () {
     String text(String query, int matches, int? current, bool searching) =>
         matchCountText(

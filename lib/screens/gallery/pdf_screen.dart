@@ -112,9 +112,9 @@ class _PdfScreenState extends State<PdfScreen> {
     }
   }
 
-  /// Fits the page width, the way the document opened.
+  /// The width the document opened at.
   void _fitWidth() => unawaited(
-    _controller.setZoom(_controller.centerPosition, _controller.coverScale),
+    _controller.setZoom(_controller.centerPosition, _readingZoom(_controller)),
   );
 
   bool? _onKey(
@@ -127,9 +127,11 @@ class _PdfScreenState extends State<PdfScreen> {
     switch (key) {
       case LogicalKeyboardKey.digit0 || LogicalKeyboardKey.numpad0:
         _fitWidth();
-      case LogicalKeyboardKey.numpadAdd || LogicalKeyboardKey.add:
+      case LogicalKeyboardKey.numpadAdd ||
+          LogicalKeyboardKey.add ||
+          LogicalKeyboardKey.equal:
         unawaited(_controller.zoomUp());
-      case LogicalKeyboardKey.numpadSubtract:
+      case LogicalKeyboardKey.numpadSubtract || LogicalKeyboardKey.minus:
         unawaited(_controller.zoomDown());
       default:
         return null;
@@ -146,7 +148,7 @@ class _PdfScreenState extends State<PdfScreen> {
     if (details.type != PdfViewerGeneralTapType.doubleTap || isDesktop) {
       return false;
     }
-    final fit = controller.coverScale;
+    final fit = _readingZoom(controller);
     final zoomedIn = controller.currentZoom > fit * 1.1;
     unawaited(
       controller.zoomOnLocalPosition(
@@ -206,6 +208,11 @@ class _PdfScreenState extends State<PdfScreen> {
       // pdfrx's default physics stop a fling early, and its Android ones let
       // the page be dragged 200 px past its edges.
       scrollPhysics: const ClampingScrollPhysics(),
+      // A wheel tick moves the page as far as it moves a list.
+      scrollByMouseWheel: 1,
+      sizeDelegateProvider: const PdfViewerSizeDelegateProviderLegacy(
+        calculateInitialZoom: _initialZoom,
+      ),
       textSelectionParams: const PdfTextSelectionParams(),
       linkHandlerParams: PdfLinkHandlerParams(
         onLinkTap: _onLink,
@@ -352,6 +359,28 @@ class _PdfScreenState extends State<PdfScreen> {
     searching: searcher.isSearching,
   );
 }
+
+/// Pages are no wider than this in a wide window; the rest is margin.
+const pdfReadingWidth = 960.0;
+
+/// Pure: the zoom that fits the page width [fitWidth] into a view
+/// [viewWidth] wide, or [pdfReadingWidth] of it when the view is wider.
+double readingZoom({required double fitWidth, required double viewWidth}) =>
+    viewWidth <= pdfReadingWidth
+    ? fitWidth
+    : fitWidth * pdfReadingWidth / viewWidth;
+
+double _readingZoom(PdfViewerController controller) => readingZoom(
+  fitWidth: controller.coverScale,
+  viewWidth: controller.viewSize.width,
+);
+
+double _initialZoom(
+  PdfDocument document,
+  PdfViewerController controller,
+  double fitZoom,
+  double coverZoom,
+) => readingZoom(fitWidth: coverZoom, viewWidth: controller.viewSize.width);
 
 /// Pure: the count beside the search field.
 String matchCountText({

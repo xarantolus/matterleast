@@ -7,6 +7,7 @@ import 'package:matterleast/domain/desktop_window.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/pane_widths.dart';
 import 'package:matterleast/domain/rail.dart';
+import 'package:matterleast/domain/ui_zoom.dart';
 
 /// One typed setting: its key, default and text encoding. Settings are
 /// declared once in [Settings] and read or written only through
@@ -165,6 +166,10 @@ abstract final class Settings {
     _encodePaneWidths,
   );
 
+  /// How much larger than at 100 % the desktop window draws everything, in
+  /// percent; one of [zoomSteps].
+  static const uiZoom = Setting<int>('uiZoom', 100, _decodeZoom, _encodeInt);
+
   static const all = <Setting<Object?>>[
     imagesOnMobileData,
     mediaCacheBytes,
@@ -183,6 +188,7 @@ abstract final class Settings {
     latestRelease,
     dismissedRelease,
     paneWidths,
+    uiZoom,
   ];
 
   static bool _decodeBool(String raw) => switch (raw) {
@@ -196,6 +202,12 @@ abstract final class Settings {
   static String _encodeOptionalBool(bool? value) =>
       value == null ? 'system' : value.toString();
   static String _encodeInt(int value) => value.toString();
+  static int _decodeZoom(String raw) {
+    final percent = int.parse(raw);
+    if (!zoomSteps.contains(percent)) throw FormatException('zoom', raw);
+    return percent;
+  }
+
   static DateTime? _decodeOptionalTime(String raw) =>
       raw.isEmpty ? null : DateTime.parse(raw).toUtc();
   static String _encodeOptionalTime(DateTime? value) =>

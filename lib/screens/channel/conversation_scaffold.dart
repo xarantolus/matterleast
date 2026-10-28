@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
@@ -273,7 +274,9 @@ void listenForRejectedPosts(
   );
 });
 
-/// Caps the message column at a readable width, centred in wider panes.
+/// Caps the message column at a readable width, centred in wider panes, on
+/// a tablet. A desktop window uses its whole width, as Mattermost's desktop
+/// app does.
 class _Readable extends StatelessWidget {
   const _Readable({required this.child});
 
@@ -283,7 +286,9 @@ class _Readable extends StatelessWidget {
   Widget build(BuildContext context) => Align(
     alignment: Alignment.topCenter,
     child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: readableWidth),
+      constraints: BoxConstraints(
+        maxWidth: isDesktop ? double.infinity : readableWidth,
+      ),
       child: child,
     ),
   );
