@@ -36,7 +36,7 @@ class RootScreen extends ConsumerStatefulWidget {
 }
 
 class _RootScreenState extends ConsumerState<RootScreen> {
-  final _search = SearchController();
+  final _search = QuickSearchOpener();
 
   @override
   void dispose() {
@@ -45,7 +45,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
   }
 
   void _openSearch() {
-    if (!_search.isOpen) _search.openView();
+    _search.open();
   }
 
   @override
@@ -82,7 +82,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         ),
         actions: [
           QuickSearchAnchor(
-            controller: _search,
+            opener: _search,
             servers: servers,
             target: team == null ? null : (url: recent.url, teamId: team),
           ),
@@ -113,7 +113,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           ref.watch(serverCatchingUpProvider(server.url)),
       actions: [
         QuickSearchAnchor(
-          controller: _search,
+          opener: _search,
           servers: servers,
           target: teamId == null ? null : (url: server.url, teamId: teamId),
         ),

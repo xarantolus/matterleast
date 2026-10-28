@@ -33,15 +33,11 @@ void main() {
   late List<String> opened;
   late List<String> searched;
 
-  Future<SearchController> show(
-    WidgetTester tester,
-    List<SwitchItem> items,
-  ) async {
+  Future<void> show(WidgetTester tester, List<SwitchItem> items) async {
     opened = [];
     searched = [];
-    final controller = SearchController();
+    final controller = TextEditingController();
     addTearDown(controller.dispose);
-    final view = GlobalKey<QuickSearchViewState>();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -51,45 +47,21 @@ void main() {
         ],
         child: MaterialApp(
           theme: MatterleastApp.lightTheme,
-          home: Scaffold(
-            appBar: AppBar(
-              actions: [
-                // The same wiring as QuickSearchAnchor: Return asks the view
-                // first and searches messages only when it declines.
-                SearchAnchor(
-                  searchController: controller,
-                  isFullScreen: true,
-                  builder: (_, c) => IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: c.openView,
-                  ),
-                  suggestionsBuilder: (_, _) => const <Widget>[],
-                  viewOnSubmitted: (text) {
-                    if (view.currentState?.submit() ?? false) return;
-                    searched.add(text);
-                  },
-                  viewBuilder: (_) => QuickSearchView(
-                    key: view,
-                    controller: controller,
-                    servers: [server],
-                    target: (url: _url, teamId: 'team1'),
-                    onOpen: (item) => opened.add(item.id),
-                    onSearch: searched.add,
-                  ),
-                ),
-              ],
-            ),
+          home: QuickSearchView(
+            controller: controller,
+            servers: [server],
+            target: (url: _url, teamId: 'team1'),
+            onOpen: (item) => opened.add(item.id),
+            onSearch: searched.add,
           ),
         ),
       ),
     );
-    await tester.tap(find.byIcon(Icons.search));
     await tester.pumpAndSettle();
-    return controller;
   }
 
   Future<void> type(WidgetTester tester, String text) async {
-    await tester.enterText(find.byType(TextField).last, text);
+    await tester.enterText(find.byType(TextField), text);
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
   }
