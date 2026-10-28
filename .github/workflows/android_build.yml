@@ -354,7 +354,7 @@ jobs:
       # Installs the bundle as a user would and prints what it declares.
       - name: Check the Flatpak
         run: |
-          flatpak install --user --noninteractive "$RUNNER_TEMP/matterleast.flatpak"
+          flatpak install --user --noninteractive --no-related "$RUNNER_TEMP/matterleast.flatpak"
           flatpak info --user --show-metadata io.github.xarantolus.matterleast
           cat ~/.local/share/flatpak/exports/share/applications/io.github.xarantolus.matterleast.desktop
 
