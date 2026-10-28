@@ -227,6 +227,10 @@ ThemeData desktopTheme(ThemeData theme) {
     titleMedium: sized(text.titleMedium, 15),
     bodyLarge: sized(text.bodyLarge, 14),
   );
+  // Flutter's desktop default over buttons is the arrow.
+  const click = WidgetStateMouseCursor.clickable;
+  ButtonStyle clickable(ButtonStyle? style) =>
+      (style ?? const ButtonStyle()).copyWith(mouseCursor: click);
   return theme.copyWith(
     // A click tints what it presses, hovers and focuses; ripples are for
     // fingers.
@@ -240,8 +244,34 @@ ThemeData desktopTheme(ThemeData theme) {
         iconSize: 20,
         minimumSize: const Size.square(32),
         padding: const EdgeInsets.all(6),
-      ),
+      ).copyWith(mouseCursor: click),
     ),
+    textButtonTheme: TextButtonThemeData(
+      style: clickable(theme.textButtonTheme.style),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: clickable(theme.filledButtonTheme.style),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: clickable(theme.outlinedButtonTheme.style),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: clickable(theme.elevatedButtonTheme.style),
+    ),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: clickable(theme.segmentedButtonTheme.style),
+    ),
+    menuButtonTheme: MenuButtonThemeData(
+      style: clickable(theme.menuButtonTheme.style),
+    ),
+    popupMenuTheme: theme.popupMenuTheme.copyWith(mouseCursor: click),
+    floatingActionButtonTheme: theme.floatingActionButtonTheme.copyWith(
+      mouseCursor: click,
+    ),
+    tabBarTheme: theme.tabBarTheme.copyWith(mouseCursor: click),
+    switchTheme: theme.switchTheme.copyWith(mouseCursor: click),
+    checkboxTheme: theme.checkboxTheme.copyWith(mouseCursor: click),
+    radioTheme: theme.radioTheme.copyWith(mouseCursor: click),
     listTileTheme: theme.listTileTheme.copyWith(
       // One line 36 px dense and 44 px otherwise, two lines 60 px.
       visualDensity: const VisualDensity(horizontal: -2, vertical: -3),

@@ -7,9 +7,14 @@ const pictureHoverTint = Color(0x1F000000);
 /// Shades [child], a picture that opens on a click, while the mouse is over
 /// it, fading in and out. Touch leaves it as it is.
 class HoverTint extends StatefulWidget {
-  const HoverTint({required this.child, super.key});
+  const HoverTint({
+    required this.child,
+    this.cursor = SystemMouseCursors.click,
+    super.key,
+  });
 
   final Widget child;
+  final MouseCursor cursor;
 
   @override
   State<HoverTint> createState() => _HoverTintState();
@@ -24,7 +29,7 @@ class _HoverTintState extends State<HoverTint> {
 
   @override
   Widget build(BuildContext context) => MouseRegion(
-    cursor: SystemMouseCursors.click,
+    cursor: widget.cursor,
     onEnter: (_) => _hover(true),
     onExit: (_) => _hover(false),
     child: TweenAnimationBuilder<Color?>(

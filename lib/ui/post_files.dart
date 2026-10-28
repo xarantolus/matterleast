@@ -16,6 +16,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/hover_tint.dart';
@@ -269,6 +270,9 @@ class _MediaTile extends StatelessWidget {
                 Material(
                   type: MaterialType.transparency,
                   child: InkWell(
+                    mouseCursor: file.kind == FileKind.video
+                        ? clickCursor
+                        : SystemMouseCursors.zoomIn,
                     onTap: onTap,
                     splashColor: scheme.primary.withValues(alpha: 0.2),
                     hoverColor: pictureHoverTint,
@@ -528,7 +532,7 @@ Future<void> _runFileAction(
         chooseApp: action == _FileAction.openWith,
       )) {
         say(
-          'No app on this ${isDesktop ? 'computer' : 'phone'} opens '
+          'No app on this $deviceWord opens '
           '${file.name}.',
         );
       }

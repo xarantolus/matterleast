@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -45,6 +46,7 @@ class AcknowledgeButton extends StatelessWidget {
     return GestureDetector(
       onLongPress: people.isEmpty ? null : list,
       child: FilterChip(
+        mouseCursor: clickCursor,
         showCheckmark: false,
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,

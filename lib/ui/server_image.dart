@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/data/images/image_rules.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// An image in a message or link preview, in a box the caller sized
@@ -122,6 +123,7 @@ class _Box extends StatelessWidget {
         borderRadius: BorderRadius.circular(Spacing.sm),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
+          mouseCursor: clickCursor,
           onTap: onTap,
           child: SizedBox(
             width: width,

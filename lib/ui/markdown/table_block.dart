@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/markdown/post_doc.dart';
+import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/slide_route.dart';
@@ -25,6 +26,7 @@ class TablePreview extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
+          mouseCursor: clickCursor,
           onTap: () => Navigator.of(
             context,
           ).push(SlideRoute<void>(builder: (_) => TableScreen(table: table))),

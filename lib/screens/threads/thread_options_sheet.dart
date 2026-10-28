@@ -43,15 +43,19 @@ Future<({bool saved, String teamName})> threadOptionFacts(
 }
 
 /// The sheet for a followed thread of the Threads list or Home.
-Future<void> showThreadOptions(BuildContext context, InboxItem item) =>
-    showAppSheet<void>(
-      context: context,
-      builder: (_) => ThreadOptionsSheet(
-        item: item,
-        navigator: Navigator.of(context),
-        messenger: ScaffoldMessenger.of(context),
-      ),
-    );
+Future<void> showThreadOptions(
+  BuildContext context,
+  InboxItem item, {
+  Rect? anchor,
+}) => showAppSheet<void>(
+  context: context,
+  anchor: anchor,
+  builder: (_) => ThreadOptionsSheet(
+    item: item,
+    navigator: Navigator.of(context),
+    messenger: ScaffoldMessenger.of(context),
+  ),
+);
 
 class ThreadOptionsSheet extends ConsumerWidget {
   const ThreadOptionsSheet({

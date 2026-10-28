@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme_providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
@@ -17,13 +18,18 @@ import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
 enum _Clock {
-  system(null, 'Like the phone'),
-  twelve(false, '12-hour (1:30 PM)'),
-  twentyFour(true, '24-hour (13:30)');
+  system(null),
+  twelve(false),
+  twentyFour(true);
 
-  const _Clock(this.use24, this.label);
+  const _Clock(this.use24);
   final bool? use24;
-  final String label;
+
+  String get label => switch (this) {
+    system => isDesktop ? 'Use system setting' : 'Like the phone',
+    twelve => '12-hour (1:30 PM)',
+    twentyFour => '24-hour (13:30)',
+  };
 
   static _Clock of(bool? use24) => values.firstWhere((c) => c.use24 == use24);
 }
@@ -111,7 +117,8 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
           ListTile(
             title: const Text('Message text size'),
             subtitle: Text(
-              '${_textSizeLabel(textSize)}, on top of the phone\'s font size',
+              '${_textSizeLabel(textSize)}, on top of the '
+              '${isDesktop ? 'system' : "phone's"} font size',
             ),
             onTap: () async {
               final picked = await pickOne(
@@ -128,9 +135,11 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
           ),
           SwitchListTile(
             title: const Text('Wrap lines in code'),
-            subtitle: const Text(
-              'Otherwise long lines scroll sideways. Each code block can '
-              'switch on its own.',
+            subtitle: Text(
+              isDesktop
+                  ? 'Otherwise long lines scroll sideways'
+                  : 'Otherwise long lines scroll sideways. Each code block '
+                        'can switch on its own.',
             ),
             value: wrapCode,
             onChanged: (on) => store.write(Settings.wrapCode, on),
@@ -161,8 +170,8 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
         title: const Text('Colours'),
         subtitle: Text(
           noWallpaper
-              ? '${_themeLabel(theme)}. This phone has none, so the app uses '
-                    'Matterleast colours.'
+              ? '${_themeLabel(theme)}. This $deviceWord has none, so the app '
+                    'uses Matterleast colours.'
               : _themeLabel(theme),
         ),
         onTap: () async {

@@ -109,6 +109,7 @@ class MessageImage extends StatelessWidget {
                 behavior: HitTestBehavior.opaque,
                 onTap: () => MessageImageOpener.of(context)?.call(image.url),
                 child: HoverTint(
+                  cursor: SystemMouseCursors.zoomIn,
                   child: ImageSlot(
                     url: image.url,
                     size: box,
