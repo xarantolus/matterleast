@@ -55,6 +55,7 @@ class SuggestionSource {
                 () => server.client.groups.getGroups(
                   q: prefix,
                   filterAllowReference: true,
+                  includeMemberCount: true,
                   perPage: 25,
                 ),
                 feature: OptionalFeature.groupMentions,
@@ -71,7 +72,12 @@ class SuggestionSource {
         final groups = [
           for (final g in await groupsAsked ?? const <api.Group>[])
             if (g.id != null && g.name != null && g.deleteAt == null)
-              (id: g.id!, name: g.name!, displayName: g.displayName ?? g.name!),
+              (
+                id: g.id!,
+                name: g.name!,
+                displayName: g.displayName ?? g.name!,
+                memberCount: g.memberCount,
+              ),
         ];
         if (remote == null && groups.isEmpty) return;
         final found = remote == null

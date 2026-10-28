@@ -128,15 +128,27 @@ final class GroupSuggestion extends Suggestion {
     required this.id,
     required this.name,
     required this.displayName,
+    this.memberCount,
   });
 
   final String id;
   final String name;
   final String displayName;
 
+  /// Null when the server didn't say.
+  final int? memberCount;
+
   @override
   String get replacement => '@$name';
 }
+
+/// Pure: what a group's row says under `@name`: its display name when it
+/// differs, and how many it notifies.
+String groupDetails(GroupSuggestion group) => [
+  if (group.displayName.isNotEmpty && group.displayName != group.name)
+    group.displayName,
+  if (group.memberCount case final n?) n == 1 ? '1 member' : '$n members',
+].join(' · ');
 
 final class ChannelSuggestion extends Suggestion {
   const ChannelSuggestion({
@@ -204,7 +216,12 @@ typedef UserCandidate = ({
   bool? inChannel,
 });
 
-typedef GroupCandidate = ({String id, String name, String displayName});
+typedef GroupCandidate = ({
+  String id,
+  String name,
+  String displayName,
+  int? memberCount,
+});
 
 const _listLimit = 25;
 
@@ -282,7 +299,12 @@ List<Suggestion> rankUsers(
   return [
     ...group(false),
     for (final (g, _) in matchingGroups.take(_listLimit))
-      GroupSuggestion(id: g.id, name: g.name, displayName: g.displayName),
+      GroupSuggestion(
+        id: g.id,
+        name: g.name,
+        displayName: g.displayName,
+        memberCount: g.memberCount,
+      ),
     if (specialMentions)
       for (final handle in SpecialMention.handles)
         if (handle.startsWith(p)) SpecialMention(handle),

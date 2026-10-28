@@ -1157,7 +1157,7 @@ class SuggestionList extends ConsumerWidget {
       GroupSuggestion() => row(
         const Icon(Icons.groups_outlined),
         '@${s.name}',
-        s.displayName == s.name ? '' : s.displayName,
+        groupDetails(s),
       ),
       ChannelSuggestion() => row(
         Icon(s.type == 'P' ? Icons.lock_outline : Icons.tag),
