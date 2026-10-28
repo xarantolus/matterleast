@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
@@ -5,7 +7,10 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
+import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/thread/thread_providers.dart';
+import 'package:matterleast/ui/clickable.dart';
 
 /// A thread: its first message, then the replies.
 class ThreadScreen extends ConsumerWidget {
@@ -45,9 +50,20 @@ class ThreadScreen extends ConsumerWidget {
       channelId: channelId,
       rootId: rootId,
       conversation: conversation,
-      title: ConversationTitle(
-        title: 'Thread',
-        subtitle: threadSubtitle(state, channelName: channelName),
+      title: Semantics(
+        button: true,
+        hint: 'Opens the channel',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _openChannel(context, ref, state),
+          child: Clickable(
+            child: ConversationTitle(
+              title: 'Thread',
+              subtitle: threadSubtitle(state, channelName: channelName),
+              opensSubtitle: true,
+            ),
+          ),
+        ),
       ),
       actions: [
         if (following != null)
@@ -60,6 +76,23 @@ class ThreadScreen extends ConsumerWidget {
       dropTarget: 'this thread',
       focusComposer: focusComposer,
     );
+  }
+
+  void _openChannel(
+    BuildContext context,
+    WidgetRef ref,
+    ConversationState state,
+  ) {
+    unawaited(
+      openConversation(
+        Navigator.of(context),
+        url: url,
+        channelId: channelId,
+        title: channelName,
+        teamId: state.window?.teamId,
+      ),
+    );
+    ref.read(openPanesProvider.notifier).closeThread();
   }
 
   Future<void> _setFollowing(
