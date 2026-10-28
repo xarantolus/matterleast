@@ -54,7 +54,7 @@ Future<void> openLinkFromMessage(
       case ServerHomeLink():
         await showPlace(navigator, RailTarget(url: url));
     }
-  } on ApiError catch (e) {
+  } on Exception catch (e) {
     _say(
       navigator,
       "Couldn't open the link. ${requestProblemText(e, link.server.host)}",
@@ -85,7 +85,7 @@ Future<void> openPost(
       fromOutside: fromOutside,
       showsProgress: showsProgress,
     );
-  } on ApiError catch (e) {
+  } on Exception catch (e) {
     _say(
       navigator,
       "Couldn't open the message. ${requestProblemText(e, Uri.parse(url).host)}",

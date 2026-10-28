@@ -7,11 +7,11 @@ import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/post_details.dart';
-import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_link.dart';
+import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/domain/user_profile.dart';
 
@@ -668,7 +668,7 @@ class ConversationViews {
       if (row == null || channel == null) continue;
       linked[id] = (
         postId: link.postId,
-        teamName: link.team,
+        teamName: link.team ?? '',
         authorId: row.userId,
         channelName: channel.displayName,
         direct: channel.type == 'D',
