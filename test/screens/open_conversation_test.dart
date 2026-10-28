@@ -108,6 +108,7 @@ void main() {
         ),
       ),
     );
+    await tester.runAsync(container.read(conversationMemoryProvider).start);
   }
 
   /// The server signed in and its channel list, [channelId] in it as
@@ -584,7 +585,6 @@ void main() {
       final url = server.url.toString();
       container.listen(switchItemsProvider(url), (_, _) {});
       listed.add(channels(url));
-      await tester.runAsync(container.read(conversationMemoryProvider).start);
       return url;
     }
 
@@ -596,7 +596,9 @@ void main() {
     }
 
     String? shownChannel(WidgetTester tester) => tester
-        .widgetList<ChannelScreen>(find.byType(ChannelScreen))
+        .widgetList<ChannelScreen>(
+          find.byType(ChannelScreen, skipOffstage: false),
+        )
         .map((w) => w.channelId)
         .firstOrNull;
 

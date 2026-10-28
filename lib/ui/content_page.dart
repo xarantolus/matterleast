@@ -92,12 +92,23 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final route = ModalRoute.of(context);
-    // What the page shows fades out while a page slides in over it, and
-    // back in while that page goes; the bar itself stays.
+    // The bar stays; what it shows fades in with a page sliding in, out
+    // while a page slides in over it, and back as that page goes. The bar
+    // stays opaque, so a taller header never shows the page below through
+    // it. On desktop the whole page fades already.
     final next = route?.secondaryAnimation;
-    final shown = next == null ? null : ReverseAnimation(next);
-    Widget fade(Widget child) =>
-        shown == null ? child : FadeTransition(opacity: shown, child: child);
+    final leaving = next == null ? null : ReverseAnimation(next);
+    final arriving = route is SlideRoute && !route.wholePage && !isDesktop
+        ? route.animation
+        : null;
+    Widget fade(Widget child) {
+      var faded = child;
+      for (final opacity in [?leaving, ?arriving]) {
+        faded = FadeTransition(opacity: opacity, child: faded);
+      }
+      return faded;
+    }
+
     // A popout's first page closes with the popout's own button.
     final popout = context.getInheritedWidgetOfExactType<InPopout>();
     final leading =
@@ -109,7 +120,7 @@ class _Header extends StatelessWidget {
             : null);
     final subtitle = this.subtitle;
     final bottom = this.bottom;
-    final bar = AppBar(
+    return AppBar(
       automaticallyImplyLeading: false,
       primary: popout == null,
       toolbarHeight: toolbarHeight,
@@ -138,15 +149,6 @@ class _Header extends StatelessWidget {
               child: fade(bottom),
             ),
     );
-    // A page sliding in brings its bar in over the one below, which shows
-    // the same colour, so only the bar's contents seem to change. On
-    // desktop the whole page fades already.
-    final arriving = route is SlideRoute && !route.wholePage && !isDesktop
-        ? route.animation!
-        : null;
-    return arriving == null
-        ? bar
-        : FadeTransition(opacity: arriving, child: bar);
   }
 }
 
