@@ -42,7 +42,11 @@ void main() {
     'message': i == linkRow ? 'tide table at $link' : 'message $i',
   };
 
-  Future<void> open(WidgetTester tester, {int count = 60}) async {
+  Future<void> open(
+    WidgetTester tester, {
+    int count = 60,
+    OpenThread? onOpenThread,
+  }) async {
     HttpOverrides.global = null;
     olderAsked = Completer();
     answerOlder = Completer();
@@ -96,6 +100,7 @@ void main() {
               url: url,
               conversation: conversationProvider(url, channelId),
               startText: 'This is the start of Boats.',
+              onOpenThread: onOpenThread,
             ),
           ),
         ),
@@ -112,6 +117,53 @@ void main() {
       await server.close();
     });
   }
+
+  testWidgets('a screen reader is back on the message once its thread '
+      'closes', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final sent = <Object?>[];
+    tester.binding.defaultBinaryMessenger.setMockDecodedMessageHandler<Object?>(
+      SystemChannels.accessibility,
+      (message) async => sent.add(message),
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger
+          .setMockDecodedMessageHandler<Object?>(
+            SystemChannels.accessibility,
+            null,
+          ),
+    );
+    late NavigatorState navigator;
+    await open(
+      tester,
+      onOpenThread: (post, {reply = false}) => navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('the thread')),
+        ),
+      ),
+    );
+    navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    final focus = ServicesBinding.instance.accessibilityFocus;
+    addTearDown(() => focus.value = null);
+    // TalkBack is on some node of the message when it is opened.
+    focus.value = 9999;
+    await tester.tap(find.text('message 57'));
+    await settle(tester);
+    expect(find.text('the thread'), findsOneWidget);
+    focus.value = 10000;
+
+    navigator.pop();
+    await settle(tester);
+    await tester.pump(const Duration(seconds: 1));
+
+    final message = tester.getSemantics(find.text('message 57'));
+    expect([
+      for (final m in sent.whereType<Map<Object?, Object?>>())
+        if (m['type'] == 'focus') m['nodeId'],
+    ], contains(message.id));
+    await close(tester);
+    semantics.dispose();
+  });
 
   testWidgets('a failed older page leaves the reader where they were', (
     tester,
