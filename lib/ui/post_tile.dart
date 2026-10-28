@@ -916,9 +916,20 @@ class _SystemLine extends StatelessWidget {
     final line = activity != null
         ? activityText(activity, [
             for (final p in [post, ...combined])
-              activityEntry(activity, detailsOf(p).props),
+              activityEntry(
+                activity,
+                detailsOf(p).props,
+                userId: p.userId,
+                names: p.systemUsernames,
+              ),
           ])
-        : systemMessageText(post.type, detailsOf(post).props, post.message);
+        : systemMessageText(
+            post.type,
+            detailsOf(post).props,
+            post.message,
+            userId: post.userId,
+            names: post.systemUsernames,
+          );
     final style = Theme.of(context).textTheme.bodySmall
         ?.copyWith(color: tokens.muted);
     final id = '${post.id}:system:${combined.length}';

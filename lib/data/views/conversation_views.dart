@@ -7,6 +7,7 @@ import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/post_details.dart';
+import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 import 'package:matterleast/domain/preference_keys.dart';
@@ -433,6 +434,9 @@ class ConversationViews {
       for (final d in details.values)
         for (final a in d.acknowledgements) a.userId,
       for (final l in links.values) l.authorId,
+      for (final p in posts)
+        if (p.type.startsWith('system_'))
+          ...systemMessageUserIds(p.userId, details[p.id]!.props),
     };
     final saved = {
       for (final pref
@@ -580,6 +584,15 @@ class ConversationViews {
           replyCount: p.replyCount,
           lastReplyAt: p.lastReplyAt,
           authorUsername: people[p.userId]?.username ?? '',
+          systemUsernames: p.type.startsWith('system_')
+              ? {
+                  for (final id in systemMessageUserIds(
+                    p.userId,
+                    details[p.id]!.props,
+                  ))
+                    if (people[id] case final person?) id: person.username,
+                }
+              : const {},
           authorIsBot: people[p.userId]?.isBot ?? false,
           authorIsGuest: people[p.userId]?.isGuest ?? false,
           authorPictureAt: people[p.userId]?.pictureAt,

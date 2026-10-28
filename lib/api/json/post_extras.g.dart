@@ -24,6 +24,9 @@ PostProps _$PostPropsFromJson(Map<String, dynamic> json) => PostProps(
       ? const {}
       : const _ChannelMentions().fromJson(json['channel_mentions']),
   username: const LenientString().fromJson(json['username']),
+  userId: const LenientString().fromJson(json['userId']),
+  addedUserId: const LenientString().fromJson(json['addedUserId']),
+  removedUserId: const LenientString().fromJson(json['removedUserId']),
   addedUsername: const LenientString().fromJson(json['addedUsername']),
   removedUsername: const LenientString().fromJson(json['removedUsername']),
   oldHeader: const LenientString().fromJson(json['old_header']),
