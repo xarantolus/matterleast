@@ -74,7 +74,7 @@ final class ComposerActionsProvider
   }
 }
 
-String _$composerActionsHash() => r'25cd5c61b4420d6d1dee29259a66c77942a089dd';
+String _$composerActionsHash() => r'ef4a9ebc080b3a2cafed14f47e8a1acdd1f84ba8';
 
 /// Kept while the app runs, like the session it wraps, so a draft save
 /// outlives the screen that started it. Waiting drafts are written when the

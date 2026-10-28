@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/desktop/autoscroll.dart';
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/launch_gate.dart';
 import 'package:matterleast/app/mouse_navigation.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/app/theme_providers.dart';
@@ -41,7 +43,11 @@ class MatterleastApp extends ConsumerWidget {
               textScale: (textSize ?? MessageTextSize.normal).scale,
               wrapCode: wrapCode,
               child: KeyboardFocusRings(
-                child: AppShortcuts(child: MouseNavigation(child: child!)),
+                child: AppShortcuts(
+                  child: MouseNavigation(
+                    child: isDesktop ? MiddleAutoscroll(child: child!) : child!,
+                  ),
+                ),
               ),
             ),
           ),

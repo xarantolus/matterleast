@@ -959,6 +959,35 @@ void main() {
     await tester.pump(Duration.zero);
   });
 
+  testWidgets('on a wide window the thread pane closes at the end of its '
+      'header', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await start(tester, panes: true);
+    await open(tester);
+    await open(tester, rootId: 'old1');
+    final thread = find.byType(ThreadScreen);
+    final close = find.descendant(
+      of: thread,
+      matching: find.byTooltip('Close the thread'),
+    );
+    final title = find.descendant(of: thread, matching: find.text('Thread'));
+    expect(
+      tester.getRect(close).left,
+      greaterThan(tester.getRect(title).right),
+    );
+    expect(
+      tester.getRect(close).right,
+      closeTo(tester.getRect(thread).right, 24),
+      reason: 'at the pane edge',
+    );
+    closeConversations(navigator(tester));
+    await settle(tester);
+    await finish(tester);
+    await tester.pump(Duration.zero);
+  });
+
   testWidgets('suggestions float above the composer; the list keeps its size', (
     tester,
   ) async {
