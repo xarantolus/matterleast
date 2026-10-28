@@ -206,7 +206,8 @@ desktop() {
         "$lane" type Regatta
         sleep 2
         # The channel, the first suggestion (Return would search messages).
-        "$lane" click 120 139
+        "$lane" click 700 215
+        DISPLAY=$DISPLAY xdotool mousemove 300 990
         sleep 4
     }
     # A first visit loads the images and avatars, so no shot shows them
