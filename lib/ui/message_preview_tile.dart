@@ -1,9 +1,11 @@
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -45,6 +47,10 @@ class MessagePreviewTile extends ConsumerWidget {
     // otherwise have room for a few letters only.
     final large = MediaQuery.textScalerOf(context).scale(10) > 15;
     final marker = _marker(context, item);
+    final partner = item.kind == InboxKind.direct ? item.avatarUserId : null;
+    final presenceKnown =
+        partner != null &&
+        ref.watch(presenceKnownProvider(item.serverUrl, partner));
     final tile = ListTile(
       contentPadding: Spacing.row,
       onTap: onTap,
@@ -62,11 +68,16 @@ class MessagePreviewTile extends ConsumerWidget {
               )
             else
               InitialsBadge(name: item.avatarName, round: true),
-            if (item.kind == InboxKind.direct)
+            if (partner != null)
               PositionedDirectional(
                 end: 0,
                 bottom: 0,
-                child: PresenceDot(status: item.status, size: 12),
+                child: LivePresenceDot(
+                  serverUrl: item.serverUrl,
+                  userId: partner,
+                  status: item.status,
+                  size: 12,
+                ),
               ),
           ],
         ),
@@ -82,6 +93,14 @@ class MessagePreviewTile extends ConsumerWidget {
                     text: item.title,
                     style: TextStyle(fontWeight: strong),
                   ),
+                  if (partner != null)
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: CustomStatusEmoji(
+                        serverUrl: item.serverUrl,
+                        userId: partner,
+                      ),
+                    ),
                   if (detail.isNotEmpty)
                     TextSpan(
                       text: ' · $detail',
@@ -96,7 +115,7 @@ class MessagePreviewTile extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (item.kind == InboxKind.direct)
+          if (presenceKnown)
             Semantics(label: presenceLabel(item.status).toLowerCase()),
           if (!large) ...[
             const SizedBox(width: Spacing.sm),

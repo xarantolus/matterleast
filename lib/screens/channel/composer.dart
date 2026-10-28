@@ -12,6 +12,7 @@ import 'package:image_picker_android/image_picker_android.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/permission_providers.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
@@ -433,6 +434,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
               AttachmentStrip(
                 attachments: files,
                 onRemove: ref.read(_provider.notifier).detach,
+                stalled: !ref.watch(serverLiveProvider(widget.url)),
               ),
             if (value.priority case final priority?
                 when canPrioritize && editing == null)
@@ -924,11 +926,16 @@ class AttachmentStrip extends StatelessWidget {
   const AttachmentStrip({
     required this.attachments,
     required this.onRemove,
+    this.stalled = false,
     super.key,
   });
 
   final List<Attachment> attachments;
   final ValueChanged<String> onRemove;
+
+  /// The server isn't live, so the last progress may no longer hold; the
+  /// bars wait without a value.
+  final bool stalled;
 
   @override
   Widget build(BuildContext context) {
@@ -1023,7 +1030,9 @@ class AttachmentStrip extends StatelessWidget {
                           Align(
                             alignment: Alignment.bottomCenter,
                             child: LinearProgressIndicator(
-                              value: a.progress > 0 ? a.progress : null,
+                              value: a.progress > 0 && !stalled
+                                  ? a.progress
+                                  : null,
                             ),
                           ),
                         Align(

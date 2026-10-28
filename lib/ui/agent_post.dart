@@ -5,6 +5,7 @@ import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/websocket/encoded.dart';
 import 'package:matterleast/app/agent_providers.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/agent_actions.dart';
 import 'package:matterleast/data/live/agent_live.dart';
@@ -98,7 +99,12 @@ class AgentPostBody extends ConsumerWidget {
           )
         ? ToolStage.call
         : ToolStage.done;
-    final busy = stream?.busy ?? false;
+    // While the server isn't live nothing streams in, and a Stop could not
+    // reach it; the answer waits instead of seeming to be written.
+    final live = ref.watch(serverLiveProvider(url));
+    final streaming = stream?.busy ?? false;
+    final busy = streaming && live;
+    final waiting = streaming && !live;
     final citations = citationsOf(rounds);
     final tokens = context.tokens;
     final muted = Theme.of(context).textTheme.bodyMedium
@@ -106,7 +112,7 @@ class AgentPostBody extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (state != null && state.failed && !busy && rounds.isEmpty)
+        if (state != null && state.failed && !streaming && rounds.isEmpty)
           Text("Couldn't load this answer.", style: muted),
         for (final (i, round) in rounds.indexed)
           _RoundView(
@@ -114,8 +120,11 @@ class AgentPostBody extends ConsumerWidget {
             postId: post.id,
             round: round,
             reasoningLoading:
-                round.id == 'live' && (stream?.reasoningLoading ?? false),
-            writing: round.id == 'live' && (stream?.generating ?? false),
+                live &&
+                round.id == 'live' &&
+                (stream?.reasoningLoading ?? false),
+            writing:
+                live && round.id == 'live' && (stream?.generating ?? false),
             // Only the stored anchor step can wait for a decision.
             stage: i == rounds.length - 1 && i < stored.length
                 ? stage
@@ -127,7 +136,12 @@ class AgentPostBody extends ConsumerWidget {
                       .read(serverSessionProvider(url).future)
                       .then((s) => s.connection.agents.refresh(conversationId)),
           ),
-        if (stream?.precontent ?? false)
+        if (waiting)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+            child: Text('Waiting for the server…', style: muted),
+          )
+        else if (stream?.precontent ?? false)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
             child: Row(
@@ -153,6 +167,7 @@ class AgentPostBody extends ConsumerWidget {
             ),
           )
         else if (requester &&
+            !waiting &&
             rounds.isNotEmpty &&
             props.noRegen != true &&
             // A summary that starts a thread has no question to answer

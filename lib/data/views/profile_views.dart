@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/channel_list.dart';
@@ -50,6 +51,18 @@ class ProfileViews {
           ))
           .watchSingleOrNull()
           .map((p) => recentCustomStatuses(p?.value));
+
+  /// Everyone's stored custom status by user id, expired ones included:
+  /// whoever shows one checks the clock.
+  Stream<Map<String, CustomStatus>> customStatuses() =>
+      (db.select(db.users)..where((u) => u.props.like('%customStatus%')))
+          .watch()
+          .map(
+            (rows) => {
+              for (final u in rows) u.id: ?storedCustomStatus(u.props),
+            },
+          )
+          .distinct(mapEquals);
 
   Future<UserProfile?> _profile(String userId) async {
     final u = await (db.select(

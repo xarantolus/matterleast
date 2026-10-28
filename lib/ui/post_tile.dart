@@ -18,6 +18,7 @@ import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/acknowledge_button.dart';
 import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/burn_on_read_view.dart';
+import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/interactive_message.dart';
 import 'package:matterleast/ui/link_preview_card.dart';
@@ -126,7 +127,25 @@ class PostTile extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: Spacing.sm,
             children: [
-              Text(name, style: text.titleSmall?.copyWith(color: tokens.text)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      name,
+                      style: text.titleSmall?.copyWith(color: tokens.text),
+                    ),
+                  ),
+                  // An integration posting under another name isn't the
+                  // person whose status it would be.
+                  if (env != null && !webhook && post.userId.isNotEmpty)
+                    CustomStatusEmoji(
+                      serverUrl: env.server.toString(),
+                      userId: post.userId,
+                      size: (text.titleSmall?.fontSize ?? 14) * 1.15,
+                    ),
+                ],
+              ),
               if (bot)
                 const _Tag('BOT')
               else if (post.authorIsGuest)

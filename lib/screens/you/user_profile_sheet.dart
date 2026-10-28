@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/data/time_zones.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -61,7 +62,8 @@ class UserProfileSheet extends ConsumerWidget {
         },
       );
     }
-    final custom = profile.customStatus;
+    final custom = ref.watch(activeCustomStatusProvider(url, userId));
+    final presenceKnown = ref.watch(presenceKnownProvider(url, userId));
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(Spacing.lg, 0, Spacing.lg, Spacing.lg),
       child: Column(
@@ -79,7 +81,9 @@ class UserProfileSheet extends ConsumerWidget {
               PositionedDirectional(
                 end: 2,
                 bottom: 2,
-                child: PresenceDot(status: profile.status, size: 22),
+                child: presenceKnown
+                    ? PresenceDot(status: profile.status, size: 22)
+                    : const SizedBox.square(dimension: 22),
               ),
             ],
           ),
@@ -94,7 +98,7 @@ class UserProfileSheet extends ConsumerWidget {
               '@${profile.username}',
               if (profile.isBot) 'Bot',
               if (profile.isGuest) 'Guest',
-              presenceLabel(profile.status),
+              if (presenceKnown) presenceLabel(profile.status),
             ].join(' · '),
             style: text.bodyMedium?.copyWith(color: tokens.muted),
             textAlign: TextAlign.center,

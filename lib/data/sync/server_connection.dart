@@ -67,7 +67,12 @@ class ServerConnection {
         if (!_notices.isClosed) _notices.add(message);
       },
     );
-    presence = PresencePoller(server: server, store: store, runner: runner);
+    presence = PresencePoller(
+      server: server,
+      store: store,
+      runner: runner,
+      live: live,
+    );
     socket = ServerSocket(
       serverUrl: url,
       token: token,
@@ -78,6 +83,7 @@ class ServerConnection {
       probe: server.reach.probe,
       onResync: () {
         agents.reconnected();
+        _resyncing = true;
         refreshAll();
       },
       onClosed: (failCount) {
@@ -88,6 +94,8 @@ class ServerConnection {
     );
     online?.addListener(_networkChanged);
     server.reach.reachable.addListener(_reachChanged);
+    socket.state.addListener(_updateLive);
+    server.reach.reachable.addListener(_updateLive);
   }
 
   /// False while the device has no network.
@@ -118,6 +126,39 @@ class ServerConnection {
 
   static const backgroundGrace = Duration(seconds: 15);
 
+  final _live = ValueNotifier(false);
+
+  /// Whether the server is live: its socket is connected and it answers.
+  /// Presence, typing and streaming are only true while it is; when it
+  /// stops being live they clear, and they come back only from fresh data.
+  ValueListenable<bool> get live => _live;
+
+  final _catchingUp = ValueNotifier(false);
+
+  /// The app came back and the socket is connecting again, or what it may
+  /// have missed meanwhile is being fetched; false while the server is
+  /// known not to answer, so nothing shows as loading for a timeout.
+  ValueListenable<bool> get catchingUp => _catchingUp;
+  var _resyncing = false;
+
+  void _updateLive() {
+    final socketState = socket.state.value;
+    final live =
+        socketState == SocketState.connected && server.reach.reachable.value;
+    if (socketState == SocketState.disconnected ||
+        !server.reach.reachable.value) {
+      _catchingUp.value = false;
+    }
+    if (live == _live.value) return;
+    _live.value = live;
+    if (live) {
+      presence.refresh();
+    } else {
+      presence.forget();
+      typing.clear();
+    }
+  }
+
   Timer? _startTimer;
   Timer? _stopTimer;
   var _active = false;
@@ -132,12 +173,17 @@ class ServerConnection {
     _startTimer?.cancel();
     _startTimer = Timer(delay, () {
       _active = true;
+      _catchingUp.value =
+          socket.state.value != SocketState.connected &&
+          (online?.value ?? true) &&
+          server.reach.reachable.value;
       socket.start();
       presence.start();
     });
   }
 
   void background() {
+    _catchingUp.value = false;
     _startTimer?.cancel();
     _stopTimer?.cancel();
     _stopTimer = Timer(backgroundGrace, () => unawaited(_stop()));
@@ -145,6 +191,9 @@ class ServerConnection {
 
   /// One event from the socket, in the order it arrived.
   void receive(ServerEvent event) {
+    // The first event after connecting: replayed events follow at once,
+    // and anything lost is fetched by the refresh it started.
+    if (!_resyncing) _catchingUp.value = false;
     switch (event) {
       // Streamed answers live in memory only; they skip the queue so text
       // keeps flowing while the database is busy.
@@ -165,6 +214,9 @@ class ServerConnection {
             )
             when agentPostTypes.contains(type)) {
           agents.postEdited(id, message ?? '');
+        }
+        if (event case StatusChangedEvent(:final userId?)) {
+          presence.confirm([userId]);
         }
         if (!_applied.isClosed) _applied.add(event);
       }),
@@ -193,11 +245,19 @@ class ServerConnection {
     entry
         .run(quiet: quiet)
         .then((_) {
+          _caughtUpNow();
           if (!_caughtUp.isClosed) _caughtUp.add(null);
           return inbox.refresh(force: true, quiet: quiet);
         })
-        .catchError((Object _) {}),
+        .catchError((Object _) => _caughtUpNow()),
   );
+
+  /// Open conversations take over showing their own catch-up from here.
+  void _caughtUpNow() {
+    if (!_resyncing) return;
+    _resyncing = false;
+    _catchingUp.value = false;
+  }
 
   void _networkChanged() {
     if (_active && online!.value) refreshAll();
@@ -216,6 +276,8 @@ class ServerConnection {
   Future<void> close() async {
     online?.removeListener(_networkChanged);
     server.reach.reachable.removeListener(_reachChanged);
+    socket.state.removeListener(_updateLive);
+    server.reach.reachable.removeListener(_updateLive);
     _startTimer?.cancel();
     _stopTimer?.cancel();
     await _stop();
@@ -224,6 +286,9 @@ class ServerConnection {
     typing.close();
     dialogs.close();
     agents.close();
+    presence.dispose();
+    _live.dispose();
+    _catchingUp.dispose();
     await _caughtUp.close();
     await _notices.close();
     await _applied.close();

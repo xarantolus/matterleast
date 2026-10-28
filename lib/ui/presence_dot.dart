@@ -1,4 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// A person's presence as a small ringed dot for the corner of an avatar.
@@ -51,3 +53,29 @@ String presenceLabel(String? status) => switch (status) {
   'dnd' => 'Do not disturb',
   _ => 'Offline',
 };
+
+/// [status] of [userId] as a [PresenceDot] while it is current on the
+/// server at [serverUrl]; an empty square of the same size while the
+/// server isn't live or hasn't told it since, so nothing moves.
+class LivePresenceDot extends ConsumerWidget {
+  const LivePresenceDot({
+    required this.serverUrl,
+    required this.userId,
+    required this.status,
+    this.size = 10,
+    this.announce = true,
+    super.key,
+  });
+
+  final String serverUrl;
+  final String userId;
+  final String? status;
+  final double size;
+  final bool announce;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) =>
+      ref.watch(presenceKnownProvider(serverUrl, userId))
+      ? PresenceDot(status: status, size: size, announce: announce)
+      : SizedBox.square(dimension: size);
+}

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/file_providers.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
@@ -364,7 +365,10 @@ class FileCard extends ConsumerWidget {
     final tokens = context.tokens;
     final transfers = ref.watch(fileTransfersProvider(url));
     final running = transfers.containsKey(file.id);
-    final progress = transfers[file.id];
+    // While the server isn't live the last progress may no longer hold.
+    final progress = running && ref.watch(serverLiveProvider(url))
+        ? transfers[file.id]
+        : null;
     return Padding(
       padding: const EdgeInsets.only(top: Spacing.xs),
       child: FileRightClick(

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
@@ -64,15 +65,27 @@ class PersonTile extends StatelessWidget {
               PositionedDirectional(
                 end: 0,
                 bottom: 0,
-                child: PresenceDot(status: status, size: dense ? 10 : 12),
+                child: LivePresenceDot(
+                  serverUrl: serverUrl,
+                  userId: userId,
+                  status: status,
+                  size: dense ? 10 : 12,
+                ),
               ),
           ],
         ),
       ),
-      title: Text(
-        name.isEmpty ? username : name,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              name.isEmpty ? username : name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          CustomStatusEmoji(serverUrl: serverUrl, userId: userId),
+        ],
       ),
       subtitle: details.isEmpty
           ? null
