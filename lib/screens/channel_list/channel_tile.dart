@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/desktop/window_title.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
@@ -35,7 +36,16 @@ class ChannelTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
-    final color = item.muted ? tokens.muted : tokens.text;
+    final selected = ref.watch(
+      openConversationProvider.select(
+        (open) => open?.url == serverUrl && open?.channelId == item.id,
+      ),
+    );
+    final color = selected
+        ? selectedRowText(context)
+        : item.muted
+        ? tokens.muted
+        : tokens.text;
     final partner = item.kind == ChannelKind.direct ? item.userId : null;
     final presenceKnown =
         partner != null && ref.watch(presenceKnownProvider(serverUrl, partner));
@@ -48,11 +58,16 @@ class ChannelTile extends ConsumerWidget {
         color: color,
         fontWeight: item.unread || item.mentions > 0
             ? FontWeight.w700
+            : selected
+            ? FontWeight.w500
             : FontWeight.w400,
       ),
     );
     final tile = ListTile(
       dense: true,
+      selected: selected,
+      selectedTileColor: selectedRowFill(context),
+      shape: selectedRowShape,
       contentPadding: Spacing.row,
       minLeadingWidth: 28,
       // The row reads as one sentence, name first; the icon and markers
@@ -95,6 +110,16 @@ class ChannelTile extends ConsumerWidget {
           );
   }
 }
+
+/// The row of the open conversation, as Discord marks it: a rounded fill
+/// with medium text. Hover keeps its tint on top of it.
+Color selectedRowFill(BuildContext context) => context.tokens.accentWash;
+
+Color selectedRowText(BuildContext context) => context.tokens.text;
+
+const selectedRowShape = RoundedRectangleBorder(
+  borderRadius: BorderRadius.all(Radius.circular(8)),
+);
 
 /// The name size of a row in the channel list: a little larger than a
 /// dense list tile's on a phone, the theme's list text on desktop.

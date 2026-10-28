@@ -11,6 +11,17 @@ typedef LocalDraftState = ({
   DateTime? syncedAt,
 });
 
+/// How long a draft must stay untouched before it goes to the server.
+const draftQuietTime = Duration(seconds: 30);
+
+/// Pure: whether a draft last changed at [lastChangeAt] goes to the server
+/// now: when the user is [leaving] it, or when it has been quiet long enough.
+bool shouldPushDraft({
+  required DateTime lastChangeAt,
+  required DateTime now,
+  required bool leaving,
+}) => leaving || now.difference(lastChangeAt) >= draftQuietTime;
+
 /// What syncing does with one draft.
 sealed class DraftSyncStep {
   const DraftSyncStep(this.key);

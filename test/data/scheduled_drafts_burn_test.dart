@@ -96,6 +96,9 @@ void main() {
       composer.saveDraft(
         const Draft(channelId: channelId, message: 'half a thought'),
       );
+      await settle();
+      expect(requests('POST', '/api/v4/drafts'), isEmpty, reason: 'typing');
+      await composer.leaveDraft(channelId);
       await eventually(() => requests('POST', '/api/v4/drafts').isNotEmpty);
       final sent = requests('POST', '/api/v4/drafts').single;
       expect(sent.body['message'], 'half a thought');
@@ -190,6 +193,7 @@ void main() {
       () async {
         server.handle = (r) => error(501, 'api.drafts.disabled');
         composer.saveDraft(const Draft(channelId: channelId, message: 'x'));
+        await composer.leaveDraft(channelId);
         await settle();
         expect((await session.db.features()).syncedDrafts, isFalse);
       },

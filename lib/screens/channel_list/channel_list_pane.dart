@@ -114,6 +114,9 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
   ));
   var _checkPending = false;
 
+  /// The shortcut whose page is open beside or over the list.
+  final _openShortcut = ValueNotifier<String?>(null);
+
   @override
   void initState() {
     super.initState();
@@ -122,6 +125,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
 
   @override
   void dispose() {
+    _openShortcut.dispose();
     _scroll.dispose();
     _unread.dispose();
     super.dispose();
@@ -331,28 +335,15 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 icon: Icons.forum_outlined,
                 title: 'Threads',
                 count: unread,
-                onTap: () => openPage(
-                  Navigator.of(context),
-                  TeamThreadsScreen(
-                    url: widget.url,
-                    teamId: widget.teamId,
-                    teamName: list.teamName,
-                  ),
-                ),
-              ),
-            ),
-          if (list.drafts > 0 || scheduled > 0)
-            SliverToBoxAdapter(
-              child: _ShortcutTile(
-                icon: Icons.edit_note,
-                title: 'Drafts',
-                count: list.drafts + scheduled,
-                onTap: () => openPage(
-                  Navigator.of(context),
-                  DraftsScreen(
-                    url: widget.url,
-                    teamId: widget.teamId,
-                    teamName: list.teamName,
+                open: _openShortcut,
+                onTap: () => unawaited(
+                  _openShortcutPage(
+                    'Threads',
+                    TeamThreadsScreen(
+                      url: widget.url,
+                      teamId: widget.teamId,
+                      teamName: list.teamName,
+                    ),
                   ),
                 ),
               ),
@@ -363,12 +354,30 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 icon: Icons.smart_toy_outlined,
                 title: 'Agents',
                 count: 0,
-                onTap: () => openPage(
-                  Navigator.of(context),
-                  AgentsScreen(url: widget.url),
+                open: _openShortcut,
+                onTap: () => unawaited(
+                  _openShortcutPage('Agents', AgentsScreen(url: widget.url)),
                 ),
               ),
             ),
+          SliverToBoxAdapter(
+            child: _ShortcutTile(
+              icon: Icons.edit_note,
+              title: 'Drafts',
+              count: list.drafts + scheduled,
+              open: _openShortcut,
+              onTap: () => unawaited(
+                _openShortcutPage(
+                  'Drafts',
+                  DraftsScreen(
+                    url: widget.url,
+                    teamId: widget.teamId,
+                    teamName: list.teamName,
+                  ),
+                ),
+              ),
+            ),
+          ),
           if (list.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
@@ -435,6 +444,12 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
         ),
       ),
     );
+  }
+
+  Future<void> _openShortcutPage(String id, Widget page) async {
+    _openShortcut.value = id;
+    await openPage(Navigator.of(context), page);
+    if (mounted && _openShortcut.value == id) _openShortcut.value = null;
   }
 
   Widget _section(CategorySection section) {
@@ -674,20 +689,30 @@ class _ShortcutTile extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.count,
+    required this.open,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final int count;
+  final ValueListenable<String?> open;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final color = context.tokens.text;
+  Widget build(BuildContext context) => ValueListenableBuilder(
+    valueListenable: open,
+    builder: (context, openId, _) => _tile(context, selected: openId == title),
+  );
+
+  Widget _tile(BuildContext context, {required bool selected}) {
+    final color = selected ? selectedRowText(context) : context.tokens.text;
     // Same metrics as ChannelTile: these are rows of the same list.
     return ListTile(
       dense: true,
+      selected: selected,
+      selectedTileColor: selectedRowFill(context),
+      shape: selectedRowShape,
       contentPadding: Spacing.row,
       minLeadingWidth: 28,
       leading: SizedBox(width: 28, child: Icon(icon, size: 20, color: color)),
@@ -698,7 +723,11 @@ class _ShortcutTile extends StatelessWidget {
         style: TextStyle(
           fontSize: channelRowTextSize(context),
           color: color,
-          fontWeight: count > 0 ? FontWeight.w700 : FontWeight.w400,
+          fontWeight: count > 0
+              ? FontWeight.w700
+              : selected
+              ? FontWeight.w500
+              : FontWeight.w400,
         ),
       ),
       trailing: count > 0 ? Text('$count') : null,
