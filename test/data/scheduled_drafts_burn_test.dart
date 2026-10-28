@@ -188,6 +188,19 @@ void main() {
       },
     );
 
+    test('a server answering null for the drafts has none to pull', () async {
+      composer.saveDraft(const Draft(channelId: channelId, message: 'mine'));
+      await composer.flushDrafts();
+      server.handle = (r) => r.method == 'GET' ? ok(null) : error(404, 'x');
+      server.seen.clear();
+      await session.connection.drafts.pull(teamId);
+      expect(
+        requests('GET', '/api/v4/users/me/teams/$teamId/drafts'),
+        hasLength(1),
+      );
+      expect(await draftMessages(), ['mine']);
+    });
+
     test(
       'a server without synced drafts turns syncing off for the session',
       () async {

@@ -11,31 +11,43 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'theme_providers.g.dart';
 
-typedef AppThemes = ({ThemeData light, ThemeData dark});
+/// Null themes keep the brand; [mode] picks light, dark or the system's.
+typedef AppThemes = ({ThemeData? light, ThemeData? dark, ThemeMode mode});
 
-/// The themes for the light and dark system setting from the colours the
-/// server in use is set to; null keeps the brand.
+const AppThemes brandSystem = (light: null, dark: null, mode: ThemeMode.system);
+
+ThemeMode themeModeFor(ThemeBrightness brightness) => switch (brightness) {
+  ThemeBrightness.system => ThemeMode.system,
+  ThemeBrightness.light => ThemeMode.light,
+  ThemeBrightness.dark => ThemeMode.dark,
+};
+
+/// The themes and mode for the colours the server in use is set to.
 @riverpod
-Future<AppThemes?> appThemes(Ref ref) async {
+Future<AppThemes> appThemes(Ref ref) async {
   final server = ref.watch(settingsServerProvider);
-  if (server == null) return null;
-  switch (await ref.watch(themeModeProvider(server.url).future)) {
-    case ThemeSource.brand:
-      return null;
-    case ThemeSource.server:
+  if (server == null) return brandSystem;
+  final source = await ref.watch(themeModeProvider(server.url).future);
+  final mode = themeModeFor(source.brightness);
+  switch (source.family) {
+    case ThemeFamily.brand:
+      return (light: null, dark: null, mode: mode);
+    case ThemeFamily.server:
       final palettes = await ref.watch(
         serverPalettesProvider(server.url).future,
       );
       return (
         light: buildServerTheme(palettes.light),
         dark: buildServerTheme(palettes.dark),
+        mode: mode,
       );
-    case ThemeSource.wallpaper:
+    case ThemeFamily.wallpaper:
       final palette = await ref.watch(wallpaperPaletteProvider.future);
-      if (palette == null) return null;
+      if (palette == null) return (light: null, dark: null, mode: mode);
       return (
         light: buildWallpaperTheme(palette, Brightness.light),
         dark: buildWallpaperTheme(palette, Brightness.dark),
+        mode: mode,
       );
   }
 }

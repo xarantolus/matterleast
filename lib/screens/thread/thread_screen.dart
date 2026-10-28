@@ -83,6 +83,8 @@ class ThreadScreen extends ConsumerWidget {
     WidgetRef ref,
     ConversationState state,
   ) {
+    // Closed first: the open then has the last word on what the panes show.
+    ref.read(openPanesProvider.notifier).closeThread();
     unawaited(
       openConversation(
         Navigator.of(context),
@@ -92,7 +94,6 @@ class ThreadScreen extends ConsumerWidget {
         teamId: state.window?.teamId,
       ),
     );
-    ref.read(openPanesProvider.notifier).closeThread();
   }
 
   Future<void> _setFollowing(
