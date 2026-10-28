@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +13,8 @@ import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_keys.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
+import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/post_tile.dart';
 
@@ -97,7 +101,7 @@ void main() {
           body: Actions(
             // What Esc does when the conversation has nothing to mark read.
             actions: {
-              DismissIntent: EnabledAction<DismissIntent>(
+              CloseOnTopIntent: EnabledAction<CloseOnTopIntent>(
                 enabled: () => true,
                 onInvoke: (_) => dismissed++,
               ),
@@ -176,6 +180,24 @@ void main() {
     expect(field(tester).hasFocus, isFalse);
     await _press(tester, LogicalKeyboardKey.keyL, control: true, shift: true);
     expect(field(tester).hasFocus, isTrue);
+    await h.close(tester);
+  }, variant: desktop);
+
+  testWidgets('a popout over the window keeps the keys from the page under '
+      'it', (tester) async {
+    await open(tester);
+    await focusList(tester);
+    unawaited(
+      openPage(
+        Navigator.of(tester.element(find.byType(Composer))),
+        const ContentPage(title: Text('Settings'), body: SizedBox()),
+        popout: true,
+      ),
+    );
+    await h.settle(tester);
+    expect(find.text('Settings'), findsOneWidget);
+    await _press(tester, LogicalKeyboardKey.keyL, control: true, shift: true);
+    expect(field(tester).hasFocus, isFalse);
     await h.close(tester);
   }, variant: desktop);
 

@@ -124,7 +124,7 @@ class RootShortcuts extends ConsumerWidget {
       OpenAccountIntent: CallbackAction<OpenAccountIntent>(
         onInvoke: (_) => openYou(context),
       ),
-      DismissIntent: _CloseOnTop(ref),
+      CloseOnTopIntent: _CloseOnTop(ref),
     },
     // Lets the keys find these actions while nothing below has the focus.
     child: Focus(canRequestFocus: false, skipTraversal: true, child: child),
@@ -133,18 +133,18 @@ class RootShortcuts extends ConsumerWidget {
 
 /// Esc with nothing nearer to close: the content view over the
 /// conversation, else the thread, else the conversation.
-class _CloseOnTop extends Action<DismissIntent> {
+class _CloseOnTop extends Action<CloseOnTopIntent> {
   _CloseOnTop(this.ref);
 
   final WidgetRef ref;
 
   @override
-  bool isEnabled(DismissIntent intent) =>
+  bool isEnabled(CloseOnTopIntent intent) =>
       ref.read(paneRoutesProvider).stack.isNotEmpty ||
       !ref.read(openPanesProvider).isEmpty;
 
   @override
-  void invoke(DismissIntent intent) {
+  void invoke(CloseOnTopIntent intent) {
     final content = ref.read(paneRoutesProvider);
     final pane = content.navigator;
     if (content.stack.isNotEmpty && pane != null) {

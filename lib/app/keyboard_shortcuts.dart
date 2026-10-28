@@ -84,6 +84,16 @@ class StepHistoryIntent extends AppIntent {
   final bool older;
 }
 
+/// Marks the open channel read.
+class MarkReadIntent extends AppIntent {
+  const MarkReadIntent();
+}
+
+/// Closes what is on top: a content view, a thread, a conversation.
+class CloseOnTopIntent extends AppIntent {
+  const CloseOnTopIntent();
+}
+
 /// Searches the messages of the open conversation.
 class SearchChannelIntent extends AppIntent {
   const SearchChannelIntent();
@@ -227,7 +237,9 @@ const appShortcuts = <AppShortcut>[
   AppShortcut(
     'Mark as read, or close the popup, thread or page',
     SingleActivator(LogicalKeyboardKey.escape),
-    DismissIntent(),
+    PrioritizedIntents(
+      orderedIntents: [MarkReadIntent(), DismissIntent(), CloseOnTopIntent()],
+    ),
   ),
   AppShortcut(
     'Zoom in',
@@ -322,8 +334,11 @@ class _AppShortcutsState extends State<AppShortcuts> {
 }
 
 /// When the focus is outside what provides an action, as after a page above
-/// it closed or in the channel list, the keys still reach that page's
-/// actions: the first widget on it that provides one takes the key.
+/// it closed or in the channel list, the keys still reach actions on the
+/// page the focus belongs to: the first widget there that provides one
+/// takes the key. Only the page on top counts, and only the window's first
+/// page also reaches into the panes beside it; a popout or a page over it
+/// keeps its keys to itself.
 class _ShortcutManager extends ShortcutManager {
   _ShortcutManager(Map<ShortcutActivator, Intent> shortcuts)
     : super(shortcuts: shortcuts);
@@ -332,24 +347,42 @@ class _ShortcutManager extends ShortcutManager {
   KeyEventResult handleKeypress(BuildContext context, KeyEvent event) {
     final result = super.handleKeypress(context, event);
     final scope = FocusManager.instance.primaryFocus?.nearestScope;
-    if (result != KeyEventResult.ignored || scope == null) return result;
+    final home = scope?.context;
+    if (result != KeyEventResult.ignored || scope == null || home == null) {
+      return result;
+    }
+    final homeRoute = ModalRoute.of(home);
+    if (homeRoute == null || !homeRoute.isCurrent) return result;
     final intent = shortcuts.entries
         .where((e) => e.key.accepts(event, HardwareKeyboard.instance))
         .firstOrNull
         ?.value;
-    if (intent is! AppIntent) return result;
+    if (intent is! AppIntent && intent is! PrioritizedIntents) return result;
+    final candidates = intent is PrioritizedIntents
+        ? intent.orderedIntents
+        : [intent!];
     // A page whose widgets live in nested navigators has none of its own.
     final nodes = scope.descendants.isEmpty
         ? FocusManager.instance.rootScope.descendants
         : scope.descendants;
     for (final node in nodes) {
       final at = node.context;
-      if (at == null || !(ModalRoute.of(at)?.isCurrent ?? false)) continue;
-      final action = Actions.maybeFind<AppIntent>(at, intent: intent);
-      if (action == null) continue;
-      final (enabled, _) = Actions.of(at)
-          .invokeActionIfEnabled(action, intent, at);
-      if (enabled) return KeyEventResult.handled;
+      if (at == null) continue;
+      final route = ModalRoute.of(at);
+      if (route == null ||
+          !route.isCurrent ||
+          (route != homeRoute && !homeRoute.isFirst)) {
+        continue;
+      }
+      // The framework's own prioritised action looks from the focus, not
+      // from this node, so the intents are tried here in order.
+      for (final candidate in candidates) {
+        final action = Actions.maybeFind<Intent>(at, intent: candidate);
+        if (action == null) continue;
+        final (enabled, _) = Actions.of(at)
+            .invokeActionIfEnabled(action, candidate, at);
+        if (enabled) return KeyEventResult.handled;
+      }
     }
     return result;
   }

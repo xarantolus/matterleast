@@ -50,43 +50,12 @@ class _ConversationKeysState extends ConsumerState<ConversationKeys> {
         enabled: () => _composer.context != null,
         onInvoke: (_) => _composer.requestFocus(),
       ),
-      DismissIntent: _MarkReadFirst(
-        context,
-        canMarkRead: () => _canMarkRead,
-        markRead: () => ref.read(widget.conversation.notifier).markRead(),
+      MarkReadIntent: EnabledAction<MarkReadIntent>(
+        enabled: () => _canMarkRead,
+        onInvoke: (_) =>
+            unawaited(ref.read(widget.conversation.notifier).markRead()),
       ),
     },
     child: widget.builder(_composer),
   );
-}
-
-/// Esc marks the channel read while it can; otherwise it is what the
-/// next Actions above would do. A nearer action that is disabled would
-/// hide that one, so this one takes over its answer.
-class _MarkReadFirst extends Action<DismissIntent> {
-  _MarkReadFirst(
-    this.above, {
-    required this.canMarkRead,
-    required this.markRead,
-  });
-
-  final BuildContext above;
-  final bool Function() canMarkRead;
-  final Future<void> Function() markRead;
-
-  Action<Intent>? _next(DismissIntent intent) =>
-      Actions.maybeFind<Intent>(above, intent: intent);
-
-  @override
-  bool isEnabled(DismissIntent intent) =>
-      canMarkRead() || (_next(intent)?.isEnabled(intent) ?? false);
-
-  @override
-  Object? invoke(DismissIntent intent) {
-    if (canMarkRead()) {
-      unawaited(markRead());
-      return null;
-    }
-    return _next(intent)?.invoke(intent);
-  }
 }
