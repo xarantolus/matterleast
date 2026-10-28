@@ -437,7 +437,9 @@ class PostTile extends StatelessWidget {
       child: onTap == null && onLongPress == null
           ? tile
           : InkWell(
-              mouseCursor: clickCursor,
+              // The text cursor over the text, the arrow elsewhere; what can
+              // be clicked inside shows the hand itself.
+              mouseCursor: MouseCursor.defer,
               // Links, images, files, reactions and names take their own
               // taps.
               onTap: onTap,
