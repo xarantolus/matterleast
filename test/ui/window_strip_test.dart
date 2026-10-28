@@ -20,8 +20,10 @@ Future<void> on(TargetPlatform platform, Future<void> Function() body) async {
 }
 
 void main() {
-  Widget app() => ProviderScope(
-    overrides: [availableUpdateProvider.overrideWithValue(null)],
+  Widget app() => UncontrolledProviderScope(
+    container: ProviderContainer.test(
+      overrides: [availableUpdateProvider.overrideWithValue(null)],
+    ),
     child: MaterialApp(
       builder: (context, child) => WindowFrame(child: child!),
       home: Scaffold(
