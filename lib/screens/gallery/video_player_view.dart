@@ -28,12 +28,16 @@ class VideoPlayerView extends StatefulWidget {
   const VideoPlayerView({
     required this.video,
     this.onControlsChanged,
+    this.onFullScreenChanged,
     super.key,
   });
 
   /// An initialized controller, owned by the caller.
   final VideoPlayerController video;
   final ValueChanged<bool>? onControlsChanged;
+
+  /// Full screen on desktop fills the window; the page hides its bars.
+  final ValueChanged<bool>? onFullScreenChanged;
 
   @override
   State<VideoPlayerView> createState() => _VideoPlayerViewState();
@@ -136,6 +140,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
     _setControls(true);
     final enter = !_fullScreen;
     setState(() => _fullScreen = enter);
+    widget.onFullScreenChanged?.call(enter);
     if (enter) {
       await enterFullScreen(wide: widget.video.value.aspectRatio > 1);
     } else {
@@ -157,6 +162,10 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
         type: MaterialType.transparency,
         // A moving mouse shows the controls; they hide once it rests.
         child: MouseRegion(
+          // Resting over a playing video hides the pointer with the controls.
+          cursor: !_controls && _playing
+              ? SystemMouseCursors.none
+              : MouseCursor.defer,
           onHover: (event) {
             if (event.kind == PointerDeviceKind.mouse) _setControls(true);
           },

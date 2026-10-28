@@ -90,6 +90,13 @@ void main() {
       );
     });
 
+    test('a heading of a hashtag is a heading whose text is the tag', () {
+      expect(
+        _blocks('# #SomeTitle').single,
+        const Block.heading(1, [Inline.hashtag('SomeTitle')]),
+      );
+    });
+
     test('a trailing full stop is not part of the tag', () {
       expect(_line('#release.').first, const Inline.hashtag('release'));
     });
