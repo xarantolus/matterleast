@@ -86,18 +86,10 @@ class ReactionsBar extends StatelessWidget {
         tooltip: isDesktop ? ':${group.emojiName}:' : null,
         showCheckmark: false,
         selected: mine,
-        // A clear outline, so a lone own reaction reads as yours.
-        side: BorderSide(
-          color: mine ? scheme.primary : scheme.outlineVariant,
-          width: mine ? 1.5 : 1,
-        ),
+        // Colour alone marks an own reaction; its size never changes.
+        side: BorderSide(color: mine ? scheme.primary : scheme.outlineVariant),
         selectedColor: scheme.primaryContainer,
-        labelStyle: mine
-            ? TextStyle(
-                color: scheme.onPrimaryContainer,
-                fontWeight: FontWeight.w600,
-              )
-            : null,
+        labelStyle: mine ? TextStyle(color: scheme.onPrimaryContainer) : null,
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 2),
         label: Semantics(

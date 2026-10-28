@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,7 @@ import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/message_hover.dart';
+import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/post_tile.dart';
 
 import '../support/fake_server.dart';
@@ -31,6 +33,7 @@ void main() {
   late Completer<void> olderAsked;
   late Completer<void> answerOlder;
   late int olderAsks;
+  final opened = <String>[];
 
   /// What the next older page holds; a server error when null.
   List<int>? olderPage;
@@ -38,6 +41,9 @@ void main() {
   final start = DateTime.utc(2026, 10, 26, 8);
   const linkRow = 50;
   const codeRow = 53;
+  const mentionRow = 52;
+  const systemRow = 51;
+  const reactedRow = 58;
   var longRow = 60;
   final long = [for (var i = 1; i <= 60; i++) 'line $i'].join('\n\n');
   const code = 'ebb `low water` chart\n\n```\nhigh water\n```\n\nmessage end';
@@ -46,12 +52,29 @@ void main() {
     'id': 'n$i',
     'channel_id': channelId,
     'user_id': 'someone',
+    if (i == reactedRow)
+      'metadata': {
+        'reactions': [
+          {
+            'user_id': 'bobid',
+            'post_id': 'n$i',
+            'emoji_name': 'tada',
+            'create_at': 1,
+          },
+        ],
+      },
+    if (i == systemRow) ...{
+      'type': 'system_add_to_channel',
+      'props': {'username': 'wren', 'addedUsername': 'bob'},
+    },
     'create_at': start.add(Duration(minutes: i)).millisecondsSinceEpoch,
     'message': i == longRow
         ? long
         : switch (i) {
             linkRow => 'tide table at $link',
             codeRow => code,
+            mentionRow => 'please ask @bob about it',
+            systemRow => '@wren added @bob to the channel.',
             _ => 'message $i',
           },
   };
@@ -60,14 +83,19 @@ void main() {
     WidgetTester tester, {
     int count = 60,
     VoidCallback? onReplyToNewest,
+    bool threads = true,
   }) async {
     HttpOverrides.global = null;
     olderAsked = Completer();
     answerOlder = Completer();
     olderAsks = 0;
+    opened.clear();
     (server, session) = (await tester.runAsync(() async {
       final server = await FakeServer.start();
       final session = await testSession(server);
+      await session.store.applyUsers([
+        api.User.fromJson({'id': 'bobid', 'username': 'bob'}),
+      ]);
       await session.store.applyChannelPage(
         channelId: channelId,
         page: api.PostList.fromJson({
@@ -132,6 +160,9 @@ void main() {
                     url: url,
                     conversation: conversationProvider(url, channelId),
                     startText: 'This is the start of Boats.',
+                    onOpenThread: threads
+                        ? (post, {reply = false}) => opened.add(post.id)
+                        : null,
                   ),
                 ),
                 if (onReplyToNewest != null)
@@ -404,6 +435,130 @@ void main() {
       }),
     );
   }
+
+  Future<void> tapMention(WidgetTester tester, String text, String name) async {
+    await open(tester);
+    answerOlder.complete();
+    final row = find.textContaining(text, findRichText: true);
+    for (var i = 0; i < 10 && row.evaluate().isEmpty; i++) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
+      await settle(tester);
+    }
+    final range = find.textRange.ofSubstring('@$name').evaluate().first;
+    final box = range.renderObject
+        .getBoxesForSelection(
+          TextSelection(
+            baseOffset: range.textRange.start,
+            extentOffset: range.textRange.end,
+          ),
+        )
+        .first;
+    final at = range.renderObject.localToGlobal(box.toRect().center);
+    final mouse = defaultTargetPlatform == TargetPlatform.android
+        ? null
+        : await tester.createGesture(kind: PointerDeviceKind.mouse);
+    if (mouse == null) {
+      await tester.tapAt(at);
+    } else {
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(at);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await mouse.down(at);
+      await tester.pump(const Duration(milliseconds: 80));
+      await mouse.up();
+    }
+    await settle(tester);
+  }
+
+  for (final (label, text) in [
+    ('a message', 'please ask'),
+    ('a system message', 'added'),
+  ]) {
+    testWidgets(
+      'tapping @bob in $label opens his profile, not the thread',
+      (tester) async {
+        await tapMention(tester, text, 'bob');
+        expect(find.byType(UserProfileSheet), findsOneWidget);
+        expect(opened, isEmpty);
+        await close(tester);
+      },
+      variant: TargetPlatformVariant(const {
+        TargetPlatform.android,
+        TargetPlatform.linux,
+      }),
+    );
+  }
+
+  for (final variant in [TargetPlatform.android, TargetPlatform.linux]) {
+    Future<void> press(
+      WidgetTester tester,
+      Offset from, {
+      Offset by = Offset.zero,
+    }) async {
+      final mouse = variant == TargetPlatform.android
+          ? null
+          : await tester.createGesture(kind: PointerDeviceKind.mouse);
+      final touch = mouse ?? await tester.startGesture(from);
+      if (mouse != null) {
+        await mouse.addPointer(location: from);
+        addTearDown(mouse.removePointer);
+        await mouse.moveTo(from);
+        await tester.pump(const Duration(milliseconds: 300));
+        await mouse.down(from);
+      }
+      await tester.pump(const Duration(milliseconds: 80));
+      if (by != Offset.zero) {
+        await touch.moveBy(by);
+        await tester.pump(const Duration(milliseconds: 80));
+      }
+      await touch.up();
+      await settle(tester);
+    }
+
+    testWidgets('a click on a message opens its thread', (tester) async {
+      await open(tester);
+      await press(tester, tester.getCenter(find.text('message 59')));
+      expect(opened, ['n59']);
+      await close(tester);
+    }, variant: TargetPlatformVariant.only(variant));
+
+    testWidgets('a click on a reaction toggles it and opens no thread', (
+      tester,
+    ) async {
+      await open(tester);
+      await press(tester, tester.getCenter(find.byType(FilterChip)));
+      expect(opened, isEmpty);
+      await close(tester);
+    }, variant: TargetPlatformVariant.only(variant));
+
+    testWidgets('a click in a thread opens nothing', (tester) async {
+      await open(tester, threads: false);
+      await press(tester, tester.getCenter(find.text('message 59')));
+      expect(opened, isEmpty);
+      await close(tester);
+    }, variant: TargetPlatformVariant.only(variant));
+  }
+
+  testWidgets('dragging over a message to select its text opens no thread', (
+    tester,
+  ) async {
+    await open(tester);
+    final at = tester.getTopLeft(find.text('message 59')) + const Offset(2, 8);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: at);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(at);
+    await tester.pump(const Duration(milliseconds: 300));
+    await mouse.down(at);
+    await mouse.moveTo(at + const Offset(40, 0));
+    await tester.pump(const Duration(milliseconds: 80));
+    await mouse.up();
+    await settle(tester);
+    expect(opened, isEmpty);
+    await close(tester);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
   group('with a mouse on desktop', () {
     final desktop = TargetPlatformVariant.only(TargetPlatform.linux);

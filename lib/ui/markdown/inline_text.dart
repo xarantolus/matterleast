@@ -45,32 +45,42 @@ class InlineText extends StatefulWidget {
 }
 
 class _InlineTextState extends State<InlineText> {
-  final _recognizers = <GestureRecognizer>[];
+  // Kept across rebuilds: a hover rebuilds the text in the middle of a
+  // click, and a recognizer replaced then would drop that click.
+  final _recognizers = <Object, GestureRecognizer>{};
+  var _used = <Object>{};
 
   /// The link or name under the mouse.
   Object? _hovered;
 
-  void _clear() {
-    for (final r in _recognizers) {
-      r.dispose();
-    }
-    _recognizers.clear();
-  }
-
   @override
   void dispose() {
-    _clear();
+    for (final r in _recognizers.values) {
+      r.dispose();
+    }
     super.dispose();
   }
 
-  T _keep<T extends GestureRecognizer>(T recognizer) {
-    _recognizers.add(recognizer);
-    return recognizer;
+  T _recognizer<T extends GestureRecognizer>(Object key, T Function() create) {
+    _used.add(key);
+    if (_recognizers[key] case final T same) return same;
+    _recognizers[key]?.dispose();
+    final made = create();
+    _recognizers[key] = made;
+    return made;
+  }
+
+  void _dropUnused() {
+    _recognizers.removeWhere((key, r) {
+      if (_used.contains(key)) return false;
+      r.dispose();
+      return true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    _clear();
+    _used = {};
     final env = PostEnvironment.maybeOf(context);
     final tokens = context.tokens;
     final base = widget.style;
@@ -109,27 +119,28 @@ class _InlineTextState extends State<InlineText> {
       return style;
     }
 
-    GestureRecognizer? linkTap(String? link) {
+    GestureRecognizer? linkTap(int i, String? link) {
       if (link == null || env == null) return null;
       if (isInlineActionLink(link)) {
         final run = action(link);
         if (run == null) return null;
-        return _keep(
-          TapGestureRecognizer()
-            ..onTap = () => env.onAction?.call(actions!.request(run)),
-        );
+        return _recognizer<TapGestureRecognizer>(
+          ('action', i),
+          TapGestureRecognizer.new,
+        )..onTap = () => env.onAction?.call(actions!.request(run));
       }
-      return _keep(
-        TapOrHoldRecognizer(
-          onTapped: () => env.onLink(classifyLink(link, env.server)),
-          onHeld: () => showLinkSheet(context, link, env),
-          onRightClick: isDesktop
-              ? (at) => showLinkMenu(context, link, at)
-              : null,
-          onMiddleClick: isDesktop
-              ? () => env.onLink(classifyLink(link, env.server))
-              : null,
-        ),
+      return _recognizer<TapOrHoldRecognizer>((
+        'link',
+        i,
+      ), TapOrHoldRecognizer.new)..update(
+        onTapped: () => env.onLink(classifyLink(link, env.server)),
+        onHeld: () => showLinkSheet(context, link, env),
+        onRightClick: isDesktop
+            ? (at) => showLinkMenu(context, link, at)
+            : null,
+        onMiddleClick: isDesktop
+            ? () => env.onLink(classifyLink(link, env.server))
+            : null,
       );
     }
 
@@ -181,7 +192,7 @@ class _InlineTextState extends State<InlineText> {
               TextSpan(
                 text: text,
                 style: styled(marks, link: link),
-                recognizer: linkTap(link),
+                recognizer: linkTap(i, link),
               ),
             ),
           );
@@ -196,7 +207,7 @@ class _InlineTextState extends State<InlineText> {
                   fontSize: fontSize * 0.92,
                   backgroundColor: seeThroughCode(tokens),
                 ),
-                recognizer: linkTap(link),
+                recognizer: linkTap(i, link),
               ),
             ),
           );
@@ -216,10 +227,10 @@ class _InlineTextState extends State<InlineText> {
                 ),
                 recognizer: env == null || _specialMentions.contains(lower)
                     ? null
-                    : _keep(
-                        TapGestureRecognizer()
-                          ..onTap = () => env.onMention(name),
-                      ),
+                    : (_recognizer<TapGestureRecognizer>(
+                        ('mention', i),
+                        TapGestureRecognizer.new,
+                      )..onTap = () => env.onMention(name)),
                 mouseCursor: env == null || _specialMentions.contains(lower)
                     ? null
                     : SystemMouseCursors.click,
@@ -235,10 +246,10 @@ class _InlineTextState extends State<InlineText> {
                 style: styled(marks).copyWith(color: tokens.accent),
                 recognizer: env == null
                     ? null
-                    : _keep(
-                        TapGestureRecognizer()
-                          ..onTap = () => env.onChannel(name),
-                      ),
+                    : (_recognizer<TapGestureRecognizer>(
+                        ('channel', i),
+                        TapGestureRecognizer.new,
+                      )..onTap = () => env.onChannel(name)),
                 mouseCursor: env == null ? null : SystemMouseCursors.click,
               ),
             ),
@@ -253,9 +264,10 @@ class _InlineTextState extends State<InlineText> {
                 style: styled(marks),
                 recognizer: onHashtag == null
                     ? null
-                    : _keep(
-                        TapGestureRecognizer()..onTap = () => onHashtag(tag),
-                      ),
+                    : (_recognizer<TapGestureRecognizer>(
+                        ('hashtag', i),
+                        TapGestureRecognizer.new,
+                      )..onTap = () => onHashtag(tag)),
                 mouseCursor: onHashtag == null
                     ? null
                     : SystemMouseCursors.click,
@@ -293,8 +305,11 @@ class _InlineTextState extends State<InlineText> {
                 text: unicode,
                 style: styled(marks, link: link),
                 recognizer: named
-                    ? _keep(TapGestureRecognizer()..onTap = showCard)
-                    : linkTap(link),
+                    ? (_recognizer<TapGestureRecognizer>((
+                        'card',
+                        i,
+                      ), TapGestureRecognizer.new)..onTap = showCard)
+                    : linkTap(i, link),
               ),
             );
           } else if (custom != null) {
@@ -313,7 +328,7 @@ class _InlineTextState extends State<InlineText> {
               TextSpan(
                 text: literal,
                 style: styled(marks, link: link),
-                recognizer: linkTap(link),
+                recognizer: linkTap(i, link),
               ),
             );
           }
@@ -345,6 +360,7 @@ class _InlineTextState extends State<InlineText> {
       }
     }
     if (widget.trailing != null) spans.add(widget.trailing!);
+    _dropUnused();
     return Text.rich(TextSpan(children: spans), style: base);
   }
 }

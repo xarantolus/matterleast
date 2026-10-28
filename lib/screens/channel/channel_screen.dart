@@ -7,6 +7,7 @@ import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
+import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
@@ -43,14 +44,10 @@ class ChannelScreen extends ConsumerWidget {
     );
     final state = ref.watch(conversation);
     final window = state.window;
-    final name = switch (window) {
-      ConversationWindow(:final channelName, :final channelType)
-          when channelName.isNotEmpty &&
-              channelType != 'D' &&
-              channelType != 'G' =>
-        channelName,
-      _ => title,
-    };
+    // The title comes from the channel itself, so every way of opening it
+    // shows the same one; [title] only covers the moment before it is known.
+    final name =
+        ref.watch(channelInfoProvider(url, channelId)).value?.title ?? title;
     final partnerId = window?.partnerId;
     final partner = partnerId == null
         ? null
