@@ -76,9 +76,9 @@ Stream<PostDisplay> postDisplay(Ref ref, String url) async* {
 
 /// Gives the message bodies below it the server's parse options and what
 /// taps on mentions, channel links and links do. The rows are built only
-/// once the parse options and the custom emoji are known, so they are laid
-/// out once, at their final size; the values handed down stay identical
-/// while nothing changes, so rows don't rebuild for nothing.
+/// once the parse options, the custom emoji and what rows show are known,
+/// so they are laid out once, at their final size; the values handed down
+/// stay identical while nothing changes, so rows don't rebuild for nothing.
 class MessageEnvironment extends ConsumerStatefulWidget {
   const MessageEnvironment({
     required this.url,
@@ -245,13 +245,14 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
     final url = widget.url;
     final options = ref.watch(parseOptionsProvider(url));
     final emoji = ref.watch(customEmojiProvider(url));
+    final shown = ref.watch(postDisplayProvider(url));
     bool known(AsyncValue<Object?> v) => v.hasValue || v.hasError;
-    if (!known(options) || !known(emoji)) {
+    if (!known(options) || !known(emoji) || !known(shown)) {
       return const SizedBox.expand();
     }
     final me = ref.watch(currentUserProvider(url)).value;
     final resolver = ref.watch(customEmojiResolverProvider(url)).value;
-    final display = ref.watch(postDisplayProvider(url)).value;
+    final display = shown.value;
     return PostEnvironment(
       server: _server,
       options: options.value ?? const ParseOptions(),
