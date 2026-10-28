@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -145,16 +146,25 @@ void main() {
     test(
       'what the opening refresh fetches is read after it, not before',
       () async {
-        server.handle = (r) {
+        final answer = Completer<void>();
+        server.handle = (r) async {
           if (r.path == posts) {
+            await answer.future;
             return ok({
               'order': ['fresh1'],
               'posts': {'fresh1': postJson('fresh1', 30)},
             });
           }
+          if (r.path.endsWith('/users/ids')) return ok(<Object?>[]);
           return ok({'status': 'OK'});
         };
-        await open();
+        final provider = conversationProvider(server.url.toString(), channelId);
+        container.listen(provider, (_, _) {});
+        await eventually(() => container.read(provider).window != null);
+        container.read(provider.notifier).onView(atBottom);
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        expect(views(), 0);
+        answer.complete();
         await eventually(() => views() == 1);
         final order = server.paths.toList();
         expect(order.indexOf(view), greaterThan(order.indexOf(posts)));
