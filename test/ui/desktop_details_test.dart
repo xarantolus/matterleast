@@ -14,6 +14,8 @@ import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/settings/display_settings_page.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/emoji_card.dart';
+import 'package:matterleast/ui/keyboard_focus_rings.dart';
+import 'package:matterleast/ui/link_status.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -211,6 +213,59 @@ void main() {
       await mouse.moveTo(tester.getCenter(find.byKey(const Key('off'))));
       await tester.pump();
       expect(_cursor(), SystemMouseCursors.basic);
+    }, variant: desktop);
+
+    testWidgets('hovering a link shows its address at the bottom left, and '
+        'leaving it hides it', (tester) async {
+      await tester.pumpWidget(
+        _app(
+          const LinkStatus(
+            child: Center(
+              child: InlineText(
+                inlines: [
+                  TextPart('the docs', link: 'https://docs.example.test/tide'),
+                ],
+                style: TextStyle(fontSize: 14),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('https://docs.example.test/tide'), findsNothing);
+      final mouse = await _hover(
+        tester,
+        find.textContaining('the docs', findRichText: true),
+      );
+      final address = find.text('https://docs.example.test/tide');
+      expect(address, findsOneWidget);
+      expect(tester.getBottomLeft(address).dx, lessThan(40));
+      await mouse.moveTo(const Offset(5, 5));
+      await tester.pump();
+      expect(address, findsNothing);
+    }, variant: desktop);
+
+    testWidgets('a keyboard-only focus ring shows after Tab, not after a '
+        'mouse click', (tester) async {
+      await tester.pumpWidget(
+        _app(
+          KeyboardFocusRings(
+            child: FilledButton(onPressed: () {}, child: const Text('go')),
+          ),
+        ),
+      );
+      addTearDown(
+        () => FocusManager.instance.highlightStrategy =
+            FocusHighlightStrategy.automatic,
+      );
+      await tester.tap(find.text('go'), kind: PointerDeviceKind.mouse);
+      await tester.pump();
+      expect(FocusManager.instance.highlightMode, FocusHighlightMode.touch);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(
+        FocusManager.instance.highlightMode,
+        FocusHighlightMode.traditional,
+      );
     }, variant: desktop);
 
     testWidgets('an icon button shows the hand through the desktop theme', (

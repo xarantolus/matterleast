@@ -65,6 +65,9 @@ void main() {
   testWidgets('the shortcut list shows every shortcut with its keys', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
         builder: (_, child) => AppShortcuts(child: child!),
@@ -89,6 +92,10 @@ void main() {
       );
     }
     expect(keysLabel(appShortcuts.first.keys), 'Ctrl+K');
+    expect(find.text('Search this conversation'), findsOneWidget);
+    expect(find.text('Ctrl+F'), findsOneWidget);
+    expect(find.text('Reply to the newest message'), findsOneWidget);
+    expect(find.text('Shift+Up'), findsOneWidget);
   }, variant: desktop);
 
   testWidgets('Alt+Down opens the next channel, Alt+Shift+Down the next '
