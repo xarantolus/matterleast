@@ -29,9 +29,11 @@ import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
+import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/gone_channels.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
+import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
@@ -56,6 +58,7 @@ void main() {
   late ServerSession session;
   late ProviderContainer container;
   late WidgetRef widgetRef;
+  late AppDatabase db;
 
   Future<void> start(
     WidgetTester tester, {
@@ -67,9 +70,12 @@ void main() {
       server.handle = (_) => ok(const <String, Object?>{});
       return (server, await testSession(server));
     }))!;
+    db = AppDatabase(DatabaseConnection(NativeDatabase.memory()));
+    addTearDown(db.close);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWithValue(db),
           serverSessionProvider(server.url.toString())
               .overrideWith((ref) async => session),
           railSelectionProvider.overrideWith(_Rail.new),
@@ -474,12 +480,9 @@ void main() {
 
   testWidgets('a restored channel opens like any other: team picked, '
       'remembered, and a left swipe brings it back', (tester) async {
-    final db = AppDatabase(DatabaseConnection(NativeDatabase.memory()));
-    addTearDown(db.close);
     await start(
       tester,
       more: (url) => [
-        appDatabaseProvider.overrideWithValue(db),
         serversProvider.overrideWith((ref) {
           ref.keepAlive();
           return Stream.value([
@@ -509,13 +512,17 @@ void main() {
       ],
     );
     final url = server.url.toString();
-    await tester.runAsync(
-      () => db.writeSetting(
-        Settings.lastConversation.key,
-        '{"url":"$url","channelId":"$channelId","title":"Old",'
-        '"teamId":"$teamId"}',
-      ),
-    );
+    await tester.runAsync(() async {
+      await db.writeSetting(
+        Settings.lastRailTarget.key,
+        '{"url":"$url","teamId":"$teamId"}',
+      );
+      await db.writeSetting(
+        Settings.openConversations.key,
+        '{"open":{"$url $teamId":{"url":"$url","channelId":"$channelId",'
+        '"title":"Old","teamId":"$teamId"}}}',
+      );
+    });
     container
       ..listen(serversProvider, (_, _) {})
       ..listen(switchItemsProvider(url), (_, _) {});
@@ -545,6 +552,133 @@ void main() {
     navigator(tester).pop();
     await settle(tester);
     await finish(tester);
+  });
+
+  group('each team keeps its own conversation', () {
+    const shipsId = 'ch000000000000000000000c02';
+    const otherTeam = 'tm000000000000000000000t02';
+    late StreamController<List<SwitchItem>> listed;
+
+    List<SwitchItem> channels(String url, {bool boats = true}) => [
+      if (boats)
+        SwitchItem(
+          serverUrl: url,
+          kind: SwitchKind.channel,
+          id: channelId,
+          title: 'Boats',
+          teamId: teamId,
+        ),
+      SwitchItem(
+        serverUrl: url,
+        kind: SwitchKind.channel,
+        id: shipsId,
+        title: 'Ships',
+        teamId: otherTeam,
+      ),
+    ];
+
+    Future<String> begin(WidgetTester tester) async {
+      listed = StreamController<List<SwitchItem>>.broadcast();
+      addTearDown(listed.close);
+      await start(tester, more: known(listed: listed.stream));
+      final url = server.url.toString();
+      container.listen(switchItemsProvider(url), (_, _) {});
+      listed.add(channels(url));
+      await tester.runAsync(container.read(conversationMemoryProvider).start);
+      return url;
+    }
+
+    Future<void> show(WidgetTester tester, String url, String team) async {
+      unawaited(
+        showPlace(navigator(tester), RailTarget(url: url, teamId: team)),
+      );
+      await settle(tester);
+    }
+
+    String? shownChannel(WidgetTester tester) => tester
+        .widgetList<ChannelScreen>(find.byType(ChannelScreen))
+        .map((w) => w.channelId)
+        .firstOrNull;
+
+    testWidgets('switching team closes the open conversation, and switching '
+        'back opens its channel and thread again', (tester) async {
+      final url = await begin(tester);
+      await open(tester);
+      await open(tester, rootId: 'old1');
+      await show(tester, url, otherTeam);
+      expect(conversations(), findsNothing);
+      await show(tester, url, teamId);
+      expect(shownChannel(tester), channelId);
+      expect(find.byType(ThreadScreen), findsOneWidget);
+      await finish(tester);
+    });
+
+    testWidgets("a team shows what was open in it, never another team's", (
+      tester,
+    ) async {
+      final url = await begin(tester);
+      await open(tester);
+      await show(tester, url, otherTeam);
+      unawaited(
+        openConversation(
+          navigator(tester),
+          url: url,
+          channelId: shipsId,
+          title: 'Ships',
+          teamId: otherTeam,
+        ),
+      );
+      await settle(tester);
+      expect(shownChannel(tester), shipsId);
+      await show(tester, url, teamId);
+      expect(shownChannel(tester), channelId);
+      await show(tester, url, otherTeam);
+      expect(shownChannel(tester), shipsId);
+      await finish(tester);
+    });
+
+    testWidgets('a channel left since shows the list instead', (tester) async {
+      final url = await begin(tester);
+      await open(tester);
+      await show(tester, url, otherTeam);
+      listed.add(channels(url, boats: false));
+      await settle(tester);
+      await show(tester, url, teamId);
+      expect(conversations(), findsNothing);
+      await finish(tester);
+    });
+
+    testWidgets("the swipe back brings only this team's closed "
+        'conversation', (tester) async {
+      final url = await begin(tester);
+      await open(tester);
+      await back(tester);
+      await show(tester, url, otherTeam);
+      await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
+      await settle(tester);
+      expect(conversations(), findsNothing);
+      await show(tester, url, teamId);
+      await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
+      await settle(tester);
+      expect(shownChannel(tester), channelId);
+      await finish(tester);
+    });
+
+    testWidgets('on a wide window the panes follow the team too', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final url = await begin(tester);
+      await open(tester);
+      expect(container.read(openPanesProvider).channel?.channelId, channelId);
+      await show(tester, url, otherTeam);
+      expect(container.read(openPanesProvider).isEmpty, isTrue);
+      await show(tester, url, teamId);
+      expect(container.read(openPanesProvider).channel?.channelId, channelId);
+      await finish(tester);
+    });
   });
 
   testWidgets('suggestions float above the composer; the list keeps its size', (

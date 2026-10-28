@@ -7,6 +7,7 @@ import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -116,10 +117,7 @@ Future<void> openConversation(
       unawaited(navigator.push(route));
   }
   await route.popped;
-  // Brought back at the reading position, not at the message it opened at.
-  container
-      .read(lastClosedProvider.notifier)
-      .set(target.copyWith(highlightPostId: null, focusComposer: false));
+  container.read(conversationMemoryProvider).closed(target);
 }
 
 /// Closes the channel [channelId] of [url] and its threads wherever they
@@ -151,6 +149,20 @@ void closeChannel(
     passed = route == lowest;
     return false;
   });
+}
+
+/// Closes every conversation and the pages over them, in routes and panes,
+/// so the list shows.
+void closeConversations(NavigatorState navigator) {
+  if (!navigator.mounted) return;
+  final container = ProviderScope.containerOf(navigator.context, listen: false);
+  for (final routes in [
+    container.read(paneRoutesProvider),
+    container.read(conversationRoutesProvider),
+  ]) {
+    routes.navigator?.popUntil((route) => route.isFirst);
+  }
+  container.read(openPanesProvider.notifier).set(Panes.none);
 }
 
 /// Opens [target] again the way [openConversation] first did.

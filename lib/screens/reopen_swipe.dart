@@ -6,10 +6,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
-import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/open_channel.dart';
-import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
 /// A left swipe anywhere on [child] brings back the conversation the user
@@ -40,7 +39,7 @@ class _ReopenSwipeState extends ConsumerState<ReopenSwipe> {
   void _end(DragEndDetails d) {
     final far = _swipe <= -_distance || d.velocity.pixelsPerSecond.dx < -800;
     _swipe = 0;
-    final last = ref.read(lastClosedProvider);
+    final last = ref.read(conversationMemoryProvider).closedHere();
     if (!far || last == null || !mounted) return;
     unawaited(_reopen(Navigator.of(context), last));
   }
@@ -49,12 +48,13 @@ class _ReopenSwipeState extends ConsumerState<ReopenSwipe> {
   /// channel, it was archived or the server signed out.
   Future<void> _reopen(
     NavigatorState navigator,
-    ConversationTarget last,
+    SavedConversation saved,
   ) async {
-    final saved = conversationToSave(Panes.fromStack([last]));
-    if (saved == null) return;
     try {
-      final stack = await openableStack(ref, saved);
+      final stack = await openableStack(
+        ProviderScope.containerOf(context, listen: false),
+        saved,
+      );
       if (stack.isEmpty || !navigator.mounted) return;
       await reopenConversation(navigator, stack.last);
     } on Object catch (e) {

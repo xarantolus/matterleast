@@ -294,4 +294,289 @@ as String?,
 
 }
 
+
+/// @nodoc
+mixin _$OpenConversations {
+
+ Map<String, SavedConversation> get open; Map<String, SavedConversation> get closed;
+/// Create a copy of OpenConversations
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$OpenConversationsCopyWith<OpenConversations> get copyWith => _$OpenConversationsCopyWithImpl<OpenConversations>(this as OpenConversations, _$identity);
+
+  /// Serializes this OpenConversations to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as OpenConversations;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OpenConversations&&const DeepCollectionEquality().equals(other.open, _this.open)&&const DeepCollectionEquality().equals(other.closed, _this.closed));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as OpenConversations;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.open),const DeepCollectionEquality().hash(_this.closed));
+}
+
+@override
+String toString() {
+  final _this = this as OpenConversations;
+  return 'OpenConversations(open: ${_this.open}, closed: ${_this.closed})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $OpenConversationsCopyWith<$Res>  {
+  factory $OpenConversationsCopyWith(OpenConversations value, $Res Function(OpenConversations) _then) = _$OpenConversationsCopyWithImpl;
+@useResult
+$Res call({
+ Map<String, SavedConversation> open, Map<String, SavedConversation> closed
+});
+
+
+
+
+}
+/// @nodoc
+class _$OpenConversationsCopyWithImpl<$Res>
+    implements $OpenConversationsCopyWith<$Res> {
+  _$OpenConversationsCopyWithImpl(this._self, this._then);
+
+  final OpenConversations _self;
+  final $Res Function(OpenConversations) _then;
+
+/// Create a copy of OpenConversations
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? open = null,Object? closed = null,}) {
+  return _then(OpenConversations(
+open: null == open ? _self.open : open // ignore: cast_nullable_to_non_nullable
+as Map<String, SavedConversation>,closed: null == closed ? _self.closed : closed // ignore: cast_nullable_to_non_nullable
+as Map<String, SavedConversation>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [OpenConversations].
+extension OpenConversationsPatterns on OpenConversations {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _OpenConversations value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _OpenConversations() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _OpenConversations value)  $default,){
+final _that = this;
+switch (_that) {
+case _OpenConversations():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _OpenConversations value)?  $default,){
+final _that = this;
+switch (_that) {
+case _OpenConversations() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, SavedConversation> open,  Map<String, SavedConversation> closed)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _OpenConversations() when $default != null:
+return $default(_that.open,_that.closed);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, SavedConversation> open,  Map<String, SavedConversation> closed)  $default,) {final _that = this;
+switch (_that) {
+case _OpenConversations():
+return $default(_that.open,_that.closed);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, SavedConversation> open,  Map<String, SavedConversation> closed)?  $default,) {final _that = this;
+switch (_that) {
+case _OpenConversations() when $default != null:
+return $default(_that.open,_that.closed);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _OpenConversations extends OpenConversations {
+  const _OpenConversations({ Map<String, SavedConversation> open = const <String, SavedConversation>{},  Map<String, SavedConversation> closed = const <String, SavedConversation>{}}): _open = open,_closed = closed,super._();
+  factory _OpenConversations.fromJson(Map<String, dynamic> json) => _$OpenConversationsFromJson(json);
+
+ final  Map<String, SavedConversation> _open;
+@override@JsonKey() Map<String, SavedConversation> get open {
+  if (_open is EqualUnmodifiableMapView) return _open;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_open);
+}
+
+ final  Map<String, SavedConversation> _closed;
+@override@JsonKey() Map<String, SavedConversation> get closed {
+  if (_closed is EqualUnmodifiableMapView) return _closed;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_closed);
+}
+
+
+/// Create a copy of OpenConversations
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$OpenConversationsCopyWith<_OpenConversations> get copyWith => __$OpenConversationsCopyWithImpl<_OpenConversations>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$OpenConversationsToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _OpenConversations&&const DeepCollectionEquality().equals(other.open, _open)&&const DeepCollectionEquality().equals(other.closed, _closed));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_open),const DeepCollectionEquality().hash(_closed));
+}
+
+@override
+String toString() {
+    return 'OpenConversations(open: $open, closed: $closed)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$OpenConversationsCopyWith<$Res> implements $OpenConversationsCopyWith<$Res> {
+  factory _$OpenConversationsCopyWith(_OpenConversations value, $Res Function(_OpenConversations) _then) = __$OpenConversationsCopyWithImpl;
+@override @useResult
+$Res call({
+ Map<String, SavedConversation> open, Map<String, SavedConversation> closed
+});
+
+
+
+
+}
+/// @nodoc
+class __$OpenConversationsCopyWithImpl<$Res>
+    implements _$OpenConversationsCopyWith<$Res> {
+  __$OpenConversationsCopyWithImpl(this._self, this._then);
+
+  final _OpenConversations _self;
+  final $Res Function(_OpenConversations) _then;
+
+/// Create a copy of OpenConversations
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? open = null,Object? closed = null,}) {
+  return _then(_OpenConversations(
+open: null == open ? _self._open : open // ignore: cast_nullable_to_non_nullable
+as Map<String, SavedConversation>,closed: null == closed ? _self._closed : closed // ignore: cast_nullable_to_non_nullable
+as Map<String, SavedConversation>,
+  ));
+}
+
+
+}
+
 // dart format on

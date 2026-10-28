@@ -69,68 +69,6 @@ abstract class _$OpenPanes extends $Notifier<Panes> {
   }
 }
 
-/// The conversation the user last closed on a narrow screen; a left swipe
-/// on the channel list or Home brings it back.
-
-@ProviderFor(LastClosed)
-final lastClosedProvider = LastClosedProvider._();
-
-/// The conversation the user last closed on a narrow screen; a left swipe
-/// on the channel list or Home brings it back.
-final class LastClosedProvider
-    extends $NotifierProvider<LastClosed, ConversationTarget?> {
-  /// The conversation the user last closed on a narrow screen; a left swipe
-  /// on the channel list or Home brings it back.
-  LastClosedProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'lastClosedProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$lastClosedHash();
-
-  @$internal
-  @override
-  LastClosed create() => LastClosed();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ConversationTarget? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ConversationTarget?>(value),
-    );
-  }
-}
-
-String _$lastClosedHash() => r'429d8b9f35d97b3461ad0a963d79af26938d921d';
-
-/// The conversation the user last closed on a narrow screen; a left swipe
-/// on the channel list or Home brings it back.
-
-abstract class _$LastClosed extends $Notifier<ConversationTarget?> {
-  ConversationTarget? build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<ConversationTarget?, ConversationTarget?>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<ConversationTarget?, ConversationTarget?>,
-              ConversationTarget?,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
-
 /// The conversation routes and content views on the app's navigator,
 /// oldest first.
 

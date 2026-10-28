@@ -9,8 +9,10 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/panes.dart';
+import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 
 const _general = ChannelTarget(
@@ -20,6 +22,14 @@ const _general = ChannelTarget(
   teamId: 't1',
 );
 
+const _team = RailTarget(url: 'https://chat.example.test', teamId: 't1');
+
+/// The rail shows [_team].
+class _InTeam extends RailSelection {
+  @override
+  RailTarget? build() => _team;
+}
+
 void main() {
   late AppDatabase db;
   late ProviderContainer container;
@@ -27,7 +37,10 @@ void main() {
   setUp(() {
     db = AppDatabase(DatabaseConnection(NativeDatabase.memory()));
     container = ProviderContainer(
-      overrides: [appDatabaseProvider.overrideWithValue(db)],
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        railSelectionProvider.overrideWith(_InTeam.new),
+      ],
     );
   });
 
@@ -37,7 +50,7 @@ void main() {
   });
 
   Future<String?> stored() async =>
-      (await db.allSettings())[Settings.lastConversation.key];
+      (await db.allSettings())[Settings.openConversations.key];
 
   testWidgets('the open conversation is remembered until it is closed', (
     tester,
@@ -71,7 +84,7 @@ void main() {
     navigatorKey.currentState!.pop();
     await tester.pumpAndSettle();
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
-    expect(await tester.runAsync(stored), isEmpty);
+    expect(await tester.runAsync(stored), isNot(contains('"open":{"')));
   });
 
   testWidgets('a conversation in a pane is remembered too', (tester) async {

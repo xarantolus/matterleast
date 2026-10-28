@@ -14,6 +14,7 @@ import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
+import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/settings/settings_page.dart';
 import 'package:matterleast/screens/you/custom_status_screen.dart';
 import 'package:matterleast/screens/you/edit_profile_screen.dart';
@@ -106,11 +107,15 @@ class _YouList extends ConsumerWidget {
           ),
           title: const Text('Saved messages'),
           onTap: () {
-            ref.read(railSelectionProvider.notifier).select(null);
             ref
                 .read(homeFilterSelectionProvider.notifier)
                 .select(InboxFilter.saved);
-            Navigator.of(context).pop();
+            final navigator = Navigator.of(context);
+            if (ref.read(railSelectionProvider) == null) {
+              navigator.pop();
+            } else {
+              unawaited(showPlace(navigator, null));
+            }
           },
         ),
         ListTile(
@@ -407,10 +412,12 @@ class _ServerTile extends ConsumerWidget {
     final navigator = Navigator.of(context);
     switch (action) {
       case null:
-        ref
-            .read(railSelectionProvider.notifier)
-            .select(RailTarget(url: server.url));
-        navigator.pop();
+        final here = ref.read(railSelectionProvider)?.url == server.url;
+        if (here) {
+          navigator.pop();
+        } else {
+          unawaited(showPlace(navigator, RailTarget(url: server.url)));
+        }
       case _ServerAction.signIn:
         await navigator.push(
           SlideRoute<void>.page(

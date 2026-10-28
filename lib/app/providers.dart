@@ -201,3 +201,17 @@ Future<T> readOnce<T>(
     held.close();
   }
 }
+
+/// [readOnce] in [container], for work that outlives the widget that
+/// started it.
+Future<T> readOnceIn<T>(
+  ProviderContainer container,
+  ProviderListenable<Future<T>> provider,
+) async {
+  final held = container.listen(provider, (_, _) {});
+  try {
+    return await held.read();
+  } finally {
+    held.close();
+  }
+}

@@ -12,8 +12,8 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 
-/// Opens the conversation the user last had open, over the channel list it
-/// belongs to, unless [launchedByIntent] says a notification, link or share
+/// Opens the conversation the user last had open in the place the rail
+/// shows, over the channel list it belongs to, unless [launchedByIntent] says a notification, link or share
 /// launched the app. Then starts remembering what is open.
 Future<void> restoreConversation(
   WidgetRef ref,
@@ -21,9 +21,9 @@ Future<void> restoreConversation(
   required Future<bool> launchedByIntent,
 }) async {
   try {
-    final saved = await ref
-        .read(settingsStoreProvider)
-        .read(Settings.lastConversation);
+    final store = ref.read(settingsStoreProvider);
+    final open = await store.read(Settings.openConversations);
+    final saved = open.at(await store.read(Settings.lastRailTarget));
     final stack = await _stackOf(ref, saved, await launchedByIntent);
     if (stack.isNotEmpty && navigator.mounted) {
       for (final target in stack) {
@@ -44,24 +44,24 @@ Future<List<ConversationTarget>> _stackOf(
   bool launchedByIntent,
 ) async {
   if (saved == null || launchedByIntent) return const [];
-  return openableStack(ref, saved);
+  return openableStack(ProviderScope.containerOf(ref.context), saved);
 }
 
 /// The conversations that open [saved] again, its channel first when it is
 /// a thread; none when its server is signed out or its channel left, gone
 /// or archived since.
 Future<List<ConversationTarget>> openableStack(
-  WidgetRef ref,
+  ProviderContainer container,
   SavedConversation saved,
 ) async {
-  final servers = await readOnce(ref, serversProvider.future);
+  final servers = await readOnceIn(container, serversProvider.future);
   final signedIn = {
     for (final s in servers)
       if (s.signedIn) s.url,
   };
   if (!signedIn.contains(saved.url)) return const [];
-  final items = await readOnce(
-    ref,
+  final items = await readOnceIn(
+    container,
     switchItemsProvider(saved.url).future,
   ).timeout(const Duration(seconds: 5));
   return conversationsToRestore(
