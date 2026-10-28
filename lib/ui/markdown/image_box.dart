@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/post_extras.dart';
 import 'package:matterleast/app/platform.dart';
@@ -9,20 +11,33 @@ import 'package:matterleast/ui/tokens.dart';
 
 /// The tallest an inline image may be: 45 % of the phone screen's longer
 /// side, so a portrait picture takes the same room whichever way the phone
-/// is held; a fixed box on desktop, where windows are large.
-double imageMaxHeight(Size screen, {required bool desktop}) =>
-    desktop ? _desktopBox.height : screen.longestSide * 0.45;
+/// is held; 40 % of the window's height on desktop.
+double imageMaxHeight(Size screen, {required bool desktop}) => desktop
+    ? max(screen.height * _desktopHeightShare, _desktopFloor)
+    : screen.longestSide * 0.45;
 
-/// The widest an inline image may be, given the room the message leaves.
-double imageMaxWidth(double available, {required bool desktop}) =>
-    desktop && available > _desktopBox.width ? _desktopBox.width : available;
+/// The widest an inline image may be, given the room the message leaves:
+/// 60 % of it on desktop, never narrower than a small floor.
+double imageMaxWidth(double available, {required bool desktop}) => desktop
+    ? max(available * _desktopWidthShare, min(available, _desktopFloor))
+    : available;
 
 /// Pictures in a grid are smaller than a single one on desktop.
-double gridMaxHeight(Size screen, {required bool desktop}) =>
-    desktop ? _desktopGridHeight : imageMaxHeight(screen, desktop: false);
+double gridMaxHeight(Size screen, {required bool desktop}) => desktop
+    ? max(screen.height * _desktopGridShare, _desktopFloor * 0.75)
+    : imageMaxHeight(screen, desktop: false);
 
-const _desktopBox = Size(480, 360);
-const _desktopGridHeight = 240.0;
+const _desktopHeightShare = 0.4;
+const _desktopWidthShare = 0.6;
+const _desktopGridShare = 0.22;
+const _desktopFloor = 160.0;
+
+/// Pure: the 16:9 box of a video whose size is unknown, within [maxWidth] and
+/// [maxHeight].
+Size unmeasuredVideoBox(double maxWidth, double maxHeight) {
+  final height = min(maxWidth * 9 / 16, maxHeight);
+  return Size(height * 16 / 9, height);
+}
 
 /// Pure: the box an image takes before its bytes arrive. The size typed in
 /// the message (`=WxH`) wins, a missing side follows the measured aspect

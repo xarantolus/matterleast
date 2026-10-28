@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/ui/clickable.dart';
@@ -68,8 +69,16 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
                       final box = imageBox(
                         measuredWidth: size.width,
                         measuredHeight: size.height,
-                        maxWidth: constraints.maxWidth,
-                        maxHeight: 200,
+                        maxWidth: imageMaxWidth(
+                          constraints.maxWidth,
+                          desktop: isDesktop,
+                        ),
+                        maxHeight: isDesktop
+                            ? gridMaxHeight(
+                                MediaQuery.sizeOf(context),
+                                desktop: true,
+                              )
+                            : 200,
                       );
                       return box == null
                           ? const SizedBox.shrink()

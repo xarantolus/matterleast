@@ -10,7 +10,6 @@ import 'package:matterleast/ui/tokens.dart';
 
 const _previewHeight = 300.0;
 const _cellMaxWidth = 240.0;
-const _inlineCellMaxWidth = 360.0;
 
 /// A table in a message. Where panes show, the whole table sits in the
 /// message and scrolls sideways when it is wider; elsewhere a preview that
@@ -92,16 +91,19 @@ class _InlineTableState extends State<_InlineTable> {
             borderRadius: BorderRadius.circular(8),
           ),
           clipBehavior: Clip.antiAlias,
-          child: Scrollbar(
-            controller: _scroll,
-            thumbVisibility: true,
-            child: SingleChildScrollView(
+          child: LayoutBuilder(
+            builder: (context, constraints) => Scrollbar(
               controller: _scroll,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(bottom: Spacing.sm),
-              child: MessageTable(
-                table: widget.table,
-                maxCellWidth: _inlineCellMaxWidth,
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                controller: _scroll,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(bottom: Spacing.sm),
+                child: MessageTable(
+                  table: widget.table,
+                  // A cell wraps before it takes more than half the message.
+                  maxCellWidth: constraints.maxWidth / 2,
+                ),
               ),
             ),
           ),
