@@ -19,6 +19,10 @@ Other (obvious) features that exist: threads, reactions, file previews, sharing,
 | :---------------------------------------------: | :---------------------------------------------: | :-------------------------------------------: |
 | ![Channel list](.github/screenshots/l-list.jpg) | ![Conversation](.github/screenshots/l-chat.jpg) | ![Home inbox](.github/screenshots/l-home.jpg) |
 
+|                    Desktop (dark)                    |                    Desktop (light)                    |
+| :--------------------------------------------------: | :---------------------------------------------------: |
+| ![Desktop, dark](.github/screenshots/d-desktop.jpg) | ![Desktop, light](.github/screenshots/l-desktop.jpg) |
+
 ### Warning about LLM-generated code
 
 This app is significantly vibe-coded / created using LLMs. Most of its code has not been thoroughly reviewed by a human.
