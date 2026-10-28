@@ -5,6 +5,7 @@ import 'package:matterleast/app/launch_gate.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/app/theme_providers.dart';
+import 'package:matterleast/app/ui_zoom.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/ui/keyboard_focus_rings.dart';
@@ -34,10 +35,12 @@ class MatterleastApp extends ConsumerWidget {
             alwaysUse24HourFormat:
                 use24 ?? MediaQuery.alwaysUse24HourFormatOf(context),
           ),
-          child: MessageDisplay(
-            textScale: (textSize ?? MessageTextSize.normal).scale,
-            wrapCode: wrapCode,
-            child: KeyboardFocusRings(child: AppShortcuts(child: child!)),
+          child: UiZoom(
+            child: MessageDisplay(
+              textScale: (textSize ?? MessageTextSize.normal).scale,
+              wrapCode: wrapCode,
+              child: KeyboardFocusRings(child: AppShortcuts(child: child!)),
+            ),
           ),
         ),
       ),

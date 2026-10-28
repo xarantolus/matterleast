@@ -37,13 +37,23 @@ void main() {
 
   final start = DateTime.utc(2026, 10, 26, 8);
   const linkRow = 50;
+  const codeRow = 53;
+  var longRow = 60;
+  final long = [for (var i = 1; i <= 60; i++) 'line $i'].join('\n\n');
+  const code = 'ebb `low water` chart\n\n```\nhigh water\n```\n\nmessage end';
   const link = 'https://example.test/tide';
   Map<String, Object?> post(int i) => {
     'id': 'n$i',
     'channel_id': channelId,
     'user_id': 'someone',
     'create_at': start.add(Duration(minutes: i)).millisecondsSinceEpoch,
-    'message': i == linkRow ? 'tide table at $link' : 'message $i',
+    'message': i == longRow
+        ? long
+        : switch (i) {
+            linkRow => 'tide table at $link',
+            codeRow => code,
+            _ => 'message $i',
+          },
   };
 
   Future<void> open(
@@ -356,6 +366,45 @@ void main() {
     await close(tester);
   });
 
+  for (final short in [false, true]) {
+    testWidgets(
+      'at the bottom, Show more opens the newest message downwards '
+      'from where its top is${short ? ', in a short channel' : ''}',
+      (tester) async {
+        longRow = short ? 1 : 60;
+        addTearDown(() => longRow = 60);
+        await open(tester, count: short ? 2 : 61);
+        olderPage = const [];
+        answerOlder.complete();
+        await settle(tester);
+        double top() => tester.getTopLeft(find.text('line 1')).dy;
+        final before = top();
+        expect(find.text('Show more'), findsOneWidget);
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await mouse.addPointer(
+          location: tester.getCenter(find.text('Show more')),
+        );
+        addTearDown(mouse.removePointer);
+        await tester.pump(const Duration(milliseconds: 300));
+        await mouse.down(tester.getCenter(find.text('Show more')));
+        await tester.pump(const Duration(milliseconds: 50));
+        await mouse.up();
+        for (var i = 0; i < 15; i++) {
+          await tester.pump(const Duration(milliseconds: 20));
+          expect(top(), closeTo(before, 0.5), reason: 'frame $i');
+        }
+        await settle(tester);
+        expect(top(), closeTo(before, 0.5));
+        await close(tester);
+      },
+      variant: TargetPlatformVariant(const {
+        TargetPlatform.android,
+        TargetPlatform.linux,
+      }),
+    );
+  }
+
   group('with a mouse on desktop', () {
     final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
 
@@ -389,6 +438,41 @@ void main() {
         tester.getRect(find.text('message 58')).top,
         greaterThanOrEqualTo(before.bottom),
       );
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('the hover tint fades in a moment after the pointer', (
+      tester,
+    ) async {
+      await open(tester);
+      double tint() {
+        final box = tester.widget<DecoratedBox>(
+          find
+              .descendant(
+                of: rowOf('message 57'),
+                matching: find.byWidgetPredicate(
+                  (w) =>
+                      w is DecoratedBox &&
+                      w.position == DecorationPosition.foreground,
+                ),
+              )
+              .first,
+        );
+        return switch (box.decoration) {
+          BoxDecoration(:final color) => color?.a ?? 0,
+          _ => 0,
+        };
+      }
+
+      final full = Theme.of(tester.element(rowOf('message 57'))).hoverColor.a;
+      await mouseAt(tester, tester.getCenter(find.text('message 57')));
+      await tester.pump();
+      expect(tint(), 0);
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(tint(), greaterThan(0));
+      expect(tint(), lessThan(full / 2));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tint(), closeTo(full, 0.001));
       await close(tester);
     }, variant: desktop);
 
@@ -511,6 +595,57 @@ void main() {
       await settle(tester);
 
       expect(find.text('Copy selection'), findsOneWidget);
+      await close(tester);
+    }, variant: desktop);
+
+    testWidgets('a selection across a message takes in its code', (
+      tester,
+    ) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      await open(tester);
+      final from = tester.getTopLeft(find.textContaining('ebb'));
+      final to = tester.getBottomRight(find.text('message end'));
+      final drag = await tester.startGesture(
+        from + const Offset(1, 2),
+        kind: PointerDeviceKind.mouse,
+      );
+      await drag.moveTo(from + const Offset(40, 20));
+      await drag.moveTo(to - const Offset(1, 2));
+      await drag.up();
+      await settle(tester);
+      await tester.tapAt(
+        to - const Offset(10, 4),
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await settle(tester);
+      await tester.tap(find.text('Copy selection'));
+      await settle(tester);
+
+      // The selection is drawn under the text; inline code must not cover
+      // it.
+      Color? codeShade;
+      tester.widget<Text>(find.textContaining('ebb')).textSpan!.visitChildren((
+        span,
+      ) {
+        if (span case TextSpan(text: 'low water', :final style?)) {
+          codeShade = style.backgroundColor;
+        }
+        return true;
+      });
+      expect(codeShade!.a, lessThan(1));
+      expect(copied, contains('low water'));
+      expect(copied, contains('high water'));
+      expect(copied, contains('message end'));
       await close(tester);
     }, variant: desktop);
 

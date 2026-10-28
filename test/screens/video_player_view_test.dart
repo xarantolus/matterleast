@@ -4,6 +4,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/screens/gallery/settled_end_player.dart';
 import 'package:matterleast/screens/gallery/slide_to_close.dart';
 import 'package:matterleast/screens/gallery/video_player_view.dart';
 import 'package:video_player/video_player.dart';
@@ -32,6 +33,20 @@ class _FakePlayer extends VideoPlayerPlatform {
       ),
     );
     return id;
+  }
+
+  /// Plays again on a seek after the end, as Windows' player does.
+  var replaysAfterEnd = false;
+  var _ended = false;
+  var completions = 0;
+
+  /// The player reaching the end of the video.
+  void finish() {
+    _ended = true;
+    completions++;
+    for (final events in _events.values) {
+      events.add(VideoEvent(eventType: VideoEventType.completed));
+    }
   }
 
   /// The player reporting that it stopped or went on by itself.
@@ -69,8 +84,14 @@ class _FakePlayer extends VideoPlayerPlatform {
       speeds.add(speed);
 
   @override
-  Future<void> seekTo(int playerId, Duration position) async =>
-      seeks.add(position);
+  Future<void> seekTo(int playerId, Duration position) async {
+    seeks.add(position);
+    if (replaysAfterEnd && _ended) {
+      _ended = false;
+      playing(true);
+      Timer(const Duration(milliseconds: 250), finish);
+    }
+  }
 
   @override
   Future<Duration> getPosition(int playerId) async => Duration.zero;
@@ -295,6 +316,62 @@ void main() {
     expect(platform.seeks, isNotEmpty);
     expect(platform.seeks.last, greaterThan(Duration.zero));
     await close(tester);
+  });
+
+  testWidgets('a mouse moving over a playing video brings its controls '
+      'back until it rests', (tester) async {
+    await open(tester, play: true);
+    await tester.pump(controlsHideDelay);
+    expect(controlsShown(tester), isFalse);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: onVideo(tester));
+    addTearDown(mouse.removePointer);
+    await mouse.moveBy(const Offset(20, 0));
+    await tester.pump();
+    expect(controlsShown(tester), isTrue);
+
+    await tester.pump(controlsHideDelay);
+    expect(controlsShown(tester), isFalse);
+    await close(tester);
+  });
+
+  for (final settled in [false, true]) {
+    testWidgets(
+      'a finished video ${settled ? 'stays still' : 'replays its '
+                'end for ever without the guard'}',
+      (tester) async {
+        platform.replaysAfterEnd = true;
+        if (settled) VideoPlayerPlatform.instance = SettledEndPlayer(platform);
+        await open(tester, play: true);
+        platform.finish();
+        for (var i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+
+        if (settled) {
+          expect(platform.completions, 1);
+          expect(video.value.isPlaying, isFalse);
+          expect(video.value.position, video.value.duration);
+        } else {
+          // What Windows did: seek to the end, play, finish, seek again.
+          expect(platform.completions, greaterThan(2));
+          platform.replaysAfterEnd = false;
+          await tester.pump(const Duration(milliseconds: 300));
+        }
+        await close(tester);
+      },
+    );
+  }
+
+  test('only a seek to the end of a finished video is left out', () {
+    const length = Duration(minutes: 1);
+    expect(seeksPastEnd(ended: true, to: length, duration: length), isTrue);
+    expect(
+      seeksPastEnd(ended: true, to: Duration.zero, duration: length),
+      isFalse,
+    );
+    expect(seeksPastEnd(ended: false, to: length, duration: length), isFalse);
   });
 
   test('playback times', () {

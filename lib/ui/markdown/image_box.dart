@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/post_extras.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/markdown/post_doc.dart';
-import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/hover_tint.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -108,7 +108,7 @@ class MessageImage extends StatelessWidget {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => MessageImageOpener.of(context)?.call(image.url),
-                child: Clickable(
+                child: HoverTint(
                   cursor: SystemMouseCursors.zoomIn,
                   child: ImageSlot(
                     url: image.url,

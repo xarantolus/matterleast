@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/app/update_providers.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/window_strip.dart';
@@ -22,11 +23,12 @@ Future<void> on(TargetPlatform platform, Future<void> Function() body) async {
 }
 
 void main() {
-  Widget app() => UncontrolledProviderScope(
+  Widget app({ThemeData? theme}) => UncontrolledProviderScope(
     container: ProviderContainer.test(
       overrides: [availableUpdateProvider.overrideWithValue(null)],
     ),
     child: MaterialApp(
+      theme: theme,
       builder: (context, child) => WindowFrame(child: child!),
       home: Scaffold(
         appBar: AppBar(
@@ -44,6 +46,14 @@ void main() {
   );
 
   group('the window strip', () {
+    testWidgets("its title is in the app's typeface", (tester) async {
+      await on(TargetPlatform.linux, () async {
+        await tester.pumpWidget(app(theme: buildTheme(Brightness.light)));
+        final title = tester.widget<Text>(find.text('Matterleast'));
+        expect(title.style?.fontFamily, appFont);
+      });
+    });
+
     for (final platform in [TargetPlatform.linux, TargetPlatform.windows]) {
       testWidgets('on ${platform.name}: a thin strip across the window above '
           'the app bar holds the drag area and the window buttons', (

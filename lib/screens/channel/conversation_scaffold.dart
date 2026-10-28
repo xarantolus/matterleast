@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/channel_info.dart';
 import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/panes.dart';
@@ -327,7 +328,7 @@ void listenForRejectedPosts(
   );
 });
 
-/// Caps the message column at a readable width, centred in wider panes.
+/// A readable column width on a tablet; the whole width on desktop.
 class _Readable extends StatelessWidget {
   const _Readable({required this.child});
 
@@ -337,7 +338,9 @@ class _Readable extends StatelessWidget {
   Widget build(BuildContext context) => Align(
     alignment: Alignment.topCenter,
     child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: readableWidth),
+      constraints: BoxConstraints(
+        maxWidth: isDesktop ? double.infinity : readableWidth,
+      ),
       child: child,
     ),
   );

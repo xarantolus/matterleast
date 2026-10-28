@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/domain/ui_zoom.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -39,6 +40,13 @@ class FocusRegionIntent extends AppIntent {
   final bool forward;
 }
 
+/// Makes the whole window larger or smaller, or back to 100 %.
+class ZoomIntent extends AppIntent {
+  const ZoomIntent(this.change);
+
+  final ZoomChange change;
+}
+
 /// Shift+Up in an empty composer: the reply to the newest message.
 class ReplyToNewestIntent extends AppIntent {
   const ReplyToNewestIntent();
@@ -69,11 +77,19 @@ class EnabledAction<T extends Intent> extends Action<T> {
 
 @immutable
 class AppShortcut {
-  const AppShortcut(this.description, this.keys, this.intent);
+  const AppShortcut(
+    this.description,
+    this.keys,
+    this.intent, {
+    this.alsoKeys = const [],
+  });
 
   final String description;
   final SingleActivator keys;
   final Intent intent;
+
+  /// Other keys for the same, not listed: keyboard layouts and the numpad.
+  final List<SingleActivator> alsoKeys;
 }
 
 /// Every desktop shortcut, as Mattermost's web app has them where it has
@@ -137,6 +153,31 @@ const appShortcuts = <AppShortcut>[
     DismissIntent(),
   ),
   AppShortcut(
+    'Zoom in',
+    SingleActivator(LogicalKeyboardKey.equal, control: true),
+    ZoomIntent(ZoomChange.zoomIn),
+    alsoKeys: [
+      SingleActivator(LogicalKeyboardKey.equal, control: true, shift: true),
+      SingleActivator(LogicalKeyboardKey.add, control: true),
+      SingleActivator(LogicalKeyboardKey.add, control: true, shift: true),
+      SingleActivator(LogicalKeyboardKey.numpadAdd, control: true),
+    ],
+  ),
+  AppShortcut(
+    'Zoom out',
+    SingleActivator(LogicalKeyboardKey.minus, control: true),
+    ZoomIntent(ZoomChange.zoomOut),
+    alsoKeys: [
+      SingleActivator(LogicalKeyboardKey.numpadSubtract, control: true),
+    ],
+  ),
+  AppShortcut(
+    'Actual size',
+    SingleActivator(LogicalKeyboardKey.digit0, control: true),
+    ZoomIntent(ZoomChange.reset),
+    alsoKeys: [SingleActivator(LogicalKeyboardKey.numpad0, control: true)],
+  ),
+  AppShortcut(
     'Keyboard shortcuts',
     SingleActivator(LogicalKeyboardKey.slash, control: true),
     ShowShortcutsIntent(),
@@ -148,6 +189,7 @@ final _keyNames = {
   LogicalKeyboardKey.arrowDown: 'Down',
   LogicalKeyboardKey.escape: 'Esc',
   LogicalKeyboardKey.slash: '/',
+  LogicalKeyboardKey.equal: '+',
 };
 
 /// Pure: [keys] as people write them, such as "Ctrl+Shift+A".
@@ -171,7 +213,10 @@ class AppShortcuts extends StatefulWidget {
 
 class _AppShortcutsState extends State<AppShortcuts> {
   final _manager = _ShortcutManager({
-    for (final s in appShortcuts) s.keys: s.intent,
+    for (final s in appShortcuts) ...{
+      s.keys: s.intent,
+      for (final keys in s.alsoKeys) keys: s.intent,
+    },
   });
   final _showList = _ShowShortcuts();
 

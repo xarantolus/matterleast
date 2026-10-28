@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
@@ -11,6 +12,16 @@ const _brandLight = Color(0xFF00695C);
 /// Brand fill for the dark theme, a step lighter so it is still visibly the
 /// brand against a dark page while white stays at 5.2:1.
 const _brandDark = Color(0xFF00796B);
+
+/// The bundled typeface; emoji fall back to the system's emoji font.
+const appFont = 'Rubik';
+
+/// Rubik's licence on the app's licence page.
+void registerFontLicence() => LicenseRegistry.addLicense(() async* {
+  yield LicenseEntryWithLineBreaks(const [
+    appFont,
+  ], await rootBundle.loadString('assets/fonts/Rubik-OFL.txt'));
+});
 
 ThemeData buildTheme(Brightness brightness) {
   final brand = brightness == Brightness.dark ? _brandDark : _brandLight;
@@ -153,7 +164,11 @@ ThemeData _build({
     outline: tokens.divider,
     outlineVariant: tokens.hairline,
   );
-  final base = ThemeData(colorScheme: colours, brightness: brightness);
+  final base = ThemeData(
+    colorScheme: colours,
+    brightness: brightness,
+    fontFamily: appFont,
+  );
   return base.copyWith(
     extensions: [tokens],
     scaffoldBackgroundColor: tokens.page,
@@ -194,7 +209,8 @@ ThemeData themeForPlatform(ThemeData theme) =>
 
 /// [theme] at mouse and keyboard sizes for a desktop window, near Discord's
 /// and the Mattermost desktop app's at 100 %: 14 px text, 36 to 44 px list rows,
-/// 48 px app bars and 32 px icon buttons. Phones keep [theme] as it is.
+/// 48 px app bars and 32 px icon buttons, and no ripples. Phones keep
+/// [theme] as it is.
 ThemeData desktopTheme(ThemeData theme) {
   final text = theme.textTheme;
   final colours = theme.colorScheme;
@@ -211,6 +227,8 @@ ThemeData desktopTheme(ThemeData theme) {
   ButtonStyle clickable(ButtonStyle? style) =>
       (style ?? const ButtonStyle()).copyWith(mouseCursor: click);
   return theme.copyWith(
+    // Ripples are for fingers.
+    splashFactory: NoSplash.splashFactory,
     visualDensity: VisualDensity.compact,
     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     textTheme: textTheme,

@@ -188,7 +188,7 @@ class _InlineTextState extends State<InlineText> {
                 style: styled(marks, link: link).copyWith(
                   fontFamily: 'monospace',
                   fontSize: fontSize * 0.92,
-                  backgroundColor: tokens.codeBackground,
+                  backgroundColor: seeThroughCode(tokens),
                 ),
                 recognizer: linkTap(link),
               ),
@@ -327,6 +327,26 @@ class _InlineTextState extends State<InlineText> {
     if (widget.trailing != null) spans.add(widget.trailing!);
     return Text.rich(TextSpan(children: spans), style: base);
   }
+}
+
+/// Pure: the code background as a see-through text shade, so a selection
+/// (drawn under the text) still shows.
+Color seeThroughCode(AppTokens tokens) {
+  final page = tokens.page;
+  final text = tokens.text;
+  final code = tokens.codeBackground;
+  final shares = [
+    for (final (c, p, t) in [
+      (code.r, page.r, text.r),
+      (code.g, page.g, text.g),
+      (code.b, page.b, text.b),
+    ])
+      if ((t - p).abs() > 0.02) (c - p) / (t - p),
+  ];
+  final alpha = shares.isEmpty
+      ? 0.06
+      : shares.reduce((a, b) => a + b) / shares.length;
+  return text.withValues(alpha: alpha.clamp(0.02, 0.5));
 }
 
 /// Pure: which of [usernames] a typed `@name` refers to. Mattermost lets a

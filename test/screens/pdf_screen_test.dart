@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,6 +110,69 @@ void main() {
     // One page and no outline: nothing to list.
     expect(find.byTooltip('Contents'), findsNothing);
     await close(tester);
+  });
+
+  testWidgets('in a wide window the page opens at a reading width, centred, '
+      'and stays centred until zoomed in', (tester) async {
+    tester.view.physicalSize = const Size(1600, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await show(tester, 'guide.pdf');
+    await waitFor(tester, find.byTooltip('Search'));
+    final controller = tester
+        .widget<PdfViewer>(find.byType(PdfViewer))
+        .controller!;
+    await tester.pump(const Duration(milliseconds: 300));
+    double pageWidth() =>
+        controller.documentSize.width * controller.currentZoom;
+    double offCentre() =>
+        controller.visibleRect.center.dx - controller.documentSize.width / 2;
+
+    expect(pageWidth(), closeTo(pdfReadingWidth, 2));
+    expect(offCentre(), closeTo(0, 0.5));
+
+    final viewer = tester.getCenter(find.byType(PdfViewer));
+    await tester.dragFrom(viewer, const Offset(300, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(offCentre(), closeTo(0, 0.5));
+    await tester.dragFrom(viewer, const Offset(-300, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(offCentre(), closeTo(0, 0.5));
+
+    // Zoomed in as Ctrl+plus does, the page pans to either edge. The
+    // zoom's future runs on the real clock.
+    for (var i = 0; i < 3; i++) {
+      unawaited(controller.zoomUp(duration: Duration.zero));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pump(const Duration(milliseconds: 300));
+    for (var i = 0; i < 3; i++) {
+      await tester.timedDragFrom(
+        viewer,
+        const Offset(800, 0),
+        const Duration(milliseconds: 600),
+      );
+      await tester.pump(const Duration(seconds: 1));
+    }
+    expect(controller.visibleRect.left, closeTo(0, 2));
+    for (var i = 0; i < 6; i++) {
+      await tester.timedDragFrom(
+        viewer,
+        const Offset(-800, 0),
+        const Duration(milliseconds: 600),
+      );
+      await tester.pump(const Duration(seconds: 1));
+    }
+    expect(
+      controller.visibleRect.right,
+      closeTo(controller.documentSize.width, 2),
+    );
+    await close(tester);
+  });
+
+  test('a page is fitted to the width, up to a reading width', () {
+    expect(readingZoom(fitWidth: 0.6, viewWidth: 400), 0.6);
+    expect(readingZoom(fitWidth: 2, viewWidth: 1920), 2 * 960 / 1920);
   });
 
   test('the match count reads like a sentence', () {
