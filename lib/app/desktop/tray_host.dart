@@ -13,10 +13,16 @@ class TrayHost {
 
   final DBusClient? _bus;
   final _changes = StreamController<bool>.broadcast();
+  final _items = StreamController<String>.broadcast();
   final _subscriptions = <StreamSubscription<Object?>>[];
   var _present = false;
 
   static const _watcher = 'org.kde.StatusNotifierWatcher';
+
+  // The tray plugin names its item after the process id, which inside a
+  // Flatpak is the same small number for every app; whoever started first
+  // keeps the name and a later icon is never registered.
+  static final _itemPrefix = 'org.kde.StatusNotifierItem-$pid-';
 
   bool get present => _present;
   Stream<bool> get changes => _changes.stream;
@@ -42,6 +48,16 @@ class TrayHost {
           interface: _watcher,
           name: 'StatusNotifierHostRegistered',
         ).listen((_) => unawaited(_check())),
+      )
+      ..add(
+        DBusSignalStream(
+          bus,
+          interface: _watcher,
+          name: 'StatusNotifierItemRegistered',
+        ).listen((signal) {
+          final name = signal.values.firstOrNull;
+          if (name is DBusString) _items.add(name.value);
+        }),
       );
     await _check();
   }
@@ -51,6 +67,26 @@ class TrayHost {
     if (present == _present) return;
     _present = present;
     _changes.add(present);
+  }
+
+  /// Starts waiting for the panel to take the next tray icon of this
+  /// process; make the icon after calling this, then await the result. False
+  /// when it didn't within [timeout], which is when its name was taken.
+  Future<bool> expectItem({
+    Duration timeout = const Duration(seconds: 2),
+  }) async {
+    if (_bus == null || !_present) return true;
+    final taken = Completer<bool>();
+    final sub = _items.stream
+        .where((name) => name.startsWith(_itemPrefix))
+        .listen((_) {
+          if (!taken.isCompleted) taken.complete(true);
+        });
+    try {
+      return await taken.future.timeout(timeout, onTimeout: () => false);
+    } finally {
+      await sub.cancel();
+    }
   }
 
   /// Any doubt counts as no tray, so a window never hides where nothing
@@ -78,6 +114,7 @@ class TrayHost {
       await s.cancel();
     }
     await _changes.close();
+    await _items.close();
     await _bus?.close();
   }
 }
