@@ -20,7 +20,7 @@ void main() {
     Pdfrx.pdfiumModulePath = File('build/native_assets/linux/libpdfium.so')
         .absolute
         .path;
-    Pdfrx.cacheDirectoryPath = Directory.systemTemp.path;
+    Pdfrx.cacheDirectoryPath = Directory.systemTemp.createTempSync('pdf').path;
     await pdfrxFlutterInitialize();
   });
 

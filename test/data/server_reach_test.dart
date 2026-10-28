@@ -67,7 +67,7 @@ void main() {
         session.connection.entry.run(quiet: true),
         throwsA(serverDownError),
       );
-      expect(clock.elapsed, lessThan(const Duration(seconds: 5)));
+      expect(clock.elapsed, lessThan(const Duration(seconds: 3)));
       expect(statuses.whereType<SyncRefreshing>(), isEmpty);
       expect(server.paths.last, '/api/v4/system/ping');
     });
@@ -77,7 +77,7 @@ void main() {
       await serverStopsAnswering();
       final clock = Stopwatch()..start();
       await expectLater(session.connection.entry.run(), throwsA(anything));
-      expect(clock.elapsed, lessThan(const Duration(seconds: 5)));
+      expect(clock.elapsed, lessThan(const Duration(seconds: 3)));
       // Only a ping is waited for; the bar would just flash.
       expect(statuses.whereType<SyncRefreshing>(), isEmpty);
       final shown = session.runner.status.value;
@@ -135,13 +135,9 @@ void main() {
           : answering(r);
       // The socket's next ping finds the server; a failed ping stands
       // for a few seconds.
-      await eventually(
-        () => session.api.reach.probe(),
-        timeout: const Duration(seconds: 8),
-      );
+      await eventually(() => session.api.reach.probe());
       await eventually(
         () async => (await session.db.select(session.db.outbox).get()).isEmpty,
-        timeout: const Duration(seconds: 2),
       );
     });
   });
@@ -156,29 +152,25 @@ void main() {
       // Coming to the foreground, the first request asks with a ping
       // whether the server answers again; it does.
       session.connection.foreground();
-      await eventually(
-        () => !session.api.reach.unreachable,
-        timeout: const Duration(seconds: 1),
-      );
+      await eventually(() => !session.api.reach.unreachable);
       await eventually(
         () => server.paths.contains('/api/v4/users/me'),
-        timeout: const Duration(seconds: 1),
         reason: 'the entry sync runs once the server answers',
       );
     },
   );
 
-  test('a slow server that answers after 8 s still succeeds on the first '
+  test('a server slower than the ping timeout still succeeds on the first '
       'attempt and is not taken as down', () async {
     server.handle = (r) async {
-      await Future<void>.delayed(const Duration(seconds: 8));
+      await Future<void>.delayed(session.api.probeTimeout * 2);
       return ok({'id': meId, 'username': 'river'});
     };
     final me = await session.api.getJsonObject('/api/v4/users/me');
     expect(me?['id'], meId);
     expect(session.api.reach.unreachable, isFalse);
     expect(server.seen, hasLength(1));
-  }, timeout: const Timeout(Duration(seconds: 20)));
+  });
 
   group('a message queued where nothing was loaded yet', () {
     setUp(() async {

@@ -120,7 +120,6 @@ void main() {
       await report(wifi);
       await eventually(
         () async => (await session.db.select(session.db.outbox).get()).isEmpty,
-        timeout: const Duration(seconds: 1),
       );
       expect(server.paths.where((p) => p == '/api/v4/posts'), hasLength(1));
     });
@@ -139,7 +138,6 @@ void main() {
       () =>
           server.paths.contains('/api/v4/users/me') &&
           server.paths.contains('/api/v4/websocket'),
-      timeout: const Duration(seconds: 1),
     );
   });
 

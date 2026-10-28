@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
+import 'package:matterleast/api/websocket/socket_rules.dart';
 import 'package:matterleast/data/actions/agent_actions.dart';
 import 'package:matterleast/data/actions/attribute_actions.dart';
 import 'package:matterleast/data/actions/bookmark_actions.dart';
@@ -37,6 +38,7 @@ class ServerSession {
     required this.dbPath,
     required this.images,
     required String? Function() token,
+    Duration Function(int failCount) retryDelayOf = jitteredRetryDelay,
     this.network,
   }) : store = ServerStore(db) {
     users = UserLoader(server: api, store: store);
@@ -47,6 +49,7 @@ class ServerSession {
       runner: runner,
       users: users,
       token: token,
+      retryDelayOf: retryDelayOf,
       online: network?.online,
     );
     outbox = OutboxSender(

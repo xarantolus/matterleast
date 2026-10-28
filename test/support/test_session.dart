@@ -33,6 +33,8 @@ Future<ServerSession> testSession(
   final http = ServerApi(
     baseUrl: server.url,
     token: () => 'token',
+    probeTimeout: const Duration(milliseconds: 500),
+    probeMemory: const Duration(milliseconds: 300),
     network: network,
   );
   final session = ServerSession(
@@ -52,6 +54,7 @@ Future<ServerSession> testSession(
       filesBudget: () async => 0,
     ),
     token: () => 'token',
+    retryDelayOf: (_) => const Duration(milliseconds: 50),
   );
   if (db != null) return session;
   final store = session.store;

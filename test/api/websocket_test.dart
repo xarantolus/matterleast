@@ -224,7 +224,7 @@ void main() {
       server.event('status_change', 1, {'user_id': 'u1', 'status': 'away'});
       await until(() => events.length == 2);
 
-      await server.connections.single.socket.close();
+      await server.connections.first.socket.close();
       await until(() => server.connections.length == 2);
       final resumed = server.connections.last.uri.queryParameters;
       expect(resumed['connection_id'], 'kept');

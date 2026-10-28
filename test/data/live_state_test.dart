@@ -149,10 +149,7 @@ void main() {
 
       // The socket connects again; the stored status from before isn't
       // shown until the server answers again.
-      await eventually(
-        () => second.connection.live.value,
-        timeout: const Duration(seconds: 8),
-      );
+      await eventually(() => second.connection.live.value);
       await eventually(
         () => lighthouse.paths.contains('/api/v4/users/status/ids'),
       );
