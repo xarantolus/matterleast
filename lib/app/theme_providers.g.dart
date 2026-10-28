@@ -8,25 +8,22 @@ part of 'theme_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The themes for the light and dark system setting from the colours the
-/// server in use is set to; null keeps the brand.
+/// The themes and mode for the colours the server in use is set to.
 
 @ProviderFor(appThemes)
 final appThemesProvider = AppThemesProvider._();
 
-/// The themes for the light and dark system setting from the colours the
-/// server in use is set to; null keeps the brand.
+/// The themes and mode for the colours the server in use is set to.
 
 final class AppThemesProvider
     extends
         $FunctionalProvider<
-          AsyncValue<AppThemes?>,
-          AppThemes?,
-          FutureOr<AppThemes?>
+          AsyncValue<AppThemes>,
+          AppThemes,
+          FutureOr<AppThemes>
         >
-    with $FutureModifier<AppThemes?>, $FutureProvider<AppThemes?> {
-  /// The themes for the light and dark system setting from the colours the
-  /// server in use is set to; null keeps the brand.
+    with $FutureModifier<AppThemes>, $FutureProvider<AppThemes> {
+  /// The themes and mode for the colours the server in use is set to.
   AppThemesProvider._()
     : super(
         from: null,
@@ -43,16 +40,16 @@ final class AppThemesProvider
 
   @$internal
   @override
-  $FutureProviderElement<AppThemes?> $createElement($ProviderPointer pointer) =>
+  $FutureProviderElement<AppThemes> $createElement($ProviderPointer pointer) =>
       $FutureProviderElement(pointer);
 
   @override
-  FutureOr<AppThemes?> create(Ref ref) {
+  FutureOr<AppThemes> create(Ref ref) {
     return appThemes(ref);
   }
 }
 
-String _$appThemesHash() => r'ad9a5c5545fa72c241da4141fefaea1d45736042';
+String _$appThemesHash() => r'5f240ac73c16dc1e4d4fb24dd8a40ddb1829998f';
 
 /// The user's Mattermost theme on the server at [url].
 

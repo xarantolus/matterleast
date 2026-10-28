@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui';
 
-/// Where a server's colours come from, stored per server by name.
-enum ThemeSource {
+/// Where the colours come from.
+enum ThemeFamily {
   brand,
 
   /// The user's Mattermost theme on that server.
@@ -11,7 +11,26 @@ enum ThemeSource {
 
   /// The phone's wallpaper colours (Material You); the brand where the
   /// phone has none.
-  wallpaper;
+  wallpaper,
+}
+
+enum ThemeBrightness { system, light, dark }
+
+/// A server's colour choice, stored per server by name. The first names are
+/// the ones older versions stored, so nothing needs migrating.
+enum ThemeSource {
+  brand(ThemeFamily.brand, ThemeBrightness.system),
+  brandLight(ThemeFamily.brand, ThemeBrightness.light),
+  brandDark(ThemeFamily.brand, ThemeBrightness.dark),
+  wallpaper(ThemeFamily.wallpaper, ThemeBrightness.system),
+  wallpaperLight(ThemeFamily.wallpaper, ThemeBrightness.light),
+  wallpaperDark(ThemeFamily.wallpaper, ThemeBrightness.dark),
+  server(ThemeFamily.server, ThemeBrightness.system);
+
+  const ThemeSource(this.family, this.brightness);
+
+  final ThemeFamily family;
+  final ThemeBrightness brightness;
 
   static ThemeSource of(String? name) =>
       values.where((s) => s.name == name).firstOrNull ?? brand;

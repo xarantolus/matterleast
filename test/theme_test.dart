@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/app/theme_providers.dart';
 import 'package:matterleast/app/wallpaper_colours.dart';
@@ -616,7 +617,7 @@ void main() {
       expect(() => WallpaperColours([1, 2, 3]), throwsFormatException);
     });
 
-    Future<AppThemes?> themesFor(
+    Future<AppThemes> themesFor(
       ThemeSource source,
       WallpaperColours? wallpaper,
     ) async {
@@ -649,24 +650,96 @@ void main() {
       final colours = WallpaperColours.fromSeed(const Color(0xFFB3261E));
       final themes = await themesFor(ThemeSource.wallpaper, colours);
       expect(
-        themes?.light.colorScheme.primary,
+        themes.light?.colorScheme.primary,
         colours.scheme(Brightness.light).primary,
       );
       expect(
-        themes?.dark.colorScheme.primary,
+        themes.dark?.colorScheme.primary,
         colours.scheme(Brightness.dark).primary,
       );
     });
 
     test('a phone without wallpaper colours keeps the brand', () async {
-      expect(await themesFor(ThemeSource.wallpaper, null), isNull);
+      expect((await themesFor(ThemeSource.wallpaper, null)).light, isNull);
       expect(
-        await themesFor(
+        (await themesFor(
           ThemeSource.brand,
           WallpaperColours.fromSeed(const Color(0xFFB3261E)),
-        ),
+        )).light,
         isNull,
       );
+    });
+
+    test(
+      'a forced brightness applies even without wallpaper colours',
+      () async {
+        final themes = await themesFor(ThemeSource.wallpaperDark, null);
+        expect(themes.light, isNull);
+        expect(themes.mode, ThemeMode.dark);
+      },
+    );
+  });
+
+  group('colour modes', () {
+    test('every choice maps to a family and a mode', () {
+      expect(
+        {
+          for (final s in ThemeSource.values)
+            s: (s.family, themeModeFor(s.brightness)),
+        },
+        {
+          ThemeSource.brand: (ThemeFamily.brand, ThemeMode.system),
+          ThemeSource.brandLight: (ThemeFamily.brand, ThemeMode.light),
+          ThemeSource.brandDark: (ThemeFamily.brand, ThemeMode.dark),
+          ThemeSource.wallpaper: (ThemeFamily.wallpaper, ThemeMode.system),
+          ThemeSource.wallpaperLight: (ThemeFamily.wallpaper, ThemeMode.light),
+          ThemeSource.wallpaperDark: (ThemeFamily.wallpaper, ThemeMode.dark),
+          ThemeSource.server: (ThemeFamily.server, ThemeMode.system),
+        },
+      );
+    });
+
+    test('values stored by older versions and unknown ones', () {
+      expect(ThemeSource.of('brand'), ThemeSource.brand);
+      expect(ThemeSource.of('wallpaper'), ThemeSource.wallpaper);
+      expect(ThemeSource.of('server'), ThemeSource.server);
+      expect(ThemeSource.of('brandDark'), ThemeSource.brandDark);
+      expect(ThemeSource.of('sepia'), ThemeSource.brand);
+      expect(ThemeSource.of(null), ThemeSource.brand);
+    });
+
+    testWidgets('Matterleast dark applies while the system is light', (
+      tester,
+    ) async {
+      tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      const url = 'https://chat.example.test';
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            settingsServerProvider.overrideWithValue(
+              const ServerEntry(
+                url: url,
+                displayName: 'Example',
+                siteName: null,
+                serverVersion: null,
+                diagnosticId: null,
+                lastActiveAt: null,
+                ssoScheme: null,
+              ),
+            ),
+            themeModeProvider(url)
+                .overrideWith((ref) => Stream.value(ThemeSource.brandDark)),
+            serversProvider.overrideWith((ref) => Stream.value([])),
+          ],
+          child: const MatterleastApp(),
+        ),
+      );
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      final context = tester.element(find.byType(Scaffold).first);
+      expect(Theme.of(context).brightness, Brightness.dark);
     });
   });
 

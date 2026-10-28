@@ -42,9 +42,13 @@ String _textSizeLabel(MessageTextSize size) => switch (size) {
 };
 
 String _themeLabel(ThemeSource source) => switch (source) {
-  ThemeSource.brand => 'Matterleast colours',
+  ThemeSource.brand => 'Matterleast · follow system',
+  ThemeSource.brandLight => 'Matterleast · light',
+  ThemeSource.brandDark => 'Matterleast · dark',
+  ThemeSource.wallpaper => 'Material You · follow system',
+  ThemeSource.wallpaperLight => 'Material You · light',
+  ThemeSource.wallpaperDark => 'Material You · dark',
   ThemeSource.server => 'My theme on the server',
-  ThemeSource.wallpaper => 'Wallpaper colours (Material You)',
 };
 
 /// How messages and people look: the app-wide clock and images, and the
@@ -158,7 +162,7 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
     final url = server.url;
     final theme = ref.watch(themeModeProvider(url)).value ?? ThemeSource.brand;
     final noWallpaper =
-        theme == ThemeSource.wallpaper &&
+        theme.family == ThemeFamily.wallpaper &&
         ref.watch(wallpaperPaletteProvider).value == null;
     final prefs = ref.watch(displayPrefsProvider(url)).value;
     final zone = ref.watch(zoneSettingProvider(url)).value;
