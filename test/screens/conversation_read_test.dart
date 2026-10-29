@@ -10,6 +10,7 @@ import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/domain/conversation_read.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 
@@ -28,6 +29,19 @@ Map<String, Object?> postJson(String id, int minute, {String rootId = ''}) => {
 
 /// When an open conversation counts as read, as in the official app.
 void main() {
+  test('the new-messages text names the count and when they began', () {
+    final now = DateTime(2026, 10, 29, 16);
+    expect(
+      newMessagesText(1, DateTime(2026, 10, 29, 14, 5), now, use24: true),
+      '1 new message since 14:05',
+    );
+    expect(
+      newMessagesText(12, DateTime(2026, 10, 28, 14, 5), now, use24: true),
+      '12 new messages since yesterday at 14:05',
+    );
+    expect(newMessagesText(3, null, now, use24: true), '3 new messages');
+  });
+
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   // The binding answers every HTTP request with 400; this talks to the fake
   // server for real.

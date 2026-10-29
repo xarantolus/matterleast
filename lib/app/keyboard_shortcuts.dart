@@ -96,6 +96,15 @@ class MarkReadIntent extends AppIntent {
   const MarkReadIntent();
 }
 
+enum MessageScroll { pageUp, pageDown, oldest, newest }
+
+/// Scrolls the messages of the open conversation.
+class ScrollMessagesIntent extends AppIntent {
+  const ScrollMessagesIntent(this.scroll);
+
+  final MessageScroll scroll;
+}
+
 /// Closes what is on top: a content view, a thread, a conversation.
 class CloseOnTopIntent extends AppIntent {
   const CloseOnTopIntent();
@@ -230,6 +239,26 @@ const appShortcuts = <AppShortcut>[
     'Code',
     SingleActivator(LogicalKeyboardKey.keyC, control: true, alt: true),
     FormatIntent(Format.code),
+  ),
+  AppShortcut(
+    'Scroll the messages up a page',
+    SingleActivator(LogicalKeyboardKey.pageUp),
+    ScrollMessagesIntent(MessageScroll.pageUp),
+  ),
+  AppShortcut(
+    'Scroll the messages down a page',
+    SingleActivator(LogicalKeyboardKey.pageDown),
+    ScrollMessagesIntent(MessageScroll.pageDown),
+  ),
+  AppShortcut(
+    'Oldest loaded message',
+    SingleActivator(LogicalKeyboardKey.home, control: true),
+    ScrollMessagesIntent(MessageScroll.oldest),
+  ),
+  AppShortcut(
+    'Newest message',
+    SingleActivator(LogicalKeyboardKey.end, control: true),
+    ScrollMessagesIntent(MessageScroll.newest),
   ),
   AppShortcut(
     'Your previous message',

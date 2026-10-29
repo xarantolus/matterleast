@@ -62,6 +62,25 @@ ComposerKey? press(
 
 void main() {
   group('composerKey', () {
+    test(
+      'PageUp and PageDown scroll the messages only from an empty field',
+      () {
+        expect(
+          press(LogicalKeyboardKey.pageUp, empty: true),
+          ComposerKey.scrollUp,
+        );
+        expect(
+          press(LogicalKeyboardKey.pageDown, empty: true),
+          ComposerKey.scrollDown,
+        );
+        expect(press(LogicalKeyboardKey.pageUp), isNull);
+        expect(
+          press(LogicalKeyboardKey.pageUp, empty: true, desktop: false),
+          isNull,
+        );
+      },
+    );
+
     test('Enter sends where a hardware keyboard sends with it', () {
       expect(press(LogicalKeyboardKey.enter), ComposerKey.send);
       expect(press(LogicalKeyboardKey.enter, enterSends: false), isNull);

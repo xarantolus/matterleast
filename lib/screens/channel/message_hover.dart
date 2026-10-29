@@ -34,6 +34,7 @@ class _MessageHoverState extends ConsumerState<MessageHover> {
     canRequestFocus: false,
     skipTraversal: true,
   );
+  final _shown = ValueNotifier(false);
   var _overRow = false;
   var _overToolbar = false;
   var _focused = false;
@@ -51,6 +52,7 @@ class _MessageHoverState extends ConsumerState<MessageHover> {
   void dispose() {
     _focus.dispose();
     _toolbarFocus.dispose();
+    _shown.dispose();
     super.dispose();
   }
 
@@ -73,6 +75,7 @@ class _MessageHoverState extends ConsumerState<MessageHover> {
     } else {
       _toolbar.hide();
     }
+    _shown.value = _hovered;
     setState(() {});
   }
 
@@ -162,7 +165,7 @@ class _MessageHoverState extends ConsumerState<MessageHover> {
           },
           child: FocusTraversalOrder(
             order: const NumericFocusOrder(2),
-            child: widget.child,
+            child: RowHover(notifier: _shown, child: widget.child),
           ),
         ),
       ),
@@ -171,6 +174,20 @@ class _MessageHoverState extends ConsumerState<MessageHover> {
 }
 
 const _toolbarOverlap = 16.0;
+
+/// Whether the pointer or the keyboard is on the message around it; the
+/// parts that show only then listen here instead of rebuilding the row.
+class RowHover extends InheritedNotifier<ValueNotifier<bool>> {
+  const RowHover({
+    required ValueNotifier<bool> notifier,
+    required super.child,
+    super.key,
+  }) : super(notifier: notifier);
+
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<RowHover>()?.notifier?.value ??
+      false;
+}
 
 /// How long a message's hover tint takes to come and go.
 const hoverFade = Duration(milliseconds: 100);

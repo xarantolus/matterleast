@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -54,6 +55,8 @@ class AnchoredListController {
 
   bool get pinned => _state?._lastView?.pinned ?? true;
 
+  bool get attached => _state != null;
+
   void jumpToBottom() => _state?._jumpToBottom();
 
   Future<void> animateToBottom() async => _state?._animateToBottom();
@@ -69,6 +72,12 @@ class AnchoredListController {
 
   /// Centres row [key] once it is laid out.
   void centre(Object key) => _state?._centre(key);
+
+  /// Scrolls a page towards the older rows, or the newer ones.
+  void scrollPage({required bool older}) => _state?._scrollPage(older: older);
+
+  /// Puts the oldest loaded row at the top.
+  void jumpToOldest() => _state?._showRowAtTop(0);
 }
 
 /// A chat list, newest row at the bottom, whose visible rows never move when
@@ -123,6 +132,8 @@ class AnchoredList<T> extends StatefulWidget {
     probe.widget.list._keepTop(probe.widget.rowKey, unlessAbove: unlessAbove);
   }
 }
+
+const _pageOverlap = 24.0;
 
 /// The anchor when the oldest row's top edge is the fixed one.
 const _pastOldest = Object();
@@ -522,6 +533,29 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     return best;
   }
 
+  /// A viewport less one line, so the last line read stays in sight.
+  void _scrollPage({required bool older}) {
+    if (!mounted || !_scroll.hasClients) return;
+    final p = _scroll.position;
+    final step = math.max(0.0, p.viewportDimension - _pageOverlap);
+    // The newest rows are an estimate until laid out, so a page that reaches
+    // them ends with the jump to the real bottom.
+    if (!older && p.pixels - step <= p.minScrollExtent) {
+      unawaited(_animateToBottom());
+      return;
+    }
+    final to = (p.pixels + (older ? step : -step))
+        .clamp(p.minScrollExtent, math.max(p.minScrollExtent, _maxPixels))
+        .toDouble();
+    unawaited(
+      _scroll.animateTo(
+        to,
+        duration: motion(context, const Duration(milliseconds: 120)),
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+
   void _jumpToBottom() {
     if (!mounted) return;
     _moved('to the bottom', 0);
@@ -707,8 +741,9 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     final height = _viewportHeight;
     if (rows.isEmpty || height == null) return;
     // The row above is parked just off the top edge.
-    final above = rows[rows.length - fromOldest];
-    final key = widget.keyOf(fromOldest == 0 ? rows.last : above);
+    final key = widget.keyOf(
+      fromOldest == 0 ? rows.last : rows[rows.length - fromOldest],
+    );
     _jumpTo(key, fromOldest == 0 ? height - 1 : height);
   }
 
