@@ -29,6 +29,7 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/composer_desktop.dart';
 import 'package:matterleast/screens/channel/composer_extras.dart';
 import 'package:matterleast/screens/channel/composer_keys.dart';
+import 'package:matterleast/screens/channel/format_bar.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/posting_rules.dart';
@@ -37,6 +38,7 @@ import 'package:matterleast/screens/drafts/schedule_picker.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/message_display.dart';
@@ -344,6 +346,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       Format.italic => toggleWrap(_text.value, '_'),
       Format.strike => toggleWrap(_text.value, '~~'),
       Format.link => insertLink(_text.value),
+      Format.code => toggleWrap(_text.value, '`'),
     };
   }
 
@@ -586,86 +589,103 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 Spacing.xs,
                 Spacing.sm,
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              child: Column(
                 children: [
-                  if (editing == null && (uploads || canPrioritize || canBurn))
-                    IconButton(
-                      tooltip: 'Attach',
-                      onPressed:
-                          (!uploads || files.length >= maxAttachments) &&
-                              !canPrioritize &&
-                              !canBurn
-                          ? null
-                          : () => _attach(
-                              uploads: uploads,
-                              acknowledgements: canPrioritize
-                                  ? options!.acknowledgements
-                                  : null,
-                              burnOnRead: canBurn,
-                            ),
-                      icon: const Icon(Icons.add_circle_outline),
-                    )
-                  else
-                    const SizedBox(width: Spacing.md),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        TextField(
-                          controller: _text,
-                          focusNode: _focus,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.forMessages(context, fallbackSize: 16),
-                          minLines: 1,
-                          maxLines: 6,
-                          keyboardType: TextInputType.multiline,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: InputDecoration(
-                            hintText: widget.hint,
-                            hintMaxLines: 1,
-                            filled: true,
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding:
-                                const EdgeInsetsDirectional.fromSTEB(
-                                  Spacing.lg,
-                                  Spacing.md,
-                                  48,
-                                  Spacing.md,
-                                ),
-                          ),
-                        ),
-                        // At the bottom like send, so a long message keeps
-                        // it next to the line being written.
-                        PositionedDirectional(
-                          end: 0,
-                          bottom: 0,
-                          child: Builder(
-                            builder: (button) => IconButton(
-                              tooltip: 'Emoji',
-                              onPressed: () => _pickEmoji(globalRectOf(button)),
-                              icon: const Icon(Icons.mood),
-                            ),
-                          ),
-                        ),
-                      ],
+                  if (context.density.plainComposer)
+                    FormatBar(
+                      onFormat: (format) {
+                        _format(format);
+                        _focus.requestFocus();
+                      },
                     ),
-                  ),
-                  const SizedBox(width: Spacing.xs),
-                  SendButton(
-                    editing: editing != null,
-                    onSend: sendable ? _send : null,
-                    onSchedule:
-                        sendable &&
-                            editing == null &&
-                            !burning &&
-                            (features?.scheduledPosts ?? false) &&
-                            !value.text.text.trimLeft().startsWith('/')
-                        ? _schedule
-                        : null,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (editing == null &&
+                          (uploads || canPrioritize || canBurn))
+                        IconButton(
+                          tooltip: 'Attach',
+                          onPressed:
+                              (!uploads || files.length >= maxAttachments) &&
+                                  !canPrioritize &&
+                                  !canBurn
+                              ? null
+                              : () => _attach(
+                                  uploads: uploads,
+                                  acknowledgements: canPrioritize
+                                      ? options!.acknowledgements
+                                      : null,
+                                  burnOnRead: canBurn,
+                                ),
+                          icon: const Icon(Icons.add_circle_outline),
+                        )
+                      else
+                        const SizedBox(width: Spacing.md),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            TextField(
+                              controller: _text,
+                              focusNode: _focus,
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.forMessages(context, fallbackSize: 16),
+                              minLines: 1,
+                              maxLines: 6,
+                              keyboardType: TextInputType.multiline,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: InputDecoration(
+                                hintText: widget.hint,
+                                hintMaxLines: 1,
+                                filled: !context.density.plainComposer,
+                                isDense: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    context.density.fieldRadius,
+                                  ),
+                                  borderSide: context.density.plainComposer
+                                      ? BorderSide(color: tokens.divider)
+                                      : BorderSide.none,
+                                ),
+                                contentPadding:
+                                    const EdgeInsetsDirectional.fromSTEB(
+                                      Spacing.lg,
+                                      Spacing.md,
+                                      48,
+                                      Spacing.md,
+                                    ),
+                              ),
+                            ),
+                            // At the bottom like send, so a long message keeps
+                            // it next to the line being written.
+                            PositionedDirectional(
+                              end: 0,
+                              bottom: 0,
+                              child: Builder(
+                                builder: (button) => IconButton(
+                                  tooltip: 'Emoji',
+                                  onPressed: () =>
+                                      _pickEmoji(globalRectOf(button)),
+                                  icon: const Icon(Icons.mood),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: Spacing.xs),
+                      SendButton(
+                        editing: editing != null,
+                        onSend: sendable ? _send : null,
+                        onSchedule:
+                            sendable &&
+                                editing == null &&
+                                !burning &&
+                                (features?.scheduledPosts ?? false) &&
+                                !value.text.text.trimLeft().startsWith('/')
+                            ? _schedule
+                            : null,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1150,7 +1170,7 @@ class AttachmentStrip extends StatelessWidget {
 
   Future<void> _menu(BuildContext context, Attachment a, Offset at) async {
     final remove = await showMenuAt<bool>(context, at, [
-      PopupMenuItem(
+      MenuItem(
         value: true,
         child: MenuEntry(
           icon: Icons.close,

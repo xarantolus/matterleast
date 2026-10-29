@@ -409,7 +409,7 @@ void showCopyLink(BuildContext context, String url, {Offset? at}) {
   if (at != null) {
     unawaited(
       showMenuAt<VoidCallback>(context, at, [
-        PopupMenuItem(
+        MenuItem(
           value: copy,
           child: MenuEntry(icon: Icons.copy, label: label),
         ),

@@ -20,6 +20,7 @@ import 'package:matterleast/screens/gallery/pdf_screen.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/hover_tint.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
@@ -238,7 +239,7 @@ class _MediaTile extends StatelessWidget {
         child: SizedBox.fromSize(
           size: size,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(Spacing.sm),
+            borderRadius: BorderRadius.circular(context.density.radius),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -631,22 +632,19 @@ class FileActionsMenu extends ConsumerWidget {
 List<PopupMenuEntry<MediaAction>> _fileMenuItems(PostFile file) => [
   if (isDesktop) ...[
     if (file.kind == FileKind.image)
-      const PopupMenuItem(
-        value: MediaAction.copyImage,
-        child: Text('Copy image'),
-      ),
-    PopupMenuItem(
+      const MenuItem(value: MediaAction.copyImage, child: Text('Copy image')),
+    MenuItem(
       value: MediaAction.saveAs,
       child: Text(file.kind == FileKind.image ? 'Save image as…' : 'Save as…'),
     ),
   ] else ...[
-    PopupMenuItem(
+    MenuItem(
       value: MediaAction.save,
       child: Text('Save to ${_folderOf(file)}'),
     ),
-    const PopupMenuItem(value: MediaAction.share, child: Text('Share')),
+    const MenuItem(value: MediaAction.share, child: Text('Share')),
   ],
-  const PopupMenuItem(value: MediaAction.openWith, child: Text('Open with…')),
+  const MenuItem(value: MediaAction.openWith, child: Text('Open with…')),
 ];
 
 /// On desktop, a right click on [child] opens [file]'s menu at the pointer,

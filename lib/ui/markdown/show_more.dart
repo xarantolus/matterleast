@@ -1,6 +1,7 @@
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/ui/anchored_list.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Space the "Show more" control needs; collapsing saves less than this is
@@ -88,7 +89,7 @@ class _ShowMoreState extends State<ShowMore>
     }
     final opening = _opening ??= AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: context.density.expand,
       value: _expanded ? 1 : 0,
     )..addListener(() => setState(() {}));
     if (MediaQuery.disableAnimationsOf(context)) {

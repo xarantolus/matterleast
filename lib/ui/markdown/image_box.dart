@@ -5,6 +5,7 @@ import 'package:matterleast/api/json/post_extras.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/markdown/post_doc.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/hover_tint.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -178,7 +179,7 @@ class ImageSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     final env = PostEnvironment.maybeOf(context);
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(context.density.radius),
       child: SizedBox.fromSize(
         size: size,
         child:

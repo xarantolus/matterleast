@@ -10,6 +10,7 @@ import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -511,7 +512,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
                 ),
                 itemBuilder: (_) => [
                   for (var t = 0; t <= skinToneSuffixes.length; t++)
-                    PopupMenuItem(
+                    MenuItem(
                       value: t,
                       child: Text(
                         unicodeForName(withSkinTone('hand', t)) ?? '✋',

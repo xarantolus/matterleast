@@ -74,7 +74,7 @@ class FocusComposerIntent extends AppIntent {
   const FocusComposerIntent();
 }
 
-enum Format { bold, italic, strike, link }
+enum Format { bold, italic, strike, link, code }
 
 /// Formats the composer's selection.
 class FormatIntent extends AppIntent {
@@ -225,6 +225,11 @@ const appShortcuts = <AppShortcut>[
     'Link',
     SingleActivator(LogicalKeyboardKey.keyK, control: true, alt: true),
     FormatIntent(Format.link),
+  ),
+  AppShortcut(
+    'Code',
+    SingleActivator(LogicalKeyboardKey.keyC, control: true, alt: true),
+    FormatIntent(Format.code),
   ),
   AppShortcut(
     'Your previous message',

@@ -4,6 +4,7 @@ import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -29,7 +30,7 @@ class TablePreview extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(context.density.radius),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           mouseCursor: clickCursor,
@@ -39,7 +40,7 @@ class TablePreview extends StatelessWidget {
             constraints: const BoxConstraints(maxHeight: _previewHeight),
             decoration: BoxDecoration(
               border: Border.all(color: tokens.hairline),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(context.density.radius),
             ),
             child: ClipRect(
               child: SingleChildScrollView(
@@ -88,7 +89,7 @@ class _InlineTableState extends State<_InlineTable> {
         child: Container(
           decoration: BoxDecoration(
             border: Border.all(color: tokens.hairline),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(context.density.radius),
           ),
           clipBehavior: Clip.antiAlias,
           child: LayoutBuilder(

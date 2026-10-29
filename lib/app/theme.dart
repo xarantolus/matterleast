@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/wallpaper_colours.dart';
 import 'package:matterleast/domain/server_theme.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Brand fill for the light theme: white text reads on it at 6.4:1.
@@ -269,7 +270,21 @@ ThemeData desktopTheme(ThemeData theme) {
   const click = WidgetStateMouseCursor.clickable;
   ButtonStyle clickable(ButtonStyle? style) =>
       (style ?? const ButtonStyle()).copyWith(mouseCursor: click);
+  const density = AppDensity.desktop;
+  final corners = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(density.radius),
+  );
   return theme.copyWith(
+    extensions: [...theme.extensions.values, density],
+    cardTheme: theme.cardTheme.copyWith(
+      elevation: 0,
+      shape: corners.copyWith(side: BorderSide(color: colours.outlineVariant)),
+    ),
+    chipTheme: theme.chipTheme.copyWith(shape: corners),
+    popupMenuTheme: theme.popupMenuTheme.copyWith(
+      mouseCursor: click,
+      shape: corners,
+    ),
     // Ripples are for fingers.
     splashFactory: NoSplash.splashFactory,
     visualDensity: VisualDensity.compact,
@@ -299,9 +314,10 @@ ThemeData desktopTheme(ThemeData theme) {
       style: clickable(theme.segmentedButtonTheme.style),
     ),
     menuButtonTheme: MenuButtonThemeData(
-      style: clickable(theme.menuButtonTheme.style),
+      style: clickable(theme.menuButtonTheme.style).copyWith(
+        minimumSize: WidgetStatePropertyAll(Size(0, density.menuRowHeight!)),
+      ),
     ),
-    popupMenuTheme: theme.popupMenuTheme.copyWith(mouseCursor: click),
     floatingActionButtonTheme: theme.floatingActionButtonTheme.copyWith(
       mouseCursor: click,
     ),

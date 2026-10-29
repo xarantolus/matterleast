@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/motion.dart';
 
 /// The one route every page but a viewer or a dialog opens in. A content
@@ -49,7 +50,9 @@ class SlideRoute<T> extends PageRoute<T> {
 
   @override
   Duration get transitionDuration {
-    final duration = Duration(milliseconds: isDesktop ? 150 : 250);
+    final duration = isDesktop
+        ? AppDensity.desktop.pageFade
+        : AppDensity.phone.pageFade;
     final context = navigator?.context;
     return context == null ? duration : motion(context, duration);
   }

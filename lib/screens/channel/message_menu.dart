@@ -318,14 +318,18 @@ Future<void> showMessageContextMenu(
   final error = Theme.of(context).colorScheme.error;
   final run = await showMenuAt<MessageRun>(context, position, [
     if (selection != null && selection.isNotEmpty) ...[
-      PopupMenuItem(
+      MenuItem(
         value: (_) => Clipboard.setData(ClipboardData(text: selection)),
-        child: const MenuEntry(icon: Icons.copy, label: 'Copy selection'),
+        child: const MenuEntry(
+          icon: Icons.copy,
+          label: 'Copy selection',
+          shortcut: 'Ctrl+C',
+        ),
       ),
       const PopupMenuDivider(),
     ],
     for (final action in actions)
-      PopupMenuItem(
+      MenuItem(
         value: action.run,
         child: MenuEntry(
           icon: action.icon,
