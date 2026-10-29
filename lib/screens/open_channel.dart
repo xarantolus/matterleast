@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/conversation_stack.dart';
+import 'package:matterleast/domain/open_history.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
@@ -29,7 +30,7 @@ import 'package:matterleast/ui/conversation_route.dart';
 /// With [besideContent] a thread opens in the thread pane of a large window
 /// and leaves the content view in the main pane in place.
 /// Opens that aren't the user's own ([recordHistory] false) stay out of the
-/// Back and Forward history. Completes once the conversation closes.
+/// Back and Forward history, which notes where the reader was first. Completes once the conversation closes.
 Future<void> openConversation(
   NavigatorState from, {
   required String url,
@@ -47,6 +48,7 @@ Future<void> openConversation(
   if (!from.mounted) return;
   final navigator = outsidePopout(from);
   final container = ProviderScope.containerOf(navigator.context, listen: false);
+  if (recordHistory) settleLocation(container);
   final picked = container.read(railSelectionProvider);
   final team = (teamId?.isNotEmpty ?? false)
       ? teamId
@@ -58,12 +60,16 @@ Future<void> openConversation(
     container
         .read(openHistoryProvider)
         .push(
-          SavedConversation(
-            url: url,
-            channelId: channelId,
-            title: title,
-            teamId: team,
-            rootId: rootId,
+          Location(
+            place: RailTarget(url: url, teamId: team),
+            conversation: SavedConversation(
+              url: url,
+              channelId: channelId,
+              title: title,
+              teamId: team,
+              rootId: rootId,
+            ),
+            highlightPostId: highlightPostId,
           ),
         );
   }
@@ -180,6 +186,17 @@ void closeChannel(
 /// so the list shows.
 void closeConversations(NavigatorState navigator) {
   if (!navigator.mounted) return;
+  closePages(navigator);
+  ProviderScope.containerOf(
+    navigator.context,
+    listen: false,
+  ).read(openPanesProvider.notifier).set(Panes.none);
+}
+
+/// Closes the pages and conversation routes over the list, but not what
+/// the panes show.
+void closePages(NavigatorState navigator) {
+  if (!navigator.mounted) return;
   final container = ProviderScope.containerOf(navigator.context, listen: false);
   for (final routes in [
     container.read(paneRoutesProvider),
@@ -187,7 +204,6 @@ void closeConversations(NavigatorState navigator) {
   ]) {
     routes.navigator?.popUntil((route) => route.isFirst);
   }
-  container.read(openPanesProvider.notifier).set(Panes.none);
 }
 
 /// Opens [target] again the way [openConversation] first did.

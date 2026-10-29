@@ -43,6 +43,7 @@ import 'package:matterleast/screens/root/gone_channels.dart';
 import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/pane_layout.dart';
+import 'package:matterleast/screens/root/place_reconciler.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -129,6 +130,7 @@ void main() {
         ),
       ),
     );
+    container.read(placeReconcilerProvider);
     await tester.runAsync(container.read(conversationMemoryProvider).start);
   }
 
@@ -179,6 +181,7 @@ void main() {
 
   Future<void> finish(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox());
+    await settle(tester);
     await tester.runAsync(() async {
       await closeTestSession(session);
       await server.close();
@@ -777,7 +780,18 @@ void main() {
     Future<String> begin(WidgetTester tester) async {
       listed = StreamController<List<SwitchItem>>.broadcast();
       addTearDown(listed.close);
-      await start(tester, more: known(listed: listed.stream));
+      await start(
+        tester,
+        more: (url) => [
+          ...known(listed: listed.stream)(url),
+          railTeamsProvider(url).overrideWith(
+            (ref) => Stream.value([
+              for (final id in [teamId, otherTeam])
+                RailTeam(id: id, displayName: id, unread: false, mentions: 0),
+            ]),
+          ),
+        ],
+      );
       final url = server.url.toString();
       container.listen(switchItemsProvider(url), (_, _) {});
       listed.add(channels(url));
@@ -843,6 +857,8 @@ void main() {
       listed.add(channels(url, boats: false));
       await settle(tester);
       await step(tester, forward: false);
+      expect(shownChannel(tester), isNull, reason: 'Home, not the lost one');
+      await step(tester, forward: true);
       expect(shownChannel(tester), shipsId);
       await finish(tester);
     });

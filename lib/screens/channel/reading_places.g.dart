@@ -8,23 +8,26 @@ part of 'reading_places.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Hands the reading position of a conversation on to the next view of it
-/// when a window change moves the conversation between a pane and a route,
-/// so the reader stays where they were.
+/// Knows where each shown conversation is read. A window change that
+/// moves a conversation between a pane and a route hands the place on to
+/// the next view of it, and history steps put the reader back where they
+/// were.
 
 @ProviderFor(readingPlaces)
 final readingPlacesProvider = ReadingPlacesProvider._();
 
-/// Hands the reading position of a conversation on to the next view of it
-/// when a window change moves the conversation between a pane and a route,
-/// so the reader stays where they were.
+/// Knows where each shown conversation is read. A window change that
+/// moves a conversation between a pane and a route hands the place on to
+/// the next view of it, and history steps put the reader back where they
+/// were.
 
 final class ReadingPlacesProvider
     extends $FunctionalProvider<ReadingPlaces, ReadingPlaces, ReadingPlaces>
     with $Provider<ReadingPlaces> {
-  /// Hands the reading position of a conversation on to the next view of it
-  /// when a window change moves the conversation between a pane and a route,
-  /// so the reader stays where they were.
+  /// Knows where each shown conversation is read. A window change that
+  /// moves a conversation between a pane and a route hands the place on to
+  /// the next view of it, and history steps put the reader back where they
+  /// were.
   ReadingPlacesProvider._()
     : super(
         from: null,

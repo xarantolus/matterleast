@@ -465,22 +465,29 @@ class Conversation extends _$Conversation {
     }
   }
 
+  /// The message the list row [key] shows; null for any other row.
+  String? postIdOfRow(Object key) {
+    final window = state.window;
+    if (window == null) return null;
+    return [
+      ...window.posts,
+      ?window.root,
+    ].where((p) => p.key == key).firstOrNull?.id;
+  }
+
   /// Remembers where the reader left off.
   void leave(AnchoredPosition? position) {
     if (!ref.mounted) return;
     final session = _session;
     final window = state.window;
     if (session == null || window == null || position == null) return;
-    final post = [
-      ...window.posts,
-      ?window.root,
-    ].where((p) => p.key == position.key).firstOrNull;
-    if (post == null) return;
+    final postId = postIdOfRow(position.key);
+    if (postId == null) return;
     unawaited(
       session.store.saveViewState(
         _scope,
         _scopeId,
-        postId: post.id,
+        postId: postId,
         offset: position.offset,
         at: DateTime.now().toUtc(),
       ),

@@ -21,6 +21,7 @@ import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/gone_channels.dart';
+import 'package:matterleast/screens/root/place_reconciler.dart';
 import 'package:matterleast/screens/root/root_screen.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
@@ -102,6 +103,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       );
       if (!mounted) return;
       final navigator = Navigator.of(context);
+      ref.read(placeReconcilerProvider);
       _gone = GoneChannels(ref, navigator)..start();
       final notice = startNotifications(ref, navigator);
       final links = AppLinks();

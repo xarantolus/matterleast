@@ -8,25 +8,25 @@ part of 'open_history.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// What the user opened, across teams and servers, for the mouse's Back
-/// and Forward buttons and Alt+Left and Alt+Right.
+/// Where the user went, across teams and servers, for the mouse's Back and
+/// Forward buttons, Alt+Left and Alt+Right and the touchpad swipe.
 
 @ProviderFor(openHistory)
 final openHistoryProvider = OpenHistoryProvider._();
 
-/// What the user opened, across teams and servers, for the mouse's Back
-/// and Forward buttons and Alt+Left and Alt+Right.
+/// Where the user went, across teams and servers, for the mouse's Back and
+/// Forward buttons, Alt+Left and Alt+Right and the touchpad swipe.
 
 final class OpenHistoryProvider
     extends
         $FunctionalProvider<
-          OpenHistory<SavedConversation>,
-          OpenHistory<SavedConversation>,
-          OpenHistory<SavedConversation>
+          OpenHistory<Location>,
+          OpenHistory<Location>,
+          OpenHistory<Location>
         >
-    with $Provider<OpenHistory<SavedConversation>> {
-  /// What the user opened, across teams and servers, for the mouse's Back
-  /// and Forward buttons and Alt+Left and Alt+Right.
+    with $Provider<OpenHistory<Location>> {
+  /// Where the user went, across teams and servers, for the mouse's Back and
+  /// Forward buttons, Alt+Left and Alt+Right and the touchpad swipe.
   OpenHistoryProvider._()
     : super(
         from: null,
@@ -43,24 +43,22 @@ final class OpenHistoryProvider
 
   @$internal
   @override
-  $ProviderElement<OpenHistory<SavedConversation>> $createElement(
+  $ProviderElement<OpenHistory<Location>> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  OpenHistory<SavedConversation> create(Ref ref) {
+  OpenHistory<Location> create(Ref ref) {
     return openHistory(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(OpenHistory<SavedConversation> value) {
+  Override overrideWithValue(OpenHistory<Location> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<OpenHistory<SavedConversation>>(
-        value,
-      ),
+      providerOverride: $SyncValueProvider<OpenHistory<Location>>(value),
     );
   }
 }
 
-String _$openHistoryHash() => r'5d52f49bc30b99111229c6e1341fcfab492e74dd';
+String _$openHistoryHash() => r'd686a20dedadaca1ab8c80b6c7bfd919e2ce48c1';
