@@ -56,9 +56,9 @@ void main() {
     addTearDown(() => local.parent.deleteSync(recursive: true));
     h = await pumpWithServer(
       tester,
+      downloads: _Downloads(),
       overrides: (url) => [
         fileTransfersProvider(url).overrideWith(() => _Transfers(local)),
-        fileDownloadsProvider(url).overrideWith((ref) async => _Downloads()),
         imageClipboardProvider.overrideWithValue((image) async {
           copied.add(image);
         }),

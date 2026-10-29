@@ -56,13 +56,15 @@ class ServerHarness {
 
 /// Starts [handle] as the server, opens a [testSession] on it, runs [seed]
 /// on that session, and pumps [home] inside providers that serve it (plus
-/// [overrides], which know the server's url), with image caches left pending. [size] and [platform] are reset afterwards.
+/// [overrides], which know the server's url), with image caches and file
+/// [downloads] left pending unless given. [size] and [platform] are reset afterwards.
 Future<ServerHarness> pumpWithServer(
   WidgetTester tester, {
   required Widget Function(String url) home,
   FutureOr<Reply?> Function(SeenRequest request)? handle,
   Future<void> Function(ServerSession session)? seed,
   List<Override> Function(String url)? overrides,
+  FileDownloads? downloads,
   Size? size,
   TargetPlatform? platform,
   bool settle = true,
@@ -94,8 +96,11 @@ Future<ServerHarness> pumpWithServer(
         serverSessionProvider(url).overrideWith((ref) async => harness.session),
         serverImageCachesProvider(url)
             .overrideWith((ref) => Completer<ServerImageCaches>().future),
-        fileDownloadsProvider(url)
-            .overrideWith((ref) => Completer<FileDownloads>().future),
+        fileDownloadsProvider(url).overrideWith(
+          (ref) => downloads == null
+              ? Completer<FileDownloads>().future
+              : Future.value(downloads),
+        ),
         ...?overrides?.call(url),
       ],
       child: MaterialApp(theme: MatterleastApp.lightTheme, home: home(url)),
