@@ -59,6 +59,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   final _list = AnchoredListController();
   late final Conversation _controller;
   late final ReadingPlaces _places;
+  late final ConversationKey _key;
   final _view = ValueNotifier<AnchoredListView?>(null);
   final _lineSeen = ValueNotifier(false);
   ({int generation, AnchoredPosition? anchor})? _opened;
@@ -85,13 +86,18 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
   void initState() {
     super.initState();
     _controller = ref.read(widget.conversation.notifier);
+    _key = (
+      url: widget.url,
+      channelId: _controller.channelId,
+      rootId: _controller.rootId,
+    );
     _places = ref.read(readingPlacesProvider)
-      ..attach(widget.conversation, _list);
+      ..attach(_key, _list, postIdOf: _controller.postIdOfRow);
   }
 
   @override
   void dispose() {
-    _places.detach(widget.conversation, _list);
+    _places.detach(_key, _list);
     _controller.leave(_list.position);
     _highlightTimer?.cancel();
     _view.dispose();
@@ -105,7 +111,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     if (opened != null && opened.generation == state.generation) {
       return opened.anchor;
     }
-    final handed = opened == null ? _places.take(widget.conversation) : null;
+    final handed = opened == null ? _places.take(_key) : null;
     final at =
         handed ??
         (state.intent == OpenIntent.bottom
