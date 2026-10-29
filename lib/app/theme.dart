@@ -16,7 +16,10 @@ const _brandDark = Color(0xFF00796B);
 
 /// The bundled typeface; emoji fall back to the system's emoji font, except
 /// on Linux where the system's is unreliable.
-const appFont = 'Rubik';
+const appFont = 'Inter';
+
+/// The typeface of the rows in the channel list.
+const channelListFont = 'Rubik';
 
 const emojiFont = 'Noto Color Emoji';
 
@@ -28,6 +31,9 @@ List<String>? emojiFallback(TargetPlatform platform) =>
 void registerFontLicence() => LicenseRegistry.addLicense(() async* {
   yield LicenseEntryWithLineBreaks(const [
     appFont,
+  ], await rootBundle.loadString('assets/fonts/Inter-OFL.txt'));
+  yield LicenseEntryWithLineBreaks(const [
+    channelListFont,
   ], await rootBundle.loadString('assets/fonts/Rubik-OFL.txt'));
   yield LicenseEntryWithLineBreaks(const [
     emojiFont,

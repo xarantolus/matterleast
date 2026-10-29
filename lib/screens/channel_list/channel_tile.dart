@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/window_title.dart';
 import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/mention_badge.dart';
@@ -83,18 +84,21 @@ class ChannelTile extends ConsumerWidget {
         ),
         onLongPressHint: onLongPress == null ? null : 'channel options',
         child: ExcludeSemantics(
-          child: partner == null
-              ? name
-              : Row(
-                  children: [
-                    Flexible(child: name),
-                    CustomStatusEmoji(
-                      serverUrl: serverUrl,
-                      userId: partner,
-                      size: channelRowTextSize(context) * 1.1,
-                    ),
-                  ],
-                ),
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(fontFamily: channelListFont),
+            child: partner == null
+                ? name
+                : Row(
+                    children: [
+                      Flexible(child: name),
+                      CustomStatusEmoji(
+                        serverUrl: serverUrl,
+                        userId: partner,
+                        size: channelRowTextSize(context) * 1.1,
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
       trailing: trailing ?? ExcludeSemantics(child: _Markers(item: item)),
