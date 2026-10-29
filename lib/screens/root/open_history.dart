@@ -55,8 +55,14 @@ Future<void> stepHistory(
   ProviderContainer container, {
   required bool forward,
 }) async {
-  final navigator = container.read(conversationRoutesProvider).navigator;
+  final routes = container.read(conversationRoutesProvider);
+  final navigator = routes.navigator;
   if (navigator == null || _stepping) return;
+  if (routes.modalOnTop) {
+    // Back closes what covers the window, as the system's back does.
+    if (!forward) unawaited(WidgetsBinding.instance.handlePopRoute());
+    return;
+  }
   _stepping = true;
   try {
     final history = container.read(openHistoryProvider);

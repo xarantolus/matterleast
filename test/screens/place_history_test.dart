@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:drift/drift.dart' show DatabaseConnection;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,9 +9,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/app.dart';
+import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/mouse_navigation.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
+import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart' show PageKind;
@@ -18,6 +22,8 @@ import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
+import 'package:matterleast/screens/gallery/gallery_screen.dart';
+import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/open_history.dart';
@@ -181,6 +187,7 @@ void main() {
         overrides: [
           appDatabaseProvider.overrideWithValue(db),
           railSelectionProvider.overrideWith(_Rail.new),
+          autoLoadImagesProvider.overrideWith((ref) => false),
           serversProvider.overrideWith((ref) {
             ref.keepAlive();
             return servers.stream;
@@ -190,8 +197,11 @@ void main() {
             (urlB(), sessionB),
           ]) ...[
             serverSessionProvider(url).overrideWith((ref) async => session),
+            imageProxyProvider(url).overrideWith((ref) => Stream.value(false)),
             serverImageCachesProvider(url)
                 .overrideWith((ref) => Completer<ServerImageCaches>().future),
+            fileDownloadsProvider(url)
+                .overrideWith((ref) => Completer<FileDownloads>().future),
             switchItemsProvider(url).overrideWith((ref) {
               ref.keepAlive();
               return items[url]!.stream;
@@ -206,6 +216,7 @@ void main() {
           builder: (context, ref, _) => MaterialApp(
             theme: MatterleastApp.lightTheme,
             navigatorObservers: [ref.watch(conversationRoutesProvider)],
+            builder: (context, child) => MouseNavigation(child: child!),
             home: Consumer(
               builder: (context, ref, _) {
                 container = ProviderScope.containerOf(context);
@@ -610,5 +621,76 @@ void main() {
       await finish(tester);
       await tester.pump(Duration.zero);
     }, variant: desktop);
+
+    group('with a gallery open', () {
+      Future<void> mouse(WidgetTester tester, int button) async {
+        final mouse = TestPointer(7, PointerDeviceKind.mouse);
+        await tester.sendEventToBinding(
+          mouse.down(const Offset(400, 300), buttons: button),
+        );
+        await tester.sendEventToBinding(mouse.up());
+        await settle(tester);
+      }
+
+      Future<void> openGalleryOver(WidgetTester tester) async {
+        unawaited(
+          navigator(tester).push(
+            galleryRoute(
+              url: urlA(),
+              files: const [
+                PostFile(
+                  id: 'f1',
+                  name: 'dunes.png',
+                  extension: 'png',
+                  mimeType: 'image/png',
+                  width: 400,
+                  height: 200,
+                  hasPreview: true,
+                ),
+              ],
+              initialIndex: 0,
+              heroPrefix: 'test',
+              author: 'someone',
+              sentAt: DateTime(2026),
+            ),
+          ),
+        );
+        await settle(tester);
+        expect(find.byType(GalleryScreen), findsOneWidget);
+      }
+
+      testWidgets('Back closes the gallery and keeps the channel', (
+        tester,
+      ) async {
+        await wide(tester);
+        await open(tester, urlA(), _xId);
+        await open(tester, urlA(), _yId);
+        await openGalleryOver(tester);
+
+        await mouse(tester, kBackMouseButton);
+        expect(find.byType(GalleryScreen), findsNothing);
+        expect(shown(tester), ['${urlA()} $_yId']);
+
+        await mouse(tester, kBackMouseButton);
+        expect(shown(tester), ['${urlA()} $_xId']);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+
+      testWidgets('Forward does nothing', (tester) async {
+        await wide(tester);
+        await open(tester, urlA(), _xId);
+        await open(tester, urlA(), _yId);
+        await step(tester, forward: false);
+        expect(shown(tester), ['${urlA()} $_xId']);
+        await openGalleryOver(tester);
+
+        await mouse(tester, kForwardMouseButton);
+        expect(find.byType(GalleryScreen), findsOneWidget);
+        expect(shown(tester), ['${urlA()} $_xId']);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+    });
   });
 }

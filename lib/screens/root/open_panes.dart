@@ -52,12 +52,21 @@ ConversationRoutes paneRoutes(Ref ref) {
 /// Keeps track of the [SlideRoute]s of one navigator.
 class ConversationRoutes extends NavigatorObserver {
   final _stack = <SlideRoute<dynamic>>[];
+  final _all = <Route<dynamic>>[];
   final _changes = StreamController<void>.broadcast();
 
   /// Fires after the routes changed.
   Stream<void> get changes => _changes.stream;
 
   void close() => unawaited(_changes.close());
+
+  /// Whether a gallery, preview, popout, dialog or menu is above the pages.
+  bool get modalOnTop =>
+      _all.length > 1 &&
+      switch (_all.last) {
+        final SlideRoute<dynamic> r => r.wholePage,
+        _ => true,
+      };
 
   /// The conversation routes, oldest first.
   List<ConversationRoute<dynamic>> get live =>
@@ -71,6 +80,7 @@ class ConversationRoutes extends NavigatorObserver {
   List<SlideRoute<dynamic>> takeAll() {
     final all = List.of(_stack);
     _stack.clear();
+    _all.clear();
     return all;
   }
 
@@ -93,12 +103,14 @@ class ConversationRoutes extends NavigatorObserver {
   }
 
   void _add(Route<dynamic> route) {
+    _all.add(route);
     if (route is! SlideRoute || route.wholePage) return;
     _stack.add(route);
     _changed();
   }
 
   void _remove(Route<dynamic> route) {
+    _all.remove(route);
     if (_stack.remove(route)) _changed();
   }
 
