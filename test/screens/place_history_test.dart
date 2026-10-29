@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' show DatabaseConnection;
 import 'package:drift/native.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -11,6 +12,7 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/mouse_navigation.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
@@ -25,6 +27,7 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
@@ -216,7 +219,8 @@ void main() {
           builder: (context, ref, _) => MaterialApp(
             theme: MatterleastApp.lightTheme,
             navigatorObservers: [ref.watch(conversationRoutesProvider)],
-            builder: (context, child) => MouseNavigation(child: child!),
+            builder: (context, child) =>
+                AppShortcuts(child: MouseNavigation(child: child!)),
             home: Consumer(
               builder: (context, ref, _) {
                 container = ProviderScope.containerOf(context);
@@ -677,6 +681,31 @@ void main() {
         await tester.pump(Duration.zero);
       }, variant: desktop);
 
+      Future<void> alt(WidgetTester tester, LogicalKeyboardKey key) async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyEvent(key);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+        await settle(tester);
+      }
+
+      testWidgets('Alt+Left closes the gallery, Alt+Right does nothing', (
+        tester,
+      ) async {
+        await wide(tester);
+        await open(tester, urlA(), _xId);
+        await open(tester, urlA(), _yId);
+        await openGalleryOver(tester);
+
+        await alt(tester, LogicalKeyboardKey.arrowRight);
+        expect(find.byType(GalleryScreen), findsOneWidget);
+
+        await alt(tester, LogicalKeyboardKey.arrowLeft);
+        expect(find.byType(GalleryScreen), findsNothing);
+        expect(shown(tester), ['${urlA()} $_yId']);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+
       testWidgets('Forward does nothing', (tester) async {
         await wide(tester);
         await open(tester, urlA(), _xId);
@@ -687,6 +716,55 @@ void main() {
 
         await mouse(tester, kForwardMouseButton);
         expect(find.byType(GalleryScreen), findsOneWidget);
+        expect(shown(tester), ['${urlA()} $_xId']);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+    });
+
+    group('with a popout open', () {
+      Future<void> mouseBack(WidgetTester tester) async {
+        final mouse = TestPointer(7, PointerDeviceKind.mouse);
+        await tester.sendEventToBinding(
+          mouse.down(const Offset(400, 300), buttons: kBackMouseButton),
+        );
+        await tester.sendEventToBinding(mouse.up());
+        await settle(tester);
+      }
+
+      testWidgets('Back goes back inside it first, then closes it', (
+        tester,
+      ) async {
+        await wide(tester);
+        await open(tester, urlA(), _xId);
+        unawaited(
+          openPage(
+            navigator(tester),
+            Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => openPage(
+                    Navigator.of(context),
+                    const Scaffold(body: Text('Second page')),
+                  ),
+                  child: const Text('First page'),
+                ),
+              ),
+            ),
+            popout: true,
+          ),
+        );
+        await settle(tester);
+        await tester.tap(find.text('First page'));
+        await settle(tester);
+        expect(find.text('Second page'), findsOneWidget);
+
+        await mouseBack(tester);
+        expect(find.text('Second page'), findsNothing);
+        expect(find.text('First page'), findsOneWidget);
+
+        await mouseBack(tester);
+        expect(find.text('First page'), findsNothing);
         expect(shown(tester), ['${urlA()} $_xId']);
         await finish(tester);
         await tester.pump(Duration.zero);

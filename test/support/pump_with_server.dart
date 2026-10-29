@@ -10,8 +10,10 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
+import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 
@@ -54,13 +56,15 @@ class ServerHarness {
 
 /// Starts [handle] as the server, opens a [testSession] on it, runs [seed]
 /// on that session, and pumps [home] inside providers that serve it (plus
-/// [overrides], which know the server's url), with image caches left pending. [size] and [platform] are reset afterwards.
+/// [overrides], which know the server's url), with image caches and file
+/// [downloads] left pending unless given. [size] and [platform] are reset afterwards.
 Future<ServerHarness> pumpWithServer(
   WidgetTester tester, {
   required Widget Function(String url) home,
   FutureOr<Reply?> Function(SeenRequest request)? handle,
   Future<void> Function(ServerSession session)? seed,
   List<Override> Function(String url)? overrides,
+  FileDownloads? downloads,
   Size? size,
   TargetPlatform? platform,
   bool settle = true,
@@ -92,6 +96,11 @@ Future<ServerHarness> pumpWithServer(
         serverSessionProvider(url).overrideWith((ref) async => harness.session),
         serverImageCachesProvider(url)
             .overrideWith((ref) => Completer<ServerImageCaches>().future),
+        fileDownloadsProvider(url).overrideWith(
+          (ref) => downloads == null
+              ? Completer<FileDownloads>().future
+              : Future.value(downloads),
+        ),
         ...?overrides?.call(url),
       ],
       child: MaterialApp(theme: MatterleastApp.lightTheme, home: home(url)),

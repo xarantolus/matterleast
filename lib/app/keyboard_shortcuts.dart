@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/ui_zoom.dart';
+import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -376,6 +380,15 @@ class _AppShortcutsState extends State<AppShortcuts> {
       child: Actions(
         actions: {
           ShowShortcutsIntent: _showList,
+          // Above the navigator, so Back also reaches a gallery or preview.
+          HistoryStepIntent: CallbackAction<HistoryStepIntent>(
+            onInvoke: (intent) => unawaited(
+              stepHistory(
+                ProviderScope.containerOf(context, listen: false),
+                forward: intent.forward,
+              ),
+            ),
+          ),
           FocusRegionIntent: CallbackAction<FocusRegionIntent>(
             onInvoke: (intent) => FocusRegion.move(forward: intent.forward),
           ),

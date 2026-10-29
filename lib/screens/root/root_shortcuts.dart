@@ -10,7 +10,6 @@ import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
-import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
@@ -121,10 +120,6 @@ class RootShortcuts extends ConsumerWidget {
       ),
       ChannelStepIntent: CallbackAction<ChannelStepIntent>(
         onInvoke: (intent) => _step(context, ref, intent),
-      ),
-      HistoryStepIntent: CallbackAction<HistoryStepIntent>(
-        onInvoke: (intent) =>
-            unawaited(stepHistory(ref.container, forward: intent.forward)),
       ),
       OpenAccountIntent: CallbackAction<OpenAccountIntent>(
         onInvoke: (_) => openYou(context),

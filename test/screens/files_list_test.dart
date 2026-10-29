@@ -1,10 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
-import 'package:matterleast/app/file_providers.dart';
-import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
@@ -69,11 +65,7 @@ void main() {
           fetchedAt: DateTime.utc(2026, 10, 25, 11),
         );
       },
-      overrides: (url) => [
-        railSelectionProvider.overrideWith(_Rail.new),
-        fileDownloadsProvider(url)
-            .overrideWith((ref) => Completer<FileDownloads>().future),
-      ],
+      overrides: (url) => [railSelectionProvider.overrideWith(_Rail.new)],
       home: (url) => SearchResultsScreen(
         url: url,
         teamId: teamId,
