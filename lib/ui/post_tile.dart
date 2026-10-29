@@ -972,13 +972,19 @@ class _SystemLine extends StatelessWidget {
               CustomSemanticsAction(label: 'Show @$name'): () =>
                   env.onMention(name),
       },
-      child: _systemRow(id, line, style, time),
+      child: _systemRow(context, id, line, style, time),
     );
   }
 
-  Widget _systemRow(String id, String line, TextStyle? style, String time) {
+  Widget _systemRow(
+    BuildContext context,
+    String id,
+    String line,
+    TextStyle? style,
+    String time,
+  ) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         Spacing.lg + context.density.gutter,
         Spacing.xs,
         Spacing.lg,

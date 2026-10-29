@@ -599,89 +599,93 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                       },
                     ),
                   Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (editing == null && (uploads || canPrioritize || canBurn))
-                    IconButton(
-                      tooltip: 'Attach',
-                      onPressed:
-                          (!uploads || files.length >= maxAttachments) &&
-                              !canPrioritize &&
-                              !canBurn
-                          ? null
-                          : () => _attach(
-                              uploads: uploads,
-                              acknowledgements: canPrioritize
-                                  ? options!.acknowledgements
-                                  : null,
-                              burnOnRead: canBurn,
-                            ),
-                      icon: const Icon(Icons.add_circle_outline),
-                    )
-                  else
-                    const SizedBox(width: Spacing.md),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        TextField(
-                          controller: _text,
-                          focusNode: _focus,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.forMessages(context, fallbackSize: 16),
-                          minLines: 1,
-                          maxLines: 6,
-                          keyboardType: TextInputType.multiline,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: InputDecoration(
-                            hintText: widget.hint,
-                            hintMaxLines: 1,
-                            filled: !context.density.plainComposer,
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                context.density.fieldRadius,
-                              ),
-                              borderSide: context.density.plainComposer
-                                  ? BorderSide(color: tokens.divider)
-                                  : BorderSide.none,
-                            ),
-                            contentPadding:
-                                const EdgeInsetsDirectional.fromSTEB(
-                                  Spacing.lg,
-                                  Spacing.md,
-                                  48,
-                                  Spacing.md,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (editing == null &&
+                          (uploads || canPrioritize || canBurn))
+                        IconButton(
+                          tooltip: 'Attach',
+                          onPressed:
+                              (!uploads || files.length >= maxAttachments) &&
+                                  !canPrioritize &&
+                                  !canBurn
+                              ? null
+                              : () => _attach(
+                                  uploads: uploads,
+                                  acknowledgements: canPrioritize
+                                      ? options!.acknowledgements
+                                      : null,
+                                  burnOnRead: canBurn,
                                 ),
-                          ),
-                        ),
-                        // At the bottom like send, so a long message keeps
-                        // it next to the line being written.
-                        PositionedDirectional(
-                          end: 0,
-                          bottom: 0,
-                          child: Builder(
-                            builder: (button) => IconButton(
-                              tooltip: 'Emoji',
-                              onPressed: () => _pickEmoji(globalRectOf(button)),
-                              icon: const Icon(Icons.mood),
+                          icon: const Icon(Icons.add_circle_outline),
+                        )
+                      else
+                        const SizedBox(width: Spacing.md),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            TextField(
+                              controller: _text,
+                              focusNode: _focus,
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.forMessages(context, fallbackSize: 16),
+                              minLines: 1,
+                              maxLines: 6,
+                              keyboardType: TextInputType.multiline,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: InputDecoration(
+                                hintText: widget.hint,
+                                hintMaxLines: 1,
+                                filled: !context.density.plainComposer,
+                                isDense: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    context.density.fieldRadius,
+                                  ),
+                                  borderSide: context.density.plainComposer
+                                      ? BorderSide(color: tokens.divider)
+                                      : BorderSide.none,
+                                ),
+                                contentPadding:
+                                    const EdgeInsetsDirectional.fromSTEB(
+                                      Spacing.lg,
+                                      Spacing.md,
+                                      48,
+                                      Spacing.md,
+                                    ),
+                              ),
                             ),
-                          ),
+                            // At the bottom like send, so a long message keeps
+                            // it next to the line being written.
+                            PositionedDirectional(
+                              end: 0,
+                              bottom: 0,
+                              child: Builder(
+                                builder: (button) => IconButton(
+                                  tooltip: 'Emoji',
+                                  onPressed: () =>
+                                      _pickEmoji(globalRectOf(button)),
+                                  icon: const Icon(Icons.mood),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: Spacing.xs),
-                  SendButton(
-                    editing: editing != null,
-                    onSend: sendable ? _send : null,
-                    onSchedule:
-                        sendable &&
-                            editing == null &&
-                            !burning &&
-                            (features?.scheduledPosts ?? false) &&
-                            !value.text.text.trimLeft().startsWith('/')
-                        ? _schedule
-                        : null,
+                      ),
+                      const SizedBox(width: Spacing.xs),
+                      SendButton(
+                        editing: editing != null,
+                        onSend: sendable ? _send : null,
+                        onSchedule:
+                            sendable &&
+                                editing == null &&
+                                !burning &&
+                                (features?.scheduledPosts ?? false) &&
+                                !value.text.text.trimLeft().startsWith('/')
+                            ? _schedule
+                            : null,
+                      ),
+                    ],
                   ),
                 ],
               ),

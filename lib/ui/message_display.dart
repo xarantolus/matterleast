@@ -31,10 +31,10 @@ extension MessageTextScale on TextStyle {
   TextStyle forMessages(BuildContext context, {double fallbackSize = 14}) {
     final scale = MessageDisplay.of(context).textScale;
     final height = context.density.lineHeight;
-    if (scale == 1 && (height == null || this.height != null)) return this;
+    if (scale == 1 && height == null) return this;
     return copyWith(
       fontSize: scale == 1 ? null : (fontSize ?? fallbackSize) * scale,
-      height: this.height ?? height,
+      height: height,
     );
   }
 }

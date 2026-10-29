@@ -207,12 +207,12 @@ class MessageToolbar extends ConsumerWidget {
     final reply = of(MessageActionKind.reply);
     final quick = quickReactions(recent, 1).first;
     const density = VisualDensity.compact;
-    final density = context.density;
+    final shape = context.density;
     return Material(
-      elevation: density.flat ? 0 : 2,
+      elevation: shape.flat ? 0 : 2,
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(density.radius),
+        borderRadius: BorderRadius.circular(shape.radius),
         side: BorderSide(color: context.tokens.hairline),
       ),
       child: Padding(

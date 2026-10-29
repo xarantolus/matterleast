@@ -1,10 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/panes.dart';
-import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/tokens.dart';

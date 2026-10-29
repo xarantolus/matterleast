@@ -2,10 +2,10 @@ import 'dart:math';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/post_extras.dart';
-import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/markdown/post_doc.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/hover_tint.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/app/today_provider.dart';
@@ -13,6 +12,7 @@ import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -136,8 +136,7 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
             initialValue: bot.id,
             onSelected: (id) => setState(() => _botId = id),
             itemBuilder: (_) => [
-              for (final b in bots)
-                MenuItem(value: b.id, child: Text(b.name)),
+              for (final b in bots) MenuItem(value: b.id, child: Text(b.name)),
             ],
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.md),

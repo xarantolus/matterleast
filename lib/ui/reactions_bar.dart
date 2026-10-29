@@ -39,16 +39,19 @@ class ReactionsBar extends StatelessWidget {
     final add = onAdd == null
         ? null
         : Builder(
-            builder: (chip) => ActionChip(
-              mouseCursor: clickCursor,
-              tooltip: 'Add reaction',
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              label: Icon(
-                Icons.add_reaction_outlined,
-                size: density.chipHeight == null ? 18 : 16,
+            builder: (chip) => _fixed(
+              density,
+              ActionChip(
+                mouseCursor: clickCursor,
+                tooltip: 'Add reaction',
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                label: Icon(
+                  Icons.add_reaction_outlined,
+                  size: density.chipHeight == null ? 18 : 16,
+                ),
+                onPressed: () => onAdd!(globalRectOf(chip)),
               ),
-              onPressed: () => onAdd!(globalRectOf(chip)),
             ),
           );
     return Wrap(
@@ -72,52 +75,61 @@ class ReactionsBar extends StatelessWidget {
     );
   }
 
+  Widget _fixed(AppDensity density, Widget chip) => density.chipHeight == null
+      ? chip
+      : SizedBox(height: density.chipHeight, child: chip);
+
   Widget _chip(BuildContext context, ReactionGroup group) {
     final density = context.density;
     final small = density.chipHeight != null;
     final scheme = Theme.of(context).colorScheme;
     final mine = group.mine;
-    return GestureDetector(
-      onLongPress: () => showReactions(context, reactions, group),
-      onSecondaryTapUp: isDesktop
-          ? (d) => showReactions(
-              context,
-              reactions,
-              group,
-              anchor: d.globalPosition & Size.zero,
-            )
-          : null,
-      child: FilterChip(
-        mouseCursor: clickCursor,
-        // A long press on a phone shows who reacted instead.
-        tooltip: isDesktop ? ':${group.emojiName}:' : null,
-        showCheckmark: false,
-        selected: mine,
-        // Colour alone marks an own reaction; its size never changes.
-        side: BorderSide(color: mine ? scheme.primary : scheme.outlineVariant),
-        selectedColor: scheme.primaryContainer,
-        labelStyle: TextStyle(
-          color: mine ? scheme.onPrimaryContainer : null,
-          fontSize: small ? 12 : null,
-        ),
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        label: Semantics(
-          label: reactionLabel(group),
-          child: ExcludeSemantics(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                EmojiGlyph(name: group.emojiName, size: small ? 14 : 18),
-                const SizedBox(width: Spacing.xs),
-                Text('${group.count}'),
-              ],
+    return _fixed(
+      density,
+      GestureDetector(
+        onLongPress: () => showReactions(context, reactions, group),
+        onSecondaryTapUp: isDesktop
+            ? (d) => showReactions(
+                context,
+                reactions,
+                group,
+                anchor: d.globalPosition & Size.zero,
+              )
+            : null,
+        child: FilterChip(
+          mouseCursor: clickCursor,
+          // A long press on a phone shows who reacted instead.
+          tooltip: isDesktop ? ':${group.emojiName}:' : null,
+          showCheckmark: false,
+          selected: mine,
+          // Colour alone marks an own reaction; its size never changes.
+          side: BorderSide(
+            color: mine ? scheme.primary : scheme.outlineVariant,
+          ),
+          selectedColor: scheme.primaryContainer,
+          labelStyle: TextStyle(
+            color: mine ? scheme.onPrimaryContainer : null,
+            fontSize: small ? 12 : null,
+          ),
+          visualDensity: VisualDensity.compact,
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          label: Semantics(
+            label: reactionLabel(group),
+            child: ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  EmojiGlyph(name: group.emojiName, size: small ? 14 : 18),
+                  const SizedBox(width: Spacing.xs),
+                  Text('${group.count}'),
+                ],
+              ),
             ),
           ),
+          onSelected: (_) => onToggle != null
+              ? onToggle!(group.emojiName)
+              : showReactions(context, reactions, group),
         ),
-        onSelected: (_) => onToggle != null
-            ? onToggle!(group.emojiName)
-            : showReactions(context, reactions, group),
       ),
     );
   }

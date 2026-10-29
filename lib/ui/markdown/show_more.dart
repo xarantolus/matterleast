@@ -1,7 +1,7 @@
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/anchored_list.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Space the "Show more" control needs; collapsing saves less than this is
