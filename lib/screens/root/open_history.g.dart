@@ -8,14 +8,12 @@ part of 'open_history.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Where the user went, across teams and servers, for the mouse's Back and
-/// Forward buttons, Alt+Left and Alt+Right and the touchpad swipe.
+/// Where the user went, across teams and servers, for Back and Forward.
 
 @ProviderFor(openHistory)
 final openHistoryProvider = OpenHistoryProvider._();
 
-/// Where the user went, across teams and servers, for the mouse's Back and
-/// Forward buttons, Alt+Left and Alt+Right and the touchpad swipe.
+/// Where the user went, across teams and servers, for Back and Forward.
 
 final class OpenHistoryProvider
     extends
@@ -25,8 +23,7 @@ final class OpenHistoryProvider
           OpenHistory<Location>
         >
     with $Provider<OpenHistory<Location>> {
-  /// Where the user went, across teams and servers, for the mouse's Back and
-  /// Forward buttons, Alt+Left and Alt+Right and the touchpad swipe.
+  /// Where the user went, across teams and servers, for Back and Forward.
   OpenHistoryProvider._()
     : super(
         from: null,

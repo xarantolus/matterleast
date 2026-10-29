@@ -8,33 +8,18 @@ part of 'place_reconciler.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Closes what is open whenever the place the rail shows changes, for any
-/// reason: a pick in the rail, a link or notification into another team, a
-/// new sign-in, the shown server signed out or removed, the shown team
-/// left. What belonged to the old place never stays on screen; switching
-/// by the rail then opens what the new place had open. Leaving Home leaves
-/// nothing behind.
+/// Closes what is open whenever the place the rail shows changes, for any reason.
 
 @ProviderFor(placeReconciler)
 final placeReconcilerProvider = PlaceReconcilerProvider._();
 
-/// Closes what is open whenever the place the rail shows changes, for any
-/// reason: a pick in the rail, a link or notification into another team, a
-/// new sign-in, the shown server signed out or removed, the shown team
-/// left. What belonged to the old place never stays on screen; switching
-/// by the rail then opens what the new place had open. Leaving Home leaves
-/// nothing behind.
+/// Closes what is open whenever the place the rail shows changes, for any reason.
 
 final class PlaceReconcilerProvider
     extends
         $FunctionalProvider<PlaceReconciler, PlaceReconciler, PlaceReconciler>
     with $Provider<PlaceReconciler> {
-  /// Closes what is open whenever the place the rail shows changes, for any
-  /// reason: a pick in the rail, a link or notification into another team, a
-  /// new sign-in, the shown server signed out or removed, the shown team
-  /// left. What belonged to the old place never stays on screen; switching
-  /// by the rail then opens what the new place had open. Leaving Home leaves
-  /// nothing behind.
+  /// Closes what is open whenever the place the rail shows changes, for any reason.
   PlaceReconcilerProvider._()
     : super(
         from: null,
