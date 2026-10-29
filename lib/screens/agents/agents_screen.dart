@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/app/today_provider.dart';
@@ -136,7 +137,7 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
             onSelected: (id) => setState(() => _botId = id),
             itemBuilder: (_) => [
               for (final b in bots)
-                PopupMenuItem(value: b.id, child: Text(b.name)),
+                MenuItem(value: b.id, child: Text(b.name)),
             ],
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.md),

@@ -29,6 +29,7 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/composer_desktop.dart';
 import 'package:matterleast/screens/channel/composer_extras.dart';
 import 'package:matterleast/screens/channel/composer_keys.dart';
+import 'package:matterleast/screens/channel/format_bar.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/posting_rules.dart';
@@ -37,6 +38,7 @@ import 'package:matterleast/screens/drafts/schedule_picker.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/message_display.dart';
@@ -344,6 +346,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       Format.italic => toggleWrap(_text.value, '_'),
       Format.strike => toggleWrap(_text.value, '~~'),
       Format.link => insertLink(_text.value),
+      Format.code => toggleWrap(_text.value, '`'),
     };
   }
 
@@ -586,7 +589,16 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 Spacing.xs,
                 Spacing.sm,
               ),
-              child: Row(
+              child: Column(
+                children: [
+                  if (context.density.plainComposer)
+                    FormatBar(
+                      onFormat: (format) {
+                        _format(format);
+                        _focus.requestFocus();
+                      },
+                    ),
+                  Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (editing == null && (uploads || canPrioritize || canBurn))
@@ -623,11 +635,15 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                           decoration: InputDecoration(
                             hintText: widget.hint,
                             hintMaxLines: 1,
-                            filled: true,
+                            filled: !context.density.plainComposer,
                             isDense: true,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
+                              borderRadius: BorderRadius.circular(
+                                context.density.fieldRadius,
+                              ),
+                              borderSide: context.density.plainComposer
+                                  ? BorderSide(color: tokens.divider)
+                                  : BorderSide.none,
                             ),
                             contentPadding:
                                 const EdgeInsetsDirectional.fromSTEB(
@@ -1150,7 +1166,7 @@ class AttachmentStrip extends StatelessWidget {
 
   Future<void> _menu(BuildContext context, Attachment a, Offset at) async {
     final remove = await showMenuAt<bool>(context, at, [
-      PopupMenuItem(
+      MenuItem(
         value: true,
         child: MenuEntry(
           icon: Icons.close,

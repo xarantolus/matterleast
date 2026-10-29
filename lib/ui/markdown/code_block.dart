@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/clickable.dart';
@@ -86,7 +87,7 @@ class _CodePreviewState extends State<CodePreview> {
       padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
       child: Material(
         color: tokens.codeBackground,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(context.density.radius),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           mouseCursor: clickCursor,
@@ -194,11 +195,11 @@ class _DesktopCodeBlockState extends State<DesktopCodeBlock> {
 
   Future<void> _menu(Offset at) async {
     final run = await showMenuAt<VoidCallback>(context, at, [
-      PopupMenuItem(
+      MenuItem(
         value: _copy,
         child: const MenuEntry(icon: Icons.copy, label: 'Copy code'),
       ),
-      PopupMenuItem(
+      MenuItem(
         value: _open,
         child: const MenuEntry(
           icon: Icons.open_in_full,
@@ -233,7 +234,7 @@ class _DesktopCodeBlockState extends State<DesktopCodeBlock> {
           onSecondaryTapUp: (d) => _menu(d.globalPosition),
           child: Material(
             color: tokens.codeBackground,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(context.density.radius),
             clipBehavior: Clip.antiAlias,
             child: Stack(
               children: [
@@ -314,7 +315,9 @@ class _DesktopCodeBlockState extends State<DesktopCodeBlock> {
                       ),
                       child: Material(
                         color: tokens.codeBackground,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(
+                          context.density.radius,
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

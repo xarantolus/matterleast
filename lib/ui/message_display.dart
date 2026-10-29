@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/density.dart';
 
 /// How message text is shown, as set on the Display page.
 class MessageDisplay extends InheritedWidget {
@@ -29,8 +30,11 @@ extension MessageTextScale on TextStyle {
   /// This style at the message text size of [context].
   TextStyle forMessages(BuildContext context, {double fallbackSize = 14}) {
     final scale = MessageDisplay.of(context).textScale;
-    return scale == 1
-        ? this
-        : copyWith(fontSize: (fontSize ?? fallbackSize) * scale);
+    final height = context.density.lineHeight;
+    if (scale == 1 && (height == null || this.height != null)) return this;
+    return copyWith(
+      fontSize: scale == 1 ? null : (fontSize ?? fallbackSize) * scale,
+      height: this.height ?? height,
+    );
   }
 }

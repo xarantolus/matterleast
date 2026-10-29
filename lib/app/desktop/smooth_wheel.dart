@@ -5,8 +5,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The time constant of a wheel tick's glide.
-const wheelGlide = Duration(milliseconds: 55);
+/// The time constant of a wheel tick's ease: a notch is done in about 120 ms.
+const wheelGlide = Duration(milliseconds: 22);
 
 /// Pure: the share of [left] to scroll in a frame [elapsed] long.
 Offset wheelStep(Offset left, Duration elapsed) {

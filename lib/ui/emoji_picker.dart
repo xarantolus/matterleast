@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
@@ -511,7 +512,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
                 ),
                 itemBuilder: (_) => [
                   for (var t = 0; t <= skinToneSuffixes.length; t++)
-                    PopupMenuItem(
+                    MenuItem(
                       value: t,
                       child: Text(
                         unicodeForName(withSkinTone('hand', t)) ?? '✋',

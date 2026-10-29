@@ -22,6 +22,7 @@ import 'package:matterleast/ui/burn_on_read_view.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/interactive_message.dart';
 import 'package:matterleast/ui/link_preview_card.dart';
@@ -36,9 +37,6 @@ import 'package:matterleast/ui/post_semantics.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
-
-const _avatarSize = 36.0;
-const _gutter = _avatarSize + Spacing.md;
 
 /// One message: avatar, name and time, then the text and what comes with
 /// it. A [compact] message continues the one above it from the same person.
@@ -99,6 +97,7 @@ class PostTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final density = context.density;
     final text = Theme.of(context).textTheme;
     if (post.isSystem && !post.deleted) {
       return _SystemLine(post: post, combined: combined);
@@ -382,7 +381,7 @@ class PostTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (compact)
-          const SizedBox(width: _gutter)
+          SizedBox(width: density.gutter)
         else ...[
           ExcludeSemantics(
             child: _ToProfile(
@@ -407,7 +406,7 @@ class PostTile extends StatelessWidget {
             : Colors.transparent,
         padding: EdgeInsets.fromLTRB(
           Spacing.lg,
-          compact && !marked ? 2 : Spacing.sm,
+          compact && !marked ? density.followUpTop : density.rowTop,
           Spacing.lg,
           2,
         ),
@@ -604,7 +603,7 @@ class _Marks extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: _gutter,
+            width: context.density.gutter,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -685,14 +684,18 @@ class _Avatar extends StatelessWidget {
         (env?.iconOverride ?? false);
     // A webhook post without its own icon is not the creator's to show.
     if (env == null || (details.fromWebhook && !webhookIcon)) {
-      return InitialsBadge(name: name, size: _avatarSize, round: true);
+      return InitialsBadge(
+        name: name,
+        size: context.density.avatar,
+        round: true,
+      );
     }
     return UserAvatar(
       serverUrl: env.server.toString(),
       userId: post.userId,
       name: name,
       lastPictureUpdate: post.authorPictureAt,
-      size: _avatarSize,
+      size: context.density.avatar,
       overrideIconUrl: webhookIcon ? icon : null,
     );
   }
@@ -732,7 +735,7 @@ class _ToProfile extends ConsumerWidget {
                 context,
                 d.globalPosition,
                 [
-                  PopupMenuItem(
+                  MenuItem(
                     value: profile,
                     child: const MenuEntry(
                       icon: Icons.person_outline,
@@ -740,7 +743,7 @@ class _ToProfile extends ConsumerWidget {
                     ),
                   ),
                   if (canMessage)
-                    PopupMenuItem(
+                    MenuItem(
                       value: () => messagePerson(
                         context,
                         ref,
@@ -976,7 +979,7 @@ class _SystemLine extends StatelessWidget {
   Widget _systemRow(String id, String line, TextStyle? style, String time) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        Spacing.lg + _gutter,
+        Spacing.lg + context.density.gutter,
         Spacing.xs,
         Spacing.lg,
         Spacing.xs,
@@ -1018,13 +1021,15 @@ class _ThreadBar extends ConsumerWidget {
       padding: const EdgeInsets.only(top: Spacing.sm, bottom: Spacing.xs),
       child: Material(
         color: tokens.panel,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(context.density.radius),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           mouseCursor: clickCursor,
           onTap: onPressed,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 44),
+            constraints: BoxConstraints(
+              minHeight: context.density.threadBarHeight,
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: Spacing.sm,
@@ -1254,7 +1259,6 @@ class _AppearOnceState extends State<AppearOnce>
   var _started = false;
   late final _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 200),
     value: widget.animate ? 0 : 1,
   );
   late final _curve = CurvedAnimation(
@@ -1267,7 +1271,11 @@ class _AppearOnceState extends State<AppearOnce>
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
-    if (widget.animate && !MediaQuery.disableAnimationsOf(context)) {
+    final arrive = context.density.arrive;
+    if (widget.animate &&
+        arrive > Duration.zero &&
+        !MediaQuery.disableAnimationsOf(context)) {
+      _controller.duration = arrive;
       unawaited(_controller.forward());
     } else {
       _controller.value = 1;

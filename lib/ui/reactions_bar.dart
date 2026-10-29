@@ -3,6 +3,7 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/person_tile.dart';
@@ -33,6 +34,7 @@ class ReactionsBar extends StatelessWidget {
   // Each chip keeps a 48 dp tap target, which is the gap between rows.
   @override
   Widget build(BuildContext context) {
+    final density = context.density;
     final chips = [for (final group in reactions) _chip(context, group)];
     final add = onAdd == null
         ? null
@@ -42,7 +44,10 @@ class ReactionsBar extends StatelessWidget {
               tooltip: 'Add reaction',
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 2),
-              label: const Icon(Icons.add_reaction_outlined, size: 18),
+              label: Icon(
+                Icons.add_reaction_outlined,
+                size: density.chipHeight == null ? 18 : 16,
+              ),
               onPressed: () => onAdd!(globalRectOf(chip)),
             ),
           );
@@ -68,6 +73,8 @@ class ReactionsBar extends StatelessWidget {
   }
 
   Widget _chip(BuildContext context, ReactionGroup group) {
+    final density = context.density;
+    final small = density.chipHeight != null;
     final scheme = Theme.of(context).colorScheme;
     final mine = group.mine;
     return GestureDetector(
@@ -89,7 +96,10 @@ class ReactionsBar extends StatelessWidget {
         // Colour alone marks an own reaction; its size never changes.
         side: BorderSide(color: mine ? scheme.primary : scheme.outlineVariant),
         selectedColor: scheme.primaryContainer,
-        labelStyle: mine ? TextStyle(color: scheme.onPrimaryContainer) : null,
+        labelStyle: TextStyle(
+          color: mine ? scheme.onPrimaryContainer : null,
+          fontSize: small ? 12 : null,
+        ),
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 2),
         label: Semantics(
@@ -98,7 +108,7 @@ class ReactionsBar extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                EmojiGlyph(name: group.emojiName, size: 18),
+                EmojiGlyph(name: group.emojiName, size: small ? 14 : 18),
                 const SizedBox(width: Spacing.xs),
                 Text('${group.count}'),
               ],

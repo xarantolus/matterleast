@@ -25,7 +25,7 @@ void main() {
     scrollDelta: Offset(0, dy),
   );
 
-  testWidgets('a wheel tick glides to its distance over a few frames', (
+  testWidgets('a wheel tick eases to its distance within about 120 ms', (
     tester,
   ) async {
     final scroll = await showList(tester);
@@ -42,11 +42,13 @@ void main() {
 
     // Not there in one jump, moving every frame, slower towards the end.
     expect(offsets[1], greaterThan(0));
-    expect(offsets[1], lessThan(60));
-    for (var i = 1; i < 8; i++) {
+    expect(offsets[1], lessThan(120));
+    for (var i = 2; i < 6; i++) {
       expect(offsets[i], greaterThan(offsets[i - 1]));
     }
-    expect(offsets[2] - offsets[1], greaterThan(offsets[6] - offsets[5]));
+    expect(offsets[2] - offsets[1], greaterThan(offsets[4] - offsets[3]));
+    // The first frame only starts the clock; then 8 frames of 16 ms.
+    expect(offsets[9], closeTo(120, 0.01));
     expect(offsets.last, closeTo(120, 0.01));
   });
 
@@ -84,7 +86,7 @@ void main() {
     const left = Offset(0, 100);
     expect(wheelStep(left, Duration.zero), Offset.zero);
     final first = wheelStep(left, const Duration(milliseconds: 16)).dy;
-    expect(first, closeTo(25.2, 0.1));
+    expect(first, closeTo(51.7, 0.1));
     expect(
       wheelStep(const Offset(0, 0.6), const Duration(milliseconds: 16)),
       const Offset(0, 0.6),

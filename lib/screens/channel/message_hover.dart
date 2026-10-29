@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/motion.dart';
@@ -206,11 +207,12 @@ class MessageToolbar extends ConsumerWidget {
     final reply = of(MessageActionKind.reply);
     final quick = quickReactions(recent, 1).first;
     const density = VisualDensity.compact;
+    final density = context.density;
     return Material(
-      elevation: 2,
+      elevation: density.flat ? 0 : 2,
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Spacing.sm),
+        borderRadius: BorderRadius.circular(density.radius),
         side: BorderSide(color: context.tokens.hairline),
       ),
       child: Padding(
