@@ -59,8 +59,8 @@ Future<void> stepHistory(
   final navigator = routes.navigator;
   if (navigator == null || _stepping) return;
   if (routes.modalOnTop) {
-    // Back closes what covers the window, as the system's back does.
-    if (!forward) unawaited(WidgetsBinding.instance.handlePopRoute());
+    // Back closes what covers the window; it never moves the places under it.
+    if (!forward) unawaited(navigator.maybePop());
     return;
   }
   _stepping = true;
