@@ -107,7 +107,7 @@ class ConversationScaffold extends ConsumerWidget {
         body: ConversationKeys(
           conversation: conversation,
           isThread: rootId.isNotEmpty,
-          builder: (composerFocus) => ConversationDropTarget(
+          builder: (composerFocus, list) => ConversationDropTarget(
             url: url,
             channelId: channelId,
             rootId: rootId,
@@ -136,6 +136,7 @@ class ConversationScaffold extends ConsumerWidget {
                                         rootId,
                                       ),
                                 startText: startText,
+                                list: list,
                                 onOpenThread: onOpenThread,
                               ),
                             ),

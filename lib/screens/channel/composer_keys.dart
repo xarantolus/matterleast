@@ -11,6 +11,10 @@ enum ComposerKey {
   editLast,
   stopEditing,
   blur,
+
+  /// An empty field leaves the page keys to the message list above.
+  scrollUp,
+  scrollDown,
 }
 
 /// Pure: what [key] does in the composer, or null when the text field is
@@ -48,6 +52,10 @@ ComposerKey? composerKey({
     if (suggestionsOpen) return ComposerKey.previousSuggestion;
     if (empty && !editing && desktop) return ComposerKey.editLast;
     return null;
+  }
+  if (plain && empty && desktop && !suggestionsOpen) {
+    if (key == LogicalKeyboardKey.pageUp) return ComposerKey.scrollUp;
+    if (key == LogicalKeyboardKey.pageDown) return ComposerKey.scrollDown;
   }
   if (key == LogicalKeyboardKey.escape && plain) {
     if (suggestionsOpen) return ComposerKey.closeSuggestions;

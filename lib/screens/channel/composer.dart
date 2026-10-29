@@ -277,6 +277,16 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         draft.stopEditing();
       case ComposerKey.blur:
         node.unfocus();
+      case ComposerKey.scrollUp:
+        Actions.maybeInvoke(
+          context,
+          const ScrollMessagesIntent(MessageScroll.pageUp),
+        );
+      case ComposerKey.scrollDown:
+        Actions.maybeInvoke(
+          context,
+          const ScrollMessagesIntent(MessageScroll.pageDown),
+        );
     }
     return KeyEventResult.handled;
   }
@@ -445,6 +455,11 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
           FormatIntent: EnabledAction<FormatIntent>(
             enabled: () => _focus.hasFocus,
             onInvoke: (intent) => _format(intent.format),
+          ),
+          // Typing keeps the page keys the field leaves unused to itself.
+          ScrollMessagesIntent: EnabledAction<ScrollMessagesIntent>(
+            enabled: () => _focus.hasFocus && _text.text.isNotEmpty,
+            onInvoke: (_) {},
           ),
           StepHistoryIntent: EnabledAction<StepHistoryIntent>(
             enabled: () => _focus.hasFocus && value.editing == null,

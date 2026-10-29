@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,11 +10,13 @@ import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/permission_providers.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_keys.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/post_tile.dart';
@@ -46,7 +49,7 @@ void main() {
   late ServerHarness h;
   var dismissed = 0;
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(WidgetTester tester, {int count = 3}) async {
     dismissed = 0;
     h = await pumpWithServer(
       tester,
@@ -54,9 +57,9 @@ void main() {
       seed: (session) => session.store.applyChannelPage(
         channelId: channelId,
         page: api.PostList.fromJson({
-          'order': ['n2', 'n1', 'n0'],
+          'order': [for (var i = count - 1; i >= 0; i--) 'n$i'],
           'posts': {
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < count; i++)
               'n$i': {
                 'id': 'n$i',
                 'channel_id': channelId,
@@ -73,7 +76,7 @@ void main() {
           },
         }),
         kind: PageKind.page,
-        requested: 3,
+        requested: count,
       ),
       handle: (r) {
         if (r.path.endsWith('/posts')) {
@@ -109,7 +112,7 @@ void main() {
             child: ConversationKeys(
               conversation: conversationProvider(url, channelId),
               isThread: false,
-              builder: (composerFocus) => Column(
+              builder: (composerFocus, list) => Column(
                 children: [
                   Expanded(
                     child: FocusRegion(
@@ -118,6 +121,7 @@ void main() {
                         url: url,
                         conversation: conversationProvider(url, channelId),
                         startText: 'Start',
+                        list: list,
                       ),
                     ),
                   ),
@@ -230,6 +234,163 @@ void main() {
     expect(dismissed, 1);
     await h.close(tester);
   }, variant: desktop);
+
+  group('a long conversation', () {
+    final list = find.byType(AnchoredList<ListRow>);
+    Finder message(int i) => find.text('message $i');
+    double top(WidgetTester tester, int i) => tester.getTopLeft(message(i)).dy;
+
+    /// The highest message on screen.
+    int highest(WidgetTester tester) => [
+      for (var i = 0; i < 60; i++)
+        if (message(i).evaluate().isNotEmpty) i,
+    ].reduce((a, b) => top(tester, a) < top(tester, b) ? a : b);
+
+    testWidgets('PageUp and PageDown scroll by a viewport less a line', (
+      tester,
+    ) async {
+      await open(tester, count: 60);
+      await focusList(tester);
+      final height = tester.getSize(list).height;
+      final first = highest(tester);
+      final before = top(tester, first);
+
+      await _press(tester, LogicalKeyboardKey.pageUp);
+      await tester.pumpAndSettle();
+      expect(top(tester, first) - before, closeTo(height - 24, 1));
+
+      await _press(tester, LogicalKeyboardKey.pageDown);
+      await tester.pumpAndSettle();
+      expect(top(tester, first), closeTo(before, 1));
+      await h.close(tester);
+    }, variant: desktop);
+
+    testWidgets('PageUp in an empty message field scrolls the messages, in '
+        'a field with text it does not', (tester) async {
+      await open(tester, count: 60);
+      await tester.tap(find.byType(EditableText));
+      await tester.pump();
+      final first = highest(tester);
+      final before = top(tester, first);
+
+      await _press(tester, LogicalKeyboardKey.pageUp);
+      await tester.pumpAndSettle();
+      expect(top(tester, first), greaterThan(before + 100));
+
+      await _press(tester, LogicalKeyboardKey.pageDown);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText), 'draft');
+      await tester.pump();
+      await _press(tester, LogicalKeyboardKey.pageUp);
+      await tester.pumpAndSettle();
+      expect(top(tester, first), closeTo(before, 1));
+      await h.close(tester);
+    }, variant: desktop);
+
+    testWidgets('Ctrl+Home reaches the oldest loaded message and Ctrl+End '
+        'the newest', (tester) async {
+      await open(tester, count: 60);
+      await focusList(tester);
+      expect(message(59), findsOneWidget);
+      expect(message(0), findsNothing);
+
+      await _press(tester, LogicalKeyboardKey.home, control: true);
+      await tester.pumpAndSettle();
+      expect(message(0), findsOneWidget);
+      expect(message(59), findsNothing);
+
+      await _press(tester, LogicalKeyboardKey.end, control: true);
+      await tester.pumpAndSettle();
+      expect(message(59), findsOneWidget);
+      expect(message(0), findsNothing);
+      await h.close(tester);
+    }, variant: desktop);
+
+    testWidgets('hovering a follow-up message shows its time in the gutter '
+        'without moving the row', (tester) async {
+      await open(tester, count: 6);
+      final at = timeLabel(DateTime.utc(2026, 10, 26, 8, 4), use24: false);
+      final row = find.ancestor(
+        of: message(4),
+        matching: find.byType(PostTile),
+      );
+      expect(find.text(at), findsNothing);
+      final size = tester.getSize(row);
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(message(4)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text(at), findsOneWidget);
+      expect(tester.getSize(row), size);
+      expect(
+        find.text(timeLabel(DateTime.utc(2026, 10, 26, 8, 3), use24: false)),
+        findsNothing,
+      );
+
+      await mouse.moveTo(const Offset(5, 5));
+      await tester.pump();
+      expect(find.text(at), findsNothing);
+      await h.close(tester);
+    }, variant: desktop);
+
+    group('the new-messages bar', () {
+      Future<void> unreadFrom(WidgetTester tester, int i) async {
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(ConversationView)),
+        );
+        final provider = conversationProvider(h.url, channelId);
+        final post = container
+            .read(provider)
+            .rows
+            .whereType<MessageRow>()
+            .map((r) => r.post)
+            .firstWhere((p) => p.id == 'n$i');
+        container.read(provider.notifier).markedUnread(post);
+        await h.settle(tester);
+      }
+
+      testWidgets('shows how many are new while the line is above, and '
+          'Mark as read sends the view request', (tester) async {
+        await open(tester, count: 60);
+        await unreadFrom(tester, 3);
+        expect(find.textContaining('57 new messages since'), findsOneWidget);
+        final views = h.server.paths.where((p) => p == _viewPath).length;
+
+        await tester.tap(find.text('Mark as read'));
+        await h.settle(tester);
+        expect(find.textContaining('new messages since'), findsNothing);
+        expect(find.byType(NewMessagesTile), findsNothing);
+        expect(h.server.paths.where((p) => p == _viewPath).length, views + 1);
+        await h.close(tester);
+      }, variant: desktop);
+
+      testWidgets('Jump brings the line into view and the bar goes', (
+        tester,
+      ) async {
+        await open(tester, count: 60);
+        await unreadFrom(tester, 3);
+        expect(find.byType(NewMessagesTile), findsNothing);
+
+        await tester.tap(find.text('Jump'));
+        await h.settle(tester);
+        expect(find.byType(NewMessagesTile), findsOneWidget);
+        expect(find.textContaining('new messages since'), findsNothing);
+        await h.close(tester);
+      }, variant: desktop);
+
+      testWidgets('a phone keeps the pill', (tester) async {
+        await open(tester, count: 60);
+        await unreadFrom(tester, 3);
+        expect(find.text('Mark as read'), findsNothing);
+        expect(find.text('57 new messages'), findsOneWidget);
+        await h.close(tester);
+      });
+    });
+  });
 
   group('formatting', () {
     testWidgets('Ctrl+B, Ctrl+I and Ctrl+Shift+X wrap the selection, and '

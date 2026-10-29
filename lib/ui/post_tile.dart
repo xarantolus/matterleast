@@ -15,6 +15,7 @@ import 'package:matterleast/domain/system_message.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/spoken_post.dart';
+import 'package:matterleast/screens/channel/message_hover.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/acknowledge_button.dart';
 import 'package:matterleast/ui/agent_post.dart';
@@ -381,7 +382,12 @@ class PostTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (compact)
-          SizedBox(width: density.gutter)
+          SizedBox(
+            width: density.gutter,
+            child: isDesktop
+                ? ExcludeSemantics(child: _GutterTime(time: time))
+                : null,
+          )
         else ...[
           ExcludeSemantics(
             child: _ToProfile(
@@ -581,6 +587,31 @@ String? sendStatusLabel(String? sendState) => switch (sendState) {
 
 /// The light tint of a pinned or saved message.
 Color markedTint(AppTokens tokens) => tokens.accent.withValues(alpha: 0.08);
+
+/// The time of a follow-up message, in the avatar's place while the row is
+/// hovered; the space is kept so nothing moves.
+class _GutterTime extends StatelessWidget {
+  const _GutterTime({required this.time});
+
+  final String time;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!RowHover.of(context)) return const SizedBox.shrink();
+    final style = Theme.of(context).textTheme.labelSmall?.copyWith(
+      color: context.tokens.muted,
+      height: context.density.lineHeight,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(right: Spacing.sm, top: 2),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.topRight,
+        child: Text(time, style: style, maxLines: 1),
+      ),
+    );
+  }
+}
 
 /// "Pinned", "Saved" or "Pinned and Saved" above a message, with their
 /// icons in the avatar's column.
@@ -1225,6 +1256,10 @@ class NewMessagesTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.error;
+    final label = Text(
+      isDesktop ? 'New' : 'New messages',
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: Spacing.lg,
@@ -1235,17 +1270,68 @@ class NewMessagesTile extends StatelessWidget {
           Expanded(child: Divider(color: color)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-            child: Text(
-              'New messages',
-              style: Theme.of(context).textTheme.labelMedium
-                  ?.copyWith(color: color),
-            ),
+            child: label,
           ),
-          Expanded(child: Divider(color: color)),
+          if (!isDesktop) Expanded(child: Divider(color: color)),
         ],
       ),
     );
   }
+}
+
+/// On desktop, over the top of the messages while the new-messages line is
+/// above them: how many are new, and the two things to do about it.
+class NewMessagesBar extends StatelessWidget {
+  const NewMessagesBar({
+    required this.text,
+    required this.onJump,
+    required this.onMarkRead,
+    super.key,
+  });
+
+  final String text;
+  final VoidCallback onJump;
+  final VoidCallback onMarkRead;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final style = Theme.of(context).textTheme.bodyMedium;
+    return Material(
+      color: colors.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+        child: Row(
+          children: [
+            Flexible(
+              child: Text(
+                text,
+                overflow: TextOverflow.ellipsis,
+                style: style?.copyWith(color: colors.onErrorContainer),
+              ),
+            ),
+            const SizedBox(width: Spacing.sm),
+            TextButton(
+              style: _barButton(colors),
+              onPressed: onJump,
+              child: const Text('Jump'),
+            ),
+            TextButton(
+              style: _barButton(colors),
+              onPressed: onMarkRead,
+              child: const Text('Mark as read'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static ButtonStyle _barButton(ColorScheme colors) => TextButton.styleFrom(
+    foregroundColor: colors.onErrorContainer,
+    textStyle: const TextStyle(fontWeight: FontWeight.w700),
+    visualDensity: VisualDensity.compact,
+  );
 }
 
 /// A row that arrived while the reader watched: it opens up and fades in

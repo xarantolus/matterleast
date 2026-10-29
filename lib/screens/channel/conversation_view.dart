@@ -7,6 +7,7 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/conversation_open.dart';
+import 'package:matterleast/domain/conversation_read.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -29,6 +30,19 @@ import 'package:matterleast/ui/tokens.dart';
 /// Opens the thread of [post]; for a [reply] with the keyboard up.
 typedef OpenThread = void Function(PostItem post, {bool reply});
 
+/// Brings the reader to the newest message, loading the newest page first
+/// when the window is apart from it.
+void showLatest(
+  Conversation conversation,
+  ConversationState state,
+  AnchoredListController list,
+) {
+  conversation.showLatest();
+  if (!(state.window?.newerApart ?? false)) {
+    unawaited(list.animateToBottom());
+  }
+}
+
 /// The message list of a channel or thread with its loading states and the
 /// pills that move through it.
 class ConversationView extends ConsumerStatefulWidget {
@@ -38,8 +52,12 @@ class ConversationView extends ConsumerStatefulWidget {
     required this.startText,
     this.onOpenThread,
     this.composer,
+    this.list,
     super.key,
   });
+
+  /// The list's controller, when keys outside the view scroll it.
+  final AnchoredListController? list;
 
   final String url;
   final ConversationProvider conversation;
@@ -56,7 +74,7 @@ class ConversationView extends ConsumerStatefulWidget {
 }
 
 class _ConversationViewState extends ConsumerState<ConversationView> {
-  final _list = AnchoredListController();
+  late final _list = widget.list ?? AnchoredListController();
   late final Conversation _controller;
   late final ReadingPlaces _places;
   late final ConversationKey _key;
@@ -196,12 +214,8 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     );
   }
 
-  void _showLatest(ConversationState state) {
-    _controller.showLatest();
-    if (!(state.window?.newerApart ?? false)) {
-      unawaited(_list.animateToBottom());
-    }
-  }
+  void _showLatest(ConversationState state) =>
+      showLatest(_controller, state, _list);
 
   @override
   Widget build(BuildContext context) {
@@ -362,22 +376,39 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     return Stack(
       children: [
         if (lineAbove)
-          Positioned(
-            top: Spacing.sm,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ActionChip(
-                mouseCursor: clickCursor,
-                avatar: const Icon(Icons.arrow_upward, size: 18),
-                label: Text(switch ((rows[line] as NewMessagesLine).count) {
-                  1 => '1 new message',
-                  final n => '$n new messages',
-                }),
-                onPressed: () => _jumpToLine(rows, height),
+          if (isDesktop)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: NewMessagesBar(
+                text: newMessagesText(
+                  (rows[line] as NewMessagesLine).count,
+                  state.lastViewedAt,
+                  DateTime.now(),
+                  use24: MediaQuery.alwaysUse24HourFormatOf(context),
+                ),
+                onJump: () => _jumpToLine(rows, height),
+                onMarkRead: () => unawaited(_controller.markRead()),
+              ),
+            )
+          else
+            Positioned(
+              top: Spacing.sm,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ActionChip(
+                  mouseCursor: clickCursor,
+                  avatar: const Icon(Icons.arrow_upward, size: 18),
+                  label: Text(switch ((rows[line] as NewMessagesLine).count) {
+                    1 => '1 new message',
+                    final n => '$n new messages',
+                  }),
+                  onPressed: () => _jumpToLine(rows, height),
+                ),
               ),
             ),
-          ),
         if (apart)
           Positioned(
             bottom: Spacing.lg,
