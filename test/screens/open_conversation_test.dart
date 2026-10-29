@@ -181,6 +181,7 @@ void main() {
 
   Future<void> finish(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox());
+    await settle(tester);
     await tester.runAsync(() async {
       await closeTestSession(session);
       await server.close();

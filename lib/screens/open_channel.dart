@@ -186,6 +186,17 @@ void closeChannel(
 /// so the list shows.
 void closeConversations(NavigatorState navigator) {
   if (!navigator.mounted) return;
+  closePages(navigator);
+  ProviderScope.containerOf(
+    navigator.context,
+    listen: false,
+  ).read(openPanesProvider.notifier).set(Panes.none);
+}
+
+/// Closes the pages and conversation routes over the list, but not what
+/// the panes show.
+void closePages(NavigatorState navigator) {
+  if (!navigator.mounted) return;
   final container = ProviderScope.containerOf(navigator.context, listen: false);
   for (final routes in [
     container.read(paneRoutesProvider),
@@ -193,7 +204,6 @@ void closeConversations(NavigatorState navigator) {
   ]) {
     routes.navigator?.popUntil((route) => route.isFirst);
   }
-  container.read(openPanesProvider.notifier).set(Panes.none);
 }
 
 /// Opens [target] again the way [openConversation] first did.

@@ -22,6 +22,7 @@ Future<void> showPlace(NavigatorState navigator, RailTarget? place) async {
   final remembered = container.read(conversationMemoryProvider).at(place);
   final before = shownLocation(container);
   container.read(railSelectionProvider.notifier).select(place);
+  closePages(navigator);
   if (remembered == null) return;
   final stack = await openableStack(container, remembered);
   // The user may have moved on while the channels were read.
