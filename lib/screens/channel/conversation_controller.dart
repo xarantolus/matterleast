@@ -465,7 +465,7 @@ class Conversation extends _$Conversation {
     }
   }
 
-  /// The message the list row [key] shows; null for any other row.
+  /// Null for a row that is not a message.
   String? postIdOfRow(Object key) {
     final window = state.window;
     if (window == null) return null;

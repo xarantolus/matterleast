@@ -16,14 +16,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'open_history.g.dart';
 
-/// Where the user went, across teams and servers, for the mouse's Back and
-/// Forward buttons, Alt+Left and Alt+Right and the touchpad swipe.
+/// Where the user went, across teams and servers, for Back and Forward.
 @Riverpod(keepAlive: true)
 OpenHistory<Location> openHistory(Ref ref) =>
     OpenHistory(repeats: (entry, current) => entry.repeats(current));
 
-/// Where the user is now: the rail's place, the conversation on top and
-/// where it is read.
+/// The rail's place, the conversation on top and where it is read.
 Location shownLocation(ProviderContainer container) {
   final open = conversationToSave(
     Panes.openNow(
@@ -46,15 +44,13 @@ Location shownLocation(ProviderContainer container) {
 ConversationKey _keyOf(SavedConversation c) =>
     (url: c.url, channelId: c.channelId, rootId: c.rootId);
 
-/// Notes where the user is, before they go somewhere else.
+/// Records where the user is, before they go elsewhere.
 void settleLocation(ProviderContainer container) => settleHistory(
   container.read(openHistoryProvider),
   shownLocation(container),
 );
 
-/// Goes to the entry before (or after) the one shown, through the normal
-/// open path, so the rail moves to its server and team and the reader is
-/// where they were. One step at a time.
+/// Goes one entry back or forward through the normal open path.
 Future<void> stepHistory(
   ProviderContainer container, {
   required bool forward,
@@ -114,15 +110,13 @@ void _show(
       recordHistory: false,
     ),
   );
-  // A channel opened in the panes keeps its thread; Back to the channel
-  // closes it.
+  // Back to a channel closes the thread the panes kept.
   if (conversation.rootId == null) {
     container.read(openPanesProvider.notifier).closeThread();
   }
 }
 
-/// The channels each server has now that the user is in and aren't
-/// archived; a server missing from the result couldn't be asked.
+/// Joined, unarchived channels per server; a server that couldn't be asked is missing.
 Future<Map<String, Set<String>>> _joinedChannels(
   ProviderContainer container,
   Set<String> urls,
