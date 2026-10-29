@@ -10,8 +10,10 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
+import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 
@@ -92,6 +94,8 @@ Future<ServerHarness> pumpWithServer(
         serverSessionProvider(url).overrideWith((ref) async => harness.session),
         serverImageCachesProvider(url)
             .overrideWith((ref) => Completer<ServerImageCaches>().future),
+        fileDownloadsProvider(url)
+            .overrideWith((ref) => Completer<FileDownloads>().future),
         ...?overrides?.call(url),
       ],
       child: MaterialApp(theme: MatterleastApp.lightTheme, home: home(url)),

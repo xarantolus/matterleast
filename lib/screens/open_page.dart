@@ -25,6 +25,8 @@ Future<void> openPage(
   if (popout && isDesktop) {
     return showDialog<void>(
       context: navigator.context,
+      // The barrier answers any mouse button, so Back over it would pop twice.
+      barrierDismissible: false,
       builder: (_) => _Popout(page: page),
     );
   }
@@ -55,6 +57,20 @@ class _PopoutState extends State<_Popout> {
 
   @override
   Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
+          ),
+        ),
+        _card(context),
+      ],
+    );
+  }
+
+  Widget _card(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final theme = Theme.of(context);
     final card = theme.colorScheme.surfaceContainerHigh;
