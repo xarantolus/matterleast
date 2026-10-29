@@ -366,6 +366,10 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
           row,
     ].length;
     final line = rows.indexWhere((r) => r is NewMessagesLine);
+    final newCount = switch (line >= 0 ? rows[line] : null) {
+      NewMessagesLine(:final count) => count,
+      _ => 0,
+    };
     final lineAbove =
         !_lineSeen.value &&
         line >= 0 &&
@@ -383,7 +387,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
               right: 0,
               child: NewMessagesBar(
                 text: newMessagesText(
-                  (rows[line] as NewMessagesLine).count,
+                  newCount,
                   state.lastViewedAt,
                   DateTime.now(),
                   use24: MediaQuery.alwaysUse24HourFormatOf(context),
@@ -401,7 +405,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
                 child: ActionChip(
                   mouseCursor: clickCursor,
                   avatar: const Icon(Icons.arrow_upward, size: 18),
-                  label: Text(switch ((rows[line] as NewMessagesLine).count) {
+                  label: Text(switch (newCount) {
                     1 => '1 new message',
                     final n => '$n new messages',
                   }),
