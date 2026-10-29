@@ -12,7 +12,8 @@ part of 'place_reconciler.dart';
 /// reason: a pick in the rail, a link or notification into another team, a
 /// new sign-in, the shown server signed out or removed, the shown team
 /// left. What belonged to the old place never stays on screen; switching
-/// by the rail then opens what the new place had open.
+/// by the rail then opens what the new place had open. Leaving Home leaves
+/// nothing behind.
 
 @ProviderFor(placeReconciler)
 final placeReconcilerProvider = PlaceReconcilerProvider._();
@@ -21,7 +22,8 @@ final placeReconcilerProvider = PlaceReconcilerProvider._();
 /// reason: a pick in the rail, a link or notification into another team, a
 /// new sign-in, the shown server signed out or removed, the shown team
 /// left. What belonged to the old place never stays on screen; switching
-/// by the rail then opens what the new place had open.
+/// by the rail then opens what the new place had open. Leaving Home leaves
+/// nothing behind.
 
 final class PlaceReconcilerProvider
     extends
@@ -31,7 +33,8 @@ final class PlaceReconcilerProvider
   /// reason: a pick in the rail, a link or notification into another team, a
   /// new sign-in, the shown server signed out or removed, the shown team
   /// left. What belonged to the old place never stays on screen; switching
-  /// by the rail then opens what the new place had open.
+  /// by the rail then opens what the new place had open. Leaving Home leaves
+  /// nothing behind.
   PlaceReconcilerProvider._()
     : super(
         from: null,
