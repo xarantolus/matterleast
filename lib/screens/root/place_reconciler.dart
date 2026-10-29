@@ -10,12 +10,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'place_reconciler.g.dart';
 
-/// Closes what is open whenever the place the rail shows changes, for any
-/// reason: a pick in the rail, a link or notification into another team, a
-/// new sign-in, the shown server signed out or removed, the shown team
-/// left. What belonged to the old place never stays on screen; switching
-/// by the rail then opens what the new place had open. Leaving Home leaves
-/// nothing behind.
+/// Closes what is open whenever the place the rail shows changes, for any reason.
 @Riverpod(keepAlive: true)
 PlaceReconciler placeReconciler(Ref ref) {
   final reconciler = PlaceReconciler(ref);
@@ -57,8 +52,7 @@ class PlaceReconciler {
       .map((s) => s.url)
       .toSet();
 
-  // Follows the teams of the server the rail shows, so a team that goes
-  // away is noticed.
+  // So a team that goes away is noticed.
   void _follow() {
     final url = _ref.read(railSelectionProvider)?.url;
     if (url == _teamsOf) return;
@@ -74,8 +68,7 @@ class PlaceReconciler {
     final before = _shown;
     final now = _place();
     _shown = now;
-    // Home has no conversations of its own: opening one moves the rail to
-    // its team, and a page open beside it stays.
+    // Leaving Home closes nothing: opening a thread from Threads moves the rail from Home.
     if (before == null || !placeChanged(before, now)) return;
     final navigator = _ref.read(conversationRoutesProvider).navigator;
     if (navigator != null && navigator.mounted) closeConversations(navigator);

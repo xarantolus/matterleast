@@ -8,10 +8,7 @@ part 'reading_places.g.dart';
 /// A channel, or the thread of [rootId] in it, on a server.
 typedef ConversationKey = ({String url, String channelId, String? rootId});
 
-/// Knows where each shown conversation is read. A window change that
-/// moves a conversation between a pane and a route hands the place on to
-/// the next view of it, and history steps put the reader back where they
-/// were.
+/// Where each shown conversation is read; handed to its next view after a window change.
 @Riverpod(keepAlive: true)
 ReadingPlaces readingPlaces(Ref ref) => ReadingPlaces();
 
@@ -19,11 +16,10 @@ class ReadingPlaces {
   final _live = <ConversationKey, List<_Shown>>{};
   final _handed = <ConversationKey, ({OpenAt at, DateTime until})>{};
 
-  /// A place handed on by a window change is for the views built right
-  /// after it.
+  /// A handed-on place is for the views built right after it.
   static const _lifetime = Duration(seconds: 2);
 
-  /// A place from history waits for a conversation that still has to load.
+  /// A place from history waits for a conversation that still loads.
   static const _loadTime = Duration(seconds: 15);
 
   /// [postIdOf] names the message a row of [list] shows, null for others.
@@ -58,8 +54,7 @@ class ReadingPlaces {
     }
   }
 
-  /// Where a new view of [conversation] opens, once, after a capture or a
-  /// [restore].
+  /// Where a new view of [conversation] opens, once, after a capture or restore.
   OpenAt? take(ConversationKey conversation) {
     final handed = _handed.remove(conversation);
     return handed != null && DateTime.now().isBefore(handed.until)
@@ -67,8 +62,7 @@ class ReadingPlaces {
         : null;
   }
 
-  /// Where [conversation] is read now; null at the bottom, or when it is
-  /// not shown.
+  /// Null at the bottom, or when [conversation] is not shown.
   ReadingAt? placeOf(ConversationKey conversation) {
     for (final shown in _live[conversation] ?? const <_Shown>[]) {
       final p = shown.list.position;
@@ -80,8 +74,7 @@ class ReadingPlaces {
     return null;
   }
 
-  /// Puts the reader of [conversation] at [at]: where it is shown, or
-  /// else where its next view opens.
+  /// Jumps the shown views to [at], or sets where the next view opens.
   void restore(ConversationKey conversation, ReadingAt at) {
     final shown = _live[conversation];
     if (shown != null && shown.isNotEmpty) {

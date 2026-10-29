@@ -43,6 +43,7 @@ class ServerHarness {
   /// the test body: pending timers are checked before tear-downs run.
   Future<void> close(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox());
+    // Closing the database in the same frame as the unmount hangs.
     await settle(tester);
     await tester.runAsync(() async {
       await closeTestSession(session);

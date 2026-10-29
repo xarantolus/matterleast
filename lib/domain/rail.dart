@@ -40,9 +40,7 @@ String? shownTeam(RailTarget? target, List<RailTeam> teams) {
   return teams.first.id;
 }
 
-/// The place the rail really shows for [selected]: Home when its server
-/// isn't signed in ([signedIn] null while unknown), else its shown team
-/// (see [shownTeam]; [teams] null while unknown).
+/// What the rail shows for [selected]: Home when its server isn't signed in, else its shown team.
 RailTarget? shownPlace(
   RailTarget? selected, {
   required Set<String>? signedIn,
@@ -56,9 +54,7 @@ RailTarget? shownPlace(
   );
 }
 
-/// Whether the rail moved from [before] to [after] in a way that leaves
-/// what was open behind: another server or team, or Home. A team becoming
-/// known for a server shown without one is no move.
+/// Whether the rail moved to another server, team or Home; a team becoming known is no move.
 bool placeChanged(RailTarget? before, RailTarget? after) {
   if (before == null || after == null) return before != after;
   return before.url != after.url ||

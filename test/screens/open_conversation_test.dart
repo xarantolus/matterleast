@@ -181,6 +181,7 @@ void main() {
 
   Future<void> finish(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox());
+    // Closing the database in the same frame as the unmount hangs.
     await settle(tester);
     await tester.runAsync(() async {
       await closeTestSession(session);

@@ -1,14 +1,10 @@
 import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/rail.dart';
 
-/// Where the reader was in a conversation, as the saved view state keeps
-/// it: the message at the bottom of the screen and how far its bottom edge
-/// sits above the bottom of the list.
+/// The message at the bottom of the screen and its bottom edge's offset.
 typedef ReadingAt = ({String postId, double offset});
 
-/// A place the user was at: a conversation (or a thread in it) with where
-/// they read, or, with no conversation, Home ([place] null) or a team's
-/// list.
+/// A conversation or thread with the reading position, or Home or a team's list.
 class Location {
   const Location({
     this.place,
@@ -20,11 +16,10 @@ class Location {
   final RailTarget? place;
   final SavedConversation? conversation;
 
-  /// The message the conversation was opened at; reopening shows it again.
+  /// The message it was opened at; reopening shows it again.
   final String? highlightPostId;
 
-  /// Where the reader was when they left; null when at the bottom, or when
-  /// [highlightPostId] says where to open.
+  /// Null at the bottom, or when [highlightPostId] says where to open.
   final ReadingAt? at;
 
   /// The same place, wherever the reader was in it.
@@ -39,14 +34,12 @@ class Location {
         mine.rootId == theirs.rootId;
   }
 
-  /// Going here again, right after [current], adds nothing: it is the same
-  /// place, and not a jump to a message in it.
+  /// Going here again right after [current] adds nothing.
   bool repeats(Location current) =>
       isSameSpot(current) &&
       (highlightPostId == null || highlightPostId == current.highlightPostId);
 
-  /// This place with the reading position [now]; a place opened at a
-  /// message keeps opening there.
+  /// This place at reading position [now]; one opened at a message keeps that.
   Location readAt(ReadingAt? now) => highlightPostId != null
       ? this
       : Location(
@@ -68,10 +61,7 @@ class Location {
   int get hashCode => Object.hash(place, conversation, highlightPostId, at);
 }
 
-/// Whether the user can still go to [location]: its server is signed in and
-/// its channel is one they are in and that isn't archived. [channels] are
-/// the joined channels by server; a server missing from it couldn't be
-/// asked, so its entries stay.
+/// Whether [location]'s server is signed in and its channel is joined and open; an unasked server stays.
 bool locationExists(
   Location location, {
   required Set<String> signedIn,
@@ -84,9 +74,7 @@ bool locationExists(
   return id == null || (channels[url]?.contains(id) ?? true);
 }
 
-/// The places the user went to, oldest first, with the one shown now, so
-/// Back and Forward move through them like a browser. Going somewhere new
-/// drops what was ahead.
+/// Places visited, oldest first; Back and Forward work like a browser's.
 class OpenHistory<T> {
   OpenHistory({this.limit = 100, bool Function(T entry, T current)? repeats})
     : _repeats = repeats ?? ((entry, current) => entry == current);
@@ -100,7 +88,7 @@ class OpenHistory<T> {
 
   T? get current => _at >= 0 ? _entries[_at] : null;
 
-  /// [entry] was gone to; a repeat of the current one changes nothing.
+  /// Going somewhere new drops what was ahead; a repeat changes nothing.
   void push(T entry) {
     final now = current;
     if (now != null && _repeats(entry, now)) return;
@@ -110,7 +98,6 @@ class OpenHistory<T> {
     _at = _entries.length - 1;
   }
 
-  /// The current entry, as it is now.
   void replaceCurrent(T entry) {
     if (_at >= 0) _entries[_at] = entry;
   }
@@ -135,7 +122,7 @@ class OpenHistory<T> {
   }
 }
 
-/// Notes in [history] where the reader is in the current entry's place.
+/// Records the reading position in the current entry when it is the same place.
 void noteReading(OpenHistory<Location> history, Location now) {
   final current = history.current;
   if (current != null && current.isSameSpot(now)) {
@@ -143,9 +130,7 @@ void noteReading(OpenHistory<Location> history, Location now) {
   }
 }
 
-/// Notes in [history] that the user is at [now] before they go somewhere
-/// else: where they read updates the current entry when it is the same
-/// place; a conversation, or Home, that isn't in it yet is added.
+/// Updates the current entry, or adds [now] when it is a new conversation or Home.
 void settleHistory(OpenHistory<Location> history, Location now) {
   final current = history.current;
   if (current != null && current.isSameSpot(now)) {

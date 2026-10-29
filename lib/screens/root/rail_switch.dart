@@ -10,11 +10,7 @@ import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 
-/// Shows [place] in the rail (null is Home), the one way the rail and the
-/// You page switch: what is open gives way (the place reconciler closes
-/// it), and what was open there last opens again at its reading position.
-/// With nothing remembered, or once it can't open any more, the place's
-/// list shows.
+/// Shows [place] (null is Home) and reopens what was open there, else its list.
 Future<void> showPlace(NavigatorState navigator, RailTarget? place) async {
   if (!navigator.mounted) return;
   final container = ProviderScope.containerOf(navigator.context, listen: false);

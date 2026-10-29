@@ -30,7 +30,7 @@ import 'package:matterleast/ui/conversation_route.dart';
 /// With [besideContent] a thread opens in the thread pane of a large window
 /// and leaves the content view in the main pane in place.
 /// Opens that aren't the user's own ([recordHistory] false) stay out of the
-/// Back and Forward history, which notes where the reader was first. Completes once the conversation closes.
+/// Back and Forward history. Completes once the conversation closes.
 Future<void> openConversation(
   NavigatorState from, {
   required String url,
@@ -193,8 +193,7 @@ void closeConversations(NavigatorState navigator) {
   ).read(openPanesProvider.notifier).set(Panes.none);
 }
 
-/// Closes the pages and conversation routes over the list, but not what
-/// the panes show.
+/// Closes pages and routes over the list, not the panes.
 void closePages(NavigatorState navigator) {
   if (!navigator.mounted) return;
   final container = ProviderScope.containerOf(navigator.context, listen: false);
