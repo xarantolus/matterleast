@@ -50,9 +50,15 @@ class ChannelListPane extends ConsumerWidget {
   final ChannelListState state;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => switch (state) {
-    ChannelListLoading() => const Center(child: CircularProgressIndicator()),
+  Widget build(BuildContext context, WidgetRef ref) => AnimatedSwitcher(
+    duration: motion(context, const Duration(milliseconds: 200)),
+    child: _content(ref),
+  );
+
+  Widget _content(WidgetRef ref) => switch (state) {
+    ChannelListLoading() => const _DelayedSpinner(key: ValueKey('loading')),
     ChannelListFailed(:final title, :final detail) => EmptyState(
+      key: const ValueKey('failed'),
       icon: Icons.cloud_off,
       title: title,
       body: detail,
@@ -74,6 +80,21 @@ class ChannelListPane extends ConsumerWidget {
 
   Future<void> _retry(WidgetRef ref) async =>
       (await ref.read(serverRefreshProvider(url).future))();
+}
+
+/// Fades in after a beat, so a load that ends at once shows no spinner.
+class _DelayedSpinner extends StatelessWidget {
+  const _DelayedSpinner({super.key});
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    tween: Tween(begin: 0, end: 1),
+    duration: motion(context, const Duration(milliseconds: 600)),
+    curve: const Interval(0.5, 1),
+    builder: (context, opacity, child) =>
+        Opacity(opacity: opacity, child: child),
+    child: const Center(child: CircularProgressIndicator()),
+  );
 }
 
 class _ChannelListView extends ConsumerStatefulWidget {
