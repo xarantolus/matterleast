@@ -102,8 +102,8 @@ void main() {
       ]);
     });
 
-    test('a live post in an empty channel starts its history', () {
-      expect(withLivePost([PostRange.empty], t(5)), [r(5, 5, start: true)]);
+    test('a live post in an empty channel is loaded from the start', () {
+      expect(withLivePost([PostRange.empty], t(5)), [r(0, 5, start: true)]);
     });
 
     test('a live post in a channel never loaded leaves it unloaded', () {

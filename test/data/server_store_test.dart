@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_ranges.dart';
 
@@ -567,6 +568,98 @@ void main() {
       expect(ranges.single.earliest.isBefore(ranges.single.latest), isTrue);
       expect(newestRange(ranges), ranges.single);
     });
+  });
+
+  group('the first reply of a thread, with the device clock ahead', () {
+    // The server stamps the reply at minute 10; this device thinks it is
+    // minute 70 when it sends it.
+    final server = DateTime.fromMillisecondsSinceEpoch(600000, isUtc: true);
+    final device = server.add(const Duration(hours: 1));
+
+    Future<List<String>> shown() async => [
+      for (final p in (await ConversationViews(
+        db,
+      ).thread('r1', limit: 30, openedAt: device).first).posts)
+        p.message,
+    ];
+
+    setUp(() async {
+      await store.applyThreadPage(
+        rootId: 'r1',
+        page: pageOf([post('r1', createAt: 60000, message: 'the question')]),
+      );
+    });
+
+    test('shows once the server has it', () async {
+      await store.queuePost(
+        pendingPostId: 'me:1',
+        channelId: 'c1',
+        rootId: 'r1',
+        userId: 'me',
+        message: 'my answer',
+        createAt: device,
+      );
+      expect(await shown(), ['my answer']);
+      await store.applySent(
+        'me:1',
+        post(
+          'p1',
+          createAt: server.millisecondsSinceEpoch,
+          user: 'me',
+          root: 'r1',
+          message: 'my answer',
+          pendingId: 'me:1',
+        ),
+      );
+      expect(await shown(), ['my answer']);
+    });
+
+    test(
+      'a thread stored by an older version shows it after a refresh',
+      () async {
+        await store.applyThreadPage(
+          rootId: 'r1',
+          page: pageOf([
+            post('r1', createAt: 60000, message: 'the question'),
+            post(
+              'p1',
+              createAt: server.millisecondsSinceEpoch,
+              user: 'me',
+              root: 'r1',
+              message: 'my answer',
+            ),
+          ]),
+        );
+        // What the old code left behind: a range at the device's time of the
+        // reply, newer than the one the server's page made.
+        await db
+            .into(db.postRanges)
+            .insert(
+              PostRangesCompanion.insert(
+                scope: 'thread',
+                scopeId: 'r1',
+                earliest: device,
+                latest: device,
+                reachesStart: const Value(true),
+              ),
+            );
+        expect(await shown(), isEmpty);
+        await store.applyThreadPage(
+          rootId: 'r1',
+          page: pageOf([
+            post('r1', createAt: 60000, message: 'the question'),
+            post(
+              'p1',
+              createAt: server.millisecondsSinceEpoch,
+              user: 'me',
+              root: 'r1',
+              message: 'my answer',
+            ),
+          ]),
+        );
+        expect(await shown(), ['my answer']);
+      },
+    );
   });
 
   group('entry and team changes', () {

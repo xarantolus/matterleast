@@ -82,6 +82,26 @@ List<PostRange> withPage(
   ]);
 }
 
+/// The newest page of a channel or thread arrived. Nothing newer than it
+/// exists on the server, so a stored range entirely after it can only stand
+/// on this device's clock (an own post's local time) and is dropped.
+List<PostRange> withNewestPage(
+  List<PostRange> ranges, {
+  required DateTime? earliest,
+  required DateTime? latest,
+  required bool reachesStart,
+}) => withPage(
+  latest == null
+      ? ranges
+      : [
+          for (final r in ranges)
+            if (r == PostRange.empty || !r.earliest.isAfter(latest)) r,
+        ],
+  earliest: earliest,
+  latest: latest,
+  reachesStart: reachesStart,
+);
+
 /// Posts older than [anchor] (which is inside a range) arrived; the range
 /// grows down to [earliest]. An empty answer means there is nothing older.
 List<PostRange> withOlder(
@@ -120,16 +140,15 @@ List<PostRange> withNewer(
 }
 
 /// A post arrived live (WebSocket or our own send). It extends the newest
-/// range; a channel known to be empty starts its history at that post. A
-/// channel never loaded stays so, since older posts may exist; its first
-/// open fetches the newest page.
+/// range; a channel known to be empty is loaded from the start up to that
+/// post, so the server's time for our own post lands inside the range even
+/// when this device's clock runs ahead. A channel never loaded stays so,
+/// since older posts may exist; its first open fetches the newest page.
 List<PostRange> withLivePost(List<PostRange> ranges, DateTime createAt) {
   final newest = newestRange(ranges);
   if (newest == null) return ranges;
   if (newest == PostRange.empty) {
-    return [
-      PostRange(earliest: createAt, latest: createAt, reachesStart: true),
-    ];
+    return [newest.copyWith(latest: createAt)];
   }
   if (!createAt.isAfter(newest.latest)) return ranges;
   return mergeRanges([

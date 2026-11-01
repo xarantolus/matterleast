@@ -819,7 +819,7 @@ class ServerStore {
     final ranges = await rangesFor('channel', channelId);
     var capped = false;
     final updated = switch (kind) {
-      PageKind.page => withPage(
+      PageKind.page => withNewestPage(
         ranges,
         earliest: earliest,
         latest: latest,
@@ -888,6 +888,12 @@ class ServerStore {
         ranges,
         anchor: newestRange(ranges)!.earliest,
         earliest: earliest,
+        reachesStart: reachesStart,
+      ),
+      PageKind.page => withNewestPage(
+        ranges,
+        earliest: earliest,
+        latest: latest,
         reachesStart: reachesStart,
       ),
       _ => withPage(
