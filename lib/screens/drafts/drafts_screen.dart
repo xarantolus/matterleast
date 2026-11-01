@@ -13,6 +13,7 @@ import 'package:matterleast/screens/drafts/scheduled_list.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/page_tabs.dart';
@@ -87,7 +88,7 @@ class DraftsScreen extends ConsumerWidget {
   Widget _drafts(BuildContext context, WidgetRef ref) {
     final drafts = ref.watch(teamDraftsProvider(url, teamId)).value;
     return switch (drafts) {
-      null => const Center(child: CircularProgressIndicator()),
+      null => const DelayedSpinner(),
       [] => const EmptyState(
         icon: Icons.edit_note,
         title: 'No drafts',

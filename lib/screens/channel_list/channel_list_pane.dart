@@ -22,6 +22,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/motion.dart';
@@ -56,7 +57,7 @@ class ChannelListPane extends ConsumerWidget {
   );
 
   Widget _content(WidgetRef ref) => switch (state) {
-    ChannelListLoading() => const _DelayedSpinner(key: ValueKey('loading')),
+    ChannelListLoading() => const DelayedSpinner(key: ValueKey('loading')),
     ChannelListFailed(:final title, :final detail) => EmptyState(
       key: const ValueKey('failed'),
       icon: Icons.cloud_off,
@@ -80,21 +81,6 @@ class ChannelListPane extends ConsumerWidget {
 
   Future<void> _retry(WidgetRef ref) async =>
       (await ref.read(serverRefreshProvider(url).future))();
-}
-
-/// Fades in after a beat, so a load that ends at once shows no spinner.
-class _DelayedSpinner extends StatelessWidget {
-  const _DelayedSpinner({super.key});
-
-  @override
-  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-    tween: Tween(begin: 0, end: 1),
-    duration: motion(context, const Duration(milliseconds: 600)),
-    curve: const Interval(0.5, 1),
-    builder: (context, opacity, child) =>
-        Opacity(opacity: opacity, child: child),
-    child: const Center(child: CircularProgressIndicator()),
-  );
 }
 
 class _ChannelListView extends ConsumerStatefulWidget {

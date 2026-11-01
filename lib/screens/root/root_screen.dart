@@ -22,6 +22,7 @@ import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
@@ -129,7 +130,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       pane: teamId == null && state is! ChannelListFailed
           ? status is SyncIdle && status.lastSuccess != null
                 ? _NoTeam(url: server.url, serverName: server.displayName)
-                : const Center(child: CircularProgressIndicator())
+                : const DelayedSpinner()
           : ChannelListPane(
               url: server.url,
               teamId: teamId ?? '',

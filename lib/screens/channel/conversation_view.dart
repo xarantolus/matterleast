@@ -21,6 +21,7 @@ import 'package:matterleast/screens/channel/reading_places.dart';
 import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
 import 'package:matterleast/ui/post_tile.dart';
@@ -228,7 +229,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
         : ref.watch(composer.select((v) => v.editing?.id));
     final host = Uri.parse(widget.url).host;
     return switch (conversationBody(state, host: host)) {
-      BodyLoading() => const Center(child: CircularProgressIndicator()),
+      BodyLoading() => const DelayedSpinner(),
       BodyFailed(:final text) => EmptyState(
         icon: Icons.cloud_off,
         title: "Couldn't load messages",

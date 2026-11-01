@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/channel_info.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
 
 /// In place of a channel's screen while its stored details are on their
@@ -36,6 +37,6 @@ class ChannelMissing extends StatelessWidget {
           "It isn't saved on this device. It may have been deleted, or you "
           'may have left it.',
     ),
-    _ => const Center(child: CircularProgressIndicator()),
+    _ => const DelayedSpinner(),
   };
 }

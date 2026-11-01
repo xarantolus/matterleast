@@ -5,6 +5,7 @@ import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
@@ -63,9 +64,7 @@ class PinnedScreen extends ConsumerWidget {
         ],
       );
     } else if (refresh.isLoading || ids == null || resolving) {
-      body = const FillScrollable(
-        child: Center(child: CircularProgressIndicator()),
-      );
+      body = const FillScrollable(child: DelayedSpinner());
     } else if (refresh.hasError) {
       body = FillScrollable(
         child: EmptyState(

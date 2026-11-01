@@ -13,6 +13,7 @@ import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/schedule_picker.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
+import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -32,7 +33,7 @@ class ScheduledList extends ConsumerWidget {
     // Kept current for the reschedule picker.
     ref.watch(manualTimeZoneProvider(url));
     return switch (items) {
-      null => const Center(child: CircularProgressIndicator()),
+      null => const DelayedSpinner(),
       [] => const EmptyState(
         icon: Icons.schedule_send_outlined,
         title: 'Nothing scheduled',
