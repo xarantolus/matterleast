@@ -142,7 +142,7 @@ void main() {
         }),
       );
       final window = await ConversationViews(session.db)
-          .channel(channelId, limit: 10, openedAt: at)
+          .channel(channelId, limit: 10, deletedUpTo: at)
           .first;
       expect(window.posts.map((p) => p.message), contains('Pong!'));
     },

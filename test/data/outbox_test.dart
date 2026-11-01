@@ -67,13 +67,24 @@ void main() {
 
   Future<List<String>> shownKeys() async {
     final window = await ConversationViews(db())
-        .channel(channelId, limit: 50, openedAt: now)
+        .channel(channelId, limit: 50, deletedUpTo: now)
         .first;
     return [for (final p in window.posts) p.key];
   }
 
   Iterable<SeenRequest> sends() =>
       server.seen.where((r) => r.path == '/api/v4/posts');
+
+  test('with the device clock behind, a sent message still shows newest '
+      'and keeps its place once confirmed', () async {
+    final newest = (await posts()).last.createAt;
+    now = newest.subtract(const Duration(hours: 1));
+    final id = await actions.send(channelId, message: 'hello boats');
+    final pending = (await posts()).last;
+    expect(pending.id, id);
+    expect(pending.createAt.isAfter(newest), isTrue);
+    expect(await shownKeys(), [id, 'old1']);
+  });
 
   test('a sent message shows at once, dimmed, and becomes the server post '
       'under the same key', () async {

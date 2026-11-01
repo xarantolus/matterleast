@@ -59,15 +59,14 @@ class ComposerActions {
     final me = await _db.syncText(SyncKeys.currentUserId);
     if (me == null) throw StateError('Not signed in');
     _drafts.cancel(channelId, rootId);
-    final at = _uniqueNow();
-    final pendingPostId = pendingPostIdFor(me, at);
+    final pendingPostId = pendingPostIdFor(me, _uniqueNow());
     await _store.queuePost(
       pendingPostId: pendingPostId,
       channelId: channelId,
       rootId: rootId,
       userId: me,
       message: message,
-      createAt: at,
+      createAt: await _nextAt(channelId),
       files: files,
       priority: rootId.isEmpty ? priority : null,
       type: burnOnRead ? burnOnReadType : '',
@@ -115,6 +114,14 @@ class ComposerActions {
         if (isKnownEmoji(name) || custom.contains(name)) name,
     ];
     if (used.isNotEmpty) await _store.addRecentEmoji(used);
+  }
+
+  /// Where a message made here goes until the server answers: right after
+  /// the newest one in [channelId], by the server's times, so it doesn't
+  /// move when it is confirmed. The device clock only for an empty channel.
+  Future<DateTime> _nextAt(String channelId) async {
+    final newest = await _db.newestPostAt(channelId: channelId, unsent: true);
+    return newest?.add(const Duration(milliseconds: 1)) ?? _clock();
   }
 
   /// Two posts queued in the same millisecond would share a pending id.
@@ -221,10 +228,10 @@ class ComposerActions {
     if (response.responseType == 'ephemeral' &&
         (reply.isNotEmpty || response.attachments.isNotEmpty)) {
       final me = await _db.syncText(SyncKeys.currentUserId);
-      final at = _uniqueNow();
+      final at = await _nextAt(channelId);
       await _store.applyEphemeralPost(
         api.Post.fromJson({
-          'id': '$localEphemeralPrefix${at.millisecondsSinceEpoch}',
+          'id': '$localEphemeralPrefix${_uniqueNow().millisecondsSinceEpoch}',
           'channel_id': response.channelId?.isNotEmpty ?? false
               ? response.channelId
               : channelId,

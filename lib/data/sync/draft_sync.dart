@@ -85,7 +85,9 @@ class DraftSync {
       if (!await enabled()) return;
       final row = await store.draft(key.channelId, key.rootId);
       if (row == null || _blank(row)) {
-        await _db.setSyncInt(_deletedKey(key), _clock().millisecondsSinceEpoch);
+        if (row?.syncedAt case final synced?) {
+          await _db.setSyncInt(_deletedKey(key), synced.millisecondsSinceEpoch);
+        }
         await _deleteOnServer(key);
       } else {
         await _send(row);
@@ -282,10 +284,10 @@ class DraftSync {
   static bool _blank(DraftRow row) =>
       row.message.trim().isEmpty && row.files.isEmpty;
 
-  static const _deletedPrefix = 'draft_deleted:';
+  static const _deletedPrefix = SyncKeys.draftDeletedPrefix;
 
   static String _deletedKey(DraftKey key) =>
-      '$_deletedPrefix${key.channelId}:${key.rootId}';
+      SyncKeys.draftDeleted(key.channelId, key.rootId);
 
   static DraftKey? _keyOf(String stored) {
     final parts = stored.substring(_deletedPrefix.length).split(':');

@@ -199,7 +199,7 @@ void main() {
 
     Future<List<String>> shown() async {
       final window = await ConversationViews(session.db)
-          .thread(_rootId, limit: 50, openedAt: now)
+          .thread(_rootId, limit: 50, deletedUpTo: now)
           .first;
       return [for (final p in window.posts) p.key];
     }

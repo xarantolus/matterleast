@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
@@ -364,10 +365,16 @@ class ServerStore {
       members: members.where((m) => listedIds.contains(m.channelId)),
       categories: categories,
     );
-    await db.setSyncInt(
-      SyncKeys.channelsSince(teamId),
-      syncedAt.millisecondsSinceEpoch,
-    );
+    // The server's newest time in the answer: anything archived later is
+    // archived after this sync.
+    final since = await db.syncInt(SyncKeys.channelsSince(teamId)) ?? 0;
+    final newest = [
+      since,
+      for (final c in channels)
+        for (final at in [c.updateAt, c.deleteAt, c.lastPostAt])
+          ?at?.millisecondsSinceEpoch,
+    ].reduce(math.max);
+    await db.setSyncInt(SyncKeys.channelsSince(teamId), newest);
   });
 
   Future<void> applyTeamUnreads(Iterable<api.TeamUnread> unreads) =>
@@ -584,6 +591,22 @@ class ServerStore {
       ], mode: InsertMode.insertOrIgnore);
     });
   });
+
+  /// Every thread of [teamId] counts as read up to its newest reply.
+  Future<void> applyAllThreadsRead(String teamId) async {
+    final teamThreads = db.selectOnly(db.threadTeams)
+      ..addColumns([db.threadTeams.rootId])
+      ..where(db.threadTeams.teamId.equals(teamId));
+    await (db.update(db.threads)..where(
+          (t) =>
+              t.rootId.isInQuery(teamThreads) &
+              t.lastReplyAt.isNotNull() &
+              (t.lastViewedAt.isNull() |
+                  t.lastViewedAt.isSmallerThan(t.lastReplyAt)),
+        ))
+        .write(ThreadsCompanion.custom(lastViewedAt: db.threads.lastReplyAt));
+    await applyThreadRead(teamId: teamId);
+  }
 
   /// A thread was read elsewhere; a null [threadId] means all of the team's.
   Future<void> applyThreadRead({
@@ -1350,19 +1373,36 @@ class ServerStore {
     );
   });
 
-  /// The channel counts as read up to [at]: the member counters catch up with
-  /// the channel's, which is what the server does on `view`.
-  Future<void> markViewed(String channelId, {required DateTime at}) =>
+  /// The server noted a visit at [at]; only a later time is taken, and the
+  /// counters stay as they are.
+  Future<void> raiseLastViewed(String channelId, DateTime at) =>
+      (db.update(db.myChannels)..where(
+            (m) =>
+                m.channelId.equals(channelId) &
+                (m.lastViewedAt.isNull() |
+                    m.lastViewedAt.isSmallerThanValue(
+                      at.millisecondsSinceEpoch,
+                    )),
+          ))
+          .write(MyChannelsCompanion(lastViewedAt: Value(at)));
+
+  /// The channel counts as read up to [at], by default up to its newest
+  /// message: the member counters catch up with the channel's, which is
+  /// what the server does on `view`.
+  Future<void> markViewed(String channelId, {DateTime? at}) =>
       db.transaction(() async {
         final channel = await (db.select(
           db.channels,
         )..where((c) => c.id.equals(channelId))).getSingleOrNull();
         if (channel == null) return;
+        final viewedAt = at ?? await db.newestPostAt(channelId: channelId);
         await (db.update(
           db.myChannels,
         )..where((m) => m.channelId.equals(channelId))).write(
           MyChannelsCompanion(
-            lastViewedAt: Value(at),
+            lastViewedAt: viewedAt == null
+                ? const Value.absent()
+                : Value(viewedAt),
             msgCount: Value(channel.totalMsgCount),
             msgCountRoot: Value(channel.totalMsgCountRoot),
             mentionCount: const Value(0),
@@ -1424,7 +1464,8 @@ class ServerStore {
             pendingPostId: pendingPostId,
             channelId: channelId,
             rootId: Value(rootId),
-            queuedAt: createAt,
+            // Local only: the order in which the device sends.
+            queuedAt: _clock(),
           ),
         );
     await deleteDraft(channelId, rootId);
@@ -1570,9 +1611,10 @@ class ServerStore {
   ///
   /// A command's reply arrives twice when the socket is up, from the
   /// command's answer (made here, id prefixed [localEphemeralPrefix]) and
-  /// as `ephemeral_message`; the same text in the same place within a
-  /// minute is one message, and the server's copy takes over the local
-  /// one's list key.
+  /// as `ephemeral_message`; the same text in the same place is one
+  /// message, and the server's copy takes over the local one's list key.
+  /// A local copy arriving second is matched within a minute of the
+  /// server's copy, whose time it follows.
   Future<void> applyEphemeralPost(api.Post post) => db.transaction(() async {
     if (post.id == null || post.createAt == null || post.channelId == null) {
       return;
@@ -1580,6 +1622,7 @@ class ServerStore {
     final rootId = post.rootId ?? '';
     final window = const Duration(minutes: 1).inMilliseconds;
     final at = post.createAt!.millisecondsSinceEpoch;
+    final local = post.id!.startsWith(localEphemeralPrefix);
     final twin =
         await (db.select(db.posts)
               ..where(
@@ -1588,12 +1631,13 @@ class ServerStore {
                     p.rootId.equals(rootId) &
                     p.type.equals(ephemeralType) &
                     p.message.equals(post.message ?? '') &
-                    p.createAt.isBetweenValues(at - window, at + window) &
+                    (local
+                        ? p.createAt.isBetweenValues(at - window, at + window)
+                        : p.id.like('$localEphemeralPrefix%')) &
                     p.id.equals(post.id!).not(),
               )
               ..limit(1))
             .getSingleOrNull();
-    final local = post.id!.startsWith(localEphemeralPrefix);
     if (twin != null && local) return;
     if (twin != null && twin.id.startsWith(localEphemeralPrefix)) {
       await (db.delete(db.posts)..where((p) => p.id.equals(twin.id))).go();
@@ -1720,6 +1764,20 @@ class ServerStore {
 
   Future<void> saveDraft(DraftsCompanion draft) =>
       db.into(db.drafts).insertOnConflictUpdate(draft);
+
+  /// The user emptied or dropped a draft: the server's copy goes too,
+  /// unless it changed elsewhere since this device last synced it.
+  Future<void> deleteDraftHere(String channelId, String rootId) =>
+      db.transaction(() async {
+        final synced = (await draft(channelId, rootId))?.syncedAt;
+        if (synced != null) {
+          await db.setSyncInt(
+            SyncKeys.draftDeleted(channelId, rootId),
+            synced.millisecondsSinceEpoch,
+          );
+        }
+        await deleteDraft(channelId, rootId);
+      });
 
   Future<void> deleteDraft(String channelId, String rootId) =>
       (db.delete(db.drafts)..where(

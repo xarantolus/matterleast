@@ -100,7 +100,10 @@ class EventApplier {
       case PostEditedEvent(:final post?):
         await store.applyEdit(post);
       case PostDeletedEvent(:final post?) when post.id != null:
-        await store.applyDelete(post.id!, at: post.deleteAt ?? _clock());
+        await store.applyDelete(
+          post.id!,
+          at: post.deleteAt ?? post.updateAt ?? _clock(),
+        );
       case ReactionEvent(:final reaction?, :final added):
         await store.applyReaction(reaction, added: added);
       case AcknowledgementEvent(:final acknowledgement?, :final added):
@@ -111,7 +114,7 @@ class EventApplier {
       case EmojiAddedEvent(:final emoji?):
         await store.applyCustomEmoji([emoji]);
       case ChannelViewedEvent(:final channelId?) when channelId.isNotEmpty:
-        await store.markViewed(channelId, at: _clock());
+        await store.markViewed(channelId);
       case ChannelViewedEvent(:final channelTimes):
         await store.applyChannelsViewed(channelTimes);
       case ChannelUpdatedEvent(:final channel?):

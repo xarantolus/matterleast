@@ -81,7 +81,7 @@ ServerManager serverManager(Ref ref) {
     onRead: (url, mark) => unawaited(clearOnRead(notifier, url, mark)),
     onWiped: notifier.clearServer,
     // What the app showed until now never comes back as a notification.
-    onHidden: (session) => markSeen(session.db, DateTime.now().toUtc()),
+    onHidden: (session) => markSeen(session.db),
     network: ref.watch(networkStateProvider),
   );
   ref.onDispose(manager.dispose);

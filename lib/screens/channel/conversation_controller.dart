@@ -35,11 +35,15 @@ class Conversation extends _$Conversation {
   DateTime? _lastViewedAt;
   String? _me;
   var _loadingNewer = false;
-  final _openedAt = DateTime.now().toUtc();
 
-  /// Only messages created before this start the new-messages line: what
-  /// arrives while the reader watches is not unread. Lifted by Mark unread.
-  late DateTime? _unreadUntil = _openedAt;
+  /// The server's time of the newest deletion when the conversation opened:
+  /// messages deleted since show as placeholders.
+  var _deletedUpTo = DateTime.utc(0);
+
+  /// Only messages created up to this start the new-messages line: what
+  /// arrives while the reader watches is not unread. It follows the newest
+  /// message stored by each refresh; lifted by Mark unread.
+  DateTime? _unreadUntil = DateTime.utc(0);
 
   /// A bigger window is on its way; the reader's next moves don't ask again.
   var _growing = false;
@@ -120,6 +124,8 @@ class Conversation extends _$Conversation {
     if (!ref.mounted) return;
     state = state.copyWith(myUserId: _me);
     _lastViewedAt = facts.lastViewedAt;
+    _deletedUpTo = facts.deletedUpTo;
+    _unreadUntil = facts.newestAt ?? _unreadUntil;
     state = state.copyWith(lastViewedAt: _lastViewedAt);
     if (!_isThread) {
       // Stay in the stretch of history stored now, even if the refresh
@@ -148,11 +154,15 @@ class Conversation extends _$Conversation {
     unawaited(_subscription?.cancel());
     _subscription =
         (_isThread
-                ? views.thread(rootId!, limit: _limit, openedAt: _openedAt)
+                ? views.thread(
+                    rootId!,
+                    limit: _limit,
+                    deletedUpTo: _deletedUpTo,
+                  )
                 : views.channel(
                     channelId,
                     limit: _limit,
-                    openedAt: _openedAt,
+                    deletedUpTo: _deletedUpTo,
                     rangeAt: _rangeAt,
                     keepAt: _keepAt,
                     unreadAfter: _lastViewedAt,
@@ -285,6 +295,7 @@ class Conversation extends _$Conversation {
         await _actions!.refreshChannel(channelId, owner: this);
       }
       _fetched();
+      await _raiseUnreadUntil();
       if (ref.mounted) {
         state = state.copyWith(refreshing: false);
         _pendingRead = true;
@@ -298,6 +309,22 @@ class Conversation extends _$Conversation {
         );
       }
     }
+  }
+
+  /// What a refresh fetched came before the reader saw it, so it can start
+  /// the new-messages line.
+  Future<void> _raiseUnreadUntil() async {
+    final until = _unreadUntil;
+    if (until == null || !ref.mounted) return;
+    final newest = await _session!.db.newestPostAt(
+      channelId: channelId,
+      rootId: rootId,
+    );
+    if (newest == null || !newest.isAfter(until) || !ref.mounted) return;
+    if (_unreadUntil == null) return;
+    _unreadUntil = newest;
+    final window = state.window;
+    if (window != null) state = state.copyWith(rows: _rows(window));
   }
 
   /// A message outside the stored newest messages: fetch the messages

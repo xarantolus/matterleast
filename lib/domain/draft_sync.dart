@@ -1,7 +1,9 @@
 /// Where a draft is written: a channel, or a thread in it.
 typedef DraftKey = ({String channelId, String rootId});
 
-/// A draft on this device, as far as syncing cares.
+/// A draft on this device, as far as syncing cares. [updatedAt] is the
+/// device's time of the last change here, or the server's `update_at` of a
+/// copy taken from it; the two clocks are never compared.
 typedef LocalDraftState = ({
   DraftKey key,
   DateTime updatedAt,
@@ -28,12 +30,12 @@ sealed class DraftSyncStep {
   final DraftKey key;
 }
 
-/// The server's copy is newer: it replaces ours.
+/// The server's copy changed and ours didn't: it replaces ours.
 final class TakeServerDraft extends DraftSyncStep {
   const TakeServerDraft(super.key);
 }
 
-/// Ours is newer or the server never had it: send it.
+/// Ours changed since the server last confirmed it: send it.
 final class SendDraft extends DraftSyncStep {
   const SendDraft(super.key);
 }
@@ -48,10 +50,11 @@ final class DeleteServerDraft extends DraftSyncStep {
   const DeleteServerDraft(super.key);
 }
 
-/// Pure: how to bring this device's drafts and the server's together, the
-/// newer copy winning. [server] maps each server draft to its `update_at`;
-/// [deleted] maps drafts deleted here, not yet deleted on the server, to
-/// when that happened.
+/// Pure: how to bring this device's drafts and the server's together.
+/// Changes made here and not yet sent win; otherwise a copy the server
+/// changed since it last confirmed ours replaces it. [server] maps each
+/// server draft to its `update_at`; [deleted] maps drafts deleted here, not
+/// yet deleted on the server, to the `update_at` the server last confirmed.
 List<DraftSyncStep> planDraftSync({
   required Iterable<LocalDraftState> local,
   required Map<DraftKey, DateTime> server,
@@ -68,10 +71,10 @@ List<DraftSyncStep> planDraftSync({
             ? DeleteServerDraft(key)
             : TakeServerDraft(key),
       );
-    } else if (updateAt.isAfter(draft.updatedAt)) {
-      steps.add(TakeServerDraft(key));
-    } else if (draft.updatedAt.isAfter(updateAt) && _unsent(draft)) {
+    } else if (_unsent(draft)) {
       steps.add(SendDraft(key));
+    } else if (updateAt.isAfter(draft.syncedAt!)) {
+      steps.add(TakeServerDraft(key));
     }
   }
   for (final draft in local) {
@@ -81,13 +84,17 @@ List<DraftSyncStep> planDraftSync({
   return steps;
 }
 
+/// A change here sets [LocalDraftState.updatedAt] to the device's time,
+/// which then differs from the confirmed server time.
 bool _unsent(LocalDraftState draft) =>
-    draft.syncedAt == null || draft.updatedAt.isAfter(draft.syncedAt!);
+    draft.syncedAt == null || draft.updatedAt != draft.syncedAt;
 
 /// Pure: whether a draft the server reports, changed at [serverUpdateAt],
-/// should replace the one here.
+/// should replace the one here: when nothing here is unsent and it is
+/// newer than the copy the server last confirmed.
 bool serverDraftWins(DateTime serverUpdateAt, LocalDraftState? local) =>
-    local == null || serverUpdateAt.isAfter(local.updatedAt);
+    local == null ||
+    (!_unsent(local) && serverUpdateAt.isAfter(local.syncedAt!));
 
 /// Pure: whether a deletion the server reports should remove the draft
 /// here: only when it holds nothing the server hasn't seen.

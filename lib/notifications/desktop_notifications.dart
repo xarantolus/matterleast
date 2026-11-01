@@ -92,7 +92,7 @@ class DesktopNotifications {
     final session = await _manager.session(url);
     // The window shows what came before; only what arrives from now on
     // can be news.
-    await markSeen(session.db, DateTime.now().toUtc());
+    await markSeen(session.db);
     final check = NotificationCheck(
       session,
       _notifier,

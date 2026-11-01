@@ -158,7 +158,7 @@ void main() {
     );
     Future<bool> marked() async {
       final window = await ConversationViews(session.db)
-          .channel(channelId, limit: 10, openedAt: at)
+          .channel(channelId, limit: 10, deletedUpTo: at)
           .first;
       return window.posts.firstWhere((p) => p.id == 'root1').hasDraftReply;
     }

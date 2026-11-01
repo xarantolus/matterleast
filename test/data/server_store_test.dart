@@ -570,6 +570,107 @@ void main() {
     });
   });
 
+  group('with the device clock an hour ahead, times come from the server', () {
+    final device = DateTime.fromMillisecondsSinceEpoch(4200000, isUtc: true);
+    DateTime at(int ms) => DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
+    final empty = api.OrderedSidebarCategories.fromJson({
+      'order': <String>[],
+      'categories': <Object>[],
+    });
+
+    setUp(() async {
+      store = ServerStore(db, clock: () => device);
+      await store.applyChannels(
+        channels: [
+          api.Channel.fromJson({
+            'id': 'c1',
+            'team_id': 't1',
+            'name': 'town-square',
+            'type': 'O',
+          }),
+        ],
+        members: [
+          api.ChannelMember.fromJson({'channel_id': 'c1', 'user_id': 'me'}),
+        ],
+      );
+    });
+
+    test('reading a channel reads it up to its newest message', () async {
+      await store.applyLivePost(
+        post('p1', createAt: 600000),
+        fromSelf: false,
+        mentionsMe: false,
+      );
+      await store.markViewed('c1');
+      final mine = await db.select(db.myChannels).getSingle();
+      expect(mine.lastViewedAt, at(600000));
+    });
+
+    test('a mention right after reading is unread', () async {
+      await store.applyLivePost(
+        post('p1', createAt: 600000),
+        fromSelf: false,
+        mentionsMe: false,
+      );
+      await store.markViewed('c1');
+      await store.applyLivePost(
+        post('p2', createAt: 660000),
+        fromSelf: false,
+        mentionsMe: true,
+      );
+      final mine = await db.select(db.myChannels).getSingle();
+      expect(mine.mentionCount, 1);
+      expect(mine.lastViewedAt!.isBefore(at(660000)), isTrue);
+    });
+
+    test(
+      'marking all threads read reads each up to its newest reply',
+      () async {
+        await store.applyThreads('t1', [
+          api.UserThread.fromJson({
+            'id': 'r1',
+            'reply_count': 2,
+            'unread_replies': 2,
+            'last_reply_at': 700000,
+            'last_viewed_at': 100000,
+            'post': {
+              'id': 'r1',
+              'channel_id': 'c1',
+              'create_at': 60000,
+              'user_id': 'u2',
+            },
+          }),
+        ]);
+        await store.applyAllThreadsRead('t1');
+        final thread = await db.select(db.threads).getSingle();
+        expect(thread.lastViewedAt, at(700000));
+        expect(thread.unreadReplies, 0);
+      },
+    );
+
+    test('the next channel sync asks from the server\'s newest time', () async {
+      await store.applyTeamChannels(
+        teamId: 't1',
+        channels: [
+          api.Channel.fromJson({
+            'id': 'c1',
+            'team_id': 't1',
+            'name': 'town-square',
+            'type': 'O',
+            'update_at': 500000,
+            'last_post_at': 600000,
+          }),
+        ],
+        members: [
+          api.ChannelMember.fromJson({'channel_id': 'c1', 'user_id': 'me'}),
+        ],
+        categories: empty,
+        syncedAt: device,
+      );
+      expect(await db.syncInt(SyncKeys.channelsSince('t1')), 600000);
+    });
+  });
+
   group('the first reply of a thread, with the device clock ahead', () {
     // The server stamps the reply at minute 10; this device thinks it is
     // minute 70 when it sends it.
@@ -579,7 +680,7 @@ void main() {
     Future<List<String>> shown() async => [
       for (final p in (await ConversationViews(
         db,
-      ).thread('r1', limit: 30, openedAt: device).first).posts)
+      ).thread('r1', limit: 30, deletedUpTo: device).first).posts)
         p.message,
     ];
 

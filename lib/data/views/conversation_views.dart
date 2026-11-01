@@ -98,13 +98,15 @@ class ConversationViews {
   }
 
   /// What opening a channel or thread (with [rootId]) starts from: the
-  /// signed-in user, when it was last read, and the place the reader left
-  /// it.
+  /// signed-in user, when it was last read, the place the reader left it,
+  /// and the server times of its newest message and newest deletion.
   Future<
     ({
       String? me,
       DateTime? lastViewedAt,
       ({String postId, double offset, DateTime savedAt})? saved,
+      DateTime? newestAt,
+      DateTime deletedUpTo,
     })
   >
   openFacts(String channelId, {String? rootId}) async {
@@ -114,9 +116,26 @@ class ConversationViews {
         await (db.select(db.viewStates)
               ..where((v) => v.scope.equals(scope) & v.scopeId.equals(scopeId)))
             .getSingleOrNull();
+    final deleted = db.posts.deleteAt.max();
+    final deletedMs =
+        await (db.selectOnly(db.posts)
+              ..addColumns([deleted])
+              ..where(
+                rootId == null
+                    ? db.posts.channelId.equals(channelId)
+                    : db.posts.rootId.equals(rootId) |
+                          db.posts.id.equals(rootId),
+              ))
+            .map((row) => row.read(deleted))
+            .getSingle();
     return (
       me: await db.syncText(SyncKeys.currentUserId),
       lastViewedAt: await _lastViewed(channelId, rootId),
+      newestAt: await db.newestPostAt(channelId: channelId, rootId: rootId),
+      deletedUpTo: DateTime.fromMillisecondsSinceEpoch(
+        deletedMs ?? 0,
+        isUtc: true,
+      ),
       saved: saved == null
           ? null
           : (
@@ -206,18 +225,20 @@ class ConversationViews {
   /// The newest [limit] messages of the loaded range containing [rangeAt]
   /// (the newest range when null), and at least those after [unreadAfter]
   /// and from [keepAt], so the new-messages line and the message asked for
-  /// stay in the window as newer ones arrive. Messages deleted before
-  /// [openedAt] are left out; those deleted since stay as placeholders.
+  /// stay in the window as newer ones arrive. Messages deleted at or before
+  /// [deletedUpTo] (the server's time of the newest deletion known when the
+  /// conversation opened) are left out; those deleted since stay as
+  /// placeholders.
   Stream<ConversationWindow> channel(
     String channelId, {
     required int limit,
-    required DateTime openedAt,
+    required DateTime deletedUpTo,
     DateTime? rangeAt,
     DateTime? unreadAfter,
     DateTime? keepAt,
   }) => throttledWatch(
     _changes(),
-    () => _channel(channelId, limit, openedAt, rangeAt, unreadAfter, keepAt),
+    () => _channel(channelId, limit, deletedUpTo, rangeAt, unreadAfter, keepAt),
     interval: _interval,
   ).distinct();
 
@@ -226,10 +247,10 @@ class ConversationViews {
   Stream<ConversationWindow> thread(
     String rootId, {
     required int limit,
-    required DateTime openedAt,
+    required DateTime deletedUpTo,
   }) => throttledWatch(
     _changes(),
-    () => _thread(rootId, limit, openedAt),
+    () => _thread(rootId, limit, deletedUpTo),
     interval: _interval,
   ).distinct();
 
@@ -261,7 +282,7 @@ class ConversationViews {
   Future<ConversationWindow> _channel(
     String channelId,
     int limit,
-    DateTime openedAt,
+    DateTime deletedUpTo,
     DateTime? rangeAt,
     DateTime? unreadAfter,
     DateTime? keepAt,
@@ -309,7 +330,7 @@ class ConversationViews {
     Expression<bool> inRange($PostsTable p) =>
         p.channelId.equals(channelId) &
         topLevel(p) &
-        _notDeletedBefore(p, openedAt) &
+        _notDeletedBefore(p, deletedUpTo) &
         ((range == null
                 ? const Constant(false)
                 : p.createAt.isBetweenValues(
@@ -368,7 +389,7 @@ class ConversationViews {
   Future<ConversationWindow> _thread(
     String rootId,
     int limit,
-    DateTime openedAt,
+    DateTime deletedUpTo,
   ) async {
     final root = await (db.select(
       db.posts,
@@ -384,7 +405,7 @@ class ConversationViews {
               ..where(
                 (p) =>
                     p.rootId.equals(rootId) &
-                    _notDeletedBefore(p, openedAt) &
+                    _notDeletedBefore(p, deletedUpTo) &
                     ((range == null
                             ? const Constant(false)
                             : p.createAt.isBetweenValues(

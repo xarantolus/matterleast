@@ -74,7 +74,7 @@ void main() {
               .channel(
                 channel,
                 limit: 50,
-                openedAt: DateTime.utc(2026, 10, 26, 10),
+                deletedUpTo: DateTime.utc(2026, 10, 26, 10),
               )
               .first)
           .posts;

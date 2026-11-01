@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:dio/dio.dart' show Options, ResponseType;
 import 'package:drift/drift.dart';
@@ -27,12 +28,27 @@ abstract final class NotifyKeys {
   static const notifiedKey = 'notify_notified';
 }
 
-/// Everything up to [at] counts as seen: the app showed it.
-Future<void> markSeen(ServerDatabase db, DateTime at) async {
+/// Everything up to [at], by default the newest message stored, counts as
+/// seen: the app showed it.
+Future<void> markSeen(ServerDatabase db, [DateTime? at]) async {
+  final seen = at ?? await newestKnownAt(db);
+  if (seen == null) return;
   final before = await db.syncInt(NotifyKeys.cursorKey) ?? 0;
-  if (at.millisecondsSinceEpoch > before) {
-    await db.setSyncInt(NotifyKeys.cursorKey, at.millisecondsSinceEpoch);
+  if (seen.millisecondsSinceEpoch > before) {
+    await db.setSyncInt(NotifyKeys.cursorKey, seen.millisecondsSinceEpoch);
   }
+}
+
+/// The server time of the newest message this device knows of, stored or
+/// reported as a channel's last post.
+Future<DateTime?> newestKnownAt(ServerDatabase db) async {
+  final last = db.channels.lastPostAt.max();
+  final channelMs = await (db.selectOnly(
+    db.channels,
+  )..addColumns([last])).map((row) => row.read(last)).getSingle();
+  final stored = await db.newestPostAt();
+  final ms = math.max(channelMs ?? 0, stored?.millisecondsSinceEpoch ?? 0);
+  return ms == 0 ? null : DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
 }
 
 /// Finds what is new on one server and shows or removes its message
@@ -46,8 +62,7 @@ class NotificationCheck {
     this.notifier, {
     required this.shownNow,
     this.serverName,
-    DateTime Function()? clock,
-  }) : _clock = clock ?? (() => DateTime.now().toUtc());
+  });
 
   final ServerSession session;
   final Notifier notifier;
@@ -56,7 +71,6 @@ class NotificationCheck {
   /// gets no notification.
   final bool Function(ConversationKey key) shownNow;
   final String? serverName;
-  final DateTime Function() _clock;
 
   String get _url => session.url.toString();
   ServerDatabase get _db => session.db;
@@ -98,7 +112,7 @@ class NotificationCheck {
     final cursorMs = await _db.syncInt(NotifyKeys.cursorKey);
     if (cursorMs == null) {
       // Nothing was seen before, so nothing counts as new yet.
-      await markSeen(_db, _clock());
+      await markSeen(_db);
       return;
     }
     final cursor = DateTime.fromMillisecondsSinceEpoch(cursorMs, isUtc: true);

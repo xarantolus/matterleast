@@ -82,7 +82,7 @@ class DraftSaver {
 
   Future<void> clear(String channelId, String rootId) async {
     cancel(channelId, rootId);
-    await store.deleteDraft(channelId, rootId);
+    await store.deleteDraftHere(channelId, rootId);
     onCleared?.call(channelId, rootId);
   }
 
@@ -94,7 +94,7 @@ class DraftSaver {
     final draft = _waiting.remove(key);
     if (draft == null) return;
     if (draft.isEmpty) {
-      await store.deleteDraft(draft.channelId, draft.rootId);
+      await store.deleteDraftHere(draft.channelId, draft.rootId);
     } else {
       await _save(draft);
     }
@@ -102,6 +102,10 @@ class DraftSaver {
   }
 
   Future<void> _save(Draft draft) async {
+    final synced = (await store.draft(draft.channelId, draft.rootId))?.syncedAt;
+    var at = _clock();
+    // Equal to the server's time it would count as already sent.
+    if (at == synced) at = at.add(const Duration(milliseconds: 1));
     await store.saveDraft(
       DraftsCompanion.insert(
         channelId: draft.channelId,
@@ -111,7 +115,7 @@ class DraftSaver {
         selectionExtent: Value(draft.selectionExtent),
         files: Value(draft.files),
         priority: Value(draft.priority),
-        updatedAt: _clock(),
+        updatedAt: at,
       ),
     );
   }

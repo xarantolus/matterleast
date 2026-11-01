@@ -47,6 +47,12 @@ abstract final class SyncKeys {
 
   /// The channel the user last opened in a team.
   static String lastChannel(String teamId) => 'last_channel:$teamId';
+
+  /// A draft deleted here while the server may still have it, holding the
+  /// server's `update_at` of the copy it last confirmed.
+  static String draftDeleted(String channelId, String rootId) =>
+      '$draftDeletedPrefix$channelId:$rootId';
+  static const draftDeletedPrefix = 'draft_deleted:';
 }
 
 /// Everything cached for one server. One file per server, so logging out is
@@ -171,6 +177,46 @@ class ServerDatabase extends _$ServerDatabase {
     (await features()).collapsedThreads,
     await preference(Prefs.collapsedThreads.$1, Prefs.collapsedThreads.$2),
   );
+
+  /// The server time of the newest message stored in the thread of
+  /// [rootId], else in [channelId] (also as the channel reports it), else
+  /// anywhere. Our own [unsent] messages count only when asked. Times
+  /// written here are taken from this, never from the device clock, which
+  /// can be off.
+  Future<DateTime?> newestPostAt({
+    String? channelId,
+    String? rootId,
+    bool unsent = false,
+  }) async {
+    final newest = posts.createAt.max();
+    final query = selectOnly(posts)
+      ..addColumns([newest])
+      ..where(
+        (unsent ? const Constant(true) : posts.sendState.isNull()) &
+            (rootId != null
+                ? posts.rootId.equals(rootId) | posts.id.equals(rootId)
+                : channelId != null
+                ? posts.channelId.equals(channelId)
+                : const Constant(true)),
+      );
+    var at = await query.map((row) => row.read(newest)).getSingle();
+    if (rootId != null) {
+      final last = (await (select(
+        threads,
+      )..where((t) => t.rootId.equals(rootId))).getSingleOrNull())?.lastReplyAt;
+      final lastMs = last?.millisecondsSinceEpoch;
+      if (lastMs != null && (at == null || lastMs > at)) at = lastMs;
+    } else if (channelId != null) {
+      final last = (await (select(
+        channels,
+      )..where((c) => c.id.equals(channelId))).getSingleOrNull())?.lastPostAt;
+      final lastMs = last?.millisecondsSinceEpoch;
+      if (lastMs != null && (at == null || lastMs > at)) at = lastMs;
+    }
+    return at == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(at, isUtc: true);
+  }
 
   /// How people are named: the server's setting when locked, else the
   /// user's preference.

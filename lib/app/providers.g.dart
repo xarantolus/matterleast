@@ -343,7 +343,7 @@ final class ServerManagerProvider
   }
 }
 
-String _$serverManagerHash() => r'079c701e06279794fd4b74446a0f74507ed11754';
+String _$serverManagerHash() => r'dcb9ce201d8116df1bd7bd770100897f5aef682d';
 
 /// Message notifications of this isolate; [Notifier.init] runs at launch.
 

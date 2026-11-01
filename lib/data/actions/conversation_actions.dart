@@ -11,11 +11,9 @@ import 'package:matterleast/domain/post_ranges.dart';
 /// runner and stores it; the screen follows from the database. Each fetch
 /// is coalesced by its key and dropped when [owner] leaves.
 class ConversationActions {
-  ConversationActions(this.session, {DateTime Function()? clock})
-    : _clock = clock ?? (() => DateTime.now().toUtc());
+  ConversationActions(this.session);
 
   final ServerSession session;
-  final DateTime Function() _clock;
 
   static const pageSize = 60;
   static const aroundSize = 30;
@@ -234,9 +232,10 @@ class ConversationActions {
     await _missingUsers(rootId: rootId);
   });
 
-  /// Marks the thread read up to now, here and on the server.
+  /// Marks the thread read up to its newest reply, here and on the server.
   Future<void> markThreadRead(String teamId, String rootId) async {
-    final now = _clock();
+    final now = await _db.newestPostAt(rootId: rootId);
+    if (now == null) return;
     await _store.applyThreadRead(
       teamId: teamId,
       threadId: rootId,
@@ -268,7 +267,7 @@ class ConversationActions {
         '/api/v4/users/me/teams/$teamId/threads/read',
       ),
     );
-    await _store.applyThreadRead(teamId: teamId, lastViewedAt: _clock());
+    await _store.applyAllThreadsRead(teamId);
   }
 
   Future<DateTime?> _postsFetchedAt(String channelId) async =>

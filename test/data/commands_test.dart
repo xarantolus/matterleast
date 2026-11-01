@@ -67,7 +67,7 @@ void main() {
     final rows = await ephemeral();
     expect(rows.single.message, 'Only you see this');
     final window = await ConversationViews(session.db)
-        .channel(channelId, limit: 10, openedAt: now)
+        .channel(channelId, limit: 10, deletedUpTo: now)
         .first;
     expect(window.posts.first.isEphemeral, isTrue);
     final channel = await (session.db.select(

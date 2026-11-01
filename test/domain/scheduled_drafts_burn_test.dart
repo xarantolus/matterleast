@@ -103,7 +103,9 @@ void main() {
         '${s.runtimeType}:${s.key.channelId}',
     ];
 
-    test('the newer copy wins', () {
+    final t0 = DateTime.utc(2026, 10, 26, 8);
+
+    test('a copy the server changed wins unless ours has unsent changes', () {
       expect(
         plan(local: [(key: a, updatedAt: t1, syncedAt: t1)], server: {a: t2}),
         ['TakeServerDraft:c1'],
@@ -116,6 +118,25 @@ void main() {
         plan(local: [(key: a, updatedAt: t1, syncedAt: t1)], server: {a: t1}),
         isEmpty,
       );
+    });
+
+    test('a change made here with the device clock behind is still sent', () {
+      expect(
+        plan(local: [(key: a, updatedAt: t0, syncedAt: t1)], server: {a: t1}),
+        ['SendDraft:c1'],
+      );
+      expect(
+        plan(local: [(key: a, updatedAt: t0, syncedAt: t1)], server: {a: t2}),
+        ['SendDraft:c1'],
+      );
+      expect(plan(local: [(key: a, updatedAt: t0, syncedAt: t1)]), [
+        'SendDraft:c1',
+      ]);
+      expect(
+        serverDraftWins(t2, (key: a, updatedAt: t0, syncedAt: t1)),
+        isFalse,
+      );
+      expect(serverDeleteWins((key: a, updatedAt: t0, syncedAt: t1)), isFalse);
     });
 
     test('drafts only one side has', () {
@@ -141,6 +162,10 @@ void main() {
 
     test('events from the server', () {
       expect(serverDraftWins(t2, null), isTrue);
+      expect(
+        serverDraftWins(t2, (key: a, updatedAt: t1, syncedAt: t1)),
+        isTrue,
+      );
       expect(
         serverDraftWins(t1, (key: a, updatedAt: t2, syncedAt: t1)),
         isFalse,

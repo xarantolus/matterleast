@@ -48,7 +48,7 @@ class ChannelActions {
   /// Marks the channel read here at once and tells the server, which also
   /// clears it on the user's other devices.
   Future<void> view(String channelId) async {
-    await session.store.markViewed(channelId, at: _clock());
+    await session.store.markViewed(channelId);
     unawaited(
       _tellViewed(channelId).catchError((Object e) {
         Log.warn('channels', 'Marking a channel read failed', e);
@@ -59,7 +59,7 @@ class ChannelActions {
   /// As [view], but completes once the server was told, e.g. from a
   /// notification's Mark as read with no app around to retry.
   Future<void> markRead(String channelId) async {
-    await session.store.markViewed(channelId, at: _clock());
+    await session.store.markViewed(channelId);
     await _tellViewed(channelId);
   }
 
@@ -67,17 +67,26 @@ class ChannelActions {
     SyncJob(
       key: 'view:$channelId',
       priority: SyncPriority.p0,
-      run: () => session.api.call(
-        () => _client.channels.viewChannel(
-          userId: 'me',
-          // Without the flag the server treats the client as not
-          // knowing threads and marks the channel's threads read.
-          body: api.ApiV4ChannelsMembersUserIdViewRequestBody(
-            channelId: channelId,
-            collapsedThreadsSupported: true,
+      run: () async {
+        final answer = await session.api.call(
+          () => _client.channels.viewChannel(
+            userId: 'me',
+            // Without the flag the server treats the client as not
+            // knowing threads and marks the channel's threads read.
+            body: api.ApiV4ChannelsMembersUserIdViewRequestBody(
+              channelId: channelId,
+              collapsedThreadsSupported: true,
+            ),
           ),
-        ),
-      ),
+        );
+        // The server's own time of the visit, which orders recent channels.
+        if (answer.lastViewedAtTimes?[channelId] case final int ms) {
+          await session.store.raiseLastViewed(
+            channelId,
+            DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true),
+          );
+        }
+      },
     ),
   );
 

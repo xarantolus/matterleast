@@ -196,7 +196,7 @@ void main() {
     });
 
     Future<ConversationWindow> window() => ConversationViews(session.db)
-        .channel(emptyChannelId, limit: 50, openedAt: DateTime.now().toUtc())
+        .channel(emptyChannelId, limit: 50, deletedUpTo: DateTime.now().toUtc())
         .first;
 
     test('shows at once, and stays once it is sent', () async {
