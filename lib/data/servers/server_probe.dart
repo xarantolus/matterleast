@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/json/client_config.dart';
 import 'package:matterleast/api/server_api.dart';
@@ -44,22 +43,13 @@ const _pingPath = '/api/v4/system/ping';
 /// Checks that an address is a Mattermost server and reads its login options.
 /// Nothing is stored and no token is sent.
 class ServerProbe {
-  ServerProbe({
-    this.allowHttp = !kReleaseMode,
-    this.timeout = const Duration(seconds: 15),
-  });
+  ServerProbe({this.timeout = const Duration(seconds: 15)});
 
-  /// Plain http only outside release builds, for the local test server
-  /// (profile builds measure against it).
-  final bool allowHttp;
   final Duration timeout;
 
   Future<ProbedServer> probe(String typed) async {
     final typedUrl = normalizeServerUrl(typed);
     if (typedUrl == null) throw ProbeFailure(addressProblemText(typed));
-    if (typedUrl.scheme == 'http' && !allowHttp) {
-      throw const ProbeFailure(httpNotAllowedText);
-    }
     final url = await _ping(typedUrl);
     final api = _api(url);
     try {

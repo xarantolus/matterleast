@@ -33,7 +33,7 @@ void main() {
   setUp(() async {
     server = await FakeServer.start();
     server.handle = mattermostProbe;
-    probed = await ServerProbe(allowHttp: true).probe('${server.url}');
+    probed = await ServerProbe().probe('${server.url}');
     server.seen.clear();
     server.handle = (r) => r.header('authorization') == 'Bearer s3ss10n'
         ? ok(fixtureMap('me'))

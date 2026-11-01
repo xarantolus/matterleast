@@ -1,4 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Profile builds measure against the local test server, which is plain http. -->
-    <application android:networkSecurityConfig="@xml/network_security_config" />
-</manifest>

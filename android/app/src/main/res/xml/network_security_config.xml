@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Servers may be plain http. Android can't list the hosts added at runtime,
+     so cleartext is allowed app-wide; the native stacks (video, downloads)
+     only ever fetch from a server. Dart's own client ignores this file. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -5,9 +5,6 @@ import 'package:matterleast/api/api_error.dart';
 const notMattermostText =
     "This address doesn't answer as a Mattermost server. Check the URL.";
 
-const httpNotAllowedText =
-    'Plain http:// addresses are not allowed. Use the https:// address.';
-
 const invalidAddressText =
     "Enter the server's address, for example chat.example.com.";
 

@@ -11,7 +11,7 @@ void main() {
   tearDown(() => server.close());
 
   ServerProbe probe({Duration timeout = const Duration(seconds: 5)}) =>
-      ServerProbe(allowHttp: true, timeout: timeout);
+      ServerProbe(timeout: timeout);
 
   Future<String> failureOf(Future<Object?> probing) async {
     try {
@@ -78,15 +78,6 @@ void main() {
     final found = await probe().probe('${server.url}');
     expect(found.url, server.url.replace(path: '/chat'));
     expect(server.paths.last, '/chat/api/v4/license/client');
-  });
-
-  test('refuses plain http unless it is allowed', () async {
-    server.handle = mattermostProbe;
-    expect(
-      await failureOf(ServerProbe(allowHttp: false).probe('${server.url}')),
-      httpNotAllowedText,
-    );
-    expect(server.seen, isEmpty);
   });
 
   test('rejects text that is not an address', () async {
