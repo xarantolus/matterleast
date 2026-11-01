@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/json/client_config.dart';
 import 'package:matterleast/api/server_api.dart';
