@@ -377,7 +377,7 @@ final class ActiveSessionsProvider
   }
 }
 
-String _$activeSessionsHash() => r'9e6745a2d03621530fc768c8c1e87c8d7151ed32';
+String _$activeSessionsHash() => r'cba90cb60e463fc4874bd076f437de2802d6627b';
 
 /// The account's sessions, newest activity first.
 
