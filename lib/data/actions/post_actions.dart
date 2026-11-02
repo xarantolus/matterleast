@@ -168,6 +168,21 @@ class PostActions {
     );
   }
 
+  /// The earlier texts of an edited post, newest first.
+  Future<List<api.Post>> editHistory(String postId) =>
+      _call(() => _client.posts.getEditHistoryForPost(postId: postId));
+
+  /// Puts an earlier text of a post back, after the server agreed.
+  Future<void> restoreVersion(String postId, String versionId) async {
+    final post = await _call(
+      () => _client.posts.restorePostVersion(
+        postId: postId,
+        restoreVersionId: versionId,
+      ),
+    );
+    await _store.applyEdit(post);
+  }
+
   /// Deletes a post after the server agreed, so a refusal leaves it as it
   /// was; it then goes without a placeholder.
   Future<void> deletePost(String postId) async {

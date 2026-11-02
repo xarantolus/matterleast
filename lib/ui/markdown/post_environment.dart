@@ -22,6 +22,7 @@ class PostEnvironment extends InheritedWidget {
     this.mmBlocks = false,
     this.onAction,
     this.onHashtag,
+    this.onEditHistory,
     this.acknowledgements = false,
     super.key,
   });
@@ -32,6 +33,10 @@ class PostEnvironment extends InheritedWidget {
   final ValueChanged<String> onMention;
   final ValueChanged<String> onChannel;
   final ValueChanged<LinkTarget> onLink;
+
+  /// Shows the earlier versions of the user's own message with that id;
+  /// false when the server has none to show.
+  final Future<bool> Function(String postId)? onEditHistory;
 
   /// Searches for a hashtag; null leaves hashtags as plain text.
   final ValueChanged<String>? onHashtag;
@@ -78,5 +83,6 @@ class PostEnvironment extends InheritedWidget {
       mmBlocks != old.mmBlocks ||
       onAction != old.onAction ||
       onHashtag != old.onHashtag ||
+      onEditHistory != old.onEditHistory ||
       acknowledgements != old.acknowledgements;
 }

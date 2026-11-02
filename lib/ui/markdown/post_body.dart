@@ -35,6 +35,7 @@ class PostBody extends StatelessWidget {
     this.unsafeLinks = false,
     this.collapsible = true,
     this.style,
+    this.onEditHistory,
     super.key,
   });
 
@@ -51,6 +52,10 @@ class PostBody extends StatelessWidget {
 
   /// Replaces the body text style, for lines quieter than a message.
   final TextStyle? style;
+
+  /// Opens the message's edit history when "(edited)" is tapped; false
+  /// when there is none to show. Null where the reader can't see it.
+  final Future<bool> Function()? onEditHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +77,7 @@ class PostBody extends StatelessWidget {
             baseline: TextBaseline.alphabetic,
             child: EditedMark(
               editAt: editedAt,
+              onHistory: onEditHistory,
               style: body.copyWith(color: tokens.muted, fontSize: 12 * scale),
             ),
           )
@@ -367,23 +373,36 @@ TextStyle headingStyle(TextStyle base, int level) {
 
 /// "(edited)" after a message; a tap tells when.
 class EditedMark extends StatelessWidget {
-  const EditedMark({required this.editAt, required this.style, super.key});
+  const EditedMark({
+    required this.editAt,
+    required this.style,
+    this.onHistory,
+    super.key,
+  });
 
   final DateTime editAt;
   final TextStyle? style;
 
+  /// Shows the earlier versions; false when there are none to show.
+  final Future<bool> Function()? onHistory;
+
   @override
   Widget build(BuildContext context) => Semantics(
     button: true,
-    hint: 'Shows when',
+    hint: onHistory == null ? 'Shows when' : 'Shows earlier versions',
     child: GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => showTopNotice(
-        context,
-        icon: Icons.edit_outlined,
-        text:
-            'Edited ${momentLabel(editAt, DateTime.now(), use24: MediaQuery.alwaysUse24HourFormatOf(context))}',
-      ),
+      onTap: () async {
+        final history = onHistory;
+        if (history != null && await history()) return;
+        if (!context.mounted) return;
+        showTopNotice(
+          context,
+          icon: Icons.edit_outlined,
+          text:
+              'Edited ${momentLabel(editAt, DateTime.now(), use24: MediaQuery.alwaysUse24HourFormatOf(context))}',
+        );
+      },
       child: Clickable(
         child: MomentTooltip(
           at: editAt,
