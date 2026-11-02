@@ -48,8 +48,9 @@ String connectionProblemText(ApiError error, String host) => switch (error) {
         "address, or ask the server's admin about the certificate.",
   Cancelled() => 'The request was stopped.',
   KeyringUnavailable() => keyringUnavailableText,
-  UnexpectedFailure(:final type) =>
-    "$host's answer couldn't be read ($type). Try again later.",
+  UnexpectedFailure(:final type, :final detail) =>
+    "$host's answer couldn't be read. Try again later.\n\n"
+        'Details: ${detail ?? type}',
   ServerError(:final message?) when message.trim().isNotEmpty =>
     '$host said: ${message.trim()}',
   ServerError(statusCode: 401) =>

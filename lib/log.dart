@@ -42,12 +42,13 @@ abstract final class Log {
       error: cause,
       stackTrace: stack,
     );
-    // developer.log never reaches logcat; problems should, on one line.
+    // developer.log never reaches logcat; problems should, with the stack.
     if (level >= 900) {
       debugPrint(
         '$area: ${text.split('\n').first}'
         '${cause == null ? '' : ' (${cause.split('\n').first})'}',
       );
+      if (stack != null) debugPrint(stack.toString());
     }
   }
 }
