@@ -66,7 +66,7 @@ void main() {
   var values = <String, Object?>{};
 
   setUp(() async {
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     values = {};
     server.handle = (r) => switch ((r.method, r.path)) {
       ('GET', '/api/v4/custom_profile_attributes/fields') => ok(_fields),
@@ -76,13 +76,7 @@ void main() {
       ('PATCH', '/api/v4/users/$meId/custom_profile_attributes') => ok(r.json),
       _ => error(404, 'not_found'),
     };
-    session = await testSession(server);
     await session.store.applyConfig('client_config', {'Version': '12.0.1'});
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   Future<List<(String, String)>> shown(String userId) async => [

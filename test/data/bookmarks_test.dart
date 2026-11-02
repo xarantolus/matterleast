@@ -33,20 +33,14 @@ void main() {
   var stored = <Map<String, Object?>>[];
 
   setUp(() async {
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     stored = [];
     server.handle = (r) => switch ((r.method, r.path)) {
       ('GET', '/api/v4/channels/$channelId/bookmarks') => ok(stored),
       _ => error(404, 'not_found'),
     };
-    session = await testSession(server);
     await session.store.applyConfig('client_config', {'Version': '12.0.1'});
     await session.store.applyConfig('license', {'IsLicensed': 'true'});
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   Future<List<String>> bar() async => [

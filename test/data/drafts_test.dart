@@ -7,25 +7,17 @@ import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/data/views/root_views.dart';
 
-import '../support/fake_server.dart';
 import '../support/test_session.dart';
 import '../support/wait.dart';
 
 void main() {
-  late FakeServer server;
   late ServerSession session;
   late ComposerActions actions;
 
   setUp(() async {
-    server = await FakeServer.start();
-    session = await testSession(server);
+    (_, session) = await startServerSession();
     actions = ComposerActions(session);
-  });
-
-  tearDown(() async {
-    await actions.dispose();
-    await closeTestSession(session);
-    await server.close();
+    addTearDown(actions.dispose);
   });
 
   /// Waits until the stored draft of the channel reads [message].

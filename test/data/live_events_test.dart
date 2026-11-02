@@ -25,18 +25,12 @@ void main() {
   late ServerSession session;
 
   setUp(() async {
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     server.handle = (r) => r.path == '/api/v4/users/ids'
         ? ok([
             {'id': 'u9', 'username': 'nadia', 'first_name': 'Nadia'},
           ])
         : error(404, 'not_found');
-    session = await testSession(server);
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   Future<void> receive(String event, Map<String, Object?> data) =>

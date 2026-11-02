@@ -30,8 +30,7 @@ void main() {
     'leaving while an older page loads stops watching the messages',
     () async {
       final reads = _PostReads();
-      final server = await FakeServer.start();
-      final session = await testSession(server, interceptor: reads);
+      final (server, session) = await startServerSession(interceptor: reads);
       final newest = {
         'order': ['n2', 'n1'],
         'posts': {'n2': postJson('n2', 11), 'n1': postJson('n1', 10)},
@@ -84,8 +83,6 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 300));
 
       expect(reads.count, 0);
-      await closeTestSession(session);
-      await server.close();
     },
   );
 }

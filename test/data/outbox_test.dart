@@ -40,7 +40,7 @@ void main() {
     created = 0;
     answers.clear();
     now = DateTime.utc(2026, 10, 25, 10);
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     server.handle = (r) {
       if (r.method == 'POST' && r.path == '/api/v4/posts') {
         final answer = answers.isEmpty ? null : answers.removeAt(0);
@@ -48,15 +48,9 @@ void main() {
       }
       return error(404, 'not_found');
     };
-    session = await testSession(server);
     actions = ComposerActions(session, clock: () => now);
     sender = newSender();
-  });
-
-  tearDown(() async {
-    await sender.close();
-    await closeTestSession(session);
-    await server.close();
+    addTearDown(sender.close);
   });
 
   ServerDatabase db() => session.db;

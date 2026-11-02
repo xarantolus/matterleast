@@ -123,10 +123,18 @@ Future<void> closeTestSession(ServerSession session) async {
   await session.db.close();
 }
 
-/// A fake server and a session on it, both closed when the test ends.
-Future<(FakeServer, ServerSession)> startServerSession() async {
+/// A fake server and a session on it, both closed when the test ends (before
+/// tear-downs registered after this call).
+Future<(FakeServer, ServerSession)> startServerSession({
+  QueryInterceptor? interceptor,
+  NetworkState? network,
+}) async {
   final server = await FakeServer.start();
-  final session = await testSession(server);
+  final session = await testSession(
+    server,
+    interceptor: interceptor,
+    network: network,
+  );
   addTearDown(() async {
     await closeTestSession(session);
     await server.close();

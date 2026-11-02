@@ -24,19 +24,13 @@ void main() {
   };
 
   setUp(() async {
-    server = await FakeServer.start();
-    session = await testSession(server);
+    (server, session) = await startServerSession();
     actions = ComposerActions(session);
+    addTearDown(actions.dispose);
     await session.store.applyUsers([
       api.User.fromJson(person('u1', 'mabel')),
       api.User.fromJson(person('u2', 'otto')),
     ]);
-  });
-
-  tearDown(() async {
-    await actions.dispose();
-    await closeTestSession(session);
-    await server.close();
   });
 
   Future<List<List<String>>> suggest(String text, {String rootId = ''}) async =>

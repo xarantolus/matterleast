@@ -25,7 +25,7 @@ void main() {
   };
 
   setUp(() async {
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     server.handle = (r) => switch (r.path) {
       '/api/v4/users/me' => ok({
         'id': meId,
@@ -39,13 +39,7 @@ void main() {
       }),
       _ => ok({'status': 'OK'}),
     };
-    session = await testSession(server);
     actions = SettingsActions(session);
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   Future<NotifyProps> storedProps() async => NotifyProps.fromJsonText(
