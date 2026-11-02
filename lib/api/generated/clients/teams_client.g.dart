@@ -209,6 +209,36 @@ class _TeamsClient implements TeamsClient {
   }
 
   @override
+  Future<PostApiV4TeamsSearchResponse> searchTeams({
+    required ApiV4TeamsSearchRequestBody body,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(body.toJson());
+    final _options = _setStreamType<PostApiV4TeamsSearchResponse>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/teams/search',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late PostApiV4TeamsSearchResponse _value;
+    try {
+      _value = PostApiV4TeamsSearchResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<List<Team>> getTeamsForUser({required String userId}) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
@@ -293,6 +323,33 @@ class _TeamsClient implements TeamsClient {
           .compose(
             _dio.options,
             '/api/v4/teams/${teamId}/members',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late TeamMember _value;
+    try {
+      _value = TeamMember.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<TeamMember> addTeamMemberFromInvite({required String inviteId}) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{r'invite_id': inviteId};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<TeamMember>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/teams/members/invite',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -533,7 +590,7 @@ class _TeamsClient implements TeamsClient {
   @override
   Future<StatusOk> inviteUsersToTeam({
     required String teamId,
-    required dynamic body,
+    required List<String> body,
     bool? graceful,
   }) async {
     final _extra = <String, dynamic>{};
@@ -592,6 +649,35 @@ class _TeamsClient implements TeamsClient {
     late StatusOk _value;
     try {
       _value = StatusOk.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<GetApiV4TeamsInviteInviteIdResponse> getTeamInviteInfo({
+    required String inviteId,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<GetApiV4TeamsInviteInviteIdResponse>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/teams/invite/${inviteId}',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late GetApiV4TeamsInviteInviteIdResponse _value;
+    try {
+      _value = GetApiV4TeamsInviteInviteIdResponse.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

@@ -14,6 +14,7 @@ class ClientConfig {
     this.version,
     this.buildNumber,
     this.sendEmailNotifications,
+    this.enableEmailInvitations,
     this.experimentalEnableAutomaticReplies,
     this.siteName,
     this.siteUrl,
@@ -97,6 +98,8 @@ class ClientConfig {
   final String? buildNumber;
   @LenientBool()
   final bool? sendEmailNotifications;
+  @LenientBool()
+  final bool? enableEmailInvitations;
   @LenientBool()
   final bool? experimentalEnableAutomaticReplies;
   @LenientString()

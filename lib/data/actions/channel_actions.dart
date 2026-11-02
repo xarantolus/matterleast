@@ -516,6 +516,68 @@ class ChannelActions {
     }
   }
 
+  /// Who is a channel admin of [channelId]: asked a page at a time, as many
+  /// as a very large channel's first thousand members.
+  Future<Set<String>> channelAdmins(String channelId) async {
+    final admins = <String>{};
+    for (var page = 0; page < 5; page++) {
+      final members = await session.api.call(
+        () => _client.channels.getChannelMembers(
+          channelId: channelId,
+          page: page,
+          perPage: 200,
+        ),
+      );
+      for (final m in members) {
+        if (m.schemeAdmin == true && m.userId != null) admins.add(m.userId!);
+      }
+      if (members.length < 200) break;
+    }
+    return admins;
+  }
+
+  /// Makes [userId] a channel admin, or an ordinary member again.
+  Future<void> setChannelAdmin(
+    String channelId,
+    String userId, {
+    required bool admin,
+  }) => session.api.call(
+    () => _client.channels.updateChannelMemberSchemeRoles(
+      channelId: channelId,
+      userId: userId,
+      body: api.ApiV4ChannelsChannelIdMembersUserIdSchemeRolesRequestBody(
+        schemeAdmin: admin,
+        schemeUser: true,
+      ),
+    ),
+  );
+
+  /// Turns the group message [channelId] into a private channel of
+  /// [teamId] and returns its id.
+  Future<String> convertGroup({
+    required String channelId,
+    required String teamId,
+    required String displayName,
+    required String name,
+  }) async {
+    final channel = await session.api.call(
+      () => _client.channels.convertGroupMessageToChannel(
+        channelId: channelId,
+        body: api.ApiV4ChannelsChannelIdConvertToChannelRequestBody(
+          channelId: channelId,
+          teamId: teamId,
+          displayName: displayName,
+          name: name,
+        ),
+      ),
+    );
+    await session.store.applyChannel(channel);
+    unawaited(
+      session.connection.entry.refreshTeam(teamId).catchError((Object _) {}),
+    );
+    return channel.id ?? channelId;
+  }
+
   /// Adds people one request each, as the official app does; the first
   /// failure is thrown once all have finished.
   Future<void> addMembers(String channelId, List<String> userIds) async {

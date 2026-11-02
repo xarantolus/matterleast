@@ -6,12 +6,15 @@ import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
 import '../models/api_v4_teams_request_body.dart';
+import '../models/api_v4_teams_search_request_body.dart';
 import '../models/api_v4_teams_team_id_files_search_request_body.dart';
 import '../models/api_v4_teams_team_id_invite_guests_email_request_body.dart';
 import '../models/api_v4_teams_team_id_members_request_body.dart';
 import '../models/api_v4_teams_team_id_patch_request_body.dart';
 import '../models/api_v4_teams_team_id_request_body.dart';
 import '../models/file_info_list.dart';
+import '../models/get_api_v4_teams_invite_invite_id_response.dart';
+import '../models/post_api_v4_teams_search_response.dart';
 import '../models/status_ok.dart';
 import '../models/team.dart';
 import '../models/team_member.dart';
@@ -56,6 +59,11 @@ abstract class TeamsClient {
     @Body() required ApiV4TeamsTeamIdPatchRequestBody body,
   });
 
+  @POST('/api/v4/teams/search')
+  Future<PostApiV4TeamsSearchResponse> searchTeams({
+    @Body() required ApiV4TeamsSearchRequestBody body,
+  });
+
   @GET('/api/v4/users/{user_id}/teams')
   Future<List<Team>> getTeamsForUser({@Path('user_id') required String userId});
 
@@ -72,6 +80,11 @@ abstract class TeamsClient {
   Future<TeamMember> addTeamMember({
     @Path('team_id') required String teamId,
     @Body() required ApiV4TeamsTeamIdMembersRequestBody body,
+  });
+
+  @POST('/api/v4/teams/members/invite')
+  Future<TeamMember> addTeamMemberFromInvite({
+    @Query('invite_id') required String inviteId,
   });
 
   @POST('/api/v4/teams/{team_id}/members/batch')
@@ -117,7 +130,7 @@ abstract class TeamsClient {
   @POST('/api/v4/teams/{team_id}/invite/email')
   Future<StatusOk> inviteUsersToTeam({
     @Path('team_id') required String teamId,
-    @Body() required dynamic body,
+    @Body() required List<String> body,
     @Query('graceful') bool? graceful,
   });
 
@@ -127,6 +140,11 @@ abstract class TeamsClient {
     @Body() required ApiV4TeamsTeamIdInviteGuestsEmailRequestBody body,
     @Query('graceful') bool? graceful,
     @Query('guest_magic_link') bool? guestMagicLink,
+  });
+
+  @GET('/api/v4/teams/invite/{invite_id}')
+  Future<GetApiV4TeamsInviteInviteIdResponse> getTeamInviteInfo({
+    @Path('invite_id') required String inviteId,
   });
 
   @POST('/api/v4/teams/{team_id}/files/search')

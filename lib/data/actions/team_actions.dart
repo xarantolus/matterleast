@@ -1,3 +1,4 @@
+import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -57,6 +58,40 @@ class TeamActions {
     );
     await session.connection.entry.joinedTeam(teamId);
   }
+
+  /// The team an invite link is for, or null when the link is no longer
+  /// valid.
+  Future<InvitedTeam?> invitedTeam(String inviteId) async {
+    try {
+      final team = await session.api.call(
+        () => _client.teams.getTeamInviteInfo(inviteId: inviteId),
+      );
+      final id = team.id;
+      if (id == null || id.isEmpty) return null;
+      return (
+        id: id,
+        displayName: team.displayName ?? team.name ?? '',
+        description: team.description ?? '',
+      );
+    } on ServerError catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 400) return null;
+      rethrow;
+    }
+  }
+
+  /// Joins the team of [inviteId]; completes once the team is stored.
+  Future<void> joinByInvite(String inviteId, String teamId) async {
+    await session.api.call(
+      () => _client.teams.addTeamMemberFromInvite(inviteId: inviteId),
+    );
+    await session.connection.entry.joinedTeam(teamId);
+  }
+
+  /// Emails an invitation to each of [emails].
+  Future<void> inviteByEmail(String teamId, List<String> emails) =>
+      session.api.call(
+        () => _client.teams.inviteUsersToTeam(teamId: teamId, body: emails),
+      );
 
   Future<void> leave(String teamId) async {
     final me = await _me();

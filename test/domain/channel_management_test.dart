@@ -33,6 +33,7 @@ void main() {
         edit: false,
         archive: false,
         manageMembers: false,
+        manageRoles: false,
         convert: false,
         unarchive: false,
       ));
@@ -50,6 +51,80 @@ void main() {
     });
   });
 
+  group('making members channel admins', () {
+    const roles = {'channel_user'};
+    final withRoles = {
+      'channel_user': {'manage_public_channel_members', 'manage_channel_roles'},
+    };
+
+    test('needs the member permission and the roles permission', () {
+      expect(
+        channelRights('O', roles: roles, granted: withRoles).manageRoles,
+        isTrue,
+      );
+      expect(
+        channelRights('O', roles: roles, granted: granted).manageRoles,
+        isFalse,
+      );
+      expect(
+        channelRights(
+          'O',
+          roles: roles,
+          granted: {
+            'channel_user': {'manage_channel_roles'},
+          },
+        ).manageRoles,
+        isFalse,
+      );
+    });
+
+    test('is checked against the private permission in a private channel', () {
+      expect(
+        channelRights('P', roles: roles, granted: withRoles).manageRoles,
+        isFalse,
+      );
+    });
+  });
+
+  group('inviting to a team', () {
+    const granted = {
+      'team_admin': {'invite_user', 'add_user_to_team'},
+      'team_user': {'add_user_to_team'},
+    };
+    TeamInviteRights rights(String role, {bool email = true}) =>
+        teamInviteRights(
+          roles: {role},
+          granted: granted,
+          emailInvitations: email,
+        );
+
+    test('email needs the permission and the server setting', () {
+      expect(rights('team_admin'), (byEmail: true, byLink: true));
+      expect(rights('team_admin', email: false), (
+        byEmail: false,
+        byLink: true,
+      ));
+      expect(rights('team_user'), (byEmail: false, byLink: true));
+      expect(rights('nobody'), (byEmail: false, byLink: false));
+    });
+  });
+
+  group('converting a group message', () {
+    test('needs a group, a new enough server and the right', () {
+      bool can(String type, {bool server = true, bool create = true}) =>
+          canConvertGroupMessage(
+            type: type,
+            serverSupports: server,
+            createPrivate: create,
+          );
+      expect(can('G'), isTrue);
+      expect(can('D'), isFalse);
+      expect(can('P'), isFalse);
+      expect(can('G', server: false), isFalse);
+      expect(can('G', create: false), isFalse);
+    });
+  });
+
   test('direct and group messages have no channel admin rights', () {
     final roles = {'system_user', 'team_user', 'channel_user', 'channel_admin'};
     for (final type in ['D', 'G']) {
@@ -57,6 +132,7 @@ void main() {
         edit: false,
         archive: false,
         manageMembers: false,
+        manageRoles: false,
         convert: false,
         unarchive: false,
       ));

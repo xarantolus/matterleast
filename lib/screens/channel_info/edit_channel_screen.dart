@@ -87,14 +87,13 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
       final channel = widget.channel;
       if (channel == null) {
         final name = _name.text.trim();
-        final slug = channelSlug(name);
         final id = await actions.create(
           teamId: widget.teamId,
           displayName: name,
-          // Names without letters or digits still need a unique URL part.
-          name: slug.length >= 2
-              ? slug
-              : 'channel-${DateTime.now().millisecondsSinceEpoch}',
+          name: channelNameFor(
+            name,
+            unique: DateTime.now().millisecondsSinceEpoch,
+          ),
           private: _isPrivate,
           purpose: _purpose.text.trim(),
           header: _header.text.trim(),

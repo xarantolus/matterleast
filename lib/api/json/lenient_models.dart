@@ -19,6 +19,7 @@ import 'package:matterleast/api/generated/models/api_v4_channels_channel_id_memb
 import 'package:matterleast/api/generated/models/api_v4_channels_channel_id_patch_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_channels_channel_id_privacy_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_channels_channel_id_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_channels_group_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_channels_members_user_id_view_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_channels_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_channels_search_request_body.dart';
@@ -39,6 +40,7 @@ import 'package:matterleast/api/generated/models/api_v4_posts_request_body.dart'
 import 'package:matterleast/api/generated/models/api_v4_posts_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_remotecluster_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_teams_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_channels_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_files_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_team_id_invite_guests_email_request_body.dart';
@@ -90,6 +92,7 @@ import 'package:matterleast/api/generated/models/get_api_v4_content_flagging_fla
 import 'package:matterleast/api/generated/models/get_api_v4_content_flagging_team_team_id_status_response.dart';
 import 'package:matterleast/api/generated/models/get_api_v4_files_file_id_link_response.dart';
 import 'package:matterleast/api/generated/models/get_api_v4_license_load_metric_response.dart';
+import 'package:matterleast/api/generated/models/get_api_v4_teams_invite_invite_id_response.dart';
 import 'package:matterleast/api/generated/models/get_api_v4_users_sessions_attributes_manifest_response.dart';
 import 'package:matterleast/api/generated/models/global_data_retention_policy.dart';
 import 'package:matterleast/api/generated/models/group.dart';
@@ -107,9 +110,11 @@ import 'package:matterleast/api/generated/models/post.dart';
 import 'package:matterleast/api/generated/models/post_acknowledgement.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_actions_dialogs_lookup_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_actions_dialogs_submit_response.dart';
+import 'package:matterleast/api/generated/models/post_api_v4_channels_members_user_id_mark_read_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_channels_members_user_id_view_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_channels_search_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_remotecluster_response.dart';
+import 'package:matterleast/api/generated/models/post_api_v4_teams_search_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_users_group_channels_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_users_login_sso_code_exchange_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_users_login_type_response.dart';
@@ -121,6 +126,7 @@ import 'package:matterleast/api/generated/models/post_metadata.dart';
 import 'package:matterleast/api/generated/models/post_priority.dart';
 import 'package:matterleast/api/generated/models/preference.dart';
 import 'package:matterleast/api/generated/models/property_field.dart';
+import 'package:matterleast/api/generated/models/put_api_v4_users_user_id_teams_team_id_read_response.dart';
 import 'package:matterleast/api/generated/models/reaction.dart';
 import 'package:matterleast/api/generated/models/remote_cluster.dart';
 import 'package:matterleast/api/generated/models/remote_cluster_info.dart';
@@ -1240,6 +1246,62 @@ class LenientMapOfApiV4ChannelsChannelIdRequestBody
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
+class LenientApiV4ChannelsGroupSearchRequestBody
+    implements JsonConverter<ApiV4ChannelsGroupSearchRequestBody?, Object?> {
+  const LenientApiV4ChannelsGroupSearchRequestBody();
+  @override
+  ApiV4ChannelsGroupSearchRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, ApiV4ChannelsGroupSearchRequestBody.fromJson)
+      : null;
+  @override
+  Object? toJson(ApiV4ChannelsGroupSearchRequestBody? object) =>
+      object?.toJson();
+}
+
+class LenientListOfApiV4ChannelsGroupSearchRequestBody
+    implements
+        JsonConverter<List<ApiV4ChannelsGroupSearchRequestBody>, Object?> {
+  const LenientListOfApiV4ChannelsGroupSearchRequestBody();
+  @override
+  List<ApiV4ChannelsGroupSearchRequestBody> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4ChannelsGroupSearchRequestBody.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4ChannelsGroupSearchRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4ChannelsGroupSearchRequestBody
+    implements
+        JsonConverter<
+          Map<String, ApiV4ChannelsGroupSearchRequestBody>?,
+          Object?
+        > {
+  const LenientMapOfApiV4ChannelsGroupSearchRequestBody();
+  @override
+  Map<String, ApiV4ChannelsGroupSearchRequestBody>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ChannelsGroupSearchRequestBody.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, ApiV4ChannelsGroupSearchRequestBody>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
 class LenientApiV4ChannelsMembersUserIdViewRequestBody
     implements
         JsonConverter<ApiV4ChannelsMembersUserIdViewRequestBody?, Object?> {
@@ -2274,6 +2336,53 @@ class LenientMapOfApiV4TeamsRequestBody
       : null;
   @override
   Object? toJson(Map<String, ApiV4TeamsRequestBody>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4TeamsSearchRequestBody
+    implements JsonConverter<ApiV4TeamsSearchRequestBody?, Object?> {
+  const LenientApiV4TeamsSearchRequestBody();
+  @override
+  ApiV4TeamsSearchRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, ApiV4TeamsSearchRequestBody.fromJson)
+      : null;
+  @override
+  Object? toJson(ApiV4TeamsSearchRequestBody? object) => object?.toJson();
+}
+
+class LenientListOfApiV4TeamsSearchRequestBody
+    implements JsonConverter<List<ApiV4TeamsSearchRequestBody>, Object?> {
+  const LenientListOfApiV4TeamsSearchRequestBody();
+  @override
+  List<ApiV4TeamsSearchRequestBody> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4TeamsSearchRequestBody.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4TeamsSearchRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4TeamsSearchRequestBody
+    implements
+        JsonConverter<Map<String, ApiV4TeamsSearchRequestBody>?, Object?> {
+  const LenientMapOfApiV4TeamsSearchRequestBody();
+  @override
+  Map<String, ApiV4TeamsSearchRequestBody>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4TeamsSearchRequestBody.fromJson),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, ApiV4TeamsSearchRequestBody>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
@@ -4880,6 +4989,62 @@ class LenientMapOfGetApiV4LicenseLoadMetricResponse
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
+class LenientGetApiV4TeamsInviteInviteIdResponse
+    implements JsonConverter<GetApiV4TeamsInviteInviteIdResponse?, Object?> {
+  const LenientGetApiV4TeamsInviteInviteIdResponse();
+  @override
+  GetApiV4TeamsInviteInviteIdResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, GetApiV4TeamsInviteInviteIdResponse.fromJson)
+      : null;
+  @override
+  Object? toJson(GetApiV4TeamsInviteInviteIdResponse? object) =>
+      object?.toJson();
+}
+
+class LenientListOfGetApiV4TeamsInviteInviteIdResponse
+    implements
+        JsonConverter<List<GetApiV4TeamsInviteInviteIdResponse>, Object?> {
+  const LenientListOfGetApiV4TeamsInviteInviteIdResponse();
+  @override
+  List<GetApiV4TeamsInviteInviteIdResponse> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, GetApiV4TeamsInviteInviteIdResponse.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<GetApiV4TeamsInviteInviteIdResponse> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfGetApiV4TeamsInviteInviteIdResponse
+    implements
+        JsonConverter<
+          Map<String, GetApiV4TeamsInviteInviteIdResponse>?,
+          Object?
+        > {
+  const LenientMapOfGetApiV4TeamsInviteInviteIdResponse();
+  @override
+  Map<String, GetApiV4TeamsInviteInviteIdResponse>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                GetApiV4TeamsInviteInviteIdResponse.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, GetApiV4TeamsInviteInviteIdResponse>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
 class LenientGetApiV4UsersSessionsAttributesManifestResponse
     implements
         JsonConverter<
@@ -5717,6 +5882,76 @@ class LenientMapOfPostApiV4ActionsDialogsSubmitResponse
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
+class LenientPostApiV4ChannelsMembersUserIdMarkReadResponse
+    implements
+        JsonConverter<
+          PostApiV4ChannelsMembersUserIdMarkReadResponse?,
+          Object?
+        > {
+  const LenientPostApiV4ChannelsMembersUserIdMarkReadResponse();
+  @override
+  PostApiV4ChannelsMembersUserIdMarkReadResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(
+          json,
+          PostApiV4ChannelsMembersUserIdMarkReadResponse.fromJson,
+        )
+      : null;
+  @override
+  Object? toJson(PostApiV4ChannelsMembersUserIdMarkReadResponse? object) =>
+      object?.toJson();
+}
+
+class LenientListOfPostApiV4ChannelsMembersUserIdMarkReadResponse
+    implements
+        JsonConverter<
+          List<PostApiV4ChannelsMembersUserIdMarkReadResponse>,
+          Object?
+        > {
+  const LenientListOfPostApiV4ChannelsMembersUserIdMarkReadResponse();
+  @override
+  List<PostApiV4ChannelsMembersUserIdMarkReadResponse> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                PostApiV4ChannelsMembersUserIdMarkReadResponse.fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<PostApiV4ChannelsMembersUserIdMarkReadResponse> object) =>
+      [for (final e in object) e.toJson()];
+}
+
+class LenientMapOfPostApiV4ChannelsMembersUserIdMarkReadResponse
+    implements
+        JsonConverter<
+          Map<String, PostApiV4ChannelsMembersUserIdMarkReadResponse>?,
+          Object?
+        > {
+  const LenientMapOfPostApiV4ChannelsMembersUserIdMarkReadResponse();
+  @override
+  Map<String, PostApiV4ChannelsMembersUserIdMarkReadResponse>? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PostApiV4ChannelsMembersUserIdMarkReadResponse.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, PostApiV4ChannelsMembersUserIdMarkReadResponse>? object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
 class LenientPostApiV4ChannelsMembersUserIdViewResponse
     implements
         JsonConverter<PostApiV4ChannelsMembersUserIdViewResponse?, Object?> {
@@ -5873,6 +6108,53 @@ class LenientMapOfPostApiV4RemoteclusterResponse
       : null;
   @override
   Object? toJson(Map<String, PostApiV4RemoteclusterResponse>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientPostApiV4TeamsSearchResponse
+    implements JsonConverter<PostApiV4TeamsSearchResponse?, Object?> {
+  const LenientPostApiV4TeamsSearchResponse();
+  @override
+  PostApiV4TeamsSearchResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, PostApiV4TeamsSearchResponse.fromJson)
+      : null;
+  @override
+  Object? toJson(PostApiV4TeamsSearchResponse? object) => object?.toJson();
+}
+
+class LenientListOfPostApiV4TeamsSearchResponse
+    implements JsonConverter<List<PostApiV4TeamsSearchResponse>, Object?> {
+  const LenientListOfPostApiV4TeamsSearchResponse();
+  @override
+  List<PostApiV4TeamsSearchResponse> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, PostApiV4TeamsSearchResponse.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<PostApiV4TeamsSearchResponse> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfPostApiV4TeamsSearchResponse
+    implements
+        JsonConverter<Map<String, PostApiV4TeamsSearchResponse>?, Object?> {
+  const LenientMapOfPostApiV4TeamsSearchResponse();
+  @override
+  Map<String, PostApiV4TeamsSearchResponse>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PostApiV4TeamsSearchResponse.fromJson),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, PostApiV4TeamsSearchResponse>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
@@ -6404,6 +6686,71 @@ class LenientMapOfPropertyField
   @override
   Object? toJson(Map<String, PropertyField>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientPutApiV4UsersUserIdTeamsTeamIdReadResponse
+    implements
+        JsonConverter<PutApiV4UsersUserIdTeamsTeamIdReadResponse?, Object?> {
+  const LenientPutApiV4UsersUserIdTeamsTeamIdReadResponse();
+  @override
+  PutApiV4UsersUserIdTeamsTeamIdReadResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, PutApiV4UsersUserIdTeamsTeamIdReadResponse.fromJson)
+      : null;
+  @override
+  Object? toJson(PutApiV4UsersUserIdTeamsTeamIdReadResponse? object) =>
+      object?.toJson();
+}
+
+class LenientListOfPutApiV4UsersUserIdTeamsTeamIdReadResponse
+    implements
+        JsonConverter<
+          List<PutApiV4UsersUserIdTeamsTeamIdReadResponse>,
+          Object?
+        > {
+  const LenientListOfPutApiV4UsersUserIdTeamsTeamIdReadResponse();
+  @override
+  List<PutApiV4UsersUserIdTeamsTeamIdReadResponse> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                PutApiV4UsersUserIdTeamsTeamIdReadResponse.fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<PutApiV4UsersUserIdTeamsTeamIdReadResponse> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfPutApiV4UsersUserIdTeamsTeamIdReadResponse
+    implements
+        JsonConverter<
+          Map<String, PutApiV4UsersUserIdTeamsTeamIdReadResponse>?,
+          Object?
+        > {
+  const LenientMapOfPutApiV4UsersUserIdTeamsTeamIdReadResponse();
+  @override
+  Map<String, PutApiV4UsersUserIdTeamsTeamIdReadResponse>? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PutApiV4UsersUserIdTeamsTeamIdReadResponse.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, PutApiV4UsersUserIdTeamsTeamIdReadResponse>? object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientReaction implements JsonConverter<Reaction?, Object?> {

@@ -43,6 +43,25 @@ actions:
     update: [{name: team_id, in: path, required: true, schema: {type: string}}]
   - target: "$.paths['/api/v4/files/search'].post"
     update: {operationId: SearchFilesAllTeams}
+  # --- wrong request shapes, checked against a 12.0 server ---
+  - target: "$.paths['/api/v4/teams/members/invite'].post.parameters"
+    remove: true
+  - target: "$.paths['/api/v4/teams/members/invite'].post"
+    update:
+      parameters:
+        - {name: invite_id, in: query, required: true, schema: {type: string}}
+  - target: "$.paths['/api/v4/teams/{team_id}/invite/email'].post.requestBody.content['application/json'].schema"
+    remove: true
+  - target: "$.paths['/api/v4/teams/{team_id}/invite/email'].post.requestBody.content['application/json']"
+    update:
+      schema: {type: array, items: {type: string}}
+  - target: "$.paths['/api/v4/channels/{channel_id}/convert_to_channel'].post.requestBody.content['application/json'].schema.properties"
+    update:
+      name: {type: string}
+      display_name: {type: string}
+  - target: "$.paths['/api/v4/channels/{channel_id}/convert_to_channel'].post.requestBody.content['application/json'].schema"
+    update:
+      required: [channel_id, team_id, name, display_name]
   # --- core models: fields the server sends but the spec omits (server/public/model/*.go) ---
   - target: "$.components.schemas.Post.properties.hashtag"
     remove: true

@@ -31,6 +31,8 @@ abstract class ChannelInfo with _$ChannelInfo {
     required bool canEdit,
     required bool canArchive,
     required bool canManageMembers,
+    required bool canManageRoles,
+    required bool canConvertGroup,
     required bool canConvert,
     required bool canUnarchive,
   }) = _ChannelInfo;
@@ -41,6 +43,9 @@ abstract class ChannelInfo with _$ChannelInfo {
 
   /// The team's default channel can't be left or archived.
   bool get isDefault => name == 'town-square';
+
+  /// Whether the user may make members channel admins.
+  bool get canChangeRoles => canManageRoles && !archived && !conversation;
 
   /// Whether the user may take people out of the channel.
   bool get canRemoveMembers =>
@@ -85,6 +90,13 @@ String channelSlug(String displayName) {
       .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
       .replaceAll(RegExp('^-+|-+\$'), '');
   return slug.length > 64 ? slug.substring(0, 64) : slug;
+}
+
+/// Pure: the URL name for a new channel called [displayName]; one without
+/// letters or digits still needs a unique name, made from [unique].
+String channelNameFor(String displayName, {required int unique}) {
+  final slug = channelSlug(displayName);
+  return slug.length >= 2 ? slug : 'channel-$unique';
 }
 
 /// Pure: the link to a channel as the web app shows it.

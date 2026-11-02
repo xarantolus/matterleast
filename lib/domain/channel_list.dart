@@ -205,6 +205,10 @@ List<String> unreadIds(CategorySection section) => [
     if (item.unread || item.mentions > 0) item.id,
 ];
 
+/// Pure: the unread channels of a whole team's list, each once.
+List<String> teamUnreadIds(ChannelList list) =>
+    {for (final section in list.sections) ...unreadIds(section)}.toList();
+
 /// Pure: the sections of a team's channel list.
 ChannelList buildChannelList(ChannelListSource source) {
   final sections = <CategorySection>[];

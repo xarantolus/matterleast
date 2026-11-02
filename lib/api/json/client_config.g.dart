@@ -12,6 +12,9 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
   sendEmailNotifications: const LenientBool().fromJson(
     json['SendEmailNotifications'],
   ),
+  enableEmailInvitations: const LenientBool().fromJson(
+    json['EnableEmailInvitations'],
+  ),
   experimentalEnableAutomaticReplies: const LenientBool().fromJson(
     json['ExperimentalEnableAutomaticReplies'],
   ),

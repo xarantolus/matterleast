@@ -102,6 +102,9 @@ abstract class ServerFeatures with _$ServerFeatures {
     /// The server sends notification emails.
     @Default(false) bool emailNotifications,
 
+    /// People can be invited to a team by email.
+    @Default(false) bool emailInvitations,
+
     /// People can set an automatic reply to direct messages.
     @Default(false) bool automaticReplies,
 
@@ -271,6 +274,7 @@ ServerFeatures serverFeatures({
         : null,
     confirmChannelMentions: config.enableConfirmNotificationsToChannel == true,
     emailNotifications: config.sendEmailNotifications == true,
+    emailInvitations: config.enableEmailInvitations == true,
     automaticReplies: config.experimentalEnableAutomaticReplies == true,
     scheduledPosts:
         licensed &&

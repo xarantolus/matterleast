@@ -42,6 +42,22 @@ void main() {
     );
   });
 
+  test('a team invite link names the invite', () {
+    expect(
+      parse('https://chat.example.test/signup_user_complete/?id=inv123'),
+      ServerLink.teamInvite(server: chat, inviteId: 'inv123'),
+    );
+    expect(
+      parse('https://tools.example.test/mm/signup_user_complete?id=x'),
+      ServerLink.teamInvite(server: sub, inviteId: 'x'),
+    );
+    expect(parse('https://chat.example.test/signup_user_complete/'), isNull);
+    expect(
+      parse('https://chat.example.test/signup_user_complete/?id='),
+      isNull,
+    );
+  });
+
   test('the bare server and a team open the server', () {
     expect(parse('https://chat.example.test/'), ServerLink.home(server: chat));
     expect(
