@@ -231,6 +231,55 @@ class ChannelActions {
     await session.store.applyCategoryUpdates(updated);
   }
 
+  /// Sets how a category orders its channels: `alpha`, `recent` or `manual`.
+  Future<void> setCategorySorting(
+    String teamId,
+    String categoryId,
+    String sorting,
+  ) => _changeCategory(
+    teamId,
+    categoryId,
+    (team, c) => team.body(c, team.idsOf(c), sorting: sorting),
+  );
+
+  /// Mutes or unmutes every channel of a category.
+  Future<void> setCategoryMuted(
+    String teamId,
+    String categoryId, {
+    required bool muted,
+  }) => _changeCategory(
+    teamId,
+    categoryId,
+    (team, c) => team.body(c, team.idsOf(c), muted: muted),
+  );
+
+  Future<void> _changeCategory(
+    String teamId,
+    String categoryId,
+    api.SidebarCategoryWithChannels Function(_TeamCategories, CategoryRow)
+    change,
+  ) async {
+    final team = await _teamCategories(teamId);
+    final category = team.byId(categoryId);
+    if (category == null) return;
+    await _updateCategories(
+      teamId,
+      before: [team.body(category, team.idsOf(category))],
+      after: [change(team, category)],
+    );
+  }
+
+  /// How many read direct messages stay in the list.
+  Future<void> setDirectLimit(int limit) =>
+      session.settings.savePreference(Prefs.directLimit, '$limit');
+
+  /// Marks the channels read one by one; the first failure stops it.
+  Future<void> markAllRead(Iterable<String> channelIds) async {
+    for (final id in channelIds) {
+      await markRead(id);
+    }
+  }
+
   /// Deletes a custom category; the server moves its channels back to
   /// Channels and Direct Messages.
   Future<void> deleteCategory(String teamId, String categoryId) async {
@@ -645,6 +694,7 @@ class _TeamCategories {
     List<String> ids, {
     String? sorting,
     String? displayName,
+    bool? muted,
   }) => api.SidebarCategoryWithChannels(
     id: c.id,
     userId: me,
@@ -652,7 +702,7 @@ class _TeamCategories {
     displayName: displayName ?? c.displayName,
     type: api.SidebarCategoryWithChannelsType.fromJson(c.type),
     sorting: sorting ?? c.sorting,
-    muted: c.muted,
+    muted: muted ?? c.muted,
     collapsed: c.collapsed,
     channelIds: ids,
   );

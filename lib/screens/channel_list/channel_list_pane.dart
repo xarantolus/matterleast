@@ -263,6 +263,7 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
         teamId: widget.teamId,
         section: section,
         onReorder: () => _setReordering(true),
+        directLimit: widget.list.directLimit,
         anchor: anchor,
       );
 

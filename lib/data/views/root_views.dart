@@ -272,6 +272,7 @@ class RootViews {
               type: c.type,
               displayName: c.displayName,
               sorting: c.sorting,
+              muted: c.muted,
               collapsed: c.collapsed,
             ),
         ],

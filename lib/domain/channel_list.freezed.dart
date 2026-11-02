@@ -321,7 +321,7 @@ as int?,
 /// @nodoc
 mixin _$CategorySection {
 
- String get id; String get title; CategoryKind get kind; bool get collapsed;/// Every visible channel, also while [collapsed].
+ String get id; String get title; CategoryKind get kind; bool get collapsed; String get sorting; bool get muted;/// Every visible channel, also while [collapsed].
  List<ChannelItem> get rows;
 /// Create a copy of CategorySection
 /// with the given fields replaced by the non-null parameter values.
@@ -334,20 +334,20 @@ $CategorySectionCopyWith<CategorySection> get copyWith => _$CategorySectionCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as CategorySection;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategorySection&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.collapsed, _this.collapsed) || other.collapsed == _this.collapsed)&&const DeepCollectionEquality().equals(other.rows, _this.rows));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategorySection&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.collapsed, _this.collapsed) || other.collapsed == _this.collapsed)&&(identical(other.sorting, _this.sorting) || other.sorting == _this.sorting)&&(identical(other.muted, _this.muted) || other.muted == _this.muted)&&const DeepCollectionEquality().equals(other.rows, _this.rows));
 }
 
 
 @override
 int get hashCode {
   final _this = this as CategorySection;
-  return Object.hash(runtimeType,_this.id,_this.title,_this.kind,_this.collapsed,const DeepCollectionEquality().hash(_this.rows));
+  return Object.hash(runtimeType,_this.id,_this.title,_this.kind,_this.collapsed,_this.sorting,_this.muted,const DeepCollectionEquality().hash(_this.rows));
 }
 
 @override
 String toString() {
   final _this = this as CategorySection;
-  return 'CategorySection(id: ${_this.id}, title: ${_this.title}, kind: ${_this.kind}, collapsed: ${_this.collapsed}, rows: ${_this.rows})';
+  return 'CategorySection(id: ${_this.id}, title: ${_this.title}, kind: ${_this.kind}, collapsed: ${_this.collapsed}, sorting: ${_this.sorting}, muted: ${_this.muted}, rows: ${_this.rows})';
 }
 
 
@@ -358,7 +358,7 @@ abstract mixin class $CategorySectionCopyWith<$Res>  {
   factory $CategorySectionCopyWith(CategorySection value, $Res Function(CategorySection) _then) = _$CategorySectionCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, CategoryKind kind, bool collapsed, List<ChannelItem> rows
+ String id, String title, CategoryKind kind, bool collapsed, String sorting, bool muted, List<ChannelItem> rows
 });
 
 
@@ -375,12 +375,14 @@ class _$CategorySectionCopyWithImpl<$Res>
 
 /// Create a copy of CategorySection
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? kind = null,Object? collapsed = null,Object? rows = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? kind = null,Object? collapsed = null,Object? sorting = null,Object? muted = null,Object? rows = null,}) {
   return _then(CategorySection(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as CategoryKind,collapsed: null == collapsed ? _self.collapsed : collapsed // ignore: cast_nullable_to_non_nullable
+as bool,sorting: null == sorting ? _self.sorting : sorting // ignore: cast_nullable_to_non_nullable
+as String,muted: null == muted ? _self.muted : muted // ignore: cast_nullable_to_non_nullable
 as bool,rows: null == rows ? _self.rows : rows // ignore: cast_nullable_to_non_nullable
 as List<ChannelItem>,
   ));
@@ -467,10 +469,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  CategoryKind kind,  bool collapsed,  List<ChannelItem> rows)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  CategoryKind kind,  bool collapsed,  String sorting,  bool muted,  List<ChannelItem> rows)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CategorySection() when $default != null:
-return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.rows);case _:
+return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.sorting,_that.muted,_that.rows);case _:
   return orElse();
 
 }
@@ -488,10 +490,10 @@ return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.rows);case
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  CategoryKind kind,  bool collapsed,  List<ChannelItem> rows)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  CategoryKind kind,  bool collapsed,  String sorting,  bool muted,  List<ChannelItem> rows)  $default,) {final _that = this;
 switch (_that) {
 case _CategorySection():
-return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.rows);case _:
+return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.sorting,_that.muted,_that.rows);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -508,10 +510,10 @@ return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.rows);case
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  CategoryKind kind,  bool collapsed,  List<ChannelItem> rows)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  CategoryKind kind,  bool collapsed,  String sorting,  bool muted,  List<ChannelItem> rows)?  $default,) {final _that = this;
 switch (_that) {
 case _CategorySection() when $default != null:
-return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.rows);case _:
+return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.sorting,_that.muted,_that.rows);case _:
   return null;
 
 }
@@ -523,13 +525,15 @@ return $default(_that.id,_that.title,_that.kind,_that.collapsed,_that.rows);case
 
 
 class _CategorySection extends CategorySection {
-  const _CategorySection({required this.id, required this.title, required this.kind, required this.collapsed, required  List<ChannelItem> rows}): _rows = rows,super._();
+  const _CategorySection({required this.id, required this.title, required this.kind, required this.collapsed, this.sorting = '', this.muted = false, required  List<ChannelItem> rows}): _rows = rows,super._();
   
 
 @override final  String id;
 @override final  String title;
 @override final  CategoryKind kind;
 @override final  bool collapsed;
+@override@JsonKey() final  String sorting;
+@override@JsonKey() final  bool muted;
 /// Every visible channel, also while [collapsed].
  final  List<ChannelItem> _rows;
 /// Every visible channel, also while [collapsed].
@@ -550,18 +554,18 @@ _$CategorySectionCopyWith<_CategorySection> get copyWith => __$CategorySectionCo
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategorySection&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.collapsed, collapsed) || other.collapsed == collapsed)&&const DeepCollectionEquality().equals(other.rows, _rows));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategorySection&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.collapsed, collapsed) || other.collapsed == collapsed)&&(identical(other.sorting, sorting) || other.sorting == sorting)&&(identical(other.muted, muted) || other.muted == muted)&&const DeepCollectionEquality().equals(other.rows, _rows));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,title,kind,collapsed,const DeepCollectionEquality().hash(_rows));
+    return Object.hash(runtimeType,id,title,kind,collapsed,sorting,muted,const DeepCollectionEquality().hash(_rows));
 }
 
 @override
 String toString() {
-    return 'CategorySection(id: $id, title: $title, kind: $kind, collapsed: $collapsed, rows: $rows)';
+    return 'CategorySection(id: $id, title: $title, kind: $kind, collapsed: $collapsed, sorting: $sorting, muted: $muted, rows: $rows)';
 }
 
 
@@ -572,7 +576,7 @@ abstract mixin class _$CategorySectionCopyWith<$Res> implements $CategorySection
   factory _$CategorySectionCopyWith(_CategorySection value, $Res Function(_CategorySection) _then) = __$CategorySectionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, CategoryKind kind, bool collapsed, List<ChannelItem> rows
+ String id, String title, CategoryKind kind, bool collapsed, String sorting, bool muted, List<ChannelItem> rows
 });
 
 
@@ -589,12 +593,14 @@ class __$CategorySectionCopyWithImpl<$Res>
 
 /// Create a copy of CategorySection
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? kind = null,Object? collapsed = null,Object? rows = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? kind = null,Object? collapsed = null,Object? sorting = null,Object? muted = null,Object? rows = null,}) {
   return _then(_CategorySection(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as CategoryKind,collapsed: null == collapsed ? _self.collapsed : collapsed // ignore: cast_nullable_to_non_nullable
+as bool,sorting: null == sorting ? _self.sorting : sorting // ignore: cast_nullable_to_non_nullable
+as String,muted: null == muted ? _self.muted : muted // ignore: cast_nullable_to_non_nullable
 as bool,rows: null == rows ? _self._rows : rows // ignore: cast_nullable_to_non_nullable
 as List<ChannelItem>,
   ));
@@ -609,7 +615,7 @@ mixin _$ChannelList {
  String get teamName; List<CategorySection> get sections;/// Followed threads with unread replies; null when threads are not
 /// collapsed, so there is no Threads row.
  int? get unreadThreads; int get drafts;/// The team's channels were fetched at least once.
- bool get synced;
+ bool get synced; int get directLimit;
 /// Create a copy of ChannelList
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -621,20 +627,20 @@ $ChannelListCopyWith<ChannelList> get copyWith => _$ChannelListCopyWithImpl<Chan
 @override
 bool operator ==(Object other) {
   final _this = this as ChannelList;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChannelList&&(identical(other.teamName, _this.teamName) || other.teamName == _this.teamName)&&const DeepCollectionEquality().equals(other.sections, _this.sections)&&(identical(other.unreadThreads, _this.unreadThreads) || other.unreadThreads == _this.unreadThreads)&&(identical(other.drafts, _this.drafts) || other.drafts == _this.drafts)&&(identical(other.synced, _this.synced) || other.synced == _this.synced));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChannelList&&(identical(other.teamName, _this.teamName) || other.teamName == _this.teamName)&&const DeepCollectionEquality().equals(other.sections, _this.sections)&&(identical(other.unreadThreads, _this.unreadThreads) || other.unreadThreads == _this.unreadThreads)&&(identical(other.drafts, _this.drafts) || other.drafts == _this.drafts)&&(identical(other.synced, _this.synced) || other.synced == _this.synced)&&(identical(other.directLimit, _this.directLimit) || other.directLimit == _this.directLimit));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ChannelList;
-  return Object.hash(runtimeType,_this.teamName,const DeepCollectionEquality().hash(_this.sections),_this.unreadThreads,_this.drafts,_this.synced);
+  return Object.hash(runtimeType,_this.teamName,const DeepCollectionEquality().hash(_this.sections),_this.unreadThreads,_this.drafts,_this.synced,_this.directLimit);
 }
 
 @override
 String toString() {
   final _this = this as ChannelList;
-  return 'ChannelList(teamName: ${_this.teamName}, sections: ${_this.sections}, unreadThreads: ${_this.unreadThreads}, drafts: ${_this.drafts}, synced: ${_this.synced})';
+  return 'ChannelList(teamName: ${_this.teamName}, sections: ${_this.sections}, unreadThreads: ${_this.unreadThreads}, drafts: ${_this.drafts}, synced: ${_this.synced}, directLimit: ${_this.directLimit})';
 }
 
 
@@ -645,7 +651,7 @@ abstract mixin class $ChannelListCopyWith<$Res>  {
   factory $ChannelListCopyWith(ChannelList value, $Res Function(ChannelList) _then) = _$ChannelListCopyWithImpl;
 @useResult
 $Res call({
- String teamName, List<CategorySection> sections, int? unreadThreads, int drafts, bool synced
+ String teamName, List<CategorySection> sections, int? unreadThreads, int drafts, bool synced, int directLimit
 });
 
 
@@ -662,14 +668,15 @@ class _$ChannelListCopyWithImpl<$Res>
 
 /// Create a copy of ChannelList
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? teamName = null,Object? sections = null,Object? unreadThreads = freezed,Object? drafts = null,Object? synced = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? teamName = null,Object? sections = null,Object? unreadThreads = freezed,Object? drafts = null,Object? synced = null,Object? directLimit = null,}) {
   return _then(ChannelList(
 teamName: null == teamName ? _self.teamName : teamName // ignore: cast_nullable_to_non_nullable
 as String,sections: null == sections ? _self.sections : sections // ignore: cast_nullable_to_non_nullable
 as List<CategorySection>,unreadThreads: freezed == unreadThreads ? _self.unreadThreads : unreadThreads // ignore: cast_nullable_to_non_nullable
 as int?,drafts: null == drafts ? _self.drafts : drafts // ignore: cast_nullable_to_non_nullable
 as int,synced: null == synced ? _self.synced : synced // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,directLimit: null == directLimit ? _self.directLimit : directLimit // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -754,10 +761,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String teamName,  List<CategorySection> sections,  int? unreadThreads,  int drafts,  bool synced)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String teamName,  List<CategorySection> sections,  int? unreadThreads,  int drafts,  bool synced,  int directLimit)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChannelList() when $default != null:
-return $default(_that.teamName,_that.sections,_that.unreadThreads,_that.drafts,_that.synced);case _:
+return $default(_that.teamName,_that.sections,_that.unreadThreads,_that.drafts,_that.synced,_that.directLimit);case _:
   return orElse();
 
 }
@@ -775,10 +782,10 @@ return $default(_that.teamName,_that.sections,_that.unreadThreads,_that.drafts,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String teamName,  List<CategorySection> sections,  int? unreadThreads,  int drafts,  bool synced)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String teamName,  List<CategorySection> sections,  int? unreadThreads,  int drafts,  bool synced,  int directLimit)  $default,) {final _that = this;
 switch (_that) {
 case _ChannelList():
-return $default(_that.teamName,_that.sections,_that.unreadThreads,_that.drafts,_that.synced);case _:
+return $default(_that.teamName,_that.sections,_that.unreadThreads,_that.drafts,_that.synced,_that.directLimit);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -795,10 +802,10 @@ return $default(_that.teamName,_that.sections,_that.unreadThreads,_that.drafts,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String teamName,  List<CategorySection> sections,  int? unreadThreads,  int drafts,  bool synced)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String teamName,  List<CategorySection> sections,  int? unreadThreads,  int drafts,  bool synced,  int directLimit)?  $default,) {final _that = this;
 switch (_that) {
 case _ChannelList() when $default != null:
-return $default(_that.teamName,_that.sections,_that.unreadThreads,_that.drafts,_that.synced);case _:
+return $default(_that.teamName,_that.sections,_that.unreadThreads,_that.drafts,_that.synced,_that.directLimit);case _:
   return null;
 
 }
@@ -810,7 +817,7 @@ return $default(_that.teamName,_that.sections,_that.unreadThreads,_that.drafts,_
 
 
 class _ChannelList extends ChannelList {
-  const _ChannelList({required this.teamName, required  List<CategorySection> sections, required this.unreadThreads, required this.drafts, required this.synced}): _sections = sections,super._();
+  const _ChannelList({required this.teamName, required  List<CategorySection> sections, required this.unreadThreads, required this.drafts, required this.synced, this.directLimit = defaultDirectLimit}): _sections = sections,super._();
   
 
 @override final  String teamName;
@@ -827,6 +834,7 @@ class _ChannelList extends ChannelList {
 @override final  int drafts;
 /// The team's channels were fetched at least once.
 @override final  bool synced;
+@override@JsonKey() final  int directLimit;
 
 /// Create a copy of ChannelList
 /// with the given fields replaced by the non-null parameter values.
@@ -838,18 +846,18 @@ _$ChannelListCopyWith<_ChannelList> get copyWith => __$ChannelListCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChannelList&&(identical(other.teamName, teamName) || other.teamName == teamName)&&const DeepCollectionEquality().equals(other.sections, _sections)&&(identical(other.unreadThreads, unreadThreads) || other.unreadThreads == unreadThreads)&&(identical(other.drafts, drafts) || other.drafts == drafts)&&(identical(other.synced, synced) || other.synced == synced));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChannelList&&(identical(other.teamName, teamName) || other.teamName == teamName)&&const DeepCollectionEquality().equals(other.sections, _sections)&&(identical(other.unreadThreads, unreadThreads) || other.unreadThreads == unreadThreads)&&(identical(other.drafts, drafts) || other.drafts == drafts)&&(identical(other.synced, synced) || other.synced == synced)&&(identical(other.directLimit, directLimit) || other.directLimit == directLimit));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,teamName,const DeepCollectionEquality().hash(_sections),unreadThreads,drafts,synced);
+    return Object.hash(runtimeType,teamName,const DeepCollectionEquality().hash(_sections),unreadThreads,drafts,synced,directLimit);
 }
 
 @override
 String toString() {
-    return 'ChannelList(teamName: $teamName, sections: $sections, unreadThreads: $unreadThreads, drafts: $drafts, synced: $synced)';
+    return 'ChannelList(teamName: $teamName, sections: $sections, unreadThreads: $unreadThreads, drafts: $drafts, synced: $synced, directLimit: $directLimit)';
 }
 
 
@@ -860,7 +868,7 @@ abstract mixin class _$ChannelListCopyWith<$Res> implements $ChannelListCopyWith
   factory _$ChannelListCopyWith(_ChannelList value, $Res Function(_ChannelList) _then) = __$ChannelListCopyWithImpl;
 @override @useResult
 $Res call({
- String teamName, List<CategorySection> sections, int? unreadThreads, int drafts, bool synced
+ String teamName, List<CategorySection> sections, int? unreadThreads, int drafts, bool synced, int directLimit
 });
 
 
@@ -877,14 +885,15 @@ class __$ChannelListCopyWithImpl<$Res>
 
 /// Create a copy of ChannelList
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? teamName = null,Object? sections = null,Object? unreadThreads = freezed,Object? drafts = null,Object? synced = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? teamName = null,Object? sections = null,Object? unreadThreads = freezed,Object? drafts = null,Object? synced = null,Object? directLimit = null,}) {
   return _then(_ChannelList(
 teamName: null == teamName ? _self.teamName : teamName // ignore: cast_nullable_to_non_nullable
 as String,sections: null == sections ? _self._sections : sections // ignore: cast_nullable_to_non_nullable
 as List<CategorySection>,unreadThreads: freezed == unreadThreads ? _self.unreadThreads : unreadThreads // ignore: cast_nullable_to_non_nullable
 as int?,drafts: null == drafts ? _self.drafts : drafts // ignore: cast_nullable_to_non_nullable
 as int,synced: null == synced ? _self.synced : synced // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,directLimit: null == directLimit ? _self.directLimit : directLimit // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
