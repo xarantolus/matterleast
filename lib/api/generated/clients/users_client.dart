@@ -15,9 +15,11 @@ import '../models/api_v4_users_password_reset_send_request_body.dart';
 import '../models/api_v4_users_request_body.dart';
 import '../models/api_v4_users_search_request_body.dart';
 import '../models/api_v4_users_sessions_device_request_body.dart';
+import '../models/api_v4_users_user_id_mfa_request_body.dart';
 import '../models/api_v4_users_user_id_password_request_body.dart';
 import '../models/api_v4_users_user_id_patch_request_body.dart';
 import '../models/api_v4_users_user_id_request_body.dart';
+import '../models/api_v4_users_user_id_sessions_revoke_request_body.dart';
 import '../models/api_v4_users_user_id_terms_of_service_request_body.dart';
 import '../models/channel_member_with_team_data.dart';
 import '../models/draft.dart';
@@ -26,6 +28,7 @@ import '../models/get_api_v4_users_sessions_attributes_manifest_response.dart';
 import '../models/post_api_v4_users_group_channels_response.dart';
 import '../models/post_api_v4_users_login_sso_code_exchange_response.dart';
 import '../models/post_api_v4_users_login_type_response.dart';
+import '../models/post_api_v4_users_user_id_mfa_generate_response.dart';
 import '../models/session.dart';
 import '../models/status_ok.dart';
 import '../models/user.dart';
@@ -150,6 +153,17 @@ abstract class UsersClient {
   @GET('/api/v4/users/username/{username}')
   Future<User> getUserByUsername({@Path('username') required String username});
 
+  @PUT('/api/v4/users/{user_id}/mfa')
+  Future<StatusOk> updateUserMfa({
+    @Path('user_id') required String userId,
+    @Body() required ApiV4UsersUserIdMfaRequestBody body,
+  });
+
+  @POST('/api/v4/users/{user_id}/mfa/generate')
+  Future<PostApiV4UsersUserIdMfaGenerateResponse> generateMfaSecret({
+    @Path('user_id') required String userId,
+  });
+
   @POST('/api/v4/users/{user_id}/demote')
   Future<StatusOk> demoteUserToGuest({@Path('user_id') required String userId});
 
@@ -169,6 +183,12 @@ abstract class UsersClient {
 
   @GET('/api/v4/users/{user_id}/sessions')
   Future<List<Session>> getSessions({@Path('user_id') required String userId});
+
+  @POST('/api/v4/users/{user_id}/sessions/revoke')
+  Future<StatusOk> revokeSession({
+    @Path('user_id') required String userId,
+    @Body() required ApiV4UsersUserIdSessionsRevokeRequestBody body,
+  });
 
   @PUT('/api/v4/users/sessions/device')
   Future<StatusOk> attachDeviceExtraProps({

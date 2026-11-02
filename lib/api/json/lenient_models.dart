@@ -53,10 +53,12 @@ import 'package:matterleast/api/generated/models/api_v4_users_request_body.dart'
 import 'package:matterleast/api/generated/models/api_v4_users_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_sessions_device_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_custom_profile_attributes_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_users_user_id_mfa_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_password_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_patch_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_posts_post_id_set_unread_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_users_user_id_sessions_revoke_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_status_custom_recent_delete_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_status_custom_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_users_user_id_status_request_body.dart';
@@ -108,6 +110,7 @@ import 'package:matterleast/api/generated/models/post_api_v4_remotecluster_respo
 import 'package:matterleast/api/generated/models/post_api_v4_users_group_channels_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_users_login_sso_code_exchange_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_users_login_type_response.dart';
+import 'package:matterleast/api/generated/models/post_api_v4_users_user_id_mfa_generate_response.dart';
 import 'package:matterleast/api/generated/models/post_info.dart';
 import 'package:matterleast/api/generated/models/post_list.dart';
 import 'package:matterleast/api/generated/models/post_list_with_search_matches.dart';
@@ -3037,6 +3040,53 @@ class LenientMapOfApiV4UsersUserIdCustomProfileAttributesRequestBody
   ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
+class LenientApiV4UsersUserIdMfaRequestBody
+    implements JsonConverter<ApiV4UsersUserIdMfaRequestBody?, Object?> {
+  const LenientApiV4UsersUserIdMfaRequestBody();
+  @override
+  ApiV4UsersUserIdMfaRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, ApiV4UsersUserIdMfaRequestBody.fromJson)
+      : null;
+  @override
+  Object? toJson(ApiV4UsersUserIdMfaRequestBody? object) => object?.toJson();
+}
+
+class LenientListOfApiV4UsersUserIdMfaRequestBody
+    implements JsonConverter<List<ApiV4UsersUserIdMfaRequestBody>, Object?> {
+  const LenientListOfApiV4UsersUserIdMfaRequestBody();
+  @override
+  List<ApiV4UsersUserIdMfaRequestBody> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4UsersUserIdMfaRequestBody.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4UsersUserIdMfaRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4UsersUserIdMfaRequestBody
+    implements
+        JsonConverter<Map<String, ApiV4UsersUserIdMfaRequestBody>?, Object?> {
+  const LenientMapOfApiV4UsersUserIdMfaRequestBody();
+  @override
+  Map<String, ApiV4UsersUserIdMfaRequestBody>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, ApiV4UsersUserIdMfaRequestBody.fromJson),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, ApiV4UsersUserIdMfaRequestBody>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
 class LenientApiV4UsersUserIdPasswordRequestBody
     implements JsonConverter<ApiV4UsersUserIdPasswordRequestBody?, Object?> {
   const LenientApiV4UsersUserIdPasswordRequestBody();
@@ -3260,6 +3310,71 @@ class LenientMapOfApiV4UsersUserIdRequestBody
   @override
   Object? toJson(Map<String, ApiV4UsersUserIdRequestBody>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4UsersUserIdSessionsRevokeRequestBody
+    implements
+        JsonConverter<ApiV4UsersUserIdSessionsRevokeRequestBody?, Object?> {
+  const LenientApiV4UsersUserIdSessionsRevokeRequestBody();
+  @override
+  ApiV4UsersUserIdSessionsRevokeRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, ApiV4UsersUserIdSessionsRevokeRequestBody.fromJson)
+      : null;
+  @override
+  Object? toJson(ApiV4UsersUserIdSessionsRevokeRequestBody? object) =>
+      object?.toJson();
+}
+
+class LenientListOfApiV4UsersUserIdSessionsRevokeRequestBody
+    implements
+        JsonConverter<
+          List<ApiV4UsersUserIdSessionsRevokeRequestBody>,
+          Object?
+        > {
+  const LenientListOfApiV4UsersUserIdSessionsRevokeRequestBody();
+  @override
+  List<ApiV4UsersUserIdSessionsRevokeRequestBody> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                ApiV4UsersUserIdSessionsRevokeRequestBody.fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4UsersUserIdSessionsRevokeRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4UsersUserIdSessionsRevokeRequestBody
+    implements
+        JsonConverter<
+          Map<String, ApiV4UsersUserIdSessionsRevokeRequestBody>?,
+          Object?
+        > {
+  const LenientMapOfApiV4UsersUserIdSessionsRevokeRequestBody();
+  @override
+  Map<String, ApiV4UsersUserIdSessionsRevokeRequestBody>? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4UsersUserIdSessionsRevokeRequestBody.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, ApiV4UsersUserIdSessionsRevokeRequestBody>? object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientApiV4UsersUserIdStatusCustomRecentDeleteRequestBody
@@ -5720,6 +5835,68 @@ class LenientMapOfPostApiV4UsersLoginTypeResponse
   @override
   Object? toJson(Map<String, PostApiV4UsersLoginTypeResponse>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientPostApiV4UsersUserIdMfaGenerateResponse
+    implements
+        JsonConverter<PostApiV4UsersUserIdMfaGenerateResponse?, Object?> {
+  const LenientPostApiV4UsersUserIdMfaGenerateResponse();
+  @override
+  PostApiV4UsersUserIdMfaGenerateResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, PostApiV4UsersUserIdMfaGenerateResponse.fromJson)
+      : null;
+  @override
+  Object? toJson(PostApiV4UsersUserIdMfaGenerateResponse? object) =>
+      object?.toJson();
+}
+
+class LenientListOfPostApiV4UsersUserIdMfaGenerateResponse
+    implements
+        JsonConverter<List<PostApiV4UsersUserIdMfaGenerateResponse>, Object?> {
+  const LenientListOfPostApiV4UsersUserIdMfaGenerateResponse();
+  @override
+  List<PostApiV4UsersUserIdMfaGenerateResponse> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                PostApiV4UsersUserIdMfaGenerateResponse.fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<PostApiV4UsersUserIdMfaGenerateResponse> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfPostApiV4UsersUserIdMfaGenerateResponse
+    implements
+        JsonConverter<
+          Map<String, PostApiV4UsersUserIdMfaGenerateResponse>?,
+          Object?
+        > {
+  const LenientMapOfPostApiV4UsersUserIdMfaGenerateResponse();
+  @override
+  Map<String, PostApiV4UsersUserIdMfaGenerateResponse>? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PostApiV4UsersUserIdMfaGenerateResponse.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, PostApiV4UsersUserIdMfaGenerateResponse>? object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientPostInfo implements JsonConverter<PostInfo?, Object?> {
