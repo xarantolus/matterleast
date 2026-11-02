@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/actions/emoji_actions.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
+import 'package:matterleast/data/views/permission_views.dart';
+import 'package:matterleast/domain/emoji_rules.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'emoji_providers.g.dart';
@@ -44,3 +47,22 @@ Future<void> customEmojiCatalog(Ref ref, String url) async {
   final resolver = await ref.watch(customEmojiResolverProvider(url).future);
   await resolver.loadAll();
 }
+
+/// What the user may do with custom emoji; nothing when the server has
+/// them off.
+@riverpod
+Stream<EmojiRights> emojiRightsOn(Ref ref, String url) async* {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  yield* PermissionViews(session.db).watchEmoji();
+}
+
+/// The stored custom emoji by name, with what the user may do to each.
+@riverpod
+Stream<List<EmojiEntry>> emojiEntries(Ref ref, String url) async* {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  yield* watchEmojiEntries(session.store);
+}
+
+@Riverpod(keepAlive: true)
+Future<EmojiActions> emojiActionsOn(Ref ref, String url) async =>
+    (await ref.watch(serverSessionProvider(url).future)).emojiActions;

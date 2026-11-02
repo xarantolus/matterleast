@@ -423,3 +423,251 @@ final class CustomEmojiCatalogFamily extends $Family
   @override
   String toString() => r'customEmojiCatalogProvider';
 }
+
+/// What the user may do with custom emoji; nothing when the server has
+/// them off.
+
+@ProviderFor(emojiRightsOn)
+final emojiRightsOnProvider = EmojiRightsOnFamily._();
+
+/// What the user may do with custom emoji; nothing when the server has
+/// them off.
+
+final class EmojiRightsOnProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<EmojiRights>,
+          EmojiRights,
+          Stream<EmojiRights>
+        >
+    with $FutureModifier<EmojiRights>, $StreamProvider<EmojiRights> {
+  /// What the user may do with custom emoji; nothing when the server has
+  /// them off.
+  EmojiRightsOnProvider._({
+    required EmojiRightsOnFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'emojiRightsOnProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$emojiRightsOnHash();
+
+  @override
+  String toString() {
+    return r'emojiRightsOnProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<EmojiRights> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<EmojiRights> create(Ref ref) {
+    final argument = this.argument as String;
+    return emojiRightsOn(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EmojiRightsOnProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$emojiRightsOnHash() => r'27fb40e3f0f2053048e13b60a4720190096798e9';
+
+/// What the user may do with custom emoji; nothing when the server has
+/// them off.
+
+final class EmojiRightsOnFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<EmojiRights>, String> {
+  EmojiRightsOnFamily._()
+    : super(
+        retry: null,
+        name: r'emojiRightsOnProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// What the user may do with custom emoji; nothing when the server has
+  /// them off.
+
+  EmojiRightsOnProvider call(String url) =>
+      EmojiRightsOnProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'emojiRightsOnProvider';
+}
+
+/// The stored custom emoji by name, with what the user may do to each.
+
+@ProviderFor(emojiEntries)
+final emojiEntriesProvider = EmojiEntriesFamily._();
+
+/// The stored custom emoji by name, with what the user may do to each.
+
+final class EmojiEntriesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<EmojiEntry>>,
+          List<EmojiEntry>,
+          Stream<List<EmojiEntry>>
+        >
+    with $FutureModifier<List<EmojiEntry>>, $StreamProvider<List<EmojiEntry>> {
+  /// The stored custom emoji by name, with what the user may do to each.
+  EmojiEntriesProvider._({
+    required EmojiEntriesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'emojiEntriesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$emojiEntriesHash();
+
+  @override
+  String toString() {
+    return r'emojiEntriesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<EmojiEntry>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<EmojiEntry>> create(Ref ref) {
+    final argument = this.argument as String;
+    return emojiEntries(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EmojiEntriesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$emojiEntriesHash() => r'163de28c79be90112505368bba9e56662a10bd24';
+
+/// The stored custom emoji by name, with what the user may do to each.
+
+final class EmojiEntriesFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<EmojiEntry>>, String> {
+  EmojiEntriesFamily._()
+    : super(
+        retry: null,
+        name: r'emojiEntriesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The stored custom emoji by name, with what the user may do to each.
+
+  EmojiEntriesProvider call(String url) =>
+      EmojiEntriesProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'emojiEntriesProvider';
+}
+
+@ProviderFor(emojiActionsOn)
+final emojiActionsOnProvider = EmojiActionsOnFamily._();
+
+final class EmojiActionsOnProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<EmojiActions>,
+          EmojiActions,
+          FutureOr<EmojiActions>
+        >
+    with $FutureModifier<EmojiActions>, $FutureProvider<EmojiActions> {
+  EmojiActionsOnProvider._({
+    required EmojiActionsOnFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'emojiActionsOnProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$emojiActionsOnHash();
+
+  @override
+  String toString() {
+    return r'emojiActionsOnProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<EmojiActions> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<EmojiActions> create(Ref ref) {
+    final argument = this.argument as String;
+    return emojiActionsOn(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EmojiActionsOnProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$emojiActionsOnHash() => r'd99432602529b63add2a7dbabfea3d7ac46f555f';
+
+final class EmojiActionsOnFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<EmojiActions>, String> {
+  EmojiActionsOnFamily._()
+    : super(
+        retry: null,
+        name: r'emojiActionsOnProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  EmojiActionsOnProvider call(String url) =>
+      EmojiActionsOnProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'emojiActionsOnProvider';
+}

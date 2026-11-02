@@ -2,13 +2,17 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
+import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/data/views/permission_views.dart';
+import 'package:matterleast/domain/emoji_rules.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/log.dart';
 
@@ -31,6 +35,46 @@ Stream<String?> watchEmojiCreator(ServerStore store, String name) {
       .watch()
       .map((rows) => rows.firstOrNull?.creatorId)
       .distinct();
+}
+
+/// One stored custom emoji for the list, with whether the user may delete it.
+typedef EmojiEntry = ({
+  String id,
+  String name,
+  String creatorId,
+  bool canDelete,
+});
+
+/// Every stored custom emoji by name, as the user may treat each.
+Stream<List<EmojiEntry>> watchEmojiEntries(ServerStore store) {
+  final db = store.db;
+  return throttledWatch(
+    db.tableUpdates(
+      TableUpdateQuery.onAllTables([
+        db.customEmoji,
+        db.roles,
+        db.syncState,
+        db.config,
+      ]),
+    ),
+    () async {
+      final rights = await PermissionViews(db).emoji();
+      final me = await db.syncText(SyncKeys.currentUserId);
+      final rows = await (db.select(
+        db.customEmoji,
+      )..orderBy([(e) => OrderingTerm.asc(e.name)])).get();
+      return [
+        for (final r in rows)
+          (
+            id: r.id,
+            name: r.name,
+            creatorId: r.creatorId,
+            canDelete: mayDeleteEmoji(rights, creatorId: r.creatorId, me: me),
+          ),
+      ];
+    },
+    interval: const Duration(milliseconds: 300),
+  ).distinct(listEquals);
 }
 
 bool _sameMap(Map<String, String> a, Map<String, String> b) =>

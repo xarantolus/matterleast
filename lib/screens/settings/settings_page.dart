@@ -4,6 +4,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/settings/account_providers.dart';
 import 'package:matterleast/screens/settings/advanced_settings_page.dart';
+import 'package:matterleast/screens/settings/custom_emoji_page.dart';
 import 'package:matterleast/screens/settings/display_settings_page.dart';
 import 'package:matterleast/screens/settings/notification_settings_page.dart';
 import 'package:matterleast/screens/settings/sessions_page.dart';
@@ -31,6 +32,9 @@ class SettingsPage extends ConsumerWidget {
     final mfa =
         server != null &&
         (ref.watch(mfaAvailableProvider(server.url)).value ?? false);
+    final customEmoji =
+        server != null &&
+        (ref.watch(featuresProvider(server.url)).value?.customEmoji ?? false);
     void push(Widget page) => openPage(Navigator.of(context), page);
     return ContentPage(
       title: const Text('Settings'),
@@ -63,6 +67,13 @@ class SettingsPage extends ConsumerWidget {
               title: const Text('Two-factor authentication'),
               subtitle: const Text('A code from an app when you sign in'),
               onTap: () => push(TwoFactorPage(server: server)),
+            ),
+          if (server != null && customEmoji)
+            ListTile(
+              leading: const Icon(Icons.add_reaction_outlined),
+              title: const Text('Custom emoji'),
+              subtitle: const Text("Browse, add and delete the server's emoji"),
+              onTap: () => push(CustomEmojiPage(server: server)),
             ),
           ListTile(
             leading: const Icon(Icons.storage_outlined),

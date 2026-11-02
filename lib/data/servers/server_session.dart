@@ -11,6 +11,7 @@ import 'package:matterleast/data/actions/bookmark_actions.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/content_flagging.dart';
+import 'package:matterleast/data/actions/emoji_actions.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
 import 'package:matterleast/data/actions/profile_actions.dart';
 import 'package:matterleast/data/actions/settings_actions.dart';
@@ -114,6 +115,7 @@ class ServerSession {
   late final bookmarks = BookmarkActions(this);
   late final attributes = AttributeActions(this);
   late final account = AccountActions(this);
+  late final emojiActions = EmojiActions(this);
 
   /// A socket that connects again means the server is reachable again.
   void _onSocketState() {
