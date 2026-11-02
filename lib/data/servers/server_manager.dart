@@ -221,6 +221,9 @@ class ServerManager {
     if (_foreground) session.connection.foreground();
   }
 
+  /// Shows the servers at [urls] in that order in the rail.
+  Future<void> reorderServers(List<String> urls) => _db.setServerOrder(urls);
+
   Future<int> _nextSortOrder() async {
     final all = await _db.allServers();
     return all.isEmpty
