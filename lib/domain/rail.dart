@@ -40,6 +40,31 @@ String? shownTeam(RailTarget? target, List<RailTeam> teams) {
   return teams.first.id;
 }
 
+/// The selection once the server's teams changed from [before] to [after]:
+/// a team that went away passes to the one that followed it, else the one
+/// before it, and to Home (null) when no team is left. While no teams are
+/// known yet nothing changes.
+RailTarget? settledSelection(
+  RailTarget? selected, {
+  required List<RailTeam>? before,
+  required List<RailTeam> after,
+}) {
+  final gone = selected?.teamId;
+  if (selected == null || gone == null) return selected;
+  final known = before ?? const <RailTeam>[];
+  if (after.isEmpty) return known.isEmpty ? selected : null;
+  if (after.any((t) => t.id == gone)) return selected;
+  final at = known.indexWhere((t) => t.id == gone);
+  final kept = {for (final t in after) t.id};
+  final following = at < 0 ? const <RailTeam>[] : known.sublist(at + 1);
+  final preceding = at < 0 ? const <RailTeam>[] : known.sublist(0, at);
+  final next =
+      following.where((t) => kept.contains(t.id)).firstOrNull ??
+      preceding.where((t) => kept.contains(t.id)).lastOrNull ??
+      after.first;
+  return RailTarget(url: selected.url, teamId: next.id);
+}
+
 /// What the rail shows for [selected]: Home when its server isn't signed in, else its shown team.
 RailTarget? shownPlace(
   RailTarget? selected, {

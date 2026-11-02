@@ -55,6 +55,20 @@ class AppDatabase extends _$AppDatabase {
   Future<List<ServerRow>> allServers() =>
       (select(servers)..orderBy([(s) => OrderingTerm.asc(s.sortOrder)])).get();
 
+  /// Puts the servers at [urls] first, in that order; the others follow in
+  /// their old order.
+  Future<void> setServerOrder(List<String> urls) => transaction(() async {
+    final rest = [
+      for (final s in await allServers())
+        if (!urls.contains(s.url)) s.url,
+    ];
+    for (final (i, url) in [...urls, ...rest].indexed) {
+      await (update(servers)..where((s) => s.url.equals(url))).write(
+        ServersCompanion(sortOrder: Value(i)),
+      );
+    }
+  });
+
   Future<ServerRow?> serverByUrl(String url) =>
       (select(servers)..where((s) => s.url.equals(url))).getSingleOrNull();
 

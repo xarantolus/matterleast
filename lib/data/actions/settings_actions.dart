@@ -4,8 +4,9 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/rail_order.dart';
 
-/// The user's account settings on one server. Each save goes to the server
+/// The user's account settings on one server. A save goes to the server
 /// first, so a refusal leaves everything as it was and the error reaches
 /// the screen.
 class SettingsActions {
@@ -69,6 +70,33 @@ class SettingsActions {
     );
     if (await session.store.applyPreferencesCheckingThreads([preference])) {
       session.connection.refreshAll();
+    }
+  }
+
+  /// Saves the order of the user's teams, shown at once and put back when
+  /// the server refuses.
+  Future<void> saveTeamsOrder(List<String> teamIds) async {
+    final me = await _me();
+    final key = Prefs.teamsOrder;
+    final before = await session.db.preference(key.$1, key.$2);
+    api.Preference preference(String value) => api.Preference(
+      userId: me,
+      category: key.$1,
+      name: key.$2,
+      value: value,
+    );
+    final next = preference(teamsOrderValue(teamIds));
+    await session.store.applyPreferences([next]);
+    try {
+      await session.api.call(
+        () => session.api.client.preferences.updatePreferences(
+          userId: me,
+          body: [next],
+        ),
+      );
+    } on Object {
+      await session.store.applyPreferences([preference(before ?? '')]);
+      rethrow;
     }
   }
 

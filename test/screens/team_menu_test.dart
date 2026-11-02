@@ -173,4 +173,35 @@ void main() {
     expect(find.text('Mark all as read'), findsNothing);
     await h.close(tester);
   });
+
+  testWidgets('cancelling Leave sends nothing and keeps the team', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.tap(find.text('Leave Harbour'));
+    await h.settle(tester, rounds: 5);
+    expect(find.text('Leave Harbour?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await h.settle(tester, rounds: 10);
+    expect(h.server.seen.where((r) => r.method == 'DELETE'), isEmpty);
+    await h.close(tester);
+  });
+
+  testWidgets('confirming Leave asks the server to remove the user', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.tap(find.text('Leave Harbour'));
+    await h.settle(tester, rounds: 5);
+    await tester.tap(find.widgetWithText(TextButton, 'Leave'));
+    await h.settle(tester, rounds: 20);
+    expect(
+      h.server.seen.where(
+        (r) =>
+            r.method == 'DELETE' && r.path.contains('/teams/$teamId/members'),
+      ),
+      hasLength(1),
+    );
+    await h.close(tester);
+  });
 }

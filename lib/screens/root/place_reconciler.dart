@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart'
-    show ProviderSubscription;
+    show AsyncValue, ProviderSubscription;
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/open_channel.dart';
@@ -60,7 +60,29 @@ class PlaceReconciler {
     _teamsOf = url;
     _teams = url == null
         ? null
-        : _ref.listen(railTeamsProvider(url), (_, _) => _check());
+        : _ref.listen<AsyncValue<List<RailTeam>>>(
+            railTeamsProvider(url),
+            _teamsChanged,
+          );
+  }
+
+  void _teamsChanged(
+    AsyncValue<List<RailTeam>>? before,
+    AsyncValue<List<RailTeam>> after,
+  ) {
+    _settle(before?.value, after.value);
+    _check();
+  }
+
+  // A team the user lost passes the selection on, so what is saved and
+  // restored never names it.
+  void _settle(List<RailTeam>? before, List<RailTeam>? after) {
+    if (after == null) return;
+    final selected = _ref.read(railSelectionProvider);
+    final settled = settledSelection(selected, before: before, after: after);
+    if (settled != selected) {
+      _ref.read(railSelectionProvider.notifier).select(settled);
+    }
   }
 
   void _check() {

@@ -13,6 +13,7 @@ import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -23,7 +24,10 @@ import 'test_session.dart';
 
 /// A fake server and a seeded session behind a widget under test.
 class ServerHarness {
-  ServerHarness(this.server, this.session);
+  ServerHarness(this.server, this.session, {this.platform});
+
+  /// Reset when the harness closes, before the test's checks.
+  final TargetPlatform? platform;
 
   final FakeServer server;
   final ServerSession session;
@@ -44,6 +48,7 @@ class ServerHarness {
   /// Unmounts the widget and closes the server and session. Call it last in
   /// the test body: pending timers are checked before tear-downs run.
   Future<void> close(WidgetTester tester) async {
+    if (platform != null) debugDefaultTargetPlatformOverride = null;
     await tester.pumpWidget(const SizedBox());
     // Closing the database in the same frame as the unmount hangs.
     await settle(tester);
@@ -57,7 +62,8 @@ class ServerHarness {
 /// Starts [handle] as the server, opens a [testSession] on it, runs [seed]
 /// on that session, and pumps [home] inside providers that serve it (plus
 /// [overrides], which know the server's url), with image caches and file
-/// [downloads] left pending unless given. [size] and [platform] are reset afterwards.
+/// [downloads] left pending unless given; [appDatabase] replaces the empty
+/// app database. [size] and [platform] are reset afterwards.
 Future<ServerHarness> pumpWithServer(
   WidgetTester tester, {
   required Widget Function(String url) home,
@@ -65,6 +71,7 @@ Future<ServerHarness> pumpWithServer(
   Future<void> Function(ServerSession session)? seed,
   List<Override> Function(String url)? overrides,
   FileDownloads? downloads,
+  AppDatabase? appDatabase,
   Size? size,
   TargetPlatform? platform,
   bool settle = true,
@@ -84,11 +91,11 @@ Future<ServerHarness> pumpWithServer(
     server.handle = handle ?? (_) => ok(const <String, Object?>{});
     final session = await testSession(server);
     await seed?.call(session);
-    return ServerHarness(server, session);
+    return ServerHarness(server, session, platform: platform);
   }))!;
   final url = harness.url;
-  final appDb = memoryAppDatabase();
-  addTearDown(appDb.close);
+  final appDb = appDatabase ?? memoryAppDatabase();
+  if (appDatabase == null) addTearDown(appDb.close);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
