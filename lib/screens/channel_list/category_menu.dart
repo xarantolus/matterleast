@@ -179,7 +179,11 @@ Future<void> _chooseSorting(
     anchor: anchor,
     title: 'Sort ${section.title}',
     current: current,
-    options: _sortings,
+    options: [
+      for (final s in _sortings)
+        // Direct messages have no manual order in Mattermost.
+        if (section.kind != CategoryKind.directMessages || s.$1 != 'manual') s,
+    ],
   );
   if (picked == null || picked == current || !context.mounted) return;
   await runCategoryAction(

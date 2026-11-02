@@ -122,6 +122,14 @@ void main() {
     await h.close(tester);
   });
 
+  testWidgets('direct messages sort only by name or activity', (tester) async {
+    await open(tester, section(CategoryKind.directMessages));
+    await tapText(tester, 'Sort');
+    expect(find.text('Recent activity'), findsOneWidget);
+    expect(find.text('Manually'), findsNothing);
+    await h.close(tester);
+  });
+
   testWidgets('favorites can be sorted but not muted', (tester) async {
     await open(tester, section(CategoryKind.favorites));
     expect(find.text('Sort'), findsOneWidget);
