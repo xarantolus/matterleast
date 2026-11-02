@@ -62,11 +62,11 @@ const desktopPickerSize = Size(360, 420);
 const _recent = 'recent';
 const _custom = 'custom';
 
-/// The picker's sections in order: the server's own emoji first, then the
-/// recent ones, then the standard categories.
+/// The picker's sections in order: the recent ones first, then the
+/// server's own emoji, then the standard categories.
 const _categories = <String, (String, IconData)>{
-  _custom: ('Custom', Icons.auto_awesome_outlined),
   _recent: ('Recent', Icons.schedule),
+  _custom: ('Custom', Icons.auto_awesome_outlined),
   'smileys-emotion': ('Smileys and emotion', Icons.emoji_emotions_outlined),
   'people-body': ('People and body', Icons.emoji_people),
   'animals-nature': ('Animals and nature', Icons.emoji_nature),

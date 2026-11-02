@@ -10,11 +10,11 @@ import 'package:matterleast/ui/emoji_picker.dart';
 const _url = 'https://chat.example.test';
 
 void main() {
-  test('custom emoji come first, then recent, then the standard ones', () {
+  test('recent emoji come first, then custom, then the standard ones', () {
     final sections = emojiSections(recent: ['smile'], custom: ['partyblob']);
     expect([for (final s in sections) s.category].take(4), [
-      'custom',
       'recent',
+      'custom',
       'smileys-emotion',
       'people-body',
     ]);
