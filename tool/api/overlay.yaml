@@ -353,3 +353,16 @@ actions:
     update:
       member_count: {type: integer}
       allow_reference: {type: boolean}
+  # --- terms of service answer: the server reads `termsOfServiceId` and a boolean `accepted` (api4/user.go) ---
+  - target: "$.paths['/api/v4/users/{user_id}/terms_of_service'].post.requestBody.content"
+    remove: true
+  - target: "$.paths['/api/v4/users/{user_id}/terms_of_service'].post.requestBody"
+    update:
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [termsOfServiceId, accepted]
+            properties:
+              termsOfServiceId: {type: string}
+              accepted: {type: boolean}

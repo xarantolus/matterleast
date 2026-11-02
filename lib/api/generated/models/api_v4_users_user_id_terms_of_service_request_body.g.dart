@@ -10,13 +10,13 @@ ApiV4UsersUserIdTermsOfServiceRequestBody
 _$ApiV4UsersUserIdTermsOfServiceRequestBodyFromJson(
   Map<String, dynamic> json,
 ) => ApiV4UsersUserIdTermsOfServiceRequestBody(
-  serviceTermsId: json['serviceTermsId'] as String,
-  accepted: json['accepted'] as String,
+  termsOfServiceId: json['termsOfServiceId'] as String,
+  accepted: json['accepted'] as bool,
 );
 
 Map<String, dynamic> _$ApiV4UsersUserIdTermsOfServiceRequestBodyToJson(
   ApiV4UsersUserIdTermsOfServiceRequestBody instance,
 ) => <String, dynamic>{
-  'serviceTermsId': instance.serviceTermsId,
+  'termsOfServiceId': instance.termsOfServiceId,
   'accepted': instance.accepted,
 };
