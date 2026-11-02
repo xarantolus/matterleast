@@ -13,6 +13,7 @@ import '../models/api_v4_channels_channel_id_members_user_id_scheme_roles_reques
 import '../models/api_v4_channels_channel_id_patch_request_body.dart';
 import '../models/api_v4_channels_channel_id_privacy_request_body.dart';
 import '../models/api_v4_channels_channel_id_request_body.dart';
+import '../models/api_v4_channels_group_search_request_body.dart';
 import '../models/api_v4_channels_members_user_id_view_request_body.dart';
 import '../models/api_v4_channels_request_body.dart';
 import '../models/api_v4_channels_search_request_body.dart';
@@ -23,9 +24,11 @@ import '../models/channel_member.dart';
 import '../models/channel_notify_props.dart';
 import '../models/channel_stats.dart';
 import '../models/ordered_sidebar_categories.dart';
+import '../models/post_api_v4_channels_members_user_id_mark_read_response.dart';
 import '../models/post_api_v4_channels_members_user_id_view_response.dart';
 import '../models/post_api_v4_channels_search_response.dart';
 import '../models/post_list.dart';
+import '../models/put_api_v4_users_user_id_teams_team_id_read_response.dart';
 import '../models/sidebar_category.dart';
 import '../models/sidebar_category_with_channels.dart';
 import '../models/status_ok.dart';
@@ -36,6 +39,12 @@ part 'channels_client.g.dart';
 @RestApi()
 abstract class ChannelsClient {
   factory ChannelsClient(Dio dio, {String? baseUrl}) = _ChannelsClient;
+
+  @PUT('/api/v4/users/{user_id}/teams/{team_id}/read')
+  Future<PutApiV4UsersUserIdTeamsTeamIdReadResponse> markAllTeamChannelsRead({
+    @Path('user_id') required String userId,
+    @Path('team_id') required String teamId,
+  });
 
   @GET('/api/v4/channels')
   Future<ChannelListWithTeamData> getAllChannels({
@@ -63,6 +72,11 @@ abstract class ChannelsClient {
   Future<PostApiV4ChannelsSearchResponse> searchAllChannels({
     @Body() required ApiV4ChannelsSearchRequestBody body,
     @Query('system_console') bool? systemConsole = true,
+  });
+
+  @POST('/api/v4/channels/group/search')
+  Future<List<Channel>> searchGroupChannels({
+    @Body() required ApiV4ChannelsGroupSearchRequestBody body,
   });
 
   @GET('/api/v4/channels/{channel_id}/timezones')
@@ -222,6 +236,13 @@ abstract class ChannelsClient {
     @Path('user_id') required String userId,
     @Body()
     required ApiV4ChannelsChannelIdMembersUserIdAutotranslationRequestBody body,
+  });
+
+  @POST('/api/v4/channels/members/{user_id}/mark_read')
+  Future<PostApiV4ChannelsMembersUserIdMarkReadResponse>
+  markChannelsReadForUser({
+    @Path('user_id') required String userId,
+    @Body() required List<String> body,
   });
 
   @POST('/api/v4/channels/members/{user_id}/view')

@@ -146,6 +146,14 @@ class ChannelViews {
       canEdit: rights.edit,
       canArchive: rights.archive,
       canManageMembers: rights.manageMembers,
+      canManageRoles: rights.manageRoles,
+      canConvertGroup:
+          channel.type == 'G' &&
+          canConvertGroupMessage(
+            type: channel.type,
+            serverSupports: (await db.features()).atLeast(9, 1),
+            createPrivate: (await convertTargets()).isNotEmpty,
+          ),
       canConvert:
           rights.convert &&
           channel.deleteAt == null &&
@@ -172,6 +180,44 @@ class ChannelViews {
       public: can(Permission.createPublicChannel),
       private: can(Permission.createPrivateChannel),
       join: can(Permission.joinPublicChannels),
+    );
+  }
+
+  /// The teams a group message can move into: those where the user may
+  /// create private channels, by name.
+  Future<List<({String id, String displayName})>> convertTargets() async {
+    final granted = await PermissionViews(db).roleGrants();
+    final system = await db.syncText(SyncKeys.currentUserRoles) ?? '';
+    final names = {
+      for (final t in await db.select(db.teams).get()) t.id: t.displayName,
+    };
+    return [
+      for (final m in await db.select(db.myTeams).get())
+        if (hasPermission(
+              Permission.createPrivateChannel,
+              roles: roleNames([system, m.roles]),
+              granted: granted,
+            ) &&
+            names[m.teamId] != null)
+          (id: m.teamId, displayName: names[m.teamId]!),
+    ]..sort(
+      (a, b) =>
+          a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+    );
+  }
+
+  /// What the user may do about inviting people to [teamId].
+  Future<TeamInviteRights> teamInvite(String teamId) async {
+    final myTeam = await (db.select(
+      db.myTeams,
+    )..where((t) => t.teamId.equals(teamId))).getSingleOrNull();
+    return teamInviteRights(
+      roles: roleNames([
+        await db.syncText(SyncKeys.currentUserRoles) ?? '',
+        myTeam?.roles ?? '',
+      ]),
+      granted: await PermissionViews(db).roleGrants(),
+      emailInvitations: (await db.features()).emailInvitations,
     );
   }
 

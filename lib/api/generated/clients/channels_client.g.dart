@@ -21,6 +21,38 @@ class _ChannelsClient implements ChannelsClient {
   final ParseErrorLogger? errorLogger;
 
   @override
+  Future<PutApiV4UsersUserIdTeamsTeamIdReadResponse> markAllTeamChannelsRead({
+    required String userId,
+    required String teamId,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<PutApiV4UsersUserIdTeamsTeamIdReadResponse>(
+      Options(method: 'PUT', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/users/${userId}/teams/${teamId}/read',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late PutApiV4UsersUserIdTeamsTeamIdReadResponse _value;
+    try {
+      _value = PutApiV4UsersUserIdTeamsTeamIdReadResponse.fromJson(
+        _result.data!,
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<List<ChannelWithTeamData>> getAllChannels({
     int? page = 0,
     int? perPage = 0,
@@ -178,6 +210,38 @@ class _ChannelsClient implements ChannelsClient {
     late PostApiV4ChannelsSearchResponse _value;
     try {
       _value = PostApiV4ChannelsSearchResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<List<Channel>> searchGroupChannels({
+    required ApiV4ChannelsGroupSearchRequestBody body,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(body.toJson());
+    final _options = _setStreamType<List<Channel>>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/channels/group/search',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<Channel> _value;
+    try {
+      _value = _result.data!
+          .map((dynamic i) => Channel.fromJson(i as Map<String, dynamic>))
+          .toList();
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
@@ -996,6 +1060,42 @@ class _ChannelsClient implements ChannelsClient {
     late StatusOk _value;
     try {
       _value = StatusOk.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<PostApiV4ChannelsMembersUserIdMarkReadResponse>
+  markChannelsReadForUser({
+    required String userId,
+    required List<String> body,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = body;
+    final _options =
+        _setStreamType<PostApiV4ChannelsMembersUserIdMarkReadResponse>(
+          Options(method: 'POST', headers: _headers, extra: _extra)
+              .compose(
+                _dio.options,
+                '/api/v4/channels/members/${userId}/mark_read',
+                queryParameters: queryParameters,
+                data: _data,
+              )
+              .copyWith(
+                baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl),
+              ),
+        );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late PostApiV4ChannelsMembersUserIdMarkReadResponse _value;
+    try {
+      _value = PostApiV4ChannelsMembersUserIdMarkReadResponse.fromJson(
+        _result.data!,
+      );
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

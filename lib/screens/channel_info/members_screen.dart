@@ -22,6 +22,7 @@ class MembersScreen extends ConsumerStatefulWidget {
     required this.title,
     required this.canAdd,
     this.canRemove = false,
+    this.canChangeRoles = false,
     super.key,
   });
 
@@ -33,6 +34,9 @@ class MembersScreen extends ConsumerStatefulWidget {
 
   /// Whether each other member has a button to take them out.
   final bool canRemove;
+
+  /// Whether each other member's menu offers making them a channel admin.
+  final bool canChangeRoles;
 
   @override
   ConsumerState<MembersScreen> createState() => _MembersScreenState();
@@ -79,10 +83,37 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
     }
   }
 
+  Future<void> _setAdmin(String userId, String name, bool admin) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final host = Uri.parse(widget.url).host;
+    try {
+      final actions = await ref.read(channelActionsProvider(widget.url).future);
+      await actions.setChannelAdmin(widget.channelId, userId, admin: admin);
+      ref.invalidate(channelAdminsProvider(widget.url, widget.channelId));
+    } on Object catch (e) {
+      if (e is ServerError && const {403, 404, 501}.contains(e.statusCode)) {
+        if (mounted) setState(() => _refused = true);
+      }
+      final said = e is ServerError ? e.message : null;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            "Couldn't change $name. "
+            '${said != null && said.isNotEmpty ? said : requestProblemText(e, host)}',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final url = widget.url;
-    final me = widget.canRemove && !_refused
+    final admins =
+        ref.watch(channelAdminsProvider(url, widget.channelId)).value ??
+        const <String>{};
+    final changeRoles = widget.canChangeRoles && !_refused;
+    final me = (widget.canRemove || changeRoles) && !_refused
         ? ref.watch(myUserIdProvider(url)).value
         : null;
     return ContentPage(
@@ -122,16 +153,45 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                 ),
             onTap: (person) =>
                 showUserProfile(context, url: url, userId: person.id),
-            trailing: me == null
-                ? null
-                : (person) => person.id == me
-                      ? const SizedBox.shrink()
-                      : IconButton(
-                          tooltip: 'Remove ${person.title} from channel',
-                          icon: const Icon(Icons.person_remove_outlined),
-                          onPressed: () =>
-                              unawaited(_remove(person.id, person.title)),
+            trailing: (person) {
+              final isMe = person.id == me;
+              final admin = admins.contains(person.id);
+              final removable = me != null && widget.canRemove && !isMe;
+              final roles = me != null && changeRoles && !isMe;
+              if (!admin && !removable && !roles) {
+                return const SizedBox.shrink();
+              }
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (admin) const _AdminTag(),
+                  if (roles)
+                    PopupMenuButton<bool>(
+                      tooltip: 'Roles of ${person.title}',
+                      icon: const Icon(Icons.admin_panel_settings_outlined),
+                      onSelected: (make) =>
+                          unawaited(_setAdmin(person.id, person.title, make)),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: !admin,
+                          child: Text(
+                            admin
+                                ? 'Remove channel admin'
+                                : 'Make channel admin',
+                          ),
                         ),
+                      ],
+                    ),
+                  if (removable)
+                    IconButton(
+                      tooltip: 'Remove ${person.title} from channel',
+                      icon: const Icon(Icons.person_remove_outlined),
+                      onPressed: () =>
+                          unawaited(_remove(person.id, person.title)),
+                    ),
+                ],
+              );
+            },
             emptyTitle: 'Nobody here yet',
             emptyBody: widget.canAdd
                 ? 'Add people with the button at the top.'
@@ -141,4 +201,15 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
       ),
     );
   }
+}
+
+class _AdminTag extends StatelessWidget {
+  const _AdminTag();
+
+  @override
+  Widget build(BuildContext context) => Chip(
+    label: const Text('Admin'),
+    visualDensity: VisualDensity.compact,
+    padding: EdgeInsets.zero,
+  );
 }

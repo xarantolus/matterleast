@@ -656,6 +656,184 @@ final class TeamRightsFamily extends $Family
   String toString() => r'teamRightsProvider';
 }
 
+/// The teams a group message can be converted into.
+
+@ProviderFor(convertTargets)
+final convertTargetsProvider = ConvertTargetsFamily._();
+
+/// The teams a group message can be converted into.
+
+final class ConvertTargetsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<({String displayName, String id})>>,
+          List<({String displayName, String id})>,
+          FutureOr<List<({String displayName, String id})>>
+        >
+    with
+        $FutureModifier<List<({String displayName, String id})>>,
+        $FutureProvider<List<({String displayName, String id})>> {
+  /// The teams a group message can be converted into.
+  ConvertTargetsProvider._({
+    required ConvertTargetsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'convertTargetsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$convertTargetsHash();
+
+  @override
+  String toString() {
+    return r'convertTargetsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<({String displayName, String id})>>
+  $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<({String displayName, String id})>> create(Ref ref) {
+    final argument = this.argument as String;
+    return convertTargets(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ConvertTargetsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$convertTargetsHash() => r'2a02b7d2ed740a23c3b36176c9ff6e4cc773a2c8';
+
+/// The teams a group message can be converted into.
+
+final class ConvertTargetsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<({String displayName, String id})>>,
+          String
+        > {
+  ConvertTargetsFamily._()
+    : super(
+        retry: null,
+        name: r'convertTargetsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The teams a group message can be converted into.
+
+  ConvertTargetsProvider call(String url) =>
+      ConvertTargetsProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'convertTargetsProvider';
+}
+
+/// The channel admins of a channel, as far as the server tells; refetched
+/// after a change.
+
+@ProviderFor(channelAdmins)
+final channelAdminsProvider = ChannelAdminsFamily._();
+
+/// The channel admins of a channel, as far as the server tells; refetched
+/// after a change.
+
+final class ChannelAdminsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Set<String>>,
+          Set<String>,
+          FutureOr<Set<String>>
+        >
+    with $FutureModifier<Set<String>>, $FutureProvider<Set<String>> {
+  /// The channel admins of a channel, as far as the server tells; refetched
+  /// after a change.
+  ChannelAdminsProvider._({
+    required ChannelAdminsFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'channelAdminsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$channelAdminsHash();
+
+  @override
+  String toString() {
+    return r'channelAdminsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Set<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Set<String>> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return channelAdmins(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ChannelAdminsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$channelAdminsHash() => r'50a809aa0db4895034a046c4a4a083d9080ee9bb';
+
+/// The channel admins of a channel, as far as the server tells; refetched
+/// after a change.
+
+final class ChannelAdminsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Set<String>>, (String, String)> {
+  ChannelAdminsFamily._()
+    : super(
+        retry: null,
+        name: r'channelAdminsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The channel admins of a channel, as far as the server tells; refetched
+  /// after a change.
+
+  ChannelAdminsProvider call(String url, String channelId) =>
+      ChannelAdminsProvider._(argument: (url, channelId), from: this);
+
+  @override
+  String toString() => r'channelAdminsProvider';
+}
+
 /// The signed-in user's id.
 
 @ProviderFor(myUserId)

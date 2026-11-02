@@ -12,6 +12,8 @@ _$ApiV4ChannelsChannelIdConvertToChannelRequestBodyFromJson(
 ) => ApiV4ChannelsChannelIdConvertToChannelRequestBody(
   channelId: json['channel_id'] as String,
   teamId: json['team_id'] as String,
+  name: json['name'] as String,
+  displayName: json['display_name'] as String,
 );
 
 Map<String, dynamic> _$ApiV4ChannelsChannelIdConvertToChannelRequestBodyToJson(
@@ -19,4 +21,6 @@ Map<String, dynamic> _$ApiV4ChannelsChannelIdConvertToChannelRequestBodyToJson(
 ) => <String, dynamic>{
   'channel_id': instance.channelId,
   'team_id': instance.teamId,
+  'name': instance.name,
+  'display_name': instance.displayName,
 };

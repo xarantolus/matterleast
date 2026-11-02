@@ -70,3 +70,23 @@ List<JoinableTeam> joinableTeams(
       (a, b) =>
           a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
     );
+
+/// The team an invite link leads to.
+typedef InvitedTeam = ({String id, String displayName, String description});
+
+/// Pure: the addresses in [text], split at commas, semicolons and white
+/// space, without duplicates; [bad] holds the pieces that aren't addresses.
+({List<String> good, List<String> bad}) parseEmails(String text) {
+  final good = <String>[];
+  final bad = <String>[];
+  final shape = RegExp(r'^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$');
+  for (final piece in text.split(RegExp(r'[,;\s]+'))) {
+    if (piece.isEmpty) continue;
+    if (!shape.hasMatch(piece)) {
+      bad.add(piece);
+    } else if (!good.any((g) => g.toLowerCase() == piece.toLowerCase())) {
+      good.add(piece);
+    }
+  }
+  return (good: good, bad: bad);
+}

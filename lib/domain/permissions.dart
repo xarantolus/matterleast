@@ -10,7 +10,10 @@ abstract final class Permission {
   static const deletePublicChannel = 'delete_public_channel';
   static const deletePrivateChannel = 'delete_private_channel';
   static const convertPublicToPrivate = 'convert_public_channel_to_private';
+  static const manageChannelRoles = 'manage_channel_roles';
   static const manageTeam = 'manage_team';
+  static const inviteUser = 'invite_user';
+  static const addUserToTeam = 'add_user_to_team';
   static const createPost = 'create_post';
   static const editPost = 'edit_post';
   static const editOthersPosts = 'edit_others_posts';
@@ -55,6 +58,9 @@ typedef ChannelRights = ({
   bool archive,
   bool manageMembers,
 
+  /// Make members channel admins or ordinary members.
+  bool manageRoles,
+
   /// Make a public channel private; never true for a private one.
   bool convert,
 
@@ -76,6 +82,9 @@ ChannelRights channelRights(
       edit: can(Permission.managePublicProperties),
       archive: can(Permission.deletePublicChannel),
       manageMembers: can(Permission.managePublicMembers),
+      manageRoles:
+          can(Permission.managePublicMembers) &&
+          can(Permission.manageChannelRoles),
       convert: can(Permission.convertPublicToPrivate),
       unarchive: can(Permission.manageTeam),
     ),
@@ -83,6 +92,9 @@ ChannelRights channelRights(
       edit: can(Permission.managePrivateProperties),
       archive: can(Permission.deletePrivateChannel),
       manageMembers: can(Permission.managePrivateMembers),
+      manageRoles:
+          can(Permission.managePrivateMembers) &&
+          can(Permission.manageChannelRoles),
       convert: false,
       unarchive: can(Permission.manageTeam),
     ),
@@ -90,11 +102,38 @@ ChannelRights channelRights(
       edit: false,
       archive: false,
       manageMembers: false,
+      manageRoles: false,
       convert: false,
       unarchive: false,
     ),
   };
 }
+
+/// What the user may do about inviting people to a team.
+typedef TeamInviteRights = ({bool byEmail, bool byLink});
+
+/// Pure: inviting by email needs the permission and the server's email
+/// invitations; the link is for those who may add people to the team.
+TeamInviteRights teamInviteRights({
+  required Iterable<String> roles,
+  required Map<String, Set<String>> granted,
+  required bool emailInvitations,
+}) {
+  bool can(String permission) =>
+      hasPermission(permission, roles: roles, granted: granted);
+  return (
+    byEmail: emailInvitations && can(Permission.inviteUser),
+    byLink: can(Permission.addUserToTeam),
+  );
+}
+
+/// Pure: whether a group message can become a private channel: the server
+/// is 9.1 or newer and the user may create private channels.
+bool canConvertGroupMessage({
+  required String type,
+  required bool serverSupports,
+  required bool createPrivate,
+}) => type == 'G' && serverSupports && createPrivate;
 
 /// Why the user can't write in a channel.
 enum PostingBlock {

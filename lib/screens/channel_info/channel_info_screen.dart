@@ -16,6 +16,7 @@ import 'package:matterleast/screens/channel/bookmark_bar.dart';
 import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/channel_info/channel_missing.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
+import 'package:matterleast/screens/channel_info/convert_group_screen.dart';
 import 'package:matterleast/screens/channel_info/edit_channel_screen.dart';
 import 'package:matterleast/screens/channel_info/members_screen.dart';
 import 'package:matterleast/screens/channel_info/notification_prefs_screen.dart';
@@ -224,6 +225,7 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
                             !info.archived &&
                             !info.conversation,
                         canRemove: info.canRemoveMembers,
+                        canChangeRoles: info.canChangeRoles,
                       ),
                     ),
                   ),
@@ -324,6 +326,18 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
                     leading: const Icon(Icons.lock_outline),
                     title: const Text('Convert to private channel'),
                     onTap: () => _convert(info),
+                  ),
+                if (info.canConvertGroup)
+                  ListTile(
+                    leading: const Icon(Icons.lock_outline),
+                    title: const Text('Convert to private channel'),
+                    onTap: () => _push(
+                      ConvertGroupScreen(
+                        url: widget.url,
+                        channelId: info.id,
+                        initialTeamId: info.teamId,
+                      ),
+                    ),
                   ),
                 if (info.canUnarchive && !_off.contains('unarchive'))
                   ListTile(

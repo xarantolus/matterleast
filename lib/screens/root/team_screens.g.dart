@@ -169,3 +169,91 @@ final class JoinableTeamListFamily extends $Family
   @override
   String toString() => r'joinableTeamListProvider';
 }
+
+/// What the user may do about inviting people to a team.
+
+@ProviderFor(teamInvite)
+final teamInviteProvider = TeamInviteFamily._();
+
+/// What the user may do about inviting people to a team.
+
+final class TeamInviteProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<TeamInviteRights>,
+          TeamInviteRights,
+          FutureOr<TeamInviteRights>
+        >
+    with $FutureModifier<TeamInviteRights>, $FutureProvider<TeamInviteRights> {
+  /// What the user may do about inviting people to a team.
+  TeamInviteProvider._({
+    required TeamInviteFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamInviteProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamInviteHash();
+
+  @override
+  String toString() {
+    return r'teamInviteProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<TeamInviteRights> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<TeamInviteRights> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return teamInvite(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamInviteProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamInviteHash() => r'65e8a521cbb3d908d721490dccaa28a0d75abb59';
+
+/// What the user may do about inviting people to a team.
+
+final class TeamInviteFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<TeamInviteRights>,
+          (String, String)
+        > {
+  TeamInviteFamily._()
+    : super(
+        retry: null,
+        name: r'teamInviteProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// What the user may do about inviting people to a team.
+
+  TeamInviteProvider call(String url, String teamId) =>
+      TeamInviteProvider._(argument: (url, teamId), from: this);
+
+  @override
+  String toString() => r'teamInviteProvider';
+}

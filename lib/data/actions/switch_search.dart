@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -53,6 +54,9 @@ class SwitchSearch {
         ),
       ),
     ).then((lists) => lists.expand((l) => l));
+    final groups = peopleOnly
+        ? Future.value(const <api.Channel>[])
+        : _groupMessages(query);
     final found = await users;
     await session.store.applyUsers(found);
     final format = await _db.nameFormat();
@@ -72,6 +76,15 @@ class SwitchSearch {
     };
     return [
       for (final u in rows) personItem(u, serverUrl, format, teamId: team),
+      for (final c in await groups)
+        if (c.id != null)
+          SwitchItem(
+            serverUrl: serverUrl,
+            kind: SwitchKind.group,
+            id: c.id!,
+            title: c.displayName ?? c.name ?? '',
+            teamId: team,
+          ),
       for (final c in await channels)
         if (c.id != null &&
             c.type == 'O' &&
@@ -88,5 +101,20 @@ class SwitchSearch {
             teamId: c.teamId,
           ),
     ];
+  }
+
+  /// The user's group messages with someone matching [query]; none when
+  /// the server doesn't offer the search.
+  Future<List<api.Channel>> _groupMessages(String query) async {
+    try {
+      return await session.api.call(
+        () => session.api.client.channels.searchGroupChannels(
+          body: api.ApiV4ChannelsGroupSearchRequestBody(term: query),
+        ),
+      );
+    } on ServerError catch (e) {
+      if (const {403, 404, 501}.contains(e.statusCode)) return const [];
+      rethrow;
+    }
   }
 }

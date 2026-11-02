@@ -8,8 +8,10 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/root/team_screens.dart';
 import 'package:matterleast/screens/you/you_page.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/mention_badge.dart';
@@ -134,6 +136,22 @@ class _ServerTeams extends ConsumerWidget {
                 'unread',
             ].join(' · '),
             selected: team.id == selectedTeam,
+            onMenu: team.unread || team.mentions > 0
+                ? (at) async {
+                    final run = await showMenuAt<bool>(context, at, const [
+                      MenuItem(
+                        value: true,
+                        child: MenuEntry(
+                          icon: Icons.done_all,
+                          label: 'Mark all as read',
+                        ),
+                      ),
+                    ]);
+                    if (run == true && context.mounted) {
+                      await markTeamRead(context, ref, server.url, team.id);
+                    }
+                  }
+                : null,
             onPressed: () => showPlace(
               Navigator.of(context),
               RailTarget(url: server.url, teamId: team.id),
@@ -200,7 +218,12 @@ class _RailButton extends StatelessWidget {
     required this.onPressed,
     required this.child,
     this.details,
+    this.onMenu,
   });
+
+  /// Opens a menu at the given global position, on right click or long
+  /// press.
+  final void Function(Offset)? onMenu;
 
   final String tooltip;
 
@@ -222,27 +245,32 @@ class _RailButton extends StatelessWidget {
       onPressed: onPressed,
       icon: child,
     );
+    final menu = onMenu;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-      // Merged, so the button itself is the selected one.
-      child: MergeSemantics(
-        child: Semantics(
-          selected: selected,
-          child: isDesktop
-              ? Tooltip(
-                  richMessage: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: tooltip,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      if (details != null) TextSpan(text: '\n$details'),
-                    ],
-                  ),
-                  positionDelegate: besideTarget,
-                  child: button,
-                )
-              : button,
+      child: GestureDetector(
+        onSecondaryTapUp: menu == null ? null : (d) => menu(d.globalPosition),
+        onLongPressStart: menu == null ? null : (d) => menu(d.globalPosition),
+        // Merged, so the button itself is the selected one.
+        child: MergeSemantics(
+          child: Semantics(
+            selected: selected,
+            child: isDesktop
+                ? Tooltip(
+                    richMessage: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: tooltip,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        if (details != null) TextSpan(text: '\n$details'),
+                      ],
+                    ),
+                    positionDelegate: besideTarget,
+                    child: button,
+                  )
+                : button,
+          ),
         ),
       ),
     );

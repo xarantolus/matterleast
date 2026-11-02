@@ -12,6 +12,7 @@ import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/root/team_screens.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -51,6 +52,8 @@ Future<void> openLinkFromMessage(
           username,
           fromOutside: fromOutside,
         );
+      case TeamInviteLink(:final inviteId):
+        await joinFromInvite(navigator, url, inviteId);
       case ServerHomeLink():
         await showPlace(navigator, RailTarget(url: url));
     }

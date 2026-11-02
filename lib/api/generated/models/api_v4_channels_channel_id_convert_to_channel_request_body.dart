@@ -11,6 +11,8 @@ class ApiV4ChannelsChannelIdConvertToChannelRequestBody {
   const ApiV4ChannelsChannelIdConvertToChannelRequestBody({
     required this.channelId,
     required this.teamId,
+    required this.name,
+    required this.displayName,
   });
 
   factory ApiV4ChannelsChannelIdConvertToChannelRequestBody.fromJson(
@@ -21,6 +23,9 @@ class ApiV4ChannelsChannelIdConvertToChannelRequestBody {
   final String channelId;
   @JsonKey(name: 'team_id')
   final String teamId;
+  final String name;
+  @JsonKey(name: 'display_name')
+  final String displayName;
 
   Map<String, Object?> toJson() =>
       _$ApiV4ChannelsChannelIdConvertToChannelRequestBodyToJson(this);

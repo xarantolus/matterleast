@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ServerLink {
 
- Uri get server; String? get team;
+ Uri get server;
 /// Create a copy of ServerLink
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $ServerLinkCopyWith<ServerLink> get copyWith => _$ServerLinkCopyWithImpl<ServerL
 @override
 bool operator ==(Object other) {
   final _this = this as ServerLink;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerLink&&(identical(other.server, _this.server) || other.server == _this.server)&&(identical(other.team, _this.team) || other.team == _this.team));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerLink&&(identical(other.server, _this.server) || other.server == _this.server));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ServerLink;
-  return Object.hash(runtimeType,_this.server,_this.team);
+  return Object.hash(runtimeType,_this.server);
 }
 
 @override
 String toString() {
   final _this = this as ServerLink;
-  return 'ServerLink(server: ${_this.server}, team: ${_this.team})';
+  return 'ServerLink(server: ${_this.server})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $ServerLinkCopyWith<$Res>  {
   factory $ServerLinkCopyWith(ServerLink value, $Res Function(ServerLink) _then) = _$ServerLinkCopyWithImpl;
 @useResult
 $Res call({
- Uri server, String team
+ Uri server
 });
 
 
@@ -68,11 +68,10 @@ class _$ServerLinkCopyWithImpl<$Res>
 
 /// Create a copy of ServerLink
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? server = null,Object? team = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? server = null,}) {
   return _then(_self.copyWith(
 server: null == server ? _self.server : server // ignore: cast_nullable_to_non_nullable
-as Uri,team: null == team ? _self.team! : team // ignore: cast_nullable_to_non_nullable
-as String,
+as Uri,
   ));
 }
 
@@ -93,13 +92,14 @@ extension ServerLinkPatterns on ServerLink {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PostLink value)?  post,TResult Function( ChannelNameLink value)?  channel,TResult Function( DirectMessageLink value)?  directMessage,TResult Function( ServerHomeLink value)?  home,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PostLink value)?  post,TResult Function( ChannelNameLink value)?  channel,TResult Function( DirectMessageLink value)?  directMessage,TResult Function( TeamInviteLink value)?  teamInvite,TResult Function( ServerHomeLink value)?  home,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case PostLink() when post != null:
 return post(_that);case ChannelNameLink() when channel != null:
 return channel(_that);case DirectMessageLink() when directMessage != null:
-return directMessage(_that);case ServerHomeLink() when home != null:
+return directMessage(_that);case TeamInviteLink() when teamInvite != null:
+return teamInvite(_that);case ServerHomeLink() when home != null:
 return home(_that);case _:
   return orElse();
 
@@ -118,13 +118,14 @@ return home(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PostLink value)  post,required TResult Function( ChannelNameLink value)  channel,required TResult Function( DirectMessageLink value)  directMessage,required TResult Function( ServerHomeLink value)  home,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PostLink value)  post,required TResult Function( ChannelNameLink value)  channel,required TResult Function( DirectMessageLink value)  directMessage,required TResult Function( TeamInviteLink value)  teamInvite,required TResult Function( ServerHomeLink value)  home,}){
 final _that = this;
 switch (_that) {
 case PostLink():
 return post(_that);case ChannelNameLink():
 return channel(_that);case DirectMessageLink():
-return directMessage(_that);case ServerHomeLink():
+return directMessage(_that);case TeamInviteLink():
+return teamInvite(_that);case ServerHomeLink():
 return home(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -139,13 +140,14 @@ return home(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PostLink value)?  post,TResult? Function( ChannelNameLink value)?  channel,TResult? Function( DirectMessageLink value)?  directMessage,TResult? Function( ServerHomeLink value)?  home,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PostLink value)?  post,TResult? Function( ChannelNameLink value)?  channel,TResult? Function( DirectMessageLink value)?  directMessage,TResult? Function( TeamInviteLink value)?  teamInvite,TResult? Function( ServerHomeLink value)?  home,}){
 final _that = this;
 switch (_that) {
 case PostLink() when post != null:
 return post(_that);case ChannelNameLink() when channel != null:
 return channel(_that);case DirectMessageLink() when directMessage != null:
-return directMessage(_that);case ServerHomeLink() when home != null:
+return directMessage(_that);case TeamInviteLink() when teamInvite != null:
+return teamInvite(_that);case ServerHomeLink() when home != null:
 return home(_that);case _:
   return null;
 
@@ -163,12 +165,13 @@ return home(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( Uri server,  String postId,  String? team)?  post,TResult Function( Uri server,  String team,  String name)?  channel,TResult Function( Uri server,  String team,  String username)?  directMessage,TResult Function( Uri server,  String? team)?  home,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( Uri server,  String postId,  String? team)?  post,TResult Function( Uri server,  String team,  String name)?  channel,TResult Function( Uri server,  String team,  String username)?  directMessage,TResult Function( Uri server,  String inviteId)?  teamInvite,TResult Function( Uri server,  String? team)?  home,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case PostLink() when post != null:
 return post(_that.server,_that.postId,_that.team);case ChannelNameLink() when channel != null:
 return channel(_that.server,_that.team,_that.name);case DirectMessageLink() when directMessage != null:
-return directMessage(_that.server,_that.team,_that.username);case ServerHomeLink() when home != null:
+return directMessage(_that.server,_that.team,_that.username);case TeamInviteLink() when teamInvite != null:
+return teamInvite(_that.server,_that.inviteId);case ServerHomeLink() when home != null:
 return home(_that.server,_that.team);case _:
   return orElse();
 
@@ -187,12 +190,13 @@ return home(_that.server,_that.team);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( Uri server,  String postId,  String? team)  post,required TResult Function( Uri server,  String team,  String name)  channel,required TResult Function( Uri server,  String team,  String username)  directMessage,required TResult Function( Uri server,  String? team)  home,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( Uri server,  String postId,  String? team)  post,required TResult Function( Uri server,  String team,  String name)  channel,required TResult Function( Uri server,  String team,  String username)  directMessage,required TResult Function( Uri server,  String inviteId)  teamInvite,required TResult Function( Uri server,  String? team)  home,}) {final _that = this;
 switch (_that) {
 case PostLink():
 return post(_that.server,_that.postId,_that.team);case ChannelNameLink():
 return channel(_that.server,_that.team,_that.name);case DirectMessageLink():
-return directMessage(_that.server,_that.team,_that.username);case ServerHomeLink():
+return directMessage(_that.server,_that.team,_that.username);case TeamInviteLink():
+return teamInvite(_that.server,_that.inviteId);case ServerHomeLink():
 return home(_that.server,_that.team);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -207,12 +211,13 @@ return home(_that.server,_that.team);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( Uri server,  String postId,  String? team)?  post,TResult? Function( Uri server,  String team,  String name)?  channel,TResult? Function( Uri server,  String team,  String username)?  directMessage,TResult? Function( Uri server,  String? team)?  home,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( Uri server,  String postId,  String? team)?  post,TResult? Function( Uri server,  String team,  String name)?  channel,TResult? Function( Uri server,  String team,  String username)?  directMessage,TResult? Function( Uri server,  String inviteId)?  teamInvite,TResult? Function( Uri server,  String? team)?  home,}) {final _that = this;
 switch (_that) {
 case PostLink() when post != null:
 return post(_that.server,_that.postId,_that.team);case ChannelNameLink() when channel != null:
 return channel(_that.server,_that.team,_that.name);case DirectMessageLink() when directMessage != null:
-return directMessage(_that.server,_that.team,_that.username);case ServerHomeLink() when home != null:
+return directMessage(_that.server,_that.team,_that.username);case TeamInviteLink() when teamInvite != null:
+return teamInvite(_that.server,_that.inviteId);case ServerHomeLink() when home != null:
 return home(_that.server,_that.team);case _:
   return null;
 
@@ -230,7 +235,7 @@ class PostLink implements ServerLink {
 
 @override final  Uri server;
  final  String postId;
-@override final  String? team;
+ final  String? team;
 
 /// Create a copy of ServerLink
 /// with the given fields replaced by the non-null parameter values.
@@ -301,7 +306,7 @@ class ChannelNameLink implements ServerLink {
   
 
 @override final  Uri server;
-@override final  String team;
+ final  String team;
  final  String name;
 
 /// Create a copy of ServerLink
@@ -373,7 +378,7 @@ class DirectMessageLink implements ServerLink {
   
 
 @override final  Uri server;
-@override final  String team;
+ final  String team;
  final  String username;
 
 /// Create a copy of ServerLink
@@ -440,12 +445,82 @@ as String,
 /// @nodoc
 
 
+class TeamInviteLink implements ServerLink {
+  const TeamInviteLink({required this.server, required this.inviteId});
+  
+
+@override final  Uri server;
+ final  String inviteId;
+
+/// Create a copy of ServerLink
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TeamInviteLinkCopyWith<TeamInviteLink> get copyWith => _$TeamInviteLinkCopyWithImpl<TeamInviteLink>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is TeamInviteLink&&(identical(other.server, server) || other.server == server)&&(identical(other.inviteId, inviteId) || other.inviteId == inviteId));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,server,inviteId);
+}
+
+@override
+String toString() {
+    return 'ServerLink.teamInvite(server: $server, inviteId: $inviteId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $TeamInviteLinkCopyWith<$Res> implements $ServerLinkCopyWith<$Res> {
+  factory $TeamInviteLinkCopyWith(TeamInviteLink value, $Res Function(TeamInviteLink) _then) = _$TeamInviteLinkCopyWithImpl;
+@override @useResult
+$Res call({
+ Uri server, String inviteId
+});
+
+
+
+
+}
+/// @nodoc
+class _$TeamInviteLinkCopyWithImpl<$Res>
+    implements $TeamInviteLinkCopyWith<$Res> {
+  _$TeamInviteLinkCopyWithImpl(this._self, this._then);
+
+  final TeamInviteLink _self;
+  final $Res Function(TeamInviteLink) _then;
+
+/// Create a copy of ServerLink
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? server = null,Object? inviteId = null,}) {
+  return _then(TeamInviteLink(
+server: null == server ? _self.server : server // ignore: cast_nullable_to_non_nullable
+as Uri,inviteId: null == inviteId ? _self.inviteId : inviteId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
 class ServerHomeLink implements ServerLink {
   const ServerHomeLink({required this.server, this.team});
   
 
 @override final  Uri server;
-@override final  String? team;
+ final  String? team;
 
 /// Create a copy of ServerLink
 /// with the given fields replaced by the non-null parameter values.

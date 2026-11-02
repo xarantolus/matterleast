@@ -1,11 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/team_actions.dart';
+import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/permissions.dart';
+import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/teams.dart';
+import 'package:matterleast/screens/channel_info/channel_providers.dart';
+import 'package:matterleast/screens/channel_list/category_menu.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/screens/root/rail_switch.dart';
+import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -20,6 +29,202 @@ Future<TeamActions> teamActions(Ref ref, String url) async =>
 @Riverpod(retry: _noRetry)
 Future<List<JoinableTeam>> joinableTeamList(Ref ref, String url) async =>
     (await ref.watch(teamActionsProvider(url).future)).joinable();
+
+/// What the user may do about inviting people to a team.
+@riverpod
+Future<TeamInviteRights> teamInvite(Ref ref, String url, String teamId) async =>
+    (await ref.watch(channelViewsProvider(url).future)).teamInvite(teamId);
+
+/// Marks every unread channel of [teamId] read, with the server's reason in
+/// a snackbar when that fails.
+Future<void> markTeamRead(
+  BuildContext context,
+  WidgetRef ref,
+  String url,
+  String teamId,
+) async {
+  final list = await ref.read(channelListProvider(url, teamId).future);
+  if (!context.mounted) return;
+  await runCategoryAction(
+    context,
+    url,
+    "Couldn't mark the team as read.",
+    (a) => a.markAllRead(teamUnreadIds(list)),
+  );
+}
+
+/// Whether [teamId] has anything unread, for offering "Mark all as read".
+bool teamHasUnread(WidgetRef ref, String url, String teamId) {
+  final list = ref.watch(channelListProvider(url, teamId)).value;
+  return list != null && teamUnreadIds(list).isNotEmpty;
+}
+
+/// Shows the team behind an invite link and joins it when the user agrees.
+Future<void> joinFromInvite(
+  NavigatorState navigator,
+  String url,
+  String inviteId,
+) async {
+  final ref = ProviderScope.containerOf(navigator.context, listen: false);
+  final messenger = ScaffoldMessenger.of(navigator.context);
+  final host = Uri.parse(url).host;
+  try {
+    final actions = await ref.read(teamActionsProvider(url).future);
+    final team = await actions.invitedTeam(inviteId);
+    if (team == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('This invite link is no longer valid.')),
+      );
+      return;
+    }
+    final session = await ref.read(serverSessionProvider(url).future);
+    final member = await (session.db.select(
+      session.db.myTeams,
+    )..where((t) => t.teamId.equals(team.id))).getSingleOrNull();
+    if (member == null) {
+      if (!navigator.mounted) return;
+      final yes = await showDialog<bool>(
+        context: navigator.context,
+        builder: (dialog) => AlertDialog(
+          title: Text('Join ${team.displayName}?'),
+          content: Text(
+            team.description.isEmpty
+                ? 'You will see its channels and be able to post.'
+                : team.description,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialog).pop(true),
+              child: const Text('Join'),
+            ),
+          ],
+        ),
+      );
+      if (yes != true) return;
+      await actions.joinByInvite(inviteId, team.id);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Joined ${team.displayName}')),
+      );
+    }
+    if (navigator.mounted) {
+      await showPlace(navigator, RailTarget(url: url, teamId: team.id));
+    }
+  } on Object catch (e) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text("Couldn't join the team. ${requestProblemText(e, host)}"),
+      ),
+    );
+  }
+}
+
+/// Email invitations and the invite link, as a short popout.
+class InvitePeopleScreen extends ConsumerStatefulWidget {
+  const InvitePeopleScreen({
+    required this.url,
+    required this.teamId,
+    required this.teamName,
+    required this.rights,
+    super.key,
+  });
+
+  final String url;
+  final String teamId;
+  final String teamName;
+  final TeamInviteRights rights;
+
+  @override
+  ConsumerState<InvitePeopleScreen> createState() => _InvitePeopleState();
+}
+
+class _InvitePeopleState extends ConsumerState<InvitePeopleScreen> {
+  final _text = TextEditingController();
+  var _sending = false;
+  String? _problem;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    final parsed = parseEmails(_text.text);
+    if (parsed.good.isEmpty || parsed.bad.isNotEmpty) {
+      setState(
+        () => _problem = parsed.bad.isNotEmpty
+            ? '${parsed.bad.first} is not an email address.'
+            : 'Enter at least one email address.',
+      );
+      return;
+    }
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() {
+      _sending = true;
+      _problem = null;
+    });
+    try {
+      await (await ref.read(teamActionsProvider(widget.url).future))
+          .inviteByEmail(widget.teamId, parsed.good);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            parsed.good.length == 1
+                ? 'Invitation sent'
+                : '${parsed.good.length} invitations sent',
+          ),
+        ),
+      );
+      navigator.pop();
+    } on Object catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _problem =
+            "Couldn't send the invitations. "
+            '${requestProblemText(e, Uri.parse(widget.url).host)}';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => ContentPage(
+    title: Text('Invite people to ${widget.teamName}'),
+    progress: _sending,
+    body: ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (widget.rights.byEmail) ...[
+          TextField(
+            controller: _text,
+            enabled: !_sending,
+            minLines: 2,
+            maxLines: 6,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: 'Email addresses',
+              helperText: 'Separate several with commas or spaces.',
+              errorText: _problem,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              onPressed: _sending ? null : _send,
+              child: const Text('Send invitations'),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
 
 Duration? _noRetry(int retryCount, Object error) => null;
 
@@ -202,33 +407,58 @@ class TeamMenu extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => MenuAnchor(
-    menuChildren: [
-      MenuItemButton(
-        leadingIcon: const Icon(Icons.group_add_outlined),
-        onPressed: () => openPage(
-          Navigator.of(context),
-          JoinTeamScreen(url: url),
-          popout: true,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final invite = ref.watch(teamInviteProvider(url, teamId)).value;
+    return MenuAnchor(
+      menuChildren: [
+        if (teamHasUnread(ref, url, teamId))
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.done_all),
+            onPressed: () => unawaited(markTeamRead(context, ref, url, teamId)),
+            child: const Text('Mark all as read'),
+          ),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.group_add_outlined),
+          onPressed: () => openPage(
+            Navigator.of(context),
+            JoinTeamScreen(url: url),
+            popout: true,
+          ),
+          child: const Text('Join another team'),
         ),
-        child: const Text('Join another team'),
+        if (invite != null && invite.byEmail)
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.mail_outline),
+            onPressed: () => openPage(
+              Navigator.of(context),
+              InvitePeopleScreen(
+                url: url,
+                teamId: teamId,
+                teamName: teamName,
+                rights: invite,
+              ),
+              popout: true,
+            ),
+            child: const Text('Invite people'),
+          ),
+        if (invite == null || invite.byLink)
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.link),
+            onPressed: () => _copyInvite(context, ref),
+            child: const Text('Copy invite link'),
+          ),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.logout),
+          onPressed: () => _leave(context, ref),
+          child: Text('Leave $teamName'),
+        ),
+      ],
+      builder: (context, controller, _) => IconButton(
+        tooltip: 'Team',
+        icon: const Icon(Icons.groups_outlined),
+        onPressed: () =>
+            controller.isOpen ? controller.close() : controller.open(),
       ),
-      MenuItemButton(
-        leadingIcon: const Icon(Icons.link),
-        onPressed: () => _copyInvite(context, ref),
-        child: const Text('Copy invite link'),
-      ),
-      MenuItemButton(
-        leadingIcon: const Icon(Icons.logout),
-        onPressed: () => _leave(context, ref),
-        child: Text('Leave $teamName'),
-      ),
-    ],
-    builder: (context, controller, _) => IconButton(
-      tooltip: 'Team',
-      icon: const Icon(Icons.groups_outlined),
-      onPressed: () =>
-          controller.isOpen ? controller.close() : controller.open(),
-    ),
-  );
+    );
+  }
 }

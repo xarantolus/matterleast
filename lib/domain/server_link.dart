@@ -30,6 +30,13 @@ sealed class ServerLink with _$ServerLink {
     required String username,
   }) = DirectMessageLink;
 
+  /// `/signup_user_complete/?id=<invite id>`, the link a team gives out to
+  /// join it.
+  const factory ServerLink.teamInvite({
+    required Uri server,
+    required String inviteId,
+  }) = TeamInviteLink;
+
   /// The server itself, or one of its teams.
   const factory ServerLink.home({required Uri server, String? team}) =
       ServerHomeLink;
@@ -77,6 +84,13 @@ ServerLink? parseServerLink(Uri uri, Iterable<Uri> knownServers) {
   final rest = path.sublist(base);
   return switch (rest) {
     [] => ServerLink.home(server: server),
+    ['signup_user_complete'] => switch (uri.queryParameters['id']) {
+      final id? when id.isNotEmpty => ServerLink.teamInvite(
+        server: server,
+        inviteId: id,
+      ),
+      _ => null,
+    },
     [final team] => ServerLink.home(server: server, team: team),
     ['_redirect', 'pl', final id] when _postId.hasMatch(id) => ServerLink.post(
       server: server,

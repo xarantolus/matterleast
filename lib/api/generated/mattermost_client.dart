@@ -6,10 +6,10 @@ import 'package:dio/dio.dart';
 
 import 'clients/users_client.dart';
 import 'clients/threads_client.dart';
+import 'clients/channels_client.dart';
 import 'clients/data_retention_client.dart';
 import 'clients/status_client.dart';
 import 'clients/teams_client.dart';
-import 'clients/channels_client.dart';
 import 'clients/posts_client.dart';
 import 'clients/preferences_client.dart';
 import 'clients/files_client.dart';
@@ -41,10 +41,10 @@ class MattermostClient {
 
   UsersClient? _users;
   ThreadsClient? _threads;
+  ChannelsClient? _channels;
   DataRetentionClient? _dataRetention;
   StatusClient? _status;
   TeamsClient? _teams;
-  ChannelsClient? _channels;
   PostsClient? _posts;
   PreferencesClient? _preferences;
   FilesClient? _files;
@@ -71,15 +71,15 @@ class MattermostClient {
   ThreadsClient get threads =>
       _threads ??= ThreadsClient(_dio, baseUrl: _baseUrl);
 
+  ChannelsClient get channels =>
+      _channels ??= ChannelsClient(_dio, baseUrl: _baseUrl);
+
   DataRetentionClient get dataRetention =>
       _dataRetention ??= DataRetentionClient(_dio, baseUrl: _baseUrl);
 
   StatusClient get status => _status ??= StatusClient(_dio, baseUrl: _baseUrl);
 
   TeamsClient get teams => _teams ??= TeamsClient(_dio, baseUrl: _baseUrl);
-
-  ChannelsClient get channels =>
-      _channels ??= ChannelsClient(_dio, baseUrl: _baseUrl);
 
   PostsClient get posts => _posts ??= PostsClient(_dio, baseUrl: _baseUrl);
 

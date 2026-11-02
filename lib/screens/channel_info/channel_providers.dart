@@ -72,6 +72,24 @@ Future<({bool public, bool private, bool join})> teamRights(
   return views.teamRights(teamId);
 }
 
+/// The teams a group message can be converted into.
+@riverpod
+Future<List<({String id, String displayName})>> convertTargets(
+  Ref ref,
+  String url,
+) async => (await ref.watch(channelViewsProvider(url).future)).convertTargets();
+
+/// The channel admins of a channel, as far as the server tells; refetched
+/// after a change.
+@riverpod
+Future<Set<String>> channelAdmins(
+  Ref ref,
+  String url,
+  String channelId,
+) async =>
+    (await ref.watch(channelActionsProvider(url).future))
+        .channelAdmins(channelId);
+
 /// The signed-in user's id.
 @riverpod
 Future<String> myUserId(Ref ref, String url) async =>

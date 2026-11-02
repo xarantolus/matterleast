@@ -49,4 +49,14 @@ void main() {
     );
     expect(offered.map((t) => t.displayName), ['Anchor', 'zebra']);
   });
+
+  test('invite addresses are split, de-duplicated and checked', () {
+    final parsed = parseEmails(
+      'kit@example.test, Rowan@Example.test;\nkit@example.test nope @x.test',
+    );
+    expect(parsed.good, ['kit@example.test', 'Rowan@Example.test']);
+    expect(parsed.bad, ['nope', '@x.test']);
+    expect(parseEmails('  ').good, isEmpty);
+    expect(parseEmails('a@b').bad, ['a@b']);
+  });
 }
