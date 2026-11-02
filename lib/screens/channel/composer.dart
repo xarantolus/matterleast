@@ -91,6 +91,8 @@ class Composer extends ConsumerWidget {
     this.ownTexts,
     this.onReplyToNewest,
     this.focusNode,
+    this.forward = '',
+    this.onForwarded,
     super.key,
   });
 
@@ -117,6 +119,13 @@ class Composer extends ConsumerWidget {
   /// The field takes the keyboard when it first shows.
   final bool autofocus;
 
+  /// The link of a message this composer forwards with its text; empty for
+  /// an ordinary composer.
+  final String forward;
+
+  /// Called once the forward is queued.
+  final VoidCallback? onForwarded;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rights = ref.watch(channelRightsProvider(url, channelId)).value;
@@ -133,7 +142,10 @@ class Composer extends ConsumerWidget {
       ownTexts: ownTexts,
       onReplyToNewest: onReplyToNewest,
       focusNode: focusNode,
+      forward: forward,
+      onForwarded: onForwarded,
     );
+    if (forward.isNotEmpty) return field;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -162,8 +174,12 @@ class _ComposerField extends ConsumerStatefulWidget {
     required this.ownTexts,
     required this.onReplyToNewest,
     required this.focusNode,
+    required this.forward,
+    required this.onForwarded,
   });
 
+  final String forward;
+  final VoidCallback? onForwarded;
   final PostItem? Function()? lastOwnPost;
   final List<String> Function()? ownTexts;
   final VoidCallback? onReplyToNewest;
@@ -193,8 +209,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   String _historyDraft = '';
   String? _historyText;
 
-  ComposerDraftProvider get _provider =>
-      composerDraftProvider(widget.url, widget.channelId, widget.rootId);
+  ComposerDraftProvider get _provider => composerDraftProvider(
+    widget.url,
+    widget.channelId,
+    widget.rootId,
+    forward: widget.forward,
+  );
 
   @override
   void initState() {
@@ -258,7 +278,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final draft = ref.read(_provider.notifier);
     switch (action) {
       case ComposerKey.send:
-        if (canSend(value, _limit)) unawaited(_send());
+        if (canSend(value, _limit, forwarding: widget.forward.isNotEmpty)) {
+          unawaited(_send());
+        }
       case ComposerKey.acceptSuggestion:
         draft.pick(suggestions[_highlight.clamp(0, suggestions.length - 1)]);
       case ComposerKey.nextSuggestion:
@@ -482,9 +504,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final options = ref.watch(postPriorityOptionsProvider(widget.url)).value;
     final features = ref.watch(featuresProvider(widget.url)).value;
     final uploads = features?.fileUploads ?? true;
-    final canPrioritize = widget.rootId.isEmpty && (options?.priority ?? false);
-    final sendable = canSend(value, limit);
-    final canBurn = widget.rootId.isEmpty && (features?.burnOnRead ?? false);
+    final forwarding = widget.forward.isNotEmpty;
+    final canPrioritize =
+        !forwarding && widget.rootId.isEmpty && (options?.priority ?? false);
+    final sendable = canSend(value, limit, forwarding: forwarding);
+    final canBurn =
+        !forwarding && widget.rootId.isEmpty && (features?.burnOnRead ?? false);
     // Kept current for the schedule picker.
     ref.watch(manualTimeZoneProvider(widget.url));
     final burning =
@@ -617,6 +642,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       if (editing == null &&
+                          !forwarding &&
                           (uploads || canPrioritize || canBurn))
                         IconButton(
                           tooltip: 'Attach',
@@ -693,6 +719,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                         onSend: sendable ? _send : null,
                         onSchedule:
                             sendable &&
+                                !forwarding &&
                                 editing == null &&
                                 !burning &&
                                 (features?.scheduledPosts ?? false) &&
@@ -875,6 +902,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         messenger.showSnackBar(
           SnackBar(content: Text('Scheduled for ${_when(at)}')),
         );
+      case SubmitForwarded():
+        widget.onForwarded?.call();
+        return;
       case SubmitDone():
     }
     if (isDesktop && mounted) _focus.requestFocus();

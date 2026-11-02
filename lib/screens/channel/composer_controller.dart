@@ -9,6 +9,7 @@ import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/drafts.dart';
 import 'package:matterleast/data/actions/file_upload.dart';
 import 'package:matterleast/domain/autocomplete.dart';
+import 'package:matterleast/domain/forward.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/quote.dart';
 import 'package:matterleast/domain/reaction_shortcut.dart';
@@ -67,9 +68,10 @@ const maxAttachments = 10;
 
 /// Pure: whether [value] can go out, with text or uploaded files, nothing
 /// still uploading and no more than [limit] characters.
-bool canSend(ComposerValue value, int limit) {
+bool canSend(ComposerValue value, int limit, {bool forwarding = false}) {
   final files = value.attachments;
-  return (value.text.text.trim().isNotEmpty ||
+  return (forwarding ||
+          value.text.text.trim().isNotEmpty ||
           files.any((a) => a.info != null)) &&
       !files.any((a) => a.uploading) &&
       value.text.text.length <= limit;
@@ -89,6 +91,11 @@ final class SubmitDone extends SubmitOutcome {
 final class SubmitOpenLink extends SubmitOutcome {
   const SubmitOpenLink(this.uri);
   final Uri uri;
+}
+
+/// Queued as a forward of a message; the composer's job is done.
+final class SubmitForwarded extends SubmitOutcome {
+  const SubmitForwarded();
 }
 
 /// Scheduled to go out at [at].
@@ -132,7 +139,9 @@ class ComposerValue {
 
 /// The composer of one conversation. Lives as long as the conversation is
 /// on screen, so rebuilds and the drawer keep what was typed; the draft
-/// keeps it after that.
+/// keeps it after that. With a [forward] link it writes the comment for
+/// forwarding that message instead: no draft, commands, files or typing
+/// signal, and sending posts the comment and the link.
 @riverpod
 class ComposerDraft extends _$ComposerDraft {
   var _teamId = '';
@@ -145,16 +154,23 @@ class ComposerDraft extends _$ComposerDraft {
       ref.read(composerActionsProvider(url).future);
 
   @override
-  ComposerValue build(String url, String channelId, String rootId) {
+  ComposerValue build(
+    String url,
+    String channelId,
+    String rootId, {
+    String forward = '',
+  }) {
     final actions = _actions;
     ref.onDispose(() {
-      unawaited(actions.then((a) => a.leaveDraft(channelId, rootId: rootId)));
+      if (forward.isEmpty) {
+        unawaited(actions.then((a) => a.leaveDraft(channelId, rootId: rootId)));
+      }
       unawaited(_suggesting?.cancel());
       for (final u in _uploads.values) {
         u.cancel();
       }
     });
-    unawaited(_restore());
+    if (forward.isEmpty) unawaited(_restore());
     return const ComposerValue();
   }
 
@@ -199,7 +215,7 @@ class ComposerDraft extends _$ComposerDraft {
       priority: state.priority,
     );
     if (typed) _suggest(value);
-    if (editing != null) return;
+    if (editing != null || forward.isNotEmpty) return;
     _saveDraft();
     if (typed && value.text.isNotEmpty) {
       unawaited(_actions.then((a) => a.userTyping(channelId, rootId: rootId)));
@@ -470,6 +486,13 @@ class ComposerDraft extends _$ComposerDraft {
         return const SubmitDone();
       }
       final actions = await _actions;
+      if (forward.isNotEmpty) {
+        if (!await confirmMention(message) || !ref.mounted) {
+          return const SubmitDone();
+        }
+        await actions.send(channelId, message: forwardText(message, forward));
+        return const SubmitForwarded();
+      }
       if (message.startsWith('/')) {
         final outcome = await actions.executeCommand(
           channelId,
