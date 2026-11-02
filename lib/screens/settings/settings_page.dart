@@ -2,11 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/screens/settings/account_providers.dart';
 import 'package:matterleast/screens/settings/advanced_settings_page.dart';
 import 'package:matterleast/screens/settings/display_settings_page.dart';
 import 'package:matterleast/screens/settings/notification_settings_page.dart';
+import 'package:matterleast/screens/settings/sessions_page.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
+import 'package:matterleast/screens/settings/two_factor_page.dart';
 import 'package:matterleast/screens/status/status_page.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -25,6 +28,9 @@ class SettingsPage extends ConsumerWidget {
     final serverVersion = server == null
         ? null
         : ref.watch(featuresProvider(server.url)).value?.versionLabel;
+    final mfa =
+        server != null &&
+        (ref.watch(mfaAvailableProvider(server.url)).value ?? false);
     void push(Widget page) => openPage(Navigator.of(context), page);
     return ContentPage(
       title: const Text('Settings'),
@@ -44,6 +50,20 @@ class SettingsPage extends ConsumerWidget {
             subtitle: const Text('Clock, colours, threads and names'),
             onTap: () => push(DisplaySettingsPage(server: server)),
           ),
+          if (server != null)
+            ListTile(
+              leading: const Icon(Icons.devices_outlined),
+              title: const Text('Active sessions'),
+              subtitle: const Text('Where you are signed in'),
+              onTap: () => push(SessionsPage(server: server)),
+            ),
+          if (server != null && mfa)
+            ListTile(
+              leading: const Icon(Icons.shield_outlined),
+              title: const Text('Two-factor authentication'),
+              subtitle: const Text('A code from an app when you sign in'),
+              onTap: () => push(TwoFactorPage(server: server)),
+            ),
           ListTile(
             leading: const Icon(Icons.storage_outlined),
             title: const Text('Storage'),

@@ -18,11 +18,11 @@ import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/settings/settings_page.dart';
 import 'package:matterleast/screens/you/custom_status_screen.dart';
 import 'package:matterleast/screens/you/edit_profile_screen.dart';
+import 'package:matterleast/screens/you/leave_server.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/screens/you/status_sheet.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/app_sheet.dart';
-import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/initials_badge.dart';
@@ -452,53 +452,12 @@ class _ServerTile extends ConsumerWidget {
         await TrustedAuthorities.instance.forget(Uri.parse(server.url));
       case _ServerAction.signOut:
       case _ServerAction.remove:
-        await _leave(context, ref, remove: action == _ServerAction.remove);
-    }
-  }
-
-  Future<void> _leave(
-    BuildContext context,
-    WidgetRef ref, {
-    required bool remove,
-  }) async {
-    // The tile goes away with a removed server, so nothing reads ref later.
-    final manager = ref.read(serverManagerProvider);
-    final db = ref.read(appDatabaseProvider);
-    final navigator = Navigator.of(context);
-    final confirmed = await confirm(
-      context,
-      title: remove
-          ? 'Remove ${server.displayName}?'
-          : 'Sign out of ${server.displayName}?',
-      body: remove
-          ? 'The server and everything saved from it are removed from this '
-                'device.'
-          : 'Messages saved from this server are removed from this device. '
-                'The server stays in your list.',
-      action: remove ? 'Remove' : 'Sign out',
-      destructive: true,
-    );
-    if (!confirmed) return;
-    Future<bool> run({bool force = false}) => remove
-        ? manager.remove(server.url, force: force)
-        : manager.signOut(server.url, force: force);
-    var done = await run();
-    if (!done && context.mounted) {
-      final anyway = await confirm(
-        context,
-        title: "Couldn't sign out on ${server.address}",
-        body:
-            'Sign out on this device anyway? The session stays valid on the '
-            'server until it expires.',
-        action: 'Sign out anyway',
-      );
-      if (anyway) done = await run(force: true);
-    }
-    final anySignedIn = (await db.allServers()).any(
-      (s) => s.lastActiveAt != null,
-    );
-    if (done && !anySignedIn) {
-      outsidePopout(navigator).popUntil((route) => route.isFirst);
+        await leaveServer(
+          context,
+          ref,
+          server,
+          remove: action == _ServerAction.remove,
+        );
     }
   }
 }
