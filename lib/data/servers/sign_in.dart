@@ -72,6 +72,21 @@ class SignIn {
     }
   }
 
+  /// Asks the server to email a password reset link. The server answers the
+  /// same whether or not the address has an account.
+  Future<void> sendPasswordReset(ProbedServer server, String email) async {
+    final client = ServerApi(baseUrl: server.url, token: () => null);
+    try {
+      await client.call(
+        () => client.client.users.sendPasswordResetEmail(
+          body: api.ApiV4UsersPasswordResetSendRequestBody(email: email.trim()),
+        ),
+      );
+    } finally {
+      client.close();
+    }
+  }
+
   /// Runs the provider's login in an auth session. Returns null when the user
   /// closed it.
   Future<SignedIn?> withSso(
