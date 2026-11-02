@@ -164,6 +164,44 @@ void main() {
       expect(find.byTooltip('Add custom emoji'), findsNothing);
       await h.close(tester);
     });
+
+    testWidgets('a right granted by a team role shows the add button', (
+      tester,
+    ) async {
+      final h = await pumpWithServer(
+        tester,
+        size: _tall,
+        handle: (r) => ok(const <Object?>[]),
+        seed: (s) async {
+          await seedEmoji(s, create: false);
+          await s.store.applyRoles([
+            api.Role.fromJson({
+              'id': '2',
+              'name': 'team_user',
+              'permissions': [Permission.createEmojis],
+            }),
+          ]);
+          await s.store.applyTeams(
+            [
+              api.Team.fromJson({
+                'id': 'team1',
+                'name': 'bay',
+                'display_name': 'Bay',
+              }),
+            ],
+            [
+              api.TeamMember.fromJson({
+                'team_id': 'team1',
+                'roles': 'team_user',
+              }),
+            ],
+          );
+        },
+        home: (url) => Scaffold(body: EmojiPicker(url: url)),
+      );
+      expect(find.byTooltip('Add custom emoji'), findsOneWidget);
+      await h.close(tester);
+    });
   });
 
   group('adding an emoji', () {

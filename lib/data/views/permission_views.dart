@@ -40,16 +40,25 @@ class PermissionViews {
   }
 
   /// What the user may do with custom emoji; nothing when the server has
-  /// them off.
+  /// them off. Team roles count too: a server that lets only team admins
+  /// add emoji grants it there.
   Future<EmojiRights> emoji() async => emojiRights(
     enabled: (await db.features()).customEmoji,
-    roles: roleNames([await db.syncText(SyncKeys.currentUserRoles) ?? '']),
+    roles: roleNames([
+      await db.syncText(SyncKeys.currentUserRoles) ?? '',
+      for (final t in await db.select(db.myTeams).get()) t.roles,
+    ]),
     granted: await roleGrants(),
   );
 
   Stream<EmojiRights> watchEmoji() => throttledWatch(
     db.tableUpdates(
-      TableUpdateQuery.onAllTables([db.roles, db.syncState, db.config]),
+      TableUpdateQuery.onAllTables([
+        db.roles,
+        db.syncState,
+        db.config,
+        db.myTeams,
+      ]),
     ),
     emoji,
     interval: const Duration(milliseconds: 300),
