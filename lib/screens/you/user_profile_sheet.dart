@@ -14,9 +14,10 @@ import 'package:matterleast/screens/you/profile_attributes_list.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
-import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/failed_state.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// Someone's profile in a bottom sheet, with a button to message them.
@@ -48,15 +49,12 @@ class UserProfileSheet extends ConsumerWidget {
       return SizedBox(
         height: 240,
         child: switch (refresh) {
-          AsyncError(:final error) when !refresh.isLoading => EmptyState(
+          AsyncError(:final error) when !refresh.isLoading => FailedState(
             icon: Icons.person_off_outlined,
             title: "Couldn't load the profile",
-            body: requestProblemText(error, Uri.parse(url).host),
-            action: FilledButton.tonal(
-              onPressed: () =>
-                  ref.invalidate(profileRefreshProvider(url, userId)),
-              child: const Text('Retry'),
-            ),
+            error: error,
+            host: hostOf(url),
+            onRetry: () => ref.invalidate(profileRefreshProvider(url, userId)),
           ),
           _ => const Center(child: CircularProgressIndicator()),
         },
@@ -159,24 +157,24 @@ Future<void> messagePerson(
   VoidCallback? before,
 }) async {
   final navigator = Navigator.of(context);
-  final messenger = ScaffoldMessenger.of(context);
-  try {
-    final actions = await ref.read(channelActionsProvider(url).future);
-    final channelId = await actions.directChannel(userId);
-    before?.call();
-    unawaited(
-      openConversation(navigator, url: url, channelId: channelId, title: name),
-    );
-  } on Object catch (e) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          "Couldn't open the conversation. "
-          '${requestProblemText(e, Uri.parse(url).host)}',
+  await tryAction(
+    context,
+    hostOf(url),
+    failure: "Couldn't open the conversation.",
+    () async {
+      final actions = await ref.read(channelActionsProvider(url).future);
+      final channelId = await actions.directChannel(userId);
+      before?.call();
+      unawaited(
+        openConversation(
+          navigator,
+          url: url,
+          channelId: channelId,
+          title: name,
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
 }
 
 /// A custom status as one line: its emoji, text and when it clears.

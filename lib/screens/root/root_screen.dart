@@ -4,6 +4,7 @@ import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel_info/browse_channels_screen.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_info/edit_channel_screen.dart';
@@ -103,7 +104,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       list: list,
       status: status,
       serverName: server.displayName,
-      host: Uri.parse(server.url).host,
+      host: hostOf(server.url),
       liveUpdatesDown: ref.watch(socketDownProvider(server.url)).value ?? false,
     );
     return _RootLayout(

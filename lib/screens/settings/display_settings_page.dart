@@ -9,13 +9,13 @@ import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
-import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/settings/time_zone_page.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 enum _Clock {
   system(null),
@@ -71,18 +71,14 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
     Future<void> Function(String url) save,
   ) async {
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
-    try {
-      await save(server.url);
-    } on Object catch (e) {
-      showProblem(
-        messenger,
-        "Couldn't save. ${requestProblemText(e, server.address)}",
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    await tryAction(
+      context,
+      server.address,
+      failure: "Couldn't save.",
+      () => save(server.url),
+    );
+    if (mounted) setState(() => _saving = false);
   }
 
   @override

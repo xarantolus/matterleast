@@ -48,7 +48,3 @@ Future<T?> pickOne<T>(
   );
   return picked == current ? null : picked;
 }
-
-/// Shows what went wrong with a save.
-void showProblem(ScaffoldMessengerState messenger, String text) =>
-    messenger.showSnackBar(SnackBar(content: Text(text)));

@@ -9,6 +9,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/sheet_header.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// The menu of a category header: sort it, mute it, mark it read, reorder
 /// the list, add a category, and rename or delete a custom one.
@@ -308,17 +309,14 @@ Future<void> runCategoryAction(
   String failure,
   Future<void> Function(ChannelActions) action,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
   final container = ProviderScope.containerOf(context, listen: false);
-  try {
-    await action(await container.read(channelActionsProvider(url).future));
-  } on Object catch (e) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('$failure ${requestProblemText(e, Uri.parse(url).host)}'),
-      ),
-    );
-  }
+  await tryAction(
+    context,
+    hostOf(url),
+    failure: failure,
+    () async =>
+        action(await container.read(channelActionsProvider(url).future)),
+  );
 }
 
 Future<String?> _askName(
@@ -326,62 +324,11 @@ Future<String?> _askName(
   required String title,
   required String action,
   String initial = '',
-}) => showDialog<String>(
-  context: context,
-  builder: (_) => _NameDialog(title: title, action: action, initial: initial),
+}) => promptText(
+  context,
+  title: title,
+  action: action,
+  initial: initial,
+  label: 'Name',
+  required: true,
 );
-
-class _NameDialog extends StatefulWidget {
-  const _NameDialog({
-    required this.title,
-    required this.action,
-    required this.initial,
-  });
-
-  final String title;
-  final String action;
-  final String initial;
-
-  @override
-  State<_NameDialog> createState() => _NameDialogState();
-}
-
-class _NameDialogState extends State<_NameDialog> {
-  late final _name = TextEditingController(text: widget.initial);
-
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final name = _name.text.trim();
-    if (name.isNotEmpty) Navigator.pop(context, name);
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.title),
-    content: TextField(
-      controller: _name,
-      autofocus: true,
-      textCapitalization: TextCapitalization.sentences,
-      decoration: const InputDecoration(labelText: 'Name'),
-      onSubmitted: (_) => _submit(),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      ListenableBuilder(
-        listenable: _name,
-        builder: (context, _) => TextButton(
-          onPressed: _name.text.trim().isEmpty ? null : _submit,
-          child: Text(widget.action),
-        ),
-      ),
-    ],
-  );
-}

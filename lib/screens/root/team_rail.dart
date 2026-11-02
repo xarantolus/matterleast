@@ -24,6 +24,7 @@ import 'package:matterleast/ui/mention_badge.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/team_icon.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// Home, then one icon per team grouped by server, then Add server and the
@@ -61,13 +62,14 @@ class _TeamRailState extends ConsumerState<TeamRail> {
     final order = moveItem([for (final s in shown) s.url], from, to);
     setState(() => _pending = order);
     unawaited(
-      _saveOrder(
+      tryAction(
         context,
-        shown[from].url,
-        "Couldn't move the server.",
+        hostOf(shown[from].url),
+        failure: "Couldn't move the server.",
         () => ref.read(serverManagerProvider).reorderServers(order),
-        onFailed: () => setState(() => _pending = null),
-      ),
+      ).then((saved) {
+        if (!saved) setState(() => _pending = null);
+      }),
     );
   }
 
@@ -161,27 +163,6 @@ class _TeamRailState extends ConsumerState<TeamRail> {
             const SizedBox(height: Spacing.md),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Runs [save] and says why it failed.
-Future<void> _saveOrder(
-  BuildContext context,
-  String url,
-  String failure,
-  Future<void> Function() save, {
-  required VoidCallback onFailed,
-}) async {
-  final messenger = ScaffoldMessenger.of(context);
-  try {
-    await save();
-  } on Object catch (e) {
-    onFailed();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('$failure ${requestProblemText(e, Uri.parse(url).host)}'),
       ),
     );
   }
@@ -297,15 +278,16 @@ class _ServerTeamsState extends ConsumerState<_ServerTeams> {
     final order = moveItem([for (final t in shown) t.id], from, to);
     setState(() => _pending = order);
     unawaited(
-      _saveOrder(
+      tryAction(
         context,
-        widget.server.url,
-        "Couldn't move the team.",
+        hostOf(widget.server.url),
+        failure: "Couldn't move the team.",
         () async =>
             (await ref.read(settingsActionsProvider(widget.server.url).future))
                 .saveTeamsOrder(order),
-        onFailed: () => setState(() => _pending = null),
-      ),
+      ).then((saved) {
+        if (!saved) setState(() => _pending = null);
+      }),
     );
   }
 

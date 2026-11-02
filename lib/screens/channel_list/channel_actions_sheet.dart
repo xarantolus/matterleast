@@ -12,6 +12,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/sheet_header.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// The long-press sheet of a channel row; on desktop a popup next to
 /// [anchor] (global), where it was right-clicked.
@@ -44,19 +45,16 @@ class _ChannelActionsSheet extends ConsumerWidget {
     final conversation =
         item.kind == ChannelKind.direct || item.kind == ChannelKind.group;
     void run(String failure, Future<void> Function(ChannelActions) action) {
-      final messenger = ScaffoldMessenger.of(context);
+      unawaited(
+        tryAction(
+          context,
+          hostOf(url),
+          failure: failure,
+          () async =>
+              action(await ref.read(channelActionsProvider(url).future)),
+        ),
+      );
       Navigator.of(context).pop();
-      ref.read(channelActionsProvider(url).future).then(action).catchError((
-        Object e,
-      ) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              '$failure ${requestProblemText(e, Uri.parse(url).host)}',
-            ),
-          ),
-        );
-      });
     }
 
     return SafeArea(

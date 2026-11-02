@@ -227,7 +227,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
     _editing = composer == null
         ? null
         : ref.watch(composer.select((v) => v.editing?.id));
-    final host = Uri.parse(widget.url).host;
+    final host = hostOf(widget.url);
     return switch (conversationBody(state, host: host)) {
       BodyLoading() => const DelayedSpinner(),
       BodyFailed(:final text) => EmptyState(
@@ -335,7 +335,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
               onViewChanged: _onView,
               olderEdge: _OlderEdge(
                 state: state,
-                host: Uri.parse(widget.url).host,
+                host: hostOf(widget.url),
                 startText: widget.startText,
                 onRetry: _controller.retryOlder,
               ),
@@ -571,7 +571,7 @@ extension on _ConversationViewState {
         SnackBar(
           content: Text(
             "Couldn't change the acknowledgement. "
-            '${requestProblemText(e, Uri.parse(widget.url).host)}',
+            '${requestProblemText(e, hostOf(widget.url))}',
           ),
         ),
       );

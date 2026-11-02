@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_scaffold.dart';
@@ -11,6 +10,7 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/thread/thread_providers.dart';
 import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// A thread: its first message, then the replies.
 class ThreadScreen extends ConsumerWidget {
@@ -101,9 +101,13 @@ class ThreadScreen extends ConsumerWidget {
     WidgetRef ref,
     bool following,
   ) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref
+    await tryAction(
+      context,
+      hostOf(url),
+      failure: following
+          ? "Couldn't follow the thread."
+          : "Couldn't stop following the thread.",
+      () => ref
           .read(
             conversationProvider(
               url,
@@ -112,17 +116,8 @@ class ThreadScreen extends ConsumerWidget {
               highlightPostId: highlightPostId,
             ).notifier,
           )
-          .setFollowing(following: following);
-    } on ApiError catch (e) {
-      final what = following
-          ? "Couldn't follow the thread."
-          : "Couldn't stop following the thread.";
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('$what ${requestProblemText(e, Uri.parse(url).host)}'),
-        ),
-      );
-    }
+          .setFollowing(following: following),
+    );
   }
 }
 

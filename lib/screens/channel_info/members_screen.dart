@@ -12,6 +12,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// Who is in a channel, admins first, with search and presence.
 class MembersScreen extends ConsumerStatefulWidget {
@@ -61,49 +62,43 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
       destructive: true,
     );
     if (!ok || !mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final host = Uri.parse(widget.url).host;
-    try {
-      final actions = await ref.read(channelActionsProvider(widget.url).future);
-      await actions.removeMember(widget.channelId, userId);
-      _removed.value = {..._removed.value, userId};
-    } on Object catch (e) {
-      final said = e is ServerError ? e.message : null;
-      if (e is ServerError && const {403, 404, 501}.contains(e.statusCode)) {
-        if (mounted) setState(() => _refused = true);
-      }
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't remove $name. "
-            '${said != null && said.isNotEmpty ? said : requestProblemText(e, host)}',
-          ),
-        ),
-      );
+    await tryAction(
+      context,
+      hostOf(widget.url),
+      failure: "Couldn't remove $name.",
+      problem: serverSaidText,
+      onFailed: _refuse,
+      () async {
+        final actions = await ref.read(
+          channelActionsProvider(widget.url).future,
+        );
+        await actions.removeMember(widget.channelId, userId);
+        _removed.value = {..._removed.value, userId};
+      },
+    );
+  }
+
+  void _refuse(Object e) {
+    if (e is ServerError && const {403, 404, 501}.contains(e.statusCode)) {
+      if (mounted) setState(() => _refused = true);
     }
   }
 
   Future<void> _setAdmin(String userId, String name, bool admin) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final host = Uri.parse(widget.url).host;
-    try {
-      final actions = await ref.read(channelActionsProvider(widget.url).future);
-      await actions.setChannelAdmin(widget.channelId, userId, admin: admin);
-      ref.invalidate(channelAdminsProvider(widget.url, widget.channelId));
-    } on Object catch (e) {
-      if (e is ServerError && const {403, 404, 501}.contains(e.statusCode)) {
-        if (mounted) setState(() => _refused = true);
-      }
-      final said = e is ServerError ? e.message : null;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't change $name. "
-            '${said != null && said.isNotEmpty ? said : requestProblemText(e, host)}',
-          ),
-        ),
-      );
-    }
+    await tryAction(
+      context,
+      hostOf(widget.url),
+      failure: "Couldn't change $name.",
+      problem: serverSaidText,
+      onFailed: _refuse,
+      () async {
+        final actions = await ref.read(
+          channelActionsProvider(widget.url).future,
+        );
+        await actions.setChannelAdmin(widget.channelId, userId, admin: admin);
+        ref.invalidate(channelAdminsProvider(widget.url, widget.channelId));
+      },
+    );
   }
 
   @override

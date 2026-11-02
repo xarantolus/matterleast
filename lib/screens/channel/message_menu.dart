@@ -23,6 +23,7 @@ import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'message_menu.g.dart';
@@ -539,20 +540,16 @@ Future<void> runPostAction(
   Future<void> Function(PostActions actions) action,
   String failure,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
   final actions = ProviderScope.containerOf(
     context,
     listen: false,
   ).read(postActionsProvider(url).future);
-  try {
-    await action(await actions);
-  } on ApiError catch (e) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('$failure ${requestProblemText(e, Uri.parse(url).host)}'),
-      ),
-    );
-  }
+  await tryAction(
+    context,
+    hostOf(url),
+    failure: failure,
+    () async => action(await actions),
+  );
 }
 
 /// Asks when, then sets the reminder.

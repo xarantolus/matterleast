@@ -2,13 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/domain/burn_on_read.dart';
 import 'package:matterleast/domain/post_list.dart';
-import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// A burn-on-read message: a "View message" placeholder until the reader
 /// opens it, then [child] with a countdown; it leaves when it burns.
@@ -37,18 +36,12 @@ class _BurnOnReadViewState extends ConsumerState<BurnOnReadView> {
   Future<void> _reveal() async {
     final server = _server;
     if (server == null || _revealing) return;
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _revealing = true);
-    try {
+    await tryAction(context, server.host, () async {
       final actions = await ref.read(postActionsProvider('$server').future);
       await actions.reveal(widget.post.id);
-    } on ApiError catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(requestProblemText(e, server.host))),
-      );
-    } finally {
-      if (mounted) setState(() => _revealing = false);
-    }
+    });
+    if (mounted) setState(() => _revealing = false);
   }
 
   void _burned() {

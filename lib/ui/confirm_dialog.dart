@@ -62,3 +62,136 @@ Future<bool> confirmLeave(
   action: 'Leave',
   destructive: true,
 );
+
+/// Tells the user something; there is nothing to decide.
+Future<void> inform(
+  BuildContext context, {
+  required String title,
+  required String body,
+}) => showDialog<void>(
+  context: context,
+  builder: (context) => AlertDialog(
+    title: Text(title),
+    content: Text(body),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('OK'),
+      ),
+    ],
+  ),
+);
+
+/// Asks for some text; the trimmed answer, or null on Cancel. A [required]
+/// answer can't be blank; [problem] may refuse one and say why.
+Future<String?> promptText(
+  BuildContext context, {
+  required String title,
+  String initial = '',
+  String action = 'Save',
+  String? label,
+  String? helper,
+  int minLines = 1,
+  int maxLines = 1,
+  bool required = false,
+  TextCapitalization capitalization = TextCapitalization.sentences,
+  String? Function(String text)? problem,
+}) => showDialog<String>(
+  context: context,
+  builder: (_) => _PromptDialog(
+    title: title,
+    initial: initial,
+    action: action,
+    label: label,
+    helper: helper,
+    minLines: minLines,
+    maxLines: maxLines,
+    required: required,
+    capitalization: capitalization,
+    problem: problem,
+  ),
+);
+
+class _PromptDialog extends StatefulWidget {
+  const _PromptDialog({
+    required this.title,
+    required this.initial,
+    required this.action,
+    required this.label,
+    required this.helper,
+    required this.minLines,
+    required this.maxLines,
+    required this.required,
+    required this.capitalization,
+    required this.problem,
+  });
+
+  final String title;
+  final String initial;
+  final String action;
+  final String? label;
+  final String? helper;
+  final int minLines;
+  final int maxLines;
+  final bool required;
+  final TextCapitalization capitalization;
+  final String? Function(String text)? problem;
+
+  @override
+  State<_PromptDialog> createState() => _PromptDialogState();
+}
+
+class _PromptDialogState extends State<_PromptDialog> {
+  late final _text = TextEditingController(text: widget.initial);
+  String? _error;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final error = widget.problem?.call(_text.text);
+    if (error != null) {
+      setState(() => _error = error);
+      return;
+    }
+    if (widget.required && _text.text.trim().isEmpty) return;
+    Navigator.pop(context, _text.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.title),
+    content: TextField(
+      controller: _text,
+      autofocus: true,
+      minLines: widget.minLines,
+      maxLines: widget.maxLines,
+      textCapitalization: widget.capitalization,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        helperText: widget.helper,
+        helperMaxLines: 2,
+        errorText: _error,
+      ),
+      onSubmitted: widget.maxLines == 1 ? (_) => _submit() : null,
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      ListenableBuilder(
+        listenable: _text,
+        builder: (context, _) => TextButton(
+          onPressed: widget.required && _text.text.trim().isEmpty
+              ? null
+              : _submit,
+          child: Text(widget.action),
+        ),
+      ),
+    ],
+  );
+}

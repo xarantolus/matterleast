@@ -96,11 +96,20 @@ String staleDataNotice(ApiError error) => switch (error) {
   KeyringUnavailable() => "Couldn't update: the keyring is unavailable",
 };
 
+/// The host part of a server [url].
+String hostOf(String url) => Uri.parse(url).host;
+
 /// Words for any failed request to [host], including our own timeouts.
 String requestProblemText(Object error, String host) => switch (error) {
   ApiError() => connectionProblemText(error, host),
   TimeoutException() => connectionProblemText(const RequestTimeout(), host),
   _ => 'Something went wrong talking to $host. Try again.',
+};
+
+/// Like [requestProblemText], but the server's own message when it sent one.
+String serverSaidText(Object error, String host) => switch (error) {
+  ServerError(:final message?) when message.isNotEmpty => message,
+  _ => requestProblemText(error, host),
 };
 
 /// Words for a failed server check; any HTTP error means the address is not

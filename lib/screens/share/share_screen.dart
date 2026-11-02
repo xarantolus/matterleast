@@ -9,7 +9,6 @@ import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
-import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -18,6 +17,7 @@ import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:path/path.dart' as p;
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -130,31 +130,33 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     setState(() => _sending = true);
-    try {
-      final session = await ref.read(serverSessionProvider(server.url).future);
-      final channelId = channel.kind == SwitchKind.person
-          ? await (await ref.read(channelActionsProvider(server.url).future))
-                .directChannel(channel.id)
-          : channel.id;
-      await sendShared(
-        session,
-        channelId: channelId,
-        message: _message.text.trim(),
-        files: files,
-      );
+    final sent = await tryAction(
+      context,
+      server.address,
+      failure: "Couldn't send.",
+      () async {
+        final session = await ref.read(
+          serverSessionProvider(server.url).future,
+        );
+        final channelId = channel.kind == SwitchKind.person
+            ? await (await ref.read(channelActionsProvider(server.url).future))
+                  .directChannel(channel.id)
+            : channel.id;
+        await sendShared(
+          session,
+          channelId: channelId,
+          message: _message.text.trim(),
+          files: files,
+        );
+      },
+    );
+    if (sent) {
       messenger.showSnackBar(
         SnackBar(content: Text('Sent to ${channel.title}')),
       );
       navigator.pop();
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't send. ${requestProblemText(e, server.address)}",
-          ),
-        ),
-      );
-      if (mounted) setState(() => _sending = false);
+    } else if (mounted) {
+      setState(() => _sending = false);
     }
   }
 

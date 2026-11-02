@@ -4,6 +4,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_status.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -67,7 +68,7 @@ class _ServerStatus extends ConsumerWidget {
       socket: ref.watch(socketStateProvider(server.url)).value,
       sync: ref.watch(syncStatusProvider(server.url)).value,
       stored: ref.watch(serverStorageProvider(server.url)).value,
-      host: Uri.parse(server.url).host,
+      host: hostOf(server.url),
       time: (at) => whenLabel(at, today, use24: use24),
     );
     final tokens = context.tokens;

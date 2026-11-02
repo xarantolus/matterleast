@@ -143,7 +143,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               when id.contains('username'):
             _usernameError = message ?? 'This username is not available.';
           default:
-            _error = requestProblemText(e, Uri.parse(widget.url).host);
+            _error = requestProblemText(e, hostOf(widget.url));
         }
       });
     }
@@ -357,7 +357,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           // The server explains its password rules and wrong current
           // passwords in its own words.
           ServerError(:final message?) when message.isNotEmpty => message,
-          _ => requestProblemText(e, Uri.parse(widget.url).host),
+          _ => requestProblemText(e, hostOf(widget.url)),
         };
       });
     }

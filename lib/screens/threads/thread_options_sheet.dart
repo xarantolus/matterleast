@@ -4,7 +4,6 @@ import 'package:drift/drift.dart' show BooleanExpressionOperators;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
@@ -15,6 +14,7 @@ import 'package:matterleast/domain/thread_options.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'thread_options_sheet.g.dart';
@@ -50,18 +50,14 @@ Future<void> showThreadOptions(
 }) => showAppSheet<void>(
   context: context,
   anchor: anchor,
-  builder: (_) => ThreadOptionsSheet(
-    item: item,
-    navigator: Navigator.of(context),
-    messenger: ScaffoldMessenger.of(context),
-  ),
+  builder: (_) =>
+      ThreadOptionsSheet(item: item, navigator: Navigator.of(context)),
 );
 
 class ThreadOptionsSheet extends ConsumerWidget {
   const ThreadOptionsSheet({
     required this.item,
     required this.navigator,
-    required this.messenger,
     super.key,
   });
 
@@ -69,7 +65,6 @@ class ThreadOptionsSheet extends ConsumerWidget {
 
   /// The screen's, so the actions outlive the sheet.
   final NavigatorState navigator;
-  final ScaffoldMessengerState messenger;
 
   static const _icons = {
     ThreadOption.reply: Icons.reply,
@@ -120,45 +115,41 @@ class ThreadOptionsSheet extends ConsumerWidget {
     final url = item.serverUrl;
     final rootId = item.rootId!;
     final team = item.teamId ?? '';
-    try {
-      switch (option) {
-        case ThreadOption.reply:
-          await openInboxItem(navigator.context, item);
-        case ThreadOption.openInChannel:
-          await openPost(navigator, url, rootId);
-        case ThreadOption.markRead:
-          final session = await ref.read(serverSessionProvider(url).future);
-          await ConversationActions(session).markThreadRead(team, rootId);
-        case ThreadOption.markUnread:
-          final actions = await ref.read(postActionsProvider(url).future);
-          await actions.markThreadUnread(team, rootId);
-        case ThreadOption.follow:
-          final actions = await ref.read(postActionsProvider(url).future);
-          await actions.followThread(team, rootId);
-        case ThreadOption.unfollow:
-          final actions = await ref.read(postActionsProvider(url).future);
-          await actions.unfollowThread(team, rootId);
-        case ThreadOption.save:
-          final actions = await ref.read(postActionsProvider(url).future);
-          await actions.savePost(rootId);
-        case ThreadOption.unsave:
-          final actions = await ref.read(postActionsProvider(url).future);
-          await actions.unsavePost(rootId);
-        case ThreadOption.copyLink:
-          final base = url.replaceFirst(RegExp(r'/+$'), '');
-          await Clipboard.setData(
-            ClipboardData(text: '$base/$teamName/pl/$rootId'),
-          );
-      }
-    } on ApiError catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't ${option.label.toLowerCase()}. "
-            '${requestProblemText(e, Uri.parse(url).host)}',
-          ),
-        ),
-      );
-    }
+    await tryAction(
+      navigator.context,
+      hostOf(url),
+      failure: "Couldn't ${option.label.toLowerCase()}.",
+      () async {
+        switch (option) {
+          case ThreadOption.reply:
+            await openInboxItem(navigator.context, item);
+          case ThreadOption.openInChannel:
+            await openPost(navigator, url, rootId);
+          case ThreadOption.markRead:
+            final session = await ref.read(serverSessionProvider(url).future);
+            await ConversationActions(session).markThreadRead(team, rootId);
+          case ThreadOption.markUnread:
+            final actions = await ref.read(postActionsProvider(url).future);
+            await actions.markThreadUnread(team, rootId);
+          case ThreadOption.follow:
+            final actions = await ref.read(postActionsProvider(url).future);
+            await actions.followThread(team, rootId);
+          case ThreadOption.unfollow:
+            final actions = await ref.read(postActionsProvider(url).future);
+            await actions.unfollowThread(team, rootId);
+          case ThreadOption.save:
+            final actions = await ref.read(postActionsProvider(url).future);
+            await actions.savePost(rootId);
+          case ThreadOption.unsave:
+            final actions = await ref.read(postActionsProvider(url).future);
+            await actions.unsavePost(rootId);
+          case ThreadOption.copyLink:
+            final base = url.replaceFirst(RegExp(r'/+$'), '');
+            await Clipboard.setData(
+              ClipboardData(text: '$base/$teamName/pl/$rootId'),
+            );
+        }
+      },
+    );
   }
 }

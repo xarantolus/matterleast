@@ -319,23 +319,20 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       );
 
   /// While a picture loads, its stand-in; when it failed, why, and Retry.
-  Widget? _loadState(
-    ExtendedImageState state,
-    PostFile item,
-    int i,
-  ) => switch (state.extendedImageLoadState) {
-    LoadState.completed => isDesktop ? _desktopPicture(state) : null,
-    // The picture it replaces stays until this one is there.
-    LoadState.loading when state.extendedImageInfo != null => null,
-    LoadState.loading => _standIn(item, i, state.loadingProgress),
-    LoadState.failed => _Message(
-      text:
-          "The picture didn't load. "
-          '${imageProblemText(state.lastException, Uri.parse(widget.url).host)}',
-      action: 'Retry',
-      onPressed: state.reLoadImage,
-    ),
-  };
+  Widget? _loadState(ExtendedImageState state, PostFile item, int i) =>
+      switch (state.extendedImageLoadState) {
+        LoadState.completed => isDesktop ? _desktopPicture(state) : null,
+        // The picture it replaces stays until this one is there.
+        LoadState.loading when state.extendedImageInfo != null => null,
+        LoadState.loading => _standIn(item, i, state.loadingProgress),
+        LoadState.failed => _Message(
+          text:
+              "The picture didn't load. "
+              '${imageProblemText(state.lastException, hostOf(widget.url))}',
+          action: 'Retry',
+          onPressed: state.reLoadImage,
+        ),
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -794,7 +791,7 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
     }
     if (_error case final error?) {
       final cause = error is ApiError || error is TimeoutException
-          ? requestProblemText(error, Uri.parse(widget.url).host)
+          ? requestProblemText(error, hostOf(widget.url))
           : 'Try again.';
       return _Message(
         text: "The video didn't load. $cause You can also use Open with.",

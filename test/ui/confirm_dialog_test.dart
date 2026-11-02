@@ -68,4 +68,50 @@ void main() {
     await tester.pumpAndSettle();
     expect(await answer, isFalse);
   });
+
+  Future<Future<String?>> prompt(WidgetTester tester) async {
+    late Future<String?> answer;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => answer = promptText(
+              context,
+              title: 'Rename',
+              initial: 'Old',
+              required: true,
+            ),
+            child: const Text('ask'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('ask'));
+    await tester.pumpAndSettle();
+    return answer;
+  }
+
+  testWidgets('a prompt answers the trimmed text', (tester) async {
+    final answer = await prompt(tester);
+    await tester.enterText(find.byType(TextField), '  New name ');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(await answer, 'New name');
+  });
+
+  testWidgets('cancelling a prompt answers nothing, and a blank one cannot '
+      'be saved', (tester) async {
+    final answer = await prompt(tester);
+    await tester.enterText(find.byType(TextField), '   ');
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, 'Save'))
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(await answer, isNull);
+  });
 }

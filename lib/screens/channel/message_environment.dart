@@ -23,6 +23,7 @@ import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'message_environment.g.dart';
@@ -111,8 +112,7 @@ class MessageEnvironment extends ConsumerStatefulWidget {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            "Couldn't look up @$typed. "
-            '${requestProblemText(e, Uri.parse(url).host)}',
+            "Couldn't look up @$typed. ${requestProblemText(e, hostOf(url))}",
           ),
         ),
       );
@@ -181,10 +181,9 @@ class MessageEnvironment extends ConsumerStatefulWidget {
     WidgetRef ref,
     PostActionRequest request,
   ) async {
-    final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final server = Uri.parse(url);
-    try {
+    await tryAction(context, server.host, () async {
       final actions = await ref.read(integrationActionsProvider(url).future);
       final location = await actions.run(request);
       if (location == null || !navigator.mounted) return;
@@ -192,11 +191,7 @@ class MessageEnvironment extends ConsumerStatefulWidget {
         FocusManager.instance.primaryFocus?.unfocus();
         await openLinkFromMessage(navigator, uri);
       }
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(requestProblemText(e, server.host))),
-      );
-    }
+    });
   }
 }
 

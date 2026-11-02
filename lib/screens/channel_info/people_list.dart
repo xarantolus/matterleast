@@ -10,6 +10,7 @@ import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_info/paged_search_controller.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/failed_state.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// A searchable list of people from the server, a page at a time, with
@@ -136,17 +137,11 @@ class _PeopleListState extends ConsumerState<PeopleList> {
               ? busy
                     ? const Center(child: CircularProgressIndicator())
                     : list.error != null
-                    ? EmptyState(
-                        icon: Icons.cloud_off,
+                    ? FailedState(
                         title: "Couldn't load people",
-                        body: requestProblemText(
-                          list.error!,
-                          Uri.parse(widget.url).host,
-                        ),
-                        action: FilledButton.tonal(
-                          onPressed: _list.retry,
-                          child: const Text('Retry'),
-                        ),
+                        error: list.error!,
+                        host: hostOf(widget.url),
+                        onRetry: _list.retry,
                       )
                     : EmptyState(
                         icon: Icons.person_search_outlined,

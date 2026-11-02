@@ -16,8 +16,10 @@ import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/failed_state.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// The team's public channels the user is not in, or its archived ones,
 /// a page at a time; joining asks first.
@@ -47,7 +49,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
   )..addListener(_listed);
   var _working = false;
 
-  String get _host => Uri.parse(widget.url).host;
+  String get _host => hostOf(widget.url);
 
   @override
   void initState() {
@@ -83,36 +85,34 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
 
   Future<void> _open(SwitchItem item) async {
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     if (!_archived && !await confirmJoin(context, item.title)) return;
+    if (!mounted) return;
     setState(() => _working = true);
-    try {
-      final actions = await ref.read(channelActionsProvider(widget.url).future);
-      if (!_archived) await actions.join(item.id);
-      if (!mounted) return;
-      setState(() => _working = false);
-      // This screen goes first, so the conversation opens over the list.
-      navigator.pop();
-      unawaited(
-        openConversation(
-          navigator,
-          url: widget.url,
-          channelId: item.id,
-          title: item.title,
-          teamId: widget.teamId,
-        ),
-      );
-    } on Object catch (e) {
-      if (!mounted) return;
-      setState(() => _working = false);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't join ${item.title}. ${requestProblemText(e, _host)}",
-          ),
-        ),
-      );
-    }
+    final joined = await tryAction(
+      context,
+      _host,
+      failure: "Couldn't join ${item.title}.",
+      () async {
+        final actions = await ref.read(
+          channelActionsProvider(widget.url).future,
+        );
+        if (!_archived) await actions.join(item.id);
+      },
+    );
+    if (!mounted) return;
+    setState(() => _working = false);
+    if (!joined) return;
+    // This screen goes first, so the conversation opens over the list.
+    navigator.pop();
+    unawaited(
+      openConversation(
+        navigator,
+        url: widget.url,
+        channelId: item.id,
+        title: item.title,
+        teamId: widget.teamId,
+      ),
+    );
   }
 
   void _create() => unawaited(
@@ -200,14 +200,11 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                                 !_archived)
                         ? const Center(child: CircularProgressIndicator())
                         : list.error != null
-                        ? EmptyState(
-                            icon: Icons.cloud_off,
+                        ? FailedState(
                             title: "Couldn't load channels",
-                            body: requestProblemText(list.error!, _host),
-                            action: FilledButton.tonal(
-                              onPressed: _list.retry,
-                              child: const Text('Retry'),
-                            ),
+                            error: list.error!,
+                            host: _host,
+                            onRetry: _list.retry,
                           )
                         : EmptyState(
                             icon: _archived

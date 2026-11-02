@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
@@ -17,6 +16,7 @@ import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// The team's scheduled messages: tap for Send now, Reschedule, Edit and
@@ -91,14 +91,11 @@ class ScheduledList extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     final session = await ref.read(serverSessionProvider(url).future);
     final scheduled = session.connection.scheduled;
+    final host = hostOf(url);
     Future<void> attempt(Future<void> Function() work, String done) async {
-      try {
-        await work();
+      if (!context.mounted) return;
+      if (await tryAction(context, host, work)) {
         messenger.showSnackBar(SnackBar(content: Text(done)));
-      } on ApiError catch (e) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(requestProblemText(e, Uri.parse(url).host))),
-        );
       }
     }
 
@@ -114,19 +111,14 @@ class ScheduledList extends ConsumerWidget {
           files: post.metadata?.files ?? const [],
           priority: post.metadata?.priority,
         );
-        try {
-          await scheduled.delete(item.id);
-          messenger.showSnackBar(const SnackBar(content: Text('Sent')));
-        } on ApiError catch (e) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                'Sent, but it is still scheduled: '
-                '${requestProblemText(e, Uri.parse(url).host)}',
-              ),
-            ),
-          );
-        }
+        if (!context.mounted) return;
+        final gone = await tryAction(
+          context,
+          host,
+          failure: 'Sent, but it is still scheduled:',
+          () => scheduled.delete(item.id),
+        );
+        if (gone) messenger.showSnackBar(const SnackBar(content: Text('Sent')));
       case _Choice.reschedule:
         if (!context.mounted) return;
         final zone = ref.read(manualTimeZoneProvider(url)).value;
@@ -140,9 +132,14 @@ class ScheduledList extends ConsumerWidget {
       case _Choice.edit:
         final post = await scheduled.find(item.id);
         if (post == null || !context.mounted) return;
-        final text = await _editText(context, post.message ?? '');
-        if (text == null || text.trim().isEmpty) return;
-        await attempt(() => scheduled.edit(item.id, text.trim()), 'Saved');
+        final text = await promptText(
+          context,
+          title: 'Edit message',
+          initial: post.message ?? '',
+          maxLines: 8,
+        );
+        if (text == null || text.isEmpty) return;
+        await attempt(() => scheduled.edit(item.id, text), 'Saved');
       case _Choice.delete:
         if (!context.mounted) return;
         final sure = await confirm(
@@ -154,33 +151,6 @@ class ScheduledList extends ConsumerWidget {
         if (!sure) return;
         await attempt(() => scheduled.delete(item.id), 'Deleted');
     }
-  }
-
-  Future<String?> _editText(BuildContext context, String message) {
-    final controller = TextEditingController(text: message);
-    return showDialog<String>(
-      context: context,
-      builder: (dialog) => AlertDialog(
-        title: const Text('Edit message'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          minLines: 1,
-          maxLines: 8,
-          textCapitalization: TextCapitalization.sentences,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialog).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialog).pop(controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    ).whenComplete(controller.dispose);
   }
 }
 

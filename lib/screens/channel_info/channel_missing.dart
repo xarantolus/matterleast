@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/channel_info.dart';
-import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/failed_state.dart';
 
 /// In place of a channel's screen while its stored details are on their
 /// way, couldn't be read, or don't exist.
@@ -21,14 +21,12 @@ class ChannelMissing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => switch (state) {
-    AsyncError(:final error) => EmptyState(
+    AsyncError(:final error) => FailedState(
       icon: Icons.error_outline,
       title: "Couldn't show the channel",
-      body: requestProblemText(error, host),
-      action: FilledButton.tonal(
-        onPressed: onRetry,
-        child: const Text('Retry'),
-      ),
+      error: error,
+      host: host,
+      onRetry: onRetry,
     ),
     AsyncData() => const EmptyState(
       icon: Icons.search_off,

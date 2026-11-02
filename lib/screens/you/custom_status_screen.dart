@@ -10,6 +10,7 @@ import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 typedef _Suggestion = ({String emoji, String text, String duration});
 
@@ -109,9 +110,8 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
 
   Future<void> _done() async {
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
-    try {
+    final saved = await tryAction(context, hostOf(widget.url), failure: "Couldn't set your status.", () async {
       final actions = await ref.read(profileActionsProvider(widget.url).future);
       await actions.setCustomStatus(
         _empty
@@ -129,18 +129,11 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
                 ),
               ),
       );
+    });
+    if (saved) {
       navigator.pop();
-    } on Object catch (e) {
-      if (!mounted) return;
+    } else if (mounted) {
       setState(() => _saving = false);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't set your status. "
-            '${requestProblemText(e, Uri.parse(widget.url).host)}',
-          ),
-        ),
-      );
     }
   }
 
