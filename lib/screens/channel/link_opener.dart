@@ -91,7 +91,7 @@ Future<void> openPost(
   } on Exception catch (e) {
     _say(
       navigator,
-      "Couldn't open the message. ${requestProblemText(e, Uri.parse(url).host)}",
+      "Couldn't open the message. ${requestProblemText(e, hostOf(url))}",
     );
   }
 }
@@ -163,7 +163,7 @@ Future<void> openChannelNamed(
   } on ApiError catch (e) {
     _say(
       navigator,
-      "Couldn't open ~$name. ${requestProblemText(e, Uri.parse(url).host)}",
+      "Couldn't open ~$name. ${requestProblemText(e, hostOf(url))}",
     );
   }
 }
@@ -253,20 +253,10 @@ Future<bool> _askJoin(NavigatorState navigator, LinkedPostNeedsJoin join) =>
 void _notFound(NavigatorState navigator) {
   if (!navigator.mounted) return;
   unawaited(
-    showDialog<void>(
-      context: navigator.context,
-      builder: (context) => AlertDialog(
-        title: const Text('Message not found'),
-        content: const Text(
-          "It was deleted, or it's in a channel you can't see.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+    inform(
+      navigator.context,
+      title: 'Message not found',
+      body: "It was deleted, or it's in a channel you can't see.",
     ),
   );
 }

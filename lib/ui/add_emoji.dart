@@ -109,7 +109,7 @@ class _AddEmojiFormState extends ConsumerState<AddEmojiForm> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _failure = requestProblemText(e, Uri.parse(widget.url).host);
+        _failure = requestProblemText(e, hostOf(widget.url));
       });
     }
   }

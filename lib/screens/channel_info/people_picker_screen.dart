@@ -12,6 +12,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// Picks people for a channel or a new conversation; the picked ones show
 /// as chips above the list.
@@ -71,19 +72,13 @@ class _PeoplePickerScreenState extends ConsumerState<PeoplePickerScreen> {
 
   Future<void> _done() async {
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _working = true);
-    try {
-      await widget.onDone(navigator, List.of(_picked));
-    } on Object catch (e) {
-      if (!mounted) return;
-      setState(() => _working = false);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(requestProblemText(e, Uri.parse(widget.url).host)),
-        ),
-      );
-    }
+    final done = await tryAction(
+      context,
+      hostOf(widget.url),
+      () => widget.onDone(navigator, List.of(_picked)),
+    );
+    if (!done && mounted) setState(() => _working = false);
   }
 
   @override

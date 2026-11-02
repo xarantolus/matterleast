@@ -18,6 +18,8 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/failed_state.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'team_screens.g.dart';
@@ -68,59 +70,44 @@ Future<void> joinFromInvite(
 ) async {
   final ref = ProviderScope.containerOf(navigator.context, listen: false);
   final messenger = ScaffoldMessenger.of(navigator.context);
-  final host = Uri.parse(url).host;
-  try {
-    final actions = await ref.read(teamActionsProvider(url).future);
-    final team = await actions.invitedTeam(inviteId);
-    if (team == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('This invite link is no longer valid.')),
-      );
-      return;
-    }
-    final session = await ref.read(serverSessionProvider(url).future);
-    final member = await (session.db.select(
-      session.db.myTeams,
-    )..where((t) => t.teamId.equals(team.id))).getSingleOrNull();
-    if (member == null) {
-      if (!navigator.mounted) return;
-      final yes = await showDialog<bool>(
-        context: navigator.context,
-        builder: (dialog) => AlertDialog(
-          title: Text('Join ${team.displayName}?'),
-          content: Text(
-            team.description.isEmpty
-                ? 'You will see its channels and be able to post.'
-                : team.description,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialog).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialog).pop(true),
-              child: const Text('Join'),
-            ),
-          ],
-        ),
-      );
-      if (yes != true) return;
-      await actions.joinByInvite(inviteId, team.id);
-      messenger.showSnackBar(
-        SnackBar(content: Text('Joined ${team.displayName}')),
-      );
-    }
-    if (navigator.mounted) {
-      await showPlace(navigator, RailTarget(url: url, teamId: team.id));
-    }
-  } on Object catch (e) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text("Couldn't join the team. ${requestProblemText(e, host)}"),
-      ),
-    );
-  }
+  await tryAction(
+    navigator.context,
+    hostOf(url),
+    failure: "Couldn't join the team.",
+    () async {
+      final actions = await ref.read(teamActionsProvider(url).future);
+      final team = await actions.invitedTeam(inviteId);
+      if (team == null) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('This invite link is no longer valid.')),
+        );
+        return;
+      }
+      final session = await ref.read(serverSessionProvider(url).future);
+      final member = await (session.db.select(
+        session.db.myTeams,
+      )..where((t) => t.teamId.equals(team.id))).getSingleOrNull();
+      if (member == null) {
+        if (!navigator.mounted) return;
+        final yes = await confirm(
+          navigator.context,
+          title: 'Join ${team.displayName}?',
+          body: team.description.isEmpty
+              ? 'You will see its channels and be able to post.'
+              : team.description,
+          action: 'Join',
+        );
+        if (!yes) return;
+        await actions.joinByInvite(inviteId, team.id);
+        messenger.showSnackBar(
+          SnackBar(content: Text('Joined ${team.displayName}')),
+        );
+      }
+      if (navigator.mounted) {
+        await showPlace(navigator, RailTarget(url: url, teamId: team.id));
+      }
+    },
+  );
 }
 
 /// Email invitations and the invite link, as a short popout.
@@ -188,7 +175,7 @@ class _InvitePeopleState extends ConsumerState<InvitePeopleScreen> {
         _sending = false;
         _problem =
             "Couldn't send the invitations. "
-            '${requestProblemText(e, Uri.parse(widget.url).host)}';
+            '${requestProblemText(e, hostOf(widget.url))}';
       });
     }
   }
@@ -242,31 +229,29 @@ class JoinTeamScreen extends ConsumerStatefulWidget {
 class _JoinTeamScreenState extends ConsumerState<JoinTeamScreen> {
   String? _joining;
 
-  String get _host => Uri.parse(widget.url).host;
+  String get _host => hostOf(widget.url);
 
   Future<void> _join(JoinableTeam team) async {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _joining = team.id);
-    try {
-      await (await ref.read(teamActionsProvider(widget.url).future))
-          .join(team.id);
-      messenger.showSnackBar(
-        SnackBar(content: Text('Joined ${team.displayName}')),
-      );
-      navigator.pop();
-    } on Object catch (e) {
-      if (!mounted) return;
+    final joined = await tryAction(
+      context,
+      _host,
+      failure: "Couldn't join ${team.displayName}.",
+      () async =>
+          (await ref.read(teamActionsProvider(widget.url).future))
+              .join(team.id),
+    );
+    if (!mounted) return;
+    if (!joined) {
       setState(() => _joining = null);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't join ${team.displayName}. "
-            '${requestProblemText(e, _host)}',
-          ),
-        ),
-      );
+      return;
     }
+    messenger.showSnackBar(
+      SnackBar(content: Text('Joined ${team.displayName}')),
+    );
+    navigator.pop();
   }
 
   @override
@@ -313,15 +298,11 @@ class _JoinTeamScreenState extends ConsumerState<JoinTeamScreen> {
             );
           },
         ),
-        AsyncError(:final error) => EmptyState(
-          icon: Icons.cloud_off_outlined,
+        AsyncError(:final error) => FailedState(
           title: "Couldn't load the teams",
-          body: requestProblemText(error, _host),
-          action: FilledButton.tonal(
-            onPressed: () =>
-                ref.invalidate(joinableTeamListProvider(widget.url)),
-            child: const Text('Retry'),
-          ),
+          error: error,
+          host: _host,
+          onRetry: () => ref.invalidate(joinableTeamListProvider(widget.url)),
         ),
         _ => const Center(child: CircularProgressIndicator()),
       },
@@ -343,36 +324,32 @@ class TeamMenu extends ConsumerWidget {
   final String teamId;
   final String teamName;
 
-  String get _host => Uri.parse(url).host;
+  String get _host => hostOf(url);
 
   Future<void> _copyInvite(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
-    try {
-      final link = await (await ref.read(teamActionsProvider(url).future))
-          .inviteLink(teamId);
-      if (link == null) {
+    await tryAction(
+      context,
+      _host,
+      failure: "Couldn't get the invite link.",
+      () async {
+        final link = await (await ref.read(teamActionsProvider(url).future))
+            .inviteLink(teamId);
+        if (link == null) {
+          messenger.showSnackBar(
+            SnackBar(content: Text("You can't invite people to $teamName.")),
+          );
+          return;
+        }
+        await Clipboard.setData(ClipboardData(text: link.toString()));
         messenger.showSnackBar(
-          SnackBar(content: Text("You can't invite people to $teamName.")),
+          const SnackBar(content: Text('Invite link copied')),
         );
-        return;
-      }
-      await Clipboard.setData(ClipboardData(text: link.toString()));
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Invite link copied')),
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't get the invite link. ${requestProblemText(e, _host)}",
-          ),
-        ),
-      );
-    }
+      },
+    );
   }
 
   Future<void> _leave(BuildContext context, WidgetRef ref) async {
-    final messenger = ScaffoldMessenger.of(context);
     final sure = await confirm(
       context,
       title: 'Leave $teamName?',
@@ -382,18 +359,14 @@ class TeamMenu extends ConsumerWidget {
       action: 'Leave',
       destructive: true,
     );
-    if (!sure) return;
-    try {
-      await (await ref.read(teamActionsProvider(url).future)).leave(teamId);
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't leave $teamName. ${requestProblemText(e, _host)}",
-          ),
-        ),
-      );
-    }
+    if (!sure || !context.mounted) return;
+    await tryAction(
+      context,
+      _host,
+      failure: "Couldn't leave $teamName.",
+      () async =>
+          (await ref.read(teamActionsProvider(url).future)).leave(teamId),
+    );
   }
 
   @override

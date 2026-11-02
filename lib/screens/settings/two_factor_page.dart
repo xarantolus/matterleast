@@ -10,7 +10,7 @@ import 'package:matterleast/screens/settings/account_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
-import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/failed_state.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -96,14 +96,13 @@ class _TwoFactorPageState extends ConsumerState<TwoFactorPage> {
       title: const Text('Two-factor authentication'),
       progress: _busy || me.isLoading,
       body: switch (user) {
-        null when me.hasError => EmptyState(
+        null when me.hasError => FailedState(
           icon: Icons.error_outline,
           title: "Couldn't load your account",
-          body: requestProblemText(me.error!, widget.server.address),
-          action: FilledButton(
-            onPressed: () => ref.invalidate(accountMeProvider(_url)),
-            child: const Text('Try again'),
-          ),
+          error: me.error!,
+          host: widget.server.address,
+          retryLabel: 'Try again',
+          onRetry: () => ref.invalidate(accountMeProvider(_url)),
         ),
         null => const SizedBox.expand(),
         final user => NarrowPage(

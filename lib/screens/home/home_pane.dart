@@ -101,9 +101,7 @@ class _HomePaneState extends ConsumerState<HomePane> {
     if (failure case (final server, final error)) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            connectionProblemText(error, Uri.parse(server.url).host),
-          ),
+          content: Text(connectionProblemText(error, hostOf(server.url))),
         ),
       );
     }
@@ -123,7 +121,7 @@ class _HomePaneState extends ConsumerState<HomePane> {
       for (final s in servers)
         (
           name: s.displayName,
-          host: Uri.parse(s.url).host,
+          host: hostOf(s.url),
           inbox: ref.watch(serverInboxProvider(s.url)).value,
           status: ref.watch(syncStatusProvider(s.url)).value,
         ),

@@ -9,6 +9,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// How the user is notified about one channel. Each change is saved at
 /// once and shown before the server confirms it.
@@ -28,18 +29,12 @@ class NotificationPrefsScreen extends ConsumerWidget {
     final info = infoState.value;
     final bottom = MediaQuery.paddingOf(context).bottom;
     Future<void> save(Future<void> Function(ChannelActions) change) async {
-      final messenger = ScaffoldMessenger.of(context);
-      try {
-        await change(await ref.read(channelActionsProvider(url).future));
-      } on Object catch (e) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              "Couldn't save. ${requestProblemText(e, Uri.parse(url).host)}",
-            ),
-          ),
-        );
-      }
+      await tryAction(
+        context,
+        hostOf(url),
+        failure: "Couldn't save.",
+        () async => change(await ref.read(channelActionsProvider(url).future)),
+      );
     }
 
     return ContentPage(
@@ -47,7 +42,7 @@ class NotificationPrefsScreen extends ConsumerWidget {
       body: info == null
           ? ChannelMissing(
               state: infoState,
-              host: Uri.parse(url).host,
+              host: hostOf(url),
               onRetry: () =>
                   ref.invalidate(channelInfoProvider(url, channelId)),
             )

@@ -123,7 +123,7 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
         _sending = false;
         _error = switch (e) {
           ServerError(:final message?) when message.isNotEmpty => message,
-          _ => connectionProblemText(e, Uri.parse(widget.url).host),
+          _ => connectionProblemText(e, hostOf(widget.url)),
         };
       });
     }

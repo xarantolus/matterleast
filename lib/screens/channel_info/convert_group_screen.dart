@@ -86,7 +86,7 @@ class _ConvertGroupState extends ConsumerState<ConvertGroupScreen> {
         _error = switch (e) {
           ServerError(:final id?) when id.contains('exists') =>
             'A channel with this name already exists. Pick another name.',
-          _ => requestProblemText(e, Uri.parse(widget.url).host),
+          _ => requestProblemText(e, hostOf(widget.url)),
         };
       });
     }

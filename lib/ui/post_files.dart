@@ -513,7 +513,7 @@ Future<void> _runFileAction(
   } on ApiError catch (e) {
     say(
       "Couldn't download ${file.name}. "
-      '${requestProblemText(e, Uri.parse(url).host)}',
+      '${requestProblemText(e, hostOf(url))}',
     );
     return;
   }

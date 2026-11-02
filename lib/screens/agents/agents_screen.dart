@@ -7,15 +7,16 @@ import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/data/actions/message_links.dart';
 import 'package:matterleast/domain/agent_stream.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/open_channel.dart';
-import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// Talk to an agent: pick one, ask, and find earlier conversations. Each
@@ -45,30 +46,29 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
     final message = _text.text.trim();
     if (message.isEmpty || _sending) return;
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _sending = true);
-    try {
-      final actions = await ref.read(agentActionsProvider(widget.url).future);
-      final asked = await actions.ask(bot, message);
-      _text.clear();
-      // Coming back must not bring the keyboard up again.
-      FocusManager.instance.primaryFocus?.unfocus();
-      unawaited(
-        openConversation(
-          navigator,
-          url: widget.url,
-          channelId: asked.channelId,
-          rootId: asked.postId,
-          title: bot.name,
-        ).then((_) => _refreshThreads()),
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(agentProblemText(e, widget.url))),
-      );
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
+    await tryAction(
+      context,
+      hostOf(widget.url),
+      problem: serverSaidText,
+      () async {
+        final actions = await ref.read(agentActionsProvider(widget.url).future);
+        final asked = await actions.ask(bot, message);
+        _text.clear();
+        // Coming back must not bring the keyboard up again.
+        FocusManager.instance.primaryFocus?.unfocus();
+        unawaited(
+          openConversation(
+            navigator,
+            url: widget.url,
+            channelId: asked.channelId,
+            rootId: asked.postId,
+            title: bot.name,
+          ).then((_) => _refreshThreads()),
+        );
+      },
+    );
+    if (mounted) setState(() => _sending = false);
   }
 
   // A new conversation, or its title, which is written after the first
@@ -84,39 +84,39 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _opening = true);
-    try {
-      final links = await ref.read(messageLinksProvider(widget.url).future);
-      final located = await links.locatePost(thread.root);
-      if (located is! LinkedPostFound) {
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              "This conversation is gone, or it's in a channel you're no "
-              'longer in.',
+    await tryAction(
+      context,
+      hostOf(widget.url),
+      problem: serverSaidText,
+      () async {
+        final links = await ref.read(messageLinksProvider(widget.url).future);
+        final located = await links.locatePost(thread.root);
+        if (located is! LinkedPostFound) {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text(
+                "This conversation is gone, or it's in a channel you're no "
+                'longer in.',
+              ),
             ),
-          ),
+          );
+          return;
+        }
+        unawaited(
+          openConversation(
+            navigator,
+            url: widget.url,
+            channelId: located.channelId,
+            rootId: thread.root,
+            teamId: located.teamId,
+            title: located.channelName.isNotEmpty
+                ? located.channelName
+                : bot?.name ?? 'Agents',
+          ).then((_) => _refreshThreads()),
         );
-        return;
-      }
-      unawaited(
-        openConversation(
-          navigator,
-          url: widget.url,
-          channelId: located.channelId,
-          rootId: thread.root,
-          teamId: located.teamId,
-          title: located.channelName.isNotEmpty
-              ? located.channelName
-              : bot?.name ?? 'Agents',
-        ).then((_) => _refreshThreads()),
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(agentProblemText(e, widget.url))),
-      );
-    } finally {
-      if (mounted) setState(() => _opening = false);
-    }
+      },
+    );
+    if (mounted) setState(() => _opening = false);
   }
 
   @override
@@ -150,7 +150,7 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
         AsyncValue(value: null, :final error?) => EmptyState(
           icon: Icons.error_outline,
           title: "Couldn't load the agents",
-          body: agentProblemText(error, widget.url),
+          body: serverSaidText(error, hostOf(widget.url)),
           action: FilledButton.tonal(
             onPressed: () => ref.invalidate(agentBotsProvider(widget.url)),
             child: const Text('Retry'),
@@ -213,7 +213,7 @@ class _History extends ConsumerWidget {
         return EmptyState(
           icon: Icons.error_outline,
           title: "Couldn't load your conversations",
-          body: agentProblemText(error, url),
+          body: serverSaidText(error, hostOf(url)),
           action: FilledButton.tonal(
             onPressed: () => ref.invalidate(agentThreadsProvider(url)),
             child: const Text('Retry'),

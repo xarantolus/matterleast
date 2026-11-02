@@ -19,6 +19,7 @@ import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/sheet_header.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// A channel's bookmarks in a row under the app bar, from the cache at
 /// once and refreshed behind it. Takes no room when the channel has none.
@@ -255,19 +256,12 @@ Future<void> runBookmarkAction(
   String url,
   Future<void> Function(BookmarkActions) action,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
-  try {
-    await action(await ref.read(bookmarkActionsProvider(url).future));
-  } on Object catch (e) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          "Couldn't change the bookmark. "
-          '${requestProblemText(e, Uri.parse(url).host)}',
-        ),
-      ),
-    );
-  }
+  await tryAction(
+    context,
+    hostOf(url),
+    failure: "Couldn't change the bookmark.",
+    () async => action(await ref.read(bookmarkActionsProvider(url).future)),
+  );
 }
 
 /// Offers to add a link or a file to [channelId]'s bookmarks.
@@ -406,7 +400,7 @@ class _BookmarkEditorState extends ConsumerState<_BookmarkEditor> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = requestProblemText(e, Uri.parse(widget.url).host);
+        _error = requestProblemText(e, hostOf(widget.url));
       });
     }
   }

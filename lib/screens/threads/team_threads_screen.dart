@@ -15,9 +15,11 @@ import 'package:matterleast/screens/threads/thread_options_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/failed_state.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/page_tabs.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// The threads the user follows in one team.
 class TeamThreadsScreen extends ConsumerStatefulWidget {
@@ -56,27 +58,24 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
   }
 
   Future<void> _markAllRead() async {
-    final messenger = ScaffoldMessenger.of(context);
     final sure = await confirm(
       context,
       title: 'Mark all as read?',
       body: 'Every thread you follow in ${widget.teamName} counts as read.',
       action: 'Mark read',
     );
-    if (!sure) return;
-    try {
-      final session = await ref.read(serverSessionProvider(widget.url).future);
-      await ConversationActions(session).markAllThreadsRead(widget.teamId);
-    } on ApiError catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't mark the threads as read. "
-            '${requestProblemText(e, Uri.parse(widget.url).host)}',
-          ),
-        ),
-      );
-    }
+    if (!sure || !mounted) return;
+    await tryAction(
+      context,
+      hostOf(widget.url),
+      failure: "Couldn't mark the threads as read.",
+      () async {
+        final session = await ref.read(
+          serverSessionProvider(widget.url).future,
+        );
+        await ConversationActions(session).markAllThreadsRead(widget.teamId);
+      },
+    );
   }
 
   @override
@@ -172,14 +171,11 @@ class _ThreadList extends StatelessWidget {
         else if (all.isEmpty && failure != null)
           SliverFillRemaining(
             hasScrollBody: false,
-            child: EmptyState(
-              icon: Icons.cloud_off,
+            child: FailedState(
               title: "Couldn't load threads",
-              body: connectionProblemText(failure, Uri.parse(url).host),
-              action: FilledButton.tonal(
-                onPressed: onRetry,
-                child: const Text('Retry'),
-              ),
+              error: failure,
+              host: hostOf(url),
+              onRetry: onRetry,
             ),
           )
         else if (items.isEmpty)

@@ -60,7 +60,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   late SearchScope _scope = widget.scope ?? SearchScope(teamId: widget.teamId);
   late _Tab _tab = widget.files ? _Tab.files : _Tab.messages;
 
-  String get _host => Uri.parse(widget.url).host;
+  String get _host => hostOf(widget.url);
 
   @override
   void initState() {

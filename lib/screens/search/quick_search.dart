@@ -26,6 +26,7 @@ import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// Where searches for messages run and recent searches come from: one
@@ -174,38 +175,35 @@ class _QuickSearchAnchorState extends ConsumerState<QuickSearchAnchor> {
 
   Future<void> _open(BuildContext context, SwitchItem item) async {
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     if (item.kind == SwitchKind.joinable &&
         !await confirmJoin(context, item.title)) {
       return;
     }
-    try {
-      final actions = await ref.read(
-        channelActionsProvider(item.serverUrl).future,
-      );
-      final channelId = switch (item.kind) {
-        SwitchKind.person => await actions.directChannel(item.id),
-        SwitchKind.joinable => await actions.join(item.id).then((_) => item.id),
-        _ => item.id,
-      };
-      _closeView(navigator, '');
-      await openConversation(
-        navigator,
-        url: item.serverUrl,
-        channelId: channelId,
-        title: item.title,
-        teamId: item.teamId,
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't open ${item.title}. "
-            '${requestProblemText(e, Uri.parse(item.serverUrl).host)}',
-          ),
-        ),
-      );
-    }
+    if (!context.mounted) return;
+    await tryAction(
+      context,
+      hostOf(item.serverUrl),
+      failure: "Couldn't open ${item.title}.",
+      () async {
+        final actions = await ref.read(
+          channelActionsProvider(item.serverUrl).future,
+        );
+        final channelId = switch (item.kind) {
+          SwitchKind.person => await actions.directChannel(item.id),
+          SwitchKind.joinable =>
+            await actions.join(item.id).then((_) => item.id),
+          _ => item.id,
+        };
+        _closeView(navigator, '');
+        await openConversation(
+          navigator,
+          url: item.serverUrl,
+          channelId: channelId,
+          title: item.title,
+          teamId: item.teamId,
+        );
+      },
+    );
   }
 
   @override
@@ -337,7 +335,7 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
       final answer = watch(switchRemoteProvider(s.url, _remoteTerm));
       if (answer.isLoading) searching = true;
       if (answer.hasError && !answer.isLoading) {
-        failedHost ??= Uri.parse(s.url).host;
+        failedHost ??= hostOf(s.url);
       }
       remote.addAll(answer.value ?? const []);
     }

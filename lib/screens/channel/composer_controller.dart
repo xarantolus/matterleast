@@ -558,7 +558,7 @@ class ComposerDraft extends _$ComposerDraft {
     } on ApiError catch (e) {
       return SubmitFailed(switch (e) {
         ServerError(:final message?) when message.isNotEmpty => message,
-        _ => connectionProblemText(e, Uri.parse(url).host),
+        _ => connectionProblemText(e, hostOf(url)),
       });
     }
   }

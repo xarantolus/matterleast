@@ -2,13 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/time_zones.dart';
 import 'package:matterleast/domain/server_entry.dart';
-import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
-import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// The account's time zone on one server: the phone's, or one picked by
 /// hand. Scheduled messages and other people's view of the user's local
@@ -43,21 +42,19 @@ class _TimeZonePageState extends ConsumerState<TimeZonePage> {
   }
 
   Future<void> _save({required bool automatic, String? manual}) async {
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
-    try {
-      final actions = await ref.read(
-        profileActionsProvider(widget.server.url).future,
-      );
-      await actions.setTimeZone(automatic: automatic, manual: manual);
-    } on Object catch (e) {
-      showProblem(
-        messenger,
-        "Couldn't save. ${requestProblemText(e, widget.server.address)}",
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    await tryAction(
+      context,
+      widget.server.address,
+      failure: "Couldn't save.",
+      () async {
+        final actions = await ref.read(
+          profileActionsProvider(widget.server.url).future,
+        );
+        await actions.setTimeZone(automatic: automatic, manual: manual);
+      },
+    );
+    if (mounted) setState(() => _saving = false);
   }
 
   @override

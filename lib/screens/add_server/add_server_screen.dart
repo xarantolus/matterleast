@@ -5,6 +5,7 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_url.dart';
 import 'package:matterleast/screens/add_server/add_server_controller.dart';
 import 'package:matterleast/screens/login/login_screen.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
@@ -72,29 +73,16 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
   }
 
   Future<bool> _confirmReplace(ServerEntry old, LoginTarget target) async {
-    final replace = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Replace “${old.displayName}”?'),
-        content: Text(
+    return confirm(
+      context,
+      title: 'Replace “${old.displayName}”?',
+      body:
           '${target.server.url.authority} says it is the same server as '
           '${Uri.parse(old.url).authority}, but that address does not lead '
           'here. Only continue if the server really moved. Signing in '
           'removes “${old.displayName}” from the app.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Replace'),
-          ),
-        ],
-      ),
+      action: 'Replace',
     );
-    return replace ?? false;
   }
 
   void _signInAgain(ServerEntry server) {

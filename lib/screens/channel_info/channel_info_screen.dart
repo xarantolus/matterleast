@@ -32,6 +32,7 @@ import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// What a channel is about and what the user can do with it.
@@ -55,7 +56,7 @@ class ChannelInfoScreen extends ConsumerStatefulWidget {
 }
 
 class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
-  String get _host => Uri.parse(widget.url).host;
+  String get _host => hostOf(widget.url);
 
   Future<ChannelActions> get _actions =>
       ref.read(channelActionsProvider(widget.url).future);
@@ -70,26 +71,20 @@ class _ChannelInfoScreenState extends ConsumerState<ChannelInfoScreen> {
     Future<void> Function(ChannelActions) action, {
     String? option,
   }) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await action(await _actions);
-      return true;
-    } on Object catch (e) {
-      final refused =
-          e is ServerError && const {403, 404, 501}.contains(e.statusCode);
-      final said = e is ServerError ? e.message : null;
-      if (refused && option != null && mounted) {
-        setState(() => _off.add(option));
-      }
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            '$failure ${said != null && said.isNotEmpty ? said : requestProblemText(e, _host)}',
-          ),
-        ),
-      );
-      return false;
-    }
+    return tryAction(
+      context,
+      _host,
+      failure: failure,
+      problem: serverSaidText,
+      onFailed: (e) {
+        final refused =
+            e is ServerError && const {403, 404, 501}.contains(e.statusCode);
+        if (refused && option != null && mounted) {
+          setState(() => _off.add(option));
+        }
+      },
+      () async => action(await _actions),
+    );
   }
 
   void _push(Widget screen) =>

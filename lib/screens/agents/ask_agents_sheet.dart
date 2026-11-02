@@ -3,11 +3,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/domain/agent_stream.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/open_channel.dart';
-import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// "Ask Agents" for a channel: an agent writes a summary into its direct
 /// message, which opens once it has started.
@@ -54,34 +55,34 @@ class _AskAgentsSheetState extends ConsumerState<_AskAgentsSheet> {
     int? days,
     DateTime? unreadsSince,
   }) async {
-    final messenger = ScaffoldMessenger.of(context);
     final sheet = Navigator.of(context);
     setState(() => _running = true);
-    try {
-      final actions = await ref.read(agentActionsProvider(widget.url).future);
-      final answer = await actions.summarize(
-        widget.channelId,
-        bot,
-        days: days,
-        unreadsSince: unreadsSince,
-      );
-      sheet.pop();
-      final channelId = answer.channelId;
-      final postId = answer.postId;
-      if (channelId == null || channelId.isEmpty || postId == null) return;
-      await openConversation(
-        widget.navigator,
-        url: widget.url,
-        channelId: channelId,
-        rootId: postId,
-        title: bot.name,
-      );
-    } on Object catch (e) {
-      if (mounted) setState(() => _running = false);
-      messenger.showSnackBar(
-        SnackBar(content: Text(agentProblemText(e, widget.url))),
-      );
-    }
+    final ok = await tryAction(
+      context,
+      hostOf(widget.url),
+      problem: serverSaidText,
+      () async {
+        final actions = await ref.read(agentActionsProvider(widget.url).future);
+        final answer = await actions.summarize(
+          widget.channelId,
+          bot,
+          days: days,
+          unreadsSince: unreadsSince,
+        );
+        sheet.pop();
+        final channelId = answer.channelId;
+        final postId = answer.postId;
+        if (channelId == null || channelId.isEmpty || postId == null) return;
+        await openConversation(
+          widget.navigator,
+          url: widget.url,
+          channelId: channelId,
+          rootId: postId,
+          title: bot.name,
+        );
+      },
+    );
+    if (!ok && mounted) setState(() => _running = false);
   }
 
   @override
@@ -113,7 +114,7 @@ class _AskAgentsSheetState extends ConsumerState<_AskAgentsSheet> {
           if (bots.hasError && bots.value == null)
             ListTile(
               leading: const Icon(Icons.error_outline),
-              title: Text(agentProblemText(bots.error!, widget.url)),
+              title: Text(serverSaidText(bots.error!, hostOf(widget.url))),
               trailing: TextButton(
                 onPressed: () => ref.invalidate(agentBotsProvider(widget.url)),
                 child: const Text('Retry'),

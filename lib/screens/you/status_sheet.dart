@@ -7,6 +7,7 @@ import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/sheet_header.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// Lets the user pick their presence on [url]; do not disturb asks how
 /// long.
@@ -16,7 +17,6 @@ Future<void> showStatusSheet(
   required String url,
   required String current,
 }) async {
-  final messenger = ScaffoldMessenger.of(context);
   final status = await showAppSheet<String>(
     context: context,
     showDragHandle: true,
@@ -47,22 +47,18 @@ Future<void> showStatusSheet(
   DateTime? until;
   if (status == 'dnd') {
     final length = await _askDndLength(context);
-    if (length == null) return;
+    if (length == null || !context.mounted) return;
     until = dndEnd(length, DateTime.now());
   }
-  try {
-    final actions = await ref.read(profileActionsProvider(url).future);
-    await actions.setStatus(status, dndEnd: until);
-  } on Object catch (e) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          "Couldn't change your status. "
-          '${requestProblemText(e, Uri.parse(url).host)}',
-        ),
-      ),
-    );
-  }
+  await tryAction(
+    context,
+    hostOf(url),
+    failure: "Couldn't change your status.",
+    () async {
+      final actions = await ref.read(profileActionsProvider(url).future);
+      await actions.setStatus(status, dndEnd: until);
+    },
+  );
 }
 
 Future<DndLength?> _askDndLength(

@@ -18,6 +18,7 @@ import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'emoji_picker.g.dart';
@@ -315,20 +316,20 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
   }
 
   Future<void> _setSkinTone(int tone) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final session = await ref.read(serverSessionProvider(widget.url).future);
-      await session.settings.savePreference(Prefs.skinTone, skinToneCode(tone));
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            "Couldn't save the skin tone. "
-            '${requestProblemText(e, Uri.parse(widget.url).host)}',
-          ),
-        ),
-      );
-    }
+    await tryAction(
+      context,
+      hostOf(widget.url),
+      failure: "Couldn't save the skin tone.",
+      () async {
+        final session = await ref.read(
+          serverSessionProvider(widget.url).future,
+        );
+        await session.settings.savePreference(
+          Prefs.skinTone,
+          skinToneCode(tone),
+        );
+      },
+    );
   }
 
   List<EmojiSection> _sectionsFor(

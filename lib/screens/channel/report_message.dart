@@ -6,6 +6,7 @@ import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 typedef _Report = ({String? reason, String comment});
 
@@ -25,24 +26,22 @@ Future<void> reportMessage(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (_) => _ReportSheet(flagging: flagging, host: Uri.parse(url).host),
+    builder: (_) => _ReportSheet(flagging: flagging, host: hostOf(url)),
   );
   if (report == null) return;
-  try {
-    await flagging.report(
+  if (!context.mounted) return;
+  final reported = await tryAction(
+    context,
+    hostOf(url),
+    failure: "Couldn't report the message.",
+    () => flagging.report(
       post.id,
       reason: report.reason,
       comment: report.comment.isEmpty ? null : report.comment,
-    );
+    ),
+  );
+  if (reported) {
     messenger.showSnackBar(const SnackBar(content: Text('Message reported')));
-  } on Object catch (e) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          "Couldn't report the message. ${requestProblemText(e, Uri.parse(url).host)}",
-        ),
-      ),
-    );
   }
 }
 

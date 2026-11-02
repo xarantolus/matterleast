@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
@@ -21,32 +23,34 @@ Future<bool> showEditHistory(
   String postId,
 ) async {
   final messenger = ScaffoldMessenger.of(context);
-  final actions = await ProviderScope.containerOf(
-    context,
-    listen: false,
-  ).read(postActionsProvider(url).future);
-  final List<EditVersion> versions;
-  try {
-    versions = editVersions(await actions.editHistory(postId));
-  } on ApiError catch (e) {
-    if (endpointUnavailable(e, refusalMeansAbsent: true)) return false;
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          "Couldn't load the edit history. "
-          '${requestProblemText(e, Uri.parse(url).host)}',
-        ),
-      ),
-    );
-    return true;
-  }
-  if (!context.mounted) return true;
+  final load = ProviderScope.containerOf(context, listen: false)
+      .read(postActionsProvider(url).future)
+      .then((actions) => actions.editHistory(postId))
+      .then(editVersions);
+  var absent = false;
   final restore = await showAppSheet<String>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (_) => _EditHistory(versions: versions),
+    builder: (_) => _EditHistory(
+      load: load,
+      onFailed: (e) {
+        if (endpointUnavailable(e, refusalMeansAbsent: true)) {
+          absent = true;
+          return;
+        }
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              "Couldn't load the edit history. "
+              '${requestProblemText(e, hostOf(url))}',
+            ),
+          ),
+        );
+      },
+    ),
   );
+  if (absent) return false;
   if (restore == null || !context.mounted) return true;
   await runPostAction(context, url, (a) async {
     await a.restoreVersion(postId, restore);
@@ -55,13 +59,40 @@ Future<bool> showEditHistory(
   return true;
 }
 
-class _EditHistory extends StatelessWidget {
-  const _EditHistory({required this.versions});
+class _EditHistory extends StatefulWidget {
+  const _EditHistory({required this.load, required this.onFailed});
 
-  final List<EditVersion> versions;
+  final Future<List<EditVersion>> load;
+  final void Function(ApiError error) onFailed;
+
+  @override
+  State<_EditHistory> createState() => _EditHistoryState();
+}
+
+class _EditHistoryState extends State<_EditHistory> {
+  List<EditVersion>? _versions;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(
+      widget.load.then(
+        (versions) {
+          if (mounted) setState(() => _versions = versions);
+        },
+        onError: (Object e) {
+          if (e is! ApiError) throw e;
+          if (!mounted) return;
+          widget.onFailed(e);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final versions = _versions;
     final text = Theme.of(context).textTheme;
     final now = DateTime.now();
     final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
@@ -73,9 +104,11 @@ class _EditHistory extends StatelessWidget {
         children: [
           Text('Edit history', style: text.titleMedium),
           const SizedBox(height: Spacing.md),
-          if (versions.isEmpty)
+          if (versions == null)
+            const LinearProgressIndicator()
+          else if (versions.isEmpty)
             const Text('There are no earlier versions of this message.'),
-          for (final version in versions)
+          for (final version in versions ?? const <EditVersion>[])
             Padding(
               padding: const EdgeInsets.only(bottom: Spacing.md),
               child: Card.outlined(

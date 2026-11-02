@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/json/agents.dart';
 import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/websocket/encoded.dart';
@@ -16,6 +15,7 @@ import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 final _props = <String, AgentPostProps>{};
 
@@ -34,13 +34,6 @@ AgentPostProps agentPropsOf(PostItem post) {
   if (_props.length > 200) _props.remove(_props.keys.first);
   return _props[key] = props;
 }
-
-/// The words for a failed request to the plugin: the server's own message
-/// when it sent one.
-String agentProblemText(Object error, String url) => switch (error) {
-  ServerError(:final message?) when message.isNotEmpty => message,
-  _ => requestProblemText(error, Uri.parse(url).host),
-};
 
 /// The body of an agent's answer: streamed text, reasoning, tools, sources
 /// and, for the person who asked, Stop and Regenerate.
@@ -195,12 +188,12 @@ Future<void> _run(
   String url,
   Future<void> Function(AgentActions actions) action,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
-  try {
-    await action(await ref.read(agentActionsProvider(url).future));
-  } on Object catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(agentProblemText(e, url))));
-  }
+  await tryAction(
+    context,
+    hostOf(url),
+    problem: serverSaidText,
+    () async => action(await ref.read(agentActionsProvider(url).future)),
+  );
 }
 
 class _Text extends StatelessWidget {
@@ -403,27 +396,30 @@ class _AgentToolSetState extends ConsumerState<AgentToolSet> {
     final env = PostEnvironment.maybeOf(context);
     if (env == null) return;
     final url = env.server.toString();
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _sending = true);
-    try {
-      final actions = await ref.read(agentActionsProvider(url).future);
-      if (widget.stage == ToolStage.result) {
-        await actions.decideToolResults(widget.postId, accepted);
-      } else {
-        await actions.decideToolCalls(
-          widget.postId,
-          accepted,
-          answers: {for (final id in accepted) id: ?_answers[id]},
-        );
-      }
-    } on Object catch (e) {
+    final done = await tryAction(
+      context,
+      hostOf(url),
+      problem: serverSaidText,
+      () async {
+        final actions = await ref.read(agentActionsProvider(url).future);
+        if (widget.stage == ToolStage.result) {
+          await actions.decideToolResults(widget.postId, accepted);
+        } else {
+          await actions.decideToolCalls(
+            widget.postId,
+            accepted,
+            answers: {for (final id in accepted) id: ?_answers[id]},
+          );
+        }
+      },
+    );
+    if (!done) {
       _decisions.clear();
       _answers.clear();
-      messenger.showSnackBar(SnackBar(content: Text(agentProblemText(e, url))));
-    } finally {
-      if (mounted) setState(() => _sending = false);
-      widget.onDecided?.call();
     }
+    if (mounted) setState(() => _sending = false);
+    widget.onDecided?.call();
   }
 
   @override
@@ -768,7 +764,7 @@ class _AgentMentionReminderState extends ConsumerState<AgentMentionReminder> {
                     await actions.loopIn(target, bot);
                     _loopedIn.add(target);
                   } on Object catch (e) {
-                    _error = agentProblemText(e, url);
+                    _error = serverSaidText(e, hostOf(url));
                   }
                   if (mounted) setState(() => _pending = false);
                 },

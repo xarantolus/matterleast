@@ -7,12 +7,12 @@ import 'package:matterleast/domain/account_security.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/settings/account_providers.dart';
-import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/you/leave_server.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
-import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/failed_state.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// Where the account is signed in, with a way to end each session.
 class SessionsPage extends ConsumerWidget {
@@ -39,14 +39,12 @@ class SessionsPage extends ConsumerWidget {
       destructive: true,
     );
     if (!confirmed || !context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref
-          .read(activeSessionsProvider(server.url).notifier)
-          .revoke(row.id);
-    } on Object catch (e) {
-      showProblem(messenger, requestProblemText(e, server.address));
-    }
+    await tryAction(
+      context,
+      server.address,
+      () =>
+          ref.read(activeSessionsProvider(server.url).notifier).revoke(row.id),
+    );
   }
 
   @override
@@ -90,14 +88,13 @@ class SessionsPage extends ConsumerWidget {
               ),
           ],
         ),
-        null when sessions.hasError => EmptyState(
+        null when sessions.hasError => FailedState(
           icon: Icons.error_outline,
           title: "Couldn't load your sessions",
-          body: requestProblemText(sessions.error!, server.address),
-          action: FilledButton(
-            onPressed: () => ref.invalidate(activeSessionsProvider(server.url)),
-            child: const Text('Try again'),
-          ),
+          error: sessions.error!,
+          host: server.address,
+          retryLabel: 'Try again',
+          onRetry: () => ref.invalidate(activeSessionsProvider(server.url)),
         ),
         null => const SizedBox.expand(),
       },

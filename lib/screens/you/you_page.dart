@@ -23,6 +23,7 @@ import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/screens/you/status_sheet.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/initials_badge.dart';
@@ -30,6 +31,7 @@ import 'package:matterleast/ui/presence_dot.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/trust_authority.dart';
+import 'package:matterleast/ui/try_action.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// Opens the user's own page; on desktop a compact menu next to [anchor],
@@ -272,24 +274,17 @@ class _Profile extends ConsumerWidget {
                   : IconButton(
                       tooltip: 'Clear custom status',
                       icon: const Icon(Icons.close),
-                      onPressed: () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        try {
+                      onPressed: () => tryAction(
+                        context,
+                        hostOf(server.url),
+                        failure: "Couldn't clear your status.",
+                        () async {
                           final actions = await ref.read(
                             profileActionsProvider(server.url).future,
                           );
                           await actions.setCustomStatus(null);
-                        } on Object catch (e) {
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Couldn't clear your status. "
-                                '${requestProblemText(e, Uri.parse(server.url).host)}',
-                              ),
-                            ),
-                          );
-                        }
-                      },
+                        },
+                      ),
                     ),
               onTap: () =>
                   push(CustomStatusScreen(url: server.url, current: custom)),
@@ -441,9 +436,16 @@ class _ServerTile extends ConsumerWidget {
       case _ServerAction.rename:
         final servers = ref.read(serversProvider).value ?? const [];
         final db = ref.read(appDatabaseProvider);
-        final name = await showDialog<String>(
-          context: context,
-          builder: (_) => _RenameDialog(server: server, servers: servers),
+        if (!context.mounted) return;
+        final name = await promptText(
+          context,
+          title: 'Rename server',
+          initial: server.displayName,
+          label: 'Name',
+          helper: 'Shown in the rail and on Home',
+          capitalization: TextCapitalization.none,
+          problem: (text) =>
+              renameProblem(text, url: server.url, servers: servers),
         );
         if (name != null) await db.renameServer(server.url, name);
       case _ServerAction.trust:
@@ -460,63 +462,4 @@ class _ServerTile extends ConsumerWidget {
         );
     }
   }
-}
-
-/// Asks for a server's new name; pops it, trimmed, or null.
-class _RenameDialog extends StatefulWidget {
-  const _RenameDialog({required this.server, required this.servers});
-
-  final ServerEntry server;
-  final List<ServerEntry> servers;
-
-  @override
-  State<_RenameDialog> createState() => _RenameDialogState();
-}
-
-class _RenameDialogState extends State<_RenameDialog> {
-  late final _name = TextEditingController(text: widget.server.displayName);
-  String? _error;
-
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    final error = renameProblem(
-      _name.text,
-      url: widget.server.url,
-      servers: widget.servers,
-    );
-    if (error != null) {
-      setState(() => _error = error);
-      return;
-    }
-    Navigator.pop(context, _name.text.trim());
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Rename server'),
-    content: TextField(
-      controller: _name,
-      autofocus: true,
-      textInputAction: TextInputAction.done,
-      onSubmitted: (_) => _save(),
-      decoration: InputDecoration(
-        labelText: 'Name',
-        helperText: 'Shown in the rail and on Home',
-        errorText: _error,
-        border: const OutlineInputBorder(),
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      TextButton(onPressed: _save, child: const Text('Save')),
-    ],
-  );
 }

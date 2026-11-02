@@ -7,10 +7,12 @@ import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
+import 'package:matterleast/ui/failed_state.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
+import 'package:matterleast/ui/try_action.dart';
 
 /// A channel's pinned messages: the stored ones at once, fetched again
 /// behind them.
@@ -36,18 +38,15 @@ class PinnedScreen extends ConsumerWidget {
     final items = found.value ?? const [];
     // Known ids still turning into rows aren't "no pinned messages".
     final resolving = (ids?.isNotEmpty ?? false) && !found.hasValue;
-    final host = Uri.parse(url).host;
+    final host = hostOf(url);
     final bottom = MediaQuery.paddingOf(context).bottom;
     Future<void> pull() async {
-      final messenger = ScaffoldMessenger.of(context);
       ref.invalidate(pinnedRefreshProvider(url, channelId));
-      try {
-        await ref.read(pinnedRefreshProvider(url, channelId).future);
-      } on Object catch (e) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(requestProblemText(e, host))),
-        );
-      }
+      await tryAction(
+        context,
+        host,
+        () => ref.read(pinnedRefreshProvider(url, channelId).future),
+      );
     }
 
     final Widget body;
@@ -67,14 +66,11 @@ class PinnedScreen extends ConsumerWidget {
       body = const FillScrollable(child: DelayedSpinner());
     } else if (refresh.hasError) {
       body = FillScrollable(
-        child: EmptyState(
-          icon: Icons.cloud_off,
+        child: FailedState(
           title: "Couldn't load pinned messages",
-          body: requestProblemText(refresh.error!, host),
-          action: FilledButton.tonal(
-            onPressed: pull,
-            child: const Text('Retry'),
-          ),
+          error: refresh.error!,
+          host: host,
+          onRetry: pull,
         ),
       );
     } else {
