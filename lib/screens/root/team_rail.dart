@@ -236,16 +236,14 @@ class _RailButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final details = this.details;
+    final menu = onMenu;
+    final label = details == null ? tooltip : '$tooltip · $details';
+    // A long press opens the menu, so the tooltip must not claim it.
     final button = IconButton(
-      tooltip: isDesktop
-          ? null
-          : details == null
-          ? tooltip
-          : '$tooltip · $details',
+      tooltip: isDesktop || menu != null ? null : label,
       onPressed: onPressed,
       icon: child,
     );
-    final menu = onMenu;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
       child: GestureDetector(
@@ -267,6 +265,12 @@ class _RailButton extends StatelessWidget {
                       ],
                     ),
                     positionDelegate: besideTarget,
+                    child: button,
+                  )
+                : menu != null
+                ? Tooltip(
+                    message: label,
+                    triggerMode: TooltipTriggerMode.manual,
                     child: button,
                   )
                 : button,
