@@ -94,10 +94,16 @@ class SignIn {
     SsoButton button, {
     String scheme = defaultSsoScheme,
   }) async {
+    final challenge = SsoChallenge.generate();
     final Uri callback;
     try {
       callback = await _openAuthSession(
-        ssoStartUrl(server: server.url, path: button.path, scheme: scheme),
+        ssoStartUrl(
+          server: server.url,
+          path: button.path,
+          scheme: scheme,
+          challenge: challenge,
+        ),
         scheme,
       );
     } on PlatformException catch (e) {
@@ -116,8 +122,48 @@ class SignIn {
     );
     return switch (result) {
       SsoToken(:final token) => await _confirm(server, token),
+      SsoCode(:final loginCode) => await _confirm(
+        server,
+        await _exchange(server, loginCode, challenge),
+      ),
       SsoRejected(:final reason) => throw LoginRejected('$reason Try again.'),
     };
+  }
+
+  /// Redeems the one-time code the server sent for the session token.
+  Future<String> _exchange(
+    ProbedServer server,
+    String loginCode,
+    SsoChallenge challenge,
+  ) async {
+    final client = ServerApi(baseUrl: server.url, token: () => null);
+    try {
+      final response = await client.call(
+        () => client.dio.post<Map<String, Object?>>(
+          '/api/v4/users/login/sso/code-exchange',
+          data: api.ApiV4UsersLoginSsoCodeExchangeRequestBody(
+            loginCode: loginCode,
+            codeVerifier: challenge.verifier,
+            state: challenge.state,
+          ).toJson(),
+          options: Options(headers: {'Cache-Control': 'no-store'}),
+        ),
+      );
+      final data = response.data;
+      final token = data == null
+          ? null
+          : api.PostApiV4UsersLoginSsoCodeExchangeResponse.fromJson(data).token;
+      if (token == null || token.isEmpty) {
+        throw LoginRejected(
+          '${server.url.authority} signed in but sent no session. Try again.',
+        );
+      }
+      return token;
+    } on ApiError catch (e) {
+      throw loginProblemFrom(e, sentMfaCode: false, host: server.url.authority);
+    } finally {
+      client.close();
+    }
   }
 
   /// Reads the user with the new token. This also catches a server that

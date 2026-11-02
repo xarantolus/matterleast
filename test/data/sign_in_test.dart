@@ -4,6 +4,7 @@ import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
 import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/sso_callback.dart';
 
 import '../support/fake_server.dart';
 
@@ -141,6 +142,68 @@ void main() {
     expect(opened!.path, '/oauth/gitlab/mobile_login');
     expect(opened!.queryParameters['redirect_to'], 'mmauth://callback');
     expect(server.paths, ['/api/v4/users/me']);
+  });
+
+  test(
+    'SSO sends a challenge and redeems the code the server answers',
+    () async {
+      server.handle = (r) => switch (r.path) {
+        '/api/v4/users/login/sso/code-exchange' => ok({
+          'token': 's3ss10n',
+          'csrf': 'x',
+        }),
+        '/api/v4/users/me' => me(r),
+        _ => error(404, 'not_found'),
+      };
+      Uri? opened;
+      final signIn = SignIn(
+        openAuthSession: (url, scheme) async {
+          opened = url;
+          return Uri.parse(
+            '$scheme://callback?login_code=one-time'
+            '&srv=${Uri.encodeComponent(server.url.toString())}',
+          );
+        },
+      );
+
+      final signedIn = await signIn.withSso(probed, gitlab);
+
+      expect(signedIn!.token, 's3ss10n');
+      final exchange = server.seen.first;
+      expect(exchange.path, '/api/v4/users/login/sso/code-exchange');
+      expect(exchange.body['login_code'], 'one-time');
+      expect(exchange.body['state'], opened!.queryParameters['state']);
+      // The verifier proves the code is ours: it hashes to the challenge sent.
+      expect(
+        s256Challenge(exchange.body['code_verifier']! as String),
+        opened!.queryParameters['code_challenge'],
+      );
+      expect(exchange.header('authorization'), isNull);
+    },
+  );
+
+  test('a refused code exchange says what the server said', () async {
+    server.handle = (r) => (
+      status: 410,
+      json: {'id': 'x', 'message': 'The code exchange is switched off.'},
+      headers: const <String, String>{},
+    );
+    final signIn = SignIn(
+      openAuthSession: (url, scheme) async => Uri.parse(
+        '$scheme://callback?login_code=one-time'
+        '&srv=${Uri.encodeComponent(server.url.toString())}',
+      ),
+    );
+    await expectLater(
+      signIn.withSso(probed, gitlab),
+      throwsA(
+        isA<LoginRejected>().having(
+          (e) => e.message,
+          'message',
+          contains('switched off'),
+        ),
+      ),
+    );
   });
 
   test('SSO refuses a callback naming another server', () async {
