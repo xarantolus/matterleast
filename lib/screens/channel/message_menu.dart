@@ -9,11 +9,14 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/domain/burn_on_read.dart';
+import 'package:matterleast/domain/forward.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/reminders.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/domain/today.dart';
+import 'package:matterleast/screens/channel/forward_message.dart';
+import 'package:matterleast/screens/channel/report_message.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/context_menu.dart';
@@ -33,6 +36,19 @@ Future<PostMenuFacts> postMenuFacts(
 ) async =>
     ConversationViews((await ref.watch(serverSessionProvider(url).future)).db)
         .menuFacts(post, teamId, now: DateTime.now().toUtc());
+
+/// Whether reports of messages are on for the team, false where the server
+/// doesn't have the feature or can't say.
+@Riverpod(keepAlive: true)
+Future<bool> reportsEnabled(Ref ref, String url, String teamId) async {
+  if (teamId.isEmpty) return false;
+  final session = await ref.watch(serverSessionProvider(url).future);
+  try {
+    return await session.contentFlagging.enabled(teamId);
+  } on ApiError {
+    return false;
+  }
+}
 
 /// Shown on the quick-reaction row before the user has reacted to anything.
 const _defaultQuickReactions = [
@@ -80,6 +96,7 @@ enum MessageActionKind {
   copyText,
   copyLink,
   quote,
+  forward,
   remind,
   save,
   pin,
@@ -88,6 +105,7 @@ enum MessageActionKind {
   edit,
   burn,
   delete,
+  report,
 }
 
 /// One thing that can be done with a message: the same in the sheet, the
@@ -110,14 +128,19 @@ class MessageAction {
 }
 
 /// Pure: what can be done with [target]'s message, in menu order.
-List<MessageAction> messageActions(MessageTarget target, PostMenuFacts facts) {
+/// [reportable] is the team's reports being on.
+List<MessageAction> messageActions(
+  MessageTarget target,
+  PostMenuFacts facts, {
+  bool reportable = false,
+}) {
   final post = target.post;
   final url = target.url;
   final rights = facts.rights;
   final unsent = post.sendState != null;
   final permalink = facts.teamName.isEmpty
       ? null
-      : '${url.replaceFirst(RegExp(r'/+$'), '')}/${facts.teamName}/pl/${post.id}';
+      : postPermalink(url, facts.teamName, post.id);
   final following = facts.following;
   final threadRoot = post.isReply ? post.rootId : post.id;
   final burns = post.type == burnOnReadType;
@@ -168,6 +191,13 @@ List<MessageAction> messageActions(MessageTarget target, PostMenuFacts facts) {
         'Quote',
         Icons.format_quote_outlined,
         (_) async => onQuote(permalink),
+      ),
+    if (permalink != null && !unsent && !post.isEphemeral && !post.isSystem)
+      MessageAction(
+        MessageActionKind.forward,
+        'Forward',
+        Icons.forward_outlined,
+        (context) => forwardMessage(context, target, permalink),
       ),
     if (!unsent && !post.isEphemeral) ...[
       if (facts.reminders)
@@ -266,6 +296,19 @@ List<MessageAction> messageActions(MessageTarget target, PostMenuFacts facts) {
           destructive: true,
         ),
     ],
+    if (canReport(
+      enabled: reportable,
+      mine: post.userId == facts.myId,
+      system: post.isSystem,
+      unsent: unsent,
+      ephemeral: post.isEphemeral,
+    ))
+      MessageAction(
+        MessageActionKind.report,
+        'Report',
+        Icons.flag_outlined,
+        (context) => reportMessage(context, url, post),
+      ),
   ];
 }
 
@@ -313,8 +356,11 @@ Future<void> showMessageContextMenu(
   } finally {
     sub.close();
   }
+  final reportable = await container
+      .read(reportsEnabledProvider(target.url, facts.teamId).future)
+      .onError((_, _) => false);
   if (!context.mounted) return;
-  final actions = messageActions(target, facts);
+  final actions = messageActions(target, facts, reportable: reportable);
   final error = Theme.of(context).colorScheme.error;
   final run = await showMenuAt<MessageRun>(context, position, [
     if (selection != null && selection.isNotEmpty) ...[
@@ -381,7 +427,9 @@ class MessageMenu extends ConsumerWidget {
         ),
       );
     }
-    final actions = messageActions(target, facts);
+    final reportable =
+        ref.watch(reportsEnabledProvider(url, facts.teamId)).value ?? false;
+    final actions = messageActions(target, facts, reportable: reportable);
     void pick(MessageRun run) => Navigator.of(context).pop(run);
     final error = Theme.of(context).colorScheme.error;
 

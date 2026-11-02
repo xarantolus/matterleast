@@ -10,22 +10,28 @@ part of 'composer_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// The composer of one conversation. Lives as long as the conversation is
 /// on screen, so rebuilds and the drawer keep what was typed; the draft
-/// keeps it after that.
+/// keeps it after that. With a [forward] link it writes the comment for
+/// forwarding that message instead: no draft, commands, files or typing
+/// signal, and sending posts the comment and the link.
 
 @ProviderFor(ComposerDraft)
 final composerDraftProvider = ComposerDraftFamily._();
 
 /// The composer of one conversation. Lives as long as the conversation is
 /// on screen, so rebuilds and the drawer keep what was typed; the draft
-/// keeps it after that.
+/// keeps it after that. With a [forward] link it writes the comment for
+/// forwarding that message instead: no draft, commands, files or typing
+/// signal, and sending posts the comment and the link.
 final class ComposerDraftProvider
     extends $NotifierProvider<ComposerDraft, ComposerValue> {
   /// The composer of one conversation. Lives as long as the conversation is
   /// on screen, so rebuilds and the drawer keep what was typed; the draft
-  /// keeps it after that.
+  /// keeps it after that. With a [forward] link it writes the comment for
+  /// forwarding that message instead: no draft, commands, files or typing
+  /// signal, and sending posts the comment and the link.
   ComposerDraftProvider._({
     required ComposerDraftFamily super.from,
-    required (String, String, String) super.argument,
+    required (String, String, String, {String forward}) super.argument,
   }) : super(
          retry: null,
          name: r'composerDraftProvider',
@@ -67,11 +73,13 @@ final class ComposerDraftProvider
   }
 }
 
-String _$composerDraftHash() => r'dc3930f637faf7104b6136bdcabf2bc67d21929b';
+String _$composerDraftHash() => r'321d3a63cf09e44fd90dfc12601275324f2be54e';
 
 /// The composer of one conversation. Lives as long as the conversation is
 /// on screen, so rebuilds and the drawer keep what was typed; the draft
-/// keeps it after that.
+/// keeps it after that. With a [forward] link it writes the comment for
+/// forwarding that message instead: no draft, commands, files or typing
+/// signal, and sending posts the comment and the link.
 
 final class ComposerDraftFamily extends $Family
     with
@@ -80,7 +88,7 @@ final class ComposerDraftFamily extends $Family
           ComposerValue,
           ComposerValue,
           ComposerValue,
-          (String, String, String)
+          (String, String, String, {String forward})
         > {
   ComposerDraftFamily._()
     : super(
@@ -93,10 +101,19 @@ final class ComposerDraftFamily extends $Family
 
   /// The composer of one conversation. Lives as long as the conversation is
   /// on screen, so rebuilds and the drawer keep what was typed; the draft
-  /// keeps it after that.
+  /// keeps it after that. With a [forward] link it writes the comment for
+  /// forwarding that message instead: no draft, commands, files or typing
+  /// signal, and sending posts the comment and the link.
 
-  ComposerDraftProvider call(String url, String channelId, String rootId) =>
-      ComposerDraftProvider._(argument: (url, channelId, rootId), from: this);
+  ComposerDraftProvider call(
+    String url,
+    String channelId,
+    String rootId, {
+    String forward = '',
+  }) => ComposerDraftProvider._(
+    argument: (url, channelId, rootId, forward: forward),
+    from: this,
+  );
 
   @override
   String toString() => r'composerDraftProvider';
@@ -104,15 +121,23 @@ final class ComposerDraftFamily extends $Family
 
 /// The composer of one conversation. Lives as long as the conversation is
 /// on screen, so rebuilds and the drawer keep what was typed; the draft
-/// keeps it after that.
+/// keeps it after that. With a [forward] link it writes the comment for
+/// forwarding that message instead: no draft, commands, files or typing
+/// signal, and sending posts the comment and the link.
 
 abstract class _$ComposerDraft extends $Notifier<ComposerValue> {
-  late final _$args = ref.$arg as (String, String, String);
+  late final _$args = ref.$arg as (String, String, String, {String forward});
   String get url => _$args.$1;
   String get channelId => _$args.$2;
   String get rootId => _$args.$3;
+  String get forward => _$args.forward;
 
-  ComposerValue build(String url, String channelId, String rootId);
+  ComposerValue build(
+    String url,
+    String channelId,
+    String rootId, {
+    String forward = '',
+  });
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
@@ -127,7 +152,7 @@ abstract class _$ComposerDraft extends $Notifier<ComposerValue> {
             >;
     return element.handleCreate(
       ref,
-      () => build(_$args.$1, _$args.$2, _$args.$3),
+      () => build(_$args.$1, _$args.$2, _$args.$3, forward: _$args.forward),
     );
   }
 }

@@ -23,7 +23,9 @@ typedef PostMenuFacts = ({
   /// Null when threads can't be followed (no collapsed threads).
   bool? following,
 
-  /// For permalinks; empty when no team is known.
+  /// The message's team and its name, for permalinks and reporting; empty
+  /// when no team is known.
+  String teamId,
   String teamName,
   MessageRights rights,
 
@@ -82,6 +84,7 @@ class ConversationViews {
       myId: me,
       saved: saved != null && saved.value == 'true',
       following: following,
+      teamId: teamRow?.id ?? '',
       teamName: teamRow?.name ?? '',
       rights: messageRights(
         channel,

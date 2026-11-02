@@ -14,6 +14,7 @@ import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
+import 'package:matterleast/screens/channel/edit_history_sheet.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
@@ -225,6 +226,9 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
   Future<void> _onAction(PostActionRequest request) =>
       widget._runAction(context, ref, request);
 
+  Future<bool> _onEditHistory(String postId) =>
+      showEditHistory(context, widget.url, postId);
+
   Widget _image(String imageUrl, Size size, BoxFit fit) => ServerImage(
     serverUrl: widget.url,
     url: imageUrl,
@@ -274,6 +278,7 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
       onChannel: _onChannel,
       onLink: _onLink,
       onHashtag: _onHashtag,
+      onEditHistory: _onEditHistory,
       customEmoji: _emojiLookup(emoji.value ?? const {}, resolver),
       image: _image,
       linkPreviews: display?.linkPreviews ?? true,

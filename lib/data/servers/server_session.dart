@@ -10,6 +10,7 @@ import 'package:matterleast/data/actions/attribute_actions.dart';
 import 'package:matterleast/data/actions/bookmark_actions.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
+import 'package:matterleast/data/actions/content_flagging.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
 import 'package:matterleast/data/actions/profile_actions.dart';
 import 'package:matterleast/data/actions/settings_actions.dart';
@@ -104,6 +105,7 @@ class ServerSession {
   // as drafts waiting to be written).
   late final composer = ComposerActions(this);
   late final posts = PostActions(this);
+  late final contentFlagging = ContentFlagging(this);
   late final channels = ChannelActions(this);
   late final profiles = ProfileActions(this);
   late final teams = TeamActions(this);

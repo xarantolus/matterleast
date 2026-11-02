@@ -29,6 +29,7 @@ import 'clients/scheduled_post_client.dart';
 import 'clients/custom_profile_attributes_client.dart';
 import 'clients/ephemeral_mode_client.dart';
 import 'clients/access_control_client.dart';
+import 'clients/content_flagging_client.dart';
 
 class MattermostClient {
   MattermostClient(Dio dio, {String? baseUrl}) : _dio = dio, _baseUrl = baseUrl;
@@ -63,6 +64,7 @@ class MattermostClient {
   CustomProfileAttributesClient? _customProfileAttributes;
   EphemeralModeClient? _ephemeralMode;
   AccessControlClient? _accessControl;
+  ContentFlaggingClient? _contentFlagging;
 
   UsersClient get users => _users ??= UsersClient(_dio, baseUrl: _baseUrl);
 
@@ -132,4 +134,7 @@ class MattermostClient {
 
   AccessControlClient get accessControl =>
       _accessControl ??= AccessControlClient(_dio, baseUrl: _baseUrl);
+
+  ContentFlaggingClient get contentFlagging =>
+      _contentFlagging ??= ContentFlaggingClient(_dio, baseUrl: _baseUrl);
 }

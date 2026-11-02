@@ -113,6 +113,7 @@ void main() {
               myId: 'me',
               saved: false,
               following: false,
+              teamId: 'team1',
               teamName: '',
               rights: (
                 react: true,

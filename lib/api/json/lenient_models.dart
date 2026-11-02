@@ -24,6 +24,7 @@ import 'package:matterleast/api/generated/models/api_v4_channels_request_body.da
 import 'package:matterleast/api/generated/models/api_v4_channels_search_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_commands_execute_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_commands_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_content_flagging_post_post_id_flag_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_custom_profile_attributes_fields_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_custom_profile_attributes_values_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_emoji_search_request_body.dart';
@@ -85,6 +86,8 @@ import 'package:matterleast/api/generated/models/embeds.dart';
 import 'package:matterleast/api/generated/models/emoji.dart';
 import 'package:matterleast/api/generated/models/file_info.dart';
 import 'package:matterleast/api/generated/models/file_info_list.dart';
+import 'package:matterleast/api/generated/models/get_api_v4_content_flagging_flag_config_response.dart';
+import 'package:matterleast/api/generated/models/get_api_v4_content_flagging_team_team_id_status_response.dart';
 import 'package:matterleast/api/generated/models/get_api_v4_files_file_id_link_response.dart';
 import 'package:matterleast/api/generated/models/get_api_v4_license_load_metric_response.dart';
 import 'package:matterleast/api/generated/models/get_api_v4_users_sessions_attributes_manifest_response.dart';
@@ -1486,6 +1489,73 @@ class LenientMapOfApiV4CommandsRequestBody
   @override
   Object? toJson(Map<String, ApiV4CommandsRequestBody>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4ContentFlaggingPostPostIdFlagRequestBody
+    implements
+        JsonConverter<ApiV4ContentFlaggingPostPostIdFlagRequestBody?, Object?> {
+  const LenientApiV4ContentFlaggingPostPostIdFlagRequestBody();
+  @override
+  ApiV4ContentFlaggingPostPostIdFlagRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(
+          json,
+          ApiV4ContentFlaggingPostPostIdFlagRequestBody.fromJson,
+        )
+      : null;
+  @override
+  Object? toJson(ApiV4ContentFlaggingPostPostIdFlagRequestBody? object) =>
+      object?.toJson();
+}
+
+class LenientListOfApiV4ContentFlaggingPostPostIdFlagRequestBody
+    implements
+        JsonConverter<
+          List<ApiV4ContentFlaggingPostPostIdFlagRequestBody>,
+          Object?
+        > {
+  const LenientListOfApiV4ContentFlaggingPostPostIdFlagRequestBody();
+  @override
+  List<ApiV4ContentFlaggingPostPostIdFlagRequestBody> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                ApiV4ContentFlaggingPostPostIdFlagRequestBody.fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4ContentFlaggingPostPostIdFlagRequestBody> object) =>
+      [for (final e in object) e.toJson()];
+}
+
+class LenientMapOfApiV4ContentFlaggingPostPostIdFlagRequestBody
+    implements
+        JsonConverter<
+          Map<String, ApiV4ContentFlaggingPostPostIdFlagRequestBody>?,
+          Object?
+        > {
+  const LenientMapOfApiV4ContentFlaggingPostPostIdFlagRequestBody();
+  @override
+  Map<String, ApiV4ContentFlaggingPostPostIdFlagRequestBody>? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ContentFlaggingPostPostIdFlagRequestBody.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, ApiV4ContentFlaggingPostPostIdFlagRequestBody>? object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientApiV4CustomProfileAttributesFieldsRequestBody
@@ -4571,6 +4641,143 @@ class LenientMapOfFileInfoList
   @override
   Object? toJson(Map<String, FileInfoList>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientGetApiV4ContentFlaggingFlagConfigResponse
+    implements
+        JsonConverter<GetApiV4ContentFlaggingFlagConfigResponse?, Object?> {
+  const LenientGetApiV4ContentFlaggingFlagConfigResponse();
+  @override
+  GetApiV4ContentFlaggingFlagConfigResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, GetApiV4ContentFlaggingFlagConfigResponse.fromJson)
+      : null;
+  @override
+  Object? toJson(GetApiV4ContentFlaggingFlagConfigResponse? object) =>
+      object?.toJson();
+}
+
+class LenientListOfGetApiV4ContentFlaggingFlagConfigResponse
+    implements
+        JsonConverter<
+          List<GetApiV4ContentFlaggingFlagConfigResponse>,
+          Object?
+        > {
+  const LenientListOfGetApiV4ContentFlaggingFlagConfigResponse();
+  @override
+  List<GetApiV4ContentFlaggingFlagConfigResponse> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                GetApiV4ContentFlaggingFlagConfigResponse.fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<GetApiV4ContentFlaggingFlagConfigResponse> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfGetApiV4ContentFlaggingFlagConfigResponse
+    implements
+        JsonConverter<
+          Map<String, GetApiV4ContentFlaggingFlagConfigResponse>?,
+          Object?
+        > {
+  const LenientMapOfGetApiV4ContentFlaggingFlagConfigResponse();
+  @override
+  Map<String, GetApiV4ContentFlaggingFlagConfigResponse>? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                GetApiV4ContentFlaggingFlagConfigResponse.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, GetApiV4ContentFlaggingFlagConfigResponse>? object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientGetApiV4ContentFlaggingTeamTeamIdStatusResponse
+    implements
+        JsonConverter<
+          GetApiV4ContentFlaggingTeamTeamIdStatusResponse?,
+          Object?
+        > {
+  const LenientGetApiV4ContentFlaggingTeamTeamIdStatusResponse();
+  @override
+  GetApiV4ContentFlaggingTeamTeamIdStatusResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(
+          json,
+          GetApiV4ContentFlaggingTeamTeamIdStatusResponse.fromJson,
+        )
+      : null;
+  @override
+  Object? toJson(GetApiV4ContentFlaggingTeamTeamIdStatusResponse? object) =>
+      object?.toJson();
+}
+
+class LenientListOfGetApiV4ContentFlaggingTeamTeamIdStatusResponse
+    implements
+        JsonConverter<
+          List<GetApiV4ContentFlaggingTeamTeamIdStatusResponse>,
+          Object?
+        > {
+  const LenientListOfGetApiV4ContentFlaggingTeamTeamIdStatusResponse();
+  @override
+  List<GetApiV4ContentFlaggingTeamTeamIdStatusResponse> fromJson(
+    Object? json,
+  ) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                GetApiV4ContentFlaggingTeamTeamIdStatusResponse.fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(
+    List<GetApiV4ContentFlaggingTeamTeamIdStatusResponse> object,
+  ) => [for (final e in object) e.toJson()];
+}
+
+class LenientMapOfGetApiV4ContentFlaggingTeamTeamIdStatusResponse
+    implements
+        JsonConverter<
+          Map<String, GetApiV4ContentFlaggingTeamTeamIdStatusResponse>?,
+          Object?
+        > {
+  const LenientMapOfGetApiV4ContentFlaggingTeamTeamIdStatusResponse();
+  @override
+  Map<String, GetApiV4ContentFlaggingTeamTeamIdStatusResponse>? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                GetApiV4ContentFlaggingTeamTeamIdStatusResponse.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, GetApiV4ContentFlaggingTeamTeamIdStatusResponse>? object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientGetApiV4FilesFileIdLinkResponse

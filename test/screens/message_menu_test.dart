@@ -49,12 +49,17 @@ Future<void> _open(
             myId: 'me',
             saved: false,
             following: false,
+            teamId: 'team1',
             teamName: 'crew',
             rights: rights,
             reminders: reminders,
           ),
         ),
         recentEmojiProvider(_url).overrideWith((ref) async => const []),
+        reportsEnabledProvider(
+          _url,
+          'team1',
+        ).overrideWith((ref) async => false),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -98,12 +103,17 @@ void main() {
                 myId: 'me',
                 saved: false,
                 following: false,
+                teamId: 'team1',
                 teamName: 'crew',
                 rights: _all,
                 reminders: false,
               ),
             ),
             recentEmojiProvider(_url).overrideWith((ref) async => const []),
+            reportsEnabledProvider(
+              _url,
+              'team1',
+            ).overrideWith((ref) async => false),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -203,12 +213,17 @@ void main() {
                 myId: 'me',
                 saved: false,
                 following: false,
+                teamId: 'team1',
                 teamName: 'crew',
                 rights: rights,
                 reminders: true,
               ),
             ),
             recentEmojiProvider(_url).overrideWith((ref) async => const []),
+            reportsEnabledProvider(
+              _url,
+              'team1',
+            ).overrideWith((ref) async => false),
           ],
           child: MaterialApp(
             home: Scaffold(

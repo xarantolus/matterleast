@@ -927,6 +927,13 @@ class PostText extends StatelessWidget {
         ),
       );
     }
+    final env = PostEnvironment.maybeOf(context);
+    final history = env?.onEditHistory;
+    final own =
+        env != null &&
+        env.myUsername.isNotEmpty &&
+        post.authorUsername == env.myUsername;
+    final onHistory = history != null && own ? () => history(post.id) : null;
     if (post.message.isEmpty) {
       final editAt = post.editAt;
       return post.edited && editAt != null
@@ -934,6 +941,7 @@ class PostText extends StatelessWidget {
               alignment: AlignmentDirectional.centerStart,
               child: EditedMark(
                 editAt: editAt,
+                onHistory: onHistory,
                 style: style?.copyWith(color: tokens.muted, fontSize: 12),
               ),
             )
@@ -944,6 +952,7 @@ class PostText extends StatelessWidget {
       message: post.message,
       editAt: post.editAt,
       edited: post.edited,
+      onEditHistory: onHistory,
       imageSizes: details.imageSizes,
       channelNames: details.props.channelMentions,
       unsafeLinks: details.unsafeLinks,
