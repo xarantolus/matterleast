@@ -15,6 +15,7 @@ import 'package:matterleast/screens/channel_list/category_menu.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -372,27 +373,16 @@ class TeamMenu extends ConsumerWidget {
 
   Future<void> _leave(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (dialog) => AlertDialog(
-        title: Text('Leave $teamName?'),
-        content: const Text(
+    final sure = await confirm(
+      context,
+      title: 'Leave $teamName?',
+      body:
           'You leave all its channels too. To come back, join it again or '
           'ask for an invite.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialog).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialog).pop(true),
-            child: const Text('Leave'),
-          ),
-        ],
-      ),
+      action: 'Leave',
+      destructive: true,
     );
-    if (sure != true) return;
+    if (!sure) return;
     try {
       await (await ref.read(teamActionsProvider(url).future)).leave(teamId);
     } on Object catch (e) {

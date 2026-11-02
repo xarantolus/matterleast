@@ -105,6 +105,10 @@ class BackgroundApp {
 Future<void> clearOnRead(Notifier notifier, String url, ReadMark mark) async {
   try {
     switch (mark) {
+      case (channelId: final channelId?, rootId: ''):
+        for (final s in await notifier.shown(url)) {
+          if (s.key.channelId == channelId) await notifier.clear(url, s.key);
+        }
       case (channelId: final channelId?, rootId: _):
         await notifier.clear(url, ConversationKey(channelId));
       case (channelId: null, rootId: final rootId?) when rootId.isNotEmpty:

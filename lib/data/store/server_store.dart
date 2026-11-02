@@ -50,7 +50,8 @@ class PageOutcome {
 const sinceCap = 1000;
 
 /// A channel ([channelId]) or a thread ([rootId]) read; a thread mark
-/// with an empty [rootId] means all threads.
+/// with an empty [rootId] means all threads, a channel mark with an empty
+/// [rootId] a channel that is gone, with all its threads.
 typedef ReadMark = ({String? channelId, String? rootId});
 
 abstract final class PostListNames {
@@ -455,6 +456,7 @@ class ServerStore {
     await (db.delete(
       db.categoryChannels,
     )..where((cc) => cc.channelId.equals(channelId))).go();
+    _markRead((channelId: channelId, rootId: ''));
   });
 
   /// The user left the team, or it was archived.
@@ -465,6 +467,9 @@ class ServerStore {
     for (final c in channels) {
       await removeChannel(c.id);
     }
+    await (db.delete(
+      db.drafts,
+    )..where((d) => d.channelId.isIn([for (final c in channels) c.id]))).go();
     final categoryIds = [
       for (final c in await (db.select(
         db.categories,
