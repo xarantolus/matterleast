@@ -19,8 +19,9 @@ double conversationBottomGap(BuildContext context) =>
     typingLineHeight(context) + (isDesktop ? Spacing.xs : Spacing.xl);
 
 /// Who is writing, drawn in the gap the message list keeps above the
-/// composer, so it never covers a message or changes the layout.
-class TypingLine extends ConsumerWidget {
+/// composer, so it never covers a message or changes the layout. A bar
+/// slides up out of the composer while someone types and back down after.
+class TypingLine extends ConsumerStatefulWidget {
   const TypingLine({
     super.key,
     required this.url,
@@ -33,22 +34,48 @@ class TypingLine extends ConsumerWidget {
   final String rootId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final names = ref.watch(typingNamesProvider(url, channelId, rootId)).value;
-    final text = typingText(names ?? const []);
+  ConsumerState<TypingLine> createState() => _TypingLineState();
+}
+
+class _TypingLineState extends ConsumerState<TypingLine> {
+  // Kept while the bar slides away, so its words don't vanish first.
+  String _last = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = typingNamesProvider(
+      widget.url,
+      widget.channelId,
+      widget.rootId,
+    );
+    ref.listen(provider, (_, next) {
+      final text = typingText(next.value ?? const []);
+      if (text != null && text != _last) setState(() => _last = text);
+    });
+    final shown = typingText(ref.watch(provider).value ?? const []) != null;
     final theme = Theme.of(context);
+    final duration = motion(context, const Duration(milliseconds: 180));
     return IgnorePointer(
-      child: AnimatedOpacity(
-        opacity: text == null ? 0 : 1,
-        duration: motion(context, const Duration(milliseconds: 150)),
-        child: SizedBox(
-          height: typingLineHeight(context),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-            child: Align(
+      child: ClipRect(
+        child: AnimatedSlide(
+          offset: shown ? Offset.zero : const Offset(0, 1),
+          duration: duration,
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            opacity: shown ? 1 : 0,
+            duration: duration,
+            child: Container(
+              height: typingLineHeight(context),
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
               alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHigh,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(Spacing.sm),
+                ),
+              ),
               child: Text(
-                text ?? '',
+                _last,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelSmall?.copyWith(
