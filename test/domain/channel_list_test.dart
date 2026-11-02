@@ -49,11 +49,13 @@ CategoryInput category(
   String type = 'custom',
   String sorting = '',
   bool collapsed = false,
+  bool muted = false,
 }) => (
   id: id,
   type: type,
   displayName: id,
   sorting: sorting,
+  muted: muted,
   collapsed: collapsed,
 );
 
@@ -192,6 +194,15 @@ void main() {
     test('alphabetical puts muted last and compares numbers', () {
       final list = build(channels);
       expect(titles(list), ['a-chan', 'b-chan', 'ch 2', 'ch 10', 'c-chan']);
+    });
+
+    test('a section tells how it is sorted and whether it is muted', () {
+      final section = build(
+        channels,
+        categories: [category('r', sorting: 'recent', muted: true)],
+      ).sections.single;
+      expect(section.sorting, 'recent');
+      expect(section.muted, isTrue);
     });
 
     test('recent sorts by the last post, manual keeps the order', () {

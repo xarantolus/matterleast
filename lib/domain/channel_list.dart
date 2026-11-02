@@ -42,6 +42,8 @@ abstract class CategorySection with _$CategorySection {
     required String title,
     required CategoryKind kind,
     required bool collapsed,
+    @Default('') String sorting,
+    @Default(false) bool muted,
 
     /// Every visible channel, also while [collapsed].
     required List<ChannelItem> rows,
@@ -72,6 +74,7 @@ abstract class ChannelList with _$ChannelList {
 
     /// The team's channels were fetched at least once.
     required bool synced,
+    @Default(defaultDirectLimit) int directLimit,
   }) = _ChannelList;
 
   const ChannelList._();
@@ -86,6 +89,7 @@ typedef CategoryInput = ({
   String type,
   String displayName,
   String sorting,
+  bool muted,
   bool collapsed,
 });
 
@@ -187,6 +191,20 @@ class ChannelListSource {
 
 const defaultDirectLimit = 20;
 
+/// What the official apps store for "All".
+const allDirects = 10000;
+
+/// The choices for how many read direct messages stay in the list.
+const directLimitChoices = [10, 15, 20, 40, allDirects];
+
+String directLimitLabel(int limit) => limit >= allDirects ? 'All' : '$limit';
+
+/// The unread channels of a section, by id.
+List<String> unreadIds(CategorySection section) => [
+  for (final item in section.rows)
+    if (item.unread || item.mentions > 0) item.id,
+];
+
 /// Pure: the sections of a team's channel list.
 ChannelList buildChannelList(ChannelListSource source) {
   final sections = <CategorySection>[];
@@ -230,6 +248,8 @@ ChannelList buildChannelList(ChannelListSource source) {
         title: category.displayName,
         kind: kind,
         collapsed: category.collapsed,
+        sorting: category.sorting,
+        muted: category.muted,
         rows: items,
       ),
     );
@@ -240,6 +260,7 @@ ChannelList buildChannelList(ChannelListSource source) {
     unreadThreads: source.collapsedThreads ? source.unreadThreads : null,
     drafts: source.draftChannels.length,
     synced: source.synced,
+    directLimit: source.directLimit,
   );
 }
 
