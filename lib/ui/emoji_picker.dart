@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +8,10 @@ import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
+import 'package:matterleast/domain/emoji_rules.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/ui/add_emoji.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
@@ -191,6 +195,11 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
   List<String>? _recentShown;
   List<EmojiSection>? _sections;
 
+  Timer? _askTimer;
+
+  /// The server is being asked about the typed query.
+  var _asking = false;
+
   @override
   void initState() {
     super.initState();
@@ -200,6 +209,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
 
   @override
   void dispose() {
+    _askTimer?.cancel();
     _scroll.dispose();
     _searchFocus.dispose();
     _gridFocus.dispose();
@@ -340,19 +350,56 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
     return _sections ??= emojiSections(recent: recent, custom: _custom!);
   }
 
-  List<String> _matches(String query) => {
-    for (final n in _custom ?? const <String>[])
-      if (n.contains(query)) n,
-    for (final n in systemEmojiNames())
-      if (n.contains(query)) canonicalName(n),
-  }.toList();
+  /// Stored custom emoji, standard ones, then custom ones that arrived from
+  /// the server meanwhile, so nothing shown moves.
+  List<String> _matches(String query) {
+    final shown = _custom ?? const <String>[];
+    final live = ref.read(customEmojiProvider(widget.url)).value?.keys;
+    return {
+      for (final n in shown)
+        if (n.contains(query)) n,
+      for (final n in systemEmojiNames())
+        if (n.contains(query)) canonicalName(n),
+      for (final n in live ?? const <String>[])
+        if (n.contains(query)) n,
+    }.toList();
+  }
+
+  void _queryChanged(String q) {
+    _askTimer?.cancel();
+    setState(() {
+      _query = q;
+      _cursor = 0;
+      _asking = false;
+    });
+    final term = _search;
+    final local = (_custom ?? const <String>[]).where((n) => n.contains(term));
+    if (!asksServerForEmoji(term, local.length)) return;
+    _asking = true;
+    _askTimer = Timer(_askDelay, () => _ask(term));
+  }
+
+  static const _askDelay = Duration(milliseconds: 300);
+
+  Future<void> _ask(String term) async {
+    try {
+      final actions = await ref.read(emojiActionsOnProvider(widget.url).future);
+      await actions.search(term);
+    } on Object {
+      // The picker works with what is stored.
+    }
+    if (mounted && term == _search) setState(() => _asking = false);
+  }
 
   String _withTone(String name, Map<String, String> custom, int tone) =>
       custom.containsKey(name) ? name : withSkinTone(name, tone);
 
   @override
   Widget build(BuildContext context) {
-    final loading = ref.watch(customEmojiCatalogProvider(widget.url)).isLoading;
+    final loading =
+        ref.watch(customEmojiCatalogProvider(widget.url)).isLoading || _asking;
+    final canAdd =
+        ref.watch(emojiRightsOnProvider(widget.url)).value?.create ?? false;
     final recent = ref.watch(recentEmojiProvider(widget.url)).value ?? const [];
     final custom = ref.watch(customEmojiProvider(widget.url)).value ?? const {};
     final tone = ref.watch(skinToneProvider(widget.url)).value ?? 0;
@@ -402,7 +449,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
         if (query.isNotEmpty) {
           final names = _matches(query);
           return names.isEmpty
-              ? const Center(child: Text('No emoji match.'))
+              ? Center(child: Text(_asking ? 'Searching…' : 'No emoji match.'))
               : GridView.builder(
                   controller: _scroll,
                   padding: EdgeInsets.fromLTRB(
@@ -495,13 +542,16 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
                     hintText: 'Search emoji',
                     leading: const Icon(Icons.search),
                     elevation: const WidgetStatePropertyAll(0),
-                    onChanged: (q) => setState(() {
-                      _query = q;
-                      _cursor = 0;
-                    }),
+                    onChanged: _queryChanged,
                   ),
                 ),
               ),
+              if (canAdd)
+                IconButton(
+                  tooltip: 'Add custom emoji',
+                  icon: const Icon(Icons.add_reaction_outlined),
+                  onPressed: () => showAddEmoji(context, widget.url),
+                ),
               PopupMenuButton<int>(
                 tooltip: 'Skin tone',
                 initialValue: tone,

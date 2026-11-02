@@ -22,6 +22,9 @@ abstract final class Permission {
   static const addReaction = 'add_reaction';
   static const useChannelMentions = 'use_channel_mentions';
   static const useGroupMentions = 'use_group_mentions';
+  static const createEmojis = 'create_emojis';
+  static const deleteEmojis = 'delete_emojis';
+  static const deleteOthersEmojis = 'delete_others_emojis';
 }
 
 /// The system role whose holders the default channel's read-only mode

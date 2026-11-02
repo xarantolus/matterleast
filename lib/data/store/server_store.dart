@@ -283,6 +283,9 @@ class ServerStore {
   Future<void> applyCustomEmoji(Iterable<api.Emoji> emoji) =>
       db.batch((b) => _upsertEmoji(b, emoji));
 
+  Future<void> removeCustomEmoji(String id) =>
+      (db.delete(db.customEmoji)..where((e) => e.id.equals(id))).go();
+
   void _upsertEmoji(Batch b, Iterable<api.Emoji> emoji) {
     final usable = [
       for (final e in emoji)

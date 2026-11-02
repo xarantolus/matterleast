@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/domain/emoji_rules.dart';
 import 'package:matterleast/domain/permissions.dart';
 
 /// The user's rights from their stored roles, kept fresh by the sync.
@@ -37,6 +38,22 @@ class PermissionViews {
       mine?.roles ?? '',
     ]);
   }
+
+  /// What the user may do with custom emoji; nothing when the server has
+  /// them off.
+  Future<EmojiRights> emoji() async => emojiRights(
+    enabled: (await db.features()).customEmoji,
+    roles: roleNames([await db.syncText(SyncKeys.currentUserRoles) ?? '']),
+    granted: await roleGrants(),
+  );
+
+  Stream<EmojiRights> watchEmoji() => throttledWatch(
+    db.tableUpdates(
+      TableUpdateQuery.onAllTables([db.roles, db.syncState, db.config]),
+    ),
+    emoji,
+    interval: const Duration(milliseconds: 300),
+  ).distinct();
 
   Future<ChannelPermissions> channel(String channelId) async {
     final channel = await (db.select(

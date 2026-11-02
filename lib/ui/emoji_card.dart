@@ -4,6 +4,7 @@ import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/delete_emoji.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -35,6 +36,13 @@ class EmojiCard extends ConsumerWidget {
     final creator = creatorId == null || creatorId.isEmpty
         ? null
         : ref.watch(userProfileProvider(url!, creatorId)).value;
+    final entry = custom && url != null
+        ? ref.watch(
+            emojiEntriesProvider(
+              url,
+            ).select((a) => a.value?.where((e) => e.name == name).firstOrNull),
+          )
+        : null;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -65,6 +73,25 @@ class EmojiCard extends ConsumerWidget {
                     : 'Custom emoji · added by ${creator.name}',
                 style: text.bodyMedium?.copyWith(color: context.tokens.muted),
                 textAlign: TextAlign.center,
+              ),
+            if (entry != null && entry.canDelete)
+              Padding(
+                padding: const EdgeInsets.only(top: Spacing.md),
+                child: TextButton.icon(
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Delete emoji'),
+                  onPressed: () async {
+                    final navigator = Navigator.of(context);
+                    final gone = await deleteCustomEmoji(
+                      context,
+                      ref,
+                      url: url!,
+                      id: entry.id,
+                      name: name,
+                    );
+                    if (gone) navigator.pop();
+                  },
+                ),
               ),
           ],
         ),
