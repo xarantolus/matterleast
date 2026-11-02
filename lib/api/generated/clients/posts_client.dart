@@ -98,6 +98,11 @@ abstract class PostsClient {
   @GET('/api/v4/posts/{post_id}/info')
   Future<PostInfo> getPostInfo({@Path('post_id') required String postId});
 
+  @GET('/api/v4/posts/{post_id}/edit_history')
+  Future<List<Post>> getEditHistoryForPost({
+    @Path('post_id') required String postId,
+  });
+
   @GET('/api/v4/channels/{channel_id}/posts')
   Future<PostList> getPostsForChannel({
     @Path('channel_id') required String channelId,
@@ -130,6 +135,9 @@ abstract class PostsClient {
     @Path('action_id') required String actionId,
   });
 
+  @POST('/api/v4/posts/ids')
+  Future<List<Post>> getPostsByIds({@Body() required List<String> body});
+
   @POST('/api/v4/users/{user_id}/posts/{post_id}/ack')
   Future<PostAcknowledgement> saveAcknowledgementForPost({
     @Path('user_id') required String userId,
@@ -140,6 +148,12 @@ abstract class PostsClient {
   Future<StatusOk> deleteAcknowledgementForPost({
     @Path('user_id') required String userId,
     @Path('post_id') required String postId,
+  });
+
+  @POST('/api/v4/posts/{post_id}/restore/{restore_version_id}')
+  Future<Post> restorePostVersion({
+    @Path('post_id') required String postId,
+    @Path('restore_version_id') required String restoreVersionId,
   });
 
   @GET('/api/v4/posts/{post_id}/reveal')

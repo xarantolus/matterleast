@@ -28,6 +28,7 @@ export 'clients/scheduled_post_client.dart';
 export 'clients/custom_profile_attributes_client.dart';
 export 'clients/ephemeral_mode_client.dart';
 export 'clients/access_control_client.dart';
+export 'clients/content_flagging_client.dart';
 // Data classes
 export 'models/user.dart';
 export 'models/known_users.dart';
@@ -173,6 +174,9 @@ export 'models/api_v4_users_user_id_custom_profile_attributes_request_body.dart'
 export 'models/api_v4_ephemeral_mode_cleanup_request_body.dart';
 export 'models/api_v4_ephemeral_mode_purge_request_body.dart';
 export 'models/api_v4_ephemeral_mode_wipe_request_body.dart';
+export 'models/get_api_v4_content_flagging_flag_config_response.dart';
+export 'models/get_api_v4_content_flagging_team_team_id_status_response.dart';
+export 'models/api_v4_content_flagging_post_post_id_flag_request_body.dart';
 export 'models/embeds.dart';
 export 'models/webapp2.dart';
 export 'models/action.dart';
