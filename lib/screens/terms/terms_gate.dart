@@ -24,7 +24,7 @@ class TermsGate extends ConsumerWidget {
     final terms = ref.watch(termsToAcceptProvider(url)).value;
     return Stack(
       children: [
-        child,
+        ExcludeFocus(excluding: terms != null, child: child),
         if (terms != null)
           Positioned.fill(
             child: _TermsScreen(
