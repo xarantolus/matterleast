@@ -49,6 +49,8 @@ android {
     packaging {
         jniLibs {
             excludes += "**/libcnativeapi.so"
+            // A smaller download; Android unpacks the libraries on install.
+            useLegacyPackaging = true
         }
     }
 
