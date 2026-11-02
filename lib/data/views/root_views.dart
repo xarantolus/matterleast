@@ -211,19 +211,8 @@ class RootViews {
       for (final c in channels.values)
         if (c.type == 'D') ?directPartnerId(c.name, myId),
     };
-    final users = await (db.select(
-      db.users,
-    )..where((u) => u.id.isIn(partnerIds))).get();
-    final people = {
-      for (final u in users)
-        u.id: (
-          username: u.username,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          nickname: u.nickname,
-          status: u.status,
-        ),
-    };
+    final users = await db.usersById(partnerIds);
+    final people = {for (final u in users) u.id: u.person};
     final pictureUpdates = {for (final u in users) u.id: ?u.lastPictureUpdate};
     final hidden =
         await (db.select(db.preferences)..where(

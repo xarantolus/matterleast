@@ -115,18 +115,6 @@ void main() {
     });
   });
 
-  group('pruning', () {
-    test('cuts ranges at the kept boundary and drops older ones', () {
-      expect(withPruned([r(10, 50, start: true), r(200, 260)], t(220)), [
-        r(220, 260),
-      ]);
-      expect(withPruned([r(10, 50, start: true), r(200, 260)], t(40)), [
-        r(40, 50),
-        r(200, 260),
-      ]);
-    });
-  });
-
   test('a time falls in the stored stretch that holds it, or in none', () {
     expect(rangeContaining([r(1, 2), r(5, 9)], t(7)), r(5, 9));
     expect(rangeContaining([r(1, 2)], t(3)), isNull);

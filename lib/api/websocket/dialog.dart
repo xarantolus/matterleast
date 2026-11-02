@@ -111,7 +111,7 @@ class DialogElement {
       _$DialogElementFromJson(json);
 
   /// The key of the field's value in the submission.
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String name;
   @LenientString()
   final String? displayName;
@@ -211,29 +211,21 @@ class DialogOption {
   factory DialogOption.fromJson(Map<String, Object?> json) =>
       _$DialogOptionFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String text;
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String value;
 }
-
-String _string(Object? json) => json is String ? json : '';
 
 DialogForm _dialog(Object? json) => json is Map<String, Object?>
     ? DialogForm.fromJson(json)
     : const DialogForm();
 
-List<DialogElement> _elements(Object? json) => [
-  if (json is List)
-    for (final e in json)
-      if (e is Map<String, Object?>) DialogElement.fromJson(e),
-];
+List<DialogElement> _elements(Object? json) =>
+    decodeList(json, DialogElement.fromJson);
 
 DialogDateTimeConfig? _datetimeConfig(Object? json) =>
     json is Map<String, Object?> ? DialogDateTimeConfig.fromJson(json) : null;
 
-List<DialogOption> _options(Object? json) => [
-  if (json is List)
-    for (final e in json)
-      if (e is Map<String, Object?>) DialogOption.fromJson(e),
-];
+List<DialogOption> _options(Object? json) =>
+    decodeList(json, DialogOption.fromJson);

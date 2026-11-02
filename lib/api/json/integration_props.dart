@@ -24,15 +24,15 @@ class IntegrationProps {
   factory IntegrationProps.fromJson(Map<String, Object?> json) =>
       _$IntegrationPropsFromJson(json);
 
-  @_MmBlocks()
+  @LenientList(MmBlockJson.fromJson)
   final List<MmBlockJson> mmBlocks;
 
   /// The cookie the server sealed for the post's `mm_blocks` actions.
   @LenientString()
   final String? mmBlocksActions;
-  @_BlockKit()
+  @LenientList(BlockKitJson.fromJson)
   final List<BlockKitJson> blocks;
-  @_Cards()
+  @LenientList(AdaptiveCardJson.fromJson)
   final List<AdaptiveCardJson> cards;
   @AttachmentList()
   final List<Attachment> attachments;
@@ -106,17 +106,17 @@ class MmBlockJson {
 
   /// Null when absent, so a block missing a required list can be told from
   /// an empty one.
-  @_MmBlocksOrNull()
+  @LenientListOrNull(MmBlockJson.fromJson)
   final List<MmBlockJson>? items;
-  @_MmBlocksOrNull()
+  @LenientListOrNull(MmBlockJson.fromJson)
   final List<MmBlockJson>? columns;
   @LenientString()
   final String? width;
   @LenientString()
   final String? gap;
-  @_MmBlocksOrNull()
+  @LenientListOrNull(MmBlockJson.fromJson)
   final List<MmBlockJson>? content;
-  @_MmBlocksOrNull()
+  @LenientListOrNull(MmBlockJson.fromJson)
   final List<MmBlockJson>? header;
   @LenientBool()
   final bool? collapsed;
@@ -142,7 +142,7 @@ class MmBlockJson {
   final String? cookie;
   @LenientString()
   final String? placeholder;
-  @_Options()
+  @LenientList(SelectOptionJson.fromJson)
   final List<SelectOptionJson> options;
   @LenientString()
   final String? initialOption;
@@ -193,9 +193,9 @@ class BlockKitJson {
   final String? text;
   @_SlackTexts()
   final List<String> fields;
-  @_BlockKitOne()
+  @LenientObject(BlockKitJson.fromJson)
   final BlockKitJson? accessory;
-  @_BlockKit()
+  @LenientList(BlockKitJson.fromJson)
   final List<BlockKitJson> elements;
   @LenientString()
   final String? imageUrl;
@@ -209,7 +209,7 @@ class BlockKitJson {
   final String? style;
   @SlackText()
   final String? placeholder;
-  @_Options()
+  @LenientList(SelectOptionJson.fromJson)
   final List<SelectOptionJson> options;
 }
 
@@ -240,9 +240,9 @@ class AdaptiveCardJson {
 
   @LenientString()
   final String? type;
-  @_Cards()
+  @LenientList(AdaptiveCardJson.fromJson)
   final List<AdaptiveCardJson> body;
-  @_Cards()
+  @LenientList(AdaptiveCardJson.fromJson)
   final List<AdaptiveCardJson> actions;
   @LenientString()
   final String? text;
@@ -250,9 +250,9 @@ class AdaptiveCardJson {
   final bool? isSubtle;
   @LenientString()
   final String? size;
-  @_Cards()
+  @LenientList(AdaptiveCardJson.fromJson)
   final List<AdaptiveCardJson> items;
-  @_Cards()
+  @LenientList(AdaptiveCardJson.fromJson)
   final List<AdaptiveCardJson> columns;
 
   /// `auto`, `stretch`, a weight or pixels such as `80px`.
@@ -306,69 +306,6 @@ class PostActionAnswer {
   final String? triggerId;
   @LenientString()
   final String? gotoLocation;
-}
-
-List<T> _list<T>(Object? json, T Function(Map<String, Object?>) decode) =>
-    json is List
-    ? [
-        for (final e in json)
-          if (e is Map<String, Object?>) decode(e),
-      ]
-    : const [];
-
-class _MmBlocks implements JsonConverter<List<MmBlockJson>, Object?> {
-  const _MmBlocks();
-  @override
-  List<MmBlockJson> fromJson(Object? json) => _list(json, MmBlockJson.fromJson);
-  @override
-  Object? toJson(List<MmBlockJson> object) => throw UnsupportedError('decode');
-}
-
-class _MmBlocksOrNull implements JsonConverter<List<MmBlockJson>?, Object?> {
-  const _MmBlocksOrNull();
-  @override
-  List<MmBlockJson>? fromJson(Object? json) =>
-      json is List ? _list(json, MmBlockJson.fromJson) : null;
-  @override
-  Object? toJson(List<MmBlockJson>? object) => throw UnsupportedError('decode');
-}
-
-class _BlockKit implements JsonConverter<List<BlockKitJson>, Object?> {
-  const _BlockKit();
-  @override
-  List<BlockKitJson> fromJson(Object? json) =>
-      _list(json, BlockKitJson.fromJson);
-  @override
-  Object? toJson(List<BlockKitJson> object) => throw UnsupportedError('decode');
-}
-
-class _BlockKitOne implements JsonConverter<BlockKitJson?, Object?> {
-  const _BlockKitOne();
-  @override
-  BlockKitJson? fromJson(Object? json) =>
-      json is Map<String, Object?> ? BlockKitJson.fromJson(json) : null;
-  @override
-  Object? toJson(BlockKitJson? object) => throw UnsupportedError('decode');
-}
-
-class _Cards implements JsonConverter<List<AdaptiveCardJson>, Object?> {
-  const _Cards();
-  @override
-  List<AdaptiveCardJson> fromJson(Object? json) =>
-      _list(json, AdaptiveCardJson.fromJson);
-  @override
-  Object? toJson(List<AdaptiveCardJson> object) =>
-      throw UnsupportedError('decode');
-}
-
-class _Options implements JsonConverter<List<SelectOptionJson>, Object?> {
-  const _Options();
-  @override
-  List<SelectOptionJson> fromJson(Object? json) =>
-      _list(json, SelectOptionJson.fromJson);
-  @override
-  Object? toJson(List<SelectOptionJson> object) =>
-      throw UnsupportedError('decode');
 }
 
 /// Slack's text: a plain string or a text object `{type, text}`.

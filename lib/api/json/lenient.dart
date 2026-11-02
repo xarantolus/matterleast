@@ -112,3 +112,50 @@ class JsonMapOrEmpty implements JsonConverter<Map<String, Object?>, Object?> {
   @override
   Object? toJson(Map<String, Object?> object) => object;
 }
+
+/// A string, or empty when [json] is anything else.
+String stringOrEmpty(Object? json) => json is String ? json : '';
+
+/// The objects of a JSON list, each decoded on its own; anything else in it
+/// is skipped.
+List<T> decodeList<T extends Object>(
+  Object? json,
+  T Function(Map<String, Object?>) decode,
+) => [
+  if (json is List)
+    for (final e in json)
+      if (e is Map<String, Object?>) ?decodeOrSkip(e, decode),
+];
+
+/// Reads a list of objects with [decode]; write-back is never needed.
+class LenientList<T extends Object> implements JsonConverter<List<T>, Object?> {
+  const LenientList(this.decode);
+  final T Function(Map<String, Object?>) decode;
+  @override
+  List<T> fromJson(Object? json) => decodeList(json, decode);
+  @override
+  Object? toJson(List<T> object) => throw UnsupportedError('decode');
+}
+
+/// Like [LenientList], but null when [json] is not a list.
+class LenientListOrNull<T extends Object>
+    implements JsonConverter<List<T>?, Object?> {
+  const LenientListOrNull(this.decode);
+  final T Function(Map<String, Object?>) decode;
+  @override
+  List<T>? fromJson(Object? json) =>
+      json is List ? decodeList(json, decode) : null;
+  @override
+  Object? toJson(List<T>? object) => throw UnsupportedError('decode');
+}
+
+/// Reads one object with [decode]; null when [json] is not one.
+class LenientObject<T extends Object> implements JsonConverter<T?, Object?> {
+  const LenientObject(this.decode);
+  final T Function(Map<String, Object?>) decode;
+  @override
+  T? fromJson(Object? json) =>
+      json is Map<String, Object?> ? decode(json) : null;
+  @override
+  Object? toJson(T? object) => throw UnsupportedError('decode');
+}

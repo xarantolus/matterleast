@@ -48,16 +48,7 @@ class SwitchViews {
     final users = await (db.select(
       db.users,
     )..where((u) => u.deleteAt.isNull())).get();
-    final people = {
-      for (final u in users)
-        u.id: (
-          username: u.username,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          nickname: u.nickname,
-          status: u.status,
-        ),
-    };
+    final people = {for (final u in users) u.id: u.person};
     final userRows = {for (final u in users) u.id: u};
     final byUsername = {for (final u in users) u.username: u};
     final items = <SwitchItem>[];

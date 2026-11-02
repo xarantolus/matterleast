@@ -91,14 +91,6 @@ String? unicodeForName(String name) => _lookup(name)?.unicode;
 
 bool isKnownEmoji(String name) => _lookup(name) != null;
 
-/// `':Tada: '` becomes `tada`.
-String normalizeShortcode(String raw) {
-  var name = raw.trim();
-  if (name.startsWith(':')) name = name.substring(1);
-  if (name.endsWith(':')) name = name.substring(0, name.length - 1);
-  return name.trim().toLowerCase();
-}
-
 /// Strips one or two skin-tone suffixes: `thumbsup_dark_skin_tone` becomes
 /// `thumbsup`.
 String baseName(String name) {
@@ -125,8 +117,6 @@ String withSkinTone(String name, int tone) {
   return name;
 }
 
-String? categoryOf(String name) => _lookup(name)?.category;
-
 /// Primary names without skin tones, in Mattermost's order.
 List<String> namesInCategory(String category) => [
   for (final name in _table.baseNames)
@@ -137,10 +127,6 @@ List<String> namesInCategory(String category) => [
 /// names are returned as they are.
 String canonicalName(String nameOrAlias) =>
     _lookup(nameOrAlias)?.name ?? nameOrAlias;
-
-/// The emoji name for a text emoticon such as `:)`, as Mattermost's emoji
-/// data lists them.
-String? nameForEmoticon(String text) => emoticonNames[text];
 
 /// Every short name and alias of the system emoji, without skin tones.
 Iterable<String> systemEmojiNames() =>

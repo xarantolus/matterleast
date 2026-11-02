@@ -151,19 +151,7 @@ class DraftViews {
         if (where.channels[id] case final c? when c.type == 'D')
           ?directPartnerId(c.name, myId),
     };
-    final users = await (db.select(
-      db.users,
-    )..where((u) => u.id.isIn(partnerIds))).get();
-    return {
-      for (final u in users)
-        u.id: (
-          username: u.username,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          nickname: u.nickname,
-          status: u.status,
-        ),
-    };
+    return {for (final u in await db.usersById(partnerIds)) u.id: u.person};
   }
 
   static int _fileCount(String json) {

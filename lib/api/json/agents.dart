@@ -25,11 +25,11 @@ class AgentBot {
   factory AgentBot.fromJson(Map<String, Object?> json) =>
       _$AgentBotFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String id;
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String displayName;
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String username;
   @LenientInt()
   final int? lastIconUpdate;
@@ -80,7 +80,7 @@ class AgentThread {
       _$AgentThreadFromJson(json);
 
   /// The post the conversation hangs under; empty when there is none.
-  @JsonKey(readValue: _rootOf, fromJson: _string)
+  @JsonKey(readValue: _rootOf, fromJson: stringOrEmpty)
   final String root;
   @LenientString()
   final String? title;
@@ -124,7 +124,7 @@ class AgentQuestionOption {
   factory AgentQuestionOption.fromJson(Map<String, Object?> json) =>
       _$AgentQuestionOptionFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String label;
   @LenientString()
   final String? description;
@@ -142,7 +142,7 @@ class AgentQuestion {
   factory AgentQuestion.fromJson(Map<String, Object?> json) =>
       _$AgentQuestionFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String question;
   @JsonKey(fromJson: _options)
   final List<AgentQuestionOption> options;
@@ -208,9 +208,9 @@ class AgentToolCall {
   factory AgentToolCall.fromJson(Map<String, Object?> json) =>
       _$AgentToolCallFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String id;
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String name;
   @LenientString()
   final String? description;
@@ -246,9 +246,9 @@ class AgentCitation {
   factory AgentCitation.fromJson(Map<String, Object?> json) =>
       _$AgentCitationFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String url;
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String title;
 }
 
@@ -267,7 +267,7 @@ class AgentPostUpdate {
   factory AgentPostUpdate.fromJson(Map<String, Object?> json) =>
       _$AgentPostUpdateFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String postId;
 
   /// The whole text so far, not a delta.
@@ -301,11 +301,11 @@ class AgentConversation {
   factory AgentConversation.fromJson(Map<String, Object?> json) =>
       _$AgentConversationFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String id;
 
   /// Who asked: the one who may stop, regenerate and approve.
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String userId;
   @LenientString()
   final String? botId;
@@ -333,13 +333,13 @@ class AgentTurn {
   factory AgentTurn.fromJson(Map<String, Object?> json) =>
       _$AgentTurnFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String id;
   @LenientString()
   final String? postId;
 
   /// `user`, `assistant` or `tool_result`.
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String role;
   @JsonKey(fromJson: _blocks)
   final List<AgentBlock> content;
@@ -373,7 +373,7 @@ class AgentBlock {
   factory AgentBlock.fromJson(Map<String, Object?> json) =>
       _$AgentBlockFromJson(json);
 
-  @JsonKey(fromJson: _string)
+  @JsonKey(fromJson: stringOrEmpty)
   final String type;
   @LenientString()
   final String? text;
@@ -498,16 +498,9 @@ class AgentAnalysisRequest {
   Map<String, Object?> toJson() => _$AgentAnalysisRequestToJson(this);
 }
 
-String _string(Object? json) => json is String ? json : '';
-
 int _int(Object? json) => const LenientInt().fromJson(json) ?? 0;
 
-bool? _flag(Object? json) => switch (json) {
-  final bool v => v,
-  'true' => true,
-  'false' => false,
-  _ => null,
-};
+bool? _flag(Object? json) => const LenientBool().fromJson(json);
 
 AgentToolStatus _statusCode(Object? json) => json is String
     ? AgentToolStatus.fromName(json)
@@ -536,36 +529,27 @@ AgentQuestion? questionOf(Object? json) {
   return question != null && question.usable ? question : null;
 }
 
-List<T> _list<T extends Object>(
-  Object? json,
-  T Function(Map<String, Object?>) decode,
-) => [
-  if (json is List)
-    for (final e in json)
-      if (e is Map<String, Object?>) ?decodeOrSkip(e, decode),
-];
-
-List<AgentBot> _bots(Object? json) => _list(json, AgentBot.fromJson);
+List<AgentBot> _bots(Object? json) => decodeList(json, AgentBot.fromJson);
 List<AgentQuestionOption> _options(Object? json) =>
-    _list(json, AgentQuestionOption.fromJson);
-List<AgentTurn> _turns(Object? json) => _list(json, AgentTurn.fromJson);
-List<AgentBlock> _blocks(Object? json) => _list(json, AgentBlock.fromJson);
+    decodeList(json, AgentQuestionOption.fromJson);
+List<AgentTurn> _turns(Object? json) => decodeList(json, AgentTurn.fromJson);
+List<AgentBlock> _blocks(Object? json) => decodeList(json, AgentBlock.fromJson);
 List<AgentCitation> _citations(Object? json) =>
-    _list(json, AgentCitation.fromJson);
+    decodeList(json, AgentCitation.fromJson);
 
 List<AgentToolCall>? _encodedToolCalls(Object? json) {
   final value = decodeJsonString(json);
-  return value is List ? _list(value, AgentToolCall.fromJson) : null;
+  return value is List ? decodeList(value, AgentToolCall.fromJson) : null;
 }
 
 List<AgentCitation>? _encodedCitations(Object? json) {
   final value = decodeJsonString(json);
-  return value is List ? _list(value, AgentCitation.fromJson) : null;
+  return value is List ? decodeList(value, AgentCitation.fromJson) : null;
 }
 
 /// Pure: the threads of `GET /ai_threads` that can be opened; unreadable
 /// ones and conversations without a thread are skipped.
 List<AgentThread> decodeAgentThreads(Object? json) => [
-  for (final t in _list(json, AgentThread.fromJson))
+  for (final t in decodeList(json, AgentThread.fromJson))
     if (t.root.isNotEmpty) t,
 ];

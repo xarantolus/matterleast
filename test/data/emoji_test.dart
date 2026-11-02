@@ -62,12 +62,6 @@ void main() {
     expect(isKnownEmoji('rocket_ship'), isFalse);
   });
 
-  test('normalizeShortcode strips colons and whitespace and lowercases', () {
-    expect(normalizeShortcode(':Tada:'), 'tada');
-    expect(normalizeShortcode('  :+1: '), '+1');
-    expect(normalizeShortcode('heart'), 'heart');
-  });
-
   group('withSkinTone', () {
     test('picks the toned name for emoji with skin tones', () {
       expect(withSkinTone('+1', 1), '+1_light_skin_tone');
@@ -116,13 +110,6 @@ void main() {
     expect(baseName('rocket'), 'rocket');
   });
 
-  test('categoryOf gives the category of base and toned names', () {
-    expect(categoryOf('tada'), 'activities');
-    expect(categoryOf('+1_dark_skin_tone'), 'people-body');
-    expect(categoryOf('flag-de'), 'flags');
-    expect(categoryOf('not_an_emoji'), isNull);
-  });
-
   test('namesInCategory lists primary names in order without tones', () {
     final smileys = namesInCategory('smileys-emotion');
     expect(smileys.take(3), ['grinning', 'smiley', 'smile']);
@@ -141,12 +128,6 @@ void main() {
     expect(canonicalName('+1'), '+1');
     expect(canonicalName('thumbsup_light_skin_tone'), '+1_light_skin_tone');
     expect(canonicalName('no_such_emoji'), 'no_such_emoji');
-  });
-
-  test('nameForEmoticon maps text emoticons', () {
-    expect(nameForEmoticon(':)'), 'slightly_smiling_face');
-    expect(nameForEmoticon('<3'), 'heart');
-    expect(nameForEmoticon(':nope'), isNull);
   });
 
   test('the skin tone is read and written as the official apps store it', () {

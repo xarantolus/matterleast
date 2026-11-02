@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart' show ephemeralType;
+import 'package:matterleast/data/views/channel_input.dart' show UsersById;
 import 'package:matterleast/data/views/permission_views.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/conversation_open.dart';
@@ -473,25 +474,11 @@ class ConversationViews {
               .get())
         pref.name,
     };
-    final users = await (db.select(
-      db.users,
-    )..where((u) => u.id.isIn(ids))).get();
+    final users = await db.usersById(ids);
     final statuses = features.customStatus
         ? {for (final u in users) u.id: ?storedCustomStatus(u.props)}
         : const <String, CustomStatus>{};
-    final people = {
-      for (final u in users)
-        u.id: (
-          username: u.username,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          nickname: u.nickname,
-          status: u.status,
-          isBot: u.isBot,
-          isGuest: isGuest(u.roles),
-          pictureAt: u.lastPictureUpdate,
-        ),
-    };
+    final people = {for (final u in users) u.id: u.author};
     final format = await db.nameFormat();
     final me = await db.syncText(SyncKeys.currentUserId);
     final reacted = [
@@ -506,19 +493,8 @@ class ConversationViews {
     final reactors = {for (final r in reactionRows) r.userId}
       ..removeAll(people.keys);
     if (reactors.isNotEmpty) {
-      for (final u in await (db.select(
-        db.users,
-      )..where((u) => u.id.isIn(reactors))).get()) {
-        people[u.id] = (
-          username: u.username,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          nickname: u.nickname,
-          status: u.status,
-          isBot: u.isBot,
-          isGuest: isGuest(u.roles),
-          pictureAt: u.lastPictureUpdate,
-        );
+      for (final u in await db.usersById(reactors)) {
+        people[u.id] = u.author;
       }
     }
     final reactionsByPost =
@@ -713,3 +689,26 @@ typedef _Linked = ({
   DateTime createAt,
   String message,
 });
+
+extension on UserRow {
+  ({
+    String username,
+    String firstName,
+    String lastName,
+    String nickname,
+    String status,
+    bool isBot,
+    bool isGuest,
+    int? pictureAt,
+  })
+  get author => (
+    username: username,
+    firstName: firstName,
+    lastName: lastName,
+    nickname: nickname,
+    status: status,
+    isBot: isBot,
+    isGuest: isGuest(roles),
+    pictureAt: lastPictureUpdate,
+  );
+}

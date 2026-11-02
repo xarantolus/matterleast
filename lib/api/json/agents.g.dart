@@ -7,9 +7,11 @@ part of 'agents.dart';
 // **************************************************************************
 
 AgentBot _$AgentBotFromJson(Map<String, dynamic> json) => AgentBot(
-  id: json['id'] == null ? '' : _string(json['id']),
-  displayName: json['displayName'] == null ? '' : _string(json['displayName']),
-  username: json['username'] == null ? '' : _string(json['username']),
+  id: json['id'] == null ? '' : stringOrEmpty(json['id']),
+  displayName: json['displayName'] == null
+      ? ''
+      : stringOrEmpty(json['displayName']),
+  username: json['username'] == null ? '' : stringOrEmpty(json['username']),
   lastIconUpdate: const LenientInt().fromJson(json['lastIconUpdate']),
   dmChannelId: const LenientString().fromJson(json['dmChannelID']),
   isDefault: const LenientBool().fromJson(json['isDefault']),
@@ -22,7 +24,9 @@ AgentBotsAnswer _$AgentBotsAnswerFromJson(Map<String, dynamic> json) =>
     );
 
 AgentThread _$AgentThreadFromJson(Map<String, dynamic> json) => AgentThread(
-  root: _rootOf(json, 'root') == null ? '' : _string(_rootOf(json, 'root')),
+  root: _rootOf(json, 'root') == null
+      ? ''
+      : stringOrEmpty(_rootOf(json, 'root')),
   title: const LenientString().fromJson(json['title']),
   message: const LenientString().fromJson(json['message']),
   channelId: const LenientString().fromJson(json['channel_id']),
@@ -38,13 +42,13 @@ AgentAnalysisAnswer _$AgentAnalysisAnswerFromJson(Map<String, dynamic> json) =>
 
 AgentQuestionOption _$AgentQuestionOptionFromJson(Map<String, dynamic> json) =>
     AgentQuestionOption(
-      label: json['label'] == null ? '' : _string(json['label']),
+      label: json['label'] == null ? '' : stringOrEmpty(json['label']),
       description: const LenientString().fromJson(json['description']),
     );
 
 AgentQuestion _$AgentQuestionFromJson(Map<String, dynamic> json) =>
     AgentQuestion(
-      question: json['question'] == null ? '' : _string(json['question']),
+      question: json['question'] == null ? '' : stringOrEmpty(json['question']),
       options: json['options'] == null ? const [] : _options(json['options']),
       multiSelect: const LenientBool().fromJson(json['multi_select']),
       allowFreeForm: const LenientBool().fromJson(json['allow_free_form']),
@@ -52,8 +56,8 @@ AgentQuestion _$AgentQuestionFromJson(Map<String, dynamic> json) =>
 
 AgentToolCall _$AgentToolCallFromJson(Map<String, dynamic> json) =>
     AgentToolCall(
-      id: json['id'] == null ? '' : _string(json['id']),
-      name: json['name'] == null ? '' : _string(json['name']),
+      id: json['id'] == null ? '' : stringOrEmpty(json['id']),
+      name: json['name'] == null ? '' : stringOrEmpty(json['name']),
       description: const LenientString().fromJson(json['description']),
       arguments: readableJson(json['arguments']),
       question: questionOf(_argumentsOf(json, 'question')),
@@ -69,13 +73,13 @@ AgentToolCall _$AgentToolCallFromJson(Map<String, dynamic> json) =>
 
 AgentCitation _$AgentCitationFromJson(Map<String, dynamic> json) =>
     AgentCitation(
-      url: json['url'] == null ? '' : _string(json['url']),
-      title: json['title'] == null ? '' : _string(json['title']),
+      url: json['url'] == null ? '' : stringOrEmpty(json['url']),
+      title: json['title'] == null ? '' : stringOrEmpty(json['title']),
     );
 
 AgentPostUpdate _$AgentPostUpdateFromJson(Map<String, dynamic> json) =>
     AgentPostUpdate(
-      postId: json['post_id'] == null ? '' : _string(json['post_id']),
+      postId: json['post_id'] == null ? '' : stringOrEmpty(json['post_id']),
       next: const LenientString().fromJson(json['next']),
       control: const LenientString().fromJson(json['control']),
       toolCalls: _encodedToolCalls(json['tool_call']),
@@ -85,8 +89,8 @@ AgentPostUpdate _$AgentPostUpdateFromJson(Map<String, dynamic> json) =>
 
 AgentConversation _$AgentConversationFromJson(Map<String, dynamic> json) =>
     AgentConversation(
-      id: json['id'] == null ? '' : _string(json['id']),
-      userId: json['user_id'] == null ? '' : _string(json['user_id']),
+      id: json['id'] == null ? '' : stringOrEmpty(json['id']),
+      userId: json['user_id'] == null ? '' : stringOrEmpty(json['user_id']),
       botId: const LenientString().fromJson(json['bot_id']),
       channelId: const LenientString().fromJson(json['channel_id']),
       rootPostId: const LenientString().fromJson(json['root_post_id']),
@@ -95,16 +99,16 @@ AgentConversation _$AgentConversationFromJson(Map<String, dynamic> json) =>
     );
 
 AgentTurn _$AgentTurnFromJson(Map<String, dynamic> json) => AgentTurn(
-  id: json['id'] == null ? '' : _string(json['id']),
+  id: json['id'] == null ? '' : stringOrEmpty(json['id']),
   postId: const LenientString().fromJson(json['post_id']),
-  role: json['role'] == null ? '' : _string(json['role']),
+  role: json['role'] == null ? '' : stringOrEmpty(json['role']),
   content: json['content'] == null ? const [] : _blocks(json['content']),
   sequence: json['sequence'] == null ? 0 : _int(json['sequence']),
   approvalState: const LenientString().fromJson(json['approval_state']),
 );
 
 AgentBlock _$AgentBlockFromJson(Map<String, dynamic> json) => AgentBlock(
-  type: json['type'] == null ? '' : _string(json['type']),
+  type: json['type'] == null ? '' : stringOrEmpty(json['type']),
   text: const LenientString().fromJson(json['text']),
   citations: json['citations'] == null
       ? const []

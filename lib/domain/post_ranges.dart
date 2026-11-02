@@ -156,12 +156,3 @@ List<PostRange> withLivePost(List<PostRange> ranges, DateTime createAt) {
     newest.copyWith(latest: createAt),
   ]);
 }
-
-/// After pruning, no range may claim posts older than [oldestKept].
-List<PostRange> withPruned(List<PostRange> ranges, DateTime oldestKept) => [
-  for (final range in ranges)
-    if (!range.latest.isBefore(oldestKept))
-      range.earliest.isBefore(oldestKept)
-          ? range.copyWith(earliest: oldestKept, reachesStart: false)
-          : range,
-];
