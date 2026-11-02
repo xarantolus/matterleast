@@ -209,8 +209,12 @@ class SyncRunner {
       queued.completer.complete();
     } on Object catch (error, stack) {
       final cause = ApiError.of(error);
-      Log.warn('sync', 'job ${job.key} failed', error);
-      if (error is! ApiError) Log.warn('sync', stack.toString());
+      Log.error(
+        'sync',
+        'job ${job.key} failed',
+        error,
+        error is ApiError ? null : stack,
+      );
       queued.completer.completeError(cause, stack);
       if (job.visible) _failed = cause;
     } finally {

@@ -131,4 +131,15 @@ void main() {
     expect(ApiError.of(TypeError()), isA<UnexpectedFailure>());
     expect(ApiError.of(const Unreachable()), isA<Unreachable>());
   });
+
+  test('an unreadable reply says what failed but not what it held', () {
+    final failure = UnexpectedFailure.of(
+      const FormatException('Unexpected character', '{"message":"secret"'),
+    );
+    expect(failure.detail, 'FormatException: Unexpected character');
+    expect(
+      connectionProblemText(failure, 'chat.example.com'),
+      contains('Details: FormatException: Unexpected character'),
+    );
+  });
 }

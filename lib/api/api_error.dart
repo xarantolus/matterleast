@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:matterleast/log.dart';
 
 /// What went wrong with a request, in terms the rest of the app can act on.
 sealed class ApiError implements Exception {
@@ -127,12 +128,26 @@ final class KeyringUnavailable extends ApiError {
 }
 
 /// The request reached the server but its answer could not be read or
-/// stored. [type] names the error class only, never content.
+/// stored. [detail] is the error's first line, without any source text.
 final class UnexpectedFailure extends ApiError {
-  const UnexpectedFailure(this.type);
-  UnexpectedFailure.of(Object error) : type = error.runtimeType.toString();
+  const UnexpectedFailure(this.type, [this.detail]);
+  UnexpectedFailure.of(Object error)
+    : type = error.runtimeType.toString(),
+      detail = describeFailure(error);
   final String type;
+  final String? detail;
 
   @override
-  String toString() => 'UnexpectedFailure($type)';
+  String toString() => 'UnexpectedFailure(${detail ?? type})';
+}
+
+/// One short line about [error]; a FormatException's source is left out,
+/// since it may hold message text.
+String describeFailure(Object error) {
+  final text = switch (error) {
+    FormatException(:final message) => 'FormatException: $message',
+    _ => error.toString(),
+  };
+  final line = Log.redact(text.split('\n').first.trim());
+  return line.length <= 240 ? line : '${line.substring(0, 240)}…';
 }
