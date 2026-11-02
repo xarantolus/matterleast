@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -300,7 +300,7 @@ void main() {
               : error(termsStatus, 'no_terms');
         case ('POST', '/api/v4/users/me/terms_of_service'):
           answers.add(r.body);
-          if (r.body['accepted'] == 'true') acceptedId = 't2';
+          if (r.body['accepted'] == true) acceptedId = 't2';
           return ok({'status': 'OK'});
       }
       return error(404, 'not_found');
@@ -349,7 +349,7 @@ void main() {
       await tester.tap(find.text('Accept'));
       await h.settle(tester);
 
-      expect(answers.single, {'serviceTermsId': 't2', 'accepted': 'true'});
+      expect(answers.single, {'termsOfServiceId': 't2', 'accepted': true});
       expect(find.text('Terms of service'), findsNothing);
       expect(find.text('Inbox'), findsOneWidget);
       await h.close(tester);
@@ -364,7 +364,7 @@ void main() {
       await tester.tap(find.text('Decline and sign out'));
       await h.settle(tester);
 
-      expect(answers.single['accepted'], 'false');
+      expect(answers.single['accepted'], false);
       expect(manager.signedOut, [h.url]);
       await h.close(tester);
     });

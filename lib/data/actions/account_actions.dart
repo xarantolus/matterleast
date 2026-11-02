@@ -82,8 +82,8 @@ class AccountActions {
         () => session.api.client.users.registerTermsOfServiceAction(
           userId: 'me',
           body: api.ApiV4UsersUserIdTermsOfServiceRequestBody(
-            serviceTermsId: termsId,
-            accepted: '$accepted',
+            termsOfServiceId: termsId,
+            accepted: accepted,
           ),
         ),
       );
