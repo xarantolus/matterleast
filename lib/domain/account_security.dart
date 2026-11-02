@@ -17,12 +17,14 @@ class SessionRow {
     required this.id,
     required this.device,
     required this.lastActive,
+    required this.created,
     required this.current,
   });
 
   final String id;
   final String device;
   final DateTime? lastActive;
+  final DateTime? created;
   final bool current;
 }
 
@@ -50,12 +52,18 @@ String? currentSessionId(List<({String id, DateTime? lastActive})> sessions) {
 String sessionDeviceName({String? platform, String? os, String? browser}) {
   String? clean(String? v) {
     final t = v?.trim();
-    return t == null || t.isEmpty || t.toLowerCase() == 'unknown' ? null : t;
+    return t == null || t.isEmpty || t.toLowerCase().startsWith('unknown')
+        ? null
+        : t;
   }
 
   final parts = [clean(browser), clean(os) ?? clean(platform)].nonNulls;
   return parts.isEmpty ? 'Unknown device' : parts.join(' on ');
 }
+
+/// Pure: when the session was signed in, by calendar date.
+String sessionStartLabel(DateTime? at, DateTime now) =>
+    at == null ? '' : 'Signed in ${dateLabel(at, now)}';
 
 /// Pure: when the session was last used, by calendar date.
 String sessionActivityLabel(

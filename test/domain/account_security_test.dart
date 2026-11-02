@@ -82,6 +82,10 @@ void main() {
     expect(sessionDeviceName(platform: 'Windows'), 'Windows');
     expect(sessionDeviceName(browser: 'Chrome', os: 'unknown'), 'Chrome');
     expect(sessionDeviceName(), 'Unknown device');
+    expect(
+      sessionDeviceName(browser: 'Unknown/0.0', platform: 'Unknown', os: ''),
+      'Unknown device',
+    );
   });
 
   group('activity label by calendar date', () {

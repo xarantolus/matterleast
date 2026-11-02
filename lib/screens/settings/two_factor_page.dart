@@ -91,11 +91,11 @@ class _TwoFactorPageState extends ConsumerState<TwoFactorPage> {
   @override
   Widget build(BuildContext context) {
     final me = ref.watch(accountMeProvider(_url));
-    final active = me.value?.mfaActive;
+    final user = me.value;
     return ContentPage(
       title: const Text('Two-factor authentication'),
       progress: _busy || me.isLoading,
-      body: switch (active) {
+      body: switch (user) {
         null when me.hasError => EmptyState(
           icon: Icons.error_outline,
           title: "Couldn't load your account",
@@ -106,9 +106,9 @@ class _TwoFactorPageState extends ConsumerState<TwoFactorPage> {
           ),
         ),
         null => const SizedBox.expand(),
-        final on => NarrowPage(
+        final user => NarrowPage(
           children: [
-            ..._intro(on),
+            ..._intro(user.mfaActive ?? false),
             if (_error case final error?) ...[
               const SizedBox(height: Spacing.lg),
               Text(
@@ -117,7 +117,7 @@ class _TwoFactorPageState extends ConsumerState<TwoFactorPage> {
               ),
             ],
             const SizedBox(height: Spacing.lg),
-            if (on)
+            if (user.mfaActive ?? false)
               OutlinedButton(
                 onPressed: _busy ? null : _turnOff,
                 child: const Text('Turn off'),

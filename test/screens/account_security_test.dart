@@ -147,7 +147,7 @@ void main() {
     Reply? handle(SeenRequest r) {
       switch ((r.method, r.path)) {
         case ('GET', '/api/v4/users/me'):
-          return ok({'id': meId, 'mfa_active': active});
+          return ok({'id': meId, if (active) 'mfa_active': true});
         case ('POST', '/api/v4/users/me/mfa/generate'):
           return ok({'secret': 'JBSWY3DPEHPK3PXP', 'qr_code': _png});
         case ('PUT', '/api/v4/users/me/mfa'):
@@ -221,7 +221,7 @@ void main() {
         tester,
         size: tall,
         handle: (r) => r.method == 'GET'
-            ? ok({'id': meId, 'mfa_active': false})
+            ? ok({'id': meId})
             : (
                 status: 501,
                 json: {'id': 'x', 'message': 'MFA is not available.'},

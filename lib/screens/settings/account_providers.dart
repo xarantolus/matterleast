@@ -68,6 +68,7 @@ class ActiveSessions extends _$ActiveSessions {
             browser: _prop(s, 'browser'),
           ),
           lastActive: s.lastActivityAt,
+          created: s.createAt,
           current: s.id == current,
         ),
     ];

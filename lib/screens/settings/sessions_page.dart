@@ -80,7 +80,8 @@ class SessionsPage extends ConsumerWidget {
                   [
                     if (row.current) 'This device',
                     sessionActivityLabel(row.lastActive, now, use24: use24),
-                  ].join(' · '),
+                    sessionStartLabel(row.created, now),
+                  ].where((part) => part.isNotEmpty).join(' · '),
                 ),
                 trailing: TextButton(
                   onPressed: () => unawaited(_signOut(context, ref, row)),
