@@ -58,6 +58,12 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
   enforceMultifactorAuthentication: const LenientBool().fromJson(
     json['EnforceMultifactorAuthentication'],
   ),
+  enableCustomTermsOfService: const LenientBool().fromJson(
+    json['EnableCustomTermsOfService'],
+  ),
+  customTermsOfServiceId: const LenientString().fromJson(
+    json['CustomTermsOfServiceId'],
+  ),
   mobileExternalBrowser: const LenientBool().fromJson(
     json['MobileExternalBrowser'],
   ),

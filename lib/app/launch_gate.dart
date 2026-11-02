@@ -26,6 +26,7 @@ import 'package:matterleast/screens/root/root_screen.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/share/share_screen.dart';
+import 'package:matterleast/screens/terms/terms_gate.dart';
 import 'package:matterleast/ui/slide_route.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
@@ -247,7 +248,12 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       onRetry: _retryKeyring,
       child: signedIn.isEmpty
           ? const AddServerScreen(isRoot: true)
-          : RootScreen(servers: signedIn),
+          : TermsGate(
+              url:
+                  ref.watch(settingsServerProvider.select((s) => s?.url)) ??
+                  signedIn.first.url,
+              child: RootScreen(servers: signedIn),
+            ),
     );
   }
 }

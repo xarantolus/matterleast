@@ -34,6 +34,8 @@ class ClientConfig {
     this.samlLoginButtonText,
     this.enableMultifactorAuthentication,
     this.enforceMultifactorAuthentication,
+    this.enableCustomTermsOfService,
+    this.customTermsOfServiceId,
     this.mobileExternalBrowser,
     this.collapsedThreads,
     this.teammateNameDisplay,
@@ -139,6 +141,10 @@ class ClientConfig {
   final bool? enableMultifactorAuthentication;
   @LenientBool()
   final bool? enforceMultifactorAuthentication;
+  @LenientBool()
+  final bool? enableCustomTermsOfService;
+  @LenientString()
+  final String? customTermsOfServiceId;
   @LenientBool()
   final bool? mobileExternalBrowser;
 
