@@ -65,11 +65,6 @@ class AnchoredListController {
   void jumpTo(Object key, {required double offset}) =>
       _state?._jumpTo(key, offset);
 
-  /// Puts row [key] so its bottom edge is [fraction] of the list's height
-  /// above the bottom.
-  void jumpToFraction(Object key, double fraction) =>
-      _state?._jumpToFraction(key, fraction);
-
   /// Centres row [key] once it is laid out.
   void centre(Object key) => _state?._centre(key);
 

@@ -237,10 +237,6 @@ class ChannelViews {
           .map((rows) => [for (final r in rows) r.postId])
           .distinct(listEquals);
 
-  /// Whether [list] was fetched at least once.
-  Future<bool> listKnown(String list) async =>
-      await db.syncInt(SyncKeys.listFetchedAt(list)) != null;
-
   /// People by id as rows, in the order of [ids], with live presence.
   Stream<List<SwitchItem>> people(List<String> ids) => throttledWatch(
     db.tableUpdates(
@@ -261,9 +257,4 @@ class ChannelViews {
     },
     interval: _interval,
   ).distinct(listEquals);
-
-  /// The channels the user is in, by id, for telling joined ones apart.
-  Future<Set<String>> joinedIds() async => {
-    for (final m in await db.select(db.myChannels).get()) m.channelId,
-  };
 }

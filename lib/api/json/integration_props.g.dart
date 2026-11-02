@@ -8,18 +8,24 @@ part of 'integration_props.dart';
 
 IntegrationProps _$IntegrationPropsFromJson(Map<String, dynamic> json) =>
     IntegrationProps(
-      mmBlocks: json['mm_blocks'] == null
-          ? const []
-          : const _MmBlocks().fromJson(json['mm_blocks']),
+      mmBlocks:
+          (json['mm_blocks'] as List<dynamic>?)
+              ?.map((e) => MmBlockJson.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       mmBlocksActions: const LenientString().fromJson(
         json['mm_blocks_actions'],
       ),
-      blocks: json['blocks'] == null
-          ? const []
-          : const _BlockKit().fromJson(json['blocks']),
-      cards: json['cards'] == null
-          ? const []
-          : const _Cards().fromJson(json['cards']),
+      blocks:
+          (json['blocks'] as List<dynamic>?)
+              ?.map((e) => BlockKitJson.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      cards:
+          (json['cards'] as List<dynamic>?)
+              ?.map((e) => AdaptiveCardJson.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       attachments: json['attachments'] == null
           ? const []
           : const AttachmentList().fromJson(json['attachments']),
@@ -39,12 +45,20 @@ MmBlockJson _$MmBlockJsonFromJson(Map<String, dynamic> json) => MmBlockJson(
   horizontalAlignment: const LenientString().fromJson(
     json['horizontal_alignment'],
   ),
-  items: const _MmBlocksOrNull().fromJson(json['items']),
-  columns: const _MmBlocksOrNull().fromJson(json['columns']),
+  items: (json['items'] as List<dynamic>?)
+      ?.map((e) => MmBlockJson.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  columns: (json['columns'] as List<dynamic>?)
+      ?.map((e) => MmBlockJson.fromJson(e as Map<String, dynamic>))
+      .toList(),
   width: const LenientString().fromJson(json['width']),
   gap: const LenientString().fromJson(json['gap']),
-  content: const _MmBlocksOrNull().fromJson(json['content']),
-  header: const _MmBlocksOrNull().fromJson(json['header']),
+  content: (json['content'] as List<dynamic>?)
+      ?.map((e) => MmBlockJson.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  header: (json['header'] as List<dynamic>?)
+      ?.map((e) => MmBlockJson.fromJson(e as Map<String, dynamic>))
+      .toList(),
   collapsed: const LenientBool().fromJson(json['collapsed']),
   border: const LenientBool().fromJson(json['border']),
   accentColor: const LenientString().fromJson(json['accent_color']),
@@ -57,9 +71,11 @@ MmBlockJson _$MmBlockJsonFromJson(Map<String, dynamic> json) => MmBlockJson(
   query: const StringMap().fromJson(json['query']),
   cookie: const LenientString().fromJson(json['cookie']),
   placeholder: const LenientString().fromJson(json['placeholder']),
-  options: json['options'] == null
-      ? const []
-      : const _Options().fromJson(json['options']),
+  options:
+      (json['options'] as List<dynamic>?)
+          ?.map((e) => SelectOptionJson.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   initialOption: const LenientString().fromJson(json['initial_option']),
   dataSource: const LenientString().fromJson(json['data_source']),
 );
@@ -76,39 +92,53 @@ BlockKitJson _$BlockKitJsonFromJson(Map<String, dynamic> json) => BlockKitJson(
   fields: json['fields'] == null
       ? const []
       : const _SlackTexts().fromJson(json['fields']),
-  accessory: const _BlockKitOne().fromJson(json['accessory']),
-  elements: json['elements'] == null
-      ? const []
-      : const _BlockKit().fromJson(json['elements']),
+  accessory: json['accessory'] == null
+      ? null
+      : BlockKitJson.fromJson(json['accessory'] as Map<String, dynamic>),
+  elements:
+      (json['elements'] as List<dynamic>?)
+          ?.map((e) => BlockKitJson.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   imageUrl: const LenientString().fromJson(json['image_url']),
   altText: const LenientString().fromJson(json['alt_text']),
   title: const SlackText().fromJson(json['title']),
   actionId: const LenientString().fromJson(json['action_id']),
   style: const LenientString().fromJson(json['style']),
   placeholder: const SlackText().fromJson(json['placeholder']),
-  options: json['options'] == null
-      ? const []
-      : const _Options().fromJson(json['options']),
+  options:
+      (json['options'] as List<dynamic>?)
+          ?.map((e) => SelectOptionJson.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
 );
 
 AdaptiveCardJson _$AdaptiveCardJsonFromJson(Map<String, dynamic> json) =>
     AdaptiveCardJson(
       type: const LenientString().fromJson(json['type']),
-      body: json['body'] == null
-          ? const []
-          : const _Cards().fromJson(json['body']),
-      actions: json['actions'] == null
-          ? const []
-          : const _Cards().fromJson(json['actions']),
+      body:
+          (json['body'] as List<dynamic>?)
+              ?.map((e) => AdaptiveCardJson.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      actions:
+          (json['actions'] as List<dynamic>?)
+              ?.map((e) => AdaptiveCardJson.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       text: const LenientString().fromJson(json['text']),
       isSubtle: const LenientBool().fromJson(json['isSubtle']),
       size: const LenientString().fromJson(json['size']),
-      items: json['items'] == null
-          ? const []
-          : const _Cards().fromJson(json['items']),
-      columns: json['columns'] == null
-          ? const []
-          : const _Cards().fromJson(json['columns']),
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map((e) => AdaptiveCardJson.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      columns:
+          (json['columns'] as List<dynamic>?)
+              ?.map((e) => AdaptiveCardJson.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       width: const _Scalar().fromJson(json['width']),
       height: const _Scalar().fromJson(json['height']),
       url: const LenientString().fromJson(json['url']),

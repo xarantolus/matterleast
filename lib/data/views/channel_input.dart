@@ -22,3 +22,18 @@ ChannelInput channelInputOf(ChannelRow c, MyChannelRow m) => (
   muted: m.notifyProps?.markUnread == 'mention',
   lastViewedAt: m.lastViewedAt,
 );
+
+extension UserPerson on UserRow {
+  PersonInput get person => (
+    username: username,
+    firstName: firstName,
+    lastName: lastName,
+    nickname: nickname,
+    status: status,
+  );
+}
+
+extension UsersById on ServerDatabase {
+  Future<List<UserRow>> usersById(Iterable<String> ids) =>
+      (select(users)..where((u) => u.id.isIn(ids))).get();
+}

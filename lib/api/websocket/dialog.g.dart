@@ -25,7 +25,7 @@ DialogForm _$DialogFormFromJson(Map<String, dynamic> json) => DialogForm(
 
 DialogElement _$DialogElementFromJson(Map<String, dynamic> json) =>
     DialogElement(
-      name: json['name'] == null ? '' : _string(json['name']),
+      name: json['name'] == null ? '' : stringOrEmpty(json['name']),
       displayName: const LenientString().fromJson(json['display_name']),
       type: json['type'] == null
           ? DialogElementType.unknown
@@ -59,6 +59,6 @@ DialogDateTimeConfig _$DialogDateTimeConfigFromJson(
 );
 
 DialogOption _$DialogOptionFromJson(Map<String, dynamic> json) => DialogOption(
-  text: json['text'] == null ? '' : _string(json['text']),
-  value: json['value'] == null ? '' : _string(json['value']),
+  text: json['text'] == null ? '' : stringOrEmpty(json['text']),
+  value: json['value'] == null ? '' : stringOrEmpty(json['value']),
 );

@@ -135,19 +135,8 @@ class InboxViews {
         if (c.input.type == 'D')
           for (final id in c.input.name.split('__')) id,
     };
-    final users = await (db.select(
-      db.users,
-    )..where((u) => u.id.isIn(peopleIds))).get();
-    final people = {
-      for (final u in users)
-        u.id: (
-          username: u.username,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          nickname: u.nickname,
-          status: u.status,
-        ),
-    };
+    final users = await db.usersById(peopleIds);
+    final people = {for (final u in users) u.id: u.person};
     final pictureUpdates = {for (final u in users) u.id: ?u.lastPictureUpdate};
     final teams = {
       for (final t in await db.select(db.teams).get()) t.id: t.displayName,
