@@ -9,7 +9,7 @@ part 'api_v4_users_user_id_terms_of_service_request_body.g.dart';
 @JsonSerializable()
 class ApiV4UsersUserIdTermsOfServiceRequestBody {
   const ApiV4UsersUserIdTermsOfServiceRequestBody({
-    required this.serviceTermsId,
+    required this.termsOfServiceId,
     required this.accepted,
   });
 
@@ -17,8 +17,8 @@ class ApiV4UsersUserIdTermsOfServiceRequestBody {
     Map<String, Object?> json,
   ) => _$ApiV4UsersUserIdTermsOfServiceRequestBodyFromJson(json);
 
-  final String serviceTermsId;
-  final String accepted;
+  final String termsOfServiceId;
+  final bool accepted;
 
   Map<String, Object?> toJson() =>
       _$ApiV4UsersUserIdTermsOfServiceRequestBodyToJson(this);

@@ -123,6 +123,13 @@ abstract class ServerFeatures with _$ServerFeatures {
     @Default({}) Set<ProfileField> ldapFields,
     @Default({}) Set<ProfileField> samlFields,
 
+    /// Users can turn on two-factor authentication for their own account.
+    @Default(false) bool multifactor,
+
+    /// The id of the terms of service users must have accepted; null when
+    /// the server asks for none.
+    String? termsId,
+
     /// Whether the server runs plugins at all.
     @Default(true) bool pluginsAllowed,
 
@@ -290,6 +297,13 @@ ServerFeatures serverFeatures({
       if (config.samlNicknameAttributeSet == true) ProfileField.nickname,
       if (config.samlPositionAttributeSet == true) ProfileField.position,
     },
+    multifactor: config.enableMultifactorAuthentication == true,
+    termsId:
+        licensed &&
+            config.enableCustomTermsOfService == true &&
+            (config.customTermsOfServiceId ?? '').isNotEmpty
+        ? config.customTermsOfServiceId
+        : null,
     featureFlags: config.featureFlags,
     pluginsAllowed: config.pluginsEnabled != false,
     plugins: {

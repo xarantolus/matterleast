@@ -187,6 +187,36 @@ void main() {
       expect(saml.queryParameters['action'], 'mobile');
     });
 
+    test('the challenge goes in the start URL and matches its verifier', () {
+      final challenge = SsoChallenge.generate();
+      final url = ssoStartUrl(
+        server: server,
+        path: '/oauth/gitlab/mobile_login',
+        scheme: 'mmauth',
+        challenge: challenge,
+      );
+      expect(url.queryParameters['state'], challenge.state);
+      expect(url.queryParameters['code_challenge_method'], 'S256');
+      expect(
+        url.queryParameters['code_challenge'],
+        s256Challenge(challenge.verifier),
+      );
+      expect(challenge.verifier.length, greaterThanOrEqualTo(43));
+      // RFC 7636 appendix B.
+      expect(
+        s256Challenge('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'),
+        'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
+      );
+      expect(
+        ssoStartUrl(
+          server: server,
+          path: '/oauth/gitlab/mobile_login',
+          scheme: 'mmauth',
+        ).queryParameters.containsKey('code_challenge'),
+        isFalse,
+      );
+    });
+
     SsoResult parse(
       String callback, {
       Uri? on,
@@ -199,6 +229,23 @@ void main() {
       siteUrl: siteUrl,
       serverVersion: version,
     );
+
+    test('a login code is passed on, with the same server checks', () {
+      expect(
+        parse(
+          'mmauth://callback?login_code=one&srv=http%3A%2F%2F10.0.2.2%3A8065',
+        ),
+        const SsoResult.code('one'),
+      );
+      expect(
+        parse('mmauth://callback?login_code=one&srv=http%3A%2F%2Fother.test'),
+        isA<SsoRejected>(),
+      );
+      expect(
+        parse('mmauth://callback?login_code=one', version: '12.0.1'),
+        isA<SsoRejected>(),
+      );
+    });
 
     test('accepts the server\'s own callback', () {
       expect(

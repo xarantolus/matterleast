@@ -56,11 +56,12 @@ extension SsoResultPatterns on SsoResult {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SsoToken value)?  token,TResult Function( SsoRejected value)?  rejected,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SsoToken value)?  token,TResult Function( SsoCode value)?  code,TResult Function( SsoRejected value)?  rejected,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case SsoToken() when token != null:
-return token(_that);case SsoRejected() when rejected != null:
+return token(_that);case SsoCode() when code != null:
+return code(_that);case SsoRejected() when rejected != null:
 return rejected(_that);case _:
   return orElse();
 
@@ -79,11 +80,12 @@ return rejected(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SsoToken value)  token,required TResult Function( SsoRejected value)  rejected,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SsoToken value)  token,required TResult Function( SsoCode value)  code,required TResult Function( SsoRejected value)  rejected,}){
 final _that = this;
 switch (_that) {
 case SsoToken():
-return token(_that);case SsoRejected():
+return token(_that);case SsoCode():
+return code(_that);case SsoRejected():
 return rejected(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -98,11 +100,12 @@ return rejected(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SsoToken value)?  token,TResult? Function( SsoRejected value)?  rejected,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SsoToken value)?  token,TResult? Function( SsoCode value)?  code,TResult? Function( SsoRejected value)?  rejected,}){
 final _that = this;
 switch (_that) {
 case SsoToken() when token != null:
-return token(_that);case SsoRejected() when rejected != null:
+return token(_that);case SsoCode() when code != null:
+return code(_that);case SsoRejected() when rejected != null:
 return rejected(_that);case _:
   return null;
 
@@ -120,10 +123,11 @@ return rejected(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String token)?  token,TResult Function( String reason)?  rejected,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String token)?  token,TResult Function( String loginCode)?  code,TResult Function( String reason)?  rejected,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SsoToken() when token != null:
-return token(_that.token);case SsoRejected() when rejected != null:
+return token(_that.token);case SsoCode() when code != null:
+return code(_that.loginCode);case SsoRejected() when rejected != null:
 return rejected(_that.reason);case _:
   return orElse();
 
@@ -142,10 +146,11 @@ return rejected(_that.reason);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String token)  token,required TResult Function( String reason)  rejected,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String token)  token,required TResult Function( String loginCode)  code,required TResult Function( String reason)  rejected,}) {final _that = this;
 switch (_that) {
 case SsoToken():
-return token(_that.token);case SsoRejected():
+return token(_that.token);case SsoCode():
+return code(_that.loginCode);case SsoRejected():
 return rejected(_that.reason);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -160,10 +165,11 @@ return rejected(_that.reason);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String token)?  token,TResult? Function( String reason)?  rejected,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String token)?  token,TResult? Function( String loginCode)?  code,TResult? Function( String reason)?  rejected,}) {final _that = this;
 switch (_that) {
 case SsoToken() when token != null:
-return token(_that.token);case SsoRejected() when rejected != null:
+return token(_that.token);case SsoCode() when code != null:
+return code(_that.loginCode);case SsoRejected() when rejected != null:
 return rejected(_that.reason);case _:
   return null;
 
@@ -233,6 +239,74 @@ class _$SsoTokenCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? token = null,}) {
   return _then(SsoToken(
 null == token ? _self.token : token // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class SsoCode implements SsoResult {
+  const SsoCode(this.loginCode);
+  
+
+ final  String loginCode;
+
+/// Create a copy of SsoResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SsoCodeCopyWith<SsoCode> get copyWith => _$SsoCodeCopyWithImpl<SsoCode>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SsoCode&&(identical(other.loginCode, loginCode) || other.loginCode == loginCode));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,loginCode);
+}
+
+@override
+String toString() {
+    return 'SsoResult.code(loginCode: $loginCode)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SsoCodeCopyWith<$Res> implements $SsoResultCopyWith<$Res> {
+  factory $SsoCodeCopyWith(SsoCode value, $Res Function(SsoCode) _then) = _$SsoCodeCopyWithImpl;
+@useResult
+$Res call({
+ String loginCode
+});
+
+
+
+
+}
+/// @nodoc
+class _$SsoCodeCopyWithImpl<$Res>
+    implements $SsoCodeCopyWith<$Res> {
+  _$SsoCodeCopyWithImpl(this._self, this._then);
+
+  final SsoCode _self;
+  final $Res Function(SsoCode) _then;
+
+/// Create a copy of SsoResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? loginCode = null,}) {
+  return _then(SsoCode(
+null == loginCode ? _self.loginCode : loginCode // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

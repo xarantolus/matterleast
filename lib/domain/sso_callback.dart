@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:matterleast/domain/login_options.dart';
 
@@ -7,10 +11,45 @@ part 'sso_callback.freezed.dart';
 /// (`NativeAppSettings.AppCustomURLSchemes`).
 const defaultSsoScheme = 'mmauth';
 
+/// What proves a code exchange belongs to the sign-in that asked for it
+/// (RFC 7636): the server keeps [challenge] and [state], and only the
+/// holder of [verifier] can redeem the code that comes back.
+class SsoChallenge {
+  const SsoChallenge({
+    required this.state,
+    required this.verifier,
+    required this.challenge,
+  });
+
+  /// Fresh random values for one sign-in.
+  factory SsoChallenge.generate([Random? random]) {
+    final source = random ?? Random.secure();
+    String token(int bytes) =>
+        base64UrlEncode([for (var i = 0; i < bytes; i++) source.nextInt(256)])
+            .replaceAll('=', '');
+    final verifier = token(48);
+    return SsoChallenge(
+      state: token(16),
+      verifier: verifier,
+      challenge: s256Challenge(verifier),
+    );
+  }
+
+  final String state;
+  final String verifier;
+  final String challenge;
+}
+
+/// The S256 code challenge of [verifier].
+String s256Challenge(String verifier) =>
+    base64UrlEncode(sha256.convert(ascii.encode(verifier)).bytes)
+        .replaceAll('=', '');
+
 Uri ssoStartUrl({
   required Uri server,
   required String path,
   required String scheme,
+  SsoChallenge? challenge,
 }) {
   final isSaml = path.startsWith('/login/sso/saml');
   return server.replace(
@@ -18,6 +57,11 @@ Uri ssoStartUrl({
     queryParameters: {
       if (isSaml) 'action': 'mobile',
       'redirect_to': '$scheme://callback',
+      if (challenge != null) ...{
+        'state': challenge.state,
+        'code_challenge': challenge.challenge,
+        'code_challenge_method': 'S256',
+      },
     },
   );
 }
@@ -44,11 +88,16 @@ bool isSsoCallbackFor(Uri uri, String scheme) =>
 sealed class SsoResult with _$SsoResult {
   const factory SsoResult.token(String token) = SsoToken;
 
+  /// The server answered the sign-in's challenge with a one-time code to
+  /// redeem for the session.
+  const factory SsoResult.code(String loginCode) = SsoCode;
+
   /// The redirect named another server, or carried no token.
   const factory SsoResult.rejected(String reason) = SsoRejected;
 }
 
-/// Reads the session token out of `<scheme>://callback?MMAUTHTOKEN=…&srv=…`.
+/// Reads the session token out of `<scheme>://callback?MMAUTHTOKEN=…&srv=…`,
+/// or the `login_code` a server answers a challenge with.
 /// Servers from 12.0 name themselves in `srv` (their configured site URL), so
 /// a redirect planted by another site or app cannot hand us its token; only
 /// servers known to be older may leave it out, as the official app accepts.
@@ -89,6 +138,8 @@ SsoResult parseSsoCallback(
       "The redirect didn't say which server it came from.",
     );
   }
+  final code = callback.queryParameters['login_code'];
+  if (code != null && code.isNotEmpty) return SsoResult.code(code);
   final token = callback.queryParameters['MMAUTHTOKEN'];
   if (token == null || token.isEmpty) {
     return const SsoResult.rejected('The server sent no session.');

@@ -7,7 +7,9 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/screens/add_server/add_server_controller.dart';
+import 'package:matterleast/screens/login/forgot_password_sheet.dart';
 import 'package:matterleast/screens/login/login_controller.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/narrow_page.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -79,9 +81,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _forgotPassword() {
-    launchUrl(
-      forgotPasswordUri(_options.forgotPasswordLink, widget.target.server.url),
-      mode: LaunchMode.externalApplication,
+    final link = _options.forgotPasswordLink;
+    if (link != null) {
+      unawaited(
+        launchUrl(
+          forgotPasswordUri(link, widget.target.server.url),
+          mode: LaunchMode.externalApplication,
+        ),
+      );
+      return;
+    }
+    final signIn = ref.read(signInProvider);
+    unawaited(
+      showAppSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => ForgotPasswordSheet(
+          host: widget.target.server.url.authority,
+          initialEmail: _loginId.text,
+          send: (email) =>
+              signIn.sendPasswordReset(widget.target.server, email),
+        ),
+      ),
     );
   }
 
