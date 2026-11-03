@@ -64,6 +64,19 @@ class _SwipeState extends State<_Swipe> {
     if (step != null) widget.onStep(forward: step);
   }
 
+  // A page view or list under the pointer wins the drag, so a swipe past its
+  // first or last page arrives as overscroll instead.
+  bool _overscrolled(ScrollNotification n) {
+    if (n.metrics.axis != Axis.horizontal) return false;
+    if (n is OverscrollNotification && n.dragDetails != null) {
+      _dx -= n.overscroll;
+      _state.value = swipeState(_dx);
+    } else if (n is ScrollEndNotification) {
+      _end();
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return RawGestureDetector(
@@ -87,7 +100,12 @@ class _SwipeState extends State<_Swipe> {
       },
       child: Stack(
         children: [
-          Positioned.fill(child: widget.child),
+          Positioned.fill(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: _overscrolled,
+              child: widget.child,
+            ),
+          ),
           Positioned.fill(
             child: IgnorePointer(
               child: ValueListenableBuilder(
