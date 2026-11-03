@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -19,6 +20,10 @@ Future<T?> showMenuAt<T>(
       Offset.zero & overlay.size,
     ),
     items: items,
+    // Desktop menus open at once, not with the phone's slow grow.
+    popUpAnimationStyle: isDesktop
+        ? const AnimationStyle(duration: Duration(milliseconds: 100))
+        : null,
   );
 }
 

@@ -357,9 +357,10 @@ Future<void> showMessageContextMenu(
   } finally {
     sub.close();
   }
-  final reportable = await container
-      .read(reportsEnabledProvider(target.url, facts.teamId).future)
-      .onError((_, _) => false);
+  // Never waits for the server: Report shows once its answer is cached.
+  final reportable =
+      container.read(reportsEnabledProvider(target.url, facts.teamId)).value ??
+      false;
   if (!context.mounted) return;
   final actions = messageActions(target, facts, reportable: reportable);
   final error = Theme.of(context).colorScheme.error;
