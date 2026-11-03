@@ -644,21 +644,23 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                       if (editing == null &&
                           !forwarding &&
                           (uploads || canPrioritize || canBurn))
-                        IconButton(
-                          tooltip: 'Attach',
-                          onPressed:
-                              (!uploads || files.length >= maxAttachments) &&
-                                  !canPrioritize &&
-                                  !canBurn
-                              ? null
-                              : () => _attach(
-                                  uploads: uploads,
-                                  acknowledgements: canPrioritize
-                                      ? options!.acknowledgements
-                                      : null,
-                                  burnOnRead: canBurn,
-                                ),
-                          icon: const Icon(Icons.add_circle_outline),
+                        _rowCentred(
+                          IconButton(
+                            tooltip: 'Attach',
+                            onPressed:
+                                (!uploads || files.length >= maxAttachments) &&
+                                    !canPrioritize &&
+                                    !canBurn
+                                ? null
+                                : () => _attach(
+                                    uploads: uploads,
+                                    acknowledgements: canPrioritize
+                                        ? options!.acknowledgements
+                                        : null,
+                                    burnOnRead: canBurn,
+                                  ),
+                            icon: const Icon(Icons.add_circle_outline),
+                          ),
                         )
                       else
                         const SizedBox(width: Spacing.md),
@@ -672,6 +674,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                   ?.forMessages(context, fallbackSize: 16),
                               minLines: 1,
                               maxLines: 6,
+                              textAlignVertical: TextAlignVertical.center,
                               keyboardType: TextInputType.multiline,
                               textCapitalization: TextCapitalization.sentences,
                               decoration: InputDecoration(
@@ -679,6 +682,10 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                 hintMaxLines: 1,
                                 filled: !context.density.plainComposer,
                                 isDense: true,
+                                // One line is as high as the buttons beside it.
+                                constraints: BoxConstraints(
+                                  minHeight: _composerRowHeight,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
                                     context.density.fieldRadius,
@@ -687,13 +694,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                       ? BorderSide(color: tokens.divider)
                                       : BorderSide.none,
                                 ),
-                                contentPadding:
-                                    const EdgeInsetsDirectional.fromSTEB(
-                                      Spacing.lg,
-                                      Spacing.md,
-                                      48,
-                                      Spacing.md,
-                                    ),
+                                contentPadding: EdgeInsetsDirectional.fromSTEB(
+                                  Spacing.lg,
+                                  isDesktop ? Spacing.sm : Spacing.md,
+                                  48,
+                                  isDesktop ? Spacing.sm : Spacing.md,
+                                ),
                               ),
                             ),
                             // At the bottom like send, so a long message keeps
@@ -702,11 +708,13 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                               end: 0,
                               bottom: 0,
                               child: Builder(
-                                builder: (button) => IconButton(
-                                  tooltip: 'Emoji',
-                                  onPressed: () =>
-                                      _pickEmoji(globalRectOf(button)),
-                                  icon: const Icon(Icons.mood),
+                                builder: (button) => _rowCentred(
+                                  IconButton(
+                                    tooltip: 'Emoji',
+                                    onPressed: () =>
+                                        _pickEmoji(globalRectOf(button)),
+                                    icon: const Icon(Icons.mood),
+                                  ),
                                 ),
                               ),
                             ),
@@ -714,18 +722,20 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                         ),
                       ),
                       const SizedBox(width: Spacing.xs),
-                      SendButton(
-                        editing: editing != null,
-                        onSend: sendable ? _send : null,
-                        onSchedule:
-                            sendable &&
-                                !forwarding &&
-                                editing == null &&
-                                !burning &&
-                                (features?.scheduledPosts ?? false) &&
-                                !value.text.text.trimLeft().startsWith('/')
-                            ? _schedule
-                            : null,
+                      _rowCentred(
+                        SendButton(
+                          editing: editing != null,
+                          onSend: sendable ? _send : null,
+                          onSchedule:
+                              sendable &&
+                                  !forwarding &&
+                                  editing == null &&
+                                  !burning &&
+                                  (features?.scheduledPosts ?? false) &&
+                                  !value.text.text.trimLeft().startsWith('/')
+                              ? _schedule
+                              : null,
+                        ),
                       ),
                     ],
                   ),
@@ -1383,3 +1393,13 @@ class _KeepState extends State<_Keep> {
   @override
   Widget build(BuildContext context) => widget.child;
 }
+
+/// The height of a one-line composer row: the buttons' touch target.
+double get _composerRowHeight => isDesktop ? 40 : kMinInteractiveDimension;
+
+/// [button] centred in a one-line row, so it lines up with a single line of
+/// text and stays by the last line of a longer one.
+Widget _rowCentred(Widget button) => SizedBox(
+  height: _composerRowHeight,
+  child: Center(child: button),
+);
