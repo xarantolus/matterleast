@@ -416,7 +416,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
             ),
         if (apart)
           Positioned(
-            bottom: Spacing.lg,
+            bottom: typingLineHeight(context) + Spacing.lg,
             left: 0,
             right: 0,
             child: Center(
@@ -429,7 +429,8 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
           )
         else if (scrolledUp)
           Positioned(
-            bottom: Spacing.sm,
+            // Above the typing line, which is drawn over the list.
+            bottom: typingLineHeight(context) + Spacing.sm,
             right: Spacing.lg,
             child: Badge.count(
               count: newBelow,
