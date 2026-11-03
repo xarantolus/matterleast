@@ -98,6 +98,33 @@ void main() {
     expect(find.text('Shift+Up'), findsOneWidget);
   }, variant: desktop);
 
+  testWidgets(
+    'Ctrl+K opens the switcher while nothing has the focus',
+    (tester) async {
+      var opened = 0;
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            builder: (_, child) => AppShortcuts(child: child!),
+            home: RootShortcuts(
+              onSwitcher: () => opened++,
+              child: const Scaffold(body: SizedBox.expand()),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      expect(opened, 1);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.linux,
+      TargetPlatform.windows,
+    }),
+  );
+
   testWidgets('Alt+Down opens the next channel, Alt+Shift+Down the next '
       'unread one', (tester) async {
     tester.view.physicalSize = const Size(1600, 1000);
