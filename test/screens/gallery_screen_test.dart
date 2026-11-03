@@ -8,10 +8,8 @@ import 'package:file/local.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
@@ -20,6 +18,8 @@ import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
+
+import '../support/pump_app.dart';
 
 const _server = 'https://chat.example.test';
 
@@ -135,39 +135,34 @@ void main() {
     tester.view.physicalSize = const Size(800, 600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          serverImageCachesProvider(_server)
-              .overrideWith((ref) async => _Caches(media)),
-          fileDownloadsProvider(_server)
-              .overrideWith((ref) async => _Downloads()),
-          imageProxyProvider(_server)
-              .overrideWith((ref) => Stream.value(false)),
-          autoLoadImagesProvider.overrideWith((ref) => true),
-          serverSessionProvider(_server)
-              .overrideWith((ref) => Completer<ServerSession>().future),
-        ],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => Navigator.of(context).push(
-                galleryRoute(
-                  url: _server,
-                  files: files,
-                  initialIndex: 0,
-                  heroPrefix: 'test',
-                  author: 'Ada',
-                  sentAt: DateTime.utc(2026, 10, 27, 9),
-                  tileWidth: tileWidth,
-                ),
-              ),
-              child: const Text('Open'),
+    await pumpApp(
+      tester,
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () => Navigator.of(context).push(
+            galleryRoute(
+              url: _server,
+              files: files,
+              initialIndex: 0,
+              heroPrefix: 'test',
+              author: 'Ada',
+              sentAt: DateTime.utc(2026, 10, 27, 9),
+              tileWidth: tileWidth,
             ),
           ),
+          child: const Text('Open'),
         ),
       ),
+      overrides: [
+        serverImageCachesProvider(_server)
+            .overrideWith((ref) async => _Caches(media)),
+        fileDownloadsProvider(_server)
+            .overrideWith((ref) async => _Downloads()),
+        imageProxyProvider(_server).overrideWith((ref) => Stream.value(false)),
+        autoLoadImagesProvider.overrideWith((ref) => true),
+        serverSessionProvider(_server)
+            .overrideWith((ref) => Completer<ServerSession>().future),
+      ],
     );
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox());

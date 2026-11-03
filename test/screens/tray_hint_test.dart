@@ -1,11 +1,10 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/screens/settings/phone_notifications.dart';
 
 import '../support/memory_database.dart';
+import '../support/pump_app.dart';
 
 void main() {
   Future<ValueNotifier<bool>> show(WidgetTester tester, bool hasTray) async {
@@ -13,17 +12,13 @@ void main() {
     addTearDown(tray.dispose);
     final db = memoryAppDatabase();
     addTearDown(db.close);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(db),
-          closeToTrayProvider.overrideWith((ref) => Stream.value(true)),
-        ],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: Scaffold(body: ComputerNotifications(hasTray: tray)),
-        ),
-      ),
+    await pumpApp(
+      tester,
+      Scaffold(body: ComputerNotifications(hasTray: tray)),
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        closeToTrayProvider.overrideWith((ref) => Stream.value(true)),
+      ],
     );
     await tester.pump();
     return tray;

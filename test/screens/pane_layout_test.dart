@@ -1,12 +1,12 @@
 import 'package:drift/drift.dart' show DatabaseConnection;
 import 'package:drift/native.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/screens/root/pane_layout.dart';
+
+import '../support/pump_app.dart';
 
 void main() {
   testWidgets('a snack bar shows once in a window of several panes', (
@@ -17,16 +17,12 @@ void main() {
     addTearDown(tester.view.reset);
     final db = AppDatabase(DatabaseConnection(NativeDatabase.memory()));
     addTearDown(db.close);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [appDatabaseProvider.overrideWithValue(db)],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: const PaneLayout(
-            list: Scaffold(body: Center(child: Text('Channels'))),
-          ),
-        ),
+    await pumpApp(
+      tester,
+      const PaneLayout(
+        list: Scaffold(body: Center(child: Text('Channels'))),
       ),
+      overrides: [appDatabaseProvider.overrideWithValue(db)],
     );
     // The database answers outside the fake clock.
     await tester.runAsync(

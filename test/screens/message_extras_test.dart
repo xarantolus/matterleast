@@ -6,18 +6,14 @@ import 'package:matterleast/screens/channel/edit_history_sheet.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 
+import '../support/builders.dart';
 import '../support/fake_server.dart';
+import '../support/pump_app.dart';
 import '../support/pump_with_server.dart';
 import '../support/test_session.dart';
 
-PostItem _post(String userId) => PostItem(
-  id: 'old1',
-  key: 'old1',
-  userId: userId,
-  authorName: 'Sam',
-  createAt: DateTime.utc(2026, 10, 25, 9),
-  message: 'morning',
-);
+PostItem _post(String userId) =>
+    postItem(id: 'old1', userId: userId, authorName: 'Sam');
 
 Map<String, Object?> _version(String id, String message, int at) => {
   'id': id,
@@ -265,17 +261,16 @@ void main() {
     tester,
   ) async {
     var asked = 0;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: EditedMark(
-            editAt: DateTime.now(),
-            style: null,
-            onHistory: () async {
-              asked++;
-              return false;
-            },
-          ),
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: EditedMark(
+          editAt: DateTime.now(),
+          style: null,
+          onHistory: () async {
+            asked++;
+            return false;
+          },
         ),
       ),
     );

@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/domain/post_list.dart';
@@ -18,6 +16,8 @@ import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/post_tile.dart';
 import 'package:matterleast/ui/user_avatar.dart';
+
+import '../support/pump_app.dart';
 
 const _url = 'https://chat.example.test';
 
@@ -64,24 +64,20 @@ Future<void> _show(
   Widget child, {
   bool profileFails = false,
 }) async {
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: _overrides(profileFails: profileFails),
-      child: MaterialApp(
-        theme: MatterleastApp.lightTheme,
-        home: Scaffold(
-          body: PostEnvironment(
-            server: Uri.parse(_url),
-            options: const ParseOptions(),
-            myUsername: 'me',
-            onMention: (_) {},
-            onChannel: (_) {},
-            onLink: (_) {},
-            child: ListView(children: [child]),
-          ),
-        ),
+  await pumpApp(
+    tester,
+    Scaffold(
+      body: PostEnvironment(
+        server: Uri.parse(_url),
+        options: const ParseOptions(),
+        myUsername: 'me',
+        onMention: (_) {},
+        onChannel: (_) {},
+        onLink: (_) {},
+        child: ListView(children: [child]),
       ),
     ),
+    overrides: _overrides(profileFails: profileFails),
   );
   await tester.pumpAndSettle();
 }

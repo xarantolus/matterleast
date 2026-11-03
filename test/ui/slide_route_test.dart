@@ -6,12 +6,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
+import '../support/pump_app.dart';
+
 void main() {
   Future<NavigatorState> openPage(WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: ContentPage(title: Text('Channels'), body: Text('List')),
-      ),
+    await pumpApp(
+      tester,
+      ContentPage(title: Text('Channels'), body: Text('List')),
     );
     final navigator = tester.state<NavigatorState>(find.byType(Navigator));
     unawaited(
@@ -45,10 +46,9 @@ void main() {
 
   testWidgets('a page slides in under the header, which stays and shows '
       'its title', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: ContentPage(title: Text('Channels'), body: Text('List')),
-      ),
+    await pumpApp(
+      tester,
+      ContentPage(title: Text('Channels'), body: Text('List')),
     );
     final navigator = tester.state<NavigatorState>(find.byType(Navigator));
     unawaited(
@@ -170,9 +170,7 @@ void main() {
 
   testWidgets('a field typed in below gives up the keyboard when a page '
       'opens over it, and leaves it down when the page goes', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: TextField())),
-    );
+    await pumpApp(tester, Scaffold(body: TextField()));
     await tester.showKeyboard(find.byType(TextField));
     expect(tester.testTextInput.isVisible, isTrue);
     final navigator = tester.state<NavigatorState>(find.byType(Navigator));

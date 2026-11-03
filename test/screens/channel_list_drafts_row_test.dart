@@ -1,47 +1,39 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/agent_providers.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/screens/channel_list/channel_list_pane.dart';
 import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 
+import '../support/pump_app.dart';
+
 const _url = 'https://chat.example.test';
 
-Future<void> _show(WidgetTester tester, {required int drafts}) =>
-    tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          teamScheduledProvider(
-            _url,
-            't1',
-          ).overrideWith((ref) => Stream.value([])),
-          agentsAvailableProvider(_url).overrideWithValue(true),
-        ],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: Scaffold(
-            body: ChannelListPane(
-              url: _url,
-              teamId: 't1',
-              serverLabel: 'Example',
-              state: ChannelListReady(
-                ChannelList(
-                  teamName: 'Harbour',
-                  sections: const [],
-                  unreadThreads: 0,
-                  drafts: drafts,
-                  synced: true,
-                ),
-                refreshing: false,
-              ),
-            ),
-          ),
+Future<void> _show(WidgetTester tester, {required int drafts}) => pumpApp(
+  tester,
+  Scaffold(
+    body: ChannelListPane(
+      url: _url,
+      teamId: 't1',
+      serverLabel: 'Example',
+      state: ChannelListReady(
+        ChannelList(
+          teamName: 'Harbour',
+          sections: const [],
+          unreadThreads: 0,
+          drafts: drafts,
+          synced: true,
         ),
+        refreshing: false,
       ),
-    );
+    ),
+  ),
+  overrides: [
+    teamScheduledProvider(_url, 't1').overrideWith((ref) => Stream.value([])),
+    agentsAvailableProvider(_url).overrideWithValue(true),
+  ],
+);
 
 Future<void> _end(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox());

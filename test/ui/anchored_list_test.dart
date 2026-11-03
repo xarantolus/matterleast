@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 
+import '../support/pump_app.dart';
+
 typedef Item = ({int id, double height});
 
 void main() {
@@ -486,18 +488,17 @@ void main() {
     testWidgets('at the bottom, row $expanding opened by the reader keeps '
         'its top and grows downwards', (tester) async {
       final rows = rowsFrom(100, 1);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              height: 600,
-              child: AnchoredList<Item>(
-                rows: rows,
-                keyOf: (r) => r.id,
-                controller: controller,
-                itemBuilder: (_, r) =>
-                    _Opens(label: 'row ${r.id}', height: r.height),
-              ),
+      await pumpApp(
+        tester,
+        Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: AnchoredList<Item>(
+              rows: rows,
+              keyOf: (r) => r.id,
+              controller: controller,
+              itemBuilder: (_, r) =>
+                  _Opens(label: 'row ${r.id}', height: r.height),
             ),
           ),
         ),

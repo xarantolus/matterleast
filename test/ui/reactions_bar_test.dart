@@ -1,8 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
+
+import '../support/pump_app.dart';
 
 ReactionGroup _group(String emoji, {required bool mine}) => ReactionGroup(
   emojiName: emoji,
@@ -17,16 +18,11 @@ void main() {
   testWidgets('an own reaction is outlined in the primary colour, others not', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: MatterleastApp.lightTheme,
-        home: Scaffold(
-          body: ReactionsBar(
-            reactions: [
-              _group('tada', mine: true),
-              _group('eyes', mine: false),
-            ],
-          ),
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: ReactionsBar(
+          reactions: [_group('tada', mine: true), _group('eyes', mine: false)],
         ),
       ),
     );
@@ -41,12 +37,10 @@ void main() {
     tester,
   ) async {
     Future<Size> size({required bool mine}) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: Scaffold(
-            body: ReactionsBar(reactions: [_group('tada', mine: mine)]),
-          ),
+      await pumpApp(
+        tester,
+        Scaffold(
+          body: ReactionsBar(reactions: [_group('tada', mine: mine)]),
         ),
       );
       return tester.getSize(find.byType(FilterChip));

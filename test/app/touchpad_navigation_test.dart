@@ -1,9 +1,10 @@
 import 'package:flutter/gestures.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/touchpad_navigation.dart';
 import 'package:matterleast/domain/touchpad_swipe.dart';
+
+import '../support/pump_app.dart';
 
 void main() {
   final steps = <bool>[];
@@ -12,14 +13,11 @@ void main() {
 
   setUp(steps.clear);
 
-  Future<void> show(WidgetTester tester, Widget content) => tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(
-        home: TouchpadNavigation(
-          onStep: ({required forward}) => steps.add(forward),
-          child: content,
-        ),
-      ),
+  Future<void> show(WidgetTester tester, Widget content) => pumpApp(
+    tester,
+    TouchpadNavigation(
+      onStep: ({required forward}) => steps.add(forward),
+      child: content,
     ),
   );
 

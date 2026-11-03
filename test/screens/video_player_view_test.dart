@@ -13,6 +13,8 @@ import 'package:matterleast/screens/gallery/video_player_view.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
+import '../support/pump_app.dart';
+
 class _FakePlayer extends VideoPlayerPlatform {
   final calls = <String>[];
   final speeds = <double>[];
@@ -118,25 +120,24 @@ void main() {
     await video.initialize();
     if (play) await video.play();
     // The view in a slide-to-close gallery page over a home page.
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: Center(
-              child: TextButton(
-                onPressed: () => Navigator.of(context).push(
-                  PageRouteBuilder<void>(
-                    opaque: false,
-                    transitionDuration: Duration.zero,
-                    pageBuilder: (_, _, _) => ExtendedImageSlidePage(
-                      slideAxis: SlideAxis.vertical,
-                      slideEndHandler: slideEndCloses,
-                      child: VideoPlayerView(video: video),
-                    ),
+    await pumpApp(
+      tester,
+      Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: TextButton(
+              onPressed: () => Navigator.of(context).push(
+                PageRouteBuilder<void>(
+                  opaque: false,
+                  transitionDuration: Duration.zero,
+                  pageBuilder: (_, _, _) => ExtendedImageSlidePage(
+                    slideAxis: SlideAxis.vertical,
+                    slideEndHandler: slideEndCloses,
+                    child: VideoPlayerView(video: video),
                   ),
                 ),
-                child: const Text('Home'),
               ),
+              child: const Text('Home'),
             ),
           ),
         ),

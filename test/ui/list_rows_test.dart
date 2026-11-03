@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/desktop/window_title.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/providers.dart';
@@ -13,20 +12,18 @@ import 'package:matterleast/screens/channel_list/channel_tile.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/presence_dot.dart';
 
+import '../support/pump_app.dart';
+
 /// The server is live and told wren's presence.
-Future<void> _show(WidgetTester tester, Widget child) => tester.pumpWidget(
-  ProviderScope(
-    overrides: [
-      knownPresenceProvider('https://chat.example.test')
-          .overrideWithValue(const {'u1'}),
-      featuresProvider('https://chat.example.test')
-          .overrideWith((ref) => Stream.value(const ServerFeatures())),
-    ],
-    child: MaterialApp(
-      theme: MatterleastApp.lightTheme,
-      home: Scaffold(body: child),
-    ),
-  ),
+Future<void> _show(WidgetTester tester, Widget child) => pumpApp(
+  tester,
+  Scaffold(body: child),
+  overrides: [
+    knownPresenceProvider('https://chat.example.test')
+        .overrideWithValue(const {'u1'}),
+    featuresProvider('https://chat.example.test')
+        .overrideWith((ref) => Stream.value(const ServerFeatures())),
+  ],
 );
 
 InboxItem _mention({String? team}) => InboxItem(
@@ -200,23 +197,19 @@ void main() {
     tester.view.physicalSize = const Size(400, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: MediaQuery(
-            data: const MediaQueryData(
-              size: Size(400, 900),
-              textScaler: TextScaler.linear(3.5),
+    await pumpApp(
+      tester,
+      MediaQuery(
+        data: const MediaQueryData(
+          size: Size(400, 900),
+          textScaler: TextScaler.linear(3.5),
+        ),
+        child: Scaffold(
+          body: MessagePreviewTile(
+            item: _mention().copyWith(
+              preview: 'Lunch at noon on the quay by the old harbour?',
             ),
-            child: Scaffold(
-              body: MessagePreviewTile(
-                item: _mention().copyWith(
-                  preview: 'Lunch at noon on the quay by the old harbour?',
-                ),
-                onTap: () {},
-              ),
-            ),
+            onTap: () {},
           ),
         ),
       ),

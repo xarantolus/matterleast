@@ -9,6 +9,7 @@ import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/window_strip.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../support/pump_app.dart';
 import '../support/tooltips.dart';
 
 /// Runs [body] as [platform]; the override has to be gone before the test
@@ -179,7 +180,7 @@ void main() {
     testWidgets('not on Android', (tester) async {
       await on(TargetPlatform.android, () async {
         final refreshed = <String>[];
-        await tester.pumpWidget(MaterialApp(home: list('home', refreshed)));
+        await pumpApp(tester, list('home', refreshed));
         await pressF5(tester);
         expect(refreshed, isEmpty);
       });

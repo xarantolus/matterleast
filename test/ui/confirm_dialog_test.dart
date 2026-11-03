@@ -3,19 +3,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 
+import '../support/pump_app.dart';
+
 void main() {
   Future<Future<bool>> ask(
     WidgetTester tester,
     Future<bool> Function(BuildContext context) question,
   ) async {
     late Future<bool> answer;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => answer = question(context),
-            child: const Text('ask'),
-          ),
+    await pumpApp(
+      tester,
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () => answer = question(context),
+          child: const Text('ask'),
         ),
       ),
     );
@@ -71,18 +72,17 @@ void main() {
 
   Future<Future<String?>> prompt(WidgetTester tester) async {
     late Future<String?> answer;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => answer = promptText(
-              context,
-              title: 'Rename',
-              initial: 'Old',
-              required: true,
-            ),
-            child: const Text('ask'),
+    await pumpApp(
+      tester,
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () => answer = promptText(
+            context,
+            title: 'Rename',
+            initial: 'Old',
+            required: true,
           ),
+          child: const Text('ask'),
         ),
       ),
     );

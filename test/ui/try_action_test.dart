@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/ui/failed_state.dart';
 import 'package:matterleast/ui/try_action.dart';
+
+import '../support/pump_app.dart';
 
 void main() {
   Future<bool> run(
@@ -12,19 +13,18 @@ void main() {
     String failure = '',
   }) async {
     late Future<bool> result;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => result = tryAction(
-                context,
-                'chat.example',
-                action,
-                failure: failure,
-              ),
-              child: const Text('go'),
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => result = tryAction(
+              context,
+              'chat.example',
+              action,
+              failure: failure,
             ),
+            child: const Text('go'),
           ),
         ),
       ),
@@ -63,15 +63,13 @@ void main() {
 
   testWidgets('a failed load shows the cause and Retry', (tester) async {
     var retried = false;
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: MatterleastApp.lightTheme,
-        home: FailedState(
-          title: "Couldn't load things",
-          error: const ServerError(statusCode: 500, message: 'Disk is full.'),
-          host: 'chat.example',
-          onRetry: () => retried = true,
-        ),
+    await pumpApp(
+      tester,
+      FailedState(
+        title: "Couldn't load things",
+        error: const ServerError(statusCode: 500, message: 'Disk is full.'),
+        host: 'chat.example',
+        onRetry: () => retried = true,
       ),
     );
     expect(find.text('chat.example said: Disk is full.'), findsOneWidget);

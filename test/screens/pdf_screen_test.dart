@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/screens/gallery/pdf_screen.dart';
 import 'package:pdfrx/pdfrx.dart';
+
+import '../support/pump_app.dart';
 
 const _server = 'http://localhost:8065';
 
@@ -26,20 +26,16 @@ void main() {
   });
 
   Future<void> show(WidgetTester tester, String name) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          featuresProvider(_server).overrideWith((ref) => const Stream.empty()),
-        ],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: PdfScreen(
-            local: File('test/fixtures/pdf/$name'),
-            url: _server,
-            file: PostFile(id: 'f1', name: name, extension: 'pdf'),
-          ),
-        ),
+    await pumpApp(
+      tester,
+      PdfScreen(
+        local: File('test/fixtures/pdf/$name'),
+        url: _server,
+        file: PostFile(id: 'f1', name: name, extension: 'pdf'),
       ),
+      overrides: [
+        featuresProvider(_server).overrideWith((ref) => const Stream.empty()),
+      ],
     );
   }
 

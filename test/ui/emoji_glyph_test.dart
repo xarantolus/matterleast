@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -15,6 +14,8 @@ import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/custom_emoji_image.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
+
+import '../support/pump_app.dart';
 
 const _url = 'https://chat.example.test';
 
@@ -33,13 +34,10 @@ List<Override> _server({List<String> recent = const []}) => [
 ];
 
 Future<void> _show(WidgetTester tester, Widget child) async {
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: _server(),
-      child: MaterialApp(
-        home: Scaffold(body: Center(child: child)),
-      ),
-    ),
+  await pumpApp(
+    tester,
+    Scaffold(body: Center(child: child)),
+    overrides: _server(),
   );
   await tester.pumpAndSettle();
 }
@@ -104,43 +102,40 @@ void main() {
       createAt: DateTime.utc(2026, 3, 1),
       message: 'Hello',
     );
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          ..._server(recent: ['partyblob', 'thumbsup']),
-          postMenuFactsProvider(_url, post, 'team1').overrideWith(
-            (ref) async => (
-              myId: 'me',
-              saved: false,
-              following: false,
-              teamId: 'team1',
-              teamName: '',
-              rights: (
-                react: true,
-                reply: true,
-                pin: true,
-                edit: true,
-                delete: true,
-                markUnread: false,
-              ),
-              reminders: false,
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showMessageMenu(
+              context,
+              MessageTarget(url: _url, teamId: 'team1', post: post),
             ),
-          ),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => TextButton(
-                onPressed: () => showMessageMenu(
-                  context,
-                  MessageTarget(url: _url, teamId: 'team1', post: post),
-                ),
-                child: const Text('open'),
-              ),
-            ),
+            child: const Text('open'),
           ),
         ),
       ),
+      overrides: [
+        ..._server(recent: ['partyblob', 'thumbsup']),
+        postMenuFactsProvider(_url, post, 'team1').overrideWith(
+          (ref) async => (
+            myId: 'me',
+            saved: false,
+            following: false,
+            teamId: 'team1',
+            teamName: '',
+            rights: (
+              react: true,
+              reply: true,
+              pin: true,
+              edit: true,
+              delete: true,
+              markUnread: false,
+            ),
+            reminders: false,
+          ),
+        ),
+      ],
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();

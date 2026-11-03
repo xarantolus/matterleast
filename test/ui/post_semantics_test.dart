@@ -1,10 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/semantics.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/domain/post_list.dart';
@@ -13,24 +11,10 @@ import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/post_tile.dart';
 
-const _url = 'https://chat.example.test';
+import '../support/builders.dart';
+import '../support/pump_app.dart';
 
-PostItem _post({
-  String? sendState,
-  String message = 'Morning',
-  List<ReactionGroup> reactions = const [],
-  int replyCount = 0,
-}) => PostItem(
-  id: 'p1',
-  key: 'p1',
-  userId: 'u1',
-  authorName: 'wren',
-  createAt: DateTime.utc(2026, 3, 1, 9),
-  message: message,
-  sendState: sendState,
-  reactions: reactions,
-  replyCount: replyCount,
-);
+const _url = 'https://chat.example.test';
 
 const _me = (id: 'u-me', name: 'me', username: 'me', pictureAt: null);
 const _kit = (id: 'u-kit', name: 'kit', username: 'kit', pictureAt: null);
@@ -49,43 +33,39 @@ Future<void> _show(
   VoidCallback? onLongPress,
 }) {
   _opened.clear();
-  return tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        serverImageCachesProvider(_url)
-            .overrideWith((ref) => Completer<ServerImageCaches>().future),
-      ],
-      child: MaterialApp(
-        theme: MatterleastApp.lightTheme,
-        home: Scaffold(
-          body: PostEnvironment(
-            server: Uri.parse(_url),
-            options: const ParseOptions(),
-            myUsername: 'me',
-            onMention: (name) => _opened.add('@$name'),
-            onChannel: (name) => _opened.add('~$name'),
-            onLink: (target) => _opened.add(switch (target) {
-              UriLink(:final uri) => '$uri',
-              _ => '$target',
-            }),
-            child: ListView(
-              children: [
-                PostTile(
-                  post: post,
-                  compact: compact,
-                  actions: actions,
-                  onToggleReaction: onToggleReaction,
-                  onOpenThread: onOpenThread,
-                  onTap: onTap,
-                  tapHint: 'open thread',
-                  onLongPress: onLongPress,
-                ),
-              ],
+  return pumpApp(
+    tester,
+    Scaffold(
+      body: PostEnvironment(
+        server: Uri.parse(_url),
+        options: const ParseOptions(),
+        myUsername: 'me',
+        onMention: (name) => _opened.add('@$name'),
+        onChannel: (name) => _opened.add('~$name'),
+        onLink: (target) => _opened.add(switch (target) {
+          UriLink(:final uri) => '$uri',
+          _ => '$target',
+        }),
+        child: ListView(
+          children: [
+            PostTile(
+              post: post,
+              compact: compact,
+              actions: actions,
+              onToggleReaction: onToggleReaction,
+              onOpenThread: onOpenThread,
+              onTap: onTap,
+              tapHint: 'open thread',
+              onLongPress: onLongPress,
             ),
-          ),
+          ],
         ),
       ),
     ),
+    overrides: [
+      serverImageCachesProvider(_url)
+          .overrideWith((ref) => Completer<ServerImageCaches>().future),
+    ],
   );
 }
 
@@ -100,7 +80,7 @@ void main() {
     final handle = tester.ensureSemantics();
     await _show(
       tester,
-      _post(
+      postItem(
         message:
             'Hi @kit, the **tide** is at [the table](https://example.test/t)',
       ),
@@ -117,7 +97,7 @@ void main() {
 
   testWidgets('a continued message still names its author', (tester) async {
     final handle = tester.ensureSemantics();
-    await _show(tester, _post(), compact: true);
+    await _show(tester, postItem(), compact: true);
     expect(find.text('wren'), findsNothing);
     expect(_message(tester).label, matches(RegExp(r'^wren, .*\nMorning$')));
     handle.dispose();
@@ -127,10 +107,10 @@ void main() {
     tester,
   ) async {
     final handle = tester.ensureSemantics();
-    await _show(tester, _post(sendState: 'failed'));
+    await _show(tester, postItem(sendState: 'failed'));
     expect(find.textContaining('Not sent'), findsOneWidget);
     expect(_message(tester).label, endsWith('\nNot sent'));
-    await _show(tester, _post(sendState: 'pending'));
+    await _show(tester, postItem(sendState: 'pending'));
     expect(find.textContaining('Not sent'), findsNothing);
     expect(_message(tester).label, endsWith('\nSending'));
     handle.dispose();
@@ -142,7 +122,7 @@ void main() {
     final handle = tester.ensureSemantics();
     await _show(
       tester,
-      _post(
+      postItem(
         replyCount: 3,
         reactions: [
           const ReactionGroup(emojiName: '+1', people: [_kit, _me], mine: true),
@@ -179,7 +159,7 @@ void main() {
     const reply = CustomSemanticsAction(label: 'Reply');
     await _show(
       tester,
-      _post(
+      postItem(
         message:
             'Ask @kit in ~boats or see [the table](https://example.test/t)',
         reactions: [
@@ -241,16 +221,12 @@ void main() {
   testWidgets('a post whose thread has a draft reply shows it and opens the '
       'thread on tap', (tester) async {
     var opened = false;
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: Scaffold(
-            body: PostTile(
-              post: _post().copyWith(hasDraftReply: true),
-              onOpenThread: () => opened = true,
-            ),
-          ),
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: PostTile(
+          post: postItem().copyWith(hasDraftReply: true),
+          onOpenThread: () => opened = true,
         ),
       ),
     );

@@ -3,17 +3,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/smooth_wheel.dart';
 
+import '../support/pump_app.dart';
+
 void main() {
   Future<ScrollController> showList(WidgetTester tester) async {
     final scroll = ScrollController();
     addTearDown(scroll.dispose);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ListView.builder(
-          controller: scroll,
-          itemCount: 200,
-          itemBuilder: (_, i) => SizedBox(height: 40, child: Text('row $i')),
-        ),
+    await pumpApp(
+      tester,
+      ListView.builder(
+        controller: scroll,
+        itemCount: 200,
+        itemBuilder: (_, i) => SizedBox(height: 40, child: Text('row $i')),
       ),
     );
     return scroll;

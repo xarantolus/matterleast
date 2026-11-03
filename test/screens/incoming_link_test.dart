@@ -9,6 +9,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/server_entry.dart';
 
 import '../support/fake_server.dart';
+import '../support/pump_app.dart';
 import '../support/test_session.dart';
 
 void main() {
@@ -31,40 +32,36 @@ void main() {
     final link = Uri.parse(
       'matterleast://${server.url.authority}/harbour/messages/@skipper',
     );
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          serversProvider.overrideWith(
-            (ref) => Stream.value([
-              ServerEntry(
-                url: url,
-                displayName: 'Harbour',
-                siteName: null,
-                serverVersion: '12.0.1',
-                diagnosticId: null,
-                lastActiveAt: DateTime.utc(2026, 10, 25),
-                ssoScheme: null,
-              ),
-            ]),
-          ),
-          serverSessionProvider(url).overrideWith((ref) async => session),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Consumer(
-              builder: (context, ref, _) {
-                // The rail keeps the server list alive in the app.
-                ref.watch(serversProvider);
-                return TextButton(
-                  onPressed: () =>
-                      openIncomingLink(Navigator.of(context), link),
-                  child: const Text('open'),
-                );
-              },
-            ),
-          ),
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: Consumer(
+          builder: (context, ref, _) {
+            // The rail keeps the server list alive in the app.
+            ref.watch(serversProvider);
+            return TextButton(
+              onPressed: () => openIncomingLink(Navigator.of(context), link),
+              child: const Text('open'),
+            );
+          },
         ),
       ),
+      overrides: [
+        serversProvider.overrideWith(
+          (ref) => Stream.value([
+            ServerEntry(
+              url: url,
+              displayName: 'Harbour',
+              siteName: null,
+              serverVersion: '12.0.1',
+              diagnosticId: null,
+              lastActiveAt: DateTime.utc(2026, 10, 25),
+              ssoScheme: null,
+            ),
+          ]),
+        ),
+        serverSessionProvider(url).overrideWith((ref) async => session),
+      ],
     );
     await tester.tap(find.text('open'));
     for (

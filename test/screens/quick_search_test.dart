@@ -1,13 +1,13 @@
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
+
+import '../support/pump_app.dart';
 
 const _url = 'https://chat.example.test';
 
@@ -38,24 +38,20 @@ void main() {
     searched = [];
     final controller = TextEditingController();
     addTearDown(controller.dispose);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          offlineProvider.overrideWithValue(false),
-          switchItemsProvider(_url).overrideWith((ref) => Stream.value(items)),
-          switchRemoteProvider.overrideWith((ref, args) async => const []),
-        ],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: QuickSearchView(
-            controller: controller,
-            servers: [server],
-            target: (url: _url, teamId: 'team1'),
-            onOpen: (item) => opened.add(item.id),
-            onSearch: searched.add,
-          ),
-        ),
+    await pumpApp(
+      tester,
+      QuickSearchView(
+        controller: controller,
+        servers: [server],
+        target: (url: _url, teamId: 'team1'),
+        onOpen: (item) => opened.add(item.id),
+        onSearch: searched.add,
       ),
+      overrides: [
+        offlineProvider.overrideWithValue(false),
+        switchItemsProvider(_url).overrideWith((ref) => Stream.value(items)),
+        switchRemoteProvider.overrideWith((ref, args) async => const []),
+      ],
     );
     await tester.pumpAndSettle();
   }

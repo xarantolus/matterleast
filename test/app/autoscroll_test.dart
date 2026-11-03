@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/autoscroll.dart';
 
+import '../support/pump_app.dart';
+
 void main() {
   group('autoscrollVelocity', () {
     test('stays still inside the dead zone', () {
@@ -37,15 +39,13 @@ void main() {
     Future<void> show(WidgetTester tester) async {
       scroll = ScrollController();
       addTearDown(scroll.dispose);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MiddleAutoscroll(
-            child: ListView.builder(
-              controller: scroll,
-              itemCount: 200,
-              itemBuilder: (_, i) =>
-                  SizedBox(height: 40, child: Text('row $i')),
-            ),
+      await pumpApp(
+        tester,
+        MiddleAutoscroll(
+          child: ListView.builder(
+            controller: scroll,
+            itemCount: 200,
+            itemBuilder: (_, i) => SizedBox(height: 40, child: Text('row $i')),
           ),
         ),
       );
@@ -125,16 +125,15 @@ void main() {
       var opened = 0;
       scroll = ScrollController();
       addTearDown(scroll.dispose);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MiddleAutoscroll(
-            child: Center(
-              child: Text.rich(
-                TextSpan(
-                  text: 'a link',
-                  recognizer: TapGestureRecognizer()
-                    ..onTertiaryTapUp = (_) => opened++,
-                ),
+      await pumpApp(
+        tester,
+        MiddleAutoscroll(
+          child: Center(
+            child: Text.rich(
+              TextSpan(
+                text: 'a link',
+                recognizer: TapGestureRecognizer()
+                  ..onTertiaryTapUp = (_) => opened++,
               ),
             ),
           ),
