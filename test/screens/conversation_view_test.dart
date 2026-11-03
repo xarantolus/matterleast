@@ -807,6 +807,31 @@ void main() {
       await close(tester);
     }, variant: desktop);
 
+    testWidgets('a slow right click on selected text opens the menu only', (
+      tester,
+    ) async {
+      await open(tester);
+      final text = tester.getRect(find.text('message 57'));
+      final drag = await tester.startGesture(
+        text.centerLeft + const Offset(1, 0),
+        kind: PointerDeviceKind.mouse,
+      );
+      await drag.moveTo(text.centerRight - const Offset(1, 0));
+      await drag.up();
+      await settle(tester);
+      final press = await tester.startGesture(
+        text.centerLeft + const Offset(8, 0),
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      await press.up();
+      await settle(tester);
+
+      expect(find.text('Copy selection'), findsOneWidget);
+      await close(tester);
+    }, variant: desktop);
+
     testWidgets('a selection across a message takes in its code', (
       tester,
     ) async {
