@@ -105,4 +105,4 @@ final class AnyUnreadProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$anyUnreadHash() => r'904e5774397c72c6a80d75d358fadd876b6433db';
+String _$anyUnreadHash() => r'acee069476ba826874ddf92cd608d1628d2d4022';
