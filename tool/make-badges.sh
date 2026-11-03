@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# Renders the unread badges for desktop: the tray icon with a dot
-# (assets/icon/tray_unread.png) and the Windows taskbar overlays with the
-# mention count (windows/runner/resources/badge_*.ico: 1-9 and 9+).
+# Renders the unread badges for desktop: the tray icon with a red dot for
+# mentions (assets/icon/tray_mention.png) and a blue one for other unread
+# messages (assets/icon/tray_unread.png), and the Windows taskbar overlays
+# with the mention count (windows/runner/resources/badge_*.ico: 1-9 and 9+).
 # Needs rsvg-convert and ImageMagick, present in the dev container image.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-rsvg-convert -w 512 -h 512 tool/icon/tray_unread.svg -o assets/icon/tray_unread.png
+rsvg-convert -w 512 -h 512 tool/icon/tray_dot.svg -o assets/icon/tray_mention.png
+sed 's/#D32F2F/#1E88E5/' tool/icon/tray_dot.svg |
+    rsvg-convert -w 512 -h 512 -o assets/icon/tray_unread.png
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 for label in 1 2 3 4 5 6 7 8 9 9+; do
