@@ -228,8 +228,8 @@ typedef _Matches = ({
 /// most of the window in view.
 const _switcherWidth = 600.0;
 
-/// The switcher full screen on a phone; on desktop a rounded card near
-/// the top of the window, as in other desktop apps.
+/// The switcher full screen on a phone; on desktop a rounded card in the
+/// upper middle of the window, as in other desktop apps.
 class _SwitcherFrame extends StatelessWidget {
   const _SwitcherFrame({required this.child});
 
@@ -242,10 +242,10 @@ class _SwitcherFrame extends StatelessWidget {
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
-        padding: EdgeInsets.only(top: size.height * 0.08),
+        padding: EdgeInsets.only(top: size.height * 0.18),
         child: SizedBox(
           width: math.min(_switcherWidth, size.width * 0.9),
-          height: size.height * 0.6,
+          height: size.height * 0.45,
           child: Material(
             type: MaterialType.card,
             elevation: 6,
