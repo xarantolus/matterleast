@@ -20,18 +20,12 @@ void main() {
   Reply reply = ok(<String, Object?>{});
 
   setUp(() async {
+    (server, session) = await startServerSession();
     now = DateTime.utc(2026, 10, 25, 10);
-    server = await FakeServer.start();
     server.handle = (r) =>
         r.path == '/api/v4/commands/execute' ? reply : error(404, 'not_found');
-    session = await testSession(server);
     actions = ComposerActions(session, clock: () => now);
-  });
-
-  tearDown(() async {
-    await actions.dispose();
-    await closeTestSession(session);
-    await server.close();
+    addTearDown(actions.dispose);
   });
 
   Future<List<PostRow>> ephemeral() => (session.db.select(

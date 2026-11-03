@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/permissions.dart';
@@ -6,16 +5,10 @@ import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 
-const _url = 'https://chat.example.test';
+import '../support/builders.dart';
+import '../support/pump_app.dart';
 
-PostItem _post(String userId) => PostItem(
-  id: 'post1',
-  key: 'post1',
-  userId: userId,
-  authorName: 'someone',
-  createAt: DateTime.utc(2026, 3, 1),
-  message: 'Hello',
-);
+const _url = 'https://chat.example.test';
 
 const _all = (
   react: true,
@@ -41,47 +34,41 @@ Future<void> _open(
   bool reminders = false,
   ValueChanged<String?>? onQuote,
 }) async {
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        postMenuFactsProvider(_url, post, 'team1').overrideWith(
-          (ref) async => (
-            myId: 'me',
-            saved: false,
-            following: false,
-            teamId: 'team1',
-            teamName: 'crew',
-            rights: rights,
-            reminders: reminders,
-          ),
-        ),
-        recentEmojiProvider(_url).overrideWith((ref) async => const []),
-        reportsEnabledProvider(
-          _url,
-          'team1',
-        ).overrideWith((ref) async => false),
-      ],
-      child: MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => showMessageMenu(
-                context,
-                MessageTarget(
-                  url: _url,
-                  teamId: 'team1',
-                  post: post,
-                  onEdit: () {},
-                  onReply: () {},
-                  onQuote: onQuote,
-                ),
-              ),
-              child: const Text('open'),
+  await pumpApp(
+    tester,
+    Scaffold(
+      body: Builder(
+        builder: (context) => TextButton(
+          onPressed: () => showMessageMenu(
+            context,
+            MessageTarget(
+              url: _url,
+              teamId: 'team1',
+              post: post,
+              onEdit: () {},
+              onReply: () {},
+              onQuote: onQuote,
             ),
           ),
+          child: const Text('open'),
         ),
       ),
     ),
+    overrides: [
+      postMenuFactsProvider(_url, post, 'team1').overrideWith(
+        (ref) async => (
+          myId: 'me',
+          saved: false,
+          following: false,
+          teamId: 'team1',
+          teamName: 'crew',
+          rights: rights,
+          reminders: reminders,
+        ),
+      ),
+      recentEmojiProvider(_url).overrideWith((ref) async => const []),
+      reportsEnabledProvider(_url, 'team1').overrideWith((ref) async => false),
+    ],
   );
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();
@@ -94,45 +81,38 @@ void main() {
       tester.view.physicalSize = const Size(1800, 2400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      final post = _post('other');
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            postMenuFactsProvider(_url, post, 'team1').overrideWith(
-              (ref) async => (
-                myId: 'me',
-                saved: false,
-                following: false,
-                teamId: 'team1',
-                teamName: 'crew',
-                rights: _all,
-                reminders: false,
-              ),
-            ),
-            recentEmojiProvider(_url).overrideWith((ref) async => const []),
-            reportsEnabledProvider(
-              _url,
-              'team1',
-            ).overrideWith((ref) async => false),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: Align(
-                alignment: Alignment.topLeft,
-                child: SizedBox(
-                  width: 240,
-                  child: MessageMenu(
-                    target: MessageTarget(
-                      url: _url,
-                      teamId: 'team1',
-                      post: post,
-                    ),
-                  ),
-                ),
+      final post = postItem(userId: 'other');
+      await pumpApp(
+        tester,
+        Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 240,
+              child: MessageMenu(
+                target: MessageTarget(url: _url, teamId: 'team1', post: post),
               ),
             ),
           ),
         ),
+        overrides: [
+          postMenuFactsProvider(_url, post, 'team1').overrideWith(
+            (ref) async => (
+              myId: 'me',
+              saved: false,
+              following: false,
+              teamId: 'team1',
+              teamName: 'crew',
+              rights: _all,
+              reminders: false,
+            ),
+          ),
+          recentEmojiProvider(_url).overrideWith((ref) async => const []),
+          reportsEnabledProvider(
+            _url,
+            'team1',
+          ).overrideWith((ref) async => false),
+        ],
       );
       await tester.pumpAndSettle();
       expect(find.byTooltip(RegExp(r'^:[^:]+:$')), findsNWidgets(3));
@@ -146,7 +126,7 @@ void main() {
   });
 
   testWidgets('the menu offers what the rights allow', (tester) async {
-    await _open(tester, _post('me'));
+    await _open(tester, postItem(userId: 'me'));
     expect(find.text('Edit'), findsOneWidget);
     expect(find.text('Delete'), findsOneWidget);
     expect(find.text('Reply'), findsOneWidget);
@@ -157,7 +137,7 @@ void main() {
   testWidgets('where nothing may be written only reading actions remain', (
     tester,
   ) async {
-    await _open(tester, _post('other'), rights: _readOnly);
+    await _open(tester, postItem(userId: 'other'), rights: _readOnly);
     expect(find.text('Edit'), findsNothing);
     expect(find.text('Delete'), findsNothing);
     expect(find.text('Reply'), findsNothing);
@@ -170,11 +150,11 @@ void main() {
   testWidgets('Remind me shows only where the server has reminders', (
     tester,
   ) async {
-    await _open(tester, _post('other'));
+    await _open(tester, postItem(userId: 'other'));
     expect(find.text('Remind me'), findsNothing);
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
-    await _open(tester, _post('other'), reminders: true);
+    await _open(tester, postItem(userId: 'other'), reminders: true);
     expect(find.text('Remind me'), findsOneWidget);
     await tester.tap(find.text('Remind me'));
     await tester.pumpAndSettle();
@@ -185,10 +165,14 @@ void main() {
 
   testWidgets('Quote hands the message link to the composer', (tester) async {
     String? quoted;
-    await _open(tester, _post('other'), onQuote: (link) => quoted = link);
+    await _open(
+      tester,
+      postItem(userId: 'other'),
+      onQuote: (link) => quoted = link,
+    );
     await tester.tap(find.text('Quote'));
     await tester.pumpAndSettle();
-    expect(quoted, '$_url/crew/pl/post1');
+    expect(quoted, '$_url/crew/pl/p1');
     expect(find.text('Quote'), findsNothing);
   });
 
@@ -196,7 +180,7 @@ void main() {
     testWidgets('a right click offers what the sheet offers ($name rights)', (
       tester,
     ) async {
-      final post = _post('me');
+      final post = postItem(userId: 'me');
       final target = MessageTarget(
         url: _url,
         teamId: 'team1',
@@ -205,49 +189,46 @@ void main() {
         onReply: () {},
         onQuote: (_) {},
       );
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            postMenuFactsProvider(_url, post, 'team1').overrideWith(
-              (ref) async => (
-                myId: 'me',
-                saved: false,
-                following: false,
-                teamId: 'team1',
-                teamName: 'crew',
-                rights: rights,
-                reminders: true,
-              ),
-            ),
-            recentEmojiProvider(_url).overrideWith((ref) async => const []),
-            reportsEnabledProvider(
-              _url,
-              'team1',
-            ).overrideWith((ref) async => false),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: Builder(
-                builder: (context) => Column(
-                  children: [
-                    TextButton(
-                      onPressed: () => showMessageMenu(context, target),
-                      child: const Text('sheet'),
-                    ),
-                    TextButton(
-                      onPressed: () => showMessageContextMenu(
-                        context,
-                        target,
-                        const Offset(200, 300),
-                      ),
-                      child: const Text('popup'),
-                    ),
-                  ],
+      await pumpApp(
+        tester,
+        Scaffold(
+          body: Builder(
+            builder: (context) => Column(
+              children: [
+                TextButton(
+                  onPressed: () => showMessageMenu(context, target),
+                  child: const Text('sheet'),
                 ),
-              ),
+                TextButton(
+                  onPressed: () => showMessageContextMenu(
+                    context,
+                    target,
+                    const Offset(200, 300),
+                  ),
+                  child: const Text('popup'),
+                ),
+              ],
             ),
           ),
         ),
+        overrides: [
+          postMenuFactsProvider(_url, post, 'team1').overrideWith(
+            (ref) async => (
+              myId: 'me',
+              saved: false,
+              following: false,
+              teamId: 'team1',
+              teamName: 'crew',
+              rights: rights,
+              reminders: true,
+            ),
+          ),
+          recentEmojiProvider(_url).overrideWith((ref) async => const []),
+          reportsEnabledProvider(
+            _url,
+            'team1',
+          ).overrideWith((ref) async => false),
+        ],
       );
 
       await tester.tap(find.text('sheet'));

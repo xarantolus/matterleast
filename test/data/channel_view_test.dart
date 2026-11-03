@@ -9,8 +9,7 @@ import '../support/test_session.dart';
 void main() {
   test('opening a channel tells the server, which keeps threads unread '
       'because the app understands collapsed threads', () async {
-    final server = await FakeServer.start();
-    final session = await testSession(server);
+    final (server, session) = await startServerSession();
     final viewed = Completer<SeenRequest>();
     server.handle = (r) {
       if (r.path == '/api/v4/channels/members/me/view') viewed.complete(r);
@@ -23,7 +22,5 @@ void main() {
     expect(request.method, 'POST');
     expect(request.body['channel_id'], channelId);
     expect(request.body['collapsed_threads_supported'], isTrue);
-    await closeTestSession(session);
-    await server.close();
   });
 }

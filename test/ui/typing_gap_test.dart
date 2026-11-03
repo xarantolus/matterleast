@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/screens/channel/typing_line.dart';
+
+import '../support/pump_app.dart';
 
 void main() {
   Future<({double gap, double line})> measure(
@@ -13,18 +14,16 @@ void main() {
     debugDefaultTargetPlatformOverride = platform;
     late double gap;
     late double line;
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: MatterleastApp.lightTheme,
-        home: MediaQuery(
-          data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-          child: Builder(
-            builder: (context) {
-              gap = conversationBottomGap(context);
-              line = typingLineHeight(context);
-              return const SizedBox();
-            },
-          ),
+    await pumpApp(
+      tester,
+      MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+        child: Builder(
+          builder: (context) {
+            gap = conversationBottomGap(context);
+            line = typingLineHeight(context);
+            return const SizedBox();
+          },
         ),
       ),
     );

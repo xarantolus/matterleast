@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
@@ -11,6 +10,8 @@ import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/interactive_message.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
+
+import '../support/pump_app.dart';
 
 PostItem _post(Map<String, Object?> props, {String id = 'p1'}) => PostItem(
   id: id,
@@ -32,24 +33,22 @@ void main() {
     answer = null;
   });
 
-  Future<void> pump(WidgetTester tester, Widget child) => tester.pumpWidget(
-    MaterialApp(
-      theme: MatterleastApp.lightTheme,
-      home: Scaffold(
-        body: PostEnvironment(
-          server: Uri.parse('https://chat.example.test'),
-          options: const ParseOptions(),
-          myUsername: 'river',
-          onMention: (_) {},
-          onChannel: (_) {},
-          onLink: (_) {},
-          mmBlocks: true,
-          onAction: (r) {
-            sent.add(r);
-            return answer?.future ?? Future.value();
-          },
-          child: SingleChildScrollView(child: child),
-        ),
+  Future<void> pump(WidgetTester tester, Widget child) => pumpApp(
+    tester,
+    Scaffold(
+      body: PostEnvironment(
+        server: Uri.parse('https://chat.example.test'),
+        options: const ParseOptions(),
+        myUsername: 'river',
+        onMention: (_) {},
+        onChannel: (_) {},
+        onLink: (_) {},
+        mmBlocks: true,
+        onAction: (r) {
+          sent.add(r);
+          return answer?.future ?? Future.value();
+        },
+        child: SingleChildScrollView(child: child),
       ),
     ),
   );

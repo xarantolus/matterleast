@@ -26,9 +26,9 @@ void main() {
   var seq = 0;
 
   setUp(() async {
+    (server, session) = await startServerSession();
     seq = 0;
     now = DateTime.utc(2026, 10, 25, 10);
-    server = await FakeServer.start();
     server.handle = (r) {
       if (r.method == 'POST' && r.path == '/api/v4/posts') {
         return ok({
@@ -43,12 +43,6 @@ void main() {
       }
       return error(404, 'not_found');
     };
-    session = await testSession(server);
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   Map<String, Object?> post(

@@ -1,10 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
@@ -13,6 +11,8 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/home/home_pane.dart';
 import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+
+import '../support/pump_app.dart';
 
 const _url = 'https://chat.example.test';
 const _server = ServerEntry(
@@ -65,24 +65,20 @@ Future<void> _show(
   tester.view.physicalSize = const Size(400, 800);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        serverSessionProvider(_url)
-            .overrideWith((ref) => Completer<ServerSession>().future),
-        serverInboxProvider(_url).overrideWith(
-          (ref) => inbox == null ? const Stream.empty() : Stream.value(inbox),
-        ),
-        syncStatusProvider(_url).overrideWith(
-          (ref) => status == null ? const Stream.empty() : Stream.value(status),
-        ),
-        homeFilterSelectionProvider.overrideWith(() => _Filter(filter)),
-      ],
-      child: MaterialApp(
-        theme: MatterleastApp.lightTheme,
-        home: const Scaffold(body: HomePane(servers: [_server])),
+  await pumpApp(
+    tester,
+    const Scaffold(body: HomePane(servers: [_server])),
+    overrides: [
+      serverSessionProvider(_url)
+          .overrideWith((ref) => Completer<ServerSession>().future),
+      serverInboxProvider(_url).overrideWith(
+        (ref) => inbox == null ? const Stream.empty() : Stream.value(inbox),
       ),
-    ),
+      syncStatusProvider(_url).overrideWith(
+        (ref) => status == null ? const Stream.empty() : Stream.value(status),
+      ),
+      homeFilterSelectionProvider.overrideWith(() => _Filter(filter)),
+    ],
   );
   await tester.pump();
   await tester.pump();

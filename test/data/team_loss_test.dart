@@ -19,9 +19,8 @@ void main() {
   late ServerSession session;
 
   setUp(() async {
-    server = await FakeServer.start();
+    (server, session) = await startServerSession();
     server.handle = (_) => ok({'status': 'OK'});
-    session = await testSession(server);
     await session.store.applyChannels(
       channels: [
         api.Channel.fromJson({
@@ -45,11 +44,6 @@ void main() {
         ),
       );
     }
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   Future<List<String>> teams() async => [

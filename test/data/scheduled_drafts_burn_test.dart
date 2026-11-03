@@ -20,15 +20,9 @@ void main() {
   late ComposerActions composer;
 
   setUp(() async {
-    server = await FakeServer.start();
-    session = await testSession(server);
+    (server, session) = await startServerSession();
     composer = session.composer;
-  });
-
-  tearDown(() async {
-    await composer.dispose();
-    await closeTestSession(session);
-    await server.close();
+    addTearDown(composer.dispose);
   });
 
   Future<void> settle() =>

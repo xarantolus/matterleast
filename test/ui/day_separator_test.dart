@@ -1,9 +1,9 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/ui/post_tile.dart';
+
+import '../support/pump_app.dart';
 
 class _Clock extends Today {
   _Clock(this.start);
@@ -21,14 +21,10 @@ void main() {
     tester,
   ) async {
     final clock = _Clock(DateTime(2026, 10, 26));
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [todayProvider.overrideWith(() => clock)],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: Scaffold(body: DaySeparatorTile(day: DateTime(2026, 10, 26))),
-        ),
-      ),
+    await pumpApp(
+      tester,
+      Scaffold(body: DaySeparatorTile(day: DateTime(2026, 10, 26))),
+      overrides: [todayProvider.overrideWith(() => clock)],
     );
     expect(find.text('TODAY'), findsOneWidget);
 

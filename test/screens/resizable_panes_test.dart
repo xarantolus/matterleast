@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart' show DatabaseConnection;
 import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
@@ -9,6 +8,8 @@ import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/pane_widths.dart';
 import 'package:matterleast/screens/root/resizable_panes.dart';
+
+import '../support/pump_app.dart';
 
 /// How often each row was built, by name.
 final _builds = <String, int>{};
@@ -81,21 +82,16 @@ void main() {
       ..physicalSize = Size(width, 900)
       ..devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [appDatabaseProvider.overrideWithValue(db)],
-        child: MaterialApp(
-          home: ResizablePanes(
-            defaultListWidth: _defaultList,
-            listInset: _rail,
-            list: const _Pane('list', key: ValueKey('list')),
-            main: const _Pane('main', key: ValueKey('main')),
-            side: thread
-                ? const _Pane('thread', key: ValueKey('thread'))
-                : null,
-          ),
-        ),
+    await pumpApp(
+      tester,
+      ResizablePanes(
+        defaultListWidth: _defaultList,
+        listInset: _rail,
+        list: const _Pane('list', key: ValueKey('list')),
+        main: const _Pane('main', key: ValueKey('main')),
+        side: thread ? const _Pane('thread', key: ValueKey('thread')) : null,
       ),
+      overrides: [appDatabaseProvider.overrideWithValue(db)],
     );
     await settle(tester);
   }

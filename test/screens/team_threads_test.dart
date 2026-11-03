@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -14,6 +12,8 @@ import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/ui/slide_route.dart';
+
+import '../support/pump_app.dart';
 
 const _url = 'https://chat.example.test';
 
@@ -36,26 +36,22 @@ InboxItem _thread(String root, {required bool unread}) => InboxItem(
 );
 
 Future<void> _open(WidgetTester tester, List<InboxItem> threads) async {
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        serverSessionProvider(_url)
-            .overrideWith((ref) => Completer<ServerSession>().future),
-        teamThreadsProvider(
-          _url,
-          't1',
-        ).overrideWith((ref) => Stream.value(threads)),
-        syncStatusProvider(_url)
-            .overrideWith((ref) => const Stream<SyncStatus>.empty()),
-        knownPresenceProvider(_url).overrideWithValue(const {}),
-        featuresProvider(_url)
-            .overrideWith((ref) => Stream.value(const ServerFeatures())),
-      ],
-      child: MaterialApp(
-        theme: MatterleastApp.lightTheme,
-        home: const Scaffold(body: Text('Channels')),
-      ),
-    ),
+  await pumpApp(
+    tester,
+    const Scaffold(body: Text('Channels')),
+    overrides: [
+      serverSessionProvider(_url)
+          .overrideWith((ref) => Completer<ServerSession>().future),
+      teamThreadsProvider(
+        _url,
+        't1',
+      ).overrideWith((ref) => Stream.value(threads)),
+      syncStatusProvider(_url)
+          .overrideWith((ref) => const Stream<SyncStatus>.empty()),
+      knownPresenceProvider(_url).overrideWithValue(const {}),
+      featuresProvider(_url)
+          .overrideWith((ref) => Stream.value(const ServerFeatures())),
+    ],
   );
   unawaited(
     tester

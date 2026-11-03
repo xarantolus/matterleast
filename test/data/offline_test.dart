@@ -32,21 +32,15 @@ void main() {
   }
 
   setUp(() async {
-    server = await FakeServer.start();
     reports = StreamController();
+    addTearDown(reports.close);
     network = NetworkState(reports.stream);
-    session = await testSession(server, network: network);
+    addTearDown(network.close);
+    (server, session) = await startServerSession(network: network);
     statuses = [];
     session.runner.status.addListener(
       () => statuses.add(session.runner.status.value),
     );
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await network.close();
-    await reports.close();
-    await server.close();
   });
 
   group('without a network', () {

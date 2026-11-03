@@ -31,17 +31,11 @@ void main() {
   late List<SyncStatus> statuses;
 
   setUp(() async {
-    server = await FakeServer.start();
-    session = await testSession(server);
+    (server, session) = await startServerSession();
     statuses = [];
     session.runner.status.addListener(
       () => statuses.add(session.runner.status.value),
     );
-  });
-
-  tearDown(() async {
-    await closeTestSession(session);
-    await server.close();
   });
 
   /// The server stops answering, and one request finds out: it waits for

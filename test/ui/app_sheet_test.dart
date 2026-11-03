@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 
+import '../support/pump_app.dart';
+
 void main() {
   final desktopAndPhone = TargetPlatformVariant({
     TargetPlatform.linux,
@@ -12,9 +14,7 @@ void main() {
   bool desktop() => defaultTargetPlatform == TargetPlatform.linux;
 
   Future<Future<String?>> open(WidgetTester tester, {Rect? anchor}) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: SizedBox.expand())),
-    );
+    await pumpApp(tester, Scaffold(body: SizedBox.expand()));
     final context = tester.element(find.byType(SizedBox));
     final picked = showAppSheet<String>(
       context: context,

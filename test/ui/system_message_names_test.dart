@@ -1,11 +1,11 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/post_tile.dart';
+
+import '../support/pump_app.dart';
 
 PostItem _added({Map<String, String> current = const {}}) => PostItem(
   id: 'p1',
@@ -24,21 +24,17 @@ PostItem _added({Map<String, String> current = const {}}) => PostItem(
 void main() {
   Future<List<String>> show(WidgetTester tester, PostItem post) async {
     final tapped = <String>[];
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: Scaffold(
-            body: PostEnvironment(
-              server: Uri.parse('https://chat.example.test'),
-              options: const ParseOptions(),
-              myUsername: 'me',
-              onMention: tapped.add,
-              onChannel: (_) {},
-              onLink: (_) {},
-              child: ListView(children: [PostTile(post: post)]),
-            ),
-          ),
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: PostEnvironment(
+          server: Uri.parse('https://chat.example.test'),
+          options: const ParseOptions(),
+          myUsername: 'me',
+          onMention: tapped.add,
+          onChannel: (_) {},
+          onLink: (_) {},
+          child: ListView(children: [PostTile(post: post)]),
         ),
       ),
     );

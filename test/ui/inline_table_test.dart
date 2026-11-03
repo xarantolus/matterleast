@@ -1,13 +1,13 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/markdown/table_block.dart';
+
+import '../support/pump_app.dart';
 
 String _table(int rows, int columns, String Function(int, int) cell) {
   final head = '| ${List.generate(columns, (c) => 'H$c').join(' | ')} |';
@@ -23,22 +23,18 @@ Future<void> _show(WidgetTester tester, String message, Size size) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(
-        theme: MatterleastApp.lightTheme,
-        home: Scaffold(
-          body: PostEnvironment(
-            server: Uri.parse('https://chat.example.test'),
-            options: const ParseOptions(),
-            myUsername: 'me',
-            onMention: (_) {},
-            onChannel: (_) {},
-            onLink: (_) {},
-            child: ListView(
-              children: [PostBody(postId: 'p1', message: message)],
-            ),
-          ),
+  await pumpApp(
+    tester,
+    Scaffold(
+      body: PostEnvironment(
+        server: Uri.parse('https://chat.example.test'),
+        options: const ParseOptions(),
+        myUsername: 'me',
+        onMention: (_) {},
+        onChannel: (_) {},
+        onLink: (_) {},
+        child: ListView(
+          children: [PostBody(postId: 'p1', message: message)],
         ),
       ),
     ),

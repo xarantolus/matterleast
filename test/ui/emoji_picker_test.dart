@@ -1,11 +1,11 @@
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
+
+import '../support/pump_app.dart';
 
 const _url = 'https://chat.example.test';
 
@@ -29,28 +29,24 @@ void main() {
     tester,
   ) async {
     String? picked;
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          recentEmojiProvider(_url).overrideWith((ref) async => ['smile']),
-          customEmojiProvider(_url)
-              .overrideWith((ref) => Stream.value(const <String, String>{})),
-          customEmojiCatalogProvider(_url).overrideWith((ref) async {}),
-          skinToneProvider(_url).overrideWith((ref) => Stream.value(0)),
-        ],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => TextButton(
-                onPressed: () async =>
-                    picked = await showEmojiPicker(context, _url),
-                child: const Text('open'),
-              ),
-            ),
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async =>
+                picked = await showEmojiPicker(context, _url),
+            child: const Text('open'),
           ),
         ),
       ),
+      overrides: [
+        recentEmojiProvider(_url).overrideWith((ref) async => ['smile']),
+        customEmojiProvider(_url)
+            .overrideWith((ref) => Stream.value(const <String, String>{})),
+        customEmojiCatalogProvider(_url).overrideWith((ref) async {}),
+        skinToneProvider(_url).overrideWith((ref) => Stream.value(0)),
+      ],
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
@@ -74,28 +70,24 @@ void main() {
       WidgetTester tester,
       ValueChanged<String?> onPicked,
     ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            recentEmojiProvider(_url).overrideWith((ref) async => const []),
-            customEmojiProvider(_url)
-                .overrideWith((ref) => Stream.value(const <String, String>{})),
-            customEmojiCatalogProvider(_url).overrideWith((ref) async {}),
-            skinToneProvider(_url).overrideWith((ref) => Stream.value(0)),
-          ],
-          child: MaterialApp(
-            theme: MatterleastApp.lightTheme,
-            home: Scaffold(
-              body: Builder(
-                builder: (context) => TextButton(
-                  onPressed: () async =>
-                      onPicked(await showEmojiPicker(context, _url)),
-                  child: const Text('open'),
-                ),
-              ),
+      await pumpApp(
+        tester,
+        Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async =>
+                  onPicked(await showEmojiPicker(context, _url)),
+              child: const Text('open'),
             ),
           ),
         ),
+        overrides: [
+          recentEmojiProvider(_url).overrideWith((ref) async => const []),
+          customEmojiProvider(_url)
+              .overrideWith((ref) => Stream.value(const <String, String>{})),
+          customEmojiCatalogProvider(_url).overrideWith((ref) async {}),
+          skinToneProvider(_url).overrideWith((ref) => Stream.value(0)),
+        ],
       );
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
