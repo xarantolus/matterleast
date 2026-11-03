@@ -191,9 +191,34 @@ class DesktopShell with WindowListener {
     }
   }
 
-  tray.Image? _trayImage() => tray.ImageAsset.fromAsset(
-    windowBadge(_unread ?? 0).dot ? trayUnreadAsset : appIconAsset,
-  );
+  tray.Image? _trayImage() => tray.ImageAsset.fromAsset(switch (trayState(
+    _unread ?? 0,
+    unread: _anyUnread,
+  )) {
+    TrayState.mention => trayMentionAsset,
+    TrayState.unread => trayUnreadAsset,
+    TrayState.none => appIconAsset,
+  });
+
+  var _anyUnread = false;
+
+  /// Shows on the tray icon whether other messages are unread.
+  void showAnyUnread(bool unread) {
+    if (unread == _anyUnread) return;
+    final before = _trayState;
+    _anyUnread = unread;
+    if (_trayState != before) _updateTrayIcon();
+  }
+
+  TrayState get _trayState => trayState(_unread ?? 0, unread: _anyUnread);
+
+  void _updateTrayIcon() {
+    try {
+      _tray?.icon = _trayImage();
+    } on Object catch (e) {
+      Log.warn('desktop', 'Changing the tray icon failed', e);
+    }
+  }
 
   /// Shows [count] unread mentions and direct messages on the tray icon and
   /// the taskbar button, and flashes the button when one arrives while the
@@ -201,14 +226,11 @@ class DesktopShell with WindowListener {
   void showUnread(int? count) {
     if (count == null) return;
     final before = _unread;
+    final trayBefore = _trayState;
     _unread = count;
     final badge = windowBadge(count);
+    if (_trayState != trayBefore) _updateTrayIcon();
     if (before == null || windowBadge(before) != badge) {
-      try {
-        _tray?.icon = _trayImage();
-      } on Object catch (e) {
-        Log.warn('desktop', 'Changing the tray icon failed', e);
-      }
       unawaited(Taskbar.setOverlay(badge.overlay));
     }
     final flash = flashesTaskbar(

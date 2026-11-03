@@ -33,6 +33,11 @@ Future<void> main() async {
       fireImmediately: true,
     );
     container.listen(
+      anyUnreadProvider,
+      (_, unread) => shell.showAnyUnread(unread),
+      fireImmediately: true,
+    );
+    container.listen(
       windowTitleTextProvider,
       (_, title) => unawaited(DesktopShell.setTitle(title)),
       fireImmediately: true,

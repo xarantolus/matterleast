@@ -16,6 +16,9 @@ String get deviceWord => isDesktop ? 'computer' : 'phone';
 /// desktop.
 const appIconAsset = 'assets/icon/legacy.png';
 
-/// The tray icon with a dot, while there are unread mentions or direct
+/// The tray icon with a red dot, while there are unread mentions or direct
 /// messages; made by tool/make-badges.sh.
+const trayMentionAsset = 'assets/icon/tray_mention.png';
+
+/// The tray icon with a blue dot, while only other messages are unread.
 const trayUnreadAsset = 'assets/icon/tray_unread.png';

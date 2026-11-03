@@ -26,6 +26,17 @@ typedef WindowBadge = ({
 WindowBadge windowBadge(int count) =>
     (dot: count > 0, overlay: count <= 0 ? 0 : (count > 9 ? 10 : count));
 
+/// What the tray icon shows, as in Mattermost's desktop app.
+enum TrayState { none, unread, mention }
+
+/// Pure: [mentions] (mentions and direct messages) win over messages that
+/// are only [unread].
+TrayState trayState(int mentions, {required bool unread}) => mentions > 0
+    ? TrayState.mention
+    : unread
+    ? TrayState.unread
+    : TrayState.none;
+
 /// What a Linux dock or launcher shows on the app's icon, as the Unity
 /// LauncherEntry `Update` signal carries it.
 typedef LauncherEntry = ({int count, bool visible, bool urgent});

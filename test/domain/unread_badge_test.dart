@@ -70,4 +70,11 @@ void main() {
       expect(flashesTaskbar(before: 3, now: 3, focused: false), isFalse);
     });
   });
+
+  test('the tray shows mentions over other unread messages', () {
+    expect(trayState(0, unread: false), TrayState.none);
+    expect(trayState(0, unread: true), TrayState.unread);
+    expect(trayState(2, unread: false), TrayState.mention);
+    expect(trayState(2, unread: true), TrayState.mention);
+  });
 }
