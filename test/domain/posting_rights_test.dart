@@ -22,7 +22,7 @@ ChannelPermissions _channel(
 }) => channelPermissions(
   archived: archived,
   readOnly: readOnly,
-  granted: granted,
+  can: granted.contains,
 );
 
 final _posted = DateTime.utc(2026, 5, 1, 12);
@@ -117,27 +117,14 @@ void main() {
   });
 
   test('the default channel is read-only for everyone but system admins', () {
-    bool readOnly(String name, Set<String> roles) => readOnlyChannel(
+    bool readOnly(String name, String roles) => readOnlyChannel(
       channelName: name,
       townSquareReadOnly: true,
-      roles: roles,
+      systemRoles: roles,
     );
-    expect(readOnly('town-square', {'system_user'}), isTrue);
-    expect(readOnly('town-square', {'system_user', 'system_admin'}), isFalse);
-    expect(readOnly('off-topic', {'system_user'}), isFalse);
-  });
-
-  test('roles grant what any of them grants', () {
-    expect(
-      grantedBy(
-        {'a', 'b', 'unknown'},
-        {
-          'a': {'x'},
-          'b': {'y'},
-        },
-      ),
-      {'x', 'y'},
-    );
+    expect(readOnly('town-square', 'system_user'), isTrue);
+    expect(readOnly('town-square', 'system_user system_admin'), isFalse);
+    expect(readOnly('off-topic', 'system_user'), isFalse);
   });
 
   group('channel-wide mentions', () {

@@ -101,11 +101,6 @@ void main() {
       'roles': 'system_user system_admin',
     });
     await settled();
-    expect(await PermissionViews(session.db).rolesIn(channelId), {
-      'system_user',
-      'system_admin',
-      'channel_user',
-    });
     expect((await rights()).editOthers, isTrue);
   });
 
@@ -115,9 +110,6 @@ void main() {
       'roles': 'system_user system_admin',
     });
     await settled();
-    expect(await PermissionViews(session.db).rolesIn(channelId), {
-      'system_user',
-      'channel_user',
-    });
+    expect((await rights()).editOthers, isFalse);
   });
 }

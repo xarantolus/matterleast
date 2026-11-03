@@ -65,15 +65,10 @@ typedef EmojiRights = ({bool create, bool deleteOwn, bool deleteOthers});
 
 const noEmojiRights = (create: false, deleteOwn: false, deleteOthers: false);
 
-/// Pure: the rights the user's [roles] grant; none when the server has
-/// custom emoji off.
-EmojiRights emojiRights({
-  required bool enabled,
-  required Iterable<String> roles,
-  required Map<String, Set<String>> granted,
-}) {
+/// Pure: the rights [can] grants (system or any team, as the web app
+/// gates them); none when the server has custom emoji off.
+EmojiRights emojiRights({required bool enabled, required Can can}) {
   if (!enabled) return noEmojiRights;
-  bool can(String p) => hasPermission(p, roles: roles, granted: granted);
   return (
     create: can(Permission.createEmojis),
     deleteOwn: can(Permission.deleteEmojis),

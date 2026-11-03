@@ -59,9 +59,6 @@ class ChannelViews {
     final team = await (db.select(
       db.teams,
     )..where((t) => t.id.equals(teamId))).getSingleOrNull();
-    final myTeam = await (db.select(
-      db.myTeams,
-    )..where((t) => t.teamId.equals(teamId))).getSingleOrNull();
     final format = await db.nameFormat();
     final partnerId = channel.type == 'D'
         ? directPartnerId(channel.name, myId)
@@ -102,15 +99,11 @@ class ChannelViews {
                   db.categories.type.equals('favorites'),
             ))
             .get();
-    final granted = await PermissionViews(db).roleGrants();
+    final permissions = PermissionViews(db);
     final rights = channelRights(
       channel.type,
-      roles: roleNames([
-        await db.syncText(SyncKeys.currentUserRoles) ?? '',
-        myTeam?.roles ?? '',
-        mine?.roles ?? '',
-      ]),
-      granted: granted,
+      can: await permissions.inChannel(channelId),
+      canInTeam: await permissions.inTeam(channel.teamId),
     );
     final props =
         mine?.notifyProps ?? api.ChannelNotifyProps.fromJson(const {});
@@ -167,15 +160,7 @@ class ChannelViews {
   Future<({bool public, bool private, bool join})> teamRights(
     String teamId,
   ) async {
-    final myTeam = await (db.select(
-      db.myTeams,
-    )..where((t) => t.teamId.equals(teamId))).getSingleOrNull();
-    final roles = roleNames([
-      await db.syncText(SyncKeys.currentUserRoles) ?? '',
-      myTeam?.roles ?? '',
-    ]);
-    final granted = await PermissionViews(db).roleGrants();
-    bool can(String p) => hasPermission(p, roles: roles, granted: granted);
+    final can = await PermissionViews(db).inTeam(teamId);
     return (
       public: can(Permission.createPublicChannel),
       private: can(Permission.createPrivateChannel),
@@ -186,17 +171,14 @@ class ChannelViews {
   /// The teams a group message can move into: those where the user may
   /// create private channels, by name.
   Future<List<({String id, String displayName})>> convertTargets() async {
-    final granted = await PermissionViews(db).roleGrants();
-    final system = await db.syncText(SyncKeys.currentUserRoles) ?? '';
+    final permissions = PermissionViews(db);
     final names = {
       for (final t in await db.select(db.teams).get()) t.id: t.displayName,
     };
     return [
       for (final m in await db.select(db.myTeams).get())
-        if (hasPermission(
+        if ((await permissions.inTeam(m.teamId))(
               Permission.createPrivateChannel,
-              roles: roleNames([system, m.roles]),
-              granted: granted,
             ) &&
             names[m.teamId] != null)
           (id: m.teamId, displayName: names[m.teamId]!),
@@ -208,15 +190,8 @@ class ChannelViews {
 
   /// What the user may do about inviting people to [teamId].
   Future<TeamInviteRights> teamInvite(String teamId) async {
-    final myTeam = await (db.select(
-      db.myTeams,
-    )..where((t) => t.teamId.equals(teamId))).getSingleOrNull();
     return teamInviteRights(
-      roles: roleNames([
-        await db.syncText(SyncKeys.currentUserRoles) ?? '',
-        myTeam?.roles ?? '',
-      ]),
-      granted: await PermissionViews(db).roleGrants(),
+      can: await PermissionViews(db).inTeam(teamId),
       emailInvitations: (await db.features()).emailInvitations,
     );
   }

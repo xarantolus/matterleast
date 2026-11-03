@@ -89,27 +89,23 @@ BookmarkRights bookmarkRights(
   String type, {
   required bool archived,
   required bool guest,
-  required Iterable<String> roles,
-  required Map<String, Set<String>> granted,
+  required Can can,
 }) {
   if (archived || guest) return noBookmarkRights;
   if (type == 'D' || type == 'G') {
     return (add: true, edit: true, delete: true, reorder: true);
   }
   final public = type == 'O';
-  bool can(String publicName, String privateName) => hasPermission(
-    public ? publicName : privateName,
-    roles: roles,
-    granted: granted,
-  );
+  bool pick(String publicName, String privateName) =>
+      can(public ? publicName : privateName);
   return (
-    add: can(BookmarkPermission.addPublic, BookmarkPermission.addPrivate),
-    edit: can(BookmarkPermission.editPublic, BookmarkPermission.editPrivate),
-    delete: can(
+    add: pick(BookmarkPermission.addPublic, BookmarkPermission.addPrivate),
+    edit: pick(BookmarkPermission.editPublic, BookmarkPermission.editPrivate),
+    delete: pick(
       BookmarkPermission.deletePublic,
       BookmarkPermission.deletePrivate,
     ),
-    reorder: can(
+    reorder: pick(
       BookmarkPermission.orderPublic,
       BookmarkPermission.orderPrivate,
     ),

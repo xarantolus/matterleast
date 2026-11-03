@@ -5,6 +5,7 @@ import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/extras_views.dart';
 import 'package:matterleast/domain/bookmarks.dart';
+import 'package:matterleast/domain/permissions.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
@@ -173,8 +174,12 @@ void main() {
       type,
       archived: archived,
       guest: guest,
-      roles: const {'channel_user'},
-      granted: {'channel_user': granted},
+      can: haveIChannelPermission(
+        systemRoles: '',
+        teamRoles: '',
+        channelRoles: 'channel_user',
+        granted: {'channel_user': granted},
+      ),
     );
 
     test('come from the channel type permissions', () {
