@@ -90,4 +90,26 @@ void main() {
     expect(steps, isEmpty);
     expect(scroll.offset, greaterThan(0));
   }, variant: linuxOnly);
+
+  testWidgets('a swipe back on the first page of a page view goes back', (
+    tester,
+  ) async {
+    await show(
+      tester,
+      PageView(children: [for (var i = 0; i < 3; i++) Text('page $i')]),
+    );
+    await swipe(tester, swipeDistance + 40);
+    expect(steps, [false]);
+    expect(find.text('page 0'), findsOneWidget);
+  }, variant: linuxOnly);
+
+  testWidgets('a swipe forward in a page view turns the page', (tester) async {
+    await show(
+      tester,
+      PageView(children: [for (var i = 0; i < 3; i++) Text('page $i')]),
+    );
+    await swipe(tester, -swipeDistance - 40);
+    expect(steps, isEmpty);
+    expect(find.text('page 1'), findsOneWidget);
+  }, variant: linuxOnly);
 }

@@ -894,8 +894,10 @@ class _SelectableState extends State<_Selectable> {
     final menu = widget.onContextMenu;
     if (menu == null) return widget.child;
     return SelectionArea(
-      // A right click opens the message menu, which offers the selection.
-      contextMenuBuilder: null,
+      // A right click opens the message menu, which offers the selection;
+      // the area's own menu stays empty (a null builder throws when a
+      // press longer than a tap makes it try to show one).
+      contextMenuBuilder: (_, _) => const SizedBox.shrink(),
       onSelectionChanged: (content) => _selected = content?.plainText,
       child: GestureDetector(
         onTap: widget.onTap,
