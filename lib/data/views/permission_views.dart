@@ -11,44 +11,55 @@ class PermissionViews {
   final ServerDatabase db;
 
   /// Each stored role's permissions by role name.
-  Future<Map<String, Set<String>>> roleGrants() async => {
+  Future<Grants> roleGrants() async => {
     for (final r in await db.select(db.roles).get())
       r.name: r.permissions.toSet(),
   };
 
-  /// The user's system, team and channel role names in [channelId]; for
-  /// direct and group messages, which belong to no team, without team
-  /// roles.
-  Future<Set<String>> rolesIn(String channelId) async {
+  Future<String> systemRoles() async =>
+      await db.syncText(SyncKeys.currentUserRoles) ?? '';
+
+  Future<String> _teamRoles(String teamId) async {
+    if (teamId.isEmpty) return '';
+    final myTeam = await (db.select(
+      db.myTeams,
+    )..where((t) => t.teamId.equals(teamId))).getSingleOrNull();
+    return myTeam?.roles ?? '';
+  }
+
+  /// The user's permissions in [teamId]: system roles, then that team's.
+  Future<Can> inTeam(String teamId) async => haveITeamPermission(
+    systemRoles: await systemRoles(),
+    teamRoles: await _teamRoles(teamId),
+    granted: await roleGrants(),
+  );
+
+  /// The user's permissions in [channelId]: system roles, the channel's
+  /// team's, then the channel's; direct and group messages have no team.
+  Future<Can> inChannel(String channelId) async {
     final channel = await (db.select(
       db.channels,
     )..where((c) => c.id.equals(channelId))).getSingleOrNull();
     final mine = await (db.select(
       db.myChannels,
     )..where((m) => m.channelId.equals(channelId))).getSingleOrNull();
-    final teamId = channel?.teamId ?? '';
-    final myTeam = teamId.isEmpty
-        ? null
-        : await (db.select(
-            db.myTeams,
-          )..where((t) => t.teamId.equals(teamId))).getSingleOrNull();
-    return roleNames([
-      await db.syncText(SyncKeys.currentUserRoles) ?? '',
-      myTeam?.roles ?? '',
-      mine?.roles ?? '',
-    ]);
+    return haveIChannelPermission(
+      systemRoles: await systemRoles(),
+      teamRoles: await _teamRoles(channel?.teamId ?? ''),
+      channelRoles: mine?.roles ?? '',
+      granted: await roleGrants(),
+    );
   }
 
   /// What the user may do with custom emoji; nothing when the server has
-  /// them off. Team roles count too: a server that lets only team admins
-  /// add emoji grants it there.
+  /// them off.
   Future<EmojiRights> emoji() async => emojiRights(
     enabled: (await db.features()).customEmoji,
-    roles: roleNames([
-      await db.syncText(SyncKeys.currentUserRoles) ?? '',
-      for (final t in await db.select(db.myTeams).get()) t.roles,
-    ]),
-    granted: await roleGrants(),
+    can: haveIAnyTeamPermission(
+      systemRoles: await systemRoles(),
+      teamRoles: [for (final t in await db.select(db.myTeams).get()) t.roles],
+      granted: await roleGrants(),
+    ),
   );
 
   Stream<EmojiRights> watchEmoji() => throttledWatch(
@@ -68,16 +79,15 @@ class PermissionViews {
     final channel = await (db.select(
       db.channels,
     )..where((c) => c.id.equals(channelId))).getSingleOrNull();
-    final roles = await rolesIn(channelId);
     final features = await db.features();
     return channelPermissions(
       archived: channel?.deleteAt != null,
       readOnly: readOnlyChannel(
         channelName: channel?.name ?? '',
         townSquareReadOnly: features.townSquareReadOnly,
-        roles: roles,
+        systemRoles: await systemRoles(),
       ),
-      granted: grantedBy(roles, await roleGrants()),
+      can: await inChannel(channelId),
     );
   }
 

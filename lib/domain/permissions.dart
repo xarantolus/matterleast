@@ -39,14 +39,71 @@ bool isGuest(String? roles) =>
 /// The server keeps at most this many different emoji on one message.
 const maxDistinctReactions = 40;
 
-/// Pure: whether any of the user's [roles] (system, team and channel roles
-/// together, as the server checks them) grants [permission]. [granted] holds
-/// each known role's permissions.
-bool hasPermission(
-  String permission, {
-  required Iterable<String> roles,
-  required Map<String, Set<String>> granted,
-}) => roles.any((role) => granted[role]?.contains(permission) ?? false);
+/// Each known role's permissions by role name.
+typedef Grants = Map<String, Set<String>>;
+
+/// Answers whether the user holds a permission at one level of the cascade.
+typedef Can = bool Function(String permission);
+
+bool _held(String permission, String roles, Grants granted) =>
+    roleNames([roles])
+        .any((role) => granted[role]?.contains(permission) ?? false);
+
+/// Pure: `haveISystemPermission` of the web app: the user's system roles.
+Can haveISystemPermission({
+  required String systemRoles,
+  required Grants granted,
+}) =>
+    (permission) => _held(permission, systemRoles, granted);
+
+/// Pure: `haveITeamPermission`: the system roles, then the roles in the
+/// membership of that team.
+Can haveITeamPermission({
+  required String systemRoles,
+  required String teamRoles,
+  required Grants granted,
+}) {
+  final system = haveISystemPermission(
+    systemRoles: systemRoles,
+    granted: granted,
+  );
+  return (permission) =>
+      system(permission) || _held(permission, teamRoles, granted);
+}
+
+/// Pure: `haveIChannelPermission`: the system roles, then the roles in the
+/// membership of the channel's team (empty for direct and group messages),
+/// then the roles in the channel membership.
+Can haveIChannelPermission({
+  required String systemRoles,
+  required String teamRoles,
+  required String channelRoles,
+  required Grants granted,
+}) {
+  final team = haveITeamPermission(
+    systemRoles: systemRoles,
+    teamRoles: teamRoles,
+    granted: granted,
+  );
+  return (permission) =>
+      team(permission) || _held(permission, channelRoles, granted);
+}
+
+/// Pure: the web app's any-team gate, used for custom emoji: the system
+/// roles or the roles in any team the user belongs to.
+Can haveIAnyTeamPermission({
+  required String systemRoles,
+  required Iterable<String> teamRoles,
+  required Grants granted,
+}) {
+  final system = haveISystemPermission(
+    systemRoles: systemRoles,
+    granted: granted,
+  );
+  return (permission) =>
+      system(permission) ||
+      teamRoles.any((roles) => _held(permission, roles, granted));
+}
 
 /// Role names from the server's space-separated role strings.
 Set<String> roleNames(Iterable<String> roleStrings) => {
@@ -72,14 +129,13 @@ typedef ChannelRights = ({
 });
 
 /// Pure: the rights for a channel of [type] (`O` public, `P` private; direct
-/// and group messages have none of these).
+/// and group messages have none of these). Restoring a channel is checked
+/// for its team, everything else for the channel.
 ChannelRights channelRights(
   String type, {
-  required Iterable<String> roles,
-  required Map<String, Set<String>> granted,
+  required Can can,
+  required Can canInTeam,
 }) {
-  bool can(String permission) =>
-      hasPermission(permission, roles: roles, granted: granted);
   return switch (type) {
     'O' => (
       edit: can(Permission.managePublicProperties),
@@ -89,7 +145,7 @@ ChannelRights channelRights(
           can(Permission.managePublicMembers) &&
           can(Permission.manageChannelRoles),
       convert: can(Permission.convertPublicToPrivate),
-      unarchive: can(Permission.manageTeam),
+      unarchive: canInTeam(Permission.manageTeam),
     ),
     'P' => (
       edit: can(Permission.managePrivateProperties),
@@ -99,7 +155,7 @@ ChannelRights channelRights(
           can(Permission.managePrivateMembers) &&
           can(Permission.manageChannelRoles),
       convert: false,
-      unarchive: can(Permission.manageTeam),
+      unarchive: canInTeam(Permission.manageTeam),
     ),
     _ => (
       edit: false,
@@ -118,12 +174,9 @@ typedef TeamInviteRights = ({bool byEmail, bool byLink});
 /// Pure: inviting by email needs the permission and the server's email
 /// invitations; the link is for those who may add people to the team.
 TeamInviteRights teamInviteRights({
-  required Iterable<String> roles,
-  required Map<String, Set<String>> granted,
+  required Can can,
   required bool emailInvitations,
 }) {
-  bool can(String permission) =>
-      hasPermission(permission, roles: roles, granted: granted);
   return (
     byEmail: emailInvitations && can(Permission.inviteUser),
     byLink: can(Permission.addUserToTeam),
@@ -178,16 +231,16 @@ const ChannelPermissions noChannelRights = (
   groupMentions: false,
 );
 
-/// Pure: the user's rights in a channel from its state and the permissions
-/// their system, team and channel roles grant together.
+/// Pure: the user's rights in a channel from its state and [can], their
+/// permissions there.
 ChannelPermissions channelPermissions({
   required bool archived,
   required bool readOnly,
-  required Set<String> granted,
+  required Can can,
 }) {
   final write = !archived && !readOnly;
-  final post = granted.contains(Permission.createPost);
-  final canEdit = write && post && granted.contains(Permission.editPost);
+  final post = can(Permission.createPost);
+  final canEdit = write && post && can(Permission.editPost);
   final canDelete = write && post;
   return (
     block: archived
@@ -197,33 +250,27 @@ ChannelPermissions channelPermissions({
         : post
         ? null
         : PostingBlock.notAllowed,
-    react: write && granted.contains(Permission.addReaction),
+    react: write && can(Permission.addReaction),
     editOwn: canEdit,
-    editOthers: canEdit && granted.contains(Permission.editOthersPosts),
-    deleteOwn: canDelete && granted.contains(Permission.deletePost),
-    deleteOthers: canDelete && granted.contains(Permission.deleteOthersPosts),
-    channelMentions: granted.contains(Permission.useChannelMentions),
-    groupMentions: granted.contains(Permission.useGroupMentions),
+    editOthers: canEdit && can(Permission.editOthersPosts),
+    deleteOwn: canDelete && can(Permission.deletePost),
+    deleteOthers: canDelete && can(Permission.deleteOthersPosts),
+    channelMentions: can(Permission.useChannelMentions),
+    groupMentions: can(Permission.useGroupMentions),
   );
 }
 
-/// Pure: the permissions [roles] grant together; [granted] holds each
-/// known role's permissions.
-Set<String> grantedBy(
-  Iterable<String> roles,
-  Map<String, Set<String>> granted,
-) => {for (final role in roles) ...?granted[role]};
-
-/// Pure: whether the default channel is closed to [roles] because the
-/// server makes it read-only for everyone but system admins.
+/// Pure: whether the default channel is closed to a user with
+/// [systemRoles] because the server makes it read-only for everyone but
+/// system admins.
 bool readOnlyChannel({
   required String channelName,
   required bool townSquareReadOnly,
-  required Set<String> roles,
+  required String systemRoles,
 }) =>
     townSquareReadOnly &&
     channelName == 'town-square' &&
-    !roles.contains(systemAdminRole);
+    !roleNames([systemRoles]).contains(systemAdminRole);
 
 /// What the message menu offers for one message.
 typedef MessageRights = ({

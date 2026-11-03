@@ -69,23 +69,26 @@ void main() {
     };
 
     test('follow the roles', () {
-      final user = emojiRights(
-        enabled: true,
-        roles: ['system_user'],
-        granted: granted,
-      );
+      Can can(String roles) =>
+          haveISystemPermission(systemRoles: roles, granted: granted);
+      final user = emojiRights(enabled: true, can: can('system_user'));
       expect(user, (create: true, deleteOwn: true, deleteOthers: false));
       final admin = emojiRights(
         enabled: true,
-        roles: ['system_user', 'system_admin'],
-        granted: granted,
+        can: can('system_user system_admin'),
       );
       expect(admin.deleteOthers, isTrue);
     });
 
     test('are none when the server has custom emoji off', () {
       expect(
-        emojiRights(enabled: false, roles: ['system_user'], granted: granted),
+        emojiRights(
+          enabled: false,
+          can: haveISystemPermission(
+            systemRoles: 'system_user',
+            granted: granted,
+          ),
+        ),
         noEmojiRights,
       );
     });

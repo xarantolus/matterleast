@@ -88,13 +88,11 @@ class BookmarkViews {
         db.channels,
       )..where((c) => c.id.equals(channelId))).getSingleOrNull();
       if (channel == null) return noBookmarkRights;
-      final permissions = PermissionViews(db);
       return bookmarkRights(
         channel.type,
         archived: channel.deleteAt != null,
         guest: isGuest(await db.syncText(SyncKeys.currentUserRoles)),
-        roles: await permissions.rolesIn(channelId),
-        granted: await permissions.roleGrants(),
+        can: await PermissionViews(db).inChannel(channelId),
       );
     },
     interval: _interval,

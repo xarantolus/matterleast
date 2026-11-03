@@ -2,6 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/domain/channel_info.dart';
 import 'package:matterleast/domain/permissions.dart';
 
+Can _canWith(Iterable<String> roles, Grants granted) => haveIChannelPermission(
+  systemRoles: roles.join(' '),
+  teamRoles: '',
+  channelRoles: '',
+  granted: granted,
+);
+
+ChannelRights _rights(String type, Iterable<String> roles, Grants granted) =>
+    channelRights(
+      type,
+      can: _canWith(roles, granted),
+      canInTeam: _canWith(roles, granted),
+    );
+
 void main() {
   const granted = {
     'system_user': {'create_team'},
@@ -21,14 +35,14 @@ void main() {
     final roles = roleNames(['system_user', 'team_user', 'channel_user']);
 
     test('may edit, archive and add people to a public channel', () {
-      final rights = channelRights('O', roles: roles, granted: granted);
+      final rights = _rights('O', roles, granted);
       expect(rights.edit, isTrue);
       expect(rights.archive, isTrue);
       expect(rights.manageMembers, isTrue);
     });
 
     test('may do none of it in a private channel without the admin role', () {
-      final rights = channelRights('P', roles: roles, granted: granted);
+      final rights = _rights('P', roles, granted);
       expect(rights, (
         edit: false,
         archive: false,
@@ -40,11 +54,7 @@ void main() {
     });
 
     test('gains the private rights as channel admin', () {
-      final rights = channelRights(
-        'P',
-        roles: {...roles, 'channel_admin'},
-        granted: granted,
-      );
+      final rights = _rights('P', {...roles, 'channel_admin'}, granted);
       expect(rights.edit, isTrue);
       expect(rights.manageMembers, isTrue);
       expect(rights.archive, isFalse);
@@ -58,31 +68,18 @@ void main() {
     };
 
     test('needs the member permission and the roles permission', () {
+      expect(_rights('O', roles, withRoles).manageRoles, isTrue);
+      expect(_rights('O', roles, granted).manageRoles, isFalse);
       expect(
-        channelRights('O', roles: roles, granted: withRoles).manageRoles,
-        isTrue,
-      );
-      expect(
-        channelRights('O', roles: roles, granted: granted).manageRoles,
-        isFalse,
-      );
-      expect(
-        channelRights(
-          'O',
-          roles: roles,
-          granted: {
-            'channel_user': {'manage_channel_roles'},
-          },
-        ).manageRoles,
+        _rights('O', roles, {
+          'channel_user': {'manage_channel_roles'},
+        }).manageRoles,
         isFalse,
       );
     });
 
     test('is checked against the private permission in a private channel', () {
-      expect(
-        channelRights('P', roles: roles, granted: withRoles).manageRoles,
-        isFalse,
-      );
+      expect(_rights('P', roles, withRoles).manageRoles, isFalse);
     });
   });
 
@@ -93,8 +90,7 @@ void main() {
     };
     TeamInviteRights rights(String role, {bool email = true}) =>
         teamInviteRights(
-          roles: {role},
-          granted: granted,
+          can: _canWith({role}, granted),
           emailInvitations: email,
         );
 
@@ -128,7 +124,7 @@ void main() {
   test('direct and group messages have no channel admin rights', () {
     final roles = {'system_user', 'team_user', 'channel_user', 'channel_admin'};
     for (final type in ['D', 'G']) {
-      expect(channelRights(type, roles: roles, granted: granted), (
+      expect(_rights(type, roles, granted), (
         edit: false,
         archive: false,
         manageMembers: false,
@@ -140,14 +136,7 @@ void main() {
   });
 
   test('roles the app has not loaded grant nothing', () {
-    expect(
-      hasPermission(
-        'create_public_channel',
-        roles: {'team_user'},
-        granted: const {},
-      ),
-      isFalse,
-    );
+    expect(_canWith({'team_user'}, const {})('create_public_channel'), isFalse);
   });
 
   test('role strings split into names', () {
