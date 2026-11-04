@@ -12,6 +12,8 @@ import 'package:image_picker_android/image_picker_android.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/app/desktop/desktop_shell.dart';
+import 'package:matterleast/app/desktop/window_visibility.dart';
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/permission_providers.dart';
@@ -675,41 +677,44 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                           ),
                           child: Stack(
                             children: [
-                              TextField(
-                                controller: _text,
-                                focusNode: _focus,
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.forMessages(context, fallbackSize: 16),
-                                minLines: 1,
-                                maxLines: isDesktop ? null : 6,
-                                textAlignVertical: TextAlignVertical.center,
-                                keyboardType: TextInputType.multiline,
-                                textCapitalization:
-                                    TextCapitalization.sentences,
-                                decoration: InputDecoration(
-                                  hintText: widget.hint,
-                                  hintMaxLines: 1,
-                                  filled: !context.density.plainComposer,
-                                  isDense: true,
-                                  // One line is as high as the buttons beside it.
-                                  constraints: BoxConstraints(
-                                    minHeight: _composerRowHeight,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      context.density.fieldRadius,
+                              TickersWhile(
+                                active: DesktopShell.focus,
+                                child: TextField(
+                                  controller: _text,
+                                  focusNode: _focus,
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.forMessages(context, fallbackSize: 16),
+                                  minLines: 1,
+                                  maxLines: isDesktop ? null : 6,
+                                  textAlignVertical: TextAlignVertical.center,
+                                  keyboardType: TextInputType.multiline,
+                                  textCapitalization:
+                                      TextCapitalization.sentences,
+                                  decoration: InputDecoration(
+                                    hintText: widget.hint,
+                                    hintMaxLines: 1,
+                                    filled: !context.density.plainComposer,
+                                    isDense: true,
+                                    // One line is as high as the buttons beside it.
+                                    constraints: BoxConstraints(
+                                      minHeight: _composerRowHeight,
                                     ),
-                                    borderSide: context.density.plainComposer
-                                        ? BorderSide(color: tokens.divider)
-                                        : BorderSide.none,
-                                  ),
-                                  contentPadding:
-                                      EdgeInsetsDirectional.fromSTEB(
-                                        Spacing.lg,
-                                        isDesktop ? Spacing.sm : Spacing.md,
-                                        48,
-                                        isDesktop ? Spacing.sm : Spacing.md,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        context.density.fieldRadius,
                                       ),
+                                      borderSide: context.density.plainComposer
+                                          ? BorderSide(color: tokens.divider)
+                                          : BorderSide.none,
+                                    ),
+                                    contentPadding:
+                                        EdgeInsetsDirectional.fromSTEB(
+                                          Spacing.lg,
+                                          isDesktop ? Spacing.sm : Spacing.md,
+                                          48,
+                                          isDesktop ? Spacing.sm : Spacing.md,
+                                        ),
+                                  ),
                                 ),
                               ),
                               // At the bottom like send, so a long message keeps
