@@ -406,6 +406,16 @@ container border good
         ],
       })!;
       expect(c.blocks, hasLength(maxBlocks));
+      expect(c.all, hasLength(150));
+    });
+
+    test('content within the limits has nothing more to show', () {
+      final c = content({
+        'mm_blocks': [
+          {'type': 'divider'},
+        ],
+      })!;
+      expect(c.all, isNull);
     });
 
     test('text stops at 16000 characters in total', () {

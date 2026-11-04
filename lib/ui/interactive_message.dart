@@ -100,7 +100,7 @@ Size integrationImageBox(
 
 /// An integration's interactive content: one renderer for message
 /// attachments, Block Kit, Adaptive Cards and Mattermost's blocks.
-class InteractiveMessage extends StatelessWidget {
+class InteractiveMessage extends StatefulWidget {
   const InteractiveMessage({
     required this.postId,
     required this.content,
@@ -117,18 +117,42 @@ class InteractiveMessage extends StatelessWidget {
   final Map<String, ImageSize> imageSizes;
 
   @override
-  Widget build(BuildContext context) => InlineActions(
-    postId: postId,
-    format: content.format,
-    cookie: content.cookie,
-    child: _Scope(
-      message: this,
-      child: Padding(
-        padding: const EdgeInsets.only(top: Spacing.xs),
-        child: _Blocks(blocks: content.blocks, path: ''),
+  State<InteractiveMessage> createState() => _InteractiveMessageState();
+}
+
+class _InteractiveMessageState extends State<InteractiveMessage> {
+  var _all = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = widget.content;
+    final more = content.all != null && !_all;
+    return InlineActions(
+      postId: widget.postId,
+      format: content.format,
+      cookie: content.cookie,
+      child: _Scope(
+        message: widget,
+        child: Padding(
+          padding: const EdgeInsets.only(top: Spacing.xs),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _Blocks(
+                blocks: _all ? content.all ?? content.blocks : content.blocks,
+                path: '',
+              ),
+              if (more)
+                TextButton(
+                  onPressed: () => setState(() => _all = true),
+                  child: const Text('Show more'),
+                ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// What every block below needs from the message it belongs to.
