@@ -14,6 +14,7 @@ import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/you/you_page.dart';
 
 /// Pure: the channel [forward] of [current] in [list]'s shown rows, or
@@ -101,6 +102,18 @@ class RootShortcuts extends ConsumerWidget {
     );
   }
 
+  void _searchMessages(BuildContext context, WidgetRef ref) {
+    final target = ref.read(railSelectionProvider);
+    final teams = target == null
+        ? const <RailTeam>[]
+        : ref.read(railTeamsProvider(target.url)).value ?? const [];
+    openMessageSearch(
+      context,
+      url: target?.url,
+      teamId: target == null ? '' : shownTeam(target, teams) ?? '',
+    );
+  }
+
   void _showMentions(BuildContext context, WidgetRef ref) {
     ref.read(homeFilterSelectionProvider.notifier).select(InboxFilter.mentions);
     unawaited(showPlace(Navigator.of(context), null));
@@ -114,6 +127,9 @@ class RootShortcuts extends ConsumerWidget {
       ),
       NewMessageIntent: CallbackAction<NewMessageIntent>(
         onInvoke: (_) => _newMessage(context, ref),
+      ),
+      SearchMessagesIntent: CallbackAction<SearchMessagesIntent>(
+        onInvoke: (_) => _searchMessages(context, ref),
       ),
       OpenSwitcherIntent: CallbackAction<OpenSwitcherIntent>(
         onInvoke: (_) => onSwitcher(),

@@ -70,6 +70,11 @@ class OpenMentionsIntent extends AppIntent {
   const OpenMentionsIntent();
 }
 
+/// Message search across the shown server, or all of them from Home.
+class SearchMessagesIntent extends AppIntent {
+  const SearchMessagesIntent();
+}
+
 /// The direct message picker.
 class NewMessageIntent extends AppIntent {
   const NewMessageIntent();
@@ -199,6 +204,11 @@ const appShortcuts = <AppShortcut>[
     'Forward to the next conversation',
     SingleActivator(LogicalKeyboardKey.arrowRight, alt: true),
     HistoryStepIntent(forward: true),
+  ),
+  AppShortcut(
+    'Search messages',
+    SingleActivator(LogicalKeyboardKey.keyF, control: true, shift: true),
+    SearchMessagesIntent(),
   ),
   AppShortcut(
     'Search this conversation',

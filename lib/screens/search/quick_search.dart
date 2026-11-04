@@ -17,7 +17,6 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
-import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/initials_badge.dart';
@@ -29,8 +28,7 @@ import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/try_action.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
-/// Where searches for messages run and recent searches come from: one
-/// server and team.
+/// The server and team Browse channels and New message act on.
 typedef SearchTarget = ({String url, String teamId});
 
 /// Opens the quick switcher from elsewhere, such as Ctrl+K.
@@ -38,18 +36,20 @@ class QuickSearchOpener extends ChangeNotifier {
   void open() => notifyListeners();
 }
 
-/// The search icon of the app bar. It opens one full-screen view that finds
-/// channels, conversations and people on every signed-in server, and
-/// searches messages.
+/// The switcher: one full-screen view that finds channels, conversations
+/// and people on every signed-in server. Ctrl+K and Find channels open it;
+/// with [showButton] it has a button of its own.
 class QuickSearchAnchor extends ConsumerStatefulWidget {
   const QuickSearchAnchor({
     required this.opener,
     required this.servers,
     required this.target,
+    this.showButton = false,
     super.key,
   });
 
   final QuickSearchOpener opener;
+  final bool showButton;
 
   /// Signed-in servers, in rail order.
   final List<ServerEntry> servers;
@@ -106,7 +106,6 @@ class _QuickSearchAnchorState extends ConsumerState<QuickSearchAnchor> {
           servers: widget.servers,
           target: target,
           onOpen: (item) => _open(context, item),
-          onSearch: (text) => _searchMessages(context, text),
           startActions: [
             if (target case final target?) ...[
               ListTile(
@@ -156,23 +155,6 @@ class _QuickSearchAnchorState extends ConsumerState<QuickSearchAnchor> {
     unawaited(openPage(navigator, screen, popout: true));
   }
 
-  void _searchMessages(BuildContext context, String text) {
-    final target = this.target;
-    if (target == null || text.trim().isEmpty) return;
-    final navigator = Navigator.of(context);
-    _closeView(navigator, text);
-    unawaited(
-      openPage(
-        navigator,
-        SearchResultsScreen(
-          url: target.url,
-          teamId: target.teamId,
-          query: text.trim(),
-        ),
-      ),
-    );
-  }
-
   Future<void> _open(BuildContext context, SwitchItem item) async {
     final navigator = Navigator.of(context);
     if (item.kind == SwitchKind.joinable &&
@@ -207,11 +189,13 @@ class _QuickSearchAnchorState extends ConsumerState<QuickSearchAnchor> {
   }
 
   @override
-  Widget build(BuildContext context) => IconButton(
-    tooltip: 'Search',
-    icon: const Icon(Icons.search),
-    onPressed: _openView,
-  );
+  Widget build(BuildContext context) => widget.showButton
+      ? IconButton(
+          tooltip: 'Find a channel or person',
+          icon: const Icon(Icons.travel_explore),
+          onPressed: _openView,
+        )
+      : const SizedBox.shrink();
 }
 
 typedef _Matches = ({
@@ -222,8 +206,6 @@ typedef _Matches = ({
   bool offline,
 });
 
-/// The full-screen search. Return opens the highlighted match, or
-/// searches messages on that row or when nothing matches.
 /// Popouts like the switcher are as wide as a command palette, and leave
 /// most of the window in view.
 const _switcherWidth = 600.0;
@@ -267,7 +249,6 @@ class QuickSearchView extends ConsumerStatefulWidget {
     required this.servers,
     required this.target,
     required this.onOpen,
-    required this.onSearch,
     this.startActions = const [],
     super.key,
   });
@@ -276,7 +257,6 @@ class QuickSearchView extends ConsumerStatefulWidget {
   final List<ServerEntry> servers;
   final SearchTarget? target;
   final ValueChanged<SwitchItem> onOpen;
-  final ValueChanged<String> onSearch;
 
   /// Rows such as Browse channels at the end of the start view.
   final List<Widget> startActions;
@@ -348,24 +328,14 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
     );
   }
 
-  List<SwitchItem?> _choices(_Matches m) => [
-    ...m.local,
-    ...m.extra,
-    if (widget.target != null) null,
-  ];
+  List<SwitchItem> _choices(_Matches m) => [...m.local, ...m.extra];
 
   void _submit(String text) {
     final term = text.trim();
     if (term.isEmpty) return;
     final choices = _choices(_matches(term, ref.read));
-    final picked = choices.isEmpty
-        ? null
-        : choices[_highlight.clamp(0, choices.length - 1)];
-    if (picked != null) {
-      widget.onOpen(picked);
-    } else {
-      widget.onSearch(term);
-    }
+    if (choices.isEmpty) return;
+    widget.onOpen(choices[_highlight.clamp(0, choices.length - 1)]);
   }
 
   void _move(int step) {
@@ -438,7 +408,7 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
               onSubmitted: _submit,
               style: Theme.of(context).textTheme.bodyLarge,
               decoration: const InputDecoration(
-                hintText: 'Find channels, people or messages',
+                hintText: 'Find channels or people',
                 border: InputBorder.none,
               ),
             ),
@@ -467,12 +437,7 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
             ...?ref.watch(switchItemsProvider(s.url)).value,
         ],
         serverNames: names,
-        target: widget.target,
         onOpen: widget.onOpen,
-        onSearch: (text) {
-          widget.controller.text = text;
-          widget.onSearch(text);
-        },
         actions: widget.startActions,
       );
     }
@@ -519,17 +484,6 @@ class _QuickSearchViewState extends ConsumerState<QuickSearchView> {
                       _ => 'No channels or people match “$term”.',
                     }, style: TextStyle(color: context.tokens.muted)),
                   ),
-                if (widget.target != null)
-                  ListTile(
-                    key: highlight == shown.length ? _highlighted : null,
-                    selected: highlight == shown.length,
-                    leading: const SizedBox(
-                      width: 40,
-                      child: Icon(Icons.manage_search),
-                    ),
-                    title: Text('Search messages for “$term”'),
-                    onTap: () => widget.onSearch(term),
-                  ),
               ],
             ),
           ),
@@ -543,50 +497,22 @@ class _StartView extends ConsumerWidget {
   const _StartView({
     required this.items,
     required this.serverNames,
-    required this.target,
     required this.onOpen,
-    required this.onSearch,
     required this.actions,
   });
 
   final List<SwitchItem> items;
   final Map<String, String> serverNames;
-  final SearchTarget? target;
   final ValueChanged<SwitchItem> onOpen;
-  final ValueChanged<String> onSearch;
   final List<Widget> actions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final target = this.target;
-    final recents = target == null
-        ? const <String>[]
-        : ref.watch(recentSearchesProvider(target.url, target.teamId)).value ??
-              const <String>[];
     final start = switchStart(items);
     final bottom = MediaQuery.paddingOf(context).bottom;
     return ListView(
       padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
       children: [
-        if (recents.isNotEmpty) ...[
-          const PaneLabel('Recent searches'),
-          for (final term in recents.take(5))
-            ListTile(
-              leading: const SizedBox(width: 40, child: Icon(Icons.history)),
-              title: Text(term, maxLines: 1, overflow: TextOverflow.ellipsis),
-              onTap: () => onSearch(term),
-              trailing: IconButton(
-                tooltip: 'Remove from recent searches',
-                icon: const Icon(Icons.close),
-                onPressed: () async {
-                  final search = await ref.read(
-                    messageSearchProvider(target!.url).future,
-                  );
-                  await search.forget(target.teamId, term);
-                },
-              ),
-            ),
-        ],
         if (start.unread.isNotEmpty) ...[
           const PaneLabel('Unread'),
           for (final item in start.unread)
