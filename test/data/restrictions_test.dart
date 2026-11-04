@@ -109,5 +109,44 @@ void main() {
         expect(page.items.map((i) => i.id), [channelId, _publicId]);
       });
     }
+
+    test('a search finds private channels the user may see', () async {
+      await start(admin: true);
+      server.handle = (r) => switch (r.path) {
+        '/api/v4/channels/search' => ok({
+          'channels': [
+            _channel(_publicId, 'O', 'quay'),
+            _channel(_privateId, 'P', 'vault'),
+          ],
+          'total_count': 2,
+        }),
+        _ => ok(const <Object?>[]),
+      };
+      final found = await directory.searchChannels(teamId, 'q');
+      expect(found.map((i) => i.id), [_publicId, _privateId]);
+      final sent = server.seen.firstWhere(
+        (r) => r.path == '/api/v4/channels/search',
+      );
+      expect(sent.body['private'], isTrue);
+      expect(sent.body['team_ids'], [teamId]);
+    });
+
+    for (final status in [403, 404, 501]) {
+      test(
+        'a $status for the combined search leaves the public ones',
+        () async {
+          await start(admin: false);
+          server.handle = (r) => switch (r.path) {
+            '/api/v4/channels/search' => error(status, 'not_allowed'),
+            '/api/v4/teams/$teamId/channels/search' => ok([
+              _channel(_publicId, 'O', 'quay'),
+            ]),
+            _ => ok(const <Object?>[]),
+          };
+          final found = await directory.searchChannels(teamId, 'q');
+          expect(found.map((i) => i.id), [_publicId]);
+        },
+      );
+    }
   });
 }
