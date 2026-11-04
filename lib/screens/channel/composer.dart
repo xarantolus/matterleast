@@ -665,60 +665,71 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                       else
                         const SizedBox(width: Spacing.md),
                       Expanded(
-                        child: Stack(
-                          children: [
-                            TextField(
-                              controller: _text,
-                              focusNode: _focus,
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.forMessages(context, fallbackSize: 16),
-                              minLines: 1,
-                              maxLines: 6,
-                              textAlignVertical: TextAlignVertical.center,
-                              keyboardType: TextInputType.multiline,
-                              textCapitalization: TextCapitalization.sentences,
-                              decoration: InputDecoration(
-                                hintText: widget.hint,
-                                hintMaxLines: 1,
-                                filled: !context.density.plainComposer,
-                                isDense: true,
-                                // One line is as high as the buttons beside it.
-                                constraints: BoxConstraints(
-                                  minHeight: _composerRowHeight,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    context.density.fieldRadius,
+                        // On desktop the field grows up to a third of the
+                        // window, then scrolls; a phone keeps six lines.
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: isDesktop
+                                ? MediaQuery.sizeOf(context).height * 0.35
+                                : double.infinity,
+                          ),
+                          child: Stack(
+                            children: [
+                              TextField(
+                                controller: _text,
+                                focusNode: _focus,
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.forMessages(context, fallbackSize: 16),
+                                minLines: 1,
+                                maxLines: isDesktop ? null : 6,
+                                textAlignVertical: TextAlignVertical.center,
+                                keyboardType: TextInputType.multiline,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                decoration: InputDecoration(
+                                  hintText: widget.hint,
+                                  hintMaxLines: 1,
+                                  filled: !context.density.plainComposer,
+                                  isDense: true,
+                                  // One line is as high as the buttons beside it.
+                                  constraints: BoxConstraints(
+                                    minHeight: _composerRowHeight,
                                   ),
-                                  borderSide: context.density.plainComposer
-                                      ? BorderSide(color: tokens.divider)
-                                      : BorderSide.none,
-                                ),
-                                contentPadding: EdgeInsetsDirectional.fromSTEB(
-                                  Spacing.lg,
-                                  isDesktop ? Spacing.sm : Spacing.md,
-                                  48,
-                                  isDesktop ? Spacing.sm : Spacing.md,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      context.density.fieldRadius,
+                                    ),
+                                    borderSide: context.density.plainComposer
+                                        ? BorderSide(color: tokens.divider)
+                                        : BorderSide.none,
+                                  ),
+                                  contentPadding:
+                                      EdgeInsetsDirectional.fromSTEB(
+                                        Spacing.lg,
+                                        isDesktop ? Spacing.sm : Spacing.md,
+                                        48,
+                                        isDesktop ? Spacing.sm : Spacing.md,
+                                      ),
                                 ),
                               ),
-                            ),
-                            // At the bottom like send, so a long message keeps
-                            // it next to the line being written.
-                            PositionedDirectional(
-                              end: 0,
-                              bottom: 0,
-                              child: Builder(
-                                builder: (button) => _rowCentred(
-                                  IconButton(
-                                    tooltip: 'Emoji',
-                                    onPressed: () =>
-                                        _pickEmoji(globalRectOf(button)),
-                                    icon: const Icon(Icons.mood),
+                              // At the bottom like send, so a long message keeps
+                              // it next to the line being written.
+                              PositionedDirectional(
+                                end: 0,
+                                bottom: 0,
+                                child: Builder(
+                                  builder: (button) => _rowCentred(
+                                    IconButton(
+                                      tooltip: 'Emoji',
+                                      onPressed: () =>
+                                          _pickEmoji(globalRectOf(button)),
+                                      icon: const Icon(Icons.mood),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: Spacing.xs),
