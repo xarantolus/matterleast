@@ -35,6 +35,7 @@ void main() {
   late Completer<void> answerOlder;
   late int olderAsks;
   final opened = <String>[];
+  late Widget app;
 
   /// What the next older page holds; a server error when null.
   List<int>? olderPage;
@@ -128,58 +129,57 @@ void main() {
       return (server, session);
     }))!;
     final url = server.url.toString();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          serverSessionProvider(url).overrideWith((ref) async => session),
-          serversProvider.overrideWith((ref) => Stream.value(const [])),
-          channelRightsProvider(url, channelId).overrideWith(
-            (ref) => Stream.value((
-              block: null,
-              react: true,
-              editOwn: true,
-              editOthers: false,
-              deleteOwn: true,
-              deleteOthers: false,
-              channelMentions: true,
-              groupMentions: true,
-            )),
-          ),
-          serverImageCachesProvider(url)
-              .overrideWith((ref) => Completer<ServerImageCaches>().future),
-        ],
-        child: MaterialApp(
-          theme: MatterleastApp.lightTheme,
-          builder: onReplyToNewest == null
-              ? null
-              : (_, child) => AppShortcuts(child: child!),
-          home: Scaffold(
-            body: Column(
-              children: [
-                Expanded(
-                  child: ConversationView(
-                    url: url,
-                    conversation: conversationProvider(url, channelId),
-                    startText: 'This is the start of Boats.',
-                    onOpenThread: threads
-                        ? (post, {reply = false}) => opened.add(post.id)
-                        : null,
-                  ),
+    app = ProviderScope(
+      overrides: [
+        serverSessionProvider(url).overrideWith((ref) async => session),
+        serversProvider.overrideWith((ref) => Stream.value(const [])),
+        channelRightsProvider(url, channelId).overrideWith(
+          (ref) => Stream.value((
+            block: null,
+            react: true,
+            editOwn: true,
+            editOthers: false,
+            deleteOwn: true,
+            deleteOthers: false,
+            channelMentions: true,
+            groupMentions: true,
+          )),
+        ),
+        serverImageCachesProvider(url)
+            .overrideWith((ref) => Completer<ServerImageCaches>().future),
+      ],
+      child: MaterialApp(
+        theme: MatterleastApp.lightTheme,
+        builder: onReplyToNewest == null
+            ? null
+            : (_, child) => AppShortcuts(child: child!),
+        home: Scaffold(
+          body: Column(
+            children: [
+              Expanded(
+                child: ConversationView(
+                  url: url,
+                  conversation: conversationProvider(url, channelId),
+                  startText: 'This is the start of Boats.',
+                  onOpenThread: threads
+                      ? (post, {reply = false}) => opened.add(post.id)
+                      : null,
                 ),
-                if (onReplyToNewest != null)
-                  Composer(
-                    url: url,
-                    channelId: channelId,
-                    teamId: 'team1',
-                    hint: 'Write',
-                    onReplyToNewest: onReplyToNewest,
-                  ),
-              ],
-            ),
+              ),
+              if (onReplyToNewest != null)
+                Composer(
+                  url: url,
+                  channelId: channelId,
+                  teamId: 'team1',
+                  hint: 'Write',
+                  onReplyToNewest: onReplyToNewest,
+                ),
+            ],
           ),
         ),
       ),
     );
+    await tester.pumpWidget(app);
     await settle(tester);
   }
 
@@ -331,6 +331,32 @@ void main() {
       () => ConversationViews(session.db).openFacts(channelId),
     );
     expect(facts!.saved, isNotNull, reason: 'the place is saved on close');
+    await close(tester);
+  });
+
+  testWidgets('reopening a conversation lands where the reader left it', (
+    tester,
+  ) async {
+    await open(tester, count: 200);
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
+      await settle(tester);
+    }
+    final text = [
+      for (var i = 0; i < 200; i++)
+        if (find.text('message $i').evaluate().isNotEmpty &&
+            tester.getTopLeft(find.text('message $i')).dy >= 0)
+          'message $i',
+    ].first;
+    final before = tester.getTopLeft(find.text(text)).dy;
+    await tester.pumpWidget(const SizedBox());
+    await settle(tester);
+
+    await tester.pumpWidget(app);
+    await settle(tester);
+
+    expect(find.text(text), findsOneWidget);
+    expect(tester.getTopLeft(find.text(text)).dy, closeTo(before, 0.5));
     await close(tester);
   });
 
