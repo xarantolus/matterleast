@@ -35,6 +35,31 @@ Future<String?> currentTeam(Ref ref, String url) async {
   return session.db.syncText(SyncKeys.currentTeamId);
 }
 
+/// The servers and teams a search in [scope] asks, narrowed to [server]
+/// when given.
+@riverpod
+Future<List<SearchRequest>> searchPlan(
+  Ref ref,
+  String? server,
+  SearchScope scope,
+) async {
+  final servers = await ref.watch(serversProvider.future);
+  return searchRequests(
+    [
+      for (final s in servers)
+        if (s.signedIn)
+          (
+            url: s.url,
+            crossTeam: (await ref.watch(featuresProvider(s.url).future))
+                .crossTeamSearch,
+            homeTeam: await ref.watch(currentTeamProvider(s.url).future),
+          ),
+    ],
+    scope,
+    server: server,
+  );
+}
+
 @riverpod
 Future<MessageSearch> messageSearch(Ref ref, String url) async {
   final session = await ref.watch(serverSessionProvider(url).future);
