@@ -48,7 +48,7 @@ class ReactionsBar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 2),
                 label: Icon(
                   Icons.add_reaction_outlined,
-                  size: density.chipHeight == null ? 18 : 16,
+                  size: density.chipHeight == null ? 22 : 18,
                 ),
                 onPressed: () => onAdd!(globalRectOf(chip)),
               ),
@@ -109,7 +109,7 @@ class ReactionsBar extends StatelessWidget {
           selectedColor: scheme.primaryContainer,
           labelStyle: TextStyle(
             color: mine ? scheme.onPrimaryContainer : null,
-            fontSize: small ? 12 : null,
+            fontSize: small ? 13 : 17,
           ),
           visualDensity: VisualDensity.compact,
           padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -119,7 +119,7 @@ class ReactionsBar extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  EmojiGlyph(name: group.emojiName, size: small ? 14 : 18),
+                  EmojiGlyph(name: group.emojiName, size: small ? 18 : 22),
                   const SizedBox(width: Spacing.xs),
                   Text('${group.count}'),
                 ],

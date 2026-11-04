@@ -66,7 +66,7 @@ class AppDensity extends ThemeExtension<AppDensity> {
     rowTop: 4,
     followUpTop: 1,
     radius: 6,
-    chipHeight: 24,
+    chipHeight: 28,
     chipRadius: 6,
     menuRowHeight: 30,
     threadBarHeight: 32,

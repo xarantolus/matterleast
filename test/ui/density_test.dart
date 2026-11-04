@@ -5,6 +5,7 @@ import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/density.dart';
+import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
 
@@ -56,7 +57,7 @@ void main() {
     });
 
     testWidgets(
-      'a reaction chip is 24 px high whether or not it is mine',
+      'a reaction chip is 28 px high whether or not it is mine',
       variant: _desktop,
       (tester) async {
         Future<Size> size({required bool mine}) async {
@@ -78,9 +79,10 @@ void main() {
         }
 
         final plain = await size(mine: false);
-        expect(plain.height, 24);
+        expect(plain.height, 28);
+        expect(tester.widget<EmojiGlyph>(find.byType(EmojiGlyph)).size, 18);
         expect(await size(mine: true), plain);
-        expect(tester.getSize(find.byType(ActionChip)).height, 24);
+        expect(tester.getSize(find.byType(ActionChip)).height, 28);
       },
     );
 
@@ -144,6 +146,7 @@ void main() {
       final body = Theme.of(context).textTheme.bodyMedium!;
       expect(body.forMessages(context).height, body.height);
       expect(tester.getSize(find.byType(FilterChip)).height, 30);
+      expect(tester.widget<EmojiGlyph>(find.byType(EmojiGlyph)).size, 22);
     });
   });
 }
