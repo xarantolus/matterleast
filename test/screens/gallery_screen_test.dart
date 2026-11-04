@@ -300,7 +300,7 @@ void main() {
             .widget<ExtendedImageGesturePageView>(
               find.byType(ExtendedImageGesturePageView),
             )
-            .controller!
+            .controller
             .page!,
       );
     }
