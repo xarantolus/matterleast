@@ -169,18 +169,38 @@ class Directory {
     }
   }
 
-  /// Channels of [teamId] matching [term].
+  /// Public channels of [teamId] and the private ones the user may see
+  /// matching [term], like the web app's browse; the public search alone
+  /// where the server won't search across both.
   Future<List<SwitchItem>> searchChannels(
     String teamId,
     String term, {
     bool archived = false,
   }) => _search('channel-search:$teamId:$term:$archived', () async {
-    final found = await session.api.call(
-      () => _client.channels.searchChannels(
-        teamId: teamId,
-        body: api.ApiV4TeamsTeamIdChannelsSearchRequestBody(term: term),
-      ),
-    );
+    List<api.Channel> found;
+    try {
+      found = (await session.api.call(
+        () => _client.channels.searchAllChannels(
+          systemConsole: false,
+          body: api.ApiV4ChannelsSearchRequestBody(
+            term: term,
+            teamIds: [teamId],
+            public: true,
+            private: true,
+            page: '0',
+            perPage: '$pageSize',
+          ),
+        ),
+      )).channels;
+    } on ServerError catch (e) {
+      if (!(e.isForbidden || e.isNotFound || e.statusCode == 501)) rethrow;
+      found = await session.api.call(
+        () => _client.channels.searchChannels(
+          teamId: teamId,
+          body: api.ApiV4TeamsTeamIdChannelsSearchRequestBody(term: term),
+        ),
+      );
+    }
     return _channelItems([
       for (final c in found)
         if ((c.deleteAt != null) == archived) c,

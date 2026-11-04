@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -16,6 +17,8 @@ import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 const _previewLines = 4;
+
+const _chunkLines = 50;
 
 const _desktopFullLines = 15;
 const _desktopCutLines = 10;
@@ -409,6 +412,8 @@ class CodeScreen extends StatefulWidget {
 class _CodeScreenState extends State<CodeScreen> {
   late bool? _wrap = widget.wrap;
   final _selection = FocusNode(debugLabel: 'Code');
+  late final _lines = widget.code.split('\n');
+  late final _longestLine = _lines.fold(0, (m, l) => math.max(m, l.length));
 
   @override
   void initState() {
@@ -433,12 +438,23 @@ class _CodeScreenState extends State<CodeScreen> {
     final code = widget.code;
     final label = languageLabel(widget.language);
     final wrap = _wrap ?? MessageDisplay.of(context).wrapCode;
-    // Wrapped lines would no longer line up with their numbers.
-    final lines = wrap ? 1 : '\n'.allMatches(code).length + 1;
     final style = _codeStyle(context);
-    final text = Text.rich(
-      _coloured(context, code, widget.language),
-      softWrap: wrap,
+    // Wrapped lines would no longer line up with their numbers.
+    final numberWidth = wrap ? 0 : '${_lines.length}'.length;
+    final list = ListView.builder(
+      padding: const EdgeInsets.all(Spacing.md),
+      itemCount: (_lines.length / _chunkLines).ceil(),
+      itemBuilder: (context, i) => _CodeChunk(
+        lines: _lines.sublist(
+          i * _chunkLines,
+          math.min(_lines.length, (i + 1) * _chunkLines),
+        ),
+        first: i * _chunkLines + 1,
+        numberWidth: numberWidth,
+        language: widget.language,
+        style: style,
+        wrap: wrap,
+      ),
     );
     return ContentPage(
       title: Text(widget.title ?? (label.isEmpty ? 'Code' : '$label code')),
@@ -459,52 +475,78 @@ class _CodeScreenState extends State<CodeScreen> {
       backgroundColor: widget.language.isEmpty ? null : tokens.codeBackground,
       body: SafeArea(
         top: false,
-        // The content is at least as large as the viewport, so a drag
-        // anywhere on the screen scrolls, in both directions.
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final page = SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minWidth: constraints.maxWidth,
-                  maxWidth: wrap ? constraints.maxWidth : double.infinity,
-                  minHeight: constraints.maxHeight,
+        child: SelectionArea(
+          focusNode: _selection,
+          // A drag anywhere scrolls: the list fills the viewport, and sideways
+          // too when lines don't wrap.
+          child: wrap
+              ? list
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final glyph = TextPainter(
+                      text: TextSpan(text: 'M', style: style),
+                      textDirection: Directionality.of(context),
+                      textScaler: MediaQuery.textScalerOf(context),
+                    )..layout();
+                    final columns = numberWidth + _longestLine + 1;
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: math.max(
+                          constraints.maxWidth,
+                          columns * glyph.width + Spacing.md * 3,
+                        ),
+                        child: list,
+                      ),
+                    );
+                  },
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(Spacing.md),
-                  child: SelectionArea(
-                    focusNode: _selection,
-                    child: lines > 1
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SelectionContainer.disabled(
-                                child: Text(
-                                  [for (var i = 1; i <= lines; i++) '$i']
-                                      .join('\n'),
-                                  textAlign: TextAlign.end,
-                                  style: style.copyWith(color: tokens.muted),
-                                ),
-                              ),
-                              const SizedBox(width: Spacing.md),
-                              text,
-                            ],
-                          )
-                        : text,
-                  ),
-                ),
-              ),
-            );
-            return wrap
-                ? page
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: page,
-                  );
-          },
         ),
       ),
+    );
+  }
+}
+
+/// A run of lines coloured on its own, built only when scrolled near.
+class _CodeChunk extends StatelessWidget {
+  const _CodeChunk({
+    required this.lines,
+    required this.first,
+    required this.numberWidth,
+    required this.language,
+    required this.style,
+    required this.wrap,
+  });
+
+  final List<String> lines;
+  final int first;
+  final int numberWidth;
+  final String language;
+  final TextStyle style;
+  final bool wrap;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text.rich(
+      _coloured(context, lines.join('\n'), language),
+      softWrap: wrap,
+    );
+    if (wrap) return text;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SelectionContainer.disabled(
+          child: Text(
+            [
+              for (var i = 0; i < lines.length; i++)
+                '${first + i}'.padLeft(numberWidth),
+            ].join('\n'),
+            style: style.copyWith(color: context.tokens.muted),
+          ),
+        ),
+        const SizedBox(width: Spacing.md),
+        text,
+      ],
     );
   }
 }
