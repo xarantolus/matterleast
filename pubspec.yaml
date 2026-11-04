@@ -60,6 +60,7 @@ dependencies:
   video_player: ^2.14.1
   video_player_platform_interface: ^6.9.0
   video_player_win: ^3.3.1
+  vm_service: ^15.4.0
   web_socket_channel: ^3.0.3
   window_manager: ^0.5.2
   workmanager: ^0.10.10

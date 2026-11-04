@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/profiling/profile_recorder.dart';
 import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/progress_slot.dart';
@@ -123,6 +124,7 @@ class _Header extends StatelessWidget {
             ? const BackButton()
             : null);
     final subtitle = this.subtitle;
+    final title = ProfileLongPress(child: this.title);
     return AppBar(
       automaticallyImplyLeading: false,
       primary: popout == null,
