@@ -470,9 +470,6 @@ void openFile(
 
 enum _FileAction { view, save, saveAs, share, openWith, copyImage }
 
-/// Text files larger than this open in another app instead of our viewer.
-const _textViewerLimit = 1024 * 1024;
-
 /// Downloads [file] when needed, then shows, saves, shares or hands it on.
 /// Failures show as a snack bar.
 Future<void> _runFileAction(
@@ -491,8 +488,7 @@ Future<void> _runFileAction(
   final features = await ref.read(featuresProvider(url).future);
   final inApp =
       action == _FileAction.view &&
-      (file.kind == FileKind.pdf ||
-          (file.kind == FileKind.text && file.size <= _textViewerLimit));
+      (file.kind == FileKind.pdf || file.kind == FileKind.text);
   if (!features.fileDownloads && !inApp) {
     say(
       "This server doesn't allow taking files out of the app, so "
@@ -522,8 +518,7 @@ Future<void> _runFileAction(
   switch (action) {
     case _FileAction.view when file.kind == FileKind.pdf:
       unawaited(viewers.push(pdfRoute(local, url: url, file: file)));
-    case _FileAction.view
-        when file.kind == FileKind.text && file.size <= _textViewerLimit:
+    case _FileAction.view when file.kind == FileKind.text:
       final text = await local.readAsString().catchError((_) => '');
       final code = text.endsWith('\n')
           ? text.substring(0, text.length - 1)

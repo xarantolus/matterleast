@@ -236,12 +236,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           const SizedBox(height: Spacing.xl),
           _field(_first, 'First name', lockedBy: by(locks?.firstName)),
           _field(_last, 'Last name', lockedBy: by(locks?.lastName)),
-          _field(
-            _nickname,
-            'Nickname',
-            maxLength: 22,
-            lockedBy: by(locks?.nickname),
-          ),
+          _field(_nickname, 'Nickname', lockedBy: by(locks?.nickname)),
           _field(
             _position,
             'Position',
