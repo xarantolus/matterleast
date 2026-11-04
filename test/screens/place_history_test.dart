@@ -610,20 +610,18 @@ void main() {
       await tester.pump(Duration.zero);
     }, variant: desktop);
 
-    testWidgets('switching to a place with a remembered conversation never '
-        'leaves the panes empty in between', (tester) async {
+    testWidgets('switching to a place with a remembered conversation changes '
+        'nothing until it can open', (tester) async {
       await wide(tester);
       final a = RailTarget(url: urlA(), teamId: teamId);
       await open(tester, urlA(), _xId);
       await open(tester, urlB(), _yId);
-      final emptied = <Object>[];
-      final sub = container.listen(openPanesProvider, (_, now) {
-        if (now.channel == null) emptied.add(now);
-      });
+      final before = place();
       unawaited(showPlace(navigator(tester), a));
+      expect(place(), before);
+      expect(shown(tester), ['${urlB()} $_yId']);
       await settle(tester);
-      sub.close();
-      expect(emptied, isEmpty);
+      expect(place(), a);
       expect(shown(tester), ['${urlA()} $_xId']);
       await finish(tester);
       await tester.pump(Duration.zero);
