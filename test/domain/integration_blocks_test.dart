@@ -54,6 +54,37 @@ InteractiveContent? content(
 }) => interactiveContent(IntegrationProps.fromJson(props), mmBlocks: mmBlocks);
 
 void main() {
+  test('Block Kit and cards need the server flag, attachments do not', () {
+    final blocks = {
+      'blocks': [
+        {'type': 'divider'},
+      ],
+    };
+    final cards = {
+      'cards': [
+        {
+          'type': 'AdaptiveCard',
+          'body': [
+            {'type': 'TextBlock', 'text': 'Hi'},
+          ],
+        },
+      ],
+    };
+    final attachments = {
+      'attachments': [
+        {'text': 'Hi'},
+      ],
+    };
+    expect(content(blocks)!.format, IntegrationFormat.block);
+    expect(content(cards)!.format, IntegrationFormat.card);
+    expect(content(blocks, mmBlocks: false), isNull);
+    expect(content(cards, mmBlocks: false), isNull);
+    expect(
+      content(attachments, mmBlocks: false)!.format,
+      IntegrationFormat.attachment,
+    );
+  });
+
   group('message attachments', () {
     test('keep pretext, author, title, text, fields, footer and actions', () {
       final c = content({
@@ -469,8 +500,14 @@ container border danger
       expect(a.query, {'row': '2', 'who': 'a b'});
     });
 
+    test('ids may hold underscores and dashes', () {
+      expect(parseInlineAction('mmaction://view_logs')!.actionId, 'view_logs');
+      expect(parseInlineAction('mmaction://next-step')!.actionId, 'next-step');
+    });
+
     test('ids outside the server rules and huge queries are refused', () {
-      expect(parseInlineAction('mmaction://bad-id'), isNull);
+      expect(parseInlineAction('mmaction://bad.id'), isNull);
+      expect(parseInlineAction('mmaction://${'a' * 65}'), isNull);
       expect(parseInlineAction('https://example.test'), isNull);
       expect(parseInlineAction('mmaction://ok?x=${'y' * 2100}'), isNull);
       expect(parseInlineAction('mmaction://ok')!.query, isEmpty);

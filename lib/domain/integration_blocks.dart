@@ -219,9 +219,9 @@ List<IntegrationBlock> translationErrorBlocks(String detail) => [
 ];
 
 /// Pure: the interactive content of a post's props, from the first format
-/// present in the order `mm_blocks` (only with [mmBlocks], the server's
-/// `FeatureFlagMmBlocksEnabled`), `blocks`, `cards`, `attachments`; null
-/// when there is none.
+/// present in the order `mm_blocks`, `blocks`, `cards` (all three only with
+/// [mmBlocks], the server's `FeatureFlagMmBlocksEnabled`), `attachments`,
+/// which servers draw either way; null when there is none.
 InteractiveContent? interactiveContent(
   IntegrationProps props, {
   required bool mmBlocks,
@@ -231,11 +231,11 @@ InteractiveContent? interactiveContent(
       IntegrationFormat.mmBlock,
       translateMmBlocks(props.mmBlocks),
     ),
-    _ when props.blocks.isNotEmpty => (
+    _ when mmBlocks && props.blocks.isNotEmpty => (
       IntegrationFormat.block,
       translateBlockKit(props.blocks),
     ),
-    _ when props.cards.isNotEmpty => (
+    _ when mmBlocks && props.cards.isNotEmpty => (
       IntegrationFormat.card,
       translateAdaptiveCards(props.cards),
     ),
@@ -929,7 +929,7 @@ IntegrationBlock? _attachmentActions(List<AttachmentAction> actions) {
 /// text, which runs a post action instead of opening anything.
 typedef InlineAction = ({String actionId, Map<String, String> query});
 
-final _actionId = RegExp(r'^[A-Za-z0-9]+$');
+final _actionId = RegExp(r'^[A-Za-z0-9_-]{1,64}$');
 const _maxInlineQuery = 2048;
 
 bool isInlineActionLink(String href) => href.startsWith('mmaction://');
