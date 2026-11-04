@@ -94,6 +94,7 @@
 - "/api/v4/teams/{team_id}/channels/deleted"
 - "/api/v4/teams/{team_id}/channels/managed_categories"
 - "/api/v4/teams/{team_id}/channels/name/{channel_name}"
+- "/api/v4/teams/{team_id}/channels/private"
 - "/api/v4/teams/{team_id}/channels/search"
 - "/api/v4/teams/{team_id}/channels/search_autocomplete"
 - "/api/v4/teams/{team_id}/commands/autocomplete"

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -91,6 +93,7 @@ PostItem _post({
   List<PostPerson> participants = const [],
   int replyCount = 0,
   String? propsJson,
+  bool authorIsBot = false,
 }) => PostItem(
   id: 'p1',
   key: 'p1',
@@ -102,6 +105,7 @@ PostItem _post({
   participants: participants,
   replyCount: replyCount,
   propsJson: propsJson,
+  authorIsBot: authorIsBot,
 );
 
 void main() {
@@ -158,14 +162,41 @@ void main() {
     expect(find.byType(UserProfileSheet), findsOneWidget);
   });
 
-  testWidgets('a webhook post opens no profile', (tester) async {
+  testWidgets("a webhook post's name opens the profile, its picture not", (
+    tester,
+  ) async {
     await _show(
       tester,
       PostTile(post: _post(propsJson: '{"from_webhook":"true"}')),
     );
-    await tester.tap(find.text('Pat Doe'));
+    await tester.tap(find.byType(InitialsBadge));
     await tester.pumpAndSettle();
     expect(find.byType(UserProfileSheet), findsNothing);
+    await tester.tap(find.text('Pat Doe'));
+    await tester.pumpAndSettle();
+    expect(find.byType(UserProfileSheet), findsOneWidget);
+  });
+
+  testWidgets("a right click on a bot's name offers to message it", (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      await _show(tester, PostTile(post: _post(authorIsBot: true)));
+      final mouse = await tester.createGesture(
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await mouse.addPointer(location: tester.getCenter(find.text('Pat Doe')));
+      addTearDown(mouse.removePointer);
+      await mouse.down(tester.getCenter(find.text('Pat Doe')));
+      await mouse.up();
+      await tester.pumpAndSettle();
+      expect(find.text('View profile'), findsOneWidget);
+      expect(find.text('Message'), findsOneWidget);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('who reacted lists people with picture and @username', (

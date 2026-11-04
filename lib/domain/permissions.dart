@@ -12,6 +12,7 @@ abstract final class Permission {
   static const convertPublicToPrivate = 'convert_public_channel_to_private';
   static const manageChannelRoles = 'manage_channel_roles';
   static const manageTeam = 'manage_team';
+  static const manageSystem = 'manage_system';
   static const inviteUser = 'invite_user';
   static const addUserToTeam = 'add_user_to_team';
   static const createPost = 'create_post';
@@ -35,9 +36,6 @@ const systemAdminRole = 'system_admin';
 /// guest account.
 bool isGuest(String? roles) =>
     roleNames([roles ?? '']).contains('system_guest');
-
-/// The server keeps at most this many different emoji on one message.
-const maxDistinctReactions = 40;
 
 /// Each known role's permissions by role name.
 typedef Grants = Map<String, Set<String>>;
@@ -289,22 +287,20 @@ MessageRights messageRights(
   ChannelPermissions channel, {
   required bool mine,
   required bool system,
-  required bool fromWebhook,
   required DateTime createAt,
   required DateTime now,
   required Duration? editTimeLimit,
-  required int distinctReactions,
 }) {
   final archived = channel.block == PostingBlock.archived;
   final open = !archived && channel.block != PostingBlock.readOnly;
   final inTime =
       editTimeLimit == null || now.isBefore(createAt.add(editTimeLimit));
   return (
-    react: !system && channel.react && distinctReactions < maxDistinctReactions,
+    react: !system && channel.react,
     reply: !system && channel.block == null,
     pin: !system && open,
     edit: !system && inTime && (mine ? channel.editOwn : channel.editOthers),
     delete: mine ? channel.deleteOwn : channel.deleteOthers,
-    markUnread: !archived && ((!mine && !system) || fromWebhook),
+    markUnread: !archived && !system,
   );
 }

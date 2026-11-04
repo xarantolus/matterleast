@@ -58,6 +58,22 @@ void main() {
     details: PostDetails.decode(post.propsJson, null),
   );
 
+  testWidgets('Show more renders what the limits cut', (tester) async {
+    final post = _post({
+      'mm_blocks': [
+        for (var i = 0; i < maxBlocks + 1; i++)
+          {'type': 'text', 'text': 'line $i'},
+      ],
+    });
+    await pump(tester, integration(post));
+    expect(find.text('line $maxBlocks', skipOffstage: false), findsNothing);
+    await tester.ensureVisible(find.text('Show more'));
+    await tester.tap(find.text('Show more'));
+    await tester.pumpAndSettle();
+    expect(find.text('line $maxBlocks', skipOffstage: false), findsOneWidget);
+    expect(find.text('Show more'), findsNothing);
+  });
+
   testWidgets('a button runs its action once until the answer comes', (
     tester,
   ) async {

@@ -132,6 +132,13 @@ abstract class ChannelsClient {
     @Query('per_page') int? perPage = 60,
   });
 
+  @GET('/api/v4/teams/{team_id}/channels/private')
+  Future<List<Channel>> getPrivateChannelsForTeam({
+    @Path('team_id') required String teamId,
+    @Query('page') int? page = 0,
+    @Query('per_page') int? perPage = 60,
+  });
+
   @GET('/api/v4/teams/{team_id}/channels/deleted')
   Future<List<Channel>> getDeletedChannelsForTeam({
     @Path('team_id') required String teamId,

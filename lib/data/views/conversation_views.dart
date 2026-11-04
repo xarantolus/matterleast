@@ -91,11 +91,9 @@ class ConversationViews {
         channel,
         mine: post.userId == me,
         system: post.isSystem,
-        fromWebhook: PostDetails.decode(post.propsJson, null).fromWebhook,
         createAt: post.createAt,
         now: now,
         editTimeLimit: features.editTimeLimit,
-        distinctReactions: post.reactions.length,
       ),
       reminders: features.postReminders && !post.isSystem,
     );

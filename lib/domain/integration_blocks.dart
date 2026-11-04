@@ -181,9 +181,13 @@ class InteractiveContent {
   const InteractiveContent({
     required this.blocks,
     required this.format,
+    this.all,
     this.cookie,
   });
   final List<IntegrationBlock> blocks;
+
+  /// Everything, when [blocks] had to be cut to the limits; else null.
+  final List<IntegrationBlock>? all;
   final IntegrationFormat format;
 
   /// The post's cookie for actions of formats other than attachments.
@@ -242,8 +246,11 @@ InteractiveContent? interactiveContent(
     _ => (null, const <IntegrationBlock>[]),
   };
   if (format == null) return null;
+  final limiter = _Limiter();
+  final shown = limiter.blocks(blocks, 1);
   return InteractiveContent(
-    blocks: applyBlockLimits(blocks),
+    blocks: shown,
+    all: limiter.cut ? blocks : null,
     format: format,
     cookie: props.mmBlocksActions,
   );
@@ -255,20 +262,24 @@ const maxBlockDepth = 32;
 const maxBlocks = 100;
 const maxMarkdownText = 16000;
 
-/// Pure: [blocks] cut to [maxBlockDepth] levels, [maxBlocks] blocks and
+/// Shown first: [maxBlockDepth] levels, [maxBlocks] blocks and
 /// [maxMarkdownText] characters of text; containers left empty go.
-List<IntegrationBlock> applyBlockLimits(List<IntegrationBlock> blocks) =>
-    _Limiter().blocks(blocks, 1);
-
 class _Limiter {
   var _count = 0;
   var _text = 0;
+  var cut = false;
 
   List<IntegrationBlock> blocks(List<IntegrationBlock> blocks, int depth) {
-    if (depth > maxBlockDepth) return const [];
+    if (depth > maxBlockDepth) {
+      cut = cut || blocks.isNotEmpty;
+      return const [];
+    }
     final out = <IntegrationBlock>[];
     for (final block in blocks) {
-      if (_count >= maxBlocks) break;
+      if (_count >= maxBlocks) {
+        cut = true;
+        break;
+      }
       if (_block(block, depth) case final kept?) out.add(kept);
     }
     return out;
@@ -276,8 +287,12 @@ class _Limiter {
 
   String? _limitText(String text) {
     final left = maxMarkdownText - _text;
-    if (left <= 0) return null;
+    if (left <= 0) {
+      cut = cut || text.isNotEmpty;
+      return null;
+    }
     final kept = text.length <= left ? text : text.substring(0, left);
+    cut = cut || kept.length < text.length;
     _text += kept.length;
     return kept;
   }

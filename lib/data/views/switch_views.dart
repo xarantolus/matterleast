@@ -108,7 +108,7 @@ class SwitchViews {
       );
     }
     for (final u in users) {
-      if (u.id == myId || withDirect.contains(u.id) || u.isBot) continue;
+      if (withDirect.contains(u.id)) continue;
       items.add(personItem(u, serverUrl, format, teamId: currentTeam));
     }
     return items;

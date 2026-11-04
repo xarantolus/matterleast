@@ -21,8 +21,8 @@ import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/try_action.dart';
 
-/// The team's public channels the user is not in, or its archived ones,
-/// a page at a time; joining asks first.
+/// The team's channels, joined ones marked, or its archived ones, a page
+/// at a time; joining asks first.
 class BrowseChannelsScreen extends ConsumerStatefulWidget {
   const BrowseChannelsScreen({
     required this.url,
@@ -40,7 +40,6 @@ class BrowseChannelsScreen extends ConsumerStatefulWidget {
 
 class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
   var _archived = false;
-  // Joined channels are left out, so a page can show little or nothing.
   late final _list = PagedSearchController<SwitchItem>(
     loadPage: _loadPage,
     search: _search,
@@ -85,7 +84,8 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
 
   Future<void> _open(SwitchItem item) async {
     final navigator = Navigator.of(context);
-    if (!_archived && !await confirmJoin(context, item.title)) return;
+    final join = !_archived && item.kind == SwitchKind.joinable;
+    if (join && !await confirmJoin(context, item.title)) return;
     if (!mounted) return;
     setState(() => _working = true);
     final joined = await tryAction(
@@ -96,7 +96,7 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
         final actions = await ref.read(
           channelActionsProvider(widget.url).future,
         );
-        if (!_archived) await actions.join(item.id);
+        if (join) await actions.join(item.id);
       },
     );
     if (!mounted) return;
@@ -214,13 +214,11 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                                 ? 'No channels match "$term"'
                                 : _archived
                                 ? 'No archived channels'
-                                : 'No more channels to join',
+                                : 'No channels yet',
                             body: _archived
                                 ? 'Channels show up here once they are '
                                       'archived.'
-                                : "You're in every public channel of this "
-                                      'team. Create one to start something '
-                                      'new.',
+                                : 'Create one to start something new.',
                             action: canCreate && !_archived && term.isEmpty
                                 ? FilledButton.tonal(
                                     onPressed: _create,
@@ -241,6 +239,9 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                         itemBuilder: (context, i) => SwitchTile(
                           item: shown[i],
                           markKind: false,
+                          trailing: !_archived && shown[i].joined
+                              ? const Icon(Icons.check, semanticLabel: 'Joined')
+                              : null,
                           onTap: busy ? () {} : () => _open(shown[i]),
                         ),
                       ),
