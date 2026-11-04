@@ -275,6 +275,7 @@ echo "seed: bot and webhook"
 # Integrations: one webhook post per format (attachments, Block Kit, an
 # Adaptive Card, Mattermost blocks).
 INTEG=$(channel "$LIGHTHOUSE" integrations Integrations O "Posts from bots and webhooks" "")
+channel_add "$INTEG" alice bob carol dave erin
 INTEG_HOOK=$(api admin POST /hooks/incoming "$(jq -n --arg c "$INTEG" '{channel_id:$c, display_name:"Status board", description:"One post per message format"}')" | jq -r .id)
 hook() { # hook <json payload>
     curl -sS -m 30 --fail-with-body -X POST "$URL/hooks/$INTEG_HOOK" -H 'Content-Type: application/json' --data-binary "$1" >/dev/null
