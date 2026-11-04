@@ -277,6 +277,81 @@ void main() {
     expect(find.byType(GalleryScreen), findsNothing);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
+  group('a touchpad swipe between pictures', () {
+    Future<(TestPointer, double Function())> start(WidgetTester tester) async {
+      final answer = await _pictures(tester);
+      await show(tester, answer, files: const [_photo, _second, _third]);
+      for (
+        var i = 0;
+        i < 100 && find.byType(ExtendedImageGesture).evaluate().isEmpty;
+        i++
+      ) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      final pad = TestPointer(1, PointerDeviceKind.trackpad);
+      final at = tester.getCenter(find.byType(GalleryScreen));
+      await tester.sendEventToBinding(pad.panZoomStart(at));
+      return (
+        pad,
+        () => tester
+            .widget<ExtendedImageGesturePageView>(
+              find.byType(ExtendedImageGesturePageView),
+            )
+            .controller!
+            .page!,
+      );
+    }
+
+    Future<void> pan(WidgetTester tester, TestPointer pad, double dx) async {
+      await tester.sendEventToBinding(
+        pad.panZoomUpdate(
+          tester.getCenter(find.byType(GalleryScreen)),
+          pan: Offset(dx, 0),
+        ),
+      );
+      await tester.pump();
+    }
+
+    Future<void> release(WidgetTester tester, TestPointer pad) async {
+      await tester.sendEventToBinding(pad.panZoomEnd());
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('moves the pages while the fingers are down', (tester) async {
+      final (pad, page) = await start(tester);
+      await pan(tester, pad, -400);
+      expect(page(), closeTo(0.5, 0.05));
+      await release(tester, pad);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+    testWidgets('settles on the next picture past half a page', (tester) async {
+      final (pad, page) = await start(tester);
+      await pan(tester, pad, -500);
+      await release(tester, pad);
+      expect(page(), 1);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+    testWidgets('springs back when short', (tester) async {
+      final (pad, page) = await start(tester);
+      await pan(tester, pad, -100);
+      await release(tester, pad);
+      expect(page(), 0);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+    testWidgets('a back swipe on the first picture closes the gallery', (
+      tester,
+    ) async {
+      final (pad, _) = await start(tester);
+      await pan(tester, pad, 200);
+      await release(tester, pad);
+      expect(find.byType(GalleryScreen), findsNothing);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+  });
+
   testWidgets('a picture opens fitted, also after it was zoomed in before', (
     tester,
   ) async {
