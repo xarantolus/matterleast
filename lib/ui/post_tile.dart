@@ -127,6 +127,7 @@ class PostTile extends StatelessWidget {
         _ToProfile(
           post: post,
           details: details,
+          nameLine: true,
           child: Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: Spacing.sm,
@@ -525,7 +526,7 @@ class PostTile extends StatelessWidget {
       if (env != null)
         if (post.linked case final linked? when !post.deleted)
           action('Open quoted message'): () => openLinkedPost(env, linked),
-      if (env != null && !details.fromWebhook && post.userId.isNotEmpty)
+      if (env != null && post.userId.isNotEmpty)
         action('Show profile of $name'): () => showUserProfile(
           context,
           url: env.server.toString(),
@@ -739,22 +740,27 @@ class _ToProfile extends ConsumerWidget {
     required this.post,
     required this.details,
     required this.child,
+    this.nameLine = false,
   });
 
   final PostItem post;
   final PostDetails details;
   final Widget child;
 
+  /// The name line opens the profile even for a webhook post, like mobile.
+  final bool nameLine;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final env = PostEnvironment.maybeOf(context);
-    if (env == null || details.fromWebhook || post.userId.isEmpty) {
+    if (env == null ||
+        (details.fromWebhook && !nameLine) ||
+        post.userId.isEmpty) {
       return child;
     }
     final url = env.server.toString();
     void profile() => showUserProfile(context, url: url, userId: post.userId);
-    final canMessage =
-        !post.authorIsBot && post.authorUsername != env.myUsername;
+    final canMessage = post.authorUsername != env.myUsername;
     // A screen reader finds this among the message's actions.
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
