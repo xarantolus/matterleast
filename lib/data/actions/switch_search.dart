@@ -60,10 +60,9 @@ class SwitchSearch {
     final found = await users;
     await session.store.applyUsers(found);
     final format = await _db.nameFormat();
-    final me = await _db.syncText(SyncKeys.currentUserId);
     final ids = [
       for (final u in found)
-        if (u.id != null && u.id != me) u.id!,
+        if (u.id != null) u.id!,
     ];
     final rows = await (_db.select(
       _db.users,
