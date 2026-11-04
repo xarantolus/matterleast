@@ -1,7 +1,7 @@
 name: matterleast
 description: A Mattermost client.
 publish_to: 'none'
-version: 0.40.0+60
+version: 0.40.1+61
 
 environment:
   sdk: ^3.13.7
