@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PaneWidths {
 
- double? get list; double? get listBesideThread; double? get thread;
+ double? get list; double? get thread;
 /// Create a copy of PaneWidths
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +30,20 @@ $PaneWidthsCopyWith<PaneWidths> get copyWith => _$PaneWidthsCopyWithImpl<PaneWid
 @override
 bool operator ==(Object other) {
   final _this = this as PaneWidths;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PaneWidths&&(identical(other.list, _this.list) || other.list == _this.list)&&(identical(other.listBesideThread, _this.listBesideThread) || other.listBesideThread == _this.listBesideThread)&&(identical(other.thread, _this.thread) || other.thread == _this.thread));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PaneWidths&&(identical(other.list, _this.list) || other.list == _this.list)&&(identical(other.thread, _this.thread) || other.thread == _this.thread));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as PaneWidths;
-  return Object.hash(runtimeType,_this.list,_this.listBesideThread,_this.thread);
+  return Object.hash(runtimeType,_this.list,_this.thread);
 }
 
 @override
 String toString() {
   final _this = this as PaneWidths;
-  return 'PaneWidths(list: ${_this.list}, listBesideThread: ${_this.listBesideThread}, thread: ${_this.thread})';
+  return 'PaneWidths(list: ${_this.list}, thread: ${_this.thread})';
 }
 
 
@@ -54,7 +54,7 @@ abstract mixin class $PaneWidthsCopyWith<$Res>  {
   factory $PaneWidthsCopyWith(PaneWidths value, $Res Function(PaneWidths) _then) = _$PaneWidthsCopyWithImpl;
 @useResult
 $Res call({
- double? list, double? listBesideThread, double? thread
+ double? list, double? thread
 });
 
 
@@ -71,10 +71,9 @@ class _$PaneWidthsCopyWithImpl<$Res>
 
 /// Create a copy of PaneWidths
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? list = freezed,Object? listBesideThread = freezed,Object? thread = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? list = freezed,Object? thread = freezed,}) {
   return _then(PaneWidths(
 list: freezed == list ? _self.list : list // ignore: cast_nullable_to_non_nullable
-as double?,listBesideThread: freezed == listBesideThread ? _self.listBesideThread : listBesideThread // ignore: cast_nullable_to_non_nullable
 as double?,thread: freezed == thread ? _self.thread : thread // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
@@ -161,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double? list,  double? listBesideThread,  double? thread)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double? list,  double? thread)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PaneWidths() when $default != null:
-return $default(_that.list,_that.listBesideThread,_that.thread);case _:
+return $default(_that.list,_that.thread);case _:
   return orElse();
 
 }
@@ -182,10 +181,10 @@ return $default(_that.list,_that.listBesideThread,_that.thread);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double? list,  double? listBesideThread,  double? thread)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double? list,  double? thread)  $default,) {final _that = this;
 switch (_that) {
 case _PaneWidths():
-return $default(_that.list,_that.listBesideThread,_that.thread);case _:
+return $default(_that.list,_that.thread);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +201,10 @@ return $default(_that.list,_that.listBesideThread,_that.thread);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double? list,  double? listBesideThread,  double? thread)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double? list,  double? thread)?  $default,) {final _that = this;
 switch (_that) {
 case _PaneWidths() when $default != null:
-return $default(_that.list,_that.listBesideThread,_that.thread);case _:
+return $default(_that.list,_that.thread);case _:
   return null;
 
 }
@@ -217,11 +216,10 @@ return $default(_that.list,_that.listBesideThread,_that.thread);case _:
 @JsonSerializable()
 
 class _PaneWidths implements PaneWidths {
-  const _PaneWidths({this.list, this.listBesideThread, this.thread});
+  const _PaneWidths({this.list, this.thread});
   factory _PaneWidths.fromJson(Map<String, dynamic> json) => _$PaneWidthsFromJson(json);
 
 @override final  double? list;
-@override final  double? listBesideThread;
 @override final  double? thread;
 
 /// Create a copy of PaneWidths
@@ -237,18 +235,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PaneWidths&&(identical(other.list, list) || other.list == list)&&(identical(other.listBesideThread, listBesideThread) || other.listBesideThread == listBesideThread)&&(identical(other.thread, thread) || other.thread == thread));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PaneWidths&&(identical(other.list, list) || other.list == list)&&(identical(other.thread, thread) || other.thread == thread));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,list,listBesideThread,thread);
+    return Object.hash(runtimeType,list,thread);
 }
 
 @override
 String toString() {
-    return 'PaneWidths(list: $list, listBesideThread: $listBesideThread, thread: $thread)';
+    return 'PaneWidths(list: $list, thread: $thread)';
 }
 
 
@@ -259,7 +257,7 @@ abstract mixin class _$PaneWidthsCopyWith<$Res> implements $PaneWidthsCopyWith<$
   factory _$PaneWidthsCopyWith(_PaneWidths value, $Res Function(_PaneWidths) _then) = __$PaneWidthsCopyWithImpl;
 @override @useResult
 $Res call({
- double? list, double? listBesideThread, double? thread
+ double? list, double? thread
 });
 
 
@@ -276,10 +274,9 @@ class __$PaneWidthsCopyWithImpl<$Res>
 
 /// Create a copy of PaneWidths
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? list = freezed,Object? listBesideThread = freezed,Object? thread = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? list = freezed,Object? thread = freezed,}) {
   return _then(_PaneWidths(
 list: freezed == list ? _self.list : list // ignore: cast_nullable_to_non_nullable
-as double?,listBesideThread: freezed == listBesideThread ? _self.listBesideThread : listBesideThread // ignore: cast_nullable_to_non_nullable
 as double?,thread: freezed == thread ? _self.thread : thread // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
