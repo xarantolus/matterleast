@@ -33,7 +33,7 @@ class Directory {
     await session.store.applyUsers(users);
     return [
       for (final u in users)
-        if (u.id != null && u.deleteAt == null && u.isBot != true) u.id!,
+        if (u.id != null && u.deleteAt == null) u.id!,
     ];
   }
 

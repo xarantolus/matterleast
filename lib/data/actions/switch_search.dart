@@ -63,7 +63,7 @@ class SwitchSearch {
     final me = await _db.syncText(SyncKeys.currentUserId);
     final ids = [
       for (final u in found)
-        if (u.id != null && u.id != me && u.isBot != true) u.id!,
+        if (u.id != null && u.id != me) u.id!,
     ];
     final rows = await (_db.select(
       _db.users,
