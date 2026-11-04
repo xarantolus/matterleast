@@ -262,7 +262,7 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
     final shown = ref.watch(postDisplayProvider(url));
     bool known(AsyncValue<Object?> v) => v.hasValue || v.hasError;
     if (!known(options) || !known(emoji) || !known(shown)) {
-      return const SizedBox.expand();
+      return const SizedBox.shrink();
     }
     final me = ref.watch(currentUserProvider(url)).value;
     final resolver = ref.watch(customEmojiResolverProvider(url)).value;
