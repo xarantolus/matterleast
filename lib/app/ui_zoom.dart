@@ -41,15 +41,20 @@ class UiZoom extends ConsumerWidget {
         ),
       },
       // One tree at every zoom, so nothing below is rebuilt.
+      // Sized to the whole window: under loose constraints a FittedBox
+      // would keep the zoomed layout's smaller size and not scale it.
       child: LayoutBuilder(
-        builder: (context, constraints) => FittedBox(
-          fit: BoxFit.fill,
-          alignment: Alignment.topLeft,
-          child: SizedBox.fromSize(
-            size: constraints.biggest / zoom,
-            child: MediaQuery(
-              data: zoomedMediaQuery(MediaQuery.of(context), zoom),
-              child: child,
+        builder: (context, constraints) => SizedBox.fromSize(
+          size: constraints.biggest,
+          child: FittedBox(
+            fit: BoxFit.fill,
+            alignment: Alignment.topLeft,
+            child: SizedBox.fromSize(
+              size: constraints.biggest / zoom,
+              child: MediaQuery(
+                data: zoomedMediaQuery(MediaQuery.of(context), zoom),
+                child: child,
+              ),
             ),
           ),
         ),

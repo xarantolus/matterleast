@@ -21,7 +21,7 @@ void main() {
   Size? laidOut;
   double? pixelRatio;
 
-  Future<void> show(WidgetTester tester) async {
+  Future<void> show(WidgetTester tester, {bool loose = false}) async {
     tester.view.physicalSize = const Size(1200, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -29,7 +29,10 @@ void main() {
       ProviderScope(
         overrides: [appDatabaseProvider.overrideWithValue(db)],
         child: MaterialApp(
-          builder: (_, child) => UiZoom(child: AppShortcuts(child: child!)),
+          builder: (_, child) {
+            final zoomed = UiZoom(child: AppShortcuts(child: child!));
+            return loose ? Center(child: zoomed) : zoomed;
+          },
           home: Scaffold(
             body: LayoutBuilder(
               builder: (context, constraints) {
@@ -82,6 +85,20 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await show(tester);
     expect(laidOut!.width, closeTo(1200 / 0.8, 0.01));
+    await close(tester);
+  }, variant: desktop);
+
+  testWidgets('zoomed in under loose constraints it still fills the window', (
+    tester,
+  ) async {
+    await show(tester, loose: true);
+    await press(tester, LogicalKeyboardKey.equal);
+    expect(laidOut!.width, closeTo(1200 / 1.1, 0.01));
+    expect(tester.getTopLeft(find.byType(Scaffold)), Offset.zero);
+    expect(
+      tester.getBottomRight(find.byType(Scaffold)),
+      const Offset(1200, 800),
+    );
     await close(tester);
   }, variant: desktop);
 
