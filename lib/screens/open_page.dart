@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/domain/open_history.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/slide_route.dart';
@@ -11,11 +12,13 @@ import 'package:matterleast/ui/slide_route.dart';
 /// the conversation pane on a wide window, over what shows on a narrow
 /// one, and inside the popout it was opened from. With [popout] it opens
 /// in a card over the window on desktop instead, where whatever it opens
-/// stays inside the card. Completes once it closes.
+/// stays inside the card. A [view] page is a history entry. Completes once
+/// it closes.
 Future<void> openPage(
   NavigatorState navigator,
   Widget page, {
   bool popout = false,
+  PlaceView? view,
 }) async {
   if (!navigator.mounted) return;
   if (InPopout.contains(navigator.context)) {
@@ -33,7 +36,7 @@ Future<void> openPage(
   final container = ProviderScope.containerOf(navigator.context, listen: false);
   final pane = container.read(paneRoutesProvider).navigator;
   final target = pane != null && pane.mounted ? pane : navigator;
-  await target.push(SlideRoute<void>(builder: (_) => page));
+  await target.push(SlideRoute<void>(builder: (_) => page, view: view));
 }
 
 /// Popouts are as wide as a comfortable form and leave the window's edges

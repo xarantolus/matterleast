@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/agent_providers.dart';
 import 'package:matterleast/domain/channel_list.dart';
-import 'package:matterleast/screens/agents/agents_screen.dart';
+import 'package:matterleast/domain/open_history.dart';
 import 'package:matterleast/screens/channel_info/browse_channels_screen.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/channel_list/category_menu.dart';
@@ -14,12 +14,11 @@ import 'package:matterleast/screens/channel_list/channel_list_state.dart';
 import 'package:matterleast/screens/channel_list/channel_tile.dart';
 import 'package:matterleast/screens/channel_list/reorder_view.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
-import 'package:matterleast/screens/drafts/drafts_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/screens/place_view.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
-import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/delayed_spinner.dart';
@@ -344,16 +343,8 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 title: 'Threads',
                 count: unread,
                 open: _openShortcut,
-                onTap: () => unawaited(
-                  _openShortcutPage(
-                    'Threads',
-                    TeamThreadsScreen(
-                      url: widget.url,
-                      teamId: widget.teamId,
-                      teamName: list.teamName,
-                    ),
-                  ),
-                ),
+                onTap: () =>
+                    unawaited(_openShortcutPage('Threads', PlaceView.threads)),
               ),
             ),
           if (ref.watch(agentsAvailableProvider(widget.url)))
@@ -363,9 +354,8 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
                 title: 'Agents',
                 count: 0,
                 open: _openShortcut,
-                onTap: () => unawaited(
-                  _openShortcutPage('Agents', AgentsScreen(url: widget.url)),
-                ),
+                onTap: () =>
+                    unawaited(_openShortcutPage('Agents', PlaceView.agents)),
               ),
             ),
           SliverToBoxAdapter(
@@ -374,16 +364,8 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
               title: 'Drafts',
               count: list.drafts + scheduled,
               open: _openShortcut,
-              onTap: () => unawaited(
-                _openShortcutPage(
-                  'Drafts',
-                  DraftsScreen(
-                    url: widget.url,
-                    teamId: widget.teamId,
-                    teamName: list.teamName,
-                  ),
-                ),
-              ),
+              onTap: () =>
+                  unawaited(_openShortcutPage('Drafts', PlaceView.drafts)),
             ),
           ),
           if (list.isEmpty)
@@ -454,9 +436,15 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     );
   }
 
-  Future<void> _openShortcutPage(String id, Widget page) async {
+  Future<void> _openShortcutPage(String id, PlaceView view) async {
     _openShortcut.value = id;
-    await openPage(Navigator.of(context), page);
+    await openPlaceView(
+      Navigator.of(context),
+      view,
+      url: widget.url,
+      teamId: widget.teamId,
+      teamName: widget.list.teamName,
+    );
     if (mounted && _openShortcut.value == id) _openShortcut.value = null;
   }
 
