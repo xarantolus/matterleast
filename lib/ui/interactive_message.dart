@@ -8,6 +8,7 @@ import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/quick_switch.dart';
+import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
@@ -256,7 +257,7 @@ class _Text extends StatelessWidget {
       postId: '${message.keyPrefix}$path',
       message: block.text,
       imageSizes: message.imageSizes,
-      collapsible: false,
+      collapsible: block.collapsible,
       style: quiet
           ? (block.small ? theme.bodySmall : theme.bodyMedium)?.copyWith(
               color: block.subtle ? tokens.muted : tokens.text,
@@ -304,6 +305,12 @@ class _Image extends StatelessWidget {
           label: b.altText.isEmpty ? null : b.altText,
           child: shown,
         );
+        final open = MessageImageOpener.of(context);
+        if (open != null) {
+          shown = Clickable(
+            child: GestureDetector(onTap: () => open(b.url), child: shown),
+          );
+        }
         if (b.title case final title? when title.isNotEmpty) {
           shown = Tooltip(message: title, child: shown);
         }
@@ -387,6 +394,9 @@ class _Container extends StatelessWidget {
   }
 }
 
+/// Columns narrower than this stack instead of sitting side by side.
+const _minColumnWidth = 140.0;
+
 class _ColumnSet extends StatelessWidget {
   const _ColumnSet({required this.block, required this.path});
 
@@ -399,6 +409,16 @@ class _ColumnSet extends StatelessWidget {
       // Columns sized to their content share what the stretching ones
       // leave, but never take more than half the row.
       final anyStretch = block.columns.any((c) => c.stretch);
+      if (constraints.maxWidth < block.columns.length * _minColumnWidth) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: _gap(block.gap),
+          children: [
+            for (final (i, column) in block.columns.indexed)
+              _Blocks(blocks: column.items, path: '$path/$i', gap: column.gap),
+          ],
+        );
+      }
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: _gap(block.gap),
@@ -500,6 +520,24 @@ class _CollapsibleState extends State<_Collapsible> {
 mixin _Acting<T extends StatefulWidget> on State<T> {
   var busy = false;
 
+  /// What the server said when the last run failed.
+  String? failure;
+
+  /// [control] with the failure under it.
+  Widget withFailure(Widget control) => failure == null
+      ? control
+      : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            control,
+            Text(
+              failure!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+        );
+
   Future<void> act(
     IntegrationBlock block, {
     required String actionId,
@@ -509,9 +547,13 @@ mixin _Acting<T extends StatefulWidget> on State<T> {
     final run = PostEnvironment.maybeOf(context)?.onAction;
     if (busy || run == null) return;
     final message = _Scope.of(context);
-    setState(() => busy = true);
+    setState(() {
+      busy = true;
+      failure = null;
+    });
+    String? said;
     try {
-      await run((
+      said = await run((
         postId: message.postId,
         actionId: actionId,
         cookie: message.content.cookieFor(block),
@@ -520,7 +562,12 @@ mixin _Acting<T extends StatefulWidget> on State<T> {
         format: message.content.format,
       ));
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() {
+          busy = false;
+          failure = said;
+        });
+      }
     }
   }
 }
@@ -539,10 +586,14 @@ class _ButtonState extends State<_Button> with _Acting {
   Widget build(BuildContext context) {
     final b = widget.block;
     final scheme = Theme.of(context).colorScheme;
+    final env = PostEnvironment.maybeOf(context);
+    final link = b.url;
     final enabled =
-        !b.disabled && PostEnvironment.maybeOf(context)?.onAction != null;
+        !b.disabled && (link != null ? env != null : env?.onAction != null);
     final onPressed = enabled && !busy
-        ? () => unawaited(act(b, actionId: b.actionId, query: b.query))
+        ? link != null
+              ? () => env!.onLink(classifyLink(link, env.server))
+              : () => unawaited(act(b, actionId: b.actionId, query: b.query))
         : null;
     final label = busy
         ? Row(
@@ -553,10 +604,10 @@ class _ButtonState extends State<_Button> with _Acting {
                 dimension: 16,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              Flexible(child: Text(b.text)),
+              Flexible(child: _Label(b.text)),
             ],
           )
-        : Text(b.text);
+        : _Label(b.text);
     final colour = namedColour(b.style);
     final Widget button = switch (b.style) {
       'primary' => FilledButton(onPressed: onPressed, child: label),
@@ -579,10 +630,27 @@ class _ButtonState extends State<_Button> with _Acting {
       _ => FilledButton.tonal(onPressed: onPressed, child: label),
     };
     final tip = b.tooltip;
-    return tip == null || tip.isEmpty
-        ? button
-        : Tooltip(message: tip, child: button);
+    return withFailure(
+      tip == null || tip.isEmpty
+          ? button
+          : Tooltip(message: tip, child: button),
+    );
   }
+}
+
+/// A button's label as markdown, in the button's text style.
+class _Label extends StatelessWidget {
+  const _Label(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => PostBody(
+    postId: 'label:$text',
+    message: text,
+    collapsible: false,
+    style: DefaultTextStyle.of(context).style,
+  );
 }
 
 class _Select extends StatefulWidget {
@@ -652,35 +720,39 @@ class _SelectState extends State<_Select> with _Acting {
     final tokens = context.tokens;
     final enabled =
         !b.disabled && PostEnvironment.maybeOf(context)?.onAction != null;
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 160, maxWidth: 320),
-      child: OutlinedButton(
-        onPressed: enabled && !busy ? () => unawaited(_pick()) : null,
-        style: OutlinedButton.styleFrom(
-          alignment: AlignmentDirectional.centerStart,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: Spacing.sm,
-          children: [
-            Flexible(
-              child: Text(
-                _shown ?? b.placeholder,
-                overflow: TextOverflow.ellipsis,
-                style: _shown == null
-                    ? TextStyle(color: tokens.muted)
-                    : TextStyle(color: tokens.text),
-              ),
+    return withFailure(
+      ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 160, maxWidth: 320),
+        child: OutlinedButton(
+          onPressed: enabled && !busy ? () => unawaited(_pick()) : null,
+          style: OutlinedButton.styleFrom(
+            alignment: AlignmentDirectional.centerStart,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
             ),
-            if (busy)
-              const SizedBox.square(
-                dimension: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            else
-              const Icon(Icons.arrow_drop_down),
-          ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Spacing.sm,
+            children: [
+              Flexible(
+                child: Text(
+                  _shown ?? b.placeholder,
+                  overflow: TextOverflow.ellipsis,
+                  style: _shown == null
+                      ? TextStyle(color: tokens.muted)
+                      : TextStyle(color: tokens.text),
+                ),
+              ),
+              if (busy)
+                const SizedBox.square(
+                  dimension: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                const Icon(Icons.arrow_drop_down),
+            ],
+          ),
         ),
       ),
     );
@@ -697,19 +769,56 @@ Future<SelectOption?> _pickOption(BuildContext context, SelectBlock block) =>
         expand: false,
         initialChildSize: 0.5,
         maxChildSize: 0.9,
-        builder: (sheet, controller) => ListView(
-          controller: controller,
-          children: [
-            SheetHeader(block.placeholder),
-            for (final o in block.options)
-              ListTile(
-                title: Text(o.text),
-                onTap: () => Navigator.pop(sheet, o),
-              ),
-          ],
-        ),
+        builder: (sheet, controller) =>
+            _Options(block: block, controller: controller),
       ),
     );
+
+/// Options longer than this get a search field.
+const _searchableFrom = 8;
+
+class _Options extends StatefulWidget {
+  const _Options({required this.block, required this.controller});
+
+  final SelectBlock block;
+  final ScrollController controller;
+
+  @override
+  State<_Options> createState() => _OptionsState();
+}
+
+class _OptionsState extends State<_Options> {
+  var _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final b = widget.block;
+    final q = _query.trim().toLowerCase();
+    return ListView(
+      controller: widget.controller,
+      children: [
+        SheetHeader(b.placeholder),
+        if (b.options.length > _searchableFrom)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+            child: TextField(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Search',
+              ),
+              onChanged: (v) => setState(() => _query = v),
+            ),
+          ),
+        for (final o in b.options)
+          if (q.isEmpty || o.text.toLowerCase().contains(q))
+            ListTile(
+              title: Text(o.text),
+              onTap: () => Navigator.pop(context, o),
+            ),
+      ],
+    );
+  }
+}
 
 /// A post's interactive content from an integration, if it has any.
 class PostIntegration extends StatelessWidget {

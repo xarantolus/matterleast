@@ -1,6 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/json/post_extras.dart';
+import 'package:matterleast/api/json/slack_mrkdwn.dart';
 
 part 'integration_props.g.dart';
 
@@ -180,6 +181,9 @@ class BlockKitJson {
     this.style,
     this.placeholder,
     this.options = const [],
+    this.initialOption,
+    this.dataSource,
+    this.url,
   });
 
   factory BlockKitJson.fromJson(Map<String, Object?> json) =>
@@ -211,6 +215,14 @@ class BlockKitJson {
   final String? placeholder;
   @LenientList(SelectOptionJson.fromJson)
   final List<SelectOptionJson> options;
+  @LenientObject(SelectOptionJson.fromJson)
+  final SelectOptionJson? initialOption;
+  @LenientString()
+  final String? dataSource;
+
+  /// A button's link.
+  @LenientString()
+  final String? url;
 }
 
 /// An Adaptive Card, or one of its elements, columns or actions.
@@ -233,6 +245,8 @@ class AdaptiveCardJson {
     this.horizontalAlignment,
     this.title,
     this.id,
+    this.facts = const [],
+    this.value,
   });
 
   factory AdaptiveCardJson.fromJson(Map<String, Object?> json) =>
@@ -272,6 +286,12 @@ class AdaptiveCardJson {
   final String? title;
   @LenientString()
   final String? id;
+
+  /// A `FactSet`'s facts, each a `title` and a [value].
+  @LenientList(AdaptiveCardJson.fromJson)
+  final List<AdaptiveCardJson> facts;
+  @LenientString()
+  final String? value;
 }
 
 /// The body of `POST /posts/{id}/actions/{action_id}`.
@@ -308,12 +328,14 @@ class PostActionAnswer {
   final String? gotoLocation;
 }
 
-/// Slack's text: a plain string or a text object `{type, text}`.
+/// Slack's text: a plain string or a text object `{type, text}`, whose
+/// `mrkdwn` becomes markdown.
 class SlackText implements JsonConverter<String?, Object?> {
   const SlackText();
   @override
   String? fromJson(Object? json) => switch (json) {
     final String s => s,
+    {'type': 'mrkdwn', 'text': final String s} => slackMrkdwnToMarkdown(s),
     {'text': final String s} => s,
     _ => null,
   };

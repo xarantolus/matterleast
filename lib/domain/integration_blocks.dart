@@ -48,10 +48,18 @@ sealed class IntegrationBlock {
 
 /// Markdown.
 final class TextBlock extends IntegrationBlock {
-  const TextBlock(this.text, {this.subtle = false, this.small = false});
+  const TextBlock(
+    this.text, {
+    this.subtle = false,
+    this.small = false,
+    this.collapsible = false,
+  });
   final String text;
   final bool subtle;
   final bool small;
+
+  /// Long text is cut with "Show more".
+  final bool collapsible;
 }
 
 final class ImageBlock extends IntegrationBlock {
@@ -138,8 +146,11 @@ final class ButtonBlock extends IntegrationBlock {
     this.disabled = false,
     this.query,
     this.cookie,
+    this.url,
   });
   final String text;
+
+  /// Empty for a button that only opens [url].
   final String actionId;
 
   /// `primary`, `danger`, `good`, `success`, `warning` or a `#rrggbb`
@@ -151,6 +162,9 @@ final class ButtonBlock extends IntegrationBlock {
 
   /// A message attachment's own cookie for this action.
   final String? cookie;
+
+  /// Opened instead of running an action.
+  final String? url;
 }
 
 typedef SelectOption = ({String text, String value});
@@ -306,12 +320,22 @@ class _Limiter {
 
   IntegrationBlock? _limited(IntegrationBlock block, int depth) {
     switch (block) {
-      case TextBlock(:final text, :final subtle, :final small):
+      case TextBlock(
+        :final text,
+        :final subtle,
+        :final small,
+        :final collapsible,
+      ):
         final kept = _limitText(text);
         if (kept == null || kept.isEmpty) return null;
         return identical(kept, text)
             ? block
-            : TextBlock(kept, subtle: subtle, small: small);
+            : TextBlock(
+                kept,
+                subtle: subtle,
+                small: small,
+                collapsible: collapsible,
+              );
       case ButtonBlock():
         final kept = _limitText(block.text);
         if (kept == null || kept.isEmpty) return null;
@@ -325,6 +349,7 @@ class _Limiter {
                 disabled: block.disabled,
                 query: block.query,
                 cookie: block.cookie,
+                url: block.url,
               );
       case ContainerBlock():
         final content = blocks(block.content, depth + 1);
@@ -563,6 +588,7 @@ IntegrationBlock? _blockKit(BlockKitJson b) => switch (b.type) {
   'divider' => const DividerBlock(),
   'image' => _blockKitImage(b, ImageSizePreset.large),
   'actions' => _blockKitActions(b.elements),
+  'context' => _context(b.elements),
   _ => null,
 };
 
@@ -606,14 +632,59 @@ List<IntegrationBlock> _pairs(List<String> fields) {
 }
 
 IntegrationBlock? _accessory(BlockKitJson a) => switch (a.type) {
-  'button' when _nonEmpty(a.text) && _nonEmpty(a.actionId) => ButtonBlock(
-    text: a.text!,
-    actionId: a.actionId!,
-    style: buttonStyle(a.style),
-  ),
+  'button' => _blockKitButton(a),
+  'static_select' => _blockKitSelect(a),
   'image' => _blockKitImage(a, ImageSizePreset.small),
   _ => null,
 };
+
+ButtonBlock? _blockKitButton(BlockKitJson e) {
+  final link = _nonEmpty(e.url) && _safeUrl(e.url!) ? e.url : null;
+  if (!_nonEmpty(e.text) || (link == null && !_nonEmpty(e.actionId))) {
+    return null;
+  }
+  return ButtonBlock(
+    text: e.text!,
+    actionId: link == null ? e.actionId! : '',
+    style: buttonStyle(e.style),
+    url: link,
+  );
+}
+
+SelectBlock? _blockKitSelect(BlockKitJson e) {
+  if (!_nonEmpty(e.placeholder) || !_nonEmpty(e.actionId)) return null;
+  final source = _source(e.dataSource);
+  final options = _options(e.options);
+  if (source == SelectSource.options && options.isEmpty) return null;
+  return SelectBlock(
+    actionId: e.actionId!,
+    placeholder: e.placeholder!,
+    options: options,
+    initialOption: e.initialOption?.value,
+    source: source,
+  );
+}
+
+/// Small subtle lines and pictures, side by side.
+IntegrationBlock? _context(List<BlockKitJson> elements) {
+  final items = <IntegrationBlock>[
+    for (final e in elements)
+      if (e.type == 'image' && _nonEmpty(e.imageUrl))
+        ImageBlock(
+          url: e.imageUrl!,
+          altText: e.altText ?? '',
+          size: ImageSizePreset.auto,
+          maxWidth: _footerIconSize,
+          maxHeight: _footerIconSize,
+        )
+      else if ((e.type == 'mrkdwn' || e.type == 'plain_text') &&
+          _nonEmpty(e.text))
+        TextBlock(e.text!, subtle: true, small: true),
+  ];
+  return items.isEmpty
+      ? null
+      : ContainerBlock(items, horizontal: true, gap: BlockGap.small);
+}
 
 IntegrationBlock? _blockKitImage(BlockKitJson b, ImageSizePreset size) {
   if (!_nonEmpty(b.imageUrl) || !_nonEmpty(b.altText)) return null;
@@ -628,21 +699,11 @@ IntegrationBlock? _blockKitImage(BlockKitJson b, ImageSizePreset size) {
 IntegrationBlock? _blockKitActions(List<BlockKitJson> elements) {
   final content = <IntegrationBlock>[
     for (final e in elements)
-      if (e.type == 'button' && _nonEmpty(e.text) && _nonEmpty(e.actionId))
-        ButtonBlock(
-          text: e.text!,
-          actionId: e.actionId!,
-          style: buttonStyle(e.style),
-        )
-      else if (e.type == 'static_select' &&
-          _nonEmpty(e.placeholder) &&
-          _nonEmpty(e.actionId) &&
-          _options(e.options).isNotEmpty)
-        SelectBlock(
-          actionId: e.actionId!,
-          placeholder: e.placeholder!,
-          options: _options(e.options),
-        ),
+      ?switch (e.type) {
+        'button' => _blockKitButton(e),
+        'static_select' => _blockKitSelect(e),
+        _ => null,
+      },
   ];
   return content.isEmpty ? null : ContainerBlock(content, horizontal: true);
 }
@@ -703,6 +764,12 @@ IntegrationBlock? _cardItem(AdaptiveCardJson i, int depth) {
             ) ??
             ImageAlignment.left,
       );
+    case 'FactSet':
+      final facts = [
+        for (final f in i.facts)
+          if (_fact(f) case final line?) TextBlock(line),
+      ];
+      return facts.isEmpty ? null : ContainerBlock(facts, gap: BlockGap.small);
     case 'ActionSet':
       return _cardActions(i.actions);
     default:
@@ -710,19 +777,30 @@ IntegrationBlock? _cardItem(AdaptiveCardJson i, int depth) {
   }
 }
 
+String? _fact(AdaptiveCardJson f) {
+  final title = f.title?.trim() ?? '';
+  final value = f.value?.trim() ?? '';
+  if (title.isEmpty && value.isEmpty) return null;
+  if (title.isEmpty) return value;
+  return value.isEmpty ? '**$title:**' : '**$title:** $value';
+}
+
 IntegrationBlock? _cardActions(List<AdaptiveCardJson> actions) {
+  String? style(AdaptiveCardJson a) => switch (a.style) {
+    'positive' => 'primary',
+    'destructive' => 'danger',
+    _ => null,
+  };
   final content = <IntegrationBlock>[
     for (final a in actions)
-      if (a.type == 'Action.Submit' && _nonEmpty(a.title) && _nonEmpty(a.id))
-        ButtonBlock(
-          text: a.title!,
-          actionId: a.id!,
-          style: switch (a.style) {
-            'positive' => 'primary',
-            'destructive' => 'danger',
-            _ => null,
-          },
-        ),
+      if (!_nonEmpty(a.title))
+        ?null
+      else if (a.type == 'Action.Submit' && _nonEmpty(a.id))
+        ButtonBlock(text: a.title!, actionId: a.id!, style: style(a))
+      else if (a.type == 'Action.OpenUrl' &&
+          _nonEmpty(a.url) &&
+          _safeUrl(a.url!))
+        ButtonBlock(text: a.title!, actionId: '', style: style(a), url: a.url),
   ];
   return content.isEmpty ? null : ContainerBlock(content, horizontal: true);
 }
@@ -750,7 +828,7 @@ List<IntegrationBlock> translateAttachments(List<Attachment> attachments) {
       );
     }
     final body = <IntegrationBlock>[
-      if (_nonEmpty(a.text)) TextBlock(a.text!),
+      if (_nonEmpty(a.text)) TextBlock(a.text!, collapsible: true),
       if (_nonEmpty(a.imageUrl))
         ImageBlock(
           url: a.imageUrl!,
@@ -846,12 +924,16 @@ IntegrationBlock? _footer(Attachment a) {
 IntegrationBlock? _fields(List<AttachmentField> fields) {
   final parsed = [
     for (final f in fields)
-      if (f.value case final value? when value.isNotEmpty)
-        (title: f.title?.trim() ?? '', value: value, short: f.short ?? false),
+      if ((f.title?.trim() ?? '', f.value ?? '') case (final title, final value)
+          when title.isNotEmpty || value.isNotEmpty)
+        (title: title, value: value, short: f.short ?? false),
   ];
   if (parsed.isEmpty) return null;
   List<IntegrationBlock> blocks(({String title, String value, bool short}) f) =>
-      [if (f.title.isNotEmpty) TextBlock('**${f.title}**'), TextBlock(f.value)];
+      [
+        if (f.title.isNotEmpty) TextBlock('**${f.title}:**'),
+        if (f.value.isNotEmpty) TextBlock(f.value),
+      ];
   IntegrationBlock whole(({String title, String value, bool short}) f) =>
       ContainerBlock(blocks(f), gap: BlockGap.none);
   final content = <IntegrationBlock>[];

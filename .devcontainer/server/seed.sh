@@ -272,6 +272,19 @@ curl -sS -m 30 --fail-with-body -X POST "$URL/hooks/$HOOK" -H 'Content-Type: app
     --data-binary "$(jq -n '{text:"Deployed **v1.2.0** to staging :rocket:", username:"Deploy Bot"}')" >/dev/null
 echo "seed: bot and webhook"
 
+# Integrations: one webhook post per format (attachments, Block Kit, an
+# Adaptive Card, Mattermost blocks).
+INTEG=$(channel "$LIGHTHOUSE" integrations Integrations O "Posts from bots and webhooks" "")
+INTEG_HOOK=$(api admin POST /hooks/incoming "$(jq -n --arg c "$INTEG" '{channel_id:$c, display_name:"Status board", description:"One post per message format"}')" | jq -r .id)
+hook() { # hook <json payload>
+    curl -sS -m 30 --fail-with-body -X POST "$URL/hooks/$INTEG_HOOK" -H 'Content-Type: application/json' --data-binary "$1" >/dev/null
+}
+hook "$(jq -n '{username:"Attachment Bot", attachments:[{color:"#339970", title:"Harbour check", text:"All moorings *held* overnight.", fields:[{title:"Berths", value:"42", short:true},{title:"Free", value:"6", short:true}], footer:"Harbour office"}]}')"
+hook "$(jq -n '{username:"Block Kit Bot", props:{blocks:[{type:"section", text:{type:"mrkdwn", text:"*Tide report*\nHigh water at <https://example.test/tides|the lighthouse> at 14:20, ~low~ _steady_ wind."}},{type:"context", elements:[{type:"mrkdwn", text:"Updated by the harbour office"}]},{type:"actions", elements:[{type:"button", text:{type:"plain_text", text:"Open chart"}, url:"https://example.test/chart"}]}]}}')"
+hook "$(jq -n '{username:"Card Bot", props:{cards:[{type:"AdaptiveCard", version:"1.5", body:[{type:"TextBlock", text:"Berth 7", weight:"Bolder"},{type:"FactSet", facts:[{title:"Boat", value:"Sea Otter"},{title:"Until", value:"Friday"}]}], actions:[{type:"Action.OpenUrl", title:"Details", url:"https://example.test/berth/7"}]}]}}')"
+hook "$(jq -n '{username:"Blocks Bot", props:{mm_blocks:[{type:"text", text:"**Crew rota** for the week"},{type:"text", text:"Shifts and swaps are on the [rota page](https://example.test/rota)."}]}}')"
+echo "seed: integrations"
+
 # Filler for scrolling
 for n in $(seq 1 150); do
     u=$(case $((n % 5)) in 0) echo alice;; 1) echo bob;; 2) echo carol;; 3) echo dave;; *) echo erin;; esac)

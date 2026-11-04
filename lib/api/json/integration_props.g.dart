@@ -111,6 +111,13 @@ BlockKitJson _$BlockKitJsonFromJson(Map<String, dynamic> json) => BlockKitJson(
           ?.map((e) => SelectOptionJson.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  initialOption: json['initial_option'] == null
+      ? null
+      : SelectOptionJson.fromJson(
+          json['initial_option'] as Map<String, dynamic>,
+        ),
+  dataSource: const LenientString().fromJson(json['data_source']),
+  url: const LenientString().fromJson(json['url']),
 );
 
 AdaptiveCardJson _$AdaptiveCardJsonFromJson(Map<String, dynamic> json) =>
@@ -149,6 +156,12 @@ AdaptiveCardJson _$AdaptiveCardJsonFromJson(Map<String, dynamic> json) =>
       ),
       title: const LenientString().fromJson(json['title']),
       id: const LenientString().fromJson(json['id']),
+      facts:
+          (json['facts'] as List<dynamic>?)
+              ?.map((e) => AdaptiveCardJson.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      value: const LenientString().fromJson(json['value']),
     );
 
 Map<String, dynamic> _$PostActionBodyToJson(PostActionBody instance) =>

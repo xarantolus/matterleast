@@ -131,11 +131,13 @@ container border #3a7
   container
     columns
       column stretch
-        text "**Branch**"
+        text "**Branch:**"
         text "main"
       column stretch
-        text "**Took**"
+        text "**Took:**"
         text "12"
+    container
+      text "**Empty:**"
   text "Kiln CI" subtle small
   container row
     button "Rerun" rerun primary cookie=c1
