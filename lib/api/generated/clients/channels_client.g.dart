@@ -544,6 +544,43 @@ class _ChannelsClient implements ChannelsClient {
   }
 
   @override
+  Future<List<Channel>> getPrivateChannelsForTeam({
+    required String teamId,
+    int? page = 0,
+    int? perPage = 60,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{
+      r'page': page,
+      r'per_page': perPage,
+    };
+    queryParameters.removeWhere((k, v) => v == null);
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<List<Channel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v4/teams/${teamId}/channels/private',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<Channel> _value;
+    try {
+      _value = _result.data!
+          .map((dynamic i) => Channel.fromJson(i as Map<String, dynamic>))
+          .toList();
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<List<Channel>> getDeletedChannelsForTeam({
     required String teamId,
     int? page = 0,
