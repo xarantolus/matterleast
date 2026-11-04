@@ -71,6 +71,7 @@ There is also a dev container with Flutter, the Android SDK, an emulator and a l
 - No iOS or macOS version.
 - The Windows and Linux app doesn't set you to "away" when you're inactive; you show as online while it runs, unless you pick a status yourself.
 - The Windows and Linux composer has no spell check: Flutter offers none on desktop, and the packages for it ship their own word lists instead of using the system dictionary.
+- On Linux, the app draws at most 60 frames per second, not in step with the screen: Flutter's Linux engine uses a fixed 60 Hz timer instead of the display's refresh, so a 90 or 120 Hz screen shows uneven scrolling.
 - The Windows installer and the Linux Flatpak are unsigned and don't update themselves; the app says when a new release is out.
 - Features that need a server setting, a plugin or a licence only show up when your server offers them.
 
