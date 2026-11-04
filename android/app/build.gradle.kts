@@ -81,6 +81,7 @@ android {
         // they must build too: without a label the manifest merger fails.
         maybeCreate("profile").apply {
             applicationIdSuffix = ".profile"
+            signingConfig = signingConfigs.getByName("debug")
             versionNameSuffix = "-profile"
             manifestPlaceholders["applicationLabel"] = "Matterleast (profile)"
         }

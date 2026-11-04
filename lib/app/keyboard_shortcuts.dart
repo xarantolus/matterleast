@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kProfileMode;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/ui_zoom.dart';
+import 'package:matterleast/profiling/profile_recorder.dart';
 import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/ui/focus_region.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -115,6 +117,10 @@ class CloseOnTopIntent extends AppIntent {
 }
 
 /// Searches the messages of the open conversation.
+class ExportProfileIntent extends AppIntent {
+  const ExportProfileIntent();
+}
+
 class SearchChannelIntent extends AppIntent {
   const SearchChannelIntent();
 }
@@ -326,6 +332,12 @@ const appShortcuts = <AppShortcut>[
     SingleActivator(LogicalKeyboardKey.slash, control: true),
     ShowShortcutsIntent(),
   ),
+  if (kProfileMode)
+    AppShortcut(
+      'Save the performance recording',
+      SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true),
+      ExportProfileIntent(),
+    ),
 ];
 
 final _keyNames = {
@@ -380,6 +392,12 @@ class _AppShortcutsState extends State<AppShortcuts> {
       child: Actions(
         actions: {
           ShowShortcutsIntent: _showList,
+          if (kProfileMode)
+            ExportProfileIntent: CallbackAction<ExportProfileIntent>(
+              onInvoke: (_) => unawaited(
+                ProfileRecorder.instance.exportAndReport(context, share: false),
+              ),
+            ),
           // Above the navigator, so Back also reaches a gallery or preview.
           HistoryStepIntent: CallbackAction<HistoryStepIntent>(
             onInvoke: (intent) => unawaited(

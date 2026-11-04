@@ -11,6 +11,7 @@ import 'package:matterleast/app/desktop/window_title.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
+import 'package:matterleast/profiling/profile_recorder.dart';
 import 'package:matterleast/screens/gallery/settled_end_player.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -49,4 +50,6 @@ Future<void> main() async {
       child: const MatterleastApp(),
     ),
   );
+  // After runApp, so the binding the recorder hooks into exists.
+  unawaited(ProfileRecorder.start());
 }
