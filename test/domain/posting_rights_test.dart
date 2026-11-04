@@ -30,18 +30,16 @@ final _posted = DateTime.utc(2026, 5, 1, 12);
 MessageRights _rights(
   ChannelPermissions channel, {
   bool mine = true,
+  bool system = false,
   Duration? limit,
   DateTime? now,
-  int reactions = 0,
 }) => messageRights(
   channel,
   mine: mine,
-  system: false,
-  fromWebhook: false,
+  system: system,
   createAt: _posted,
   now: now ?? _posted.add(const Duration(minutes: 1)),
   editTimeLimit: limit,
-  distinctReactions: reactions,
 );
 
 void main() {
@@ -110,10 +108,10 @@ void main() {
     expect(own.pin, isTrue);
   });
 
-  test('reactions stop at the server maximum of different emoji', () {
+  test('own messages can be marked unread, system ones not', () {
     final channel = _channel(_member);
-    expect(_rights(channel, reactions: 39).react, isTrue);
-    expect(_rights(channel, reactions: maxDistinctReactions).react, isFalse);
+    expect(_rights(channel).markUnread, isTrue);
+    expect(_rights(channel, system: true).markUnread, isFalse);
   });
 
   test('the default channel is read-only for everyone but system admins', () {
