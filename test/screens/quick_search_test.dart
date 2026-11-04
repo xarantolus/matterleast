@@ -1,9 +1,13 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/app.dart';
+import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
+import 'package:matterleast/screens/root/root_shortcuts.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 
@@ -31,11 +35,9 @@ void main() {
   );
 
   late List<String> opened;
-  late List<String> searched;
 
   Future<void> show(WidgetTester tester, List<SwitchItem> items) async {
     opened = [];
-    searched = [];
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     await pumpApp(
@@ -45,7 +47,6 @@ void main() {
         servers: [server],
         target: (url: _url, teamId: 'team1'),
         onOpen: (item) => opened.add(item.id),
-        onSearch: searched.add,
       ),
       overrides: [
         offlineProvider.overrideWithValue(false),
@@ -72,7 +73,6 @@ void main() {
     await type(tester, 'boat');
     await pressReturn(tester);
     expect(opened, ['c1']);
-    expect(searched, isEmpty);
   });
 
   testWidgets('arrow keys move the highlight Return opens', (tester) async {
@@ -88,24 +88,14 @@ void main() {
     expect(opened, ['c2']);
   });
 
-  testWidgets('Return on the message search row searches messages', (
-    tester,
-  ) async {
+  testWidgets('the switcher has no row for searching messages', (tester) async {
     await show(tester, [_channel('c1', 'Boats')]);
     await type(tester, 'boat');
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.pump();
-    await pressReturn(tester);
-    expect(opened, isEmpty);
-    expect(searched, ['boat']);
-  });
-
-  testWidgets('with no matches Return searches messages', (tester) async {
-    await show(tester, [_channel('c1', 'Boats')]);
+    expect(find.textContaining('Search messages'), findsNothing);
     await type(tester, 'lunch');
     await pressReturn(tester);
     expect(opened, isEmpty);
-    expect(searched, ['lunch']);
+    expect(find.textContaining('Search messages'), findsNothing);
   });
 
   testWidgets('the first match is highlighted as the user types, and again '
@@ -132,4 +122,44 @@ void main() {
     await pressReturn(tester);
     expect(opened, ['c2']);
   });
+
+  testWidgets(
+    'Ctrl+K opens the switcher, which has no row for searching messages',
+    (tester) async {
+      final opener = QuickSearchOpener();
+      addTearDown(opener.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            offlineProvider.overrideWithValue(false),
+            switchItemsProvider(_url)
+                .overrideWith((ref) => Stream.value([_channel('c1', 'Boats')])),
+            switchRemoteProvider.overrideWith((ref, args) async => const []),
+          ],
+          child: MaterialApp(
+            theme: MatterleastApp.lightTheme,
+            builder: (_, child) => AppShortcuts(child: child!),
+            home: RootShortcuts(
+              onSwitcher: opener.open,
+              child: Scaffold(
+                body: QuickSearchAnchor(
+                  opener: opener,
+                  servers: [server],
+                  target: (url: _url, teamId: 'team1'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      await type(tester, 'boat');
+      expect(find.text('Boats'), findsOneWidget);
+      expect(find.textContaining('Search messages'), findsNothing);
+    },
+    variant: const TargetPlatformVariant({TargetPlatform.linux}),
+  );
 }

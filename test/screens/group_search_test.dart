@@ -33,7 +33,6 @@ void main() {
         ],
         target: null,
         onOpen: (_) {},
-        onSearch: (_) {},
       ),
     );
     controller.text = 'bobby';

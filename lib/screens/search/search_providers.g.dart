@@ -258,6 +258,101 @@ final class CurrentTeamFamily extends $Family
   String toString() => r'currentTeamProvider';
 }
 
+/// The servers and teams a search in [scope] asks, narrowed to [server]
+/// when given.
+
+@ProviderFor(searchPlan)
+final searchPlanProvider = SearchPlanFamily._();
+
+/// The servers and teams a search in [scope] asks, narrowed to [server]
+/// when given.
+
+final class SearchPlanProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<SearchRequest>>,
+          List<SearchRequest>,
+          FutureOr<List<SearchRequest>>
+        >
+    with
+        $FutureModifier<List<SearchRequest>>,
+        $FutureProvider<List<SearchRequest>> {
+  /// The servers and teams a search in [scope] asks, narrowed to [server]
+  /// when given.
+  SearchPlanProvider._({
+    required SearchPlanFamily super.from,
+    required (String?, SearchScope) super.argument,
+  }) : super(
+         retry: null,
+         name: r'searchPlanProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchPlanHash();
+
+  @override
+  String toString() {
+    return r'searchPlanProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<SearchRequest>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<SearchRequest>> create(Ref ref) {
+    final argument = this.argument as (String?, SearchScope);
+    return searchPlan(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SearchPlanProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$searchPlanHash() => r'1567620ea674cd3d287f783bac1610cce53859c4';
+
+/// The servers and teams a search in [scope] asks, narrowed to [server]
+/// when given.
+
+final class SearchPlanFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<SearchRequest>>,
+          (String?, SearchScope)
+        > {
+  SearchPlanFamily._()
+    : super(
+        retry: null,
+        name: r'searchPlanProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The servers and teams a search in [scope] asks, narrowed to [server]
+  /// when given.
+
+  SearchPlanProvider call(String? server, SearchScope scope) =>
+      SearchPlanProvider._(argument: (server, scope), from: this);
+
+  @override
+  String toString() => r'searchPlanProvider';
+}
+
 @ProviderFor(messageSearch)
 final messageSearchProvider = MessageSearchFamily._();
 

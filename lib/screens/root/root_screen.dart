@@ -21,6 +21,7 @@ import 'package:matterleast/screens/root/team_rail.dart';
 import 'package:matterleast/screens/root/team_screens.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
+import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/delayed_spinner.dart';
@@ -84,10 +85,12 @@ class _RootScreenState extends ConsumerState<RootScreen> {
               ref.watch(serverCatchingUpProvider(s.url)),
         ),
         actions: [
+          const MessageSearchButton(),
           QuickSearchAnchor(
             opener: _search,
             servers: servers,
             target: team == null ? null : (url: recent.url, teamId: team),
+            showButton: true,
           ),
         ],
         pane: HomePane(servers: servers, onSearch: _openSearch),
@@ -115,6 +118,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           status is SyncRefreshing ||
           ref.watch(serverCatchingUpProvider(server.url)),
       actions: [
+        MessageSearchButton(url: server.url, teamId: teamId ?? ''),
         QuickSearchAnchor(
           opener: _search,
           servers: servers,

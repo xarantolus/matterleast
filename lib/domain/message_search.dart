@@ -219,6 +219,7 @@ class SearchShown<T> extends SearchView<T> {
     required this.refreshing,
     this.notice,
     this.more = const [],
+    this.failures = const [],
   });
 
   final List<T> results;
@@ -232,6 +233,9 @@ class SearchShown<T> extends SearchView<T> {
 
   /// Why only stored results show, when the server could not be asked.
   final String? notice;
+
+  /// Servers that could not be searched, when several are.
+  final List<({String name, String cause})> failures;
 }
 
 /// Both looked and found nothing.
@@ -313,4 +317,115 @@ List<Object> withDays<T extends Object>(
     rows.add(item);
   }
   return rows;
+}
+
+/// One search request: a server and the scope resolved for it, whose team
+/// is the one searched unless [SearchScope.allTeams].
+typedef SearchRequest = ({String url, SearchScope scope});
+
+/// What a server offers a search.
+typedef SearchServer = ({String url, bool crossTeam, String? homeTeam});
+
+/// Pure: the requests for [scope]. [server] narrows to one server (null
+/// searches all); a server that can't search every team falls back to the
+/// scope's team on the server it was named for, else to its [homeTeam],
+/// and is left out when it has neither.
+List<SearchRequest> searchRequests(
+  List<SearchServer> servers,
+  SearchScope scope, {
+  String? server,
+}) => [
+  for (final s in servers)
+    if (server == null || s.url == server)
+      if (_resolved(s, scope, named: server != null) case final resolved?)
+        (url: s.url, scope: resolved),
+];
+
+SearchScope? _resolved(
+  SearchServer s,
+  SearchScope scope, {
+  required bool named,
+}) {
+  if (scope.allTeams && s.crossTeam) {
+    return scope.copyWith(teamId: s.homeTeam ?? scope.teamId);
+  }
+  final team = named && scope.teamId.isNotEmpty ? scope.teamId : s.homeTeam;
+  return team == null ? null : scope.copyWith(teamId: team, allTeams: false);
+}
+
+/// Pure: [lists] as one, newest first; equal times keep the earlier list
+/// first, then each list's own order.
+List<T> mergeNewestFirst<T>(List<List<T>> lists, DateTime? Function(T) timeOf) {
+  final all = [
+    for (final (l, list) in lists.indexed)
+      for (final (i, item) in list.indexed) (item, l, i),
+  ];
+  final epoch = DateTime.fromMillisecondsSinceEpoch(0);
+  all.sort((a, b) {
+    final byTime = (timeOf(b.$1) ?? epoch).compareTo(timeOf(a.$1) ?? epoch);
+    if (byTime != 0) return byTime;
+    final byList = a.$2.compareTo(b.$2);
+    return byList != 0 ? byList : a.$3.compareTo(b.$3);
+  });
+  return [for (final e in all) e.$1];
+}
+
+/// Pure: the servers in the order their results first showed, in groups
+/// that appeared together. [ready] are the servers with results now; the
+/// ones not seen before join as a new last group, so rows already on screen
+/// keep their place.
+List<List<String>> arrivalGroups(
+  List<List<String>> shown,
+  Iterable<String> ready,
+) {
+  final seen = {for (final group in shown) ...group};
+  final fresh = [
+    for (final url in ready)
+      if (!seen.contains(url)) url,
+  ];
+  return fresh.isEmpty ? shown : [...shown, fresh];
+}
+
+/// Pure: the views of several servers as one. Loading shows until some
+/// result exists or every server has answered; a failed server is listed
+/// in [SearchShown.failures] while the others' results show.
+SearchView<T> mergeSearch<T>(
+  List<({String name, SearchView<T> view})> sources,
+) {
+  final results = <T>[];
+  final more = <T>[];
+  final failures = <({String name, String cause})>[];
+  var loading = false;
+  for (final (:name, :view) in sources) {
+    switch (view) {
+      case SearchLoading():
+        loading = true;
+      case SearchEmpty():
+        break;
+      case SearchFailed(:final cause):
+        failures.add((name: name, cause: cause));
+      case SearchShown(
+        results: final r,
+        more: final m,
+        :final refreshing,
+        :final notice,
+      ):
+        results.addAll(r);
+        more.addAll(m);
+        loading |= refreshing;
+        if (notice != null) failures.add((name: name, cause: notice));
+    }
+  }
+  if (results.isEmpty && more.isEmpty) {
+    if (loading) return const SearchLoading();
+    return failures.isEmpty
+        ? const SearchEmpty()
+        : SearchFailed(failures.first.cause);
+  }
+  return SearchShown(
+    results,
+    more: more,
+    refreshing: loading,
+    failures: failures,
+  );
 }

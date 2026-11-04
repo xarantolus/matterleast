@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/rail.dart';
+import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
@@ -65,7 +67,22 @@ void main() {
           fetchedAt: DateTime.utc(2026, 10, 25, 11),
         );
       },
-      overrides: (url) => [railSelectionProvider.overrideWith(_Rail.new)],
+      overrides: (url) => [
+        railSelectionProvider.overrideWith(_Rail.new),
+        serversProvider.overrideWith(
+          (ref) => Stream.value([
+            ServerEntry(
+              url: url,
+              displayName: 'Test',
+              siteName: null,
+              serverVersion: null,
+              diagnosticId: null,
+              lastActiveAt: DateTime.utc(2026),
+              ssoScheme: null,
+            ),
+          ]),
+        ),
+      ],
       home: (url) => SearchResultsScreen(
         url: url,
         teamId: teamId,
