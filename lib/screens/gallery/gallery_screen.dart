@@ -293,12 +293,44 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   // Two fingers' sideways travel on a touchpad, for swiping out.
   var _swipe = 0.0;
+  Drag? _drag;
+  final _swipeSpeed = VelocityTracker.withKind(PointerDeviceKind.trackpad);
+
+  /// The picture's own recogniser takes a touchpad pan before the page view
+  /// can, so an unzoomed pan drags the pages from here instead.
+  void _swipeStarted(PointerPanZoomStartEvent event) {
+    _swipe = 0;
+    if (_zoomedIn) return;
+    _drag = _pages.position.drag(
+      DragStartDetails(globalPosition: event.position),
+      () => _drag = null,
+    );
+  }
+
+  void _swipeMoved(PointerPanZoomUpdateEvent event) {
+    _swipe = event.pan.dx;
+    _swipeSpeed.addPosition(event.timeStamp, event.pan);
+    _drag?.update(
+      DragUpdateDetails(
+        globalPosition: event.position + event.pan,
+        delta: Offset(event.panDelta.dx, 0),
+        primaryDelta: event.panDelta.dx,
+      ),
+    );
+  }
 
   /// A back swipe on the first picture closes the gallery, as Back does;
-  /// further on, the pages turn as before.
+  /// further on, the pages settle on a picture.
   void _swipeEnded() {
     final back = swipeStep(_swipe) == false;
     _swipe = 0;
+    final velocity = _swipeSpeed.getVelocity().pixelsPerSecond.dx;
+    _drag?.end(
+      DragEndDetails(
+        velocity: Velocity(pixelsPerSecond: Offset(velocity, 0)),
+        primaryVelocity: velocity,
+      ),
+    );
     if (back && _index == 0) unawaited(Navigator.of(context).maybePop());
   }
 
@@ -471,8 +503,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         onPointerUp: (_) => _pointer(down: false),
         onPointerCancel: (_) => _pointer(down: false),
         onPointerSignal: _wheel,
-        onPointerPanZoomStart: (_) => _swipe = 0,
-        onPointerPanZoomUpdate: (e) => _swipe = e.pan.dx,
+        onPointerPanZoomStart: _swipeStarted,
+        onPointerPanZoomUpdate: _swipeMoved,
         onPointerPanZoomEnd: (_) => _swipeEnded(),
         child: file.isUploaded
             ? FileRightClick(url: widget.url, file: file, child: child)
