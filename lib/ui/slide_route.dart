@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/domain/open_history.dart';
 import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/motion.dart';
 
@@ -13,14 +14,22 @@ import 'package:matterleast/ui/motion.dart';
 /// the back button slide it away again. On desktop it fades in and out
 /// instead, Esc closes it and a drag selects text.
 class SlideRoute<T> extends PageRoute<T> {
-  SlideRoute({required this.builder, this.instant = false, super.settings})
-    : wholePage = false;
+  SlideRoute({
+    required this.builder,
+    this.instant = false,
+    this.view,
+    super.settings,
+  }) : wholePage = false;
 
   /// A page of its own rather than a content view, such as signing in.
   SlideRoute.page({required this.builder, this.instant = false, super.settings})
-    : wholePage = true;
+    : wholePage = true,
+      view = null;
 
   final WidgetBuilder builder;
+
+  /// The team-wide page it shows, which Back and Forward return to.
+  final PlaceView? view;
 
   /// Shown at once rather than sliding in.
   final bool instant;

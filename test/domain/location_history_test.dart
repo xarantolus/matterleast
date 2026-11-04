@@ -32,6 +32,11 @@ OpenHistory<Location> _history() =>
 
 bool _all(Location _) => true;
 
+Location _view(PlaceView view, {String url = _a}) => Location(
+  place: RailTarget(url: url, teamId: 't1'),
+  view: view,
+);
+
 void main() {
   group('history of locations', () {
     test('Back and Forward walk the places, across servers and threads', () {
@@ -228,6 +233,125 @@ void main() {
       const a = RailTarget(url: _a);
       expect(placeChanged(a, const RailTarget(url: _a, teamId: 't1')), isFalse);
       expect(placeChanged(null, null), isFalse);
+    });
+  });
+
+  group('pages that are entries', () {
+    test('Threads sits between channels; Back and Forward pass it', () {
+      final h = _history()
+        ..push(_channel(_a, 'x'))
+        ..push(_view(PlaceView.threads));
+      expect(h.step(forward: false, exists: _all), _channel(_a, 'x'));
+      expect(h.step(forward: true, exists: _all)?.view, PlaceView.threads);
+    });
+
+    test('a thread opened from Threads is an entry after it', () {
+      final h = _history()
+        ..push(_view(PlaceView.threads))
+        ..push(_channel(_a, 'x', root: 'p1'));
+      expect(h.step(forward: false, exists: _all)?.view, PlaceView.threads);
+    });
+
+    test('Threads and Drafts of one team are different places', () {
+      expect(
+        _view(PlaceView.threads).isSameSpot(_view(PlaceView.drafts)),
+        isFalse,
+      );
+      expect(
+        _view(PlaceView.threads).repeats(_view(PlaceView.threads)),
+        isTrue,
+      );
+    });
+
+    test('a page over a list is an entry, a bare list is not', () {
+      final h = _history();
+      settleHistory(h, _view(PlaceView.agents));
+      expect(h.entries, hasLength(1));
+    });
+  });
+
+  group('what Back does first', () {
+    final channel = _channel(_a, 'x');
+    final list = Location(
+      place: RailTarget(url: _b, teamId: 't1'),
+    );
+
+    for (final (name, forward, page, shown, current, move) in [
+      (
+        'a page that is no entry closes first',
+        false,
+        true,
+        channel,
+        channel,
+        HistoryMove.closePage,
+      ),
+      (
+        'a bare list returns to the entry',
+        false,
+        false,
+        list,
+        channel,
+        HistoryMove.reopenCurrent,
+      ),
+      (
+        'at the entry it steps',
+        false,
+        false,
+        channel,
+        channel,
+        HistoryMove.step,
+      ),
+      (
+        'the same place at another reading position steps',
+        false,
+        false,
+        _channel(_a, 'x', at: (postId: 'p', offset: 1)),
+        channel,
+        HistoryMove.step,
+      ),
+      ('Forward always steps', true, true, list, channel, HistoryMove.step),
+      ('no history yet steps', false, false, list, null, HistoryMove.step),
+    ]) {
+      test(name, () {
+        expect(
+          historyMove(
+            forward: forward,
+            pageOnTop: page,
+            shown: shown,
+            current: current,
+          ),
+          move,
+        );
+      });
+    }
+  });
+
+  group('teams that exist', () {
+    test('an entry for a team the server no longer has is gone', () {
+      final x = _channel(_a, 'x');
+      expect(
+        locationExists(
+          x,
+          signedIn: {_a},
+          channels: {},
+          teams: {
+            _a: {'t2'},
+          },
+        ),
+        isFalse,
+      );
+      expect(
+        locationExists(
+          x,
+          signedIn: {_a},
+          channels: {},
+          teams: {
+            _a: {'t1'},
+          },
+        ),
+        isTrue,
+      );
+      expect(locationExists(x, signedIn: {_a}, channels: {}), isTrue);
     });
   });
 }
