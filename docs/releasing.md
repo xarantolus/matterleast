@@ -52,13 +52,12 @@ own commit and push it.
 bundle into `tmp/profile/` (`matterleast-profile.apk`,
 `matterleast-linux-profile.tar.gz`) and prints their paths and SHA-256. The
 APK is debug-signed and installs next to the normal app as
-`Matterleast (profile)`.
+`Matterleast (profile)`. Pass `--widgets` to name widgets in the timeline
+(`--dart-define=PROFILE_WIDGETS=true`); off by default, it floods the Linux ring buffer.
 
 Only profile builds record (frame timings of the last 60 seconds, and the
-VM timeline, which the Android profile build keeps whole through the engine's
-`--endless-trace-buffer`, so its memory grows while the app runs; the Linux
-build has the VM's small ring buffer of a few seconds, so export right after
-a stutter); release and debug builds contain none of it. To save a recording,
+VM timeline, which both profile builds keep whole through the engine's
+`--endless-trace-buffer`, so memory grows while the app runs); release and debug builds contain none of it. To save a recording,
 use the app, then long-press an app bar title on Android (it opens the share
 sheet) or press Ctrl+Shift+P on Linux (it lands in Downloads). It writes
 `matterleast-trace-*.json` and `matterleast-frames-*.csv`; open the trace in
