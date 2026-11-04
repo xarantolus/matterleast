@@ -158,7 +158,7 @@ void main() {
     await settle(tester);
     expect(
       await tester.runAsync(stored),
-      const PaneWidths(listBesideThread: 300, thread: 500),
+      const PaneWidths(list: 300, thread: 500),
     );
     await close(tester);
 
@@ -167,15 +167,49 @@ void main() {
     expect(threadWidth(tester), 500);
     await close(tester);
 
-    // Without a thread the list keeps its own width.
     await show(tester);
-    expect(listWidth(tester), _defaultList);
+    expect(listWidth(tester), 300);
+    await close(tester);
+  });
+
+  testWidgets('the list width set without a thread holds when one opens', (
+    tester,
+  ) async {
+    await show(tester);
+    await drag(tester, listDivider, 60);
+    await show(tester, thread: true);
+    expect(listWidth(tester), _defaultList + 60);
+    await close(tester);
+  });
+
+  testWidgets('the list width set beside a thread holds when it closes', (
+    tester,
+  ) async {
+    await show(tester, thread: true);
+    await drag(tester, listDivider, -60);
+    await show(tester);
+    expect(listWidth(tester), _defaultList - 60);
+    await close(tester);
+  });
+
+  testWidgets('a list shrunk beside a thread in a narrow window comes back', (
+    tester,
+  ) async {
+    await show(tester);
+    await drag(tester, listDivider, 100);
+    final wanted = _defaultList + 100;
+    await settle(tester);
+    await show(tester, width: 1000, thread: true);
+    expect(listWidth(tester), lessThan(wanted));
+    await show(tester, width: 1000);
+    expect(listWidth(tester), wanted);
+    expect((await tester.runAsync(stored))?.list, wanted);
     await close(tester);
   });
 
   testWidgets('a narrower window takes from the thread, then the list, and '
       'gives the stored widths back', (tester) async {
-    const saved = PaneWidths(listBesideThread: 400, thread: 500);
+    const saved = PaneWidths(list: 400, thread: 500);
     await tester.runAsync(
       () => SettingsStore(db).write(Settings.paneWidths, saved),
     );

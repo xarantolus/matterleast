@@ -59,9 +59,7 @@ class _ResizablePanesState extends ConsumerState<ResizablePanes> {
 
   ({double list, double? thread}) _fitted(PaneWidths widths) => fitPanes(
     room: _room,
-    list:
-        (_hasSide ? widths.listBesideThread : widths.list) ??
-        widget.defaultListWidth,
+    list: widths.list ?? widget.defaultListWidth,
     thread: _hasSide ? widths.thread ?? threadPaneWidth : null,
   );
 
@@ -76,7 +74,6 @@ class _ResizablePanesState extends ConsumerState<ResizablePanes> {
   PaneWidths _set(_Pane pane, double? width) {
     final widths = _widths.value;
     return switch (pane) {
-      _Pane.list when _hasSide => widths.copyWith(listBesideThread: width),
       _Pane.list => widths.copyWith(list: width),
       _Pane.thread => widths.copyWith(thread: width),
     };

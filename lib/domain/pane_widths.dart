@@ -6,16 +6,10 @@ part 'pane_widths.freezed.dart';
 part 'pane_widths.g.dart';
 
 /// The side pane widths the user dragged to, in logical pixels; null keeps
-/// the default. The conversation always takes the rest. The channel list
-/// is kept apart for when a thread pane is open beside the conversation
-/// and when none is.
+/// the default. The conversation always takes the rest.
 @freezed
 abstract class PaneWidths with _$PaneWidths {
-  const factory PaneWidths({
-    double? list,
-    double? listBesideThread,
-    double? thread,
-  }) = _PaneWidths;
+  const factory PaneWidths({double? list, double? thread}) = _PaneWidths;
 
   factory PaneWidths.fromJson(Map<String, Object?> json) =>
       _$PaneWidthsFromJson(json);
