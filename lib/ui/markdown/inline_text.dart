@@ -124,10 +124,12 @@ class _InlineTextState extends State<InlineText> {
       if (isInlineActionLink(link)) {
         final run = action(link);
         if (run == null) return null;
-        return _recognizer<TapGestureRecognizer>(
-          ('action', i),
-          TapGestureRecognizer.new,
-        )..onTap = () => env.onAction?.call(actions!.request(run));
+        return _recognizer<TapGestureRecognizer>((
+            'action',
+            i,
+          ), TapGestureRecognizer.new)
+          ..onTap = () =>
+              unawaited(_runInline(context, env, actions!.request(run)));
       }
       return _recognizer<TapOrHoldRecognizer>((
         'link',
@@ -401,6 +403,16 @@ String? mentionedUsername(String typed, Set<String> usernames) {
 
 /// Holding or right-clicking a link or its preview: only a way to copy the
 /// address, in a menu at the pointer when there is one, else a small sheet.
+Future<void> _runInline(
+  BuildContext context,
+  PostEnvironment env,
+  PostActionRequest request,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final failure = await env.onAction?.call(request);
+  if (failure != null) messenger.showSnackBar(SnackBar(content: Text(failure)));
+}
+
 void showCopyLink(BuildContext context, String url, {Offset? at}) {
   final isMail = url.startsWith('mailto:');
   final shown = isMail ? url.substring(7) : url;

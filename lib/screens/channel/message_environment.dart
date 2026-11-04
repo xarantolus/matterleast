@@ -23,7 +23,6 @@ import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
-import 'package:matterleast/ui/try_action.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'message_environment.g.dart';
@@ -176,22 +175,25 @@ class MessageEnvironment extends ConsumerStatefulWidget {
     }
   }
 
-  Future<void> _runAction(
+  Future<String?> _runAction(
     BuildContext context,
     WidgetRef ref,
     PostActionRequest request,
   ) async {
     final navigator = Navigator.of(context);
     final server = Uri.parse(url);
-    await tryAction(context, server.host, () async {
+    try {
       final actions = await ref.read(integrationActionsProvider(url).future);
       final location = await actions.run(request);
-      if (location == null || !navigator.mounted) return;
+      if (location == null || !navigator.mounted) return null;
       if (classifyLink(location, server) case UriLink(:final uri)) {
         FocusManager.instance.primaryFocus?.unfocus();
         await openLinkFromMessage(navigator, uri);
       }
-    });
+      return null;
+    } on Object catch (e) {
+      return serverSaidText(e, server.host);
+    }
   }
 }
 
@@ -218,7 +220,7 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
 
   void _onLink(LinkTarget target) => widget._openLink(context, ref, target);
 
-  Future<void> _onAction(PostActionRequest request) =>
+  Future<String?> _onAction(PostActionRequest request) =>
       widget._runAction(context, ref, request);
 
   Future<bool> _onEditHistory(String postId) =>

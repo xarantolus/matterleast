@@ -336,7 +336,10 @@ class PostTile extends StatelessWidget {
             sentAt: post.createAt,
             leading: () => _textImages(context, details),
           ),
-        PostIntegration(post: post, details: details),
+        MessageImageOpener(
+          open: (url) => _openImage(context, url, details, name),
+          child: PostIntegration(post: post, details: details),
+        ),
         ExcludeSemantics(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -60,9 +60,9 @@ class PostEnvironment extends InheritedWidget {
   /// (`FeatureFlagMmBlocksEnabled`).
   final bool mmBlocks;
 
-  /// Runs an integration's action; completes when the server answered and
-  /// the user was told of any failure.
-  final Future<void> Function(PostActionRequest request)? onAction;
+  /// Runs an integration's action; completes when the server answered, with
+  /// the words for its failure, if it failed.
+  final Future<String?> Function(PostActionRequest request)? onAction;
 
   /// Messages can ask readers to acknowledge them.
   final bool acknowledgements;
