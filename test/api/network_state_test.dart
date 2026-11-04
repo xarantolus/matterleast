@@ -33,4 +33,50 @@ void main() {
     await network.close();
     await reports.close();
   });
+
+  test('an unreadable current state counts as unknown and the changes are '
+      'never listened to', () async {
+    var listened = false;
+    final network = NetworkState(
+      NetworkState.deviceReports(
+        () async => throw Exception('no system bus'),
+        () {
+          listened = true;
+          return const Stream.empty();
+        },
+      ),
+    );
+    await pumpEventQueue();
+    expect(network.last, isEmpty);
+    expect(network.online.value, isTrue);
+    expect(listened, isFalse);
+    await network.close();
+  });
+
+  test('a failure that escapes the read in a future nobody awaits still '
+      'counts as unknown', () async {
+    final network = NetworkState(
+      NetworkState.deviceReports(() {
+        Future<void>.delayed(Duration.zero, () => throw Exception('no bus'));
+        return Completer<List<ConnectivityResult>>().future;
+      }, () => const Stream.empty()),
+    );
+    await pumpEventQueue();
+    expect(network.last, isEmpty);
+    expect(network.online.value, isTrue);
+    await network.close();
+  });
+
+  test('changes that fail on listen count as unknown once', () async {
+    final network = NetworkState(
+      NetworkState.deviceReports(
+        () async => [ConnectivityResult.wifi],
+        () => Stream.error(Exception('no system bus')),
+      ),
+    );
+    await pumpEventQueue();
+    expect(network.last, [ConnectivityResult.wifi]);
+    expect(network.online.value, isTrue);
+    await network.close();
+  });
 }

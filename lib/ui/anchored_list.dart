@@ -183,6 +183,8 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
 
   final _viewportKey = GlobalKey();
   final _span = ValueNotifier<RowSpan?>(null);
+  (int, double)? _screenKey;
+  double _screenRows = 0;
   final _built = <Object, BuildContext>{};
   var _indexOf = <Object, int>{};
   Object? _anchor;
@@ -726,7 +728,16 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
         total - 1 - oldest + share(-first.top, first.bottom - first.top);
     final end =
         total - newest - share(last.bottom - height, last.bottom - last.top);
-    return RowSpan(start: start, extent: end - start, total: total);
+    if (_screenKey != (total, height)) {
+      _screenKey = (total, height);
+      _screenRows = end - start;
+    }
+    return RowSpan(
+      start: start,
+      extent: end - start,
+      total: total,
+      screen: _screenRows,
+    );
   }
 
   /// Shows row [fromOldest] (0 is the oldest) at the top, for a dragged
