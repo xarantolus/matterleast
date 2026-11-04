@@ -23,6 +23,7 @@ import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/domain/touchpad_swipe.dart';
 import 'package:matterleast/screens/gallery/slide_to_close.dart';
 import 'package:matterleast/screens/gallery/video_player_view.dart';
 import 'package:matterleast/ui/motion.dart';
@@ -289,6 +290,17 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       ? SystemMouseCursors.grabbing
       : SystemMouseCursors.grab;
 
+  // Two fingers' sideways travel on a touchpad, for swiping out.
+  var _swipe = 0.0;
+
+  /// A back swipe on the first picture closes the gallery, as Back does;
+  /// further on, the pages turn as before.
+  void _swipeEnded() {
+    final back = swipeStep(_swipe) == false;
+    _swipe = 0;
+    if (back && _index == 0) unawaited(Navigator.of(context).maybePop());
+  }
+
   void _pointer({required bool down}) {
     _pointerDown = down;
     _updateCursor();
@@ -458,6 +470,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         onPointerUp: (_) => _pointer(down: false),
         onPointerCancel: (_) => _pointer(down: false),
         onPointerSignal: _wheel,
+        onPointerPanZoomStart: (_) => _swipe = 0,
+        onPointerPanZoomUpdate: (e) => _swipe = e.pan.dx,
+        onPointerPanZoomEnd: (_) => _swipeEnded(),
         child: file.link == null
             ? FileRightClick(url: widget.url, file: file, child: child)
             : child,

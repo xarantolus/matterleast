@@ -259,6 +259,24 @@ void main() {
     expect(find.byType(GalleryScreen), findsNothing);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
+  testWidgets('a back swipe on a touchpad closes the gallery on a desktop', (
+    tester,
+  ) async {
+    final progress = StreamController<FileResponse>();
+    addTearDown(progress.close);
+    await show(tester, (url) => progress.stream);
+    final pad = TestPointer(1, PointerDeviceKind.trackpad);
+    final at = tester.getCenter(find.byType(GalleryScreen));
+    await tester.sendEventToBinding(pad.panZoomStart(at));
+    await tester.sendEventToBinding(
+      pad.panZoomUpdate(at, pan: const Offset(200, 0)),
+    );
+    await tester.sendEventToBinding(pad.panZoomEnd());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(GalleryScreen), findsNothing);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
   testWidgets('a picture opens fitted, also after it was zoomed in before', (
     tester,
   ) async {
