@@ -334,6 +334,33 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('reopening a conversation lands where the reader left it', (
+    tester,
+  ) async {
+    await open(tester, count: 200);
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
+      await settle(tester);
+    }
+    final text = [
+      for (var i = 0; i < 200; i++)
+        if (find.text('message $i').evaluate().isNotEmpty &&
+            tester.getTopLeft(find.text('message $i')).dy >= 0)
+          'message $i',
+    ].first;
+    final before = tester.getTopLeft(find.text(text)).dy;
+    final app = tester.widget<ProviderScope>(find.byType(ProviderScope));
+    await tester.pumpWidget(const SizedBox());
+    await settle(tester);
+
+    await tester.pumpWidget(app);
+    await settle(tester);
+
+    expect(find.text(text), findsOneWidget);
+    expect(tester.getTopLeft(find.text(text)).dy, closeTo(before, 0.5));
+    await close(tester);
+  });
+
   testWidgets('what the reader sends far up in a long conversation shows, '
       'and so does what comes after it', (tester) async {
     await open(tester, count: 200);

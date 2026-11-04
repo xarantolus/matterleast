@@ -134,6 +134,11 @@ class Conversation extends _$Conversation {
         await session.store.rangesFor('channel', channelId),
       )?.latest;
     }
+    final saved = facts.saved;
+    if (!_isThread && saved != null) {
+      // Keeps the place the reader left inside the first window.
+      _keepAt = await ConversationViews(session.db).postCreatedAt(saved.postId);
+    }
     if (!ref.mounted) return;
     state = state.copyWith(saved: facts.saved);
     _watch();

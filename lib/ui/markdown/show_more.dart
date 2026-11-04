@@ -137,7 +137,7 @@ class _ShowMoreState extends State<ShowMore>
                   child: Padding(
                     padding: const EdgeInsets.only(top: Spacing.xl),
                     child: Align(
-                      alignment: AlignmentDirectional.centerStart,
+                      alignment: Alignment.center,
                       child: TextButton.icon(
                         style: TextButton.styleFrom(
                           foregroundColor: context.tokens.accent,
@@ -154,7 +154,7 @@ class _ShowMoreState extends State<ShowMore>
         ),
         if (_expanded)
           Align(
-            alignment: AlignmentDirectional.centerStart,
+            alignment: Alignment.center,
             child: TextButton.icon(
               onPressed: _toggle,
               icon: const Icon(Icons.expand_less),
