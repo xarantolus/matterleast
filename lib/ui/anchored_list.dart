@@ -890,11 +890,28 @@ class _RowProbeState extends State<_RowProbe> {
     widget.list._built[widget.rowKey] = context;
   }
 
+  // An inactive element has no render object to measure until it returns.
+  @override
+  void deactivate() {
+    _forget();
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    widget.list._built[widget.rowKey] = context;
+  }
+
   @override
   void dispose() {
+    _forget();
+    super.dispose();
+  }
+
+  void _forget() {
     final built = widget.list._built;
     if (built[widget.rowKey] == context) built.remove(widget.rowKey);
-    super.dispose();
   }
 
   @override

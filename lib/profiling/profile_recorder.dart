@@ -21,6 +21,8 @@ class ProfileRecorder {
 
   static final instance = ProfileRecorder._();
   static const _window = Duration(seconds: 60);
+  // Per-widget events fill the Linux timeline ring buffer within a second.
+  static const _widgetNames = bool.fromEnvironment('PROFILE_WIDGETS');
 
   final _frames = Queue<FrameTiming>();
   VmService? _service;
@@ -29,9 +31,11 @@ class ProfileRecorder {
   static Future<void> start() async {
     if (!kProfileMode) return;
     SchedulerBinding.instance.addTimingsCallback(instance._onTimings);
-    debugProfileBuildsEnabledUserWidgets = true;
-    debugProfileLayoutsEnabled = true;
-    debugProfilePaintsEnabled = true;
+    if (_widgetNames) {
+      debugProfileBuildsEnabledUserWidgets = true;
+      debugProfileLayoutsEnabled = true;
+      debugProfilePaintsEnabled = true;
+    }
     try {
       final info = await developer.Service.controlWebServer(enable: true);
       final http = info.serverUri;
