@@ -530,6 +530,18 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
 
   Widget _field(BuildContext context, ComposerValue value) {
     final tokens = context.tokens;
+    final style = Theme.of(context).textTheme.bodyLarge
+        ?.forMessages(context, fallbackSize: 16);
+    final line =
+        MediaQuery.textScalerOf(context).scale(style?.fontSize ?? 16) *
+        (style?.height ?? 1);
+    final density = Theme.of(context).visualDensity.baseSizeAdjustment.dy;
+    // One line of the field is as high as the buttons, which are centred on it.
+    final rowHeight = math.max(
+      _composerRowHeight,
+      line + 2 * Spacing.sm + density,
+    );
+    final padding = (rowHeight - line - density) / 2;
     final limit =
         ref.watch(maxPostSizeProvider(widget.url)).value ??
         ServerFeatures.defaultMaxPostSize;
@@ -682,6 +694,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                             !forwarding &&
                             (uploads || canPrioritize || canBurn))
                           _rowCentred(
+                            rowHeight,
                             IconButton(
                               tooltip: 'Attach',
                               onPressed:
@@ -721,13 +734,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                       controller: _text,
                                       onTap: _wake,
                                       focusNode: _focus,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.forMessages(
-                                            context,
-                                            fallbackSize: 16,
-                                          ),
+                                      style: style,
                                       minLines: 1,
                                       maxLines: isDesktop ? null : 6,
                                       textAlignVertical:
@@ -740,10 +747,6 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                         hintMaxLines: 1,
                                         filled: !context.density.plainComposer,
                                         isDense: true,
-                                        // One line is as high as the buttons beside it.
-                                        constraints: BoxConstraints(
-                                          minHeight: _composerRowHeight,
-                                        ),
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(
                                             context.density.fieldRadius,
@@ -758,13 +761,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                         contentPadding:
                                             EdgeInsetsDirectional.fromSTEB(
                                               Spacing.lg,
-                                              isDesktop
-                                                  ? Spacing.sm
-                                                  : Spacing.md,
+                                              padding,
                                               48,
-                                              isDesktop
-                                                  ? Spacing.sm
-                                                  : Spacing.md,
+                                              padding,
                                             ),
                                       ),
                                     ),
@@ -777,6 +776,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                   bottom: 0,
                                   child: Builder(
                                     builder: (button) => _rowCentred(
+                                      rowHeight,
                                       IconButton(
                                         tooltip: 'Emoji',
                                         onPressed: () =>
@@ -792,6 +792,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                         ),
                         const SizedBox(width: Spacing.xs),
                         _rowCentred(
+                          rowHeight,
                           SendButton(
                             editing: editing != null,
                             onSend: sendable ? _send : null,
@@ -1526,7 +1527,7 @@ double get _composerRowHeight => isDesktop ? 40 : kMinInteractiveDimension;
 
 /// [button] centred in a one-line row, so it lines up with a single line of
 /// text and stays by the last line of a longer one.
-Widget _rowCentred(Widget button) => SizedBox(
-  height: _composerRowHeight,
+Widget _rowCentred(double height, Widget button) => SizedBox(
+  height: height,
   child: Center(child: button),
 );
