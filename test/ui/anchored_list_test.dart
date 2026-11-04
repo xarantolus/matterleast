@@ -516,6 +516,39 @@ void main() {
       expect(topOf(tester, expanding), closeTo(before, 0.5));
     });
   }
+
+  testWidgets('asking for the position while rows are being replaced raises '
+      'nothing', (tester) async {
+    Widget withProbe(List<Item> rows) => MaterialApp(
+      home: Scaffold(
+        body: Column(
+          children: [
+            SizedBox(
+              height: 600,
+              child: AnchoredList<Item>(
+                rows: rows,
+                keyOf: (r) => r.id,
+                controller: controller,
+                itemBuilder: (_, r) =>
+                    SizedBox(height: r.height, child: Text('row ${r.id}')),
+              ),
+            ),
+            LayoutBuilder(
+              builder: (_, _) {
+                controller.position;
+                return const SizedBox();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpWidget(withProbe(rowsFrom(100, 51)));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(withProbe(rowsFrom(300, 251)));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
 }
 
 /// A row that grows by 400 px over 200 ms when tapped, like "Show more".
