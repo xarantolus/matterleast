@@ -86,6 +86,31 @@ void main() {
     });
   });
 
+  group('servers answering one after another', () {
+    test('a late server joins after those already shown', () {
+      final first = arrivalGroups(const [], ['a']);
+      expect(arrivalGroups(first, ['a', 'b']), [
+        ['a'],
+        ['b'],
+      ]);
+    });
+
+    test('servers ready together share a group, in request order', () {
+      expect(arrivalGroups(const [], ['a', 'b']), [
+        ['a', 'b'],
+      ]);
+    });
+
+    test('a server shown earlier keeps its group when others arrive', () {
+      final shown = arrivalGroups(arrivalGroups(const [], ['b']), ['a', 'b']);
+      expect(shown, [
+        ['b'],
+        ['a'],
+      ]);
+      expect(arrivalGroups(shown, ['a', 'b']), same(shown));
+    });
+  });
+
   group('one view of several servers', () {
     ({String name, SearchView<String> view}) src(
       String name,

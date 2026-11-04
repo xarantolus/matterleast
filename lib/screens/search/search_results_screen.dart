@@ -296,6 +296,14 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                       onRefresh: _refresh,
                       child: _tab == _Tab.messages
                           ? _MessageResults(
+                              key: ValueKey(
+                                Object.hash(
+                                  _query,
+                                  Object.hashAll([
+                                    for (final r in requests) (r.url, r.scope),
+                                  ]),
+                                ),
+                              ),
                               requests: requests,
                               names: names,
                               query: _query,
@@ -718,6 +726,7 @@ class _Failures extends StatelessWidget {
 
 class _MessageResults extends ConsumerWidget {
   const _MessageResults({
+    super.key,
     required this.requests,
     required this.names,
     required this.query,
@@ -761,7 +770,7 @@ class _MessageResults extends ConsumerWidget {
   }
 }
 
-class _PostList extends ConsumerWidget {
+class _PostList extends ConsumerStatefulWidget {
   const _PostList({
     required this.groups,
     required this.names,
@@ -776,7 +785,29 @@ class _PostList extends ConsumerWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PostList> createState() => _PostListState();
+}
+
+class _PostListState extends ConsumerState<_PostList> {
+  late List<List<String>> _arrivals = arrivalGroups(const [], _ready);
+
+  Iterable<String> get _ready => [
+    for (final g in widget.groups)
+      if (g.results.isNotEmpty) g.url,
+  ];
+
+  @override
+  void didUpdateWidget(_PostList old) {
+    super.didUpdateWidget(old);
+    _arrivals = arrivalGroups(_arrivals, _ready);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final groups = widget.groups;
+    final names = widget.names;
+    final failures = widget.failures;
+    final onRetry = widget.onRetry;
     List<InboxItem> itemsOf(String url, List<String> ids) => ids.isEmpty
         ? const []
         : ref.watch(searchPostItemsProvider(url, ids.join(','))).value ??
@@ -785,18 +816,25 @@ class _PostList extends ConsumerWidget {
     final moreItems = mergeNewestFirst([
       for (final g in groups) itemsOf(g.url, g.more),
     ], time);
-    final rows = [
-      ...withDays(
-        mergeNewestFirst([
-          for (final g in groups) itemsOf(g.url, g.results),
-        ], time),
-        time,
-      ),
-      if (moreItems.isNotEmpty) ...[
-        const PaneLabel('More from the server'),
-        ...withDays(moreItems, time),
-      ],
-    ];
+    final rows = <Object>[];
+    for (final (i, urls) in _arrivals.indexed) {
+      final items = mergeNewestFirst([
+        for (final g in groups)
+          if (urls.contains(g.url)) itemsOf(g.url, g.results),
+      ], time);
+      if (items.isEmpty) continue;
+      if (i > 0) {
+        rows.add(
+          PaneLabel('More from ${urls.map((u) => names[u] ?? u).join(', ')}'),
+        );
+      }
+      rows.addAll(withDays(items, time));
+    }
+    if (moreItems.isNotEmpty) {
+      rows
+        ..add(const PaneLabel('More from the server'))
+        ..addAll(withDays(moreItems, time));
+    }
     // The ids are known before their rows are read, so the count is right
     // at once instead of starting at 0.
     final count = groups.fold(

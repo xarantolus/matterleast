@@ -370,6 +370,22 @@ List<T> mergeNewestFirst<T>(List<List<T>> lists, DateTime? Function(T) timeOf) {
   return [for (final e in all) e.$1];
 }
 
+/// Pure: the servers in the order their results first showed, in groups
+/// that appeared together. [ready] are the servers with results now; the
+/// ones not seen before join as a new last group, so rows already on screen
+/// keep their place.
+List<List<String>> arrivalGroups(
+  List<List<String>> shown,
+  Iterable<String> ready,
+) {
+  final seen = {for (final group in shown) ...group};
+  final fresh = [
+    for (final url in ready)
+      if (!seen.contains(url)) url,
+  ];
+  return fresh.isEmpty ? shown : [...shown, fresh];
+}
+
 /// Pure: the views of several servers as one. Loading shows until some
 /// result exists or every server has answered; a failed server is listed
 /// in [SearchShown.failures] while the others' results show.
