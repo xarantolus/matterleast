@@ -5,8 +5,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/inbox.dart';
-import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/message_search.dart';
+import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/post_files.dart'
     show fileKindOf, formatBytes;
 import 'package:matterleast/domain/quick_switch.dart';
