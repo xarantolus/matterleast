@@ -25,6 +25,7 @@ import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
 import 'package:matterleast/ui/focus_region.dart';
+import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/progress_slot.dart';
 
 /// What a channel and a thread have in common: the app bar with its
@@ -123,21 +124,34 @@ class ConversationScaffold extends ConsumerWidget {
                       child: Stack(
                         children: [
                           Positioned.fill(
-                            child: FocusRegion(
-                              entry: RegionEntry.self,
-                              child: ConversationView(
-                                url: url,
-                                conversation: conversation,
-                                composer: window == null || window.archived
-                                    ? null
-                                    : composerDraftProvider(
-                                        url,
-                                        channelId,
-                                        rootId,
-                                      ),
-                                startText: startText,
-                                list: list,
-                                onOpenThread: onOpenThread,
+                            // Fades in per conversation, so text and the
+                            // pictures loading just after arrive together.
+                            child: TweenAnimationBuilder<double>(
+                              key: ValueKey('$url/$channelId/$rootId'),
+                              tween: Tween(begin: 0, end: 1),
+                              duration: motion(
+                                context,
+                                const Duration(milliseconds: 250),
+                              ),
+                              curve: Curves.easeOut,
+                              builder: (context, opacity, child) =>
+                                  Opacity(opacity: opacity, child: child),
+                              child: FocusRegion(
+                                entry: RegionEntry.self,
+                                child: ConversationView(
+                                  url: url,
+                                  conversation: conversation,
+                                  composer: window == null || window.archived
+                                      ? null
+                                      : composerDraftProvider(
+                                          url,
+                                          channelId,
+                                          rootId,
+                                        ),
+                                  startText: startText,
+                                  list: list,
+                                  onOpenThread: onOpenThread,
+                                ),
                               ),
                             ),
                           ),
