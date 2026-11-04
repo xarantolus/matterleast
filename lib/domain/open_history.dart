@@ -4,17 +4,24 @@ import 'package:matterleast/domain/rail.dart';
 /// The message at the bottom of the screen and its bottom edge's offset.
 typedef ReadingAt = ({String postId, double offset});
 
-/// A conversation or thread with the reading position, or Home or a team's list.
+/// A team-wide page that is a history entry of its own.
+enum PlaceView { threads, drafts, agents }
+
+/// A conversation or thread with the reading position, a [view] of a team, or Home.
 class Location {
   const Location({
     this.place,
     this.conversation,
+    this.view,
     this.highlightPostId,
     this.at,
   });
 
   final RailTarget? place;
   final SavedConversation? conversation;
+
+  /// The page shown over [place]'s list, when no conversation is.
+  final PlaceView? view;
 
   /// The message it was opened at; reopening shows it again.
   final String? highlightPostId;
@@ -27,7 +34,7 @@ class Location {
     final mine = conversation;
     final theirs = other.conversation;
     if (mine == null || theirs == null) {
-      return mine == theirs && place == other.place;
+      return mine == theirs && place == other.place && view == other.view;
     }
     return mine.url == theirs.url &&
         mine.channelId == theirs.channelId &&
@@ -45,6 +52,7 @@ class Location {
       : Location(
           place: place,
           conversation: conversation,
+          view: view,
           highlightPostId: highlightPostId,
           at: now,
         );
@@ -54,24 +62,48 @@ class Location {
       other is Location &&
       other.place == place &&
       other.conversation == conversation &&
+      other.view == view &&
       other.highlightPostId == highlightPostId &&
       other.at == at;
 
   @override
-  int get hashCode => Object.hash(place, conversation, highlightPostId, at);
+  int get hashCode =>
+      Object.hash(place, conversation, view, highlightPostId, at);
 }
 
-/// Whether [location]'s server is signed in and its channel is joined and open; an unasked server stays.
+/// Whether [location]'s server is signed in, its team still there and its channel joined and open; an unasked server stays.
 bool locationExists(
   Location location, {
   required Set<String> signedIn,
   required Map<String, Set<String>> channels,
+  Map<String, Set<String>> teams = const {},
 }) {
   final url = location.conversation?.url ?? location.place?.url;
   if (url == null) return true;
   if (!signedIn.contains(url)) return false;
+  final team = location.place?.teamId;
+  if (team != null && !(teams[url]?.contains(team) ?? true)) return false;
   final id = location.conversation?.channelId;
   return id == null || (channels[url]?.contains(id) ?? true);
+}
+
+/// What Back does at [shown], with [current] the entry the history is at.
+enum HistoryMove { closePage, reopenCurrent, step }
+
+/// Back first goes where the user is: it closes a page that is no entry, and
+/// returns to the entry when the window shows something else.
+HistoryMove historyMove({
+  required bool forward,
+  required bool pageOnTop,
+  required Location shown,
+  required Location? current,
+}) {
+  if (forward) return HistoryMove.step;
+  if (pageOnTop) return HistoryMove.closePage;
+  if (current != null && !current.isSameSpot(shown)) {
+    return HistoryMove.reopenCurrent;
+  }
+  return HistoryMove.step;
 }
 
 /// Places visited, oldest first; Back and Forward work like a browser's.
@@ -135,7 +167,9 @@ void settleHistory(OpenHistory<Location> history, Location now) {
   final current = history.current;
   if (current != null && current.isSameSpot(now)) {
     noteReading(history, now);
-  } else if (now.conversation != null || now.place == null) {
+  } else if (now.conversation != null ||
+      now.view != null ||
+      now.place == null) {
     history.push(now);
   }
 }

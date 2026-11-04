@@ -6,12 +6,17 @@ import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/open_history.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/quick_switch.dart';
+import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/screens/channel/reading_places.dart';
 import 'package:matterleast/screens/open_channel.dart';
+import 'package:matterleast/screens/place_view.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
+import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
+import 'package:matterleast/ui/conversation_route.dart';
+import 'package:matterleast/ui/slide_route.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'open_history.g.dart';
@@ -32,13 +37,26 @@ Location shownLocation(ProviderContainer container) {
       panes: container.read(openPanesProvider),
     ),
   );
+  final place = container.read(railSelectionProvider);
+  final view = _pageOver(container)?.view;
+  if (view != null && open?.rootId == null) {
+    return Location(place: place, view: view);
+  }
   return Location(
-    place: container.read(railSelectionProvider),
+    place: place,
     conversation: open,
     at: open == null
         ? null
         : container.read(readingPlacesProvider).placeOf(_keyOf(open)),
   );
+}
+
+/// The content page over the conversations, if one is.
+SlideRoute<dynamic>? _pageOver(ProviderContainer container) {
+  final page =
+      container.read(paneRoutesProvider).stack.lastOrNull ??
+      container.read(conversationRoutesProvider).stack.lastOrNull;
+  return page is ConversationRoute ? null : page;
 }
 
 ConversationKey _keyOf(SavedConversation c) =>
@@ -63,10 +81,22 @@ Future<void> stepHistory(
     if (!forward) unawaited(navigator.maybePop());
     return;
   }
+  final history = container.read(openHistoryProvider);
+  final shown = shownLocation(container);
+  noteReading(history, shown);
+  final page = _pageOver(container);
+  final move = historyMove(
+    forward: forward,
+    pageOnTop: page != null && page.view == null,
+    shown: shown,
+    current: history.current,
+  );
+  if (move == HistoryMove.closePage) {
+    unawaited(page?.navigator?.maybePop());
+    return;
+  }
   _stepping = true;
   try {
-    final history = container.read(openHistoryProvider);
-    noteReading(history, shownLocation(container));
     final servers = await readOnceIn(container, serversProvider.future);
     final signedIn = {
       for (final s in servers)
@@ -77,10 +107,17 @@ Future<void> stepHistory(
         if (e.conversation?.url case final url? when signedIn.contains(url))
           url,
     });
-    final entry = history.step(
-      forward: forward,
-      exists: (e) => locationExists(e, signedIn: signedIn, channels: channels),
-    );
+    final teams = await _teamsOf(container, {
+      for (final e in history.entries)
+        if (e.place?.url case final url? when signedIn.contains(url)) url,
+    });
+    bool exists(Location e) =>
+        locationExists(e, signedIn: signedIn, channels: channels, teams: teams);
+    final current = history.current;
+    final entry =
+        move == HistoryMove.reopenCurrent && current != null && exists(current)
+        ? current
+        : history.step(forward: forward, exists: exists);
     if (entry == null || !navigator.mounted) return;
     _show(container, navigator, entry);
   } finally {
@@ -98,6 +135,10 @@ void _show(
   final conversation = entry.conversation;
   if (conversation == null) {
     container.read(railSelectionProvider.notifier).select(entry.place);
+    closePages(navigator);
+    if (entry.view case final view?) {
+      unawaited(_showView(container, navigator, entry.place, view));
+    }
     return;
   }
   final at = entry.at;
@@ -120,6 +161,50 @@ void _show(
   if (conversation.rootId == null) {
     container.read(openPanesProvider.notifier).closeThread();
   }
+}
+
+Future<void> _showView(
+  ProviderContainer container,
+  NavigatorState navigator,
+  RailTarget? place,
+  PlaceView view,
+) async {
+  if (place == null) return;
+  container.read(openPanesProvider.notifier).closeThread();
+  final teams = await readOnceIn(
+    container,
+    railTeamsProvider(place.url).future,
+  );
+  final id = shownTeam(place, teams);
+  if (id == null || !navigator.mounted) return;
+  await openPlaceView(
+    navigator,
+    view,
+    url: place.url,
+    teamId: id,
+    teamName: teams.firstWhere((t) => t.id == id).displayName,
+    recordHistory: false,
+  );
+}
+
+/// The teams each server has; a server that couldn't be asked is missing.
+Future<Map<String, Set<String>>> _teamsOf(
+  ProviderContainer container,
+  Set<String> urls,
+) async {
+  final result = <String, Set<String>>{};
+  for (final url in urls) {
+    try {
+      final teams = await readOnceIn(
+        container,
+        railTeamsProvider(url).future,
+      ).timeout(const Duration(seconds: 5));
+      result[url] = {for (final t in teams) t.id};
+    } on Object catch (e) {
+      Log.warn('history', 'Could not check the teams of a server', e);
+    }
+  }
+  return result;
 }
 
 /// Joined, unarchived channels per server; a server that couldn't be asked is missing.

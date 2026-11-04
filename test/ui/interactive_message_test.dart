@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/interactive_message.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
@@ -25,11 +26,13 @@ PostItem _post(Map<String, Object?> props, {String id = 'p1'}) => PostItem(
 
 void main() {
   late List<PostActionRequest> sent;
+  late List<LinkTarget> opened;
   // A pending answer, or null for one that comes at once.
-  Completer<void>? answer;
+  Completer<String?>? answer;
 
   setUp(() {
     sent = [];
+    opened = [];
     answer = null;
   });
 
@@ -42,7 +45,7 @@ void main() {
         myUsername: 'river',
         onMention: (_) {},
         onChannel: (_) {},
-        onLink: (_) {},
+        onLink: opened.add,
         mmBlocks: true,
         onAction: (r) {
           sent.add(r);
@@ -87,7 +90,7 @@ void main() {
         },
       ],
     });
-    final pending = answer = Completer<void>();
+    final pending = answer = Completer<String?>();
     await pump(tester, integration(post));
     await tester.tap(find.text('Ship it'));
     await tester.pump();
@@ -169,6 +172,99 @@ void main() {
     expect(sent.single.format, IntegrationFormat.block);
     expect(find.text('Monday'), findsOneWidget);
     expect(find.text('Pick a slot'), findsNothing);
+  });
+
+  testWidgets('a failed action shows what the server said under the button', (
+    tester,
+  ) async {
+    answer = Completer<String?>()..complete('Not allowed here.');
+    await pump(
+      tester,
+      integration(
+        _post({
+          'mm_blocks': [
+            {'type': 'button', 'text': 'Go', 'action_id': 'go'},
+          ],
+        }),
+      ),
+    );
+    await tester.tap(find.text('Go'));
+    await tester.pumpAndSettle();
+    expect(find.text('Not allowed here.'), findsOneWidget);
+  });
+
+  testWidgets('a URL button opens its link and runs no action', (tester) async {
+    await pump(
+      tester,
+      integration(
+        _post({
+          'blocks': [
+            {
+              'type': 'actions',
+              'elements': [
+                {
+                  'type': 'button',
+                  'text': {'type': 'plain_text', 'text': 'Docs'},
+                  'url': 'https://example.test/docs',
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    );
+    await tester.tap(find.text('Docs'));
+    await tester.pump();
+    expect(sent, isEmpty);
+    expect(opened.single, isA<UriLink>());
+  });
+
+  testWidgets('a long menu can be searched', (tester) async {
+    await pump(
+      tester,
+      integration(
+        _post({
+          'blocks': [
+            {
+              'type': 'actions',
+              'elements': [
+                {
+                  'type': 'static_select',
+                  'action_id': 'pick',
+                  'placeholder': {'type': 'plain_text', 'text': 'Fruit'},
+                  'options': [
+                    for (final n in [
+                      'apple',
+                      'banana',
+                      'cherry',
+                      'date',
+                      'elder',
+                      'fig',
+                      'grape',
+                      'honeydew',
+                      'kiwi',
+                      'lemon',
+                    ])
+                      {
+                        'text': {'type': 'plain_text', 'text': n},
+                        'value': n,
+                      },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    );
+    await tester.tap(find.text('Fruit'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'kiw');
+    await tester.pump();
+    expect(find.text('apple'), findsNothing);
+    await tester.tap(find.text('kiwi'));
+    await tester.pumpAndSettle();
+    expect(sent.single.selectedOption, 'kiwi');
   });
 
   testWidgets('a collapsible section opens on tap', (tester) async {

@@ -131,8 +131,9 @@ Route<void> Function() reopened(
       builder: builder,
       instant: instant,
     ),
-  SlideRoute(:final builder) => () => SlideRoute<void>(
+  SlideRoute(:final builder, :final view) => () => SlideRoute<void>(
     builder: builder,
+    view: view,
     instant: instant,
   ),
 };

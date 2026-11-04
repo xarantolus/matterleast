@@ -20,6 +20,7 @@ import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart' show PageKind;
+import 'package:matterleast/domain/open_history.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/rail.dart';
@@ -28,6 +29,7 @@ import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/screens/place_view.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
@@ -38,6 +40,8 @@ import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
+import 'package:matterleast/screens/threads/team_threads_screen.dart';
+import 'package:matterleast/ui/content_page.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
@@ -766,6 +770,145 @@ void main() {
         await mouseBack(tester);
         expect(find.text('First page'), findsNothing);
         expect(shown(tester), ['${urlA()} $_xId']);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+    });
+
+    group('with pages that are entries', () {
+      Future<void> openThreads(WidgetTester tester, String url) async {
+        unawaited(
+          openPlaceView(
+            navigator(tester),
+            PlaceView.threads,
+            url: url,
+            teamId: teamId,
+            teamName: 'Harbour',
+          ),
+        );
+        await settle(tester);
+        expect(find.byType(TeamThreadsScreen), findsOneWidget);
+      }
+
+      testWidgets('Back from Threads lands on the channel, Forward returns', (
+        tester,
+      ) async {
+        await wide(tester);
+        await open(tester, urlA(), _xId);
+        await open(tester, urlB(), _yId);
+        await openThreads(tester, urlB());
+
+        await step(tester, forward: false);
+        expect(find.byType(TeamThreadsScreen), findsNothing);
+        expect(shown(tester), ['${urlB()} $_yId']);
+        expect(place()?.url, urlB());
+
+        await step(tester, forward: true);
+        expect(find.byType(TeamThreadsScreen), findsOneWidget);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+
+      testWidgets('Back from a thread opened in Threads shows Threads', (
+        tester,
+      ) async {
+        await wide(tester);
+        await open(tester, urlB(), _yId);
+        await openThreads(tester, urlB());
+        unawaited(
+          openConversation(
+            navigator(tester),
+            url: urlB(),
+            channelId: _yId,
+            title: 'y',
+            teamId: teamId,
+            rootId: 'y5',
+            besideContent: true,
+          ),
+        );
+        await settle(tester);
+        expect(shown(tester), contains('${urlB()} $_yId y5'));
+
+        await step(tester, forward: false);
+        expect(find.byType(TeamThreadsScreen), findsOneWidget);
+        expect(shown(tester), ['${urlB()} $_yId']);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+
+      testWidgets('Back after a rail switch to a bare list returns to the '
+          'channel just left', (tester) async {
+        await wide(tester);
+        await open(tester, urlA(), _xId);
+        await open(tester, urlB(), _yId);
+        unawaited(showPlace(navigator(tester), RailTarget(url: urlA())));
+        await settle(tester);
+        expect(shown(tester), isEmpty);
+
+        await step(tester, forward: false);
+        expect(shown(tester), ['${urlB()} $_yId']);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+
+      testWidgets('Back after closing a channel returns to it', (tester) async {
+        await wide(tester);
+        await open(tester, urlA(), _xId);
+        await open(tester, urlA(), _yId);
+        container.read(openPanesProvider.notifier).back();
+        await settle(tester);
+        expect(shown(tester), isEmpty);
+
+        await step(tester, forward: false);
+        expect(shown(tester), ['${urlA()} $_yId']);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+
+      testWidgets('Back with a page over the channel closes only the page', (
+        tester,
+      ) async {
+        await wide(tester);
+        await open(tester, urlA(), _xId);
+        await open(tester, urlA(), _yId);
+        unawaited(
+          openPage(
+            navigator(tester),
+            const ContentPage(title: Text('Info'), body: Text('Info body')),
+          ),
+        );
+        await settle(tester);
+        expect(find.text('Info body'), findsOneWidget);
+
+        await step(tester, forward: false);
+        expect(find.text('Info body'), findsNothing);
+        expect(shown(tester), ['${urlA()} $_yId']);
+
+        await step(tester, forward: false);
+        expect(shown(tester), ['${urlA()} $_xId']);
+        await finish(tester);
+        await tester.pump(Duration.zero);
+      }, variant: desktop);
+
+      testWidgets('an entry for a team that is gone is skipped', (
+        tester,
+      ) async {
+        await wide(tester);
+        await open(tester, urlB(), _yId);
+        await open(tester, urlA(), _xId);
+        await open(tester, urlB(), _zId);
+        railTeams[urlA()]!.add(const [
+          RailTeam(
+            id: _otherTeam,
+            displayName: 'Other',
+            unread: false,
+            mentions: 0,
+          ),
+        ]);
+        await settle(tester);
+
+        await step(tester, forward: false);
+        expect(shown(tester), ['${urlB()} $_yId']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);
