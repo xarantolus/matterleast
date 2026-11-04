@@ -35,4 +35,13 @@ void main() {
     );
     expect(resizedPane(1300, room: 2000, others: 0, isThread: true), 1300);
   });
+
+  test('saved widths that still hold a separate list width decode', () {
+    final widths = PaneWidths.fromJson({
+      'list': 300.0,
+      'listBesideThread': 280.0,
+      'thread': 500.0,
+    });
+    expect(widths, const PaneWidths(list: 300, thread: 500));
+  });
 }

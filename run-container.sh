@@ -36,8 +36,12 @@ args+=(
 if [ -e /dev/kvm ]; then
   [ -r /dev/kvm ] && [ -w /dev/kvm ] ||
     echo "warning: no access to /dev/kvm (join the kvm group and log in again); the emulator won't start" >&2
-  args+=(--device /dev/kvm --group-add keep-groups)
+  args+=(--device /dev/kvm)
 fi
+# The host GPU, for rendering measurements in a headless Weston session.
+[ -d /dev/dri ] && args+=(--device /dev/dri)
+# kvm and render/video access come from the host user's groups.
+args+=(--group-add keep-groups)
 [ -d /dev/bus/usb ] && args+=(--cap-add SYS_RAWIO --cap-add MKNOD --device /dev/bus/usb)
 [ -d "$HOME/.ssh" ] && args+=(-v "$HOME/.ssh":/root/.ssh)
 [ -d "$HOME/.config/gh" ] && args+=(-v "$HOME/.config/gh":/root/.config/gh:ro)

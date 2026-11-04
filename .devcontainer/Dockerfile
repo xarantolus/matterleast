@@ -123,7 +123,9 @@ RUN npm install -g @mobilenext/mobile-mcp@1.0.13
 # input and screenshots. librsvg2-common loads SVG icons, the emoji font
 # gives Flutter's text fallback colour emoji. dbus-daemon, not dbus-x11:
 # with dbus-launch installed, every Secret Service lookup outside a lane
-# autolaunches a session bus and a keyring daemon that never exit.
+# autolaunches a session bus and a keyring daemon that never exit. Weston's
+# headless backend renders a Wayland session on the host GPU when /dev/dri is
+# passed in.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get install -y --no-install-recommends \
@@ -131,7 +133,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
         xvfb openbox xfce4-panel dunst libnotify-bin dbus-daemon gnome-keyring \
         xdg-desktop-portal xdg-desktop-portal-gtk \
-        x11-utils xdotool imagemagick librsvg2-common fonts-noto-color-emoji
+        x11-utils xdotool imagemagick librsvg2-common fonts-noto-color-emoji \
+        weston
 
 # Podman for the local Mattermost test server (.devcontainer/server/). It runs
 # rootful inside this container, which needs CAP_SYS_ADMIN, an unmasked /proc
