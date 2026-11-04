@@ -645,11 +645,13 @@ class _Label extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => PostBody(
-    postId: 'label:$text',
-    message: text,
-    collapsible: false,
-    style: DefaultTextStyle.of(context).style,
+  Widget build(BuildContext context) => IntrinsicWidth(
+    child: PostBody(
+      postId: 'label:$text',
+      message: text,
+      collapsible: false,
+      style: DefaultTextStyle.of(context).style,
+    ),
   );
 }
 
