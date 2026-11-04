@@ -201,6 +201,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   final _text = TextEditingController();
   late final _focus = widget.focusNode ?? FocusNode();
   final _suggestionsShown = OverlayPortalController()..show();
+  final _blinking = ValueNotifier(true);
+  static const _blinkFor = Duration(seconds: 10);
+  Timer? _blinkStop;
 
   /// The suggestion Enter and Tab take.
   int _highlight = 0;
@@ -223,6 +226,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     super.initState();
     _text.value = ref.read(_provider).text;
     _text.addListener(_typed);
+    _wake();
     _focus.onKeyEvent = _onKey;
     if (isDesktop) HardwareKeyboard.instance.addHandler(_typeToFocus);
     ref.read(_provider.notifier).inTeam(widget.teamId);
@@ -399,14 +403,25 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   }
 
   void _typed() {
+    _wake();
     if (_text.text != _historyText) _historyAt = -1;
     if (_text.value != ref.read(_provider).text) {
       ref.read(_provider.notifier).changed(_text.value);
     }
   }
 
+  /// Like GTK, the caret blinks for 10 seconds after the last edit or move.
+  void _wake() {
+    if (!isDesktop) return;
+    _blinkStop?.cancel();
+    _blinkStop = Timer(_blinkFor, () => _blinking.value = false);
+    _blinking.value = true;
+  }
+
   @override
   void dispose() {
+    _blinkStop?.cancel();
+    _blinking.dispose();
     if (isDesktop) HardwareKeyboard.instance.removeHandler(_typeToFocus);
     _text.removeListener(_typed);
     _text.dispose();
@@ -517,248 +532,268 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final burning =
         canBurn &&
         ref.watch(burnOnReadChoiceProvider(widget.url, widget.channelId));
-    return Material(
-      color: Theme.of(context).colorScheme.surfaceContainer,
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (editing != null)
-              Padding(
-                padding: const EdgeInsets.only(left: Spacing.lg),
-                child: Row(
-                  children: [
-                    Icon(Icons.edit, size: 18, color: tokens.muted),
-                    const SizedBox(width: Spacing.sm),
-                    Expanded(
-                      child: Text.rich(
-                        TextSpan(
-                          text: 'Editing message',
-                          style: Theme.of(context).textTheme.labelLarge,
-                          children: [
-                            if (isDesktop)
-                              TextSpan(
-                                text: '  Esc to cancel · Enter to save',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: tokens.muted),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Cancel editing',
-                      onPressed: ref.read(_provider.notifier).stopEditing,
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-            if (files.isNotEmpty && editing == null)
-              AttachmentStrip(
-                attachments: files,
-                onRemove: ref.read(_provider.notifier).detach,
-                stalled: !ref.watch(serverLiveProvider(widget.url)),
-              ),
-            if (value.priority case final priority?
-                when canPrioritize && editing == null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Spacing.md,
-                  Spacing.sm,
-                  Spacing.md,
-                  0,
-                ),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: PriorityChip(
-                    priority: priority,
-                    onPressed: () => _pickPriority(options!.acknowledgements),
-                    onDeleted: () =>
-                        ref.read(_provider.notifier).setPriority(null),
-                  ),
-                ),
-              ),
-            if (burning && editing == null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Spacing.md,
-                  Spacing.sm,
-                  Spacing.md,
-                  0,
-                ),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: BurnOnReadChip(
-                    duration: features!.burnOnReadDuration,
-                    onDeleted: () => ref
-                        .read(
-                          burnOnReadChoiceProvider(
-                            widget.url,
-                            widget.channelId,
-                          ).notifier,
-                        )
-                        .set(on: false),
-                  ),
-                ),
-              ),
-            if (length >= limit * _counterFrom)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Spacing.lg,
-                  Spacing.xs,
-                  Spacing.lg,
-                  0,
-                ),
-                child: Text(
-                  '$length / $limit',
-                  textAlign: TextAlign.end,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: length > limit
-                        ? Theme.of(context).colorScheme.error
-                        : tokens.muted,
-                  ),
-                ),
-              ),
-            Padding(
-              // Keeps the field itself when bars appear above it.
-              key: const ValueKey('composer-field'),
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.xs,
-                Spacing.sm,
-                Spacing.xs,
-                Spacing.sm,
-              ),
-              child: Column(
-                children: [
-                  if (context.density.plainComposer)
-                    FormatBar(
-                      onFormat: (format) {
-                        _format(format);
-                        _focus.requestFocus();
-                      },
-                    ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+    return RepaintBoundary(
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (editing != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: Spacing.lg),
+                  child: Row(
                     children: [
-                      if (editing == null &&
-                          !forwarding &&
-                          (uploads || canPrioritize || canBurn))
-                        _rowCentred(
-                          IconButton(
-                            tooltip: 'Attach',
-                            onPressed:
-                                (!uploads || files.length >= maxAttachments) &&
-                                    !canPrioritize &&
-                                    !canBurn
-                                ? null
-                                : () => _attach(
-                                    uploads: uploads,
-                                    acknowledgements: canPrioritize
-                                        ? options!.acknowledgements
-                                        : null,
-                                    burnOnRead: canBurn,
-                                  ),
-                            icon: const Icon(Icons.add_circle_outline),
-                          ),
-                        )
-                      else
-                        const SizedBox(width: Spacing.md),
+                      Icon(Icons.edit, size: 18, color: tokens.muted),
+                      const SizedBox(width: Spacing.sm),
                       Expanded(
-                        // On desktop the field grows up to a third of the
-                        // window, then scrolls; a phone keeps six lines.
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: isDesktop
-                                ? MediaQuery.sizeOf(context).height * 0.35
-                                : double.infinity,
-                          ),
-                          child: Stack(
+                        child: Text.rich(
+                          TextSpan(
+                            text: 'Editing message',
+                            style: Theme.of(context).textTheme.labelLarge,
                             children: [
-                              TickersWhile(
-                                active: DesktopShell.focus,
-                                child: TextField(
-                                  controller: _text,
-                                  focusNode: _focus,
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.forMessages(context, fallbackSize: 16),
-                                  minLines: 1,
-                                  maxLines: isDesktop ? null : 6,
-                                  textAlignVertical: TextAlignVertical.center,
-                                  keyboardType: TextInputType.multiline,
-                                  textCapitalization:
-                                      TextCapitalization.sentences,
-                                  decoration: InputDecoration(
-                                    hintText: widget.hint,
-                                    hintMaxLines: 1,
-                                    filled: !context.density.plainComposer,
-                                    isDense: true,
-                                    // One line is as high as the buttons beside it.
-                                    constraints: BoxConstraints(
-                                      minHeight: _composerRowHeight,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        context.density.fieldRadius,
-                                      ),
-                                      borderSide: context.density.plainComposer
-                                          ? BorderSide(color: tokens.divider)
-                                          : BorderSide.none,
-                                    ),
-                                    contentPadding:
-                                        EdgeInsetsDirectional.fromSTEB(
-                                          Spacing.lg,
-                                          isDesktop ? Spacing.sm : Spacing.md,
-                                          48,
-                                          isDesktop ? Spacing.sm : Spacing.md,
-                                        ),
-                                  ),
+                              if (isDesktop)
+                                TextSpan(
+                                  text: '  Esc to cancel · Enter to save',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: tokens.muted),
                                 ),
-                              ),
-                              // At the bottom like send, so a long message keeps
-                              // it next to the line being written.
-                              PositionedDirectional(
-                                end: 0,
-                                bottom: 0,
-                                child: Builder(
-                                  builder: (button) => _rowCentred(
-                                    IconButton(
-                                      tooltip: 'Emoji',
-                                      onPressed: () =>
-                                          _pickEmoji(globalRectOf(button)),
-                                      icon: const Icon(Icons.mood),
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(width: Spacing.xs),
-                      _rowCentred(
-                        SendButton(
-                          editing: editing != null,
-                          onSend: sendable ? _send : null,
-                          onSchedule:
-                              sendable &&
-                                  !forwarding &&
-                                  editing == null &&
-                                  !burning &&
-                                  (features?.scheduledPosts ?? false) &&
-                                  !value.text.text.trimLeft().startsWith('/')
-                              ? _schedule
-                              : null,
-                        ),
+                      IconButton(
+                        tooltip: 'Cancel editing',
+                        onPressed: ref.read(_provider.notifier).stopEditing,
+                        icon: const Icon(Icons.close),
                       ),
                     ],
                   ),
-                ],
+                ),
+              if (files.isNotEmpty && editing == null)
+                AttachmentStrip(
+                  attachments: files,
+                  onRemove: ref.read(_provider.notifier).detach,
+                  stalled: !ref.watch(serverLiveProvider(widget.url)),
+                ),
+              if (value.priority case final priority?
+                  when canPrioritize && editing == null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Spacing.md,
+                    Spacing.sm,
+                    Spacing.md,
+                    0,
+                  ),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: PriorityChip(
+                      priority: priority,
+                      onPressed: () => _pickPriority(options!.acknowledgements),
+                      onDeleted: () =>
+                          ref.read(_provider.notifier).setPriority(null),
+                    ),
+                  ),
+                ),
+              if (burning && editing == null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Spacing.md,
+                    Spacing.sm,
+                    Spacing.md,
+                    0,
+                  ),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: BurnOnReadChip(
+                      duration: features!.burnOnReadDuration,
+                      onDeleted: () => ref
+                          .read(
+                            burnOnReadChoiceProvider(
+                              widget.url,
+                              widget.channelId,
+                            ).notifier,
+                          )
+                          .set(on: false),
+                    ),
+                  ),
+                ),
+              if (length >= limit * _counterFrom)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Spacing.lg,
+                    Spacing.xs,
+                    Spacing.lg,
+                    0,
+                  ),
+                  child: Text(
+                    '$length / $limit',
+                    textAlign: TextAlign.end,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: length > limit
+                          ? Theme.of(context).colorScheme.error
+                          : tokens.muted,
+                    ),
+                  ),
+                ),
+              Padding(
+                // Keeps the field itself when bars appear above it.
+                key: const ValueKey('composer-field'),
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.xs,
+                  Spacing.sm,
+                  Spacing.xs,
+                  Spacing.sm,
+                ),
+                child: Column(
+                  children: [
+                    if (context.density.plainComposer)
+                      FormatBar(
+                        onFormat: (format) {
+                          _format(format);
+                          _focus.requestFocus();
+                        },
+                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (editing == null &&
+                            !forwarding &&
+                            (uploads || canPrioritize || canBurn))
+                          _rowCentred(
+                            IconButton(
+                              tooltip: 'Attach',
+                              onPressed:
+                                  (!uploads ||
+                                          files.length >= maxAttachments) &&
+                                      !canPrioritize &&
+                                      !canBurn
+                                  ? null
+                                  : () => _attach(
+                                      uploads: uploads,
+                                      acknowledgements: canPrioritize
+                                          ? options!.acknowledgements
+                                          : null,
+                                      burnOnRead: canBurn,
+                                    ),
+                              icon: const Icon(Icons.add_circle_outline),
+                            ),
+                          )
+                        else
+                          const SizedBox(width: Spacing.md),
+                        Expanded(
+                          // On desktop the field grows up to a third of the
+                          // window, then scrolls; a phone keeps six lines.
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: isDesktop
+                                  ? MediaQuery.sizeOf(context).height * 0.35
+                                  : double.infinity,
+                            ),
+                            child: Stack(
+                              children: [
+                                TickersWhile(
+                                  active: DesktopShell.focus,
+                                  child: TickersWhile(
+                                    active: _blinking,
+                                    child: TextField(
+                                      controller: _text,
+                                      onTap: _wake,
+                                      focusNode: _focus,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.forMessages(
+                                            context,
+                                            fallbackSize: 16,
+                                          ),
+                                      minLines: 1,
+                                      maxLines: isDesktop ? null : 6,
+                                      textAlignVertical:
+                                          TextAlignVertical.center,
+                                      keyboardType: TextInputType.multiline,
+                                      textCapitalization:
+                                          TextCapitalization.sentences,
+                                      decoration: InputDecoration(
+                                        hintText: widget.hint,
+                                        hintMaxLines: 1,
+                                        filled: !context.density.plainComposer,
+                                        isDense: true,
+                                        // One line is as high as the buttons beside it.
+                                        constraints: BoxConstraints(
+                                          minHeight: _composerRowHeight,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            context.density.fieldRadius,
+                                          ),
+                                          borderSide:
+                                              context.density.plainComposer
+                                              ? BorderSide(
+                                                  color: tokens.divider,
+                                                )
+                                              : BorderSide.none,
+                                        ),
+                                        contentPadding:
+                                            EdgeInsetsDirectional.fromSTEB(
+                                              Spacing.lg,
+                                              isDesktop
+                                                  ? Spacing.sm
+                                                  : Spacing.md,
+                                              48,
+                                              isDesktop
+                                                  ? Spacing.sm
+                                                  : Spacing.md,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // At the bottom like send, so a long message keeps
+                                // it next to the line being written.
+                                PositionedDirectional(
+                                  end: 0,
+                                  bottom: 0,
+                                  child: Builder(
+                                    builder: (button) => _rowCentred(
+                                      IconButton(
+                                        tooltip: 'Emoji',
+                                        onPressed: () =>
+                                            _pickEmoji(globalRectOf(button)),
+                                        icon: const Icon(Icons.mood),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: Spacing.xs),
+                        _rowCentred(
+                          SendButton(
+                            editing: editing != null,
+                            onSend: sendable ? _send : null,
+                            onSchedule:
+                                sendable &&
+                                    !forwarding &&
+                                    editing == null &&
+                                    !burning &&
+                                    (features?.scheduledPosts ?? false) &&
+                                    !value.text.text.trimLeft().startsWith('/')
+                                ? _schedule
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
