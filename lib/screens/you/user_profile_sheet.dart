@@ -112,7 +112,7 @@ class UserProfileSheet extends ConsumerWidget {
             _Detail(label: 'Position', value: profile.position),
           if (profile.timezone case final zone?) _LocalTime(zone: zone),
           ProfileAttributesList(url: url, userId: userId),
-          if (!profile.isMe && !profile.isBot) ...[
+          if (!profile.isMe) ...[
             const SizedBox(height: Spacing.lg),
             SizedBox(
               width: double.infinity,

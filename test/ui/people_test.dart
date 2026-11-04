@@ -47,13 +47,16 @@ const PostPerson _samPerson = (
   pictureAt: null,
 );
 
-List<Override> _overrides({bool profileFails = false}) => [
+List<Override> _overrides({
+  bool profileFails = false,
+  UserProfile profile = _pat,
+}) => [
   serverImageCachesProvider(_url)
       .overrideWith((ref) => Completer<ServerImageCaches>().future),
   userProfileProvider(
     _url,
     'u-pat',
-  ).overrideWith((ref) => Stream.value(profileFails ? null : _pat)),
+  ).overrideWith((ref) => Stream.value(profileFails ? null : profile)),
   profileRefreshProvider(_url, 'u-pat').overrideWith((ref) async {
     if (profileFails) throw const ServerError(statusCode: 500);
   }),
@@ -63,6 +66,7 @@ Future<void> _show(
   WidgetTester tester,
   Widget child, {
   bool profileFails = false,
+  UserProfile profile = _pat,
 }) async {
   await pumpApp(
     tester,
@@ -77,7 +81,7 @@ Future<void> _show(
         child: ListView(children: [child]),
       ),
     ),
-    overrides: _overrides(profileFails: profileFails),
+    overrides: _overrides(profileFails: profileFails, profile: profile),
   );
   await tester.pumpAndSettle();
 }
@@ -218,5 +222,32 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.byType(InitialsBadge), findsNothing);
+  });
+
+  testWidgets("a bot's profile offers to message it", (tester) async {
+    await _show(
+      tester,
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () => showUserProfile(context, url: _url, userId: 'u-pat'),
+          child: const Text('open'),
+        ),
+      ),
+      profile: const UserProfile(
+        id: 'u-pat',
+        name: 'Tide Bot',
+        username: 'tidebot',
+        nickname: '',
+        firstName: '',
+        lastName: '',
+        position: '',
+        status: 'online',
+        isBot: true,
+        isMe: false,
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Message'), findsOneWidget);
   });
 }
