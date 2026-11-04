@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/data/views/permission_views.dart';
 import 'package:matterleast/domain/paged_search.dart';
+import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 
 /// Pages of people and channels from one server, for member lists, pickers
@@ -114,8 +117,9 @@ class Directory {
   Future<bool> _restricted() async =>
       (await _db.features()).directMessagesRestricted;
 
-  /// Public channels of [teamId] the user is not in, or archived ones with
-  /// [archived]; [more] says whether another page may follow.
+  /// Public channels of [teamId] and, where the user's permissions allow,
+  /// its private ones, joined or not, or archived ones with [archived];
+  /// [more] says whether another page may follow.
   Future<ServerPage<SwitchItem>> channels(
     String teamId, {
     bool archived = false,
@@ -134,10 +138,35 @@ class Directory {
               perPage: pageSize,
             ),
     );
+    final private = archived
+        ? const <api.Channel>[]
+        : await _private(teamId, page);
     return (
-      items: await _channelItems(found, archived: archived),
-      more: found.length >= pageSize,
+      items: await _channelItems([...found, ...private], archived: archived),
+      more: found.length >= pageSize || private.length >= pageSize,
     );
+  }
+
+  /// The team's private channels for those who may see them all; none
+  /// when the permission or the server's answer says otherwise.
+  Future<List<api.Channel>> _private(String teamId, int page) async {
+    final can = haveISystemPermission(
+      systemRoles: await PermissionViews(_db).systemRoles(),
+      granted: await PermissionViews(_db).roleGrants(),
+    );
+    if (!can(Permission.manageSystem)) return const [];
+    try {
+      return await session.api.call(
+        () => _client.channels.getPrivateChannelsForTeam(
+          teamId: teamId,
+          page: page,
+          perPage: pageSize,
+        ),
+      );
+    } on ServerError catch (e) {
+      if (e.isForbidden || e.isNotFound || e.statusCode == 501) return const [];
+      rethrow;
+    }
   }
 
   /// Channels of [teamId] matching [term].
@@ -167,11 +196,16 @@ class Directory {
     };
     return [
       for (final c in found)
-        if (c.id != null &&
-            (archived || (c.type == 'O' && !joined.contains(c.id))))
+        if (c.id != null)
           SwitchItem(
             serverUrl: serverUrl,
-            kind: archived ? SwitchKind.archived : SwitchKind.joinable,
+            kind: archived
+                ? SwitchKind.archived
+                : joined.contains(c.id)
+                ? (c.type == 'P'
+                      ? SwitchKind.privateChannel
+                      : SwitchKind.channel)
+                : SwitchKind.joinable,
             id: c.id!,
             title: c.displayName ?? c.name ?? '',
             subtitle: c.purpose,
