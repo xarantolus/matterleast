@@ -410,6 +410,9 @@ class PostTile extends StatelessWidget {
             ? tokens.accentWash
             : marked
             ? markedTint(tokens)
+            // Only you can see it, so it looks set apart.
+            : post.isEphemeral
+            ? tokens.panel
             : Colors.transparent,
         padding: EdgeInsets.fromLTRB(
           Spacing.lg,

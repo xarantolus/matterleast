@@ -68,6 +68,19 @@ void main() {
     expect(shown(rows), ['day 20', 'a', 'join', 'b']);
   });
 
+  test('a message only you can see never joins a row', () {
+    final rows = rowsOf([
+      post('a', morning, user: 'system'),
+      post(
+        'only-you',
+        morning.add(const Duration(minutes: 1)),
+        user: 'system',
+        type: 'system_ephemeral',
+      ),
+    ]);
+    expect(shown(rows), ['day 20', 'a', 'only-you']);
+  });
+
   test('a new day gets a separator and starts a new row', () {
     final rows = rowsOf([
       post('a', DateTime(2026, 10, 20, 23, 58)),

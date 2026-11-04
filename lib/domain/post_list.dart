@@ -299,6 +299,8 @@ List<ListRow> buildRows(
         previous.userId == post.userId &&
         !previous.isSystem &&
         !post.isSystem &&
+        // Its header says only you can see it, so it never merges.
+        !post.isEphemeral &&
         detailsOf(post).priority == null &&
         post.createAt.difference(previous.createAt) < _groupWindow;
     rows.add(ListRow.post(post, compact: compact));
