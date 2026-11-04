@@ -6,6 +6,7 @@ import 'package:matterleast/screens/channel/bookmark_bar.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
+import 'package:matterleast/screens/channel/header_strip.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/open_channel.dart';
@@ -105,7 +106,13 @@ class ChannelScreen extends ConsumerWidget {
           onPressed: openInfo,
         ),
       ],
-      header: BookmarkBar(url: url, channelId: channelId),
+      header: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          HeaderStrip(url: url, channelId: channelId),
+          BookmarkBar(url: url, channelId: channelId),
+        ],
+      ),
       composerHint: 'Write to $name',
       dropTarget: name,
       focusComposer: focusComposer,
