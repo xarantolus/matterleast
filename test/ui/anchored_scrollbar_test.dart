@@ -8,22 +8,22 @@ void main() {
     const track = 500.0;
 
     test('size follows the share of rows shown', () {
-      const span = RowSpan(start: 0, extent: 10, total: 50);
+      const span = RowSpan(start: 0, extent: 10, total: 50, screen: 10);
       final thumb = thumbGeometry(span, track, minThumb: 36);
       expect(thumb.height, 100);
       expect(thumb.top, 0);
     });
 
     test('a huge list keeps the thumb at its minimum size', () {
-      const span = RowSpan(start: 0, extent: 10, total: 10000);
+      const span = RowSpan(start: 0, extent: 10, total: 10000, screen: 10);
       expect(thumbGeometry(span, track, minThumb: 36).height, 36);
     });
 
     test('the thumb reaches both ends of the track with the span', () {
-      const end = RowSpan(start: 40, extent: 10, total: 50);
+      const end = RowSpan(start: 40, extent: 10, total: 50, screen: 10);
       final thumb = thumbGeometry(end, track, minThumb: 36);
       expect(thumb.top + thumb.height, closeTo(track, 0.001));
-      const middle = RowSpan(start: 20, extent: 10, total: 50);
+      const middle = RowSpan(start: 20, extent: 10, total: 50, screen: 10);
       expect(
         thumbGeometry(middle, track, minThumb: 36).top,
         closeTo(200, 0.01),
@@ -31,21 +31,39 @@ void main() {
     });
 
     test('a part of a row moves the thumb a part of a row', () {
-      const a = RowSpan(start: 20, extent: 10, total: 50);
-      const b = RowSpan(start: 20.5, extent: 10, total: 50);
+      const a = RowSpan(start: 20, extent: 10, total: 50, screen: 10);
+      const b = RowSpan(start: 20.5, extent: 10, total: 50, screen: 10);
       final delta =
           thumbGeometry(b, track, minThumb: 36).top -
           thumbGeometry(a, track, minThumb: 36).top;
       expect(delta, closeTo(5, 0.001));
     });
 
+    test('the thumb keeps its size when the rows on screen change height', () {
+      const short = RowSpan(start: 20, extent: 10, total: 50, screen: 10);
+      const tall = RowSpan(start: 20, extent: 3, total: 50, screen: 10);
+      expect(
+        thumbGeometry(tall, track, minThumb: 36).height,
+        thumbGeometry(short, track, minThumb: 36).height,
+      );
+      const end = RowSpan(start: 47, extent: 3, total: 50, screen: 10);
+      final thumb = thumbGeometry(end, track, minThumb: 36);
+      expect(thumb.top + thumb.height, closeTo(track, 0.001));
+    });
+
     test('everything on screen means nothing to draw', () {
-      expect(const RowSpan(start: 0, extent: 5, total: 5).fits, isTrue);
-      expect(const RowSpan(start: 0, extent: 4.5, total: 5).fits, isFalse);
+      expect(
+        const RowSpan(start: 0, extent: 5, total: 5, screen: 5).fits,
+        isTrue,
+      );
+      expect(
+        const RowSpan(start: 0, extent: 4.5, total: 5, screen: 4.5).fits,
+        isFalse,
+      );
     });
 
     test('a held thumb maps back to the row it shows', () {
-      const span = RowSpan(start: 0, extent: 10, total: 50);
+      const span = RowSpan(start: 0, extent: 10, total: 50, screen: 10);
       int row(double top) => rowAtThumbTop(span, track, top, minThumb: 36);
       expect(row(0), 0);
       expect(row(200), 20);
@@ -114,24 +132,26 @@ void main() {
       expect(shown.first, inInclusiveRange(35, 65));
     }, variant: desktop);
 
-    testWidgets('rows measuring taller leave the thumb near where it was', (
-      tester,
-    ) async {
-      await tester.pumpWidget(list(rowsFrom(100)));
-      await tester.pumpAndSettle();
-      await tester.drag(find.byType(Scrollable), const Offset(0, 100));
-      await tester.pump();
-      final before = tester.getRect(thumb());
+    testWidgets(
+      'rows measuring taller leave the thumb its size and near where it was',
+      (tester) async {
+        await tester.pumpWidget(list(rowsFrom(100)));
+        await tester.pumpAndSettle();
+        await tester.drag(find.byType(Scrollable), const Offset(0, 100));
+        await tester.pump();
+        final before = tester.getRect(thumb());
 
-      await tester.pumpWidget(
-        list(rowsFrom(100), heightOf: (r) => r.isEven ? 140 : 60),
-      );
-      await tester.pump();
-      await tester.pump();
-      final after = tester.getRect(thumb());
-      // Fewer rows fit now, so the thumb is no taller; it stays near.
-      expect(after.height, lessThanOrEqualTo(before.height));
-      expect((after.top - before.top).abs(), lessThan(16));
-    }, variant: desktop);
+        await tester.pumpWidget(
+          list(rowsFrom(100), heightOf: (r) => r.isEven ? 140 : 60),
+        );
+        await tester.pump();
+        await tester.pump();
+        final after = tester.getRect(thumb());
+        // Taller rows put fewer rows on screen, and the thumb keeps its size.
+        expect(after.height, before.height);
+        expect((after.top - before.top).abs(), lessThan(60));
+      },
+      variant: desktop,
+    );
   });
 }

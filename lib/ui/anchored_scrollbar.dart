@@ -7,19 +7,22 @@ import 'package:matterleast/ui/motion.dart';
 
 /// What a list shows, counted in rows from the oldest: it starts [start]
 /// rows in (a part of a row counts as a part) and covers [extent] rows of
-/// [total]. Row counts don't change while rows are measured, so a thumb
-/// drawn from them doesn't jump.
+/// [total]. [screen] is how many rows make a screen, fixed by the list while
+/// [total] and the viewport stay, so the thumb keeps its size however tall
+/// the rows on screen are.
 @immutable
 class RowSpan {
   const RowSpan({
     required this.start,
     required this.extent,
     required this.total,
+    required this.screen,
   });
 
   final double start;
   final double extent;
   final int total;
+  final double screen;
 
   /// Everything fits, so there is nothing to scroll.
   bool get fits => extent >= total - 0.001;
@@ -29,14 +32,16 @@ class RowSpan {
       other is RowSpan &&
       other.start == start &&
       other.extent == extent &&
-      other.total == total;
+      other.total == total &&
+      other.screen == screen;
 
   @override
-  int get hashCode => Object.hash(start, extent, total);
+  int get hashCode => Object.hash(start, extent, total, screen);
 }
 
 /// Pure: the thumb's top and height on a track of [track] pixels. The thumb
-/// is at least [minThumb] tall, and reaches the track's end exactly when the
+/// is at least [minThumb] tall, sized by [RowSpan.screen] and not by what is
+/// on screen now, and reaches the track's end exactly when the
 /// span reaches the last row.
 ({double top, double height}) thumbGeometry(
   RowSpan span,
@@ -45,7 +50,7 @@ class RowSpan {
 }) {
   final height = math.min(
     track,
-    math.max(minThumb, track * span.extent / span.total),
+    math.max(minThumb, track * span.screen / span.total),
   );
   final scrollable = span.total - span.extent;
   final share = scrollable <= 0 ? 0.0 : (span.start / scrollable).clamp(0, 1);

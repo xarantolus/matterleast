@@ -30,10 +30,39 @@ class NetworkState {
   /// The device's own reports, the current state first.
   factory NetworkState.device() {
     final connectivity = Connectivity();
-    return NetworkState(() async* {
-      yield await connectivity.checkConnectivity();
-      yield* connectivity.onConnectivityChanged;
-    }());
+    return NetworkState(
+      deviceReports(
+        connectivity.checkConnectivity,
+        () => connectivity.onConnectivityChanged,
+      ),
+    );
+  }
+
+  /// The current state, then the changes. When the current state can't be
+  /// read the changes aren't watched either. The Linux plugin's D-Bus setup
+  /// fails in a future nobody awaits, so the read runs in a guarded zone
+  /// that turns such an escape into its error.
+  static Stream<List<ConnectivityResult>> deviceReports(
+    Future<List<ConnectivityResult>> Function() current,
+    Stream<List<ConnectivityResult>> Function() changes,
+  ) async* {
+    final first = Completer<List<ConnectivityResult>>();
+    void fail(Object error, StackTrace stack) {
+      if (!first.isCompleted) first.completeError(error, stack);
+    }
+
+    runZonedGuarded(
+      () {
+        unawaited(
+          current().then((report) {
+            if (!first.isCompleted) first.complete(report);
+          }, onError: fail),
+        );
+      },
+      fail,
+    );
+    yield await first.future;
+    yield* changes();
   }
 
   late final StreamSubscription<List<ConnectivityResult>> _subscription;
