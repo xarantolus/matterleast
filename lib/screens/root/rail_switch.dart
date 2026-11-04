@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/domain/open_history.dart';
+import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
@@ -14,18 +15,20 @@ import 'package:matterleast/screens/root/rail_selection.dart';
 Future<void> showPlace(NavigatorState navigator, RailTarget? place) async {
   if (!navigator.mounted) return;
   final container = ProviderScope.containerOf(navigator.context, listen: false);
-  if (container.read(railSelectionProvider) == place) return;
+  final from = container.read(railSelectionProvider);
+  if (from == place) return;
   final remembered = container.read(conversationMemoryProvider).at(place);
   final before = shownLocation(container);
-  container.read(railSelectionProvider.notifier).select(place);
-  closePages(navigator);
-  if (remembered == null) return;
-  final stack = await openableStack(container, remembered);
+  final stack = remembered == null
+      ? const <ConversationTarget>[]
+      : await openableStack(container, remembered);
   // The user may have moved on while the channels were read.
-  if (!navigator.mounted || container.read(railSelectionProvider) != place) {
+  if (!navigator.mounted || container.read(railSelectionProvider) != from) {
     return;
   }
-  if (stack.isEmpty) return;
+  container.read(railSelectionProvider.notifier).select(place);
+  closePages(navigator);
+  if (remembered == null || stack.isEmpty) return;
   final history = container.read(openHistoryProvider);
   settleHistory(history, before);
   history.push(Location(place: place, conversation: remembered));

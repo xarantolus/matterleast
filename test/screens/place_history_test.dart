@@ -610,6 +610,23 @@ void main() {
       await tester.pump(Duration.zero);
     }, variant: desktop);
 
+    testWidgets('switching to a place with a remembered conversation changes '
+        'nothing until it can open', (tester) async {
+      await wide(tester);
+      final a = RailTarget(url: urlA(), teamId: teamId);
+      await open(tester, urlA(), _xId);
+      await open(tester, urlB(), _yId);
+      final before = place();
+      unawaited(showPlace(navigator(tester), a));
+      expect(place(), before);
+      expect(shown(tester), ['${urlB()} $_yId']);
+      await settle(tester);
+      expect(place(), a);
+      expect(shown(tester), ['${urlA()} $_xId']);
+      await finish(tester);
+      await tester.pump(Duration.zero);
+    }, variant: desktop);
+
     testWidgets('history on a wide window: Back closes the thread and moves '
         'the rail', (tester) async {
       await wide(tester);

@@ -156,7 +156,7 @@ void main() {
   });
 
   group('custom status beside the author', () {
-    final start = DateTime.utc(2026, 10, 26, 9, 30);
+    final start = DateTime(2026, 10, 26, 9, 30);
     var now = start;
     final post = PostItem(
       id: 'p1',
@@ -202,11 +202,11 @@ void main() {
         final tooltip = tester.widget<Tooltip>(
           find.ancestor(of: glyph, matching: find.byType(Tooltip)),
         );
-        expect(tooltip.message, 'Sailing\nUntil 11:00 AM');
+        expect(tooltip.message, 'Sailing\nUntil 10:00 AM');
         final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
         await mouse.addPointer(location: tester.getCenter(glyph));
         await tester.pump(const Duration(seconds: 1));
-        expect(find.text('Sailing\nUntil 11:00 AM'), findsOneWidget);
+        expect(find.text('Sailing\nUntil 10:00 AM'), findsOneWidget);
         await mouse.removePointer();
       },
     );
