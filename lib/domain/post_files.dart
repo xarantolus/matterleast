@@ -19,6 +19,7 @@ class PostFile {
     this.hasPreview = false,
     this.miniPreview,
     this.link,
+    this.localPath,
   });
 
   /// An image written into a message's text, at [url]; [format] is what
@@ -66,6 +67,12 @@ class PostFile {
 
   /// Where an image from a message's text is; null for an uploaded file.
   final String? link;
+
+  /// Where a picture still being written into a message is on this device.
+  final String? localPath;
+
+  /// Whether the file is on the server, so its actions apply.
+  bool get isUploaded => link == null && localPath == null;
 
   FileKind get kind => fileKindOf(extension: extension, mimeType: mimeType);
 

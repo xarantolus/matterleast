@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
@@ -418,7 +419,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                               ? '${_index + 1} / ${widget.files.length}'
                               : null,
                           // An image from a message's text is no file to save.
-                          menu: file.link == null
+                          menu: file.isUploaded
                               ? FileActionsMenu(
                                   url: widget.url,
                                   file: file,
@@ -455,7 +456,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   /// Ctrl+C and Ctrl+S work on a picture that is a file of the server.
   bool _fileKeysApply(PostFile file) =>
       file.kind == FileKind.image &&
-      file.link == null &&
+      file.isUploaded &&
       (ref.read(featuresProvider(widget.url)).value?.fileDownloads ?? true);
 
   /// On desktop: a right click offers the file's menu, the wheel steps or
@@ -473,7 +474,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         onPointerPanZoomStart: (_) => _swipe = 0,
         onPointerPanZoomUpdate: (e) => _swipe = e.pan.dx,
         onPointerPanZoomEnd: (_) => _swipeEnded(),
-        child: file.link == null
+        child: file.isUploaded
             ? FileRightClick(url: widget.url, file: file, child: child)
             : child,
       ),
@@ -508,7 +509,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           ),
         );
       }
-      final image = caches == null || downloads == null
+      final image = item.localPath != null
+          ? FileImage(File(item.localPath!))
+          : caches == null || downloads == null
           ? null
           : _imageFor(item, caches, downloads, proxy);
       if (image == null) {

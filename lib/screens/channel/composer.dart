@@ -23,6 +23,7 @@ import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/permissions.dart';
+import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/text_wrap.dart';
@@ -37,6 +38,7 @@ import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/posting_rules.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
 import 'package:matterleast/screens/drafts/schedule_picker.dart';
+import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
@@ -48,6 +50,7 @@ import 'package:matterleast/ui/person_tile.dart';
 import 'package:matterleast/ui/sheet_header.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:pasteboard/pasteboard.dart';
+import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'composer.g.dart';
@@ -325,13 +328,28 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       () => Pasteboard.text,
     );
     if (bytes == null || !mounted) return;
+    final now = DateTime.now();
+    final name = pastedImageName(now);
+    // A loose file in the cache folder, which the sweep and the composer's
+    // clean-up already handle for picker copies.
+    final path = p.join(
+      await LocalCopies.cacheDirectory(),
+      '${now.microsecondsSinceEpoch}-$name',
+    );
+    await File(path).writeAsBytes(bytes);
+    if (!mounted) {
+      await _deletePicked(path);
+      return;
+    }
+    _picked.add(path);
     unawaited(
       ref
           .read(_provider.notifier)
           .attach(
             open: () => Stream.value(bytes),
-            name: pastedImageName(DateTime.now()),
+            name: name,
             size: bytes.length,
+            path: path,
           ),
     );
   }
@@ -574,6 +592,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 ),
               if (files.isNotEmpty && editing == null)
                 AttachmentStrip(
+                  url: widget.url,
                   attachments: files,
                   onRemove: ref.read(_provider.notifier).detach,
                   stalled: !ref.watch(serverLiveProvider(widget.url)),
@@ -1122,7 +1141,7 @@ Future<List<PickedFile>> pickFiles(PickSource source, int room) async {
         for (final f in result)
           (
             file: f.xFile,
-            path: null,
+            path: f.xFile.path,
             name: f.name,
             size: await f.xFile.length(),
           ),
@@ -1134,12 +1153,14 @@ Future<List<PickedFile>> pickFiles(PickSource source, int room) async {
 /// way to take it off.
 class AttachmentStrip extends StatelessWidget {
   const AttachmentStrip({
+    required this.url,
     required this.attachments,
     required this.onRemove,
     this.stalled = false,
     super.key,
   });
 
+  final String url;
   final List<Attachment> attachments;
   final ValueChanged<String> onRemove;
 
@@ -1168,6 +1189,9 @@ class AttachmentStrip extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: Spacing.sm),
               child: GestureDetector(
+                onTap: a.isImage && a.path != null
+                    ? () => _open(context, a)
+                    : null,
                 onSecondaryTapUp: isDesktop
                     ? (d) => _menu(context, a, d.globalPosition)
                     : null,
@@ -1179,90 +1203,96 @@ class AttachmentStrip extends StatelessWidget {
                   ].join(', '),
                   child: SizedBox(
                     width: a.isImage && a.path != null ? 88 : 180,
-                    child: Card.outlined(
-                      margin: EdgeInsets.zero,
-                      clipBehavior: Clip.antiAlias,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          if (a.isImage && a.path != null)
-                            ExcludeSemantics(
-                              child: Image.file(
-                                File(a.path!),
-                                fit: BoxFit.cover,
-                                cacheWidth: 264,
-                              ),
-                            )
-                          else
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                Spacing.sm,
-                                Spacing.sm,
-                                Spacing.xl,
-                                Spacing.sm,
-                              ),
-                              child: ExcludeSemantics(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.insert_drive_file_outlined,
-                                      color: tokens.muted,
-                                    ),
-                                    Text(
-                                      a.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: text.labelMedium,
-                                    ),
-                                    Text(
-                                      a.error ?? fileSizeText(a.size),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: text.bodySmall?.copyWith(
-                                        color: a.error != null
-                                            ? Theme.of(context)
-                                                  .colorScheme
-                                                  .error
-                                            : tokens.muted,
+                    child: _Openable(
+                      name: a.isImage && a.path != null ? a.name : null,
+                      child: Card.outlined(
+                        margin: EdgeInsets.zero,
+                        clipBehavior: Clip.antiAlias,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            if (a.isImage && a.path != null)
+                              ExcludeSemantics(
+                                child: Image.file(
+                                  File(a.path!),
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 264,
+                                ),
+                              )
+                            else
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  Spacing.sm,
+                                  Spacing.sm,
+                                  Spacing.xl,
+                                  Spacing.sm,
+                                ),
+                                child: ExcludeSemantics(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Icons.insert_drive_file_outlined,
+                                        color: tokens.muted,
                                       ),
-                                    ),
-                                  ],
+                                      Text(
+                                        a.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: text.labelMedium,
+                                      ),
+                                      Text(
+                                        a.error ?? fileSizeText(a.size),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: text.bodySmall?.copyWith(
+                                          color: a.error != null
+                                              ? Theme.of(context)
+                                                    .colorScheme
+                                                    .error
+                                              : tokens.muted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (a.error != null && a.isImage && a.path != null)
-                            ColoredBox(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .errorContainer
-                                  .withValues(alpha: 0.85),
-                              child: Center(
-                                child: Icon(
-                                  Icons.error_outline,
-                                  color: Theme.of(context).colorScheme.error,
+                            if (a.error != null && a.isImage && a.path != null)
+                              ColoredBox(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .errorContainer
+                                    .withValues(alpha: 0.85),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.error_outline,
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (a.uploading)
+                            if (a.uploading)
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: LinearProgressIndicator(
+                                  value: a.progress > 0 && !stalled
+                                      ? a.progress
+                                      : null,
+                                ),
+                              ),
                             Align(
-                              alignment: Alignment.bottomCenter,
-                              child: LinearProgressIndicator(
-                                value: a.progress > 0 && !stalled
-                                    ? a.progress
-                                    : null,
+                              alignment: Alignment.topRight,
+                              child: IconButton.filledTonal(
+                                iconSize: 16,
+                                tooltip: a.uploading
+                                    ? 'Cancel upload'
+                                    : 'Remove',
+                                onPressed: () => onRemove(a.clientId),
+                                icon: const Icon(Icons.close),
                               ),
                             ),
-                          Align(
-                            alignment: Alignment.topRight,
-                            child: IconButton.filledTonal(
-                              iconSize: 16,
-                              tooltip: a.uploading ? 'Cancel upload' : 'Remove',
-                              onPressed: () => onRemove(a.clientId),
-                              icon: const Icon(Icons.close),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1270,6 +1300,34 @@ class AttachmentStrip extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  /// Opens the pictures of the draft in the gallery, at [a].
+  void _open(BuildContext context, Attachment a) {
+    final pictures = [
+      for (final b in attachments)
+        if (b.isImage && b.path != null) b,
+    ];
+    unawaited(
+      Navigator.of(context, rootNavigator: true).push(
+        galleryRoute(
+          url: url,
+          files: [
+            for (final b in pictures)
+              PostFile(
+                id: b.clientId,
+                name: b.name,
+                extension: b.name.split('.').last.toLowerCase(),
+                localPath: b.path,
+              ),
+          ],
+          initialIndex: pictures.indexOf(a),
+          heroPrefix: 'draft',
+          author: 'Draft',
+          sentAt: DateTime.now(),
+        ),
       ),
     );
   }
@@ -1286,6 +1344,24 @@ class AttachmentStrip extends StatelessWidget {
     ]);
     if (remove ?? false) onRemove(a.clientId);
   }
+}
+
+/// A picture of the draft: a hand and a tooltip on desktop, where [name] is
+/// set when it opens.
+class _Openable extends StatelessWidget {
+  const _Openable({required this.name, required this.child});
+
+  final String? name;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => switch (name) {
+    final name? when isDesktop => MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Tooltip(message: 'Open $name', child: child),
+    ),
+    _ => child,
+  };
 }
 
 /// Pure: a byte count in the units people read.
