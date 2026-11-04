@@ -616,7 +616,7 @@ void main() {
       final a = RailTarget(url: urlA(), teamId: teamId);
       await open(tester, urlA(), _xId);
       await open(tester, urlB(), _yId);
-      final emptied = [];
+      final emptied = <Object>[];
       final sub = container.listen(openPanesProvider, (_, now) {
         if (now.channel == null) emptied.add(now);
       });
