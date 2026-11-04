@@ -66,12 +66,12 @@ void main() {
       final strip = find.byType(HeaderStrip);
       final oneLine = tester.getSize(strip).height;
 
-      await tester.tapOnText(find.textRange.ofSubstring("every Tuesday"));
+      await tester.tapOnText(find.textRange.ofSubstring('every Tuesday'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(tester.getSize(strip).height, greaterThan(oneLine));
 
-      await tester.tapOnText(find.textRange.ofSubstring("every Tuesday"));
+      await tester.tapOnText(find.textRange.ofSubstring('every Tuesday'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(tester.getSize(strip).height, oneLine);
