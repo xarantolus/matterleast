@@ -610,6 +610,25 @@ void main() {
       await tester.pump(Duration.zero);
     }, variant: desktop);
 
+    testWidgets('switching to a place with a remembered conversation never '
+        'leaves the panes empty in between', (tester) async {
+      await wide(tester);
+      final a = RailTarget(url: urlA(), teamId: teamId);
+      await open(tester, urlA(), _xId);
+      await open(tester, urlB(), _yId);
+      final emptied = [];
+      final sub = container.listen(openPanesProvider, (_, now) {
+        if (now.channel == null) emptied.add(now);
+      });
+      unawaited(showPlace(navigator(tester), a));
+      await settle(tester);
+      sub.close();
+      expect(emptied, isEmpty);
+      expect(shown(tester), ['${urlA()} $_xId']);
+      await finish(tester);
+      await tester.pump(Duration.zero);
+    }, variant: desktop);
+
     testWidgets('history on a wide window: Back closes the thread and moves '
         'the rail', (tester) async {
       await wide(tester);
