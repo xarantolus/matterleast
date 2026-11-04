@@ -265,6 +265,9 @@ class DesktopShell with WindowListener {
   static ValueListenable<bool> get focus => _focus;
   static final _focus = ValueNotifier(true);
 
+  @visibleForTesting
+  static set windowFocused(bool value) => _focus.value = value;
+
   /// Whether a panel shows tray icons; false only on a Linux desktop without
   /// one, where closing the window quits.
   static ValueListenable<bool> get hasTray => _hasTray;
