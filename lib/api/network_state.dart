@@ -51,16 +51,13 @@ class NetworkState {
       if (!first.isCompleted) first.completeError(error, stack);
     }
 
-    runZonedGuarded(
-      () {
-        unawaited(
-          current().then((report) {
-            if (!first.isCompleted) first.complete(report);
-          }, onError: fail),
-        );
-      },
-      fail,
-    );
+    runZonedGuarded(() {
+      unawaited(
+        current().then((report) {
+          if (!first.isCompleted) first.complete(report);
+        }, onError: fail),
+      );
+    }, fail);
     yield await first.future;
     yield* changes();
   }

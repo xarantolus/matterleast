@@ -84,7 +84,7 @@ class FileDownloads {
     await partial.parent.create(recursive: true);
     final token = cancel ?? CancelToken();
     var tooLarge = false;
-    final progress = DownloadProgress(file.size);
+    final progress = DownloadFraction(file.size);
     try {
       await _api.call(
         () => _api.dio.downloadUri(
@@ -124,8 +124,8 @@ class FileDownloads {
 /// The fraction downloaded, from the response's length when it has one and
 /// the file's recorded size otherwise. Once more arrives than the size it
 /// used, the size was wrong and the answer stays null (unknown).
-class DownloadProgress {
-  DownloadProgress(this._fileSize);
+class DownloadFraction {
+  DownloadFraction(this._fileSize);
 
   final int _fileSize;
   var _unknown = false;
