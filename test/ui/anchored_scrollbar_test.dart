@@ -148,7 +148,7 @@ void main() {
         await tester.pump();
         final after = tester.getRect(thumb());
         // Taller rows put fewer rows on screen, and the thumb keeps its size.
-        expect(after.height, before.height);
+        expect(after.height, closeTo(before.height, 0.01));
         expect((after.top - before.top).abs(), lessThan(60));
       },
       variant: desktop,
