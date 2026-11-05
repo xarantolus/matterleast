@@ -105,18 +105,19 @@ class MessageLinks {
     }
   }
 
-  /// A channel by its URL name, in [teamId] when there is one by that name.
   /// The URL name of the team with [teamId], when stored.
   Future<String?> teamName(String teamId) async => (await (_db.select(
     _db.teams,
   )..where((t) => t.id.equals(teamId))).getSingleOrNull())?.name;
 
+  /// A stored channel by its URL name: in [teamId] when given, so a link
+  /// never opens another team's channel of the same name; else in any team.
   Future<ChannelRow?> channelNamed(String name, {String? teamId}) async {
     final rows = await (_db.select(
       _db.channels,
     )..where((c) => c.name.equals(name.toLowerCase()))).get();
-    return rows.where((c) => c.teamId == teamId).firstOrNull ??
-        rows.firstOrNull;
+    if (teamId == null || teamId.isEmpty) return rows.firstOrNull;
+    return rows.where((c) => c.teamId == teamId).firstOrNull;
   }
 
   /// The id of the person a typed `@name` refers to, stored or fetched;
