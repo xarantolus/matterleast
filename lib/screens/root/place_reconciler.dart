@@ -29,10 +29,22 @@ class PlaceReconciler {
 
   final Ref _ref;
   late RailTarget? _shown;
+  var _keeping = false;
   ProviderSubscription<Object?>? _teams;
   String? _teamsOf;
 
   void dispose() => _teams?.close();
+
+  /// Selects [target] in the rail and leaves open what is open, for a
+  /// conversation followed from another or gone back to across teams.
+  void selectKeepingOpen(RailTarget target) {
+    _keeping = true;
+    try {
+      _ref.read(railSelectionProvider.notifier).select(target);
+    } finally {
+      _keeping = false;
+    }
+  }
 
   RailTarget? _place() {
     final selected = _ref.read(railSelectionProvider);
@@ -91,7 +103,7 @@ class PlaceReconciler {
     final now = _place();
     _shown = now;
     // Leaving Home closes nothing: opening a thread from Threads moves the rail from Home.
-    if (before == null || !placeChanged(before, now)) return;
+    if (_keeping || before == null || !placeChanged(before, now)) return;
     final navigator = _ref.read(conversationRoutesProvider).navigator;
     if (navigator != null && navigator.mounted) closeConversations(navigator);
   }

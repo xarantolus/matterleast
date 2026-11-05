@@ -13,6 +13,7 @@ import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/screens/root/place_reconciler.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
@@ -57,9 +58,12 @@ Future<void> openConversation(
   final team = (teamId?.isNotEmpty ?? false)
       ? teamId
       : (picked?.url == url ? picked?.teamId : null);
-  container
-      .read(railSelectionProvider.notifier)
-      .select(RailTarget(url: url, teamId: team));
+  final place = RailTarget(url: url, teamId: team);
+  if (followed && !fromOutside) {
+    container.read(placeReconcilerProvider).selectKeepingOpen(place);
+  } else {
+    container.read(railSelectionProvider.notifier).select(place);
+  }
   if (recordHistory) {
     container
         .read(openHistoryProvider)
@@ -167,7 +171,8 @@ Future<void> openConversation(
   _railFollowsTop(container, navigator);
 }
 
-/// After Back to a conversation of another team, the rail shows its team.
+/// After Back to a conversation of another team, the rail shows its team;
+/// one without a team (a direct message) leaves the rail as it is.
 void _railFollowsTop(ProviderContainer container, NavigatorState navigator) {
   final top = container
       .read(conversationRoutesProvider)
@@ -175,10 +180,10 @@ void _railFollowsTop(ProviderContainer container, NavigatorState navigator) {
       .where((r) => r.navigator == navigator && r.isCurrent)
       .firstOrNull
       ?.target;
-  if (top == null) return;
+  if (top == null || top.teamId == null) return;
   final place = RailTarget(url: top.url, teamId: top.teamId);
   if (container.read(railSelectionProvider) == place) return;
-  container.read(railSelectionProvider.notifier).select(place);
+  container.read(placeReconcilerProvider).selectKeepingOpen(place);
 }
 
 bool _showsPostOnly(ConversationTarget target) =>
