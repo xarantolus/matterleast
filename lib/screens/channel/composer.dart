@@ -821,11 +821,14 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
 
   Future<void> _pickEmoji(Rect? anchor) async {
     final draft = ref.read(_provider.notifier);
+    // The keyboard comes back only if it was up: picking an emoji alone
+    // shouldn't pull it over the messages.
+    final typing = _focus.hasFocus || isDesktop;
     final name = await showEmojiPicker(context, widget.url, anchor: anchor);
     if (name == null) return;
     final unicode = unicodeForName(name);
     draft.insert(unicode ?? ':$name: ');
-    _focus.requestFocus();
+    if (typing) _focus.requestFocus();
   }
 
   Future<void> _pickPriority(bool acknowledgements) async {

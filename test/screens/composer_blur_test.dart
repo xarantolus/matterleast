@@ -90,4 +90,37 @@ void main() {
     expect(tester.binding.hasScheduledFrame, isTrue);
     await h.close(tester);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+  group('picking an emoji on a phone', () {
+    Future<bool> pick(WidgetTester tester, {required bool typing}) async {
+      final h = await _pumpComposer(tester);
+      if (!typing) {
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pump();
+      }
+      await tester.tap(find.byTooltip('Emoji'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Flags'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('\u{1F3C1}'));
+      await tester.pumpAndSettle();
+      expect(find.text('\u{1F3C1}'), findsOneWidget, reason: 'inserted');
+      final focused = tester
+          .widget<EditableText>(find.byType(EditableText))
+          .focusNode
+          .hasFocus;
+      await h.close(tester);
+      return focused;
+    }
+
+    final phone = TargetPlatformVariant.only(TargetPlatform.android);
+
+    testWidgets('brings the keyboard back when it was up', (tester) async {
+      expect(await pick(tester, typing: true), isTrue);
+    }, variant: phone);
+
+    testWidgets('leaves it down when it was down', (tester) async {
+      expect(await pick(tester, typing: false), isFalse);
+    }, variant: phone);
+  });
 }
