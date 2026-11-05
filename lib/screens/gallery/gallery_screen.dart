@@ -138,6 +138,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   /// Files whose original replaced the preview after zooming in.
   final _originals = <String>{};
 
+  /// Full-size pictures this gallery decoded, evicted when it closes.
+  final _decoded = <ImageProvider>{};
+
   @override
   void initState() {
     super.initState();
@@ -151,6 +154,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     _cursor.dispose();
     _focus.dispose();
     _pages.dispose();
+    for (final image in _decoded) {
+      unawaited(image.evict());
+    }
     super.dispose();
   }
 
@@ -199,6 +205,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     for (final next in [i - 1, i + 1]) {
       if (next < 0 || next >= widget.files.length) continue;
       if (_imageOf(next) case final image?) {
+        _decoded.add(image);
         unawaited(precacheImage(image, context, onError: (_, _) {}));
       }
     }
@@ -549,11 +556,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       if (image == null) {
         return _standIn(item, i);
       }
+      _decoded.add(image);
       final picture = ExtendedImage(
         image: image,
         fit: BoxFit.contain,
         handleLoadingProgress: true,
-        clearMemoryCacheWhenDispose: true,
         loadStateChanged: (state) => _loadState(state, item, i),
         semanticLabel: item.name,
         mode: ExtendedImageMode.gesture,
