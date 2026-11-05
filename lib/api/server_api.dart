@@ -9,6 +9,7 @@ import 'package:matterleast/api/generated/export.dart' show MattermostClient;
 import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/api/server_paths.dart';
 import 'package:matterleast/api/server_reach.dart';
+import 'package:matterleast/api/traffic_log.dart';
 import 'package:matterleast/api/trusted_authorities.dart';
 
 typedef TokenProvider = FutureOr<String?> Function();
@@ -108,6 +109,11 @@ class ServerApi {
           handler.next(options);
         },
         onResponse: (response, handler) {
+          TrafficLog.request(
+            response.requestOptions.method,
+            response.requestOptions.path,
+            int.tryParse(response.headers.value('content-length') ?? '') ?? 0,
+          );
           _live.remove(response.requestOptions);
           reach.answered();
           handler.next(response);

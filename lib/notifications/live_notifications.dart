@@ -15,27 +15,37 @@ class LiveNotifications {
 
   final Stream<ServerEvent> _applied;
   final Stream<void> _caughtUp;
-  final Future<void> Function() _check;
+
+  /// [afterGap]: events may have been missed, so the posts come from the
+  /// server instead of the database.
+  final Future<void> Function({required bool afterGap}) _check;
 
   /// Posts often come in bursts; one check covers them.
   final Duration delay;
 
   final _subscriptions = <StreamSubscription<Object?>>[];
   Timer? _debounce;
+  var _gap = false;
 
   void start() {
     if (_subscriptions.isNotEmpty) return;
     _subscriptions
       ..add(_applied.where((e) => e is PostedEvent).listen((_) => _soon()))
-      ..add(_caughtUp.listen((_) => _soon()));
+      ..add(
+        _caughtUp.listen((_) {
+          _gap = true;
+          _soon();
+        }),
+      );
   }
 
   void _soon() {
     _debounce?.cancel();
-    _debounce = Timer(
-      delay,
-      () => unawaited(_check().catchError((Object _) {})),
-    );
+    _debounce = Timer(delay, () {
+      final afterGap = _gap;
+      _gap = false;
+      unawaited(_check(afterGap: afterGap).catchError((Object _) {}));
+    });
   }
 
   Future<void> stop() async {

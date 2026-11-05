@@ -195,6 +195,20 @@ void main() {
       expect(socket.state.value, SocketState.connected);
     });
 
+    test(
+      'a connection without a UI says no channel or thread is open',
+      () async {
+        final actions = <Map<String, Object?>>[];
+        server.actions.listen(actions.add);
+        open();
+        socket.silent = true;
+        await server.nextConnection();
+        await until(() => actions.any((a) => a['action'] == 'presence'));
+        final presence = actions.firstWhere((a) => a['action'] == 'presence');
+        expect((presence['data']! as Map)['channel_id'], '');
+      },
+    );
+
     test('a missing pong drops the connection and reconnects', () async {
       server.answerPings = false;
       open(ping: const Duration(milliseconds: 50));

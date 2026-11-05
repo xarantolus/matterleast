@@ -298,4 +298,33 @@ void main() {
       await eventually(() async => await memberCount() == 3);
     });
   });
+
+  group('while the UI is away', () {
+    setUp(() => session.connection.events.withoutUi = true);
+
+    test('events that only matter on screen make no request', () async {
+      server.seen.clear();
+      await receive(
+        'user_added',
+        {'user_id': 'u9', 'team_id': teamId},
+        broadcast: {'channel_id': channelId},
+      );
+      await receive(
+        'typing',
+        {'user_id': 'u9', 'parent_id': ''},
+        broadcast: {'channel_id': channelId},
+      );
+      await receive('status_change', {'user_id': 'u9', 'status': 'away'});
+      await pumpEventQueue();
+      expect(server.seen, isEmpty);
+    });
+
+    test('a new post is still stored without fetching its author', () async {
+      server.seen.clear();
+      await posted(from: 'u9');
+      await pumpEventQueue();
+      expect(server.seen, isEmpty);
+      expect(await session.db.select(session.db.posts).get(), hasLength(2));
+    });
+  });
 }
