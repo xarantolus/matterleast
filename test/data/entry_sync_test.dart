@@ -138,6 +138,24 @@ void main() {
     },
   );
 
+  test(
+    'a short reconnect leaves other teams alone while counts hold',
+    () async {
+      await store.setCurrentTeam(lighthouse);
+      await sync.run();
+      await settled();
+      server.seen.clear();
+
+      await sync.run(light: true);
+      await settled();
+
+      final paths = server.paths.toList();
+      expect(paths, contains('/api/v4/users/me/teams/$lighthouse/channels'));
+      expect(paths, isNot(contains('/api/v4/users/me/teams/$harbor/channels')));
+      expect(paths, contains('/api/v4/users/me/teams/unread'));
+    },
+  );
+
   test('without a remembered team the first by name is synced first', () async {
     await sync.run();
     expect(await db.syncText(SyncKeys.currentTeamId), harbor);

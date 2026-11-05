@@ -13,6 +13,7 @@ import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/views/channel_input.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/notify_props.dart';
+import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/preview_text.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/log.dart';
@@ -51,6 +52,14 @@ Future<DateTime?> newestKnownAt(ServerDatabase db) async {
   return ms == 0 ? null : DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
 }
 
+/// A post as the check needs it, from the server or from the database.
+typedef _Seen = ({
+  NotifyPost post,
+  String? override,
+  int files,
+  bool attachments,
+});
+
 /// Finds what is new on one server and shows or removes its message
 /// notifications. The same code runs from the periodic background work
 /// (which refreshes unread counts first) and from the live connection of
@@ -78,35 +87,40 @@ class NotificationCheck {
 
   Future<void>? _running;
   var _again = false;
+  var _fetchAgain = false;
 
-  /// Looks once; with [refresh] the unread counts are fetched first. A call
-  /// while a check runs makes it look once more afterwards, so a post that
-  /// came in meanwhile is not left for later.
-  Future<void> run({bool refresh = true}) {
+  /// Looks once; with [refresh] the unread counts are fetched first. The
+  /// posts come from the server unless [fetch] is false, for when the
+  /// socket just stored them. A call while a check runs makes it look once
+  /// more afterwards, so a post that came in meanwhile is not left for later.
+  Future<void> run({bool refresh = true, bool fetch = true}) {
     if (_running case final running?) {
       _again = true;
+      _fetchAgain = _fetchAgain || fetch;
       return running;
     }
-    final running = _loop(refresh);
+    final running = _loop(refresh, fetch);
     _running = running;
     return running.whenComplete(() => _running = null);
   }
 
-  Future<void> _loop(bool refresh) async {
+  Future<void> _loop(bool refresh, bool fetch) async {
     do {
       _again = false;
+      final fetchNow = fetch || _fetchAgain;
+      _fetchAgain = false;
       await session.runner.enqueue(
         SyncJob(
           key: 'notify',
           visible: false,
           timeout: const Duration(seconds: 90),
-          run: () => _run(refresh),
+          run: () => _run(refresh, fetch: fetchNow),
         ),
       );
     } while (_again);
   }
 
-  Future<void> _run(bool refresh) async {
+  Future<void> _run(bool refresh, {required bool fetch}) async {
     final myId = await _db.syncText(SyncKeys.currentUserId);
     if (myId == null) return;
     final cursorMs = await _db.syncInt(NotifyKeys.cursorKey);
@@ -119,29 +133,17 @@ class NotificationCheck {
     if (refresh) await _refresh();
     final user = await _user(myId);
     final channels = await _candidates(cursor);
-    final pages = <String, api.PostList>{};
-    for (final c in channels.values) {
-      final since = _later(c.lastViewedAt, cursor.subtract(_lookBack));
-      pages[c.id] = await session.api.call(
-        () => _client.posts.getPostsForChannel(
-          channelId: c.id,
-          since: since.millisecondsSinceEpoch,
-          page: null,
-          perPage: null,
-        ),
-      );
-    }
-    final posts = <String, api.Post>{
-      for (final page in pages.values) ...?page.posts,
-    };
+    final posts = fetch
+        ? await _fetchPosts(channels, cursor)
+        : await _storedPosts(channels, cursor);
     final threads = await _threads(user.collapsedThreads);
     final notifiable = <(NotifyPost, NotifyKind)>[];
-    for (final post in posts.values) {
-      final p = _notifyPost(post);
-      final channel = p == null ? null : channels[p.channelId];
-      if (p == null || channel == null) continue;
+    for (final seen in posts.values) {
+      final p = seen.post;
+      final channel = channels[p.channelId];
+      if (channel == null) continue;
       final rootAuthor = p.isReply
-          ? posts[p.rootId]?.userId ?? await _authorOf(p.rootId)
+          ? posts[p.rootId]?.post.userId ?? await _authorOf(p.rootId)
           : null;
       final kind = notifyKindOf(
         p,
@@ -178,8 +180,7 @@ class NotificationCheck {
       jsonEncode(rememberNotified(notified, updates)),
     );
     final newest = posts.values
-        .map((p) => p.createAt)
-        .whereType<DateTime>()
+        .map((s) => s.post.createAt)
         .fold(cursor, _later);
     await markSeen(_db, newest);
     await clearRead();
@@ -326,7 +327,77 @@ class NotificationCheck {
     }
   }
 
-  static NotifyPost? _notifyPost(api.Post post) {
+  Future<Map<String, _Seen>> _fetchPosts(
+    Map<String, NotifyChannel> channels,
+    DateTime cursor,
+  ) async {
+    final seen = <String, _Seen>{};
+    for (final c in channels.values) {
+      final since = _since(c, cursor);
+      final page = await session.api.call(
+        () => _client.posts.getPostsForChannel(
+          channelId: c.id,
+          since: since.millisecondsSinceEpoch,
+          page: null,
+          perPage: null,
+        ),
+      );
+      for (final post in page.posts?.values ?? const <api.Post>[]) {
+        if (_fromApi(post) case final item?) seen[item.post.id] = item;
+      }
+    }
+    return seen;
+  }
+
+  /// What the socket stored, when it has been connected throughout.
+  Future<Map<String, _Seen>> _storedPosts(
+    Map<String, NotifyChannel> channels,
+    DateTime cursor,
+  ) async {
+    final seen = <String, _Seen>{};
+    for (final c in channels.values) {
+      final since = _since(c, cursor);
+      final rows =
+          await (_db.select(_db.posts)..where(
+                (p) =>
+                    p.channelId.equals(c.id) &
+                    p.createAt.isBiggerOrEqualValue(
+                      since.millisecondsSinceEpoch,
+                    ) &
+                    p.sendState.isNull(),
+              ))
+              .get();
+      for (final row in rows) {
+        final props = PostDetails.decode(row.propsJson, null).props;
+        seen[row.id] = (
+          post: NotifyPost(
+            id: row.id,
+            channelId: row.channelId,
+            userId: row.userId,
+            createAt: row.createAt,
+            message: row.message,
+            rootId: row.rootId,
+            type: row.type,
+            deleted: row.deleteAt != null,
+            fromWebhook: props.fromWebhook == 'true',
+          ),
+          override:
+              props.fromWebhook == 'true' &&
+                  (props.overrideUsername?.isNotEmpty ?? false)
+              ? props.overrideUsername
+              : null,
+          files: row.fileCount,
+          attachments: props.attachments.isNotEmpty,
+        );
+      }
+    }
+    return seen;
+  }
+
+  static DateTime _since(NotifyChannel c, DateTime cursor) =>
+      _later(c.lastViewedAt, cursor.subtract(_lookBack));
+
+  static _Seen? _fromApi(api.Post post) {
     final (id, channelId, userId, createAt) = (
       post.id,
       post.channelId,
@@ -335,22 +406,31 @@ class NotificationCheck {
     );
     if (id == null || channelId == null || userId == null) return null;
     if (createAt == null) return null;
-    return NotifyPost(
-      id: id,
-      channelId: channelId,
-      userId: userId,
-      createAt: createAt,
-      message: post.message ?? '',
-      rootId: post.rootId ?? '',
-      type: post.type ?? '',
-      deleted: post.deleteAt != null,
-      fromWebhook: post.props?['from_webhook'] == 'true',
+    final fromWebhook = post.props?['from_webhook'] == 'true';
+    final override = post.props?['override_username'];
+    return (
+      post: NotifyPost(
+        id: id,
+        channelId: channelId,
+        userId: userId,
+        createAt: createAt,
+        message: post.message ?? '',
+        rootId: post.rootId ?? '',
+        type: post.type ?? '',
+        deleted: post.deleteAt != null,
+        fromWebhook: fromWebhook,
+      ),
+      override: fromWebhook && override is String && override.isNotEmpty
+          ? override
+          : null,
+      files: post.fileIds.length,
+      attachments: post.props?['attachments'] != null,
     );
   }
 
   Future<ConversationNotice> _notice(
     ConversationUpdate update,
-    Map<String, api.Post> posts,
+    Map<String, _Seen> posts,
     String myId, {
     required bool sound,
   }) async {
@@ -416,7 +496,7 @@ class NotificationCheck {
       newestAt: update.newest.createAt,
       messages: [
         for (final p in update.posts)
-          if (_overrideName(posts[p.id]) case final override)
+          if (posts[p.id]?.override case final override)
             NoticeMessage(
               // Android puts consecutive messages of one key under one name.
               senderId: override == null ? p.userId : '${p.userId}/$override',
@@ -431,31 +511,31 @@ class NotificationCheck {
 
   static final _shortcode = RegExp(r':([a-z0-9_+-]+):');
 
-  /// Webhooks and bots may post under another name.
-  static String? _overrideName(api.Post? post) {
-    final override = post?.props?['override_username'];
-    return post?.props?['from_webhook'] == 'true' &&
-            override is String &&
-            override.isNotEmpty
-        ? override
-        : null;
-  }
-
-  static String _text(api.Post? post, String message) {
+  static String _text(_Seen? post, String message) {
     final text = previewText(message)
         .replaceAllMapped(_shortcode, (m) => unicodeForName(m[1]!) ?? m[0]!);
     if (text.isNotEmpty) return text;
-    final files = post?.fileIds.length ?? 0;
+    final files = post?.files ?? 0;
     if (files == 1) return 'Sent a file';
     if (files > 1) return 'Sent $files files';
-    if (post?.props?['attachments'] != null) return 'Sent an attachment';
+    if (post?.attachments ?? false) return 'Sent an attachment';
     return 'Sent a message';
+  }
+
+  final _avatars = <(String, int), Uint8List>{};
+
+  Future<Uint8List?> _avatar(String userId, int? pictureUpdate) async {
+    final key = (userId, pictureUpdate ?? 0);
+    if (_avatars[key] case final cached?) return cached;
+    final fetched = await _fetchAvatar(userId, pictureUpdate);
+    if (fetched != null) _avatars[key] = fetched;
+    return fetched;
   }
 
   /// Fetched directly: the image caches keep their index in a database
   /// the plugin shares across the process, which a background engine must
   /// not open and close under the UI.
-  Future<Uint8List?> _avatar(String userId, int? pictureUpdate) async {
+  Future<Uint8List?> _fetchAvatar(String userId, int? pictureUpdate) async {
     try {
       final url = serverUri(session.url, 'api/v4/users/$userId/image', {
         '_': '${pictureUpdate ?? 0}',

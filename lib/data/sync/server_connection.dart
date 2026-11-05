@@ -87,13 +87,25 @@ class ServerConnection {
       probe: server.reach.probe,
       onResync: () {
         agents.reconnected();
+        if (_catchUp case final catchUp?) {
+          _catchUpFor(catchUp);
+          return;
+        }
         _resyncing = true;
-        refreshAll();
+        refreshAll(light: _synced);
       },
       onClosed: (failCount) {
         // REST may work where the socket doesn't; try once per outage,
         // without the progress bar, since it may only wait for a timeout.
-        if (failCount == 1) refreshAll(quiet: true);
+        if (failCount == 1) _outage.reset();
+        // A reconnect refreshes by itself; this is for a socket that stays
+        // down where REST works, once per outage.
+        if (failCount != 3) return;
+        if (_catchUp case final catchUp?) {
+          _catchUpFor(catchUp);
+        } else {
+          refreshAll(quiet: true, light: _synced);
+        }
       },
     );
     online?.addListener(_networkChanged);
@@ -175,6 +187,29 @@ class ServerConnection {
       typing.clear();
     }
   }
+
+  Future<void> Function()? _catchUp;
+
+  /// The full refresh of this visit happened, so reconnects need less.
+  var _synced = false;
+
+  /// How long the socket has been down; Home's lists are fetched again
+  /// after an outage of at least [longOutage].
+  final _outage = Stopwatch()..start();
+  static const longOutage = Duration(minutes: 2);
+
+  /// For the stay-connected service, which has no UI: events skip follow-up
+  /// requests that only serve the screen, the socket asks the server for no
+  /// typing or reaction events, and after a gap only [catchUp] runs instead
+  /// of the full refresh (the UI does that itself when it connects).
+  void withoutUi(Future<void> Function() catchUp) {
+    _catchUp = catchUp;
+    events.withoutUi = true;
+    socket.silent = true;
+  }
+
+  void _catchUpFor(Future<void> Function() catchUp) =>
+      unawaited(catchUp().catchError((Object _) {}));
 
   Timer? _startTimer;
   Timer? _stopTimer;
@@ -259,15 +294,19 @@ class ServerConnection {
 
   /// Events may have been missed: the entry data first, then Home's lists,
   /// which only a fresh fetch brings up to date, and open conversations.
-  /// [quiet]: failures report, but nothing shows as refreshing.
-  void refreshAll({bool quiet = false}) => unawaited(
+  /// [quiet]: failures report, but nothing shows as refreshing. [light]:
+  /// a reconnect during a visit that was synced already, so other teams and
+  /// Home's lists are fetched only when counts changed or the outage was long.
+  void refreshAll({bool quiet = false, bool light = false}) => unawaited(
     entry
-        .run(quiet: quiet)
+        .run(quiet: quiet, light: light)
         .then((_) {
+          _synced = true;
           _caughtUpNow();
           // Direct messages it stored may name people not polled yet.
           presence.refresh();
           if (!_caughtUp.isClosed) _caughtUp.add(null);
+          if (light && _outage.elapsed < longOutage) return null;
           return inbox.refresh(force: true, quiet: quiet);
         })
         .catchError((Object _) => _caughtUpNow()),
@@ -290,6 +329,7 @@ class ServerConnection {
 
   Future<void> _stop() async {
     _active = false;
+    _synced = false;
     presence.stop();
     await socket.stop();
   }
