@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -14,19 +15,35 @@ abstract final class AppVisibility {
 
   static bool get visible => IsolateNameServer.lookupPortByName(_name) != null;
 
-  /// Called by the UI isolate as it is shown and hidden.
-  static void set({required bool visible}) {
-    if (visible) {
-      if (_port == null) {
-        _port = ReceivePort();
-        IsolateNameServer.removePortNameMapping(_name);
-        IsolateNameServer.registerPortWithName(_port!.sendPort, _name);
-      }
-    } else {
+  /// Called by the UI isolate as it is shown. Completes once the
+  /// stay-connected engine has let go of the servers, so their databases
+  /// have one writer again, or after [wait] when it doesn't answer.
+  static Future<void> shown({
+    Duration wait = const Duration(seconds: 5),
+  }) async {
+    if (_port == null) {
+      _port = ReceivePort();
       IsolateNameServer.removePortNameMapping(_name);
-      _port?.close();
-      _port = null;
+      IsolateNameServer.registerPortWithName(_port!.sendPort, _name);
     }
-    IsolateNameServer.lookupPortByName(serviceName)?.send(visible);
+    final service = IsolateNameServer.lookupPortByName(serviceName);
+    if (service == null) return;
+    final done = ReceivePort();
+    service.send(done.sendPort);
+    try {
+      await done.first.timeout(wait);
+    } on TimeoutException {
+      // Its databases still wait for each other; they just may wait long.
+    } finally {
+      done.close();
+    }
+  }
+
+  /// Called by the UI isolate once it has gone quiet after being hidden.
+  static void hidden() {
+    IsolateNameServer.removePortNameMapping(_name);
+    _port?.close();
+    _port = null;
+    IsolateNameServer.lookupPortByName(serviceName)?.send(false);
   }
 }

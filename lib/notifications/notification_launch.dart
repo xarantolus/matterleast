@@ -22,7 +22,7 @@ import 'package:matterleast/screens/search/search_providers.dart';
 /// the app counts as on screen, and the stay-connected service comes back
 /// when it is switched on. True when a notification launched the app.
 Future<bool> startNotifications(WidgetRef ref, NavigatorState navigator) async {
-  AppVisibility.set(visible: true);
+  unawaited(AppVisibility.shown());
   final notifier = ref.read(notifierProvider);
   try {
     await notifier.init(
@@ -70,8 +70,8 @@ Future<bool> _onNotice(
 /// later and the background engines take over; on a desktop they stay up
 /// while the process runs, minimised or in the tray, for the toasts.
 Future<void> appHidden(ServerManager manager) async {
-  AppVisibility.set(visible: false);
   if (!isDesktop) await manager.setForeground(false);
+  AppVisibility.hidden();
 }
 
 /// The periodic check runs while any server is signed in.

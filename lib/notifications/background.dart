@@ -189,8 +189,10 @@ abstract final class PeriodicCheck {
 @pragma('vm:entry-point')
 void backgroundDispatcher() {
   Workmanager().executeTask((task, input) async {
-    // The stay-connected engine hears about new posts at once already.
-    if (IsolateNameServer.lookupPortByName(AppVisibility.serviceName) != null) {
+    // The open app and the stay-connected engine hear about new posts at
+    // once already, and a second writer would only wait for them.
+    if (AppVisibility.visible ||
+        IsolateNameServer.lookupPortByName(AppVisibility.serviceName) != null) {
       return true;
     }
     await BackgroundApp.run((app) => app.checkAll(refresh: true));

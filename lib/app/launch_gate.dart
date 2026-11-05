@@ -102,6 +102,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         servers
             .then((all) => devSignIn(manager, [for (final s in all) s.url]))
             .then((_) => manager.checkTokens())
+            .then((_) => AppVisibility.shown())
             .then((_) => manager.setForeground(true)),
       );
       if (!mounted) return;
@@ -165,10 +166,11 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       fireImmediately: true,
     );
     _lifecycle = AppLifecycleListener(
-      onShow: () {
-        AppVisibility.set(visible: true);
-        unawaited(manager.setForeground(true));
-      },
+      onShow: () => unawaited(
+        AppVisibility.shown().then((_) {
+          if (AppVisibility.visible) return manager.setForeground(true);
+        }),
+      ),
       onHide: () => unawaited(appHidden(manager)),
     );
   }

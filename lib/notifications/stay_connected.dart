@@ -47,7 +47,13 @@ Future<void> stayConnectedMain() async {
   );
   final engine = _ServiceEngine();
   port.listen((message) {
-    if (message is bool) unawaited(engine.uiVisible(message));
+    switch (message) {
+      // The UI is shown and waits until this has let go.
+      case final SendPort done:
+        unawaited(engine.uiVisible(true).whenComplete(() => done.send(null)));
+      case false:
+        unawaited(engine.uiVisible(false));
+    }
   });
   if (!AppVisibility.visible) await engine.connect();
 }
