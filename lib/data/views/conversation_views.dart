@@ -309,7 +309,7 @@ class ConversationViews {
               await db.syncText(SyncKeys.currentUserId) ?? '',
             )
           : null,
-      teamId: channel?.teamId ?? '',
+      teamId: await _teamOf(channel),
       memberCount: channel?.memberCount,
       archived: channel?.deleteAt != null,
     );
@@ -437,9 +437,17 @@ class ConversationViews {
       reachesStart: (range?.reachesStart ?? false) && rows.length <= limit,
       moreStored: rows.length > limit,
       channelName: channel?.displayName ?? '',
-      teamId: channel?.teamId ?? '',
+      teamId: await _teamOf(channel),
       archived: channel?.deleteAt != null,
     );
+  }
+
+  /// A direct or group message has no team; it acts in the current one,
+  /// like the official app, so commands and channel lookups work there.
+  Future<String> _teamOf(ChannelRow? channel) async {
+    if (channel == null) return '';
+    if (channel.teamId.isNotEmpty) return channel.teamId;
+    return await db.syncText(SyncKeys.currentTeamId) ?? '';
   }
 
   Future<List<PostItem>> _items(List<PostRow> posts) async {
