@@ -15,8 +15,8 @@ void main() {
     await pumpApp(
       tester,
       Scaffold(body: ComputerNotifications(hasTray: tray)),
+      appDatabase: db,
       overrides: [
-        appDatabaseProvider.overrideWithValue(db),
         closeToTrayProvider.overrideWith((ref) => Stream.value(true)),
       ],
     );
