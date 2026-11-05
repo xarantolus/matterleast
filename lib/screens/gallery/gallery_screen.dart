@@ -138,9 +138,30 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   /// Files whose original replaced the preview after zooming in.
   final _originals = <String>{};
 
+  // Kept in fields because dispose can't read providers.
+  ServerImageCaches? _caches;
+  FileDownloads? _downloads;
+  bool? _proxy;
+
   @override
   void initState() {
     super.initState();
+    ref
+      ..listenManual(
+        serverImageCachesProvider(widget.url),
+        (_, next) => _caches = next.value,
+        fireImmediately: true,
+      )
+      ..listenManual(
+        fileDownloadsProvider(widget.url),
+        (_, next) => _downloads = next.value,
+        fireImmediately: true,
+      )
+      ..listenManual(
+        imageProxyProvider(widget.url),
+        (_, next) => _proxy = next.value,
+        fireImmediately: true,
+      );
     WidgetsBinding.instance.addPostFrameCallback((_) => _preloadAround(_index));
   }
 
@@ -151,16 +172,19 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     _cursor.dispose();
     _focus.dispose();
     _pages.dispose();
+    // Evicting a picture that was never loaded does nothing.
+    for (var i = 0; i < widget.files.length; i++) {
+      if (_imageOf(i) case final image?) unawaited(image.evict());
+    }
     super.dispose();
   }
 
   /// The picture of page [i], once the caches are open.
   ImageProvider? _imageOf(int i) {
-    final caches = ref.read(serverImageCachesProvider(widget.url)).value;
-    final downloads = ref.read(fileDownloadsProvider(widget.url)).value;
-    final proxy = ref.read(imageProxyProvider(widget.url)).value;
+    final caches = _caches;
+    final downloads = _downloads;
     if (caches == null || downloads == null) return null;
-    return _imageFor(widget.files[i], caches, downloads, proxy);
+    return _imageFor(widget.files[i], caches, downloads, _proxy);
   }
 
   ImageProvider? _imageFor(
