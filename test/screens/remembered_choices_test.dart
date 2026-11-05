@@ -54,6 +54,7 @@ InboxItem _item(String title, {InboxKind kind = InboxKind.group}) => InboxItem(
 
 void main() {
   late AppDatabase db;
+  ProviderContainer? current;
 
   setUp(() => db = memoryAppDatabase());
   tearDown(() => db.close());
@@ -70,6 +71,8 @@ void main() {
   /// Drift closes its queries on a zero timer.
   Future<void> unmount(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox());
+    current?.dispose();
+    current = null;
     await tester.pump(Duration.zero);
   }
 
@@ -83,14 +86,26 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await unmount(tester);
+    final container = ProviderContainer(
+      overrides: [appDatabaseProvider.overrideWithValue(db), ...overrides],
+    );
+    current = container;
+    // The launch gate waits for these before the first frame.
+    final warm = [
+      container.listen(homeFilterSettingProvider, (_, _) {}),
+      container.listen(searchTabProvider, (_, _) {}),
+      container.listen(threadsTabProvider, (_, _) {}),
+    ];
+    await settle(tester);
+    expect(warm.every((w) => w.read().hasValue), isTrue);
     await tester.pumpWidget(
-      ProviderScope(
-        key: UniqueKey(),
-        overrides: [appDatabaseProvider.overrideWithValue(db), ...overrides],
+      UncontrolledProviderScope(
+        container: container,
         child: MaterialApp(theme: MatterleastApp.lightTheme, home: home),
       ),
     );
-    await settle(tester);
+    // Only the first frame: a saved choice must already show.
+    await tester.pump();
   }
 
   final sessionPending = serverSessionProvider(_url)

@@ -238,7 +238,16 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     });
     final servers = ref.watch(serversProvider).value;
     final saved = ref.watch(savedRailTargetProvider);
-    if (servers == null || saved.isLoading) return const Scaffold();
+    // Saved choices are known before the first frame, so none shows its
+    // default and then switches.
+    final choices = [
+      ref.watch(homeFilterSettingProvider),
+      ref.watch(searchTabProvider),
+      ref.watch(threadsTabProvider),
+    ];
+    if (servers == null || saved.isLoading || choices.any((c) => c.isLoading)) {
+      return const Scaffold();
+    }
     final signedIn = [
       for (final s in servers)
         if (s.signedIn) s,

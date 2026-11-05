@@ -136,8 +136,7 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
   }
 }
 
-/// Saves the tab the reader picks and follows the saved one when it arrives
-/// after the page opened.
+/// Saves the tab the reader picks.
 class _TabMemory extends ConsumerStatefulWidget {
   const _TabMemory({required this.child});
 
@@ -149,17 +148,6 @@ class _TabMemory extends ConsumerStatefulWidget {
 
 class _TabMemoryState extends ConsumerState<_TabMemory> {
   TabController? _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    ref.listenManual(threadsTabProvider, (_, next) {
-      final index = next.value?.index;
-      if (index != null && index != _controller?.index) {
-        _controller?.index = index;
-      }
-    });
-  }
 
   @override
   void didChangeDependencies() {
