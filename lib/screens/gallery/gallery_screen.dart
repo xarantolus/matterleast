@@ -553,6 +553,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         image: image,
         fit: BoxFit.contain,
         handleLoadingProgress: true,
+        clearMemoryCacheWhenDispose: true,
         loadStateChanged: (state) => _loadState(state, item, i),
         semanticLabel: item.name,
         mode: ExtendedImageMode.gesture,

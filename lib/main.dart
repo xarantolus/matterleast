@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import 'package:matterleast/app/desktop/smooth_wheel.dart';
 import 'package:matterleast/app/desktop/tray_status.dart';
 import 'package:matterleast/app/desktop/unread_count.dart';
 import 'package:matterleast/app/desktop/window_title.dart';
+import 'package:matterleast/app/image_memory.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
@@ -18,6 +20,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<void> main() async {
   final container = ProviderContainer();
+  WidgetsFlutterBinding.ensureInitialized();
+  limitImageCache(PlatformDispatcher.instance.views.first.physicalSize);
   registerFontLicence();
   if (isDesktop) {
     DesktopBinding();
