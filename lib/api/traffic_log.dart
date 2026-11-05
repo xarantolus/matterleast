@@ -1,13 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:matterleast/log.dart';
 
 /// Debug builds only: counts requests and WebSocket events per kind (never
-/// their content) and logs the totals every few minutes.
+/// their content) and logs the totals at most every five minutes.
 abstract final class TrafficLog {
   static final _counts = <String, (int, int)>{};
-  static Timer? _timer;
+  static var _dumped = DateTime.now();
 
   static final _id = RegExp(r'[a-z0-9]{26}');
 
@@ -20,7 +18,10 @@ abstract final class TrafficLog {
     if (!kDebugMode) return;
     final (count, total) = _counts[key] ?? (0, 0);
     _counts[key] = (count + 1, total + bytes);
-    _timer ??= Timer.periodic(const Duration(minutes: 5), (_) => _dump());
+    final now = DateTime.now();
+    if (now.difference(_dumped) < const Duration(minutes: 5)) return;
+    _dumped = now;
+    _dump();
   }
 
   static void _dump() {
