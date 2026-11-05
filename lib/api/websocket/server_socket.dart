@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:matterleast/api/traffic_log.dart';
 import 'package:matterleast/api/trusted_authorities.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/api/websocket/socket_rules.dart';
@@ -140,6 +141,12 @@ class ServerSocket {
     if (token() case final token?) {
       _send('authentication_challenge', {'token': token});
     }
+    if (silent) {
+      // The server only sends typing and reaction events for the channel
+      // and threads a connection says are open; naming none stops them.
+      _send('presence', {'channel_id': '', 'thread_channel_id': ''});
+      _send('presence', {'thread_channel_id': '', 'is_thread_view': true});
+    }
     _waitingForPong = true;
     _send('ping');
     _pingTimer = Timer.periodic(pingInterval, (_) {
@@ -176,6 +183,9 @@ class ServerSocket {
     return true;
   }
 
+  /// Whether no channel is open, as for a connection without a UI.
+  var silent = false;
+
   void _send(String action, [Map<String, Object?>? data]) {
     _channel?.sink.add(
       jsonEncode({'action': action, 'seq': _actionSeq++, 'data': ?data}),
@@ -192,6 +202,9 @@ class ServerSocket {
     }
     if (json is! Map<String, Object?>) return;
     final frame = SocketFrame.fromJson(json);
+    if (!frame.isReply) {
+      TrafficLog.event(frame.event ?? 'unknown', message.length);
+    }
     if (frame.isReply) {
       if (frame.isPong) _waitingForPong = false;
       if (frame.status == 'FAIL') Log.warn('socket', 'Action failed');

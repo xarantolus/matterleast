@@ -18,7 +18,7 @@ void main() {
     live = LiveNotifications(
       applied: applied.stream,
       caughtUp: caughtUp.stream,
-      check: () async => checks++,
+      check: ({required afterGap}) async => checks++,
     );
   });
 

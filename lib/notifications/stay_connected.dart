@@ -79,11 +79,13 @@ class _ServiceEngine {
         shownNow: (_) => AppVisibility.visible,
         serverName: label,
       );
+      session.connection.withoutUi(check.run);
       _live.add(
         LiveNotifications(
           applied: session.connection.applied,
           caughtUp: session.connection.caughtUp,
-          check: () => check.run(refresh: false),
+          check: ({required afterGap}) =>
+              check.run(refresh: false, fetch: afterGap),
         )..start(),
       );
       session.connection.socket.start();
