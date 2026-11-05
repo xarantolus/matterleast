@@ -27,7 +27,9 @@ import 'package:matterleast/ui/conversation_route.dart';
 /// place of other conversations rather than piling up on them
 /// ([stackStepFor]); on a wide one it opens in the panes. Opened
 /// [fromOutside] the app, Back leads to the list unless it is a thread of
-/// the open channel. With [focusComposer] its composer takes the keyboard.
+/// the open channel. [followed] from a link or a reference in a
+/// conversation, it opens over it, so Back returns there. With
+/// [focusComposer] its composer takes the keyboard.
 /// With [besideContent] a thread opens in the thread pane of a large window
 /// and leaves the content view in the main pane in place.
 /// Opens that aren't the user's own ([recordHistory] false) stay out of the
@@ -43,6 +45,7 @@ Future<void> openConversation(
   bool instant = false,
   bool focusComposer = false,
   bool fromOutside = false,
+  bool followed = false,
   bool besideContent = false,
   bool recordHistory = true,
 }) async {
@@ -130,6 +133,7 @@ Future<void> openConversation(
     [for (final r in open) r.target],
     target,
     fromOutside: fromOutside,
+    followed: followed,
   );
   final route = conversationRoute(
     target,
@@ -160,6 +164,21 @@ Future<void> openConversation(
   }
   await route.popped;
   container.read(conversationMemoryProvider).closed(target);
+  _railFollowsTop(container, navigator);
+}
+
+/// After Back to a conversation of another team, the rail shows its team.
+void _railFollowsTop(ProviderContainer container, NavigatorState navigator) {
+  final top = container
+      .read(conversationRoutesProvider)
+      .live
+      .where((r) => r.navigator == navigator && r.isCurrent)
+      .firstOrNull
+      ?.target;
+  if (top == null) return;
+  final place = RailTarget(url: top.url, teamId: top.teamId);
+  if (container.read(railSelectionProvider) == place) return;
+  container.read(railSelectionProvider.notifier).select(place);
 }
 
 bool _showsPostOnly(ConversationTarget target) =>

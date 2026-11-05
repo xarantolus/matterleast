@@ -156,6 +156,7 @@ class MessageEnvironment extends ConsumerStatefulWidget {
         channelId: channel.id,
         title: channel.displayName,
         teamId: channel.teamId,
+        followed: true,
       ),
     );
   }

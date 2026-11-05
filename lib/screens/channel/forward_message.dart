@@ -66,6 +66,7 @@ Future<void> forwardMessage(
           channelId: to.id,
           title: to.title,
           teamId: to.teamId,
+          followed: true,
         ),
       ),
     ),

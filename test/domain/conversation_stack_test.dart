@@ -141,6 +141,60 @@ void main() {
     }
   });
 
+  group('followed from a link in a conversation', () {
+    final cases =
+        <(String, List<ConversationTarget>, ConversationTarget, StackStep)>[
+          (
+            'another channel: over the one with the link, so Back returns',
+            [_channel('dm')],
+            _channel('b', highlight: 'p1'),
+            const StackStep.push(),
+          ),
+          (
+            "another channel's thread: over the one with the link",
+            [_channel('dm')],
+            _thread('b', 'r1', highlight: 'p2'),
+            const StackStep.push(),
+          ),
+          (
+            'a message in the same channel: shown in place',
+            [_channel('dm')],
+            _channel('dm', highlight: 'p1'),
+            const StackStep.returnTo(0),
+          ),
+          (
+            'a channel open further down: back to it',
+            [_channel('a'), _channel('b')],
+            _channel('a', highlight: 'p1'),
+            const StackStep.returnTo(0),
+          ),
+          (
+            'a thread of the channel below: over the channel',
+            [_channel('a'), _channel('b')],
+            _thread('a', 'r1'),
+            const StackStep.pushOver(0),
+          ),
+        ];
+    for (final (name, open, target, step) in cases) {
+      test(
+        name,
+        () => expect(stackStepFor(open, target, followed: true), step),
+      );
+    }
+    test(
+      'a link from outside the app still opens over the list',
+      () => expect(
+        stackStepFor(
+          [_channel('dm')],
+          _channel('b'),
+          fromOutside: true,
+          followed: true,
+        ),
+        const StackStep.overList(),
+      ),
+    );
+  });
+
   group('a channel gone from under an open conversation', () {
     SwitchItem item(SwitchKind kind) =>
         SwitchItem(serverUrl: _url, kind: kind, id: 'a', title: 'a');

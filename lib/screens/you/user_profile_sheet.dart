@@ -171,6 +171,7 @@ Future<void> messagePerson(
           url: url,
           channelId: channelId,
           title: name,
+          followed: true,
         ),
       );
     },
