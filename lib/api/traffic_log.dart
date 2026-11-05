@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:matterleast/log.dart';
 
-/// Debug builds only: counts requests and WebSocket events per kind (never
+/// Debug and profile builds only: counts requests and WebSocket events per kind (never
 /// their content) and logs the totals at most every five minutes.
 abstract final class TrafficLog {
   static final _counts = <String, (int, int)>{};
@@ -15,7 +15,7 @@ abstract final class TrafficLog {
   static void event(String type, int bytes) => _add('ws $type', bytes);
 
   static void _add(String key, int bytes) {
-    if (!kDebugMode) return;
+    if (!(kDebugMode || kProfileMode)) return;
     final (count, total) = _counts[key] ?? (0, 0);
     _counts[key] = (count + 1, total + bytes);
     final now = DateTime.now();

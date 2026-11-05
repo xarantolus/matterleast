@@ -92,14 +92,7 @@ class EventApplier {
         if (post.userId case final author?) {
           _fetch(() => users.ensure([author]));
         }
-        if (!withoutUi) {
-          await setConversationShown(
-            server,
-            store,
-            post.channelId!,
-            show: true,
-          );
-        }
+        await setConversationShown(server, store, post.channelId!, show: true);
       case EphemeralMessageEvent(:final post?)
           when post.channelId != null && await _knownChannel(post.channelId!):
         await store.applyEphemeralPost(post);

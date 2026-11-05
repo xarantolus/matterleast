@@ -103,7 +103,8 @@ class DesktopNotifications {
     _attached[url] = LiveNotifications(
       applied: session.connection.applied,
       caughtUp: session.connection.caughtUp,
-      check: () => check.run(refresh: false),
+      check: ({required afterGap}) =>
+          check.run(refresh: false, fetch: afterGap),
     )..start();
   }
 
