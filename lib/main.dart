@@ -20,11 +20,14 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<void> main() async {
   final container = ProviderContainer();
-  WidgetsFlutterBinding.ensureInitialized();
+  if (isDesktop) {
+    DesktopBinding();
+  } else {
+    WidgetsFlutterBinding.ensureInitialized();
+  }
   limitImageCache(PlatformDispatcher.instance.views.first.physicalSize);
   registerFontLicence();
   if (isDesktop) {
-    DesktopBinding();
     GestureBinding.instance.resamplingEnabled = true;
     // The image caches' index is sqflite, which has no desktop plugin; this
     // runs it on the sqlite3 library the app ships anyway.
