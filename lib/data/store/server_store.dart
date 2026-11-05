@@ -1299,22 +1299,34 @@ class ServerStore {
   }
 
   /// Keeps the row as a placeholder until the channel is reopened.
-  Future<void> applyDelete(String postId, {required DateTime at}) =>
-      db.transaction(() async {
-        final row = await post(postId);
-        if (row == null || row.deleteAt != null) return;
-        await _replyGone(row);
-        await (db.update(db.posts)..where((p) => p.id.equals(postId))).write(
-          PostsCompanion(
-            deleteAt: Value(at),
-            message: const Value(''),
-            propsJson: const Value(null),
-            metadataJson: const Value(null),
-            fileCount: const Value(0),
-            reactionCount: const Value(0),
-          ),
-        );
-      });
+  Future<void> applyDelete(
+    String postId, {
+    required DateTime at,
+  }) => db.transaction(() async {
+    final row = await post(postId);
+    if (row == null || row.deleteAt != null) return;
+    await _replyGone(row);
+    final gone = PostsCompanion(
+      deleteAt: Value(at),
+      message: const Value(''),
+      propsJson: const Value(null),
+      metadataJson: const Value(null),
+      fileCount: const Value(0),
+      reactionCount: const Value(0),
+      replyCount: const Value(0),
+    );
+    await (db.update(db.posts)..where((p) => p.id.equals(postId))).write(gone);
+    if (row.rootId.isNotEmpty) return;
+    // The server deletes the replies with their root but sends no
+    // event for them.
+    await (db.update(
+      db.posts,
+    )..where((p) => p.rootId.equals(postId) & p.deleteAt.isNull())).write(gone);
+    await (db.delete(db.threads)..where((t) => t.rootId.equals(postId))).go();
+    await (db.delete(
+      db.threadTeams,
+    )..where((t) => t.rootId.equals(postId))).go();
+  });
 
   /// The server sends no thread update when a reply goes, so its root
   /// and thread count one reply less here, as the official app does.

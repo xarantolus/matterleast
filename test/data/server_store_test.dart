@@ -533,6 +533,30 @@ void main() {
       expect(row.message, '');
     });
 
+    test('a deleted root takes its replies and thread with it', () async {
+      await store.applyThreadPage(
+        rootId: 'p1',
+        page: pageOf([
+          post('r2', createAt: 300, root: 'p1'),
+          post('r1', createAt: 200, root: 'p1'),
+          post('p1', createAt: 100),
+        ]),
+      );
+      await store.applyThreads('t1', [
+        api.UserThread.fromJson({
+          'id': 'p1',
+          'reply_count': 2,
+          'post': {'id': 'p1', 'channel_id': 'c1', 'create_at': 100},
+        }),
+      ]);
+      await store.applyDelete('p1', at: DateTime.utc(2026));
+      final posts = await db.select(db.posts).get();
+      expect(posts.map((p) => p.id), containsAll(['p1', 'r1', 'r2']));
+      expect(posts.every((p) => p.deleteAt != null && p.message == ''), isTrue);
+      expect(await db.select(db.threads).get(), isEmpty);
+      expect(await db.select(db.threadTeams).get(), isEmpty);
+    });
+
     test('reactions come and go with their count', () async {
       final reaction = api.Reaction.fromJson({
         'post_id': 'p1',
