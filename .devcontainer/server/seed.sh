@@ -5,10 +5,10 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-URL=${URL:-http://127.0.0.1:8065}
+URL=${URL:-http://127.0.0.1:8165}
 API=$URL/api/v4
 PASSWORD=matterleast
-COMMANDS_URL=http://127.0.0.1:8066
+COMMANDS_URL=http://127.0.0.1:8166
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
@@ -372,7 +372,7 @@ echo "seed: links"
 
 cat <<EOF
 
-seed: done. Server: $URL (emulator: http://10.0.2.2:8065)
+seed: done. Server: $URL (emulator: http://10.0.2.2:8165)
   users: admin (system admin), alice, bob, carol, dave, erin — password "$PASSWORD"
   teams: lighthouse (all), harbor (alice, bob)
   commands: /shout <text>, /lunch, /blocks <attachment|blockkit|card|mmblocks>

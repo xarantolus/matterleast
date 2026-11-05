@@ -69,14 +69,14 @@ WebKitGTK, Ayatana AppIndicator) and has what a virtual desktop session
 needs: Xvfb, openbox, xfce4-panel (task list and tray), dunst, a D-Bus
 session with gnome-keyring, xdotool and ImageMagick. `tool/desktop.sh up`
 starts such a session and runs the app in it; the desktop app reaches the
-test server at `http://127.0.0.1:8065`.
+test server at `http://127.0.0.1:8165`.
 
 ## Local Mattermost server
 
 `server/server.sh start` runs a throwaway Mattermost server with podman inside
 the dev container, seeded with invented users and content; see
 [`server/README.md`](server/README.md). The emulator reaches it at
-`http://10.0.2.2:8065`. This is why `run-container.sh` passes `--cap-add
+`http://10.0.2.2:8165`. This is why `run-container.sh` passes `--cap-add
 SYS_ADMIN --security-opt unmask=ALL --device /dev/fuse` and a volume for
 `/var/lib/containers`.
 

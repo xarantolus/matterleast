@@ -2,12 +2,12 @@
 
 A throwaway Mattermost Team Edition server for development and tests, run with
 podman *inside* the dev container. It listens on the loopback only, so the
-emulator reaches it at `http://10.0.2.2:8065` and nothing is exposed on the
+emulator reaches it at `http://10.0.2.2:8165` and nothing is exposed on the
 network. Everything on it is invented.
 
 ```sh
 .devcontainer/server/server.sh start           # create or start, seed on first start
-.devcontainer/server/server.sh start --second  # also a second server on port 8067
+.devcontainer/server/server.sh start --second  # also a second server on port 8167
 .devcontainer/server/server.sh status
 .devcontainer/server/server.sh logs            # or: logs db | logs server2 | logs commands
 .devcontainer/server/server.sh stop
@@ -19,9 +19,9 @@ network. Everything on it is invented.
 | Container | Image | Purpose |
 | --- | --- | --- |
 | `matterleast-db` | `postgres:17-alpine` | database, on volume `matterleast-db-data` |
-| `matterleast-server` | `mattermost/mattermost-team-edition:12.0.1` | the server on port 8065; settings in `mattermost.env` |
-| `matterleast-server2` | same | optional second server on port 8067 with its own database, for multi-server tests |
-| `matterleast-commands` | `node:22-alpine` | side services on port 8066: the custom slash commands and a fake GitLab for SSO (`commands/responder.js`) |
+| `matterleast-server` | `mattermost/mattermost-team-edition:12.0.1` | the server on port 8165; settings in `mattermost.env` |
+| `matterleast-server2` | same | optional second server on port 8167 with its own database, for multi-server tests |
+| `matterleast-commands` | `node:22-alpine` | side services on port 8166: the custom slash commands and a fake GitLab for SSO (`commands/responder.js`) |
 
 All use host networking on the loopback. Containers and data volumes survive a
 dev-container restart, so `start` just brings them back; the image store
@@ -32,7 +32,7 @@ volumes and seeds again.
 
 GitLab login is enabled and points at the fake provider, which approves every
 login as the invented user `sso-sam`. Opening
-`http://10.0.2.2:8065/oauth/gitlab/mobile_login?redirect_to=mmauth://callback`
+`http://10.0.2.2:8165/oauth/gitlab/mobile_login?redirect_to=mmauth://callback`
 in the emulator's browser ends on the server's "Authentication complete" page,
 which redirects to `mmauth://callback?MMAUTHTOKEN=…&srv=…`, the same flow a
 real provider produces.
@@ -74,7 +74,7 @@ acknowledgements, SAML/LDAP/most SSO providers. GitLab SSO and MFA are free.
 (`mattermost-ai`, release 2.10.0 by default, cached under `~/.cache/matterleast`)
 through the API, configures one service and one agent, **Local Echo**
 (`@echo`), and points it at the fake OpenAI-compatible model in
-`commands/llm.js` (`http://127.0.0.1:8066/llm/v1`). No real model or key is
+`commands/llm.js` (`http://127.0.0.1:8166/llm/v1`). No real model or key is
 involved; every answer is canned and invented. Plugins need
 `MM_PLUGINSETTINGS_ENABLE=true` and `…ENABLEUPLOADS=true` (in `mattermost.env`);
 a server created before that needs `server.sh recreate` (keeps its data), and

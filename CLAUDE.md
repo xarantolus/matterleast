@@ -190,7 +190,7 @@ notes, and they win over this summary.
 - Desktop lane: `tool/desktop.sh up [user]` runs the Linux build the same
   way on a virtual 1600×1000 screen of its own (window manager, panel with
   tray, notification daemon, unlocked keyring; the app reaches the server
-  at `127.0.0.1:8065`). The mobile MCP can't see it: look with
+  at `127.0.0.1:8165`). The mobile MCP can't see it: look with
   `desktop.sh shot <label>` (PNG pixels are screen coordinates; `--window`
   crops to the app) and drive it with `click X Y`, `rclick`, `type TEXT`,
   `key ctrl+k`, `drag`, `scroll X Y N`; `windows`, `size W H`, `reload`,

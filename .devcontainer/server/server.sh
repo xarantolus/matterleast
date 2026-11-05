@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Throwaway Mattermost server for development and tests, run with podman inside
 # the dev container. Listens on the loopback only; the emulator reaches it as
-# http://10.0.2.2:8065. All data is invented (see seed.sh).
+# http://10.0.2.2:8165. All data is invented (see seed.sh).
 #
 #   server.sh start [--second]  create or start the containers, wait until the
 #                               API answers, seed on first start; --second also
-#                               runs a second server on port 8067 for
+#                               runs a second server on port 8167 for
 #                               multi-server tests
 #   server.sh stop
 #   server.sh status
@@ -110,9 +110,9 @@ start() {
     for c in db commands; do
         if ! exists $c; then create_$c; elif ! running $c; then podman start "$PREFIX-$c" >/dev/null; fi
     done
-    start_one server 8065 mattermost
+    start_one server 8165 mattermost
     if [ "$second" = "--second" ] || exists server2; then
-        start_one server2 8067 mattermost2
+        start_one server2 8167 mattermost2
     fi
 }
 
@@ -139,7 +139,7 @@ reset() {
 
 status() {
     podman ps -a --filter "name=^$PREFIX-" --format '{{.Names}}\t{{.Status}}'
-    for port in 8065 8067; do
+    for port in 8165 8167; do
         curl -fsS -m 5 "http://127.0.0.1:$port/api/v4/system/ping" >/dev/null 2>&1 \
             && echo "server: $port answering" || echo "server: $port not answering"
     done
@@ -150,11 +150,11 @@ start) start "${2:-}" ;;
 stop) stop ;;
 reset) reset ;;
 status) status ;;
-seed) URL="http://127.0.0.1:${2:-8065}" ./seed.sh ;;
+seed) URL="http://127.0.0.1:${2:-8165}" ./seed.sh ;;
 recreate)
     podman stop -t 10 "$PREFIX-server" >/dev/null && podman rm "$PREFIX-server" >/dev/null
-    create_server server 8065 mattermost
-    wait_ready 8065 ;;
+    create_server server 8165 mattermost
+    wait_ready 8165 ;;
 agents) ./agents.sh ;;
 logs) podman logs --tail 200 -f "$PREFIX-${2:-server}" ;;
 *) sed -n '2,19p' "$0"; exit 2 ;;

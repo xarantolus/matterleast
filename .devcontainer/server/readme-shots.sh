@@ -15,7 +15,7 @@ set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(git -C "$here" rev-parse --show-toplevel)
-URL=${URL:-http://127.0.0.1:8065}
+URL=${URL:-http://127.0.0.1:8165}
 API=$URL/api/v4
 declare -A TOKEN ID
 

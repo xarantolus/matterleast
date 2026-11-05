@@ -5,14 +5,14 @@
 #
 #   agents.sh            install (or update) and configure; idempotent
 #
-# Environment: URL (server, default http://127.0.0.1:8065), LLM_URL (default
+# Environment: URL (server, default http://127.0.0.1:8165), LLM_URL (default
 # the commands container), AGENTS_VERSION, AGENTS_CACHE (download folder).
 set -euo pipefail
 cd "$(dirname "$0")"
 
-URL=${URL:-http://127.0.0.1:8065}
+URL=${URL:-http://127.0.0.1:8165}
 API=$URL/api/v4
-LLM_URL=${LLM_URL:-http://127.0.0.1:8066/llm/v1}
+LLM_URL=${LLM_URL:-http://127.0.0.1:8166/llm/v1}
 VERSION=${AGENTS_VERSION:-2.10.0}
 CACHE=${AGENTS_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/matterleast}
 TARBALL=$CACHE/mattermost-plugin-agents-v$VERSION-linux-amd64.tar.gz

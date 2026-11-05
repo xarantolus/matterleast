@@ -11,8 +11,8 @@
 const http = require('http');
 const { handleLlm } = require('./llm');
 
-const PORT = Number(process.env.PORT || 8066);
-const SERVER = 'http://127.0.0.1:8065';
+const PORT = Number(process.env.PORT || 8166);
+const SERVER = 'http://127.0.0.1:8165';
 const ACTION_URL = `http://127.0.0.1:${PORT}/blocks/action`;
 const OAUTH_USER = {
   id: 4711,

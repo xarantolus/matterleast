@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-URL=${URL:-http://127.0.0.1:8065}
+URL=${URL:-http://127.0.0.1:8165}
 API=$URL/api/v4
 OUT=test/fixtures/api
 mkdir -p "$OUT"
