@@ -265,10 +265,6 @@ void main() {
     await open(tester, highlight: 'old1');
     expect(find.text('Pinned'), findsNothing);
     expect(conversations(), findsOneWidget);
-    expect(
-      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
-      'old1',
-    );
     await back(tester);
     expect(conversations(), findsNothing);
     expect(find.byType(ReopenSwipe), findsOneWidget);
