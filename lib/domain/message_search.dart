@@ -3,6 +3,9 @@ import 'package:matterleast/domain/post_files.dart';
 
 part 'message_search.freezed.dart';
 
+/// The tabs of the search results.
+enum SearchTab { messages, files }
+
 /// What a search is narrowed to, besides its words. Each part becomes one
 /// of the server's search modifiers.
 @freezed

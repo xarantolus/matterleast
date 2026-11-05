@@ -1041,6 +1041,117 @@ final class WrapCodeProvider
 
 String _$wrapCodeHash() => r'29d6ee002f5e077605648ad91b2d08edd0583605';
 
+@ProviderFor(searchTab)
+final searchTabProvider = SearchTabProvider._();
+
+final class SearchTabProvider
+    extends
+        $FunctionalProvider<AsyncValue<SearchTab>, SearchTab, Stream<SearchTab>>
+    with $FutureModifier<SearchTab>, $StreamProvider<SearchTab> {
+  SearchTabProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'searchTabProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchTabHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<SearchTab> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<SearchTab> create(Ref ref) {
+    return searchTab(ref);
+  }
+}
+
+String _$searchTabHash() => r'fd43ae7e20a1543ffb9b8323800150f33d779a11';
+
+@ProviderFor(threadsTab)
+final threadsTabProvider = ThreadsTabProvider._();
+
+final class ThreadsTabProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ThreadsTab>,
+          ThreadsTab,
+          Stream<ThreadsTab>
+        >
+    with $FutureModifier<ThreadsTab>, $StreamProvider<ThreadsTab> {
+  ThreadsTabProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'threadsTabProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$threadsTabHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<ThreadsTab> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<ThreadsTab> create(Ref ref) {
+    return threadsTab(ref);
+  }
+}
+
+String _$threadsTabHash() => r'fdc139cd5dd091d348ce5fda2bb47591599875ad';
+
+@ProviderFor(homeFilterSetting)
+final homeFilterSettingProvider = HomeFilterSettingProvider._();
+
+final class HomeFilterSettingProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<InboxFilter>,
+          InboxFilter,
+          Stream<InboxFilter>
+        >
+    with $FutureModifier<InboxFilter>, $StreamProvider<InboxFilter> {
+  HomeFilterSettingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeFilterSettingProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeFilterSettingHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<InboxFilter> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<InboxFilter> create(Ref ref) {
+    return homeFilterSetting(ref);
+  }
+}
+
+String _$homeFilterSettingHash() => r'7e9a7b0bf5cf4b15e4076cc162aae9e566414670';
+
 /// The desktop window's zoom in percent.
 
 @ProviderFor(uiZoom)

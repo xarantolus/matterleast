@@ -1,18 +1,27 @@
+import 'dart:async';
+
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/views/inbox_views.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'home_providers.g.dart';
 
-/// The chip picked on Home; kept while the app runs so Saved can be opened
-/// from the You page.
+/// The chip picked on Home, kept across launches; Saved can be opened from
+/// the You page.
 @Riverpod(keepAlive: true)
 class HomeFilterSelection extends _$HomeFilterSelection {
   @override
-  InboxFilter build() => InboxFilter.unread;
+  InboxFilter build() =>
+      ref.watch(homeFilterSettingProvider).value ?? InboxFilter.unread;
 
-  void select(InboxFilter filter) => state = filter;
+  void select(InboxFilter filter) {
+    state = filter;
+    unawaited(
+      ref.read(settingsStoreProvider).write(Settings.homeFilter, filter),
+    );
+  }
 }
 
 /// One server's inbox rows for every chip.

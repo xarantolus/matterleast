@@ -8,6 +8,9 @@ part 'inbox.freezed.dart';
 /// The chips on Home.
 enum InboxFilter { unread, mentions, threads, saved }
 
+/// The tabs of a team's threads page.
+enum ThreadsTab { all, unread }
+
 enum InboxKind { direct, group, mention, thread, saved }
 
 /// One row of the Home inbox or a threads list.

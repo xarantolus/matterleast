@@ -14,6 +14,8 @@ import 'package:matterleast/data/servers/server_manager.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/servers/sign_in.dart';
+import 'package:matterleast/domain/inbox.dart';
+import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/pane_widths.dart';
 import 'package:matterleast/domain/rail.dart';
@@ -177,6 +179,18 @@ Stream<MessageTextSize> messageTextSize(Ref ref) =>
 @Riverpod(keepAlive: true)
 Stream<bool> wrapCode(Ref ref) =>
     ref.watch(settingsStoreProvider).watch(Settings.wrapCode);
+
+@Riverpod(keepAlive: true)
+Stream<SearchTab> searchTab(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.searchTab);
+
+@Riverpod(keepAlive: true)
+Stream<ThreadsTab> threadsTab(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.threadsTab);
+
+@Riverpod(keepAlive: true)
+Stream<InboxFilter> homeFilterSetting(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.homeFilter);
 
 /// The desktop window's zoom in percent.
 @Riverpod(keepAlive: true)

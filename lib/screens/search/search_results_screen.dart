@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
+import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/post_files.dart'
@@ -29,8 +30,6 @@ import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
-
-enum _Tab { messages, files }
 
 /// Opens message search over [url]'s teams, or every server's when null.
 void openMessageSearch(
@@ -90,7 +89,13 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   late String? _server = widget.url;
   late SearchScope _scope =
       widget.scope ?? SearchScope(teamId: widget.teamId, allTeams: true);
-  late _Tab _tab = widget.files ? _Tab.files : _Tab.messages;
+  SearchTab? _picked;
+
+  SearchTab get _tab =>
+      _picked ??
+      (widget.files
+          ? SearchTab.files
+          : ref.watch(searchTabProvider).value ?? SearchTab.messages);
 
   @override
   void initState() {
@@ -149,7 +154,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       );
       final answers = <Future<Object?>>[];
       for (final r in requests) {
-        if (_tab == _Tab.messages) {
+        if (_tab == SearchTab.messages) {
           final answer = serverPostResultsProvider(r.url, r.scope, _query);
           ref
             ..invalidate(localPostResultsProvider(r.url, r.scope, _query))
@@ -191,7 +196,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         (requests == null ||
             requests.any(
               (r) =>
-                  (_tab == _Tab.messages
+                  (_tab == SearchTab.messages
                           ? ref.watch(
                               serverPostResultsProvider(r.url, r.scope, _query),
                             )
@@ -211,8 +216,8 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         cursorColor: foreground,
         decoration: InputDecoration(
           hintText: switch ((_tab, _scope.channelLabel)) {
-            (_Tab.files, final where?) => 'Search files in $where',
-            (_Tab.files, null) => 'Search files',
+            (SearchTab.files, final where?) => 'Search files in $where',
+            (SearchTab.files, null) => 'Search files',
             (_, final where?) => 'Search in $where',
             _ => 'Search messages',
           },
@@ -235,21 +240,28 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
               ),
               child: SizedBox(
                 width: double.infinity,
-                child: SegmentedButton<_Tab>(
+                child: SegmentedButton<SearchTab>(
                   segments: const [
                     ButtonSegment(
-                      value: _Tab.messages,
+                      value: SearchTab.messages,
                       label: Text('Messages'),
                       icon: Icon(Icons.chat_bubble_outline),
                     ),
                     ButtonSegment(
-                      value: _Tab.files,
+                      value: SearchTab.files,
                       label: Text('Files'),
                       icon: Icon(Icons.description_outlined),
                     ),
                   ],
                   selected: {_tab},
-                  onSelectionChanged: (s) => setState(() => _tab = s.first),
+                  onSelectionChanged: (s) {
+                    setState(() => _picked = s.first);
+                    unawaited(
+                      ref
+                          .read(settingsStoreProvider)
+                          .write(Settings.searchTab, s.first),
+                    );
+                  },
                 ),
               ),
             ),
@@ -273,7 +285,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                 );
               }),
             ),
-            if (_tab == _Tab.files)
+            if (_tab == SearchTab.files)
               _FileKindChips(
                 selected: _scope.fileKind,
                 onSelected: (kind) =>
@@ -294,7 +306,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                     )
                   : RefreshArea(
                       onRefresh: _refresh,
-                      child: _tab == _Tab.messages
+                      child: _tab == SearchTab.messages
                           ? _MessageResults(
                               key: ValueKey(
                                 Object.hash(
@@ -902,57 +914,117 @@ class _FileResults extends ConsumerWidget {
           (f) => f.file.id,
         ),
     ];
-    final bottom = MediaQuery.paddingOf(context).bottom;
     return switch (mergeSearch(sources)) {
       SearchLoading() => const FillScrollable(
         child: Center(child: CircularProgressIndicator()),
       ),
       SearchEmpty() => _NoResults(query: query),
       SearchFailed(:final cause) => _Failed(cause: cause, onRetry: onRetry),
-      SearchShown(:final results, :final more, :final failures) => () {
-        DateTime? time(_Found f) => f.file.createAt;
-        // Each server's hits are already newest first.
-        List<List<_Found>> byServer(List<_Found> all) => [
-          for (final r in requests)
-            [
-              for (final f in all)
-                if (f.url == r.url) f,
-            ],
-        ];
-        final rows = [
-          ...withDays(mergeNewestFirst(byServer(results), time), time),
-          if (more.isNotEmpty) ...[
-            const PaneLabel('More from the server'),
-            ...withDays(mergeNewestFirst(byServer(more), time), time),
-          ],
-        ];
-        final count = results.length + more.length;
-        final top = failures.isEmpty ? 1 : 2;
-        return ListView.builder(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
-          itemCount: rows.length + top,
-          itemBuilder: (context, i) {
-            if (i == 0) {
-              return PaneLabel('$count ${count == 1 ? 'file' : 'files'}');
-            }
-            if (i < top) {
-              return _Failures(failures: failures, onRetry: onRetry);
-            }
-            return switch (rows[i - top]) {
-              final DateTime day => _DayHeader(day: day),
-              final PaneLabel label => label,
-              final _Found found => _FileTile(
-                url: found.url,
-                file: found.file,
-                serverName: names[found.url],
-              ),
-              _ => const SizedBox.shrink(),
-            };
-          },
-        );
-      }(),
+      SearchShown(:final results, :final more, :final failures) => _FileList(
+        urls: [for (final r in requests) r.url],
+        results: results,
+        more: more,
+        names: names,
+        failures: failures,
+        onRetry: onRetry,
+      ),
     };
+  }
+}
+
+class _FileList extends StatefulWidget {
+  const _FileList({
+    required this.urls,
+    required this.results,
+    required this.more,
+    required this.names,
+    required this.failures,
+    required this.onRetry,
+  });
+
+  final List<String> urls;
+  final List<_Found> results;
+  final List<_Found> more;
+  final Map<String, String> names;
+  final List<({String name, String cause})> failures;
+  final VoidCallback onRetry;
+
+  @override
+  State<_FileList> createState() => _FileListState();
+}
+
+class _FileListState extends State<_FileList> {
+  late List<List<String>> _arrivals = arrivalGroups(const [], _ready);
+
+  Iterable<String> get _ready => {for (final f in widget.results) f.url};
+
+  @override
+  void didUpdateWidget(_FileList old) {
+    super.didUpdateWidget(old);
+    _arrivals = arrivalGroups(_arrivals, _ready);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final names = widget.names;
+    final failures = widget.failures;
+    DateTime? time(_Found f) => f.file.createAt;
+    // Each server's hits are already newest first.
+    List<List<_Found>> byServer(List<_Found> all, Iterable<String> urls) => [
+      for (final url in urls)
+        [
+          for (final f in all)
+            if (f.url == url) f,
+        ],
+    ];
+    final rows = <Object>[];
+    for (final (i, urls) in _arrivals.indexed) {
+      final items = mergeNewestFirst(byServer(widget.results, urls), time);
+      if (items.isEmpty) continue;
+      if (i > 0) {
+        rows.add(
+          PaneLabel('More from ${urls.map((u) => names[u] ?? u).join(', ')}'),
+        );
+      }
+      rows.addAll(withDays(items, time));
+    }
+    if (widget.more.isNotEmpty) {
+      rows
+        ..add(const PaneLabel('More from the server'))
+        ..addAll(
+          withDays(
+            mergeNewestFirst(byServer(widget.more, widget.urls), time),
+            time,
+          ),
+        );
+    }
+    final count = widget.results.length + widget.more.length;
+    final top = failures.isEmpty ? 1 : 2;
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
+      ),
+      itemCount: rows.length + top,
+      itemBuilder: (context, i) {
+        if (i == 0) {
+          return PaneLabel('$count ${count == 1 ? 'file' : 'files'}');
+        }
+        if (i < top) {
+          return _Failures(failures: failures, onRetry: widget.onRetry);
+        }
+        return switch (rows[i - top]) {
+          final DateTime day => _DayHeader(day: day),
+          final PaneLabel label => label,
+          final _Found found => _FileTile(
+            url: found.url,
+            file: found.file,
+            serverName: names[found.url],
+          ),
+          _ => const SizedBox.shrink(),
+        };
+      },
+    );
   }
 }
 
