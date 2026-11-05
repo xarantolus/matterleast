@@ -56,12 +56,12 @@
                  servers, not routed by Flutter's own deep linking. -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
         </activity>
-        <!-- Receives the SSO redirect (mmauth://callback) from the Auth Tab. -->
+        <!-- Receives the SSO redirect (mmauth://callback) from the Custom Tab. -->
         <activity
-            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+            android:name=".SsoCallbackActivity"
             android:exported="true"
             android:taskAffinity="">
-            <intent-filter android:label="flutter_web_auth_2">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />

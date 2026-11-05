@@ -847,6 +847,35 @@ void main() {
       await finish(tester);
     });
 
+    testWidgets('Back from a link followed into another team returns to '
+        'the conversation it was in', (tester) async {
+      final url = await begin(tester);
+      await open(tester);
+      unawaited(
+        openConversation(
+          navigator(tester),
+          url: url,
+          channelId: shipsId,
+          title: 'Ships',
+          teamId: otherTeam,
+          followed: true,
+        ),
+      );
+      await settle(tester);
+      String top() => tester
+          .widgetList<ChannelScreen>(find.byType(ChannelScreen))
+          .last
+          .channelId;
+      expect(top(), shipsId);
+      expect(container.read(railSelectionProvider)?.teamId, otherTeam);
+      await back(tester);
+      expect(top(), channelId);
+      expect(container.read(railSelectionProvider)?.teamId, teamId);
+      await back(tester);
+      expect(conversations(), findsNothing);
+      await finish(tester);
+    });
+
     testWidgets('Back skips a channel that is gone', (tester) async {
       final url = await begin(tester);
       await open(tester);

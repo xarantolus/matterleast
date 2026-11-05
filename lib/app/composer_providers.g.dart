@@ -249,7 +249,7 @@ final class TypingNamesProvider
   }
 }
 
-String _$typingNamesHash() => r'22f5b975d29d5729760249d0744e7b5e5caed567';
+String _$typingNamesHash() => r'e24292968ea7bd6a58ced7e635c5e7d9330faee6';
 
 /// The names of the people writing in a channel (empty [rootId]) or thread,
 /// first to start first.
@@ -277,6 +277,99 @@ final class TypingNamesFamily extends $Family
 
   @override
   String toString() => r'typingNamesProvider';
+}
+
+/// The ids of the people writing in a channel or thread, first to start
+/// first.
+
+@ProviderFor(typingIds)
+final typingIdsProvider = TypingIdsFamily._();
+
+/// The ids of the people writing in a channel or thread, first to start
+/// first.
+
+final class TypingIdsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<String>>,
+          List<String>,
+          Stream<List<String>>
+        >
+    with $FutureModifier<List<String>>, $StreamProvider<List<String>> {
+  /// The ids of the people writing in a channel or thread, first to start
+  /// first.
+  TypingIdsProvider._({
+    required TypingIdsFamily super.from,
+    required (String, String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'typingIdsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$typingIdsHash();
+
+  @override
+  String toString() {
+    return r'typingIdsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<String>> create(Ref ref) {
+    final argument = this.argument as (String, String, String);
+    return typingIds(ref, argument.$1, argument.$2, argument.$3);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TypingIdsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$typingIdsHash() => r'f2fb65fbb54cbdfb9df4fef4b9713096761cdbf5';
+
+/// The ids of the people writing in a channel or thread, first to start
+/// first.
+
+final class TypingIdsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          Stream<List<String>>,
+          (String, String, String)
+        > {
+  TypingIdsFamily._()
+    : super(
+        retry: null,
+        name: r'typingIdsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The ids of the people writing in a channel or thread, first to start
+  /// first.
+
+  TypingIdsProvider call(String url, String channelId, String rootId) =>
+      TypingIdsProvider._(argument: (url, channelId, rootId), from: this);
+
+  @override
+  String toString() => r'typingIdsProvider';
 }
 
 /// Dialogs integrations open in answer to this device's commands, to show
