@@ -149,8 +149,8 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
   List<CategorySection> get _sections =>
       _unreadsOnly ? unreadsOnly(widget.list.sections) : widget.list.sections;
 
-  /// Rows only move while the list rests at the top; otherwise they keep
-  /// their places and just update.
+  /// Rows only move while the list is idle; while it is being dragged or
+  /// flung they keep their places and just update.
   void _refreshShown() {
     _shown = _atRest ? _sections : keepOrder(_sections, _shown);
   }
@@ -158,7 +158,11 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
   bool _onScroll(ScrollNotification n) {
     if (n.depth != 0) return false;
     _checkUnread();
-    final atRest = n is ScrollEndNotification && n.metrics.pixels <= 0;
+    final atRest = switch (n) {
+      ScrollStartNotification() => false,
+      ScrollEndNotification() => true,
+      _ => _atRest,
+    };
     if (atRest != _atRest) {
       _atRest = atRest;
       if (atRest && _shown != _sections) {

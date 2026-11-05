@@ -14,9 +14,9 @@ double typingLineHeight(BuildContext context) {
 }
 
 /// The room the message list keeps under its newest message: the typing
-/// line, and a margin that is wider on a phone, which asked for more air.
+/// line, and a margin that is wider on a phone.
 double conversationBottomGap(BuildContext context) =>
-    typingLineHeight(context) + (isDesktop ? Spacing.xs : Spacing.xl);
+    typingLineHeight(context) + (isDesktop ? Spacing.xs : Spacing.lg);
 
 /// Who is writing, drawn in the gap the message list keeps above the
 /// composer, so it never covers a message or changes the layout. A bar
