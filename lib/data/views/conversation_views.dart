@@ -37,9 +37,12 @@ typedef PostMenuFacts = ({
 /// The reads of an open channel or thread: one batched query each, re-run
 /// at most every 100 ms while writes land, passed on only when changed.
 class ConversationViews {
-  ConversationViews(this.db, {this.server});
+  ConversationViews(this.db, {this.server, this.missingPeople});
 
   final ServerDatabase db;
+
+  /// Told who the messages show that isn't stored, to fetch them.
+  final void Function(Set<String> ids)? missingPeople;
 
   /// Links to messages on this server show a card of a stored message.
   final Uri? server;
@@ -495,6 +498,10 @@ class ConversationViews {
         people[u.id] = u.author;
       }
     }
+    final missing = {...ids, ...reactors}
+      ..remove('')
+      ..removeAll(people.keys);
+    if (missing.isNotEmpty) missingPeople?.call(missing);
     final reactionsByPost =
         <String, List<({String userId, String emojiName, DateTime? at})>>{};
     for (final r in reactionRows) {

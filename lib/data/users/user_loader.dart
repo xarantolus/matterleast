@@ -28,6 +28,7 @@ class UserLoader {
 
   late final _Batches _byId;
   late final _Batches _byUsername;
+  final _asked = <String>{};
 
   ServerDatabase get _db => store.db;
 
@@ -38,6 +39,22 @@ class UserLoader {
     for (final id in ids)
       if (id.isNotEmpty) id,
   });
+
+  /// For screens that show people they don't have: fetches each of [ids]
+  /// once, so someone the server doesn't know isn't asked for again on
+  /// every change; a request that fails is tried again on the next call.
+  void fetchMissing(Iterable<String> ids) {
+    final fresh = {
+      for (final id in ids)
+        if (id.isNotEmpty && _asked.add(id)) id,
+    };
+    if (fresh.isEmpty) return;
+    unawaited(
+      ensure(fresh).catchError((Object _) {
+        _asked.removeAll(fresh);
+      }),
+    );
+  }
 
   /// As [ensure], by usernames, such as from mentions.
   Future<void> ensureUsernames(Iterable<String> usernames) => _byUsername.add({

@@ -10,10 +10,13 @@ import 'package:matterleast/domain/inbox.dart';
 /// Home's reads from one server database: one batched query, re-run at most
 /// twice a second while writes land, passed on only when it changed.
 class InboxViews {
-  InboxViews(this.db, {required this.serverUrl});
+  InboxViews(this.db, {required this.serverUrl, this.missingPeople});
 
   final ServerDatabase db;
   final String serverUrl;
+
+  /// Told who the rows show that isn't stored, to fetch them.
+  final void Function(Set<String> ids)? missingPeople;
 
   static const _interval = Duration(milliseconds: 500);
 
@@ -137,6 +140,8 @@ class InboxViews {
     };
     final users = await db.usersById(peopleIds);
     final people = {for (final u in users) u.id: u.person};
+    final missing = peopleIds.difference(people.keys.toSet())..remove('');
+    if (missing.isNotEmpty) missingPeople?.call(missing);
     final pictureUpdates = {for (final u in users) u.id: ?u.lastPictureUpdate};
     final teams = {
       for (final t in await db.select(db.teams).get()) t.id: t.displayName,

@@ -28,12 +28,20 @@ class HomeFilterSelection extends _$HomeFilterSelection {
 @riverpod
 Stream<ServerInbox> serverInbox(Ref ref, String url) async* {
   final session = await ref.watch(serverSessionProvider(url).future);
-  yield* InboxViews(session.db, serverUrl: url).inbox();
+  yield* InboxViews(
+    session.db,
+    serverUrl: url,
+    missingPeople: session.users.fetchMissing,
+  ).inbox();
 }
 
 /// The followed threads of one team.
 @riverpod
 Stream<List<InboxItem>> teamThreads(Ref ref, String url, String teamId) async* {
   final session = await ref.watch(serverSessionProvider(url).future);
-  yield* InboxViews(session.db, serverUrl: url).teamThreads(teamId);
+  yield* InboxViews(
+    session.db,
+    serverUrl: url,
+    missingPeople: session.users.fetchMissing,
+  ).teamThreads(teamId);
 }
