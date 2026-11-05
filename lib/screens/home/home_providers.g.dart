@@ -8,18 +8,18 @@ part of 'home_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The chip picked on Home; kept while the app runs so Saved can be opened
-/// from the You page.
+/// The chip picked on Home, kept across launches; Saved can be opened from
+/// the You page.
 
 @ProviderFor(HomeFilterSelection)
 final homeFilterSelectionProvider = HomeFilterSelectionProvider._();
 
-/// The chip picked on Home; kept while the app runs so Saved can be opened
-/// from the You page.
+/// The chip picked on Home, kept across launches; Saved can be opened from
+/// the You page.
 final class HomeFilterSelectionProvider
     extends $NotifierProvider<HomeFilterSelection, InboxFilter> {
-  /// The chip picked on Home; kept while the app runs so Saved can be opened
-  /// from the You page.
+  /// The chip picked on Home, kept across launches; Saved can be opened from
+  /// the You page.
   HomeFilterSelectionProvider._()
     : super(
         from: null,
@@ -48,10 +48,10 @@ final class HomeFilterSelectionProvider
 }
 
 String _$homeFilterSelectionHash() =>
-    r'3eb76bf21a6588ddf6b028a84d062636038f34bb';
+    r'f782353a0d8c775a0d7811e3c46bb03c198002f1';
 
-/// The chip picked on Home; kept while the app runs so Saved can be opened
-/// from the You page.
+/// The chip picked on Home, kept across launches; Saved can be opened from
+/// the You page.
 
 abstract class _$HomeFilterSelection extends $Notifier<InboxFilter> {
   InboxFilter build();

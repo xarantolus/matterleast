@@ -4,6 +4,8 @@ import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/domain/app_update.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/desktop_window.dart';
+import 'package:matterleast/domain/inbox.dart';
+import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/domain/pane_widths.dart';
 import 'package:matterleast/domain/rail.dart';
@@ -169,6 +171,30 @@ abstract final class Settings {
   /// The desktop window's zoom in percent, one of [zoomSteps].
   static const uiZoom = Setting<int>('uiZoom', 100, _decodeZoom, _encodeInt);
 
+  /// The chip picked on Home.
+  static const homeFilter = Setting<InboxFilter>(
+    'homeFilter',
+    InboxFilter.unread,
+    _decodeInboxFilter,
+    _encodeName,
+  );
+
+  /// The tab picked on the search results.
+  static const searchTab = Setting<SearchTab>(
+    'searchTab',
+    SearchTab.messages,
+    _decodeSearchTab,
+    _encodeName,
+  );
+
+  /// The tab picked on a team's threads.
+  static const threadsTab = Setting<ThreadsTab>(
+    'threadsTab',
+    ThreadsTab.all,
+    _decodeThreadsTab,
+    _encodeName,
+  );
+
   static const all = <Setting<Object?>>[
     imagesOnMobileData,
     mediaCacheBytes,
@@ -188,6 +214,9 @@ abstract final class Settings {
     dismissedRelease,
     paneWidths,
     uiZoom,
+    homeFilter,
+    searchTab,
+    threadsTab,
   ];
 
   static bool _decodeBool(String raw) => switch (raw) {
@@ -231,6 +260,15 @@ abstract final class Settings {
       MessageTextSize.values.where((s) => s.name == raw).firstOrNull ??
       (throw FormatException('text size', raw));
   static String _encodeName(Enum value) => value.name;
+  static T _byName<T extends Enum>(List<T> values, String raw) =>
+      values.where((v) => v.name == raw).firstOrNull ??
+      (throw FormatException(T.toString(), raw));
+  static InboxFilter _decodeInboxFilter(String raw) =>
+      _byName(InboxFilter.values, raw);
+  static SearchTab _decodeSearchTab(String raw) =>
+      _byName(SearchTab.values, raw);
+  static ThreadsTab _decodeThreadsTab(String raw) =>
+      _byName(ThreadsTab.values, raw);
   static RailTarget? _decodeRailTarget(String raw) {
     if (raw.isEmpty) return null;
     try {

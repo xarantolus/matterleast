@@ -6,6 +6,7 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/message_search.dart';
 import 'package:matterleast/domain/inbox.dart';
+import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
@@ -106,6 +107,7 @@ void main() {
     expect(newer.dy, lessThan(older.dy));
     expect(find.textContaining('Second'), findsWidgets);
     expect(find.textContaining('First'), findsWidgets);
+    await closeApp(tester);
   });
 
   testWidgets('inside one server only that server is searched', (tester) async {
@@ -113,6 +115,7 @@ void main() {
     expect(asked, [_a]);
     expect(find.textContaining('first'), findsOneWidget);
     expect(find.textContaining('second'), findsNothing);
+    await closeApp(tester);
   });
 
   testWidgets('a failing server is named and the others still show', (
@@ -123,6 +126,7 @@ void main() {
     expect(find.textContaining("Couldn't search Second"), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
     expect(find.textContaining('No results'), findsNothing);
+    await closeApp(tester);
   });
 
   testWidgets('the search button opens message search with the field focused', (
@@ -142,5 +146,70 @@ void main() {
     final field = tester.widget<EditableText>(find.byType(EditableText));
     expect(field.focusNode.hasFocus, isTrue);
     expect(find.text('Messages'), findsOneWidget);
+    await closeApp(tester);
+  });
+
+  testWidgets('a server answering late adds its files below the ones shown', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    FileHit file(String id, String name, int minute) => FileHit(
+      id: id,
+      name: name,
+      extension: 'txt',
+      mimeType: 'text/plain',
+      size: 10,
+      postId: 'p$id',
+      channelId: 'c',
+      place: '#town',
+      createAt: DateTime.utc(2026, 1, 1, 0, minute),
+    );
+    final late = Completer<List<FileHit>>();
+    await pumpApp(
+      tester,
+      const SearchResultsScreen(
+        url: null,
+        teamId: '',
+        query: 'boat',
+        files: true,
+      ),
+      overrides: [
+        serversProvider.overrideWith(
+          (ref) => Stream.value([_server(_a, 'First'), _server(_b, 'Second')]),
+        ),
+        for (final u in [_a, _b]) ...[
+          featuresProvider(u).overrideWith(
+            (ref) => Stream.value(const ServerFeatures(crossTeamSearch: true)),
+          ),
+          currentTeamProvider(u).overrideWith((ref) async => 't'),
+          messageSearchProvider(u)
+              .overrideWith((ref) => Completer<MessageSearch>().future),
+        ],
+        localFileResultsProvider.overrideWith((ref, args) async => const []),
+        serverFileResultsProvider.overrideWith(
+          (ref, args) => args.$1 == _a
+              ? Future.value([file('a1', 'first.txt', 5)])
+              : late.future,
+        ),
+      ],
+    );
+    // B is still loading, so its progress bar keeps animating.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('first.txt'), findsOneWidget);
+    final before = tester.getTopLeft(find.text('first.txt'));
+
+    late.complete([file('b1', 'second.txt', 9)]);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(tester.getTopLeft(find.text('first.txt')), before);
+    expect(
+      tester.getTopLeft(find.text('second.txt')).dy,
+      greaterThan(before.dy),
+    );
+    expect(find.text('MORE FROM SECOND'), findsOneWidget);
+    await closeApp(tester);
   });
 }

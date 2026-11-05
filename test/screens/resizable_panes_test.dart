@@ -3,7 +3,6 @@ import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/pane_widths.dart';
@@ -91,7 +90,7 @@ void main() {
         main: const _Pane('main', key: ValueKey('main')),
         side: thread ? const _Pane('thread', key: ValueKey('thread')) : null,
       ),
-      overrides: [appDatabaseProvider.overrideWithValue(db)],
+      appDatabase: db,
     );
     await settle(tester);
   }

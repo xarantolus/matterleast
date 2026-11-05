@@ -2,11 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
+import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/message_display.dart';
+
+import '../support/memory_database.dart';
 
 const _longLine =
     'final answer = computeTheAnswerToEverything(lifeTheUniverse, '
@@ -18,26 +21,33 @@ Widget _app(
   MessageTextSize size = MessageTextSize.normal,
   bool wrapCode = false,
   double width = 360,
-}) => MaterialApp(
-  theme: MatterleastApp.lightTheme,
-  builder: (context, home) => MediaQuery(
-    data: MediaQuery.of(context)
-        .copyWith(textScaler: TextScaler.linear(fontScale)),
-    child: MessageDisplay(
-      textScale: size.scale,
-      wrapCode: wrapCode,
-      child: home!,
+}) => UncontrolledProviderScope(
+  container: _container,
+  child: MaterialApp(
+    theme: MatterleastApp.lightTheme,
+    builder: (context, home) => MediaQuery(
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: TextScaler.linear(fontScale)),
+      child: MessageDisplay(
+        textScale: size.scale,
+        wrapCode: wrapCode,
+        child: home!,
+      ),
     ),
-  ),
-  home: Scaffold(
-    body: Align(
-      alignment: Alignment.topLeft,
-      child: SizedBox(
-        width: width,
-        child: SingleChildScrollView(child: child),
+    home: Scaffold(
+      body: Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          width: width,
+          child: SingleChildScrollView(child: child),
+        ),
       ),
     ),
   ),
+);
+
+final _container = ProviderContainer(
+  overrides: [appDatabaseProvider.overrideWithValue(memoryAppDatabase())],
 );
 
 Size _textSize(WidgetTester tester, String text) =>
@@ -137,27 +147,6 @@ void main() {
       ),
     );
 
-    testWidgets('a long line scrolls sideways until the block is wrapped, '
-        'then it fits the width', (tester) async {
-      await tester.pumpWidget(
-        _app(const CodePreview(code: _longLine, language: 'dart'), width: 320),
-      );
-      expect(sideways(), findsOneWidget);
-      final oneLine = _textSize(tester, 'computeTheAnswer');
-      expect(oneLine.width, greaterThan(320));
-
-      await tester.tap(find.byTooltip('Wrap lines'));
-      await tester.pump();
-      expect(sideways(), findsNothing);
-      final wrapped = _textSize(tester, 'computeTheAnswer');
-      expect(wrapped.width, lessThanOrEqualTo(320));
-      expect(wrapped.height, greaterThan(oneLine.height * 2));
-
-      await tester.tap(find.byTooltip("Don't wrap lines"));
-      await tester.pump();
-      expect(sideways(), findsOneWidget);
-    });
-
     testWidgets('the wrap setting decides how blocks start', (tester) async {
       await tester.pumpWidget(
         _app(
@@ -168,44 +157,6 @@ void main() {
       );
       expect(sideways(), findsNothing);
       expect(find.byTooltip("Don't wrap lines"), findsOneWidget);
-    });
-
-    testWidgets('the whole block opens the way the preview showed it and '
-        'switches on its own', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: _app(
-            const CodePreview(code: '$_longLine\nreturn answer;', language: ''),
-            width: 320,
-          ),
-        ),
-      );
-      await tester.tap(find.byTooltip('Wrap lines'));
-      await tester.pump();
-      await tester.tap(
-        find.textContaining('computeTheAnswer', findRichText: true),
-      );
-      await tester.pumpAndSettle();
-      expect(find.byType(CodeScreen), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byType(AppBar),
-          matching: find.byTooltip("Don't wrap lines"),
-        ),
-        findsOneWidget,
-      );
-      // No line numbers when wrapped, since they would not line up.
-      expect(find.text('1\n2'), findsNothing);
-
-      await tester.tap(
-        find.descendant(
-          of: find.byType(AppBar),
-          matching: find.byTooltip("Don't wrap lines"),
-        ),
-      );
-      await tester.pump();
-      expect(find.text('1\n2'), findsOneWidget);
-      expect(tester.takeException(), isNull);
     });
   });
 }

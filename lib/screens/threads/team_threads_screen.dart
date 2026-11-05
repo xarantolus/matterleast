@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
+import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -99,36 +100,76 @@ class _TeamThreadsScreenState extends ConsumerState<TeamThreadsScreen> {
       onRetry: _refresh,
     );
     return DefaultTabController(
-      length: 2,
-      child: ContentPage(
-        title: Text(
-          'Threads · ${widget.teamName}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Mark all as read',
-            onPressed: (all?.any((t) => t.unread) ?? false)
-                ? _markAllRead
-                : null,
-            icon: const Icon(Icons.done_all),
+      length: ThreadsTab.values.length,
+      initialIndex:
+          (ref.watch(threadsTabProvider).value ?? ThreadsTab.all).index,
+      child: _TabMemory(
+        child: ContentPage(
+          title: Text(
+            'Threads · ${widget.teamName}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-        progress: refreshing,
-        body: Column(
-          children: [
-            tabs,
-            Expanded(
-              child: TabBarView(
-                children: [list(unreadOnly: false), list(unreadOnly: true)],
-              ),
+          actions: [
+            IconButton(
+              tooltip: 'Mark all as read',
+              onPressed: (all?.any((t) => t.unread) ?? false)
+                  ? _markAllRead
+                  : null,
+              icon: const Icon(Icons.done_all),
             ),
           ],
+          progress: refreshing,
+          body: Column(
+            children: [
+              tabs,
+              Expanded(
+                child: TabBarView(
+                  children: [list(unreadOnly: false), list(unreadOnly: true)],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// Saves the tab the reader picks.
+class _TabMemory extends ConsumerStatefulWidget {
+  const _TabMemory({required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<_TabMemory> createState() => _TabMemoryState();
+}
+
+class _TabMemoryState extends ConsumerState<_TabMemory> {
+  TabController? _controller;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controller?.removeListener(_save);
+    _controller = DefaultTabController.of(context)..addListener(_save);
+  }
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_save);
+    super.dispose();
+  }
+
+  void _save() {
+    final tab = ThreadsTab.values[_controller!.index];
+    if (ref.read(threadsTabProvider).value == tab) return;
+    unawaited(ref.read(settingsStoreProvider).write(Settings.threadsTab, tab));
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// All followed threads, or only the unread ones; each tab keeps its own

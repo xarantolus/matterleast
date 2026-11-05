@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/clickable.dart';
@@ -45,7 +48,7 @@ TextSpan _coloured(BuildContext context, String code, String language) {
 
 /// The first lines of a code block with its language and a wrap toggle;
 /// tap shows all of it. Desktop uses [DesktopCodeBlock].
-class CodePreview extends StatefulWidget {
+class CodePreview extends StatelessWidget {
   const CodePreview({
     required this.code,
     required this.language,
@@ -60,32 +63,17 @@ class CodePreview extends StatefulWidget {
   final String? id;
 
   @override
-  State<CodePreview> createState() => _CodePreviewState();
-}
-
-class _CodePreviewState extends State<CodePreview> {
-  /// The reader's choice for this block; null follows the setting.
-  bool? _wrap;
-
-  @override
   Widget build(BuildContext context) {
     if (isDesktop) {
-      return DesktopCodeBlock(
-        code: widget.code,
-        language: widget.language,
-        id: widget.id,
-      );
+      return DesktopCodeBlock(code: code, language: language, id: id);
     }
     final tokens = context.tokens;
-    final wrap = _wrap ?? MessageDisplay.of(context).wrapCode;
-    final lines = widget.code.split('\n');
+    final wrap = MessageDisplay.of(context).wrapCode;
+    final lines = code.split('\n');
     final shown = lines.take(_previewLines).join('\n');
     final more = lines.length - _previewLines;
-    final label = languageLabel(widget.language);
-    final text = Text.rich(
-      _coloured(context, shown, widget.language),
-      softWrap: wrap,
-    );
+    final label = languageLabel(language);
+    final text = Text.rich(_coloured(context, shown, language), softWrap: wrap);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
       child: Material(
@@ -94,8 +82,7 @@ class _CodePreviewState extends State<CodePreview> {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           mouseCursor: clickCursor,
-          onTap: () =>
-              openCode(context, widget.code, widget.language, wrap: wrap),
+          onTap: () => openCode(context, code, language),
           child: Padding(
             padding: const EdgeInsetsDirectional.only(
               start: Spacing.sm,
@@ -132,10 +119,7 @@ class _CodePreviewState extends State<CodePreview> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    WrapToggle(
-                      wrap: wrap,
-                      onChanged: (on) => setState(() => _wrap = on),
-                    ),
+                    WrapToggle(wrap: wrap),
                   ],
                 ),
               ],
@@ -353,33 +337,26 @@ class _DesktopCodeBlockState extends State<DesktopCodeBlock> {
   }
 }
 
-/// Switches a code block between wrapped lines and sideways scrolling.
-class WrapToggle extends StatelessWidget {
-  const WrapToggle({required this.wrap, required this.onChanged, super.key});
+/// Switches every code block between wrapped lines and sideways scrolling.
+class WrapToggle extends ConsumerWidget {
+  const WrapToggle({required this.wrap, super.key});
 
   final bool wrap;
-  final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) => IconButton(
+  Widget build(BuildContext context, WidgetRef ref) => IconButton(
     tooltip: wrap ? "Don't wrap lines" : 'Wrap lines',
     isSelected: wrap,
     visualDensity: VisualDensity.compact,
     iconSize: 20,
     icon: const Icon(Icons.wrap_text),
-    onPressed: () => onChanged(!wrap),
+    onPressed: () =>
+        ref.read(settingsStoreProvider).write(Settings.wrapCode, !wrap),
   );
 }
 
-void openCode(
-  BuildContext context,
-  String code,
-  String language, {
-  bool? wrap,
-}) => openPage(
-  Navigator.of(context),
-  CodeScreen(code: code, language: language, wrap: wrap),
-);
+void openCode(BuildContext context, String code, String language) =>
+    openPage(Navigator.of(context), CodeScreen(code: code, language: language));
 
 /// A whole code block: selectable, with line numbers unless wrapped, a
 /// wrap toggle and a copy action.
@@ -389,7 +366,6 @@ class CodeScreen extends StatefulWidget {
     required this.language,
     this.title,
     this.actions = const [],
-    this.wrap,
     super.key,
   });
 
@@ -402,15 +378,11 @@ class CodeScreen extends StatefulWidget {
   /// Shown instead of the language, such as a file's name.
   final String? title;
 
-  /// Whether lines start wrapped; null follows the setting.
-  final bool? wrap;
-
   @override
   State<CodeScreen> createState() => _CodeScreenState();
 }
 
 class _CodeScreenState extends State<CodeScreen> {
-  late bool? _wrap = widget.wrap;
   final _selection = FocusNode(debugLabel: 'Code');
   late final _lines = widget.code.split('\n');
   late final _longestLine = _lines.fold(0, (m, l) => math.max(m, l.length));
@@ -437,7 +409,7 @@ class _CodeScreenState extends State<CodeScreen> {
     final tokens = context.tokens;
     final code = widget.code;
     final label = languageLabel(widget.language);
-    final wrap = _wrap ?? MessageDisplay.of(context).wrapCode;
+    final wrap = MessageDisplay.of(context).wrapCode;
     final style = _codeStyle(context);
     // Wrapped lines would no longer line up with their numbers.
     final numberWidth = wrap ? 0 : '${_lines.length}'.length;
@@ -459,7 +431,7 @@ class _CodeScreenState extends State<CodeScreen> {
     return ContentPage(
       title: Text(widget.title ?? (label.isEmpty ? 'Code' : '$label code')),
       actions: [
-        WrapToggle(wrap: wrap, onChanged: (on) => setState(() => _wrap = on)),
+        WrapToggle(wrap: wrap),
         IconButton(
           tooltip: 'Copy code',
           icon: const Icon(Icons.copy),

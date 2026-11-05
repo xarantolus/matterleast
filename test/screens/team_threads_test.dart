@@ -93,6 +93,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Threads · Harbour'), findsNothing);
     expect(find.text('Channels'), findsOneWidget);
+    await closeApp(tester);
   });
 
   testWidgets('each tab keeps where it was scrolled to', (tester) async {
@@ -112,5 +113,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(first, findsNothing);
     expect(tester.getTopLeft(row('Buoy 20.')).dy, shown);
+    await closeApp(tester);
   });
 }
