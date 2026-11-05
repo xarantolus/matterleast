@@ -131,7 +131,7 @@ final class ServerInboxProvider
   }
 }
 
-String _$serverInboxHash() => r'647820ae214d5c72a200e5f340bfc77f93fbecac';
+String _$serverInboxHash() => r'afd2efdac3e587f20598775dab8cd0197ebb3920';
 
 /// One server's inbox rows for every chip.
 
@@ -215,7 +215,7 @@ final class TeamThreadsProvider
   }
 }
 
-String _$teamThreadsHash() => r'70ac279d9be3e33c0fbc6f093dc2afe5a2f7b8ad';
+String _$teamThreadsHash() => r'2668af4f8b72c1f7a043e09494f34f256162db8a';
 
 /// The followed threads of one team.
 
