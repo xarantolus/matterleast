@@ -8,6 +8,7 @@ import 'package:matterleast/domain/open_history.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
+import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/open_history.dart';
@@ -110,6 +111,14 @@ Future<void> openConversation(
       }
       navigator.popUntil((route) => route.isFirst);
     }
+    final shown = [
+      ?container.read(openPanesProvider).channel,
+      ?container.read(openPanesProvider).thread,
+    ].where((t) => sameConversation(t, target)).firstOrNull;
+    if (shown != null && _showsPostOnly(target)) {
+      _showPost(container, shown, target.highlightPostId!);
+      return;
+    }
     container.read(openPanesProvider.notifier).open(target);
     return;
   }
@@ -131,11 +140,13 @@ Future<void> openConversation(
       unawaited(navigator.push(route));
     case ReturnToStep(:final index):
       navigator.popUntil((r) => r == open[index]);
-      if (target.highlightPostId == null && !focusComposer) {
+      if (!focusComposer) {
+        if (target.highlightPostId != null) {
+          _showPost(container, open[index].target, target.highlightPostId!);
+        }
         await open[index].popped;
         return;
       }
-      // In place, as a pane would, so it opens at the message.
       navigator.replace(oldRoute: open[index], newRoute: route);
     case PushOverStep(:final index):
       navigator.popUntil((r) => r == open[index]);
@@ -149,6 +160,31 @@ Future<void> openConversation(
   }
   await route.popped;
   container.read(conversationMemoryProvider).closed(target);
+}
+
+bool _showsPostOnly(ConversationTarget target) =>
+    target.highlightPostId != null && !target.focusComposer;
+
+/// Shows the message [postId] in the conversation open as [shown].
+void _showPost(
+  ProviderContainer container,
+  ConversationTarget shown,
+  String postId,
+) {
+  final conversation = switch (shown) {
+    ChannelTarget() => conversationProvider(
+      shown.url,
+      shown.channelId,
+      highlightPostId: shown.highlightPostId,
+    ),
+    ThreadTarget() => conversationProvider(
+      shown.url,
+      shown.channelId,
+      rootId: shown.rootId,
+      highlightPostId: shown.highlightPostId,
+    ),
+  };
+  container.read(conversation.notifier).showPost(postId);
 }
 
 /// Closes the channel [channelId] of [url] and its threads wherever they

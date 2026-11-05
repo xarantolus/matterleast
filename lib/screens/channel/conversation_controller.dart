@@ -332,6 +332,18 @@ class Conversation extends _$Conversation {
     if (window != null) state = state.copyWith(rows: _rows(window));
   }
 
+  /// Brings the message [postId] into view and highlights it, fetching the
+  /// messages around it when they aren't loaded.
+  void showPost(String postId) {
+    state = state.copyWith(
+      highlightKey: postId,
+      showCount: state.showCount + 1,
+      intent: OpenIntent.usual,
+    );
+    if (_session == null) return;
+    unawaited(_isThread ? _showReplyAsked() : _openHighlight());
+  }
+
   /// A message outside the stored newest messages: fetch the messages
   /// around it and move there.
   Future<void> _openHighlight() async {
