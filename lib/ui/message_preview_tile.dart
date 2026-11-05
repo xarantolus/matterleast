@@ -159,8 +159,7 @@ class MessagePreviewTile extends ConsumerWidget {
     if (options == null) return tile;
     return Semantics(
       customSemanticsActions: {
-        const CustomSemanticsAction(label: 'Thread options'): () =>
-            options(null),
+        const CustomSemanticsAction(label: 'Options'): () => options(null),
       },
       child: GestureDetector(
         onSecondaryTapUp: isDesktop

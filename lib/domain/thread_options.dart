@@ -1,3 +1,5 @@
+import 'package:matterleast/domain/inbox.dart';
+
 /// What can be done with a followed thread, in the order the sheet shows it.
 enum ThreadOption {
   reply('Reply'),
@@ -30,3 +32,14 @@ List<ThreadOption> threadOptions({
   if (saved) ThreadOption.unsave else ThreadOption.save,
   if (canLink) ThreadOption.copyLink,
 ];
+
+/// Pure: the options for a Home row that isn't a followed thread; empty
+/// when there is none.
+List<ThreadOption> rowOptions(InboxKind kind, {required bool unread}) =>
+    switch (kind) {
+      InboxKind.saved => [ThreadOption.unsave],
+      InboxKind.direct ||
+      InboxKind.group ||
+      InboxKind.mention => [if (unread) ThreadOption.markRead],
+      InboxKind.thread => const [],
+    };

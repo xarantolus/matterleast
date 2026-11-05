@@ -220,6 +220,7 @@ class MessageToolbar extends ConsumerWidget {
         : messageActions(target, facts);
     MessageAction? of(MessageActionKind kind) =>
         actions.where((a) => a.kind == kind).firstOrNull;
+    if (facts != null && actions.isEmpty) return const SizedBox.shrink();
     final react = of(MessageActionKind.react);
     final reply = of(MessageActionKind.reply);
     final quick = quickReactions(recent, 1).first;

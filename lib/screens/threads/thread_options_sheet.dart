@@ -80,17 +80,25 @@ class ThreadOptionsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final facts = ref
-        .watch(
-          threadOptionFactsProvider(item.serverUrl, item.rootId!, item.teamId),
-        )
-        .value;
-    final options = threadOptions(
-      following: true,
-      unread: item.unread,
-      saved: facts?.saved ?? false,
-      canLink: facts != null && facts.teamName.isNotEmpty,
-    );
+    final facts = item.kind == InboxKind.thread
+        ? ref
+              .watch(
+                threadOptionFactsProvider(
+                  item.serverUrl,
+                  item.rootId!,
+                  item.teamId,
+                ),
+              )
+              .value
+        : null;
+    final options = item.kind == InboxKind.thread
+        ? threadOptions(
+            following: true,
+            unread: item.unread,
+            saved: facts?.saved ?? false,
+            canLink: facts != null && facts.teamName.isNotEmpty,
+          )
+        : rowOptions(item.kind, unread: item.unread);
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
@@ -113,7 +121,7 @@ class ThreadOptionsSheet extends ConsumerWidget {
 
   Future<void> _run(WidgetRef ref, ThreadOption option, String teamName) async {
     final url = item.serverUrl;
-    final rootId = item.rootId!;
+    final rootId = item.rootId ?? item.postId ?? '';
     final team = item.teamId ?? '';
     await tryAction(
       navigator.context,
@@ -125,6 +133,9 @@ class ThreadOptionsSheet extends ConsumerWidget {
             await openInboxItem(navigator.context, item);
           case ThreadOption.openInChannel:
             await openPost(navigator, url, rootId);
+          case ThreadOption.markRead when item.kind != InboxKind.thread:
+            final session = await ref.read(serverSessionProvider(url).future);
+            await session.channels.markRead(item.channelId);
           case ThreadOption.markRead:
             final session = await ref.read(serverSessionProvider(url).future);
             await ConversationActions(session).markThreadRead(team, rootId);
