@@ -1,6 +1,8 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/post_list.dart';
+import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/density.dart';
@@ -204,12 +206,9 @@ void showReactions(
                             if (env == null)
                               ListTile(title: Text(person.name))
                             else
-                              PersonTile(
-                                serverUrl: env.server.toString(),
-                                userId: person.id,
-                                name: person.name,
-                                username: person.username,
-                                pictureUpdate: person.pictureAt,
+                              _Reactor(
+                                url: env.server.toString(),
+                                person: person,
                               ),
                         ],
                       ),
@@ -235,4 +234,29 @@ void showReactions(
             );
     },
   );
+}
+
+/// One person who reacted. Someone the conversation had no profile for yet
+/// is looked up here, so the open sheet names them once they arrive.
+class _Reactor extends ConsumerWidget {
+  const _Reactor({required this.url, required this.person});
+
+  final String url;
+  final PostPerson person;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final known = person.username.isNotEmpty;
+    if (!known) ref.watch(profileRefreshProvider(url, person.id));
+    final profile = known
+        ? null
+        : ref.watch(userProfileProvider(url, person.id)).value;
+    return PersonTile(
+      serverUrl: url,
+      userId: person.id,
+      name: profile?.name ?? person.name,
+      username: profile?.username ?? person.username,
+      pictureUpdate: profile?.pictureUpdate ?? person.pictureAt,
+    );
+  }
 }
