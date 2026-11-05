@@ -43,7 +43,14 @@ Future<void> openLinkFromMessage(
       case PostLink(:final postId):
         await _openPost(navigator, ref, url, postId, fromOutside: fromOutside);
       case ChannelNameLink(:final team, :final name):
-        await _openChannelNamed(navigator, ref, url, team, name);
+        await _openChannelNamed(
+          navigator,
+          ref,
+          url,
+          team,
+          name,
+          followed: !fromOutside,
+        );
       case DirectMessageLink(:final username):
         await _openDirectMessage(
           navigator,
@@ -141,6 +148,7 @@ Future<void> _openPost(
           highlightPostId: postId,
           rootId: thread,
           fromOutside: fromOutside,
+          followed: !fromOutside,
         ),
       );
     case LinkedPostMissing() || LinkedPostNeedsJoin():
@@ -159,7 +167,14 @@ Future<void> openChannelNamed(
   if (!navigator.mounted) return;
   final ref = ProviderScope.containerOf(navigator.context, listen: false);
   try {
-    await _openChannelNamed(navigator, ref, url, teamName, name);
+    await _openChannelNamed(
+      navigator,
+      ref,
+      url,
+      teamName,
+      name,
+      followed: true,
+    );
   } on ApiError catch (e) {
     _say(
       navigator,
@@ -173,8 +188,9 @@ Future<void> _openChannelNamed(
   ProviderContainer ref,
   String url,
   String teamName,
-  String name,
-) async {
+  String name, {
+  required bool followed,
+}) async {
   final links = await ref.read(messageLinksProvider(url).future);
   final channel = await links.channelLinked(teamName, name);
   final id = channel?.id;
@@ -198,6 +214,7 @@ Future<void> _openChannelNamed(
     channelId: id,
     title: channel.displayName,
     teamId: channel.stored?.teamId,
+    followed: followed,
   );
 }
 
@@ -237,6 +254,7 @@ Future<void> _openDirectMessage(
     url: url,
     channelId: channelId,
     title: '@$username',
+    followed: !fromOutside,
   );
 }
 

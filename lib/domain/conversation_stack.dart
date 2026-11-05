@@ -30,16 +30,19 @@ sealed class StackStep with _$StackStep {
 /// The step that opens [target] over the conversations [open], bottom first.
 /// Opened [fromOutside] the app, as from a notification, it keeps only the
 /// conversation itself or the thread's channel; anything else gives way, so
-/// Back leads to the list.
+/// Back leads to the list. [followed] from a link or a reference in what
+/// shows, it opens over the others, so Back returns to where the link was.
 StackStep stackStepFor(
   List<ConversationTarget> open,
   ConversationTarget target, {
   bool fromOutside = false,
+  bool followed = false,
 }) {
   final step = _stepFor(open, target);
-  return fromOutside && (step is PushStep || step is ReplaceStep)
-      ? const StackStep.overList()
-      : step;
+  if (fromOutside && (step is PushStep || step is ReplaceStep)) {
+    return const StackStep.overList();
+  }
+  return followed && step is ReplaceStep ? const StackStep.push() : step;
 }
 
 StackStep _stepFor(List<ConversationTarget> open, ConversationTarget target) {

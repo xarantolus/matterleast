@@ -20,7 +20,7 @@ network. Everything on it is invented.
 | --- | --- | --- |
 | `matterleast-db` | `postgres:17-alpine` | database, on volume `matterleast-db-data` |
 | `matterleast-server` | `mattermost/mattermost-team-edition:12.0.1` | the server on port 8165; settings in `mattermost.env` |
-| `matterleast-server2` | same | optional second server on port 8167 with its own database, for multi-server tests |
+| `matterleast-server2` | same | optional second server on port 8167 with its own database, for multi-server tests and SSO: it listens on 8177 behind a small proxy in the responder (`commands/sso_proxy.js`) that adds the GitLab sign-in to its client config, which Team Edition hides without a licence; sign in with GitLab as the fake user |
 | `matterleast-commands` | `node:22-alpine` | side services on port 8166: the custom slash commands and a fake GitLab for SSO (`commands/responder.js`) |
 
 All use host networking on the loopback. Containers and data volumes survive a

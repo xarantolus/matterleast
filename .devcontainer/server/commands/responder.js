@@ -8,8 +8,10 @@
 //                  mobile SSO flow can be exercised without a real provider
 //   /llm/v1/*      a fake OpenAI-compatible model for the Agents plugin
 //                  (llm.js)
+// It also fronts the second test server on 8167 (sso_proxy.js).
 const http = require('http');
 const { handleLlm } = require('./llm');
+const { startSsoProxy } = require('./sso_proxy');
 
 const PORT = Number(process.env.PORT || 8166);
 const SERVER = 'http://127.0.0.1:8165';
@@ -293,3 +295,5 @@ http.createServer(async (req, res) => {
   }
   reply(res, 404, { text: 'unknown endpoint' });
 }).listen(PORT, '127.0.0.1', () => console.log(`side services on ${PORT}`));
+
+startSsoProxy(8167, 8177);
