@@ -87,13 +87,22 @@ class ServerConnection {
       probe: server.reach.probe,
       onResync: () {
         agents.reconnected();
+        if (_catchUp case final catchUp?) {
+          _catchUpFor(catchUp);
+          return;
+        }
         _resyncing = true;
         refreshAll();
       },
       onClosed: (failCount) {
         // REST may work where the socket doesn't; try once per outage,
         // without the progress bar, since it may only wait for a timeout.
-        if (failCount == 1) refreshAll(quiet: true);
+        if (failCount != 1) return;
+        if (_catchUp case final catchUp?) {
+          _catchUpFor(catchUp);
+        } else {
+          refreshAll(quiet: true);
+        }
       },
     );
     online?.addListener(_networkChanged);
@@ -175,6 +184,21 @@ class ServerConnection {
       typing.clear();
     }
   }
+
+  Future<void> Function()? _catchUp;
+
+  /// For the stay-connected service, which has no UI: events skip follow-up
+  /// requests that only serve the screen, the socket asks the server for no
+  /// typing or reaction events, and after a gap only [catchUp] runs instead
+  /// of the full refresh (the UI does that itself when it connects).
+  void withoutUi(Future<void> Function() catchUp) {
+    _catchUp = catchUp;
+    events.withoutUi = true;
+    socket.silent = true;
+  }
+
+  void _catchUpFor(Future<void> Function() catchUp) =>
+      unawaited(catchUp().catchError((Object _) {}));
 
   Timer? _startTimer;
   Timer? _stopTimer;

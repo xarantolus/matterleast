@@ -452,10 +452,20 @@ class NotificationCheck {
     return 'Sent a message';
   }
 
+  final _avatars = <(String, int), Uint8List>{};
+
+  Future<Uint8List?> _avatar(String userId, int? pictureUpdate) async {
+    final key = (userId, pictureUpdate ?? 0);
+    if (_avatars[key] case final cached?) return cached;
+    final fetched = await _fetchAvatar(userId, pictureUpdate);
+    if (fetched != null) _avatars[key] = fetched;
+    return fetched;
+  }
+
   /// Fetched directly: the image caches keep their index in a database
   /// the plugin shares across the process, which a background engine must
   /// not open and close under the UI.
-  Future<Uint8List?> _avatar(String userId, int? pictureUpdate) async {
+  Future<Uint8List?> _fetchAvatar(String userId, int? pictureUpdate) async {
     try {
       final url = serverUri(session.url, 'api/v4/users/$userId/image', {
         '_': '${pictureUpdate ?? 0}',

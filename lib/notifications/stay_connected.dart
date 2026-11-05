@@ -79,6 +79,7 @@ class _ServiceEngine {
         shownNow: (_) => AppVisibility.visible,
         serverName: label,
       );
+      session.connection.withoutUi(check.run);
       _live.add(
         LiveNotifications(
           applied: session.connection.applied,

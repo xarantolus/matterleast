@@ -55,6 +55,15 @@ class EventApplier {
   final void Function(String message)? onNotice;
   final DateTime Function() _clock;
 
+  /// While the UI is away every event is still applied, but follow-up
+  /// requests that only serve what is on screen are left to the UI, which
+  /// refreshes everything when it connects.
+  var withoutUi = false;
+
+  void _fetch(Future<void> Function() work) {
+    if (!withoutUi) _later(work());
+  }
+
   ServerDatabase get _db => store.db;
   Future<void> _last = Future.value();
 
@@ -80,8 +89,17 @@ class EventApplier {
           fromSelf: post.userId == me && !_isAutomatic(post),
           mentionsMe: me != null && mentions.contains(me),
         );
-        if (post.userId case final author?) _later(users.ensure([author]));
-        await setConversationShown(server, store, post.channelId!, show: true);
+        if (post.userId case final author?) {
+          _fetch(() => users.ensure([author]));
+        }
+        if (!withoutUi) {
+          await setConversationShown(
+            server,
+            store,
+            post.channelId!,
+            show: true,
+          );
+        }
       case EphemeralMessageEvent(:final post?)
           when post.channelId != null && await _knownChannel(post.channelId!):
         await store.applyEphemeralPost(post);
@@ -96,7 +114,7 @@ class EventApplier {
           when userId != me && (broadcast.channelId?.isNotEmpty ?? false):
         typing.expiry = await _typingExpiry();
         typing.typing(broadcast.channelId!, event.parentId ?? '', userId);
-        _later(users.ensure([userId]));
+        _fetch(() => users.ensure([userId]));
       case PostEditedEvent(:final post?):
         await store.applyEdit(post);
       case PostDeletedEvent(:final post?) when post.id != null:
@@ -109,7 +127,7 @@ class EventApplier {
       case AcknowledgementEvent(:final acknowledgement?, :final added):
         await store.applyAcknowledgement(acknowledgement, added: added);
         if (acknowledgement.userId case final userId?) {
-          _later(users.ensure([userId]));
+          _fetch(() => users.ensure([userId]));
         }
       case EmojiAddedEvent(:final emoji?):
         await store.applyCustomEmoji([emoji]);
@@ -126,7 +144,7 @@ class EventApplier {
         await _refreshChannel(channel);
       case ChannelChangedEvent(:final channel?)
           when await _knownChannel(channel):
-        _later(entry.channelStats(channel));
+        _fetch(() => entry.channelStats(channel));
       case ChannelChangedEvent():
         return;
       case MarkedUnreadEvent(:final channelId)
@@ -153,13 +171,15 @@ class EventApplier {
       case UserRemovedEvent(:final channel?) when event.removedUser == me:
         await store.removeChannel(channel);
       case UserRemovedEvent(:final channel?) when await _knownChannel(channel):
-        _later(entry.channelStats(channel));
+        _fetch(() => entry.channelStats(channel));
       case CategoriesEvent(:final updatedCategories)
           when updatedCategories.isNotEmpty:
         await store.applyCategoryUpdates(updatedCategories);
       case CategoriesEvent(:final broadcast?)
           when broadcast.teamId?.isNotEmpty ?? false:
-        _later(entry.refreshTeam(broadcast.teamId!, priority: SyncPriority.p1));
+        _fetch(
+          () => entry.refreshTeam(broadcast.teamId!, priority: SyncPriority.p1),
+        );
       case TeamEvent(kind: TeamChange.joined, :final teamId?)
           when event.userId == me:
         _later(entry.joinedTeam(teamId));
@@ -184,13 +204,13 @@ class EventApplier {
           deleted: deleted,
         );
         if (threadsFlipped) {
-          _later(entry.run().then((_) => inbox.refresh(force: true)));
+          _fetch(() => entry.run().then((_) => inbox.refresh(force: true)));
         }
         final missing = await store.applySavedChanges(
           event.all,
           deleted: deleted,
         );
-        if (missing.isNotEmpty) _later(inbox.refreshSaved());
+        if (missing.isNotEmpty) _fetch(() => inbox.refreshSaved());
       case ThreadUpdatedEvent(:final thread?):
         await store.applyThreads(event.broadcast?.teamId ?? '', [thread]);
       case ThreadReadEvent():
@@ -211,7 +231,7 @@ class EventApplier {
         switch (kind) {
           case ConfigKind.clientConfig:
             await store.applyConfig(ConfigKeys.clientConfig, values);
-            _later(entry.refreshPlugins());
+            _fetch(() => entry.refreshPlugins());
           case ConfigKind.license:
             await store.applyConfig(ConfigKeys.license, values);
         }
@@ -228,7 +248,7 @@ class EventApplier {
       case BurnAllRevealedEvent(:final postId?, :final senderExpireAt?):
         await store.setBurnExpiry(postId, senderExpireAt);
       case PluginsChangedEvent():
-        _later(entry.refreshPlugins());
+        _fetch(() => entry.refreshPlugins());
       case BookmarksEvent(:final channelId, :final bookmarks)
           when await _knownChannel(channelId):
         await store.applyBookmarks(channelId, bookmarks);
