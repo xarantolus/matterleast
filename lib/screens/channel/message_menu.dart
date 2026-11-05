@@ -154,7 +154,7 @@ List<MessageAction> messageActions(
     String failure,
   ) => runPostAction(context, url, action, failure);
 
-  return [
+  final actions = [
     if (!unsent && !post.isEphemeral && rights.react)
       MessageAction(
         MessageActionKind.react,
@@ -311,6 +311,10 @@ List<MessageAction> messageActions(
         (context) => reportMessage(context, url, post),
       ),
   ];
+  // As upstream: a system message offers Delete and nothing else.
+  return post.isSystem
+      ? actions.where((a) => a.kind == MessageActionKind.delete).toList()
+      : actions;
 }
 
 /// The emoji the quick reactions offer, most recent first, at most [count].
@@ -320,6 +324,14 @@ List<String> quickReactions(List<String> recent, int count) =>
 /// The menu for one message as a sheet: quick reactions, then what can be
 /// done with it.
 Future<void> showMessageMenu(BuildContext context, MessageTarget target) async {
+  if (target.post.isSystem) {
+    final facts = await _loadFacts(context, target);
+    if (facts == null ||
+        messageActions(target, facts).isEmpty ||
+        !context.mounted) {
+      return;
+    }
+  }
   final run = await showAppSheet<MessageRun>(
     context: context,
     showDragHandle: true,
@@ -330,6 +342,29 @@ Future<void> showMessageMenu(BuildContext context, MessageTarget target) async {
   if (run != null && context.mounted) await run(context);
 }
 
+/// What the menu for [target] depends on, or null after telling the reader
+/// it couldn't load.
+Future<PostMenuFacts?> _loadFacts(
+  BuildContext context,
+  MessageTarget target,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final sub = ProviderScope.containerOf(context, listen: false).listen(
+    postMenuFactsProvider(target.url, target.post, target.teamId).future,
+    (_, _) {},
+  );
+  try {
+    return await sub.read();
+  } on Object {
+    messenger.showSnackBar(
+      const SnackBar(content: Text("Couldn't load the options.")),
+    );
+    return null;
+  } finally {
+    sub.close();
+  }
+}
+
 /// The same menu at the pointer, for a right click at [position] (global).
 /// [selection] is text selected in the message, offered for copying.
 Future<void> showMessageContextMenu(
@@ -338,31 +373,16 @@ Future<void> showMessageContextMenu(
   Offset position, {
   String? selection,
 }) async {
-  final messenger = ScaffoldMessenger.of(context);
   final container = ProviderScope.containerOf(context, listen: false);
-  final provider = postMenuFactsProvider(
-    target.url,
-    target.post,
-    target.teamId,
-  );
-  final sub = container.listen(provider.future, (_, _) {});
-  final PostMenuFacts facts;
-  try {
-    facts = await sub.read();
-  } on Object {
-    messenger.showSnackBar(
-      const SnackBar(content: Text("Couldn't load the options.")),
-    );
-    return;
-  } finally {
-    sub.close();
-  }
+  final facts = await _loadFacts(context, target);
+  if (facts == null) return;
   // Never waits for the server: Report shows once its answer is cached.
   final reportable =
       container.read(reportsEnabledProvider(target.url, facts.teamId)).value ??
       false;
   if (!context.mounted) return;
   final actions = messageActions(target, facts, reportable: reportable);
+  if (actions.isEmpty) return;
   final error = Theme.of(context).colorScheme.error;
   final run = await showMenuAt<MessageRun>(context, position, [
     if (selection != null && selection.isNotEmpty) ...[

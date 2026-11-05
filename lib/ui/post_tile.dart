@@ -101,7 +101,11 @@ class PostTile extends StatelessWidget {
     final density = context.density;
     final text = Theme.of(context).textTheme;
     if (post.isSystem && !post.deleted) {
-      return _SystemLine(post: post, combined: combined);
+      return _SystemLine(
+        post: post,
+        combined: combined,
+        onLongPress: onLongPress,
+      );
     }
     final details = detailsOf(post);
     final env = PostEnvironment.maybeOf(context);
@@ -978,10 +982,15 @@ String _time(BuildContext context, DateTime at) =>
     timeLabel(at, use24: MediaQuery.alwaysUse24HourFormatOf(context));
 
 class _SystemLine extends StatelessWidget {
-  const _SystemLine({required this.post, required this.combined});
+  const _SystemLine({
+    required this.post,
+    required this.combined,
+    required this.onLongPress,
+  });
 
   final PostItem post;
   final List<PostItem> combined;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -1019,6 +1028,8 @@ class _SystemLine extends StatelessWidget {
       container: true,
       excludeSemantics: true,
       label: '${spoken.text}\n$time',
+      onLongPress: onLongPress,
+      onLongPressHint: onLongPress == null ? null : 'message options',
       customSemanticsActions: {
         if (env != null)
           for (final target in spoken.targets)
@@ -1026,7 +1037,15 @@ class _SystemLine extends StatelessWidget {
               CustomSemanticsAction(label: 'Show @$name'): () =>
                   env.onMention(name),
       },
-      child: _systemRow(context, id, line, style, time),
+      child: onLongPress == null
+          ? _systemRow(context, id, line, style, time)
+          : InkWell(
+              mouseCursor: MouseCursor.defer,
+              onLongPress: onLongPress,
+              hoverColor: Colors.transparent,
+              excludeFromSemantics: true,
+              child: _systemRow(context, id, line, style, time),
+            ),
     );
   }
 

@@ -9,6 +9,7 @@ import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/domain/thread_options.dart';
 import 'package:matterleast/screens/home/home_providers.dart';
 import 'package:matterleast/screens/home/home_state.dart';
 import 'package:matterleast/screens/home/open_item.dart';
@@ -196,7 +197,12 @@ class _HomePaneState extends ConsumerState<HomePane> {
                           item: item,
                           serverName: names[item.serverUrl],
                           onTap: () => openInboxItem(context, item),
-                          onOptions: item.kind == InboxKind.thread
+                          onOptions:
+                              item.kind == InboxKind.thread ||
+                                  rowOptions(
+                                    item.kind,
+                                    unread: item.unread,
+                                  ).isNotEmpty
                               ? (anchor) => showThreadOptions(
                                   context,
                                   item,

@@ -476,7 +476,9 @@ extension on _ConversationViewState {
     List<PostItem> combined, {
     required bool highlighted,
   }) {
-    final usable = !post.isSystem && !post.deleted && !post.unreadable;
+    // A system message offers only what the menu allows it, such as Delete.
+    final menu = !post.deleted && !post.unreadable;
+    final usable = !post.isSystem && menu;
     final threads = widget.onOpenThread != null;
     // An archived channel is read-only, reactions included.
     final reacts =
@@ -517,8 +519,8 @@ extension on _ConversationViewState {
           ? openThread
           : null,
       tapHint: failed ? 'try again or delete' : 'open thread',
-      onLongPress: usable && !failed && !desktop ? open : null,
-      onContextMenu: usable && !failed && desktop
+      onLongPress: menu && !failed && !desktop ? open : null,
+      onContextMenu: menu && !failed && desktop
           ? (position, selection) => unawaited(
               showMessageContextMenu(
                 context,
@@ -538,7 +540,7 @@ extension on _ConversationViewState {
             }
           : const {},
     );
-    if (failed || !usable) return tile;
+    if (failed || !menu) return tile;
     if (desktop) return MessageHover(target: target, child: tile);
     return SwipeToOpen(onOpen: open, child: tile);
   }
