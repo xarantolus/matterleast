@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_view.dart';
@@ -69,6 +70,51 @@ void main() {
 
     expect(row, findsOneWidget);
     expect(tester.getTopLeft(row).dy, closeTo(before, 1));
+    await h.close(tester);
+  });
+
+  testWidgets('asking for a message of the open conversation shows it, '
+      'again after the reader scrolled away', (tester) async {
+    final h = await pumpWithServer(
+      tester,
+      handle: (r) async {
+        if (r.path == '/api/v4/posts/n50') return ok(post(50));
+        if (r.path == '/api/v4/channels/$channelId/posts') {
+          final query = r.raw.uri.queryParameters;
+          if (query['before'] == 'n50') return ok(page(range(49, 20)));
+          if (query['after'] == 'n50') return ok(page(range(80, 51)));
+          return ok(page(range(200, 141)));
+        }
+        if (r.path == '/api/v4/users/ids') return ok(<Object?>[]);
+        return ok(<String, Object?>{});
+      },
+      home: (url) => Scaffold(
+        body: ConversationView(
+          url: url,
+          conversation: conversationProvider(url, channelId),
+          startText: 'This is the start of Boats.',
+        ),
+      ),
+    );
+    await h.settle(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ConversationView)),
+    );
+    final conversation = conversationProvider(h.url, channelId);
+    final row = find.text('message 50');
+    expect(row, findsNothing);
+
+    container.read(conversation.notifier).showPost('n50');
+    await h.settle(tester);
+    expect(row, findsOneWidget);
+
+    await tester.drag(find.byType(ConversationView), const Offset(0, 3000));
+    await h.settle(tester);
+    expect(row.hitTestable(), findsNothing);
+
+    container.read(conversation.notifier).showPost('n50');
+    await h.settle(tester);
+    expect(row.hitTestable(), findsOneWidget);
     await h.close(tester);
   });
 }

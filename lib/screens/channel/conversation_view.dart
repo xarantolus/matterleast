@@ -192,6 +192,14 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
 
   void _changed(ConversationState? before, ConversationState after) {
     if (before == null) return;
+    final shown = after.highlightKey;
+    if (shown != null &&
+        after.showCount != before.showCount &&
+        after.generation == before.generation &&
+        after.rows.any((r) => r.key == shown)) {
+      _list.centre(shown);
+      setState(() => _highlight(shown));
+    }
     // What the user sends shows where they can see it go out.
     if (sentJustNow(before, after) && !(_view.value?.pinned ?? true)) {
       _showLatest(after);

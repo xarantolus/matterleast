@@ -36,6 +36,10 @@ abstract class ConversationState with _$ConversationState {
     SavedPlace? saved,
     String? highlightKey,
 
+    /// Counts the times a message was asked for, so asking again for the
+    /// same one shows it again.
+    @Default(0) int showCount,
+
     /// When the channel was last read before it was opened, or since the
     /// reader marked a message unread.
     DateTime? lastViewedAt,
