@@ -78,6 +78,7 @@ class _ServerImageState extends ConsumerState<ServerImage> {
     final placeholder =
         widget.placeholder ?? _Box(width: widget.width, height: widget.height);
     return Image(
+      key: ValueKey(url),
       image: ResizeImage(
         CachedNetworkImageProvider(url.toString(), cacheManager: caches.media),
         width: pixels,

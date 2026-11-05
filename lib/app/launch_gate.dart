@@ -4,6 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/dev_sign_in.dart';
+import 'package:matterleast/app/image_memory.dart';
 import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/incoming_shares.dart';
 import 'package:matterleast/app/platform.dart';
@@ -42,6 +43,7 @@ class LaunchGate extends ConsumerStatefulWidget {
 
 class _LaunchGateState extends ConsumerState<LaunchGate> {
   late final AppLifecycleListener _lifecycle;
+  final _imageMemory = ReleaseImagesWhenHidden();
   StreamSubscription<Uri>? _links;
   StreamSubscription<List<SharedMediaFile>>? _shares;
   GoneChannels? _gone;
@@ -178,6 +180,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     _shortcutSource?.close();
     _gone?.dispose();
     _lifecycle.dispose();
+    _imageMemory.dispose();
     super.dispose();
   }
 

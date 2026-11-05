@@ -259,6 +259,38 @@ void main() {
     expect(find.byType(GalleryScreen), findsNothing);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
+  testWidgets('closing the gallery frees its full-size pictures', (
+    tester,
+  ) async {
+    final answer = await _pictures(tester);
+    final cache = PaintingBinding.instance.imageCache..clear();
+    final picture = CachedNetworkImageProvider(
+      '$_server/api/v4/files/${_photo.id}/preview',
+    );
+    await show(tester, answer);
+    for (
+      var i = 0;
+      i < 100 && find.byType(ExtendedImageGesture).evaluate().isEmpty;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(cache.containsKey(picture), isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+
+    expect(cache.containsKey(picture), isFalse);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
   testWidgets('a back swipe on a touchpad closes the gallery on a desktop', (
     tester,
   ) async {
