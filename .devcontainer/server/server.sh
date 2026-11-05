@@ -39,19 +39,20 @@ create_db() {
         "$PG_IMAGE" -c listen_addresses=127.0.0.1 >/dev/null
 }
 
-# create_server <name> <port> <database>
+# create_server <name> <port> <database> [listen port]
 # The emulator knows the server as SiteURL; the desktop lane
 # (tool/desktop.sh) uses 127.0.0.1, which WebSockets only accept as an
-# allowed origin.
+# allowed origin. A server with its own listen port sits behind the
+# responder's proxy on <port> (commands/sso_proxy.js).
 create_server() {
-    local name=$1 port=$2 database=$3
+    local name=$1 port=$2 database=$3 listen=${4:-$2}
     podman run -d --name "$PREFIX-$name" --network host \
         -v "$PREFIX-$name-config":/mattermost/config \
         -v "$PREFIX-$name-data":/mattermost/data \
         --env-file mattermost.env \
         -e MM_SERVICESETTINGS_SITEURL="http://10.0.2.2:$port" \
         -e MM_SERVICESETTINGS_ALLOWCORSFROM="http://127.0.0.1:$port" \
-        -e MM_SERVICESETTINGS_LISTENADDRESS="127.0.0.1:$port" \
+        -e MM_SERVICESETTINGS_LISTENADDRESS="127.0.0.1:$listen" \
         -e MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:$DB_PASSWORD@127.0.0.1:5432/$database?sslmode=disable&connect_timeout=10" \
         "$MM_IMAGE" >/dev/null
 }
@@ -87,15 +88,15 @@ wait_ready() { # wait_ready <port>
     echo "server: ready at http://127.0.0.1:$1 after ${waited}s"
 }
 
-start_one() { # start_one <name> <port> <database>
-    local name=$1 port=$2 database=$3 fresh=0
+start_one() { # start_one <name> <port> <database> [listen port]
+    local name=$1 port=$2 database=$3 listen=${4:-} fresh=0
     if ! exists "$name"; then
         wait_db
         local present
         present=$(pg_retry psql -h 127.0.0.1 -U mmuser -d postgres -tAc \
             "SELECT 1 FROM pg_database WHERE datname='$database'" | tr -d "[:space:]")
         [ "$present" = 1 ] || pg createdb -h 127.0.0.1 -U mmuser "$database"
-        create_server "$name" "$port" "$database"
+        create_server "$name" "$port" "$database" $listen
         fresh=1
     elif ! running "$name"; then
         podman start "$PREFIX-$name" >/dev/null
@@ -112,7 +113,7 @@ start() {
     done
     start_one server 8165 mattermost
     if [ "$second" = "--second" ] || exists server2; then
-        start_one server2 8167 mattermost2
+        start_one server2 8167 mattermost2 8177
     fi
 }
 
