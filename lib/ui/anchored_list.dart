@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/ui/anchored_scrollbar.dart';
 import 'package:matterleast/ui/motion.dart';
 
@@ -628,8 +629,10 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     final row = _laidOut().where((r) => r.key == key).firstOrNull;
     if (row == null) return;
     final height = _scroll.position.viewportDimension;
-    final want = (height - (row.bottom - row.top)) / 2;
-    _jumpTo(key, math.max(0, want));
+    _jumpTo(
+      key,
+      centredOffset(viewport: height, rowHeight: row.bottom - row.top),
+    );
   }
 
   void _setPixels(double pixels) {

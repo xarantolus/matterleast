@@ -169,4 +169,15 @@ void main() {
       );
     });
   });
+
+  group('centredOffset', () {
+    test('a row shorter than the list sits in the middle', () {
+      expect(centredOffset(viewport: 600, rowHeight: 100), 250);
+    });
+
+    test('a row taller than the list shows its top at the top', () {
+      expect(centredOffset(viewport: 600, rowHeight: 900), -300);
+      expect(centredOffset(viewport: 600, rowHeight: 600), 0);
+    });
+  });
 }

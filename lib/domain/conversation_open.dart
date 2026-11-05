@@ -22,6 +22,12 @@ final class OpenCentred extends OpenAt {
   final Object key;
 }
 
+/// How far above the bottom of a list [viewport] tall the bottom edge of a
+/// row [rowHeight] tall sits so the row is centred, or, when it is taller
+/// than the list, so its top (with the author's name) is at the top.
+double centredOffset({required double viewport, required double rowHeight}) =>
+    rowHeight >= viewport ? viewport - rowHeight : (viewport - rowHeight) / 2;
+
 /// A saved reading position.
 typedef SavedPlace = ({String postId, double offset, DateTime savedAt});
 
