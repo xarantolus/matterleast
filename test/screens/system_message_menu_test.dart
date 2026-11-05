@@ -11,7 +11,11 @@ import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
 import '../support/test_session.dart';
 
-Future<void> _seed(ServerSession session, {required bool admin}) async {
+Future<void> _seed(
+  ServerSession session, {
+  required bool admin,
+  bool twice = false,
+}) async {
   final store = session.store;
   await store.applyMyRoles('system_user');
   await store.applyChannelMember(
@@ -30,8 +34,24 @@ Future<void> _seed(ServerSession session, {required bool admin}) async {
   await store.applyChannelPage(
     channelId: channelId,
     page: api.PostList.fromJson({
-      'order': ['sys1'],
+      'order': [if (twice) 'sys2', 'sys1'],
       'posts': {
+        if (twice)
+          'sys2': {
+            'id': 'sys2',
+            'channel_id': channelId,
+            'user_id': 'someone',
+            'type': 'system_add_to_channel',
+            'props': {'username': 'wren', 'addedUsername': 'carol'},
+            'create_at': DateTime.utc(
+              2026,
+              10,
+              26,
+              9,
+              1,
+            ).millisecondsSinceEpoch,
+            'message': '@wren added @carol to the channel.',
+          },
         'sys1': {
           'id': 'sys1',
           'channel_id': channelId,
@@ -48,21 +68,24 @@ Future<void> _seed(ServerSession session, {required bool admin}) async {
 }
 
 void main() {
-  Future<ServerHarness> open(WidgetTester tester, {required bool admin}) =>
-      pumpWithServer(
-        tester,
-        size: const Size(400, 800),
-        handle: (r) => ok(const <String, Object?>{}),
-        seed: (session) => _seed(session, admin: admin),
-        home: (url) => Scaffold(
-          body: ConversationView(
-            url: url,
-            conversation: conversationProvider(url, channelId),
-            startText: 'This is the start of Boats.',
-            onOpenThread: (post, {reply = false}) {},
-          ),
-        ),
-      );
+  Future<ServerHarness> open(
+    WidgetTester tester, {
+    required bool admin,
+    bool twice = false,
+  }) => pumpWithServer(
+    tester,
+    size: const Size(400, 800),
+    handle: (r) => ok(const <String, Object?>{}),
+    seed: (session) => _seed(session, admin: admin, twice: twice),
+    home: (url) => Scaffold(
+      body: ConversationView(
+        url: url,
+        conversation: conversationProvider(url, channelId),
+        startText: 'This is the start of Boats.',
+        onOpenThread: (post, {reply = false}) {},
+      ),
+    ),
+  );
 
   testWidgets('an admin long-pressing a system message can delete it', (
     tester,
@@ -84,6 +107,16 @@ void main() {
     expect(find.text('Delete'), findsNothing);
     expect(find.text('Copy text'), findsNothing);
     expect(find.byType(BottomSheet), findsNothing);
+    await h.close(tester);
+  });
+
+  testWidgets('a line telling several system messages has no menu', (
+    tester,
+  ) async {
+    final h = await open(tester, admin: true, twice: true);
+    await tester.longPress(find.textContaining('added', findRichText: true));
+    await h.settle(tester);
+    expect(find.text('Delete'), findsNothing);
     await h.close(tester);
   });
 }

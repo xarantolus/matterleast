@@ -476,8 +476,12 @@ extension on _ConversationViewState {
     List<PostItem> combined, {
     required bool highlighted,
   }) {
-    // A system message offers only what the menu allows it, such as Delete.
-    final menu = !post.deleted && !post.unreadable;
+    // A system message offers only what the menu allows it, such as Delete;
+    // a line telling several of them has no single message to act on.
+    final menu =
+        !post.deleted &&
+        !post.unreadable &&
+        !(post.isSystem && combined.isNotEmpty);
     final usable = !post.isSystem && menu;
     final threads = widget.onOpenThread != null;
     // An archived channel is read-only, reactions included.

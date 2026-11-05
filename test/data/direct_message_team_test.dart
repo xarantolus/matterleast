@@ -4,7 +4,6 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
 
-import '../support/fake_server.dart';
 import '../support/test_session.dart';
 
 void main() {
