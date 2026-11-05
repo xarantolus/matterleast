@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
@@ -70,5 +71,34 @@ void main() {
     expect(ranges, hasLength(2), reason: 'a gap, not false continuity');
     final newest = await session.store.post('n${sinceCap - 1}');
     expect(newest, isNotNull);
+  });
+
+  test('a thread whose first message is gone on the server shows as '
+      'deleted, not as an error', () async {
+    Map<String, Object?> post(String id, int second, {String root = ''}) => {
+      'id': id,
+      'channel_id': channelId,
+      'user_id': 'someone',
+      'root_id': root,
+      'create_at': start.add(Duration(seconds: second)).millisecondsSinceEpoch,
+      'message': 'message $id',
+    };
+    await session.store.applyThreadPage(
+      rootId: 'root',
+      page: api.PostList.fromJson({
+        'order': ['reply', 'root'],
+        'posts': {
+          'root': post('root', 0),
+          'reply': post('reply', 1, root: 'root'),
+        },
+      }),
+    );
+    server.handle = (r) => r.path == '/api/v4/posts/root/thread'
+        ? error(404, 'app.post.get.app_error')
+        : ok(<Object?>[]);
+    await actions.refreshThread('root');
+    for (final id in ['root', 'reply']) {
+      expect((await session.store.post(id))?.deleteAt, isNotNull, reason: id);
+    }
   });
 }

@@ -37,11 +37,13 @@ List<ConversationTarget> restore(
   bool intent = false,
   Set<String> servers = const {url},
   Map<String, SwitchItem>? channels,
+  bool rootDeleted = false,
 }) => conversationsToRestore(
   saved: saved,
   launchedByIntent: intent,
   signedInUrls: servers,
   channels: channels ?? {'c1': channel('c1', title: 'Renamed')},
+  rootDeleted: rootDeleted,
 );
 
 void main() {
@@ -94,6 +96,11 @@ void main() {
       expect(stack, hasLength(2));
       expect(stack.first, isA<ChannelTarget>());
       expect((stack.last as ThreadTarget).rootId, 'p1');
+    });
+
+    test('a thread whose first message was deleted opens its channel', () {
+      final stack = restore(inThread, rootDeleted: true);
+      expect(stack.single, isA<ChannelTarget>());
     });
 
     test('nothing saved, nothing opens', () {

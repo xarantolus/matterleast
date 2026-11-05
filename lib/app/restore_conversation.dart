@@ -48,8 +48,8 @@ Future<List<ConversationTarget>> _stackOf(
 }
 
 /// The conversations that open [saved] again, its channel first when it is
-/// a thread; none when its server is signed out or its channel left, gone
-/// or archived since.
+/// a thread whose first message is still there; none when its server is
+/// signed out or its channel left, gone or archived since.
 Future<List<ConversationTarget>> openableStack(
   ProviderContainer container,
   SavedConversation saved,
@@ -64,6 +64,12 @@ Future<List<ConversationTarget>> openableStack(
     container,
     switchItemsProvider(saved.url).future,
   ).timeout(const Duration(seconds: 5));
+  final rootId = saved.rootId;
+  final session = await readOnceIn(
+    container,
+    serverSessionProvider(saved.url).future,
+  );
+  final root = rootId == null ? null : await session.store.post(rootId);
   return conversationsToRestore(
     saved: saved,
     launchedByIntent: false,
@@ -72,5 +78,6 @@ Future<List<ConversationTarget>> openableStack(
       for (final i in items)
         if (i.kind != SwitchKind.person) i.id: i,
     },
+    rootDeleted: root?.deleteAt != null,
   );
 }

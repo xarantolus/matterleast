@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -188,15 +189,25 @@ class ConversationActions {
   Future<void> refreshThread(String rootId, {Object? owner}) =>
       _run('thread-refresh:$rootId', owner, () async {
         final crt = await _db.collapsedThreads();
-        final page = await _call(
-          () => _client.posts.getPostThread(
-            postId: rootId,
-            perPage: pageSize,
-            direction: 'up',
-            collapsedThreads: crt,
-            collapsedThreadsExtended: crt,
-          ),
-        );
+        final api.PostList page;
+        try {
+          page = await _call(
+            () => _client.posts.getPostThread(
+              postId: rootId,
+              perPage: pageSize,
+              direction: 'up',
+              collapsedThreads: crt,
+              collapsedThreadsExtended: crt,
+            ),
+          );
+        } on ServerError catch (e) {
+          if (!e.isNotFound) rethrow;
+          // Deleted while no event could tell us, replies and all.
+          final root = await _store.post(rootId);
+          if (root == null) rethrow;
+          await _store.applyDelete(rootId, at: root.updateAt ?? root.createAt);
+          return;
+        }
         await _store.applyThreadPage(
           rootId: rootId,
           page: page,

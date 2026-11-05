@@ -114,6 +114,7 @@ List<ConversationTarget> conversationsToRestore({
   required bool launchedByIntent,
   required Set<String> signedInUrls,
   required Map<String, SwitchItem> channels,
+  bool rootDeleted = false,
 }) {
   if (saved == null || launchedByIntent) return const [];
   if (!signedInUrls.contains(saved.url)) return const [];
@@ -132,7 +133,7 @@ List<ConversationTarget> conversationsToRestore({
       title: channel.title,
       teamId: teamId,
     ),
-    if (root != null)
+    if (root != null && !rootDeleted)
       ConversationTarget.thread(
         url: saved.url,
         channelId: saved.channelId,
