@@ -506,29 +506,29 @@ List<CategorySection> unreadsOnly(List<CategorySection> sections) {
 /// Pure: the nearest unread channel above and below what the reader sees.
 /// [rows] are the list's channels in order; [placed] holds the rows laid
 /// out now, by id, with their top and bottom relative to the top of the
-/// visible part, which is [height] tall. Rows not laid out are further
-/// away than every laid-out one, on the side their place in [rows] says.
+/// visible part, which is [height] tall. A row not laid out is above when
+/// the next laid-out row after it is not below the visible part; the list
+/// keeps stray rows of categories scrolled past laid out, so the first
+/// laid-out row says nothing.
 ({String? above, String? below}) unreadOutside({
   required List<({String id, bool unread})> rows,
   required Map<String, ({double top, double bottom})> placed,
   required double height,
 }) {
-  final firstPlaced = rows.indexWhere((r) => placed.containsKey(r.id));
   String? above;
   String? below;
-  for (final (i, row) in rows.indexed) {
-    if (!row.unread) continue;
+  ({double top, double bottom})? next;
+  for (final row in rows.reversed) {
     final at = placed[row.id];
-    final isAbove = at == null
-        ? firstPlaced >= 0 && i < firstPlaced
-        : at.bottom <= 0;
-    final isBelow = at == null
-        ? firstPlaced < 0 || i > firstPlaced
-        : at.top >= height;
-    if (isAbove) above = row.id;
-    if (isBelow) {
-      below ??= row.id;
+    if (row.unread) {
+      final isAbove = at == null
+          ? next != null && next.top < height
+          : at.bottom <= 0;
+      final isBelow = at == null ? !isAbove : at.top >= height;
+      if (isAbove) above ??= row.id;
+      if (isBelow) below = row.id;
     }
+    if (at != null) next = at;
   }
   return (above: above, below: below);
 }
