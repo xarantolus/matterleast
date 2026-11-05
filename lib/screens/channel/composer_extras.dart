@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/burn_on_read.dart';
 import 'package:matterleast/domain/scheduled_posts.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
@@ -45,8 +46,8 @@ class BurnOnReadChip extends StatelessWidget {
   );
 }
 
-/// Send (or save, while editing). Holding it offers to schedule the
-/// message when [onSchedule] is set.
+/// Send (or save, while editing). Holding it, or a right-click on desktop,
+/// offers to schedule the message when [onSchedule] is set.
 class SendButton extends StatelessWidget {
   const SendButton({
     required this.editing,
@@ -61,18 +62,27 @@ class SendButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final label = editing ? 'Save' : 'Send';
     final button = IconButton.filled(
-      // The tooltip would take the long press scheduling needs.
-      tooltip: onSchedule == null ? (editing ? 'Save' : 'Send') : null,
+      // On a phone the tooltip would take the long press scheduling needs.
+      tooltip: onSchedule == null
+          ? label
+          : isDesktop
+          ? '$label · right-click to schedule'
+          : null,
       onPressed: onSend,
       icon: Icon(editing ? Icons.check : Icons.send),
     );
     if (onSchedule == null) return button;
     return Semantics(
-      label: 'Send',
+      label: label,
       onLongPressHint: 'schedule',
       onLongPress: onSchedule,
-      child: GestureDetector(onLongPress: onSchedule, child: button),
+      child: GestureDetector(
+        onLongPress: onSchedule,
+        onSecondaryTap: onSchedule,
+        child: button,
+      ),
     );
   }
 }

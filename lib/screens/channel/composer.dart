@@ -562,6 +562,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final burning =
         canBurn &&
         ref.watch(burnOnReadChoiceProvider(widget.url, widget.channelId));
+    final canSchedule =
+        !forwarding &&
+        editing == null &&
+        !burning &&
+        (features?.scheduledPosts ?? false) &&
+        !value.text.text.trimLeft().startsWith('/');
     return RepaintBoundary(
       child: Material(
         color: Theme.of(context).colorScheme.surfaceContainer,
@@ -692,7 +698,10 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                       children: [
                         if (editing == null &&
                             !forwarding &&
-                            (uploads || canPrioritize || canBurn))
+                            (uploads ||
+                                canPrioritize ||
+                                canBurn ||
+                                canSchedule))
                           _rowCentred(
                             rowHeight,
                             IconButton(
@@ -701,7 +710,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                   (!uploads ||
                                           files.length >= maxAttachments) &&
                                       !canPrioritize &&
-                                      !canBurn
+                                      !canBurn &&
+                                      !canSchedule
                                   ? null
                                   : () => _attach(
                                       uploads: uploads,
@@ -709,6 +719,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                           ? options!.acknowledgements
                                           : null,
                                       burnOnRead: canBurn,
+                                      schedule: canSchedule ? sendable : null,
                                     ),
                               icon: const Icon(Icons.add_circle_outline),
                             ),
@@ -796,13 +807,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                           SendButton(
                             editing: editing != null,
                             onSend: sendable ? _send : null,
-                            onSchedule:
-                                sendable &&
-                                    !forwarding &&
-                                    editing == null &&
-                                    !burning &&
-                                    (features?.scheduledPosts ?? false) &&
-                                    !value.text.text.trimLeft().startsWith('/')
+                            onSchedule: sendable && canSchedule
                                 ? _schedule
                                 : null,
                           ),
@@ -848,11 +853,13 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   }
 
   /// Files only with [uploads]; priority unless [acknowledgements] is null;
-  /// the burn-on-read switch with [burnOnRead].
+  /// the burn-on-read switch with [burnOnRead]; scheduling unless
+  /// [schedule] is null, usable once it is true.
   Future<void> _attach({
     required bool uploads,
     required bool? acknowledgements,
     bool burnOnRead = false,
+    bool? schedule,
   }) async {
     final room = maxAttachments - ref.read(_provider).attachments.length;
     final source = await showAppSheet<PickSource>(
@@ -879,6 +886,17 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 onTap: () {
                   Navigator.of(sheet).pop();
                   unawaited(_pickPriority(acknowledgements));
+                },
+              ),
+            if (schedule != null)
+              ListTile(
+                leading: const Icon(Icons.schedule_send_outlined),
+                title: const Text('Schedule message'),
+                subtitle: schedule ? null : const Text('Write a message first'),
+                enabled: schedule,
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  unawaited(_schedule());
                 },
               ),
             if (burnOnRead)
