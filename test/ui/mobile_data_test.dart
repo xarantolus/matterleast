@@ -177,6 +177,30 @@ void main() {
       },
     );
 
+    testWidgets('while the connection is unknown the card decides nothing', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _scope(
+          const LinkPreviewCard(preview: _preview),
+          overrides: [
+            connectionProvider.overrideWith((ref) => const Stream.empty()),
+            dataSaverProvider.overrideWith((ref) => Stream.value(false)),
+            imagesOnMobileDataProvider.overrideWith(
+              (ref) => Stream.value(true),
+            ),
+            gifsOnMobileDataProvider.overrideWith((ref) => Stream.value(true)),
+            linkPicturesOnMobileDataProvider.overrideWith(
+              (ref) => Stream.value(false),
+            ),
+          ],
+        ),
+      );
+      await _load(tester);
+      expect(find.text('Tide tables'), findsOneWidget);
+      expect(find.byType(ImageSlot), findsNothing);
+    });
+
     scenario(
       'on Wi-Fi the picture shows',
       child: const LinkPreviewCard(preview: _preview),

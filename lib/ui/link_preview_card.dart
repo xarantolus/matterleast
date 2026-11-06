@@ -30,7 +30,7 @@ class _LinkPreviewCardState extends ConsumerState<LinkPreviewCard> {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
     final env = PostEnvironment.maybeOf(context);
-    final pictures = ref.watch(autoLoadProvider(DataKind.linkPicture)) ?? true;
+    final pictures = ref.watch(autoLoadProvider(DataKind.linkPicture)) ?? false;
     final imageUrl = pictures ? preview.imageUrl : null;
     final size = preview.imageSize;
     return Padding(

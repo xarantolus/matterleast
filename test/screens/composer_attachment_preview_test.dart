@@ -76,8 +76,16 @@ Future<ServerHarness> _pasteAnImage(WidgetTester tester) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
   await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
   await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-  await h.settle(tester);
+  await _until(tester, h, _thumbnail);
   return h;
+}
+
+/// Settles in short rounds until [finder] matches; the paste writes a file,
+/// which takes as long as the machine is busy.
+Future<void> _until(WidgetTester tester, ServerHarness h, Finder finder) async {
+  for (var i = 0; i < 100 && finder.evaluate().isEmpty; i++) {
+    await h.settle(tester, rounds: 1);
+  }
 }
 
 void main() {
@@ -94,7 +102,7 @@ void main() {
     final h = await _pasteAnImage(tester);
 
     await tester.tap(_thumbnail, warnIfMissed: false);
-    await h.settle(tester);
+    await _until(tester, h, find.byType(GalleryScreen));
 
     expect(find.byType(GalleryScreen), findsOneWidget);
     await h.close(tester);
