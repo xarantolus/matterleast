@@ -31,14 +31,14 @@ void main() {
     return (gap: gap, line: line);
   }
 
-  testWidgets('the gap is smaller on desktop and holds the typing line', (
+  testWidgets('the gap holds the typing line and little more, everywhere', (
     tester,
   ) async {
     final phone = await measure(tester, TargetPlatform.android);
     final desktop = await measure(tester, TargetPlatform.linux);
-    expect(desktop.gap, lessThan(phone.gap));
-    expect(desktop.gap, greaterThan(desktop.line));
+    expect(phone.gap, desktop.gap);
     expect(phone.gap, greaterThan(phone.line));
+    expect(phone.gap, lessThan(phone.line + 8));
   });
 
   testWidgets('a larger text size makes room for a taller typing line', (
