@@ -72,10 +72,7 @@ void main() {
     });
 
     test('otherwise the bottom', () {
-      expect(
-        openPosition(rows: rows(), height: 800),
-        isA<OpenAtBottom>(),
-      );
+      expect(openPosition(rows: rows(), height: 800), isA<OpenAtBottom>());
     });
   });
 
