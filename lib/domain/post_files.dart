@@ -91,9 +91,10 @@ Uint8List? _base64(String? value) {
 
 const _images = {'jpg', 'jpeg', 'png', 'webp', 'bmp', 'heic', 'heif'};
 const _videos = {'mp4', 'm4v', 'webm', 'mkv', '3gp', 'mov'};
+const _pages = {'html', 'htm', 'xhtml'};
 const _texts = {
   'txt', 'md', 'markdown', 'log', 'csv', 'tsv', 'json', 'yaml', 'yml', //
-  'xml', 'html', 'css', 'js', 'ts', 'dart', 'py', 'go', 'java', 'kt', 'c',
+  'xml', 'css', 'js', 'ts', 'dart', 'py', 'go', 'java', 'kt', 'c',
   'h', 'cpp', 'hpp', 'cs', 'rs', 'rb', 'php', 'sh', 'sql', 'swift', 'toml',
   'ini', 'conf', 'diff', 'patch',
 };
@@ -105,6 +106,8 @@ FileKind fileKindOf({required String extension, required String mimeType}) {
   if (_images.contains(ext)) return FileKind.image;
   if (_videos.contains(ext)) return FileKind.video;
   if (ext == 'pdf' || mimeType == 'application/pdf') return FileKind.pdf;
+  // A web page opens in the browser, not as its source.
+  if (_pages.contains(ext) || mimeType == 'text/html') return FileKind.other;
   if (_texts.contains(ext)) return FileKind.text;
   if (mimeType.startsWith('image/') && mimeType != 'image/svg+xml') {
     return FileKind.image;

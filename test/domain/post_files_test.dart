@@ -36,6 +36,15 @@ void main() {
       expect(kind('zip', 'application/zip'), FileKind.other);
     });
 
+    test('a web page opens in an app, not as its source', () {
+      FileKind kind(String ext, [String mime = '']) =>
+          fileKindOf(extension: ext, mimeType: mime);
+      expect(kind('html'), FileKind.other);
+      expect(kind('HTM'), FileKind.other);
+      expect(kind('', 'text/html'), FileKind.other);
+      expect(kind('xml'), FileKind.text);
+    });
+
     test('sizes read like people write them', () {
       expect(formatBytes(38), '38 B');
       expect(formatBytes(1536), '1.5 KB');
