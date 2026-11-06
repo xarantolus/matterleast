@@ -514,7 +514,7 @@ class PostTile extends StatelessWidget {
               action('Open $text'): () => env.onLink(classifyLink(url, server)),
             },
             SpokenMention(:final name) => {
-              action('Show @$name'): () => env.onMention(name),
+              action('Show @$name'): () => env.onMention(name, null),
             },
             SpokenChannel(:final name, :final shown) => {
               action('Open ~$shown'): () => env.onChannel(name),
@@ -1035,7 +1035,7 @@ class _SystemLine extends StatelessWidget {
           for (final target in spoken.targets)
             if (target case SpokenMention(:final name))
               CustomSemanticsAction(label: 'Show @$name'): () =>
-                  env.onMention(name),
+                  env.onMention(name, null),
       },
       child: onLongPress == null
           ? _systemRow(context, id, line, style, time)

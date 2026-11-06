@@ -20,7 +20,7 @@ Widget _message(Widget child, {required VoidCallback onMessageHold}) =>
             server: Uri.parse('https://chat.example.test'),
             options: const ParseOptions(),
             myUsername: 'me',
-            onMention: (_) {},
+            onMention: (_, _) {},
             onChannel: (_) {},
             onLink: (_) {},
             child: GestureDetector(

@@ -40,7 +40,7 @@ Future<void> _show(
         server: Uri.parse(_url),
         options: const ParseOptions(),
         myUsername: 'me',
-        onMention: (name) => _opened.add('@$name'),
+        onMention: (name, _) => _opened.add('@$name'),
         onChannel: (name) => _opened.add('~$name'),
         onLink: (target) => _opened.add(switch (target) {
           UriLink(:final uri) => '$uri',

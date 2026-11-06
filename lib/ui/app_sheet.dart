@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// A modal bottom sheet, the way every sheet opens. The keyboard goes down
@@ -10,7 +11,8 @@ import 'package:matterleast/ui/tokens.dart';
 ///
 /// On desktop the same content opens as a popup instead: next to [anchor]
 /// (a global rect, such as the button or the point clicked) when given,
-/// else as a dialog in the middle of the window. Esc and a click outside
+/// else next to the widget of [context] unless that is a good part of the
+/// window, then as a dialog in the middle of it. Esc and a click outside
 /// close it.
 Future<T?> showAppSheet<T>({
   required BuildContext context,
@@ -27,7 +29,13 @@ Future<T?> showAppSheet<T>({
   // focus back on its own once a page opened from the sheet closes.
   restore?.unfocus();
   final picked = isDesktop
-      ? await _showPopup<T>(context, builder, constraints, anchor)
+      ? await _showPopup<T>(
+          context,
+          builder,
+          constraints,
+          anchor ??
+              openerAnchor(globalRectOf(context), MediaQuery.sizeOf(context)),
+        )
       : await showModalBottomSheet<T>(
           context: context,
           builder: builder,
@@ -51,6 +59,14 @@ Rect? globalRectOf(BuildContext context) {
   final box = context.findRenderObject();
   if (box is! RenderBox || !box.hasSize || !box.attached) return null;
   return box.localToGlobal(Offset.zero) & box.size;
+}
+
+/// Where a popup without an explicit anchor opens: next to [opener], unless
+/// that is unknown or covers half the window or more, as a page does.
+Rect? openerAnchor(Rect? opener, Size window) {
+  if (opener == null || opener.isEmpty) return null;
+  final share = opener.width * opener.height / (window.width * window.height);
+  return share < 0.5 ? opener : null;
 }
 
 /// Popups next to what opened them are as narrow as a menu; dialogs as
@@ -77,7 +93,10 @@ Future<T?> _showPopup<T>(
       constraints: constraints?.enforce(limits) ?? limits,
       child: Padding(
         padding: const EdgeInsets.only(top: Spacing.md, bottom: Spacing.sm),
-        child: Builder(builder: builder),
+        child: Theme(
+          data: _compactRows(Theme.of(dialog)),
+          child: Builder(builder: builder),
+        ),
       ),
     );
     if (anchor == null) {
@@ -127,4 +146,13 @@ class AnchoredLayout extends SingleChildLayoutDelegate {
   @override
   bool shouldRelayout(AnchoredLayout oldDelegate) =>
       anchor != oldDelegate.anchor;
+}
+
+/// List rows in a desktop popup are as tall as the menu rows beside them.
+ThemeData _compactRows(ThemeData theme) {
+  final height = theme.extension<AppDensity>()?.menuRowHeight;
+  if (height == null) return theme;
+  return theme.copyWith(
+    listTileTheme: theme.listTileTheme.copyWith(minTileHeight: height),
+  );
 }

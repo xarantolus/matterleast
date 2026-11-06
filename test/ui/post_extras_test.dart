@@ -50,7 +50,7 @@ Widget _host(Widget child, {bool acknowledgements = false}) => ProviderScope(
         server: Uri.parse('https://chat.example.test'),
         options: const ParseOptions(),
         myUsername: 'kite',
-        onMention: (_) {},
+        onMention: (_, _) {},
         onChannel: (_) {},
         onLink: (_) {},
         image: (url, size, fit) => SizedBox.fromSize(size: size),

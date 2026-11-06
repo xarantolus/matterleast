@@ -142,7 +142,7 @@ void main() {
           server: Uri.parse('https://chat.example.test'),
           options: const ParseOptions(),
           myUsername: 'river',
-          onMention: (_) {},
+          onMention: (_, _) {},
           onChannel: (_) {},
           onLink: (_) {},
           image: (url, size, _) {

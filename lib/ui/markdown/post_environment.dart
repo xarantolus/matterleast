@@ -30,7 +30,9 @@ class PostEnvironment extends InheritedWidget {
   final Uri server;
   final ParseOptions options;
   final String myUsername;
-  final ValueChanged<String> onMention;
+
+  /// Opens the person; [at] is where it was tapped, when it was.
+  final void Function(String name, Rect? at) onMention;
   final ValueChanged<String> onChannel;
   final ValueChanged<LinkTarget> onLink;
 
