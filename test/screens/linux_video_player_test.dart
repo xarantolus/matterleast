@@ -17,6 +17,7 @@ class _Mpv extends VideoPlayerPlatform {
 void main() {
   test('a decoder error that mpv works around does not stop the video', () {
     final events = StreamController<VideoEvent>();
+    addTearDown(events.close);
     final seen = <VideoEventType>[];
     final errors = <Object>[];
     ForgivingPlayer(_Mpv(events.stream))
