@@ -3,7 +3,9 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/app_visibility.dart';
 import 'package:matterleast/notifications/background.dart';
@@ -39,6 +41,7 @@ abstract final class StayConnected {
 /// lets go, so the UI's own connection is the only one.
 @pragma('vm:entry-point')
 Future<void> stayConnectedMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
   final port = ReceivePort();
   IsolateNameServer.removePortNameMapping(AppVisibility.serviceName);
   IsolateNameServer.registerPortWithName(
@@ -46,7 +49,14 @@ Future<void> stayConnectedMain() async {
     AppVisibility.serviceName,
   );
   final engine = _ServiceEngine();
+  // Android destroyed the UI, which may not have said goodbye.
+  _engineChannel.setMethodCallHandler((call) async {
+    if (call.method != 'uiGone') return;
+    AppVisibility.forgetUi();
+    await engine.uiVisible(false);
+  });
   port.listen((message) {
+    if (AppVisibility.answerPing(message)) return;
     switch (message) {
       // The UI is shown and waits until this has let go.
       case final SendPort done:
@@ -55,8 +65,10 @@ Future<void> stayConnectedMain() async {
         unawaited(engine.uiVisible(false));
     }
   });
-  if (!AppVisibility.visible) await engine.connect();
+  if (!await AppVisibility.stillVisible()) await engine.connect();
 }
+
+const _engineChannel = MethodChannel('matterleast/stay_connected_engine');
 
 class _ServiceEngine {
   BackgroundApp? _app;
@@ -78,7 +90,14 @@ class _ServiceEngine {
     final app = _app = await BackgroundApp.open();
     final labels = await app.signedIn();
     for (final MapEntry(key: url, value: label) in labels.entries) {
-      final session = await app.manager.session(url);
+      final ServerSession session;
+      try {
+        session = await app.manager.session(url);
+      } on Object catch (e) {
+        // The other servers still notify.
+        Log.warn('notify', 'Opening a server failed', e);
+        continue;
+      }
       final check = NotificationCheck(
         session,
         app.notifier,
@@ -99,12 +118,24 @@ class _ServiceEngine {
     }
   });
 
+  /// Lets go even when a step fails, so the next [connect] opens afresh
+  /// instead of thinking it is still connected.
   Future<void> _disconnect() async {
-    for (final live in _live) {
-      await live.stop();
-    }
-    _live.clear();
-    await _app?.close();
+    final app = _app;
+    final live = [..._live];
     _app = null;
+    _live.clear();
+    for (final l in live) {
+      await _quietly(l.stop);
+    }
+    if (app != null) await _quietly(app.close);
+  }
+
+  static Future<void> _quietly(Future<void> Function() step) async {
+    try {
+      await step();
+    } on Object catch (e) {
+      Log.warn('notify', 'Letting go of a server failed', e);
+    }
   }
 }

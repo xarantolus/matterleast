@@ -11,9 +11,51 @@ abstract final class AppVisibility {
   /// The stay-connected engine listens here for the UI coming and going.
   static const serviceName = 'matterleast.stay_connected';
 
+  static const _ping = 'ping';
+
   static ReceivePort? _port;
 
   static bool get visible => IsolateNameServer.lookupPortByName(_name) != null;
+
+  /// [visible], confirmed by the UI isolate itself: one that died without
+  /// [hidden], as when the app is swiped away from the recent apps, leaves
+  /// its name behind.
+  static Future<bool> stillVisible() => answers(_name);
+
+  /// Whether the isolate registered under [name] answers within [wait].
+  /// A name nobody answers for is forgotten.
+  static Future<bool> answers(
+    String name, {
+    Duration wait = const Duration(seconds: 2),
+  }) async {
+    final port = IsolateNameServer.lookupPortByName(name);
+    if (port == null) return false;
+    final reply = ReceivePort();
+    port.send([_ping, reply.sendPort]);
+    try {
+      await reply.first.timeout(wait);
+      return true;
+    } on TimeoutException {
+      if (IsolateNameServer.lookupPortByName(name) == port) {
+        IsolateNameServer.removePortNameMapping(name);
+      }
+      return false;
+    } finally {
+      reply.close();
+    }
+  }
+
+  /// Answers [answers]; true when [message] was its question.
+  static bool answerPing(Object? message) {
+    if (message case [_ping, final SendPort reply]) {
+      reply.send(null);
+      return true;
+    }
+    return false;
+  }
+
+  /// Forgets the UI once Android has destroyed it.
+  static void forgetUi() => IsolateNameServer.removePortNameMapping(_name);
 
   /// Called by the UI isolate as it is shown. Completes once the
   /// stay-connected engine has let go of the servers, so their databases
@@ -22,7 +64,7 @@ abstract final class AppVisibility {
     Duration wait = const Duration(seconds: 5),
   }) async {
     if (_port == null) {
-      _port = ReceivePort();
+      _port = ReceivePort()..listen(answerPing);
       IsolateNameServer.removePortNameMapping(_name);
       IsolateNameServer.registerPortWithName(_port!.sendPort, _name);
     }

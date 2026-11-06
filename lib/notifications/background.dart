@@ -191,8 +191,8 @@ void backgroundDispatcher() {
   Workmanager().executeTask((task, input) async {
     // The open app and the stay-connected engine hear about new posts at
     // once already, and a second writer would only wait for them.
-    if (AppVisibility.visible ||
-        IsolateNameServer.lookupPortByName(AppVisibility.serviceName) != null) {
+    if (await AppVisibility.stillVisible() ||
+        await AppVisibility.answers(AppVisibility.serviceName)) {
       return true;
     }
     await BackgroundApp.run((app) => app.checkAll(refresh: true));
