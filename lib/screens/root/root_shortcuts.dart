@@ -15,6 +15,7 @@ import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/rail_switch.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
+import 'package:matterleast/screens/settings/settings_page.dart';
 import 'package:matterleast/screens/you/you_page.dart';
 
 /// Pure: the channel [forward] of [current] in [list]'s shown rows, or
@@ -87,6 +88,20 @@ class RootShortcuts extends ConsumerWidget {
     );
   }
 
+  void _goToTeam(BuildContext context, WidgetRef ref, int number) {
+    final target = ref.read(railSelectionProvider);
+    if (target == null) return;
+    final teams = ref.read(railTeamsProvider(target.url)).value ?? const [];
+    final team = teams.elementAtOrNull(number - 1);
+    if (team == null) return;
+    unawaited(
+      showPlace(
+        Navigator.of(context),
+        RailTarget(url: target.url, teamId: team.id),
+      ),
+    );
+  }
+
   void _newMessage(BuildContext context, WidgetRef ref) {
     final target = ref.read(railSelectionProvider);
     if (target == null) return;
@@ -140,6 +155,14 @@ class RootShortcuts extends ConsumerWidget {
       OpenAccountIntent: CallbackAction<OpenAccountIntent>(
         onInvoke: (_) => openYou(context),
       ),
+      OpenSettingsIntent: CallbackAction<OpenSettingsIntent>(
+        onInvoke: (_) => unawaited(
+          openPage(Navigator.of(context), const SettingsPage(), popout: true),
+        ),
+      ),
+      TeamNumberIntent: CallbackAction<TeamNumberIntent>(
+        onInvoke: (intent) => _goToTeam(context, ref, intent.number),
+      ),
       CloseOnTopIntent: _CloseOnTop(ref),
     },
     // Lets the keys find these actions while nothing below has the focus.
@@ -148,7 +171,7 @@ class RootShortcuts extends ConsumerWidget {
 }
 
 /// Esc with nothing nearer to close: the content view over the
-/// conversation, else the thread, else the conversation.
+/// conversation, else the thread. The conversation itself stays.
 class _CloseOnTop extends Action<CloseOnTopIntent> {
   _CloseOnTop(this.ref);
 
@@ -157,7 +180,7 @@ class _CloseOnTop extends Action<CloseOnTopIntent> {
   @override
   bool isEnabled(CloseOnTopIntent intent) =>
       ref.read(paneRoutesProvider).stack.isNotEmpty ||
-      !ref.read(openPanesProvider).isEmpty;
+      ref.read(openPanesProvider).thread != null;
 
   @override
   void invoke(CloseOnTopIntent intent) {
@@ -166,7 +189,7 @@ class _CloseOnTop extends Action<CloseOnTopIntent> {
     if (content.stack.isNotEmpty && pane != null) {
       unawaited(pane.maybePop());
     } else {
-      ref.read(openPanesProvider.notifier).back();
+      ref.read(openPanesProvider.notifier).closeThread();
     }
   }
 }

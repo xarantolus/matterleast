@@ -595,8 +595,14 @@ void main() {
     NoticeRoute route({
       bool inView = false,
       bool inFront = true,
+      bool covered = false,
       bool desktop = false,
-    }) => noticeRoute(inView: inView, inFront: inFront, desktop: desktop);
+    }) => noticeRoute(
+      inView: inView,
+      inFront: inFront,
+      covered: covered,
+      desktop: desktop,
+    );
 
     test('a conversation on screen gives nothing', () {
       expect(route(inView: true), NoticeRoute.none);
@@ -611,6 +617,20 @@ void main() {
     test('a desktop window not in front toasts', () {
       expect(route(inFront: false, desktop: true), NoticeRoute.toast);
     });
+
+    test('a phone covered by recents or the shade toasts, no banner', () {
+      expect(route(inFront: false, covered: true), NoticeRoute.toast);
+    });
+
+    test(
+      'a covered phone still shows nothing for a conversation on screen',
+      () {
+        expect(
+          route(inView: true, inFront: false, covered: true),
+          NoticeRoute.none,
+        );
+      },
+    );
 
     test('a phone not in front leaves it to the background engines', () {
       expect(route(inFront: false), NoticeRoute.none);

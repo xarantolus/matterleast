@@ -21,6 +21,11 @@ bool appInFront() =>
     WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed &&
     (!isDesktop || DesktopShell.focus.value);
 
+/// Whether the app is shown but covered or unfocused: on a phone, recents
+/// or the notification shade over it, which Flutter reports as inactive.
+bool appCovered() =>
+    WidgetsBinding.instance.lifecycleState == AppLifecycleState.inactive;
+
 /// The presences the tray menu sets, with their labels.
 const trayStatuses = [
   ('online', 'Online'),

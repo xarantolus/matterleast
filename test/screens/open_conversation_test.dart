@@ -365,7 +365,7 @@ void main() {
       await settle(tester);
     }
 
-    testWidgets('closes the thread, then the channel, from the message list', (
+    testWidgets('closes the thread, never the channel, from the message list', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(1400, 900);
@@ -381,7 +381,7 @@ void main() {
       expect(find.byType(ChannelScreen), findsOneWidget);
       await focusIn(tester, ChannelScreen);
       await esc(tester);
-      expect(find.byType(ChannelScreen), findsNothing);
+      expect(find.byType(ChannelScreen), findsOneWidget);
       await finish(tester);
       await tester.pump(Duration.zero);
     }, variant: desktop);

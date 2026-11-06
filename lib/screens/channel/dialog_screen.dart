@@ -13,6 +13,7 @@ import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/narrow_page.dart';
+import 'package:matterleast/ui/picker_modes.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// Shows the dialogs integrations open for this device while the screen
@@ -328,6 +329,7 @@ class _DateField extends StatelessWidget {
     if (initial.isBefore(first)) initial = first;
     if (initial.isAfter(last)) initial = last;
     final picked = await showDatePicker(
+      initialEntryMode: dateEntryMode,
       context: context,
       initialDate: initial,
       firstDate: first,
@@ -342,6 +344,7 @@ class _DateField extends StatelessWidget {
     final start =
         wall ?? snapToInterval(clock.toWall(clock.now), element.timeInterval);
     final time = await showTimePicker(
+      initialEntryMode: timeEntryMode,
       context: context,
       initialTime: TimeOfDay(hour: start.hour, minute: start.minute),
     );
