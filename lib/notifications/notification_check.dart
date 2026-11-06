@@ -70,6 +70,7 @@ class NotificationCheck {
     this.session,
     this.notifier, {
     required this.shownNow,
+    this.deliver,
     this.serverName,
   });
 
@@ -79,6 +80,9 @@ class NotificationCheck {
   /// Whether the user sees the conversation in the app now, which then
   /// gets no notification.
   final bool Function(ConversationKey key) shownNow;
+
+  /// Where a notice goes; the notifier shows it by default.
+  final Future<void> Function(ConversationNotice notice)? deliver;
   final String? serverName;
 
   String get _url => session.url.toString();
@@ -168,9 +172,13 @@ class NotificationCheck {
     for (final update in updates) {
       if (shownNow(update.key)) continue;
       try {
-        await notifier.show(
-          await _notice(update, posts, myId, sound: user.props.desktopSound),
+        final notice = await _notice(
+          update,
+          posts,
+          myId,
+          sound: user.props.desktopSound,
         );
+        await (deliver ?? notifier.show)(notice);
       } on Object catch (e) {
         Log.warn('notify', 'Showing a notification failed', e);
       }

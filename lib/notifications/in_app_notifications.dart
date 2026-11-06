@@ -1,44 +1,100 @@
 import 'dart:async';
 
 import 'package:matterleast/app/desktop/desktop_shell.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/servers/server_manager.dart';
+import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/live_notifications.dart';
+import 'package:matterleast/notifications/notice_banner.dart';
 import 'package:matterleast/notifications/notification_check.dart';
 import 'package:matterleast/notifications/notifier.dart';
 import 'package:matterleast/notifications/notify_rules.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'desktop_notifications.g.dart';
+part 'in_app_notifications.g.dart';
+
+/// Where a notice goes right now: for the conversation [key] of [url], or
+/// with a null [key] for any conversation the user doesn't look at.
+typedef NoticeRouter = NoticeRoute Function(String url, ConversationKey? key);
 
 @Riverpod(keepAlive: true)
-DesktopNotifications desktopNotifications(Ref ref) {
+NoticeRouter noticeRouter(Ref ref) {
   final routes = ref.watch(conversationRoutesProvider);
-  final engine = DesktopNotifications(
+  return (url, key) => noticeRoute(
+    inView:
+        key != null &&
+        conversationInView(
+          url,
+          key,
+          focused: appInFront(),
+          open: Panes.openNow(
+            routes: [for (final r in routes.live) r.target],
+            panes: ref.read(openPanesProvider),
+          ),
+        ),
+    inFront: appInFront(),
+    desktop: isDesktop,
+  );
+}
+
+@Riverpod(keepAlive: true)
+InAppNotifications inAppNotifications(Ref ref) {
+  final engine = InAppNotifications(
     ref.watch(serverManagerProvider),
     ref.watch(notifierProvider),
-    inView: (url, key) => conversationInView(
-      url,
-      key,
-      focused: appInFront(),
-      open: Panes.openNow(
-        routes: [for (final r in routes.live) r.target],
-        panes: ref.read(openPanesProvider),
-      ),
-    ),
+    route: ref.watch(noticeRouterProvider),
+    banner: ref.watch(noticeBannersProvider.notifier).show,
   );
   ref.onDispose(() => unawaited(engine.dispose()));
   return engine;
 }
 
-/// Toasts on desktop, from the window's own live connections while the app
-/// runs (open, minimised or in the tray), for every signed-in server.
-class DesktopNotifications {
-  DesktopNotifications(this._manager, this._notifier, {required this.inView}) {
+/// The notification check of a server as the UI isolate runs it: a notice
+/// for a conversation the user sees is dropped, one while the app is in
+/// front becomes a banner, and one while a desktop window is not in front a
+/// toast.
+NotificationCheck inAppCheck(
+  ServerSession session,
+  Notifier notifier, {
+  required NoticeRouter route,
+  required void Function(ConversationNotice notice) banner,
+  String? serverName,
+}) {
+  final url = session.url.toString();
+  return NotificationCheck(
+    session,
+    notifier,
+    shownNow: (key) => route(url, key) == NoticeRoute.none,
+    deliver: (notice) async {
+      switch (route(url, notice.key)) {
+        case NoticeRoute.banner:
+          banner(notice);
+        case NoticeRoute.toast:
+          await notifier.show(notice);
+        case NoticeRoute.none:
+          break;
+      }
+    },
+    serverName: serverName,
+  );
+}
+
+/// Banners and toasts from the window's own live connections while the app
+/// runs (on a desktop open, minimised or in the tray), for every signed-in
+/// server. A phone that is not in front checks nothing here: its background
+/// engines own the notifications and the cursor then.
+class InAppNotifications {
+  InAppNotifications(
+    this._manager,
+    this._notifier, {
+    required this.route,
+    required this.banner,
+  }) {
     _changes = _manager.changed.listen((url) {
       // A new sign-in replaced the session; its check follows it.
       _serial(() async {
@@ -49,9 +105,8 @@ class DesktopNotifications {
 
   final ServerManager _manager;
   final Notifier _notifier;
-
-  /// Whether the user looks at that conversation of that server now.
-  final bool Function(String url, ConversationKey key) inView;
+  final NoticeRouter route;
+  final void Function(ConversationNotice notice) banner;
 
   final _attached = <String, LiveNotifications>{};
   final _labels = <String, String?>{};
@@ -60,7 +115,7 @@ class DesktopNotifications {
 
   void _serial(Future<void> Function() step) {
     _busy = _busy.then((_) => step()).catchError((Object e) {
-      Log.warn('notify', 'Following the servers for toasts failed', e);
+      Log.warn('notify', 'Following the servers for notices failed', e);
     });
   }
 
@@ -93,18 +148,21 @@ class DesktopNotifications {
     // The window shows what came before; only what arrives from now on
     // can be news.
     await markSeen(session.db);
-    final check = NotificationCheck(
+    final check = inAppCheck(
       session,
       _notifier,
-      shownNow: (key) => inView(url, key),
+      route: route,
+      banner: banner,
       serverName: label,
     );
     _labels[url] = label;
     _attached[url] = LiveNotifications(
       applied: session.connection.applied,
       caughtUp: session.connection.caughtUp,
-      check: ({required afterGap}) =>
-          check.run(refresh: false, fetch: afterGap),
+      check: ({required afterGap}) async {
+        if (route(url, null) == NoticeRoute.none) return;
+        await check.run(refresh: false, fetch: afterGap);
+      },
     )..start();
   }
 
