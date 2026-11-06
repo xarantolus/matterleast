@@ -20,7 +20,6 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
-import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
@@ -102,9 +101,9 @@ class MessageEnvironment extends ConsumerStatefulWidget {
     BuildContext context,
     WidgetRef ref,
     String typed,
+    Rect? anchor,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
-    final anchor = recentPointerAnchor();
     final links = ref.read(messageLinksProvider(url).future);
     final String? userId;
     try {
@@ -208,7 +207,8 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
   Object? _resolver;
   Widget? Function(String, double)? _customEmoji;
 
-  void _onMention(String name) => widget._showPerson(context, ref, name);
+  void _onMention(String name, Rect? at) =>
+      widget._showPerson(context, ref, name, at);
 
   void _onChannel(String name) => widget._openChannel(context, ref, name);
 

@@ -229,10 +229,14 @@ class _InlineTextState extends State<InlineText> {
                 ),
                 recognizer: env == null || _specialMentions.contains(lower)
                     ? null
-                    : (_recognizer<TapGestureRecognizer>(
-                        ('mention', i),
-                        TapGestureRecognizer.new,
-                      )..onTap = () => env.onMention(name)),
+                    : (_recognizer<TapGestureRecognizer>((
+                          'mention',
+                          i,
+                        ), TapGestureRecognizer.new)
+                        ..onTapUp = (tap) => env.onMention(
+                          name,
+                          tap.globalPosition & Size.zero,
+                        )),
                 mouseCursor: env == null || _specialMentions.contains(lower)
                     ? null
                     : SystemMouseCursors.click,

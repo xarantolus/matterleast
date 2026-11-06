@@ -30,7 +30,7 @@ Future<void> _show(WidgetTester tester, String message, Size size) async {
         server: Uri.parse('https://chat.example.test'),
         options: const ParseOptions(),
         myUsername: 'me',
-        onMention: (_) {},
+        onMention: (_, _) {},
         onChannel: (_) {},
         onLink: (_) {},
         child: ListView(

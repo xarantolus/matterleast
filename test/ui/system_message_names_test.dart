@@ -31,7 +31,7 @@ void main() {
           server: Uri.parse('https://chat.example.test'),
           options: const ParseOptions(),
           myUsername: 'me',
-          onMention: tapped.add,
+          onMention: (name, _) => tapped.add(name),
           onChannel: (_) {},
           onLink: (_) {},
           child: ListView(children: [PostTile(post: post)]),

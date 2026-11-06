@@ -34,7 +34,7 @@ Widget _host(Widget child, {List<Override> overrides = const []}) =>
             server: Uri.parse(_url),
             options: const ParseOptions(),
             myUsername: 'kite',
-            onMention: (_) {},
+            onMention: (_, _) {},
             onChannel: (_) {},
             onLink: (_) {},
             image: (url, size, fit) => SizedBox.fromSize(size: size),

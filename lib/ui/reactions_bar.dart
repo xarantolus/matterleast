@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
@@ -178,17 +176,6 @@ String reactionTooltip(ReactionGroup group, {required String myUsername}) {
       ' reacted with :${group.emojiName}:';
 }
 
-/// The height of the who-reacted sheet: half the window on a phone, on
-/// desktop as tall as its longest list of [people] needs, up to that.
-double reactionsHeight({required int people, required double window}) {
-  final most = window * 0.5;
-  if (!isDesktop) return most;
-  const tabBar = 48.0;
-  const label = 40.0;
-  const row = 52.0;
-  return math.min(most, tabBar + label + people * row);
-}
-
 /// Who reacted, one tab per emoji, starting at [initial].
 void showReactions(
   BuildContext context,
@@ -203,15 +190,39 @@ void showReactions(
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheet) {
+      Widget list(ReactionGroup group, {bool shrinkWrap = false}) => ListView(
+        shrinkWrap: shrinkWrap,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.lg,
+              Spacing.md,
+              Spacing.lg,
+              Spacing.xs,
+            ),
+            child: Text(
+              ':${group.emojiName}:',
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: context.tokens.muted),
+            ),
+          ),
+          for (final person in group.people)
+            if (env == null)
+              ListTile(title: Text(person.name))
+            else
+              _Reactor(url: env.server.toString(), person: person),
+        ],
+      );
       final body = DefaultTabController(
         length: reactions.length,
         initialIndex: reactions.indexOf(initial).clamp(0, reactions.length - 1),
-        child: SizedBox(
-          height: reactionsHeight(
-            people: reactions.fold(0, (a, g) => math.max(a, g.people.length)),
-            window: MediaQuery.sizeOf(sheet).height,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: isDesktop ? 0 : MediaQuery.sizeOf(sheet).height * 0.5,
+            maxHeight: MediaQuery.sizeOf(sheet).height * 0.5,
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               TabBar(
                 isScrollable: true,
@@ -230,37 +241,23 @@ void showReactions(
                     ),
                 ],
               ),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    for (final group in reactions)
-                      ListView(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              Spacing.lg,
-                              Spacing.md,
-                              Spacing.lg,
-                              Spacing.xs,
+              Flexible(
+                child: isDesktop
+                    ? Builder(
+                        builder: (tabs) {
+                          final controller = DefaultTabController.of(tabs);
+                          return ListenableBuilder(
+                            listenable: controller,
+                            builder: (_, _) => list(
+                              reactions[controller.index],
+                              shrinkWrap: true,
                             ),
-                            child: Text(
-                              ':${group.emojiName}:',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: context.tokens.muted),
-                            ),
-                          ),
-                          for (final person in group.people)
-                            if (env == null)
-                              ListTile(title: Text(person.name))
-                            else
-                              _Reactor(
-                                url: env.server.toString(),
-                                person: person,
-                              ),
-                        ],
+                          );
+                        },
+                      )
+                    : TabBarView(
+                        children: [for (final g in reactions) list(g)],
                       ),
-                  ],
-                ),
               ),
             ],
           ),
