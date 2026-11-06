@@ -141,9 +141,12 @@ seed() {
 shots() {
     local lane=$root/tool/lane.sh out=$root/.github/screenshots ui=$here/readme-shots/ui.py
     mkdir -p "$out"
-    tap() { python3 "$ui" "$lane adb" tap "$@"; sleep 2; }
+    # An overloaded emulator shows "isn't responding" dialogs over the app.
+    calm() { while python3 "$ui" "$lane adb" has '.* isn.t responding'; do python3 "$ui" "$lane adb" tap 'Wait'; sleep 2; done; }
+    tap() { calm; python3 "$ui" "$lane adb" tap "$@"; sleep 2; }
     keep() { # keep <d|l> <list|chat|home>
         local png
+        calm
         png=$("$lane" shot "$1-$2")
         echo "$1-$2: $(dart run "$root/tool/png_to_jpg.dart" "$png" "$out/$1-$2.jpg" 85)"
     }
@@ -156,6 +159,11 @@ shots() {
     done
     # A fresh install asks about notifications first, and a relaunch reopens
     # the last conversation over the list.
+    for _ in $(seq 30); do
+        calm
+        python3 "$ui" "$lane adb" has 'Not now|Home' && break
+        sleep 2
+    done
     if python3 "$ui" "$lane adb" has 'Not now'; then tap 'Not now'; fi
     for _ in 1 2 3; do
         python3 "$ui" "$lane adb" has 'Home' && break
@@ -173,7 +181,7 @@ shots() {
         if [ "${mode%%:*}" = d ]; then tap 'Channels'; fi
         keep "${mode%%:*}" list
         tap 'Regatta'
-        sleep 1
+        sleep 10
         keep "${mode%%:*}" chat
         "$lane" adb shell input keyevent 4
         sleep 2
@@ -201,12 +209,13 @@ desktop() {
     DISPLAY=$DISPLAY xdotool windowmove --sync "$win" 0 0 windowsize --sync "$win" 1600 1000
     open_regatta() {
         "$lane" key Escape Escape
+        "$lane" click 1000 800
         "$lane" key ctrl+k
         sleep 1
         "$lane" type Regatta
         sleep 2
         # The channel, the first suggestion (Return would search messages).
-        "$lane" click 700 215
+        "$lane" click 700 318
         DISPLAY=$DISPLAY xdotool mousemove 300 990
         sleep 4
     }
