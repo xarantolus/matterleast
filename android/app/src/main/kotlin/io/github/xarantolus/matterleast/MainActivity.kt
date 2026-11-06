@@ -14,6 +14,11 @@ class MainActivity : FlutterActivity() {
         return args
     }
 
+    override fun onDestroy() {
+        StayConnectedService.uiGone(this)
+        super.onDestroy()
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "matterleast/display")

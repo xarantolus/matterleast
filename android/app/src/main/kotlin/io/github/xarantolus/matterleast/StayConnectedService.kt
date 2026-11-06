@@ -14,6 +14,7 @@ import android.os.IBinder
 import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.plugin.common.MethodChannel
 
 /**
  * Keeps the process alive with a low-priority notification and runs the
@@ -37,6 +38,7 @@ class StayConnectedService : Service() {
             return START_NOT_STICKY
         }
         if (engine == null) {
+            running = true
             val loader = FlutterInjector.instance().flutterLoader()
             loader.startInitialization(applicationContext)
             loader.ensureInitializationComplete(applicationContext, null)
@@ -50,12 +52,19 @@ class StayConnectedService : Service() {
                 )
             }
         }
+        if (intent?.action == ACTION_UI_GONE) {
+            engine?.let {
+                MethodChannel(it.dartExecutor.binaryMessenger, ENGINE_CHANNEL)
+                    .invokeMethod("uiGone", null)
+            }
+        }
         return START_STICKY
     }
 
     override fun onDestroy() {
         engine?.destroy()
         engine = null
+        running = false
         super.onDestroy()
     }
 
@@ -100,10 +109,15 @@ class StayConnectedService : Service() {
 
     companion object {
         const val ACTION_STOP = "io.github.xarantolus.matterleast.STOP_STAY_CONNECTED"
+        private const val ACTION_UI_GONE = "io.github.xarantolus.matterleast.UI_GONE"
+        private const val ENGINE_CHANNEL = "matterleast/stay_connected_engine"
         const val SYNC_CHANNEL = "sync"
         private const val NOTIFICATION_ID = 0x5c
         private const val PREFS = "stay_connected"
         private const val KEY_ENABLED = "enabled"
+
+        @Volatile
+        private var running = false
 
         fun isEnabled(context: Context): Boolean =
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -122,6 +136,19 @@ class StayConnectedService : Service() {
         fun disable(context: Context) {
             setEnabled(context, false)
             context.stopService(Intent(context, StayConnectedService::class.java))
+        }
+
+        /**
+         * Tells the engine the UI is gone. Swiping the app away from the recent
+         * apps destroys the UI without it saying so itself.
+         */
+        fun uiGone(context: Context) {
+            // A plain start: the running service is in the foreground already.
+            if (running) {
+                context.startService(
+                    Intent(context, StayConnectedService::class.java).setAction(ACTION_UI_GONE),
+                )
+            }
         }
 
         /** Starts the service when it is switched on; a running one stays as is. */

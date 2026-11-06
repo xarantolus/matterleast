@@ -70,8 +70,14 @@ Future<bool> _onNotice(
 /// later and the background engines take over; on a desktop they stay up
 /// while the process runs, minimised or in the tray, for the toasts.
 Future<void> appHidden(ServerManager manager) async {
-  if (!isDesktop) await manager.setForeground(false);
-  AppVisibility.hidden();
+  try {
+    if (!isDesktop) await manager.setForeground(false);
+  } on Object catch (e) {
+    Log.warn('notify', 'Going to the background failed', e);
+  } finally {
+    // Stay connected takes over only once told, whatever failed before.
+    AppVisibility.hidden();
+  }
 }
 
 /// The periodic check runs while any server is signed in.
