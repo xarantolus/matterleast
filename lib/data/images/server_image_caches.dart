@@ -9,6 +9,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/server_paths.dart';
 import 'package:matterleast/data/images/image_rules.dart';
+import 'package:matterleast/log.dart';
 import 'package:path/path.dart' as p;
 
 /// The download caches of one server, each in its own directory under
@@ -70,7 +71,10 @@ class ServerImageCaches {
         dir,
         stalePeriod: maxIdle,
         repo: LastUseRepository(
-          CacheObjectProvider(path: p.join(dir, 'index.db')),
+          ReopeningRepository(
+            p.join(dir, 'index.db'),
+            (path) => CacheObjectProvider(path: path),
+          ),
           maxIdle: maxIdle,
           budget: budget,
         ),
@@ -174,6 +178,98 @@ class LastUseRepository implements CacheInfoRepository {
 
   @override
   Future<void> deleteDataFile() => _inner.deleteDataFile();
+}
+
+/// A cache index that opens again when its file was removed while open,
+/// as Android's "Clear cache" does to a running app; the old connection
+/// would refuse every write from then on.
+class ReopeningRepository implements CacheInfoRepository {
+  ReopeningRepository(this.path, this._create);
+
+  final String path;
+  final CacheInfoRepository Function(String path) _create;
+  CacheInfoRepository? _repo;
+  Future<CacheInfoRepository>? _opening;
+
+  Future<CacheInfoRepository> _current() {
+    final repo = _repo;
+    if (repo != null && File(path).existsSync()) return Future.value(repo);
+    return _opening ??= _reopen(repo);
+  }
+
+  Future<CacheInfoRepository> _reopen(CacheInfoRepository? stale) async {
+    try {
+      if (stale != null) {
+        Log.info('images', 'The image cache was cleared; opening it again');
+        _repo = null;
+        await stale.close();
+      }
+      final next = _create(path);
+      await next.open();
+      return _repo = next;
+    } finally {
+      _opening = null;
+    }
+  }
+
+  @override
+  Future<bool> exists() async => File(path).existsSync();
+
+  @override
+  Future<bool> open() async {
+    await _current();
+    return true;
+  }
+
+  @override
+  Future<Object?> updateOrInsert(CacheObject cacheObject) async =>
+      (await _current()).updateOrInsert(cacheObject);
+
+  @override
+  Future<CacheObject> insert(
+    CacheObject cacheObject, {
+    bool setTouchedToNow = true,
+  }) async =>
+      (await _current()).insert(cacheObject, setTouchedToNow: setTouchedToNow);
+
+  @override
+  Future<CacheObject?> get(String key) async => (await _current()).get(key);
+
+  @override
+  Future<int> delete(int id) async => (await _current()).delete(id);
+
+  @override
+  Future<int> deleteAll(Iterable<int> ids) async =>
+      (await _current()).deleteAll(ids);
+
+  @override
+  Future<int> update(
+    CacheObject cacheObject, {
+    bool setTouchedToNow = true,
+  }) async =>
+      (await _current()).update(cacheObject, setTouchedToNow: setTouchedToNow);
+
+  @override
+  Future<List<CacheObject>> getAllObjects() async =>
+      (await _current()).getAllObjects();
+
+  @override
+  Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async =>
+      (await _current()).getObjectsOverCapacity(capacity);
+
+  @override
+  Future<List<CacheObject>> getOldObjects(Duration maxAge) async =>
+      (await _current()).getOldObjects(maxAge);
+
+  @override
+  Future<bool> close() async {
+    final repo = _repo;
+    _repo = null;
+    return repo == null || await repo.close();
+  }
+
+  @override
+  Future<void> deleteDataFile() async => (await _current()).deleteDataFile();
 }
 
 /// Cache files in a fixed directory, created on first use.

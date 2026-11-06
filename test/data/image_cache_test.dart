@@ -11,6 +11,28 @@ void main() {
   final now = DateTime.utc(2026, 10, 25, 12);
   const mb = 1024 * 1024;
 
+  test('a cache cleared while the app runs is opened again', () async {
+    final dir = await Directory.systemTemp.createTemp('index');
+    addTearDown(() => dir.delete(recursive: true));
+    final path = '${dir.path}/index.db';
+    final opened = <_FileRepository>[];
+    final repo = ReopeningRepository(path, (path) {
+      final next = _FileRepository(path);
+      opened.add(next);
+      return next;
+    });
+    await repo.open();
+    await repo.get('a');
+
+    await dir.delete(recursive: true);
+    expect(await repo.get('a'), isNull);
+
+    expect(opened, hasLength(2));
+    expect(opened.first.closed, isTrue);
+    expect(opened.last.reads, 1);
+    expect(File(path).existsSync(), isTrue);
+  });
+
   group('eviction', () {
     CachedImage image(int id, {required int daysAgo, int bytes = mb}) =>
         (id: id, bytes: bytes, lastUsed: now.subtract(Duration(days: daysAgo)));
@@ -308,4 +330,28 @@ class _MemoryRepository extends Fake implements CacheInfoRepository {
 
   @override
   Future<List<CacheObject>> getAllObjects() async => objects;
+}
+
+/// Creates its file when opened, like the real index.
+class _FileRepository extends Fake implements CacheInfoRepository {
+  _FileRepository(this.path);
+
+  final String path;
+  var closed = false;
+  var reads = 0;
+
+  @override
+  Future<bool> open() async {
+    File(path).createSync(recursive: true);
+    return true;
+  }
+
+  @override
+  Future<CacheObject?> get(String key) async {
+    reads++;
+    return null;
+  }
+
+  @override
+  Future<bool> close() async => closed = true;
 }
