@@ -295,13 +295,15 @@ jobs:
           persist-credentials: false
 
       # The libraries of the dev container's desktop layer, X11 and Xi for
-      # the tray plugin, and the Flatpak tools.
+      # the tray plugin, libmpv and libepoxy for the video plugin, and the
+      # Flatpak tools.
       - name: Install the desktop build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev \
-            libwebkit2gtk-4.1-dev libx11-dev libxi-dev flatpak flatpak-builder
+            libwebkit2gtk-4.1-dev libx11-dev libxi-dev libmpv-dev libepoxy-dev \
+            flatpak flatpak-builder elfutils
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -342,9 +344,20 @@ jobs:
           flatpak install --user --noninteractive --no-related flathub \
             "org.gnome.Platform//$FLATPAK_RUNTIME" "org.gnome.Sdk//$FLATPAK_RUNTIME"
 
+      # flatpak-builder keeps downloaded sources and every finished module
+      # by the hash of its manifest entry, so ffmpeg, libplacebo and mpv are
+      # built once and only the app's own module changes between runs.
+      - name: Restore the Flatpak build state
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .flatpak-builder
+          key: flatpak-state-${{ hashFiles('linux/flatpak/io.github.xarantolus.matterleast.yml') }}
+          restore-keys: flatpak-state-
+
       - name: Build the Flatpak
         run: |
           flatpak-builder --user --force-clean --disable-rofiles-fuse \
+            --state-dir=.flatpak-builder \
             --repo="$RUNNER_TEMP/flatpak-repo" "$RUNNER_TEMP/flatpak-app" \
             linux/flatpak/io.github.xarantolus.matterleast.yml
           flatpak build-bundle "$RUNNER_TEMP/flatpak-repo" "$RUNNER_TEMP/matterleast.flatpak" \

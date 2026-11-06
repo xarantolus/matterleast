@@ -1,5 +1,7 @@
-# Packs the bundle `flutter build linux --release` made into a Flatpak; it
-# builds nothing from source. From the repository root:
+# Packs the bundle `flutter build linux --release` made into a Flatpak. The
+# app itself is not built here, but libmpv (video playback, loaded by
+# package:media_kit) and what it needs that the runtime lacks are, from
+# pinned source archives. From the repository root:
 #   flatpak-builder --user --force-clean --repo=build/flatpak/repo \
 #     build/flatpak/app linux/flatpak/io.github.xarantolus.matterleast.yml
 #   flatpak build-bundle build/flatpak/repo matterleast.flatpak \
@@ -17,6 +19,8 @@ finish-args:
   - --socket=wayland
   - --socket=fallback-x11
   - --device=dri
+  # Sound for video: libmpv speaks to PulseAudio, which PipeWire also serves.
+  - --socket=pulseaudio
   # The tray icon: the plugin speaks StatusNotifierItem itself, under the
   # name org.kde.StatusNotifierItem-<pid>-<n>; without a watcher it falls
   # back to minimising.
@@ -32,7 +36,111 @@ finish-args:
   - --system-talk-name=org.freedesktop.NetworkManager
   # The unread count on the dock icon is a broadcast signal (Unity
   # LauncherEntry), which needs no permission.
+cleanup:
+  - '*.la'
+
 modules:
+  # FFmpeg decodes what libmpv plays. LGPL, nothing from the network, only
+  # what the runtime already has.
+  - name: ffmpeg
+    config-opts:
+      - --disable-debug
+      - --disable-doc
+      - --disable-programs
+      - --disable-static
+      - --enable-shared
+      - --disable-autodetect
+      - --disable-network
+      - --enable-zlib
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+      - /share/ffmpeg
+    sources:
+      - type: archive
+        url: https://ffmpeg.org/releases/ffmpeg-8.0.1.tar.xz
+        sha256: 05ee0b03119b45c0bdb4df654b96802e909e0a752f72e4fe3794f487229e5a41
+
+  - name: libass
+    config-opts:
+      - --disable-static
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+    sources:
+      - type: archive
+        url: https://github.com/libass/libass/releases/download/0.17.4/libass-0.17.4.tar.xz
+        sha256: 78f1179b838d025e9c26e8fef33f8092f65611444ffa1bfc0cfac6a33511a05a
+
+  # libmpv draws through libplacebo. Its release has no submodules, so each
+  # is a pinned archive of the commit it names.
+  - name: libplacebo
+    buildsystem: meson
+    config-opts:
+      - --libdir=lib
+      - -Ddemos=false
+      - -Dtests=false
+      - -Dvulkan=enabled
+      - -Dopengl=enabled
+      - -Dd3d11=disabled
+      - -Dglslang=disabled
+      - -Dshaderc=disabled
+      - -Dlcms=disabled
+      - -Dlibdovi=disabled
+      - -Dxxhash=disabled
+      - -Dunwind=disabled
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+    sources:
+      - type: archive
+        url: https://github.com/haasn/libplacebo/archive/refs/tags/v7.387.0.tar.gz
+        sha256: f9e62d3774a9c4cfd198ec3abaa88294aaade2e31c04d5ab02bcf4abc98b1df5
+      - type: archive
+        url: https://github.com/Dav1dde/glad/archive/73db193f853e2ee079bf3ca8a64aa2eaf6459043.tar.gz
+        sha256: 33dbeae44d8315ece57e14eba4b1b4a02ac5406d1c4f49cd20048c91522a6b9a
+        dest: 3rdparty/glad
+      - type: archive
+        url: https://github.com/pallets/jinja/archive/15206881c006c79667fe5154fe80c01c65410679.tar.gz
+        sha256: b88a20dcc2e34072fcf4159325bc6c34cd4b29a81a8b83d15d2f28ba561da296
+        dest: 3rdparty/jinja
+      - type: archive
+        url: https://github.com/pallets/markupsafe/archive/297fc8e356e6836a62087949245d09a28e9f1b13.tar.gz
+        sha256: da7c010c9c81a66ac73036558c1fcb6212b50482f43211cd1254035b94f82414
+        dest: 3rdparty/markupsafe
+      - type: archive
+        url: https://github.com/KhronosGroup/Vulkan-Headers/archive/74d8a6cb930c68ef617b202c3ff3c59d919e086b.tar.gz
+        sha256: 75967a8288ff16044a86d1af462b96d2e75c435937efb75f2bb4102ab0382f29
+        dest: 3rdparty/Vulkan-Headers
+      - type: archive
+        url: https://github.com/fastfloat/fast_float/archive/97b54ca9e75f5303507699d27c6b4f4efe4641a1.tar.gz
+        sha256: 2b132274539286e41f37857cac22aa8441d21bd86d55de825a3342b149f66801
+        dest: 3rdparty/fast_float
+
+  - name: mpv
+    buildsystem: meson
+    config-opts:
+      - --libdir=lib
+      - -Dauto_features=disabled
+      - -Dlibmpv=true
+      - -Dcplayer=false
+      - -Dbuild-date=false
+      - -Dgpl=false
+      - -Dgl=enabled
+      - -Degl=enabled
+      - -Dplain-gl=enabled
+      - -Dpulse=enabled
+      - -Dzlib=enabled
+      - -Diconv=enabled
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+      - /share
+    sources:
+      - type: archive
+        url: https://github.com/mpv-player/mpv/archive/refs/tags/v0.42.0.tar.gz
+        sha256: bcfebbfa2b65a6d88dc97ea18117831072373e38b5785a2afb874ed4df5070dd
+
   - name: matterleast
     buildsystem: simple
     # Flutter's build is already a release build; there is nothing to split.

@@ -198,6 +198,9 @@ start_session() {
     openbox --config-file /etc/xdg/openbox/rc.xml > "$home/openbox.log" 2>&1 &
     XDG_CONFIG_HOME=$home/config xfce4-panel --disable-wm-check > "$home/panel.log" 2>&1 &
     dunst > "$home/dunst.log" 2>&1 &
+    # The container has no sound card, and libmpv gives up on a video when
+    # it finds no audio output.
+    pulseaudio --start --exit-idle-time=-1 --load="module-null-sink sink_name=lane" > "$home/pulse.log" 2>&1
 }
 
 cmd=${1:-status}

@@ -125,7 +125,8 @@ RUN npm install -g @mobilenext/mobile-mcp@1.0.13
 # with dbus-launch installed, every Secret Service lookup outside a lane
 # autolaunches a session bus and a keyring daemon that never exit. Weston's
 # headless backend renders a Wayland session on the host GPU when /dev/dri is
-# passed in.
+# passed in. libmpv plays video (package:media_kit) on a null PulseAudio sink,
+# and flatpak-builder builds the Flatpak.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get install -y --no-install-recommends \
@@ -134,7 +135,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         xvfb openbox xfce4-panel dunst libnotify-bin dbus-daemon gnome-keyring \
         xdg-desktop-portal xdg-desktop-portal-gtk \
         x11-utils xdotool imagemagick librsvg2-common fonts-noto-color-emoji \
-        weston
+        weston libmpv-dev libepoxy-dev pulseaudio flatpak flatpak-builder elfutils
 
 # Podman for the local Mattermost test server (.devcontainer/server/). It runs
 # rootful inside this container, which needs CAP_SYS_ADMIN, an unmasked /proc
