@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/domain/channel_list.dart';
@@ -93,6 +94,7 @@ Future<ProviderContainer> _pumpRoot(WidgetTester tester) async {
             .overrideWith((ref) => Completer<ChannelActions>().future),
       ],
       child: MaterialApp(
+        theme: MatterleastApp.lightTheme,
         builder: (_, child) => AppShortcuts(child: child!),
         home: Consumer(
           builder: (context, ref, _) {
@@ -134,7 +136,8 @@ void main() {
   testWidgets('the shortcut list shows every shortcut with its keys', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(1200, 1600);
+    // Tall, so that the list builds every row.
+    tester.view.physicalSize = const Size(1200, 3200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
