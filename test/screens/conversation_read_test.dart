@@ -83,7 +83,9 @@ void main() {
 
   int requests(String path) => server.paths.where((p) => p == path).length;
 
-  Future<void> open({String? rootId}) async {
+  /// Opens the conversation; [atBottom] has its list report the newest
+  /// message in view, as a short one does.
+  Future<void> open({String? rootId, bool atBottom = false}) async {
     final provider = conversationProvider(
       server.url.toString(),
       channelId,
@@ -94,6 +96,18 @@ void main() {
       final s = container.read(provider);
       return s.window != null && !s.refreshing;
     });
+    if (atBottom) {
+      container
+          .read(provider.notifier)
+          .onView(
+            const AnchoredListView(
+              pinned: true,
+              nearOlderEnd: false,
+              newestVisible: 0,
+              oldestVisible: 0,
+            ),
+          );
+    }
     await Future<void>.delayed(const Duration(milliseconds: 400));
   }
 
@@ -122,7 +136,7 @@ void main() {
           'post': postJson('root1', 0),
         }),
       ]);
-      await open(rootId: 'root1');
+      await open(rootId: 'root1', atBottom: true);
       expect(readAsked(), isTrue);
     });
   });
@@ -307,14 +321,14 @@ void main() {
     }
 
     test('is read again when a new message arrives', () async {
-      await open();
+      await open(atBottom: true);
       expect(requests(view), 1);
       await postFromSomeone();
       await eventually(() => requests(view) == 2);
     });
 
     test('marked unread stays unread when a new message arrives', () async {
-      await open();
+      await open(atBottom: true);
       await session.store.applyMarkedUnread(
         api.ChannelMember.fromJson({
           'channel_id': channelId,

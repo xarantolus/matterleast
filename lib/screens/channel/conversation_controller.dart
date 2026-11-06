@@ -102,7 +102,7 @@ class Conversation extends _$Conversation {
   /// mark of a visit also clears a "marked unread".
   void _maybeMarkRead() {
     if (!shouldMarkRead(
-      atNewest: (_pinned ?? true) && !(state.window?.newerApart ?? false),
+      atNewest: (_pinned ?? false) && !(state.window?.newerApart ?? false),
       inFront: appInFront(),
       pending: _pendingRead,
       ready: _session != null && !state.refreshing,
