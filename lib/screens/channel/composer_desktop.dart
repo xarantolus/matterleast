@@ -15,6 +15,21 @@ typedef AttachFile = Future<void> Function({
   String? path,
 });
 
+/// Pure: the left edge and width of the suggestion list over [field] in a
+/// [window] that wide. A phone gets the whole field's width; a desktop a
+/// card at the field's left, a third of the window wide, but at least
+/// [minWidth] and never wider than the field.
+({double left, double width}) suggestionSpan(
+  Rect field,
+  double window, {
+  required bool desktop,
+  double minWidth = 280,
+}) {
+  if (!desktop) return (left: field.left, width: field.width);
+  final width = (window / 3).clamp(minWidth, double.infinity);
+  return (left: field.left, width: width < field.width ? width : field.width);
+}
+
 /// The last part of a path, whichever separator it uses.
 String baseName(String path) => path.split(RegExp(r'[\\/]')).last;
 

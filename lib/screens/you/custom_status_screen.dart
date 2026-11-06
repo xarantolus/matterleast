@@ -9,6 +9,7 @@ import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/pane_label.dart';
+import 'package:matterleast/ui/picker_modes.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/try_action.dart';
 
@@ -84,6 +85,7 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
     final now = DateTime.now();
     final start = _chosenEnd ?? now.add(const Duration(hours: 1));
     final day = await showDatePicker(
+      initialEntryMode: dateEntryMode,
       context: context,
       initialDate: start,
       firstDate: DateUtils.dateOnly(now),
@@ -91,6 +93,7 @@ class _CustomStatusScreenState extends ConsumerState<CustomStatusScreen> {
     );
     if (day == null || !mounted) return;
     final time = await showTimePicker(
+      initialEntryMode: timeEntryMode,
       context: context,
       initialTime: TimeOfDay.fromDateTime(start),
     );

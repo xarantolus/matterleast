@@ -9,6 +9,14 @@ bool get isDesktop => switch (defaultTargetPlatform) {
   _ => false,
 };
 
+/// "tap" on a phone, "click" with a mouse; [capital] for a sentence start.
+String tapWord({bool capital = false}) => switch ((isDesktop, capital)) {
+  (true, true) => 'Click',
+  (true, false) => 'click',
+  (false, true) => 'Tap',
+  (false, false) => 'tap',
+};
+
 /// "phone" or "computer", for sentences.
 String get deviceWord => isDesktop ? 'computer' : 'phone';
 

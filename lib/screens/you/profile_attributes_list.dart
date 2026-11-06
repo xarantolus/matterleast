@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/extras_providers.dart';
 import 'package:matterleast/domain/profile_attributes.dart';
 import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/picker_modes.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -160,6 +161,7 @@ class AttributeEditors extends StatelessWidget {
             onTap: on
                 ? () async {
                     final picked = await showDatePicker(
+                      initialEntryMode: dateEntryMode,
                       context: context,
                       initialDate: DateTime.tryParse(text) ?? DateTime.now(),
                       firstDate: DateTime(1900),

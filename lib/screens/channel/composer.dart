@@ -472,6 +472,11 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     });
     final value = ref.watch(_provider);
     final suggestions = value.suggestions;
+    final canUpload =
+        value.editing == null &&
+        widget.forward.isEmpty &&
+        (ref.watch(featuresProvider(widget.url)).value?.fileUploads ?? true) &&
+        value.attachments.length < maxAttachments;
     // Over the messages, so the list doesn't shrink and move under the
     // reader while they come and go.
     return OverlayPortal.overlayChildLayoutBuilder(
@@ -482,9 +487,14 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
           info.childPaintTransform,
           Offset.zero & info.childSize,
         );
+        final span = suggestionSpan(
+          field,
+          info.overlaySize.width,
+          desktop: isDesktop,
+        );
         return Positioned(
-          left: field.left,
-          width: field.width,
+          left: span.left,
+          width: span.width,
           bottom: info.overlaySize.height - field.top,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: math.max(0, field.top)),
@@ -521,6 +531,14 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
           StepHistoryIntent: EnabledAction<StepHistoryIntent>(
             enabled: () => _focus.hasFocus && value.editing == null,
             onInvoke: (intent) => _stepHistory(older: intent.older),
+          ),
+          UploadFileIntent: EnabledAction<UploadFileIntent>(
+            enabled: () => canUpload,
+            onInvoke: (_) => unawaited(_addFiles(PickSource.files)),
+          ),
+          EmojiPickerIntent: EnabledAction<EmojiPickerIntent>(
+            enabled: () => true,
+            onInvoke: (_) => unawaited(_pickEmoji(globalRectOf(context))),
           ),
         },
         child: _field(context, value),
@@ -930,7 +948,11 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         ),
       ),
     );
-    if (source == null) return;
+    if (source != null) await _addFiles(source);
+  }
+
+  Future<void> _addFiles(PickSource source) async {
+    final room = maxAttachments - ref.read(_provider).attachments.length;
     final picked = await pickFiles(source, room);
     if (!mounted) return;
     if (picked.length > room) {
@@ -1426,10 +1448,16 @@ class SuggestionList extends ConsumerWidget {
       ),
       child: Material(
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        // An edge, so a single suggestion doesn't read as a message.
-        shape: Border(
-          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-        ),
+        // An edge, so a single suggestion doesn't read as a message; on
+        // desktop a floating card.
+        elevation: isDesktop ? 3 : 0,
+        clipBehavior: isDesktop ? Clip.antiAlias : Clip.none,
+        shape: isDesktop
+            ? RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Spacing.sm),
+                side: BorderSide(color: scheme.outlineVariant),
+              )
+            : Border(top: BorderSide(color: scheme.outlineVariant)),
         child: ListTileTheme(
           data: ListTileThemeData(
             selectedColor: scheme.onSecondaryContainer,

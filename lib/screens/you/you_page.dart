@@ -238,7 +238,7 @@ class _Profile extends ConsumerWidget {
               ),
             ),
             title: Text(known ? presenceLabel(status) : 'Status'),
-            subtitle: const Text('Tap to change'),
+            subtitle: Text('${tapWord(capital: true)} to change'),
             onTap: () => showStatusSheet(
               context,
               ref,
@@ -327,7 +327,7 @@ class _ServerTile extends ConsumerWidget {
     ].join(' · ');
     final state = server.signedIn
         ? (me == null ? 'Signed in' : 'Signed in as @${me.username}')
-        : 'Signed out · tap to sign in';
+        : 'Signed out · ${tapWord()} to sign in';
     final tile = ListTile(
       leading: InitialsBadge(name: server.displayName, faded: !server.signedIn),
       title: Text(server.displayName),

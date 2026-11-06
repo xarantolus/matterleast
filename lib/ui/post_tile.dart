@@ -375,7 +375,7 @@ class PostTile extends StatelessWidget {
                 _DraftMarker(onPressed: onOpenThread!),
               if (failed)
                 Text(
-                  'Not sent · Tap to try again',
+                  'Not sent · ${tapWord(capital: true)} to try again',
                   style: text.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.error,
                   ),

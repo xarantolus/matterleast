@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -65,7 +66,7 @@ class _ServerImageState extends ConsumerState<ServerImage> {
         width: widget.width,
         height: widget.height,
         icon: Icons.image_outlined,
-        label: 'Tap to load',
+        label: '${tapWord(capital: true)} to load',
         onTap: () => setState(() => _asked = true),
       );
     }

@@ -4,6 +4,7 @@ import 'package:matterleast/domain/dialog_dates.dart';
 import 'package:matterleast/domain/scheduled_posts.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/picker_modes.dart';
 
 /// Asks when a message should go out: tomorrow or Monday morning, or a day
 /// and time of the user's choice, on the clock of [zone] (the user's
@@ -58,6 +59,7 @@ final _custom = DateTime.utc(1970);
 Future<DateTime?> _pickCustom(BuildContext context, DialogClock clock) async {
   final today = clock.today;
   final day = await showDatePicker(
+    initialEntryMode: dateEntryMode,
     context: context,
     initialDate: today.add(const Duration(days: 1)),
     firstDate: today,
@@ -65,6 +67,7 @@ Future<DateTime?> _pickCustom(BuildContext context, DialogClock clock) async {
   );
   if (day == null || !context.mounted) return null;
   final time = await showTimePicker(
+    initialEntryMode: timeEntryMode,
     context: context,
     initialTime: const TimeOfDay(hour: 9, minute: 0),
   );
