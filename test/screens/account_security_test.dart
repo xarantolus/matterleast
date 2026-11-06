@@ -19,10 +19,17 @@ import '../support/test_session.dart';
 
 class _Manager extends Fake implements ServerManager {
   final signedOut = <String>[];
+  final removed = <String>[];
 
   @override
   Future<bool> signOut(String url, {bool force = false}) async {
     signedOut.add(url);
+    return true;
+  }
+
+  @override
+  Future<bool> remove(String url, {bool force = false}) async {
+    removed.add(url);
     return true;
   }
 }
@@ -98,7 +105,7 @@ void main() {
       await h.close(tester);
     });
 
-    testWidgets('ending this device signs out through the normal path', (
+    testWidgets('ending this device signs out and removes the server', (
       tester,
     ) async {
       final manager = _Manager();
@@ -112,10 +119,12 @@ void main() {
 
       await tester.tap(find.text('Sign out').first);
       await h.settle(tester);
+      expect(find.textContaining('removed from this device'), findsOneWidget);
       await tester.tap(find.widgetWithText(TextButton, 'Sign out').last);
       await h.settle(tester);
 
-      expect(manager.signedOut, [h.url]);
+      expect(manager.removed, [h.url]);
+      expect(manager.signedOut, isEmpty);
       expect(revoked, isEmpty);
       await h.close(tester);
     });

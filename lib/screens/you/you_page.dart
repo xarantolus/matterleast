@@ -396,11 +396,12 @@ class _ServerTile extends ConsumerWidget {
                       title: const Text('Trust a certificate authority…'),
                       onTap: () => Navigator.pop(context, _ServerAction.trust),
                     ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline),
-              title: const Text('Remove server'),
-              onTap: () => Navigator.pop(context, _ServerAction.remove),
-            ),
+            if (!server.signedIn)
+              ListTile(
+                leading: const Icon(Icons.delete_outline),
+                title: const Text('Remove server'),
+                onTap: () => Navigator.pop(context, _ServerAction.remove),
+              ),
             const SizedBox(height: Spacing.sm),
           ],
         ),
@@ -454,12 +455,7 @@ class _ServerTile extends ConsumerWidget {
         await TrustedAuthorities.instance.forget(Uri.parse(server.url));
       case _ServerAction.signOut:
       case _ServerAction.remove:
-        await leaveServer(
-          context,
-          ref,
-          server,
-          remove: action == _ServerAction.remove,
-        );
+        await leaveServer(context, ref, server);
     }
   }
 }

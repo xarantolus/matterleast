@@ -26,7 +26,7 @@ class SessionsPage extends ConsumerWidget {
     SessionRow row,
   ) async {
     if (row.current) {
-      await leaveServer(context, ref, server, remove: false);
+      await leaveServer(context, ref, server);
       return;
     }
     final confirmed = await confirm(

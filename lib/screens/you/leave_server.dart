@@ -5,36 +5,32 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 
-/// Signs out of [server], or with [remove] forgets it too, after asking.
+/// Signs out of [server] and removes it from the device, after asking.
 /// When the server can't be told it offers to sign out here anyway. The
 /// one path for the You page and the list of sessions.
 Future<void> leaveServer(
   BuildContext context,
   WidgetRef ref,
-  ServerEntry server, {
-  required bool remove,
-}) async {
+  ServerEntry server,
+) async {
   // The tile goes away with a removed server, so nothing reads ref later.
   final manager = ref.read(serverManagerProvider);
   final db = ref.read(appDatabaseProvider);
   final navigator = Navigator.of(context);
   final confirmed = await confirm(
     context,
-    title: remove
-        ? 'Remove ${server.displayName}?'
-        : 'Sign out of ${server.displayName}?',
-    body: remove
-        ? 'The server and everything saved from it are removed from this '
-              'device.'
-        : 'Messages saved from this server are removed from this device. '
-              'The server stays in your list.',
-    action: remove ? 'Remove' : 'Sign out',
+    title: server.signedIn
+        ? 'Sign out of ${server.displayName}?'
+        : 'Remove ${server.displayName}?',
+    body:
+        'The server and everything saved from it are removed from this '
+        'device. To use it again, add it again.',
+    action: server.signedIn ? 'Sign out' : 'Remove',
     destructive: true,
   );
   if (!confirmed) return;
-  Future<bool> run({bool force = false}) => remove
-      ? manager.remove(server.url, force: force)
-      : manager.signOut(server.url, force: force);
+  Future<bool> run({bool force = false}) =>
+      manager.remove(server.url, force: force);
   var done = await run();
   if (!done && context.mounted) {
     final anyway = await confirm(
