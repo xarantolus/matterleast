@@ -48,7 +48,7 @@ final class NoticeRouterProvider
   }
 }
 
-String _$noticeRouterHash() => r'19f25be7f39c7bc26aea1e42484163caaae648c8';
+String _$noticeRouterHash() => r'e1232a1026e9ba5b08130cb845688cd97402eff7';
 
 @ProviderFor(inAppNotifications)
 final inAppNotificationsProvider = InAppNotificationsProvider._();
