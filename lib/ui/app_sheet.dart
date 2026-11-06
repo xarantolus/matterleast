@@ -156,3 +156,35 @@ ThemeData _compactRows(ThemeData theme) {
     listTileTheme: theme.listTileTheme.copyWith(minTileHeight: height),
   );
 }
+
+/// Remembers where the pointer last went down, so a popup opened by a tap on
+/// text, which has no widget of its own, can open at it.
+class PointerMemory extends StatelessWidget {
+  const PointerMemory({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Listener(
+    behavior: HitTestBehavior.translucent,
+    onPointerDown: (event) {
+      _lastDown = event.position;
+      _sinceDown
+        ..reset()
+        ..start();
+    },
+    child: child,
+  );
+}
+
+Offset? _lastDown;
+final _sinceDown = Stopwatch();
+
+/// The point the pointer went down at, if that was a moment ago.
+Rect? recentPointerAnchor() {
+  final at = _lastDown;
+  if (at == null || _sinceDown.elapsed > const Duration(seconds: 1)) {
+    return null;
+  }
+  return at & Size.zero;
+}

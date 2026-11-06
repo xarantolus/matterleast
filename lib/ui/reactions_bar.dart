@@ -185,7 +185,7 @@ double reactionsHeight({required int people, required double window}) {
   if (!isDesktop) return most;
   const tabBar = 48.0;
   const label = 40.0;
-  const row = 56.0;
+  const row = 52.0;
   return math.min(most, tabBar + label + people * row);
 }
 

@@ -12,6 +12,7 @@ import 'package:matterleast/app/touchpad_navigation.dart';
 import 'package:matterleast/app/ui_zoom.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/keyboard_focus_rings.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/notice_banner_layer.dart';
@@ -50,7 +51,9 @@ class MatterleastApp extends ConsumerWidget {
                   child: MouseNavigation(
                     child: TouchpadNavigation(
                       child: isDesktop
-                          ? MiddleAutoscroll(child: child!)
+                          ? PointerMemory(
+                              child: MiddleAutoscroll(child: child!),
+                            )
                           : child!,
                     ),
                   ),

@@ -20,6 +20,7 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
+import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/server_image.dart';
@@ -103,6 +104,7 @@ class MessageEnvironment extends ConsumerStatefulWidget {
     String typed,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final anchor = recentPointerAnchor();
     final links = ref.read(messageLinksProvider(url).future);
     final String? userId;
     try {
@@ -124,7 +126,9 @@ class MessageEnvironment extends ConsumerStatefulWidget {
       );
       return;
     }
-    unawaited(showUserProfile(context, url: url, userId: userId));
+    unawaited(
+      showUserProfile(context, url: url, userId: userId, anchor: anchor),
+    );
   }
 
   Future<void> _openChannel(
