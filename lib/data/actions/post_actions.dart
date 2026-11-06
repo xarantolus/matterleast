@@ -46,12 +46,32 @@ class PostActions {
     }
   }
 
+  /// Right after the newest reaction on the post, by the server's times, so
+  /// the emoji keeps its place in the row. The device clock only when the
+  /// post is not stored.
+  Future<DateTime> _nextReactionAt(String postId) async {
+    final newest = _db.reactions.createAt.max();
+    final latest =
+        await (_db.selectOnly(_db.reactions)
+              ..addColumns([newest])
+              ..where(_db.reactions.postId.equals(postId)))
+            .map((row) => row.read(newest))
+            .getSingle();
+    final posted = (await _store.post(postId))?.createAt.millisecondsSinceEpoch;
+    final base = [
+      ?latest,
+      ?posted,
+    ].fold<int?>(null, (a, b) => a == null || b > a ? b : a);
+    if (base == null) return _clock();
+    return DateTime.fromMillisecondsSinceEpoch(base + 1, isUtc: true);
+  }
+
   Future<void> addReaction(String postId, String emojiName) async {
     final reaction = api.Reaction(
       userId: await _me(),
       postId: postId,
       emojiName: emojiName,
-      createAt: _clock(),
+      createAt: await _nextReactionAt(postId),
     );
     await _optimistic(
       () => _store.applyReaction(reaction, added: true),
