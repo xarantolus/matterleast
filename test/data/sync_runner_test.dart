@@ -68,6 +68,62 @@ void main() {
     runner.close();
   });
 
+  test(
+    'a state-reporting job asked for while running runs again after it',
+    () async {
+      final runner = SyncRunner();
+      final starts = <int>[];
+      final gates = [Completer<void>(), Completer<void>()];
+      Future<void> ask() => runner.enqueue(
+        SyncJob(
+          key: 'view',
+          reportsState: true,
+          run: () async {
+            starts.add(starts.length);
+            await gates[starts.length - 1].future;
+          },
+        ),
+      );
+      final first = ask();
+      await Future<void>.delayed(Duration.zero);
+      final second = ask();
+      final third = ask();
+      await Future<void>.delayed(Duration.zero);
+      expect(starts, [0], reason: 'never two at once');
+      gates[0].complete();
+      await first;
+      await Future<void>.delayed(Duration.zero);
+      expect(starts, [0, 1]);
+      gates[1].complete();
+      await Future.wait([second, third]);
+      await Future<void>.delayed(Duration.zero);
+      expect(starts, [0, 1], reason: 'two asks while running run once more');
+      runner.close();
+    },
+  );
+
+  test('a plain job asked for while running joins it', () async {
+    final runner = SyncRunner();
+    var runs = 0;
+    final gate = Completer<void>();
+    Future<void> ask() => runner.enqueue(
+      SyncJob(
+        key: 'plain',
+        run: () async {
+          runs++;
+          await gate.future;
+        },
+      ),
+    );
+    final first = ask();
+    await Future<void>.delayed(Duration.zero);
+    final second = ask();
+    gate.complete();
+    await Future.wait([first, second]);
+    expect(runs, 1);
+    runner.close();
+  });
+
   test('a failure shows up in the status until the next success', () async {
     final runner = SyncRunner(clock: () => DateTime.utc(2026, 1, 1));
     await expectLater(

@@ -257,6 +257,7 @@ class ConversationActions {
         key: 'thread-read:$rootId',
         priority: SyncPriority.p0,
         visible: false,
+        reportsState: true,
         run: () => _call(
           () => _client.threads.updateThreadReadForUser(
             userId: 'me',

@@ -67,6 +67,7 @@ class ChannelActions {
     SyncJob(
       key: 'view:$channelId',
       priority: SyncPriority.p0,
+      reportsState: true,
       run: () async {
         final answer = await session.api.call(
           () => _client.channels.viewChannel(

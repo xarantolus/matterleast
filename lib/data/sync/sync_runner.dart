@@ -52,6 +52,7 @@ class SyncJob {
     this.owner,
     this.visible = true,
     this.quiet = false,
+    this.reportsState = false,
   });
 
   /// Jobs with the same key coalesce: a second enqueue while one is queued
@@ -73,6 +74,10 @@ class SyncJob {
   /// A [visible] job that reports its failure but doesn't show as
   /// refreshing: a retry nobody asked for, which may wait for a timeout.
   final bool quiet;
+
+  /// Tells the server the current state (a read mark): asked for again while
+  /// running, it runs once more afterwards instead of joining the older run.
+  final bool reportsState;
 }
 
 class _Queued {
@@ -134,7 +139,9 @@ class SyncRunner {
       }
       return Future.error(cause);
     }
-    final existing = _running[job.key] ?? _queuedByKey[job.key];
+    final running = _running[job.key];
+    final existing =
+        _queuedByKey[job.key] ?? (job.reportsState ? null : running);
     if (existing != null) {
       if (job.visible && !job.quiet && !existing.shown) {
         existing.shown = true;
@@ -179,7 +186,9 @@ class SyncRunner {
             ? a.job.priority.index.compareTo(b.job.priority.index)
             : a.sequence.compareTo(b.sequence),
       );
-      final next = _queue.removeAt(0);
+      final index = _queue.indexWhere((q) => !_running.containsKey(q.job.key));
+      if (index < 0) return;
+      final next = _queue.removeAt(index);
       _queuedByKey.remove(next.job.key);
       _running[next.job.key] = next;
       _publish();
