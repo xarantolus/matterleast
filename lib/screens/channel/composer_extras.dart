@@ -112,7 +112,7 @@ class ScheduledNotice extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme.labelLarge;
     return Material(
-      color: scheme.surfaceContainerHigh,
+      color: scheme.surfaceContainer,
       child: InkWell(
         mouseCursor: clickCursor,
         onTap: () => openPage(

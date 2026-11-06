@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/composer_providers.dart';
-import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/typing.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -14,9 +13,9 @@ double typingLineHeight(BuildContext context) {
 }
 
 /// The room the message list keeps under its newest message: the typing
-/// line, and a margin that is wider on a phone.
+/// line and a small margin.
 double conversationBottomGap(BuildContext context) =>
-    typingLineHeight(context) + (isDesktop ? Spacing.xs : Spacing.lg);
+    typingLineHeight(context) + Spacing.xs;
 
 /// Who is writing, drawn in the gap the message list keeps above the
 /// composer, so it never covers a message or changes the layout. A bar
