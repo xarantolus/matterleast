@@ -30,10 +30,11 @@ finish-args:
   # flutter_local_notifications talks to the notification server directly,
   # not through the portal.
   - --talk-name=org.freedesktop.Notifications
-  # No access to the host keyring or NetworkManager: in a Flatpak libsecret
-  # keeps its items in an encrypted file under the app's data, locked with a
-  # key from the Secret portal, and connectivity_plus' failure to reach
-  # NetworkManager counts as an unknown network, not an offline one.
+  # The host keyring, so sessions survive updates and work on desktops
+  # without a Secret portal (KWallet, older GNOME).
+  - --talk-name=org.freedesktop.secrets
+  # No NetworkManager: connectivity_plus' failure to reach it counts as an
+  # unknown network, not an offline one.
   # The unread count on the dock icon is a broadcast signal (Unity
   # LauncherEntry), which needs no permission.
 cleanup:
