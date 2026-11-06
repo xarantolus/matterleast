@@ -42,41 +42,24 @@ Future<void> _load(WidgetTester tester) async {
 
 final _server = Uri.parse('https://chat.test');
 
-Widget _app(
-  Widget child, {
-  required List<ConnectivityResult> connection,
-  bool gifs = true,
-  bool linkPictures = true,
-  bool dataSaver = false,
-}) => ProviderScope(
-  overrides: <Override>[
-    connectionProvider.overrideWith((ref) => Stream.value(connection)),
-    dataSaverProvider.overrideWith((ref) => Stream.value(dataSaver)),
-    imagesOnMobileDataProvider.overrideWith((ref) => Stream.value(true)),
-    gifsOnMobileDataProvider.overrideWith((ref) => Stream.value(gifs)),
-    linkPicturesOnMobileDataProvider.overrideWith(
-      (ref) => Stream.value(linkPictures),
-    ),
-    serverImageCachesProvider(_server.toString())
-        .overrideWith((ref) => Completer<ServerImageCaches>().future),
-    fileDownloadsProvider(_server.toString())
-        .overrideWith((ref) => Future.value(_Downloads())),
-  ],
-  child: MaterialApp(
-    theme: themeForPlatform(MatterleastApp.lightTheme),
-    home: Scaffold(
-      body: PostEnvironment(
-        server: _server,
-        options: const ParseOptions(),
-        myUsername: 'me',
-        onMention: (_) {},
-        onChannel: (_) {},
-        onLink: (_) {},
-        child: Align(alignment: Alignment.topLeft, child: child),
+Widget _scope(Widget child, {required List<Override> overrides}) =>
+    ProviderScope(
+      overrides: overrides,
+      child: MaterialApp(
+        theme: themeForPlatform(MatterleastApp.lightTheme),
+        home: Scaffold(
+          body: PostEnvironment(
+            server: _server,
+            options: const ParseOptions(),
+            myUsername: 'me',
+            onMention: (_) {},
+            onChannel: (_) {},
+            onLink: (_) {},
+            child: Align(alignment: Alignment.topLeft, child: child),
+          ),
+        ),
       ),
-    ),
-  ),
-);
+    );
 
 const _gif = PostFile(
   id: 'g1',
@@ -107,78 +90,100 @@ void main() {
   const mobile = [ConnectivityResult.mobile];
   const wifi = [ConnectivityResult.wifi];
 
+  void scenario(
+    String name, {
+    required Widget child,
+    required List<ConnectivityResult> connection,
+    bool gifs = true,
+    bool linkPictures = true,
+    bool dataSaver = false,
+    required Future<void> Function(WidgetTester tester) check,
+  }) => testWidgets(name, (tester) async {
+    await tester.pumpWidget(
+      _scope(
+        child,
+        overrides: [
+          connectionProvider.overrideWith((ref) => Stream.value(connection)),
+          serverImageCachesProvider(_server.toString())
+              .overrideWith((ref) => Completer<ServerImageCaches>().future),
+          fileDownloadsProvider(_server.toString())
+              .overrideWith((ref) => Future.value(_Downloads())),
+          dataSaverProvider.overrideWith((ref) => Stream.value(dataSaver)),
+          imagesOnMobileDataProvider.overrideWith((ref) => Stream.value(true)),
+          gifsOnMobileDataProvider.overrideWith((ref) => Stream.value(gifs)),
+          linkPicturesOnMobileDataProvider.overrideWith(
+            (ref) => Stream.value(linkPictures),
+          ),
+        ],
+      ),
+    );
+    await _load(tester);
+    await check(tester);
+  });
+
   group('GIFs', () {
-    testWidgets('on mobile data with GIFs off a GIF stays still until tapped', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _app(_gifMessage(), connection: mobile, gifs: false),
-      );
-      await _load(tester);
-      expect(find.text('GIF'), findsOneWidget);
+    scenario(
+      'on mobile data with GIFs off a GIF stays still until tapped',
+      child: _gifMessage(),
+      connection: mobile,
+      gifs: false,
+      check: (tester) async {
+        expect(find.text('GIF'), findsOneWidget);
+        await tester.tap(find.byType(MediaPicture));
+        await _load(tester);
+        expect(find.text('GIF'), findsNothing);
+      },
+    );
 
-      await tester.tap(find.byType(MediaPicture));
-      await _load(tester);
-      expect(find.text('GIF'), findsNothing);
-    });
+    scenario(
+      'the tapped GIF keeps its place',
+      child: _gifMessage(),
+      connection: mobile,
+      gifs: false,
+      check: (tester) async {
+        final before = tester.getRect(find.byType(MediaPicture));
+        await tester.tap(find.byType(MediaPicture));
+        await _load(tester);
+        expect(tester.getRect(find.byType(MediaPicture)), before);
+      },
+    );
 
-    testWidgets('the tapped GIF keeps its place', (tester) async {
-      await tester.pumpWidget(
-        _app(_gifMessage(), connection: mobile, gifs: false),
-      );
-      await _load(tester);
-      final before = tester.getRect(find.byType(MediaPicture));
-      await tester.tap(find.byType(MediaPicture));
-      await _load(tester);
-      expect(tester.getRect(find.byType(MediaPicture)), before);
-    });
+    scenario(
+      'on Wi-Fi a GIF plays at once',
+      child: _gifMessage(),
+      connection: wifi,
+      gifs: false,
+      check: (tester) async => expect(find.text('GIF'), findsNothing),
+    );
 
-    testWidgets('on Wi-Fi a GIF plays at once', (tester) async {
-      await tester.pumpWidget(
-        _app(_gifMessage(), connection: wifi, gifs: false),
-      );
-      await _load(tester);
-      expect(find.text('GIF'), findsNothing);
-    });
-
-    testWidgets('Data Saver holds a GIF back whatever the switch says', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _app(_gifMessage(), connection: mobile, dataSaver: true),
-      );
-      await _load(tester);
-      expect(find.text('GIF'), findsOneWidget);
-    });
+    scenario(
+      'Data Saver holds a GIF back whatever the switch says',
+      child: _gifMessage(),
+      connection: mobile,
+      dataSaver: true,
+      check: (tester) async => expect(find.text('GIF'), findsOneWidget),
+    );
   });
 
   group('link previews', () {
-    testWidgets('on mobile data with pictures off there is no picture box', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _app(
-          const LinkPreviewCard(preview: _preview),
-          connection: mobile,
-          linkPictures: false,
-        ),
-      );
-      await _load(tester);
-      expect(find.text('Tide tables'), findsOneWidget);
-      expect(find.byType(ImageSlot), findsNothing);
-    });
+    scenario(
+      'on mobile data with pictures off there is no picture box',
+      child: const LinkPreviewCard(preview: _preview),
+      connection: mobile,
+      linkPictures: false,
+      check: (tester) async {
+        expect(find.text('Tide tables'), findsOneWidget);
+        expect(find.byType(ImageSlot), findsNothing);
+      },
+    );
 
-    testWidgets('on Wi-Fi the picture shows', (tester) async {
-      await tester.pumpWidget(
-        _app(
-          const LinkPreviewCard(preview: _preview),
-          connection: wifi,
-          linkPictures: false,
-        ),
-      );
-      await _load(tester);
-      expect(find.byType(ImageSlot), findsOneWidget);
-    });
+    scenario(
+      'on Wi-Fi the picture shows',
+      child: const LinkPreviewCard(preview: _preview),
+      connection: wifi,
+      linkPictures: false,
+      check: (tester) async => expect(find.byType(ImageSlot), findsOneWidget),
+    );
   });
 
   group('the decision', () {
