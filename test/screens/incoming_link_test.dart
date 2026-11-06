@@ -13,6 +13,41 @@ import '../support/pump_app.dart';
 import '../support/test_session.dart';
 
 void main() {
+  testWidgets('a sign-in link from another app asks before it signs in', (
+    tester,
+  ) async {
+    HttpOverrides.global = null;
+    final server = (await tester.runAsync(FakeServer.start))!;
+    final host = server.url.authority;
+    final link = Uri.parse(
+      'matterleast://$host/login/one_time_link?t=${'a' * 64}',
+    );
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => openIncomingLink(Navigator.of(context), link),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+      overrides: [serversProvider.overrideWith((ref) => Stream.value([]))],
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in to $host?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    expect(server.paths, isEmpty);
+
+    await tester.runAsync(server.close);
+  });
+
   testWidgets('a link from another app asks before it starts a conversation', (
     tester,
   ) async {

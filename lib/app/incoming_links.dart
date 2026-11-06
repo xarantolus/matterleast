@@ -7,6 +7,7 @@ import 'package:matterleast/domain/server_link.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/screens/add_server/add_server_screen.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
 /// Opens a link another app handed over, only when it points into a server
@@ -64,6 +65,17 @@ Future<void> _signInWithMagicLink(
     navigator.context,
     listen: false,
   ).read(magicLinkSignInProvider);
+  // Any page or app can open such a link, so it never signs in unasked.
+  final host = link.server.authority;
+  final asked = await confirm(
+    navigator.context,
+    title: 'Sign in to $host?',
+    body:
+        'A sign-in link for $host was opened. Continue only if you asked '
+        '$host for this link.',
+    action: 'Sign in',
+  );
+  if (!asked || !navigator.mounted) return;
   try {
     await signIn.signIn(link);
   } on LoginRejected catch (e) {
