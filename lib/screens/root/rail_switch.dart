@@ -11,13 +11,22 @@ import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/screens/root/open_history.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 
-/// Shows [place] (null is Home) and reopens what was open there, else its list.
+/// Shows [place] (null is Home). Beside the list on a wide window, what was
+/// open there opens again; on a phone the list shows and a swipe brings it
+/// back, so a tap on the rail never lands in a conversation.
 Future<void> showPlace(NavigatorState navigator, RailTarget? place) async {
   if (!navigator.mounted) return;
   final container = ProviderScope.containerOf(navigator.context, listen: false);
   final from = container.read(railSelectionProvider);
   if (from == place) return;
-  final remembered = container.read(conversationMemoryProvider).at(place);
+  final memory = container.read(conversationMemoryProvider);
+  if (!windowClassOf(MediaQuery.sizeOf(navigator.context).width).showsPanes) {
+    memory.putAside(place);
+    container.read(railSelectionProvider.notifier).select(place);
+    closePages(navigator);
+    return;
+  }
+  final remembered = memory.at(place);
   final before = shownLocation(container);
   final stack = remembered == null
       ? const <ConversationTarget>[]

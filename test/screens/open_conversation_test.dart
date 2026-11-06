@@ -958,13 +958,20 @@ void main() {
       await finish(tester);
     });
 
-    testWidgets('switching team closes the open conversation, and switching '
-        'back opens it again', (tester) async {
+    Future<void> swipeBack(WidgetTester tester) async {
+      await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
+      await settle(tester);
+    }
+
+    testWidgets('switching team closes the open conversation; switching back '
+        'shows the list, and a swipe opens it again', (tester) async {
       final url = await begin(tester);
       await open(tester);
       await show(tester, url, otherTeam);
       expect(conversations(), findsNothing);
       await show(tester, url, teamId);
+      expect(conversations(), findsNothing);
+      await swipeBack(tester);
       expect(shownChannel(tester), channelId);
       await show(tester, url, otherTeam);
       await finish(tester);
@@ -988,8 +995,10 @@ void main() {
       await settle(tester);
       expect(shownChannel(tester), shipsId);
       await show(tester, url, teamId);
+      await swipeBack(tester);
       expect(shownChannel(tester), channelId);
       await show(tester, url, otherTeam);
+      await swipeBack(tester);
       expect(shownChannel(tester), shipsId);
       await finish(tester);
     });

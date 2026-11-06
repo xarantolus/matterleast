@@ -72,6 +72,15 @@ class ConversationMemory {
     _save(before.withClosed(here, conversation));
   }
 
+  /// [place] shows its list again; what was open there is what a swipe
+  /// brings back.
+  void putAside(RailTarget? place) {
+    final before = saved;
+    final open = before?.at(place);
+    if (before == null || open == null) return;
+    _save(before.withOpen(place, null).withClosed(place, open));
+  }
+
   void update() {
     final before = saved;
     if (before == null) return;
