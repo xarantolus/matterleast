@@ -18,7 +18,6 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
-import 'package:matterleast/data/files/file_handoff.dart';
 import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/domain/post_files.dart';
@@ -775,40 +774,11 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
   VideoPlayerController? _video;
   var _ready = false;
   Object? _error;
-  String? _notice;
-
-  // video_player has no Linux implementation.
-  bool get _system => defaultTargetPlatform == TargetPlatform.linux;
 
   @override
   void initState() {
     super.initState();
-    _system ? _openExternally() : _open();
-  }
-
-  Future<void> _openExternally() async {
-    setState(() {
-      _error = null;
-      _notice = null;
-    });
-    try {
-      final local = await ref
-          .read(fileTransfersProvider(widget.url).notifier)
-          .fetch(widget.file);
-      if (local == null || !mounted) return;
-      final handoff = (await ref.read(fileDownloadsProvider(widget.url).future))
-          .handoffDirectory;
-      final opened = await FileHandoff.open(local, widget.file, handoff);
-      if (!mounted) return;
-      setState(
-        () => _notice = opened
-            ? 'Opened ${widget.file.name} in your video player.'
-            : 'No video player on this computer opens ${widget.file.name}. '
-                  'Use Save as to keep it.',
-      );
-    } on Object catch (e) {
-      if (mounted) setState(() => _error = e);
-    }
+    _open();
   }
 
   Future<void> _open() async {
@@ -816,7 +786,15 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
     try {
       final session = await ref.read(serverSessionProvider(widget.url).future);
       final downloads = session.files;
-      final cached = await downloads.cached(widget.file.id);
+      // libmpv doesn't verify TLS unless told to and the Linux plugin can't
+      // tell it, so Linux plays the file our own client downloaded.
+      final download = defaultTargetPlatform == TargetPlatform.linux;
+      final cached = download
+          ? await ref
+                .read(fileTransfersProvider(widget.url).notifier)
+                .fetch(widget.file)
+          : await downloads.cached(widget.file.id);
+      if (download && cached == null) return;
       final VideoPlayerController video;
       if (cached != null) {
         video = VideoPlayerController.file(cached);
@@ -856,13 +834,6 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
   @override
   Widget build(BuildContext context) {
     final video = _video;
-    if (_notice case final notice?) {
-      return _Message(
-        text: notice,
-        action: 'Open again',
-        onPressed: _openExternally,
-      );
-    }
     if (_error case final error?) {
       final cause = error is ApiError || error is TimeoutException
           ? requestProblemText(error, hostOf(widget.url))
@@ -870,11 +841,23 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
       return _Message(
         text: "The video didn't load. $cause You can also use Open with.",
         action: 'Retry',
-        onPressed: _system ? _openExternally : _open,
+        onPressed: _open,
       );
     }
     if (!_ready || video == null) {
-      return GalleryStandIn(url: widget.url, file: widget.file);
+      final done = ref.watch(
+        fileTransfersProvider(widget.url).select((m) => m[widget.file.id]),
+      );
+      return GalleryStandIn(
+        url: widget.url,
+        file: widget.file,
+        progress: done == null
+            ? null
+            : ImageChunkEvent(
+                cumulativeBytesLoaded: (done * 1000).round(),
+                expectedTotalBytes: 1000,
+              ),
+      );
     }
     return VideoPlayerView(
       video: video,

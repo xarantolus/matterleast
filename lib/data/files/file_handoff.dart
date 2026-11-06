@@ -23,7 +23,8 @@ abstract final class FileHandoff {
     return cached.copy(p.join(dir.path, _safeName(file)));
   }
 
-  /// Opens the file in an app; false when none can. [chooseApp] asks which.
+  /// Opens the file in an app; false when none can. [chooseApp] asks which;
+  /// closing the chooser is not a failure.
   static Future<bool> open(
     File cached,
     PostFile file,
@@ -31,9 +32,9 @@ abstract final class FileHandoff {
     bool chooseApp = false,
   }) async {
     final copy = await _namedCopy(cached, file, directory);
-    if (Platform.isLinux &&
-        await openFileWithPortal(copy.path, ask: chooseApp)) {
-      return true;
+    if (Platform.isLinux) {
+      return await openFileWithPortal(copy.path, ask: chooseApp) !=
+          PortalOutcome.failed;
     }
     return FileDownloader().openFile(
       filePath: copy.path,

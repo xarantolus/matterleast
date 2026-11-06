@@ -47,6 +47,14 @@ function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Profile>:PROFILE_BUILD>")
 endfunction()
 
+# media_kit_libs_linux would otherwise download and build mimalloc, which
+# nothing links.
+set(MIMALLOC_USE_STATIC_LIBS OFF)
+
+# media_kit_libs_linux would otherwise download and build mimalloc, which
+# nothing links.
+set(MIMALLOC_USE_STATIC_LIBS OFF)
+
 # Flutter library and tool build rules.
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
