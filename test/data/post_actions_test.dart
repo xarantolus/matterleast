@@ -345,4 +345,29 @@ void main() {
     );
     expect((await session.db.features()).postReminders, isTrue);
   });
+
+  test(
+    'my reaction ranks after the earlier ones whatever the phone clock',
+    () async {
+      final theirs = DateTime.utc(2026, 10, 25, 10);
+      await session.store.applyReaction(
+        api.Reaction(
+          userId: 'someone',
+          postId: 'old1',
+          emojiName: 'eyes',
+          createAt: theirs,
+        ),
+        added: true,
+      );
+      final behind = DateTime.utc(2026, 10, 25, 5);
+      await PostActions(
+        session,
+        clock: () => behind,
+      ).addReaction('old1', 'tada');
+      final mine = await (session.db.select(
+        session.db.reactions,
+      )..where((r) => r.userId.equals(meId))).getSingle();
+      expect(mine.createAt!.isAfter(theirs), isTrue);
+    },
+  );
 }
