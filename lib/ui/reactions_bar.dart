@@ -101,7 +101,13 @@ class ReactionsBar extends StatelessWidget {
         child: FilterChip(
           mouseCursor: clickCursor,
           // A long press on a phone shows who reacted instead.
-          tooltip: isDesktop ? ':${group.emojiName}:' : null,
+          tooltip: isDesktop
+              ? reactionTooltip(
+                  group,
+                  myUsername:
+                      PostEnvironment.maybeOf(context)?.myUsername ?? '',
+                )
+              : null,
           showCheckmark: false,
           selected: mine,
           // Colour alone marks an own reaction; its size never changes.
@@ -144,6 +150,29 @@ String reactionLabel(ReactionGroup group) => [
   '${group.count}',
   if (group.mine) 'including you',
 ].join(', ');
+
+/// Pure: who reacted, for the tooltip on desktop: "You, Wren and 2 others
+/// reacted with :tada:". People not loaded yet count among the others.
+String reactionTooltip(ReactionGroup group, {required String myUsername}) {
+  const shown = 3;
+  final named = [
+    if (group.mine) 'You',
+    for (final person in group.people)
+      if (!(group.mine && person.username == myUsername))
+        if (person.name.isNotEmpty ? person.name : person.username
+            case final name when name.isNotEmpty)
+          name,
+  ];
+  final names = named.take(shown).toList();
+  final rest = group.count - names.length;
+  final who = rest > 0
+      ? '${names.join(', ')} and $rest ${rest == 1 ? 'other' : 'others'}'
+      : names.length == 1
+      ? names.single
+      : '${names.take(names.length - 1).join(', ')} and ${names.last}';
+  return '${names.isEmpty ? '$rest ${rest == 1 ? 'person' : 'people'}' : who}'
+      ' reacted with :${group.emojiName}:';
+}
 
 /// Who reacted, one tab per emoji, starting at [initial].
 void showReactions(

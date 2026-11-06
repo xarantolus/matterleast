@@ -15,6 +15,60 @@ BorderSide _side(WidgetTester tester, int index) =>
     tester.widget<FilterChip>(find.byType(FilterChip).at(index)).side!;
 
 void main() {
+  group('the tooltip names who reacted', () {
+    PostPerson person(String name) => (
+      id: 'u-$name',
+      name: name,
+      username: name.toLowerCase(),
+      pictureAt: null,
+    );
+    String tooltip(List<PostPerson> people, {bool mine = false}) =>
+        reactionTooltip(
+          ReactionGroup(emojiName: 'tada', people: people, mine: mine),
+          myUsername: 'me',
+        );
+
+    test('one, two and three people', () {
+      expect(tooltip([person('Wren')]), 'Wren reacted with :tada:');
+      expect(
+        tooltip([person('Wren'), person('Kit')]),
+        'Wren and Kit reacted with :tada:',
+      );
+      expect(
+        tooltip([person('Wren'), person('Kit'), person('Ash')]),
+        'Wren, Kit and Ash reacted with :tada:',
+      );
+    });
+
+    test('you come first, as "You"', () {
+      expect(
+        tooltip([person('Wren'), person('Me')], mine: true),
+        'You and Wren reacted with :tada:',
+      );
+      expect(tooltip([person('Me')], mine: true), 'You reacted with :tada:');
+    });
+
+    test('more than three are counted', () {
+      final many = [
+        for (final n in ['A', 'B', 'C', 'D', 'E']) person(n),
+      ];
+      expect(tooltip(many), 'A, B, C and 2 others reacted with :tada:');
+      expect(
+        tooltip(many.take(4).toList()),
+        'A, B, C and 1 other reacted with :tada:',
+      );
+    });
+
+    test('people not loaded yet are counted, not named', () {
+      const unknown = (id: 'u-x', name: '', username: '', pictureAt: null);
+      expect(
+        tooltip([person('Wren'), unknown]),
+        'Wren and 1 other reacted with :tada:',
+      );
+      expect(tooltip([unknown, unknown]), '2 people reacted with :tada:');
+    });
+  });
+
   testWidgets('an own reaction is outlined in the primary colour, others not', (
     tester,
   ) async {
