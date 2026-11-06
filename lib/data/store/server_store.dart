@@ -1349,11 +1349,12 @@ class ServerStore {
           return;
         }
         if (added) {
+          // The server's echo replaces the time we gave our own reaction.
           await db
               .into(db.reactions)
               .insert(
                 reactionCompanion(reaction),
-                mode: InsertMode.insertOrIgnore,
+                mode: InsertMode.insertOrReplace,
               );
         } else {
           await (db.delete(db.reactions)..where(

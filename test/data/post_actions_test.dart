@@ -370,4 +370,22 @@ void main() {
       expect(mine.createAt!.isAfter(theirs), isTrue);
     },
   );
+
+  test('the server\'s time replaces the one my reaction got', () async {
+    await PostActions(session).addReaction('old1', 'tada');
+    final server = DateTime.utc(2026, 10, 25, 11, 30);
+    await session.store.applyReaction(
+      api.Reaction(
+        userId: meId,
+        postId: 'old1',
+        emojiName: 'tada',
+        createAt: server,
+      ),
+      added: true,
+    );
+    final mine = await (session.db.select(
+      session.db.reactions,
+    )..where((r) => r.userId.equals(meId))).getSingle();
+    expect(mine.createAt, server);
+  });
 }
