@@ -18,6 +18,8 @@ import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
+import 'package:matterleast/screens/gallery/video_player_view.dart';
+import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import '../support/pump_app.dart';
 
@@ -62,6 +64,80 @@ class _Downloads implements FileDownloads {
   @override
   Object? noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
+
+class _CachedDownloads extends _Downloads {
+  _CachedDownloads(this.file);
+
+  final File file;
+
+  @override
+  Future<File?> cached(String fileId) async => file;
+}
+
+class _Session implements ServerSession {
+  _Session(this.files);
+
+  @override
+  final FileDownloads files;
+
+  @override
+  Object? noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// A player that is ready at once and draws a flat colour.
+class _StillPlayer extends VideoPlayerPlatform {
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<int?> createWithOptions(VideoCreationOptions options) async => 1;
+
+  @override
+  Stream<VideoEvent> videoEventsFor(int playerId) => Stream.value(
+    VideoEvent(
+      eventType: VideoEventType.initialized,
+      duration: const Duration(seconds: 30),
+      size: const Size(1280, 720),
+    ),
+  );
+
+  @override
+  Future<void> setLooping(int playerId, bool looping) async {}
+
+  @override
+  Future<void> setVolume(int playerId, double volume) async {}
+
+  @override
+  Future<void> play(int playerId) async {}
+
+  @override
+  Future<void> pause(int playerId) async {}
+
+  @override
+  Future<void> setPlaybackSpeed(int playerId, double speed) async {}
+
+  @override
+  Future<void> seekTo(int playerId, Duration position) async {}
+
+  @override
+  Future<void> dispose(int playerId) async {}
+
+  @override
+  Future<Duration> getPosition(int playerId) async => Duration.zero;
+
+  @override
+  Widget buildViewWithOptions(VideoViewOptions options) =>
+      const ColoredBox(color: Colors.blueGrey);
+}
+
+const _clip = PostFile(
+  id: 'f9',
+  name: 'clip.mp4',
+  extension: 'mp4',
+  mimeType: 'video/mp4',
+  width: 1280,
+  height: 720,
+);
 
 const _second = PostFile(
   id: 'f2',
@@ -125,6 +201,8 @@ void main() {
     Stream<FileResponse> Function(String url) answer, {
     double? tileWidth,
     List<PostFile> files = const [_photo],
+    FileDownloads? downloads,
+    Future<ServerSession>? session,
   }) async {
     final media = _Media(answer);
     final temp = Directory.systemTemp.createTempSync().path;
@@ -157,11 +235,12 @@ void main() {
         serverImageCachesProvider(_server)
             .overrideWith((ref) async => _Caches(media)),
         fileDownloadsProvider(_server)
-            .overrideWith((ref) async => _Downloads()),
+            .overrideWith((ref) async => downloads ?? _Downloads()),
         imageProxyProvider(_server).overrideWith((ref) => Stream.value(false)),
         autoLoadImagesProvider.overrideWith((ref) => true),
-        serverSessionProvider(_server)
-            .overrideWith((ref) => Completer<ServerSession>().future),
+        serverSessionProvider(
+          _server,
+        ).overrideWith((ref) => session ?? Completer<ServerSession>().future),
       ],
     );
     addTearDown(() async {
@@ -246,6 +325,25 @@ void main() {
     expect(find.textContaining("The picture didn't load."), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
   });
+
+  testWidgets('a video plays inside the gallery, also on Linux', (
+    tester,
+  ) async {
+    VideoPlayerPlatform.instance = _StillPlayer();
+    final file = File('${Directory.systemTemp.createTempSync().path}/v.mp4')
+      ..writeAsBytesSync([0]);
+    final downloads = _CachedDownloads(file);
+    await show(
+      tester,
+      (url) => const Stream.empty(),
+      files: const [_clip],
+      downloads: downloads,
+      session: Future.value(_Session(downloads)),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(VideoPlayerView), findsOneWidget);
+    expect(find.textContaining('video player'), findsNothing);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
   testWidgets('Esc closes the gallery on a desktop', (tester) async {
     final progress = StreamController<FileResponse>();

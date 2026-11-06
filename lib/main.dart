@@ -15,6 +15,7 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/profiling/profile_recorder.dart';
+import 'package:matterleast/screens/gallery/linux_video_player.dart';
 import 'package:matterleast/screens/gallery/settled_end_player.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -33,6 +34,7 @@ Future<void> main() async {
     // runs it on the sqlite3 library the app ships anyway.
     databaseFactory = databaseFactoryFfi;
     settleVideoEnds();
+    useMpvOnLinux();
     final shell = await DesktopShell.start(
       container.read(settingsStoreProvider),
       setStatus: (status) => setStatusEverywhere(container, status),
