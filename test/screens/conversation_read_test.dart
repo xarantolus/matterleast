@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/websocket/server_events.dart';
+import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -185,6 +187,27 @@ void main() {
       },
     );
 
+    test('what the reader reached while the window had no focus is read when '
+        'the focus returns', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+      addTearDown(() {
+        debugDefaultTargetPlatformOverride = null;
+        DesktopShell.windowFocused = true;
+      });
+      DesktopShell.windowFocused = false;
+      final provider = conversationProvider(server.url.toString(), channelId);
+      container.listen(provider, (_, _) {});
+      container.read(provider.notifier).onView(atBottom);
+      await eventually(() {
+        final s = container.read(provider);
+        return s.window != null && !s.refreshing;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(views(), 0);
+      DesktopShell.windowFocused = true;
+      await eventually(() => views() == 1);
+    });
+
     test('a reader scrolled up leaves new messages unread until they reach '
         'the newest one', () async {
       final provider = conversationProvider(server.url.toString(), channelId);
@@ -199,6 +222,56 @@ void main() {
       expect(views(), 0);
 
       container.read(provider.notifier).onView(atBottom);
+      await eventually(() => views() == 1);
+    });
+
+    test('a reader who scrolls down through newer pages to the newest message '
+        'has read the channel', () async {
+      final base = DateTime.utc(2026, 10, 26, 8).millisecondsSinceEpoch;
+      Map<String, Object?> at(int i) => {
+        ...postJson('n$i', 0),
+        'create_at': base + i * 60000,
+      };
+      Map<String, Object?> page(Iterable<int> newestFirst) => {
+        'order': [for (final i in newestFirst) 'n$i'],
+        'posts': {for (final i in newestFirst) 'n$i': at(i)},
+      };
+      Iterable<int> range(int newest, int oldest) => [
+        for (var i = newest; i >= oldest; i--) i,
+      ];
+      server.handle = (r) {
+        if (r.path == '/api/v4/posts/n50') return ok(at(50));
+        if (r.path == posts) {
+          final query = r.raw.uri.queryParameters;
+          if (query.containsKey('since')) {
+            return ok(page(range(1300, 301)));
+          }
+          if (query['before'] == 'n50') return ok(page(range(49, 20)));
+          if (query['after'] == 'n50') return ok(page(range(110, 51)));
+          if (query['after'] == 'n110') return ok(page(range(150, 111)));
+          return ok(page(range(200, 141)));
+        }
+        if (r.path.endsWith('/users/ids')) return ok(<Object?>[]);
+        return ok({'status': 'OK'});
+      };
+      final provider = conversationProvider(
+        server.url.toString(),
+        channelId,
+        highlightPostId: 'n50',
+      );
+      container.listen(provider, (_, _) {});
+      container.read(provider.notifier).onView(scrolledUp);
+      await eventually(() {
+        final s = container.read(provider);
+        return s.window != null && !s.refreshing;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      expect(container.read(provider).window?.newerApart, isTrue);
+      expect(views(), 0);
+      container.read(provider.notifier).onView(atBottom);
+      await eventually(
+        () => container.read(provider).window?.newerApart == false,
+      );
       await eventually(() => views() == 1);
     });
 

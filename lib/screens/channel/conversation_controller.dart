@@ -82,17 +82,19 @@ class Conversation extends _$Conversation {
   /// background; they are read once it has the focus again.
   var _unseen = false;
 
-  /// Whether the newest message is in view; unknown until a list reports.
-  bool? _atNewest;
+  /// Whether the list is at its bottom; unknown until a list reports.
+  bool? _pinned;
 
   /// Something new arrived since the last mark.
   var _pendingRead = true;
   var _markedOnce = false;
 
   void _focusChanged() {
-    if (!_unseen || _session == null || !appInFront()) return;
-    _unseen = false;
-    _pendingRead = true;
+    if (_session == null || !appInFront()) return;
+    if (_unseen) {
+      _unseen = false;
+      _pendingRead = true;
+    }
     _maybeMarkRead();
   }
 
@@ -100,7 +102,7 @@ class Conversation extends _$Conversation {
   /// mark of a visit also clears a "marked unread".
   void _maybeMarkRead() {
     if (!shouldMarkRead(
-      atNewest: _atNewest ?? true,
+      atNewest: (_pinned ?? true) && !(state.window?.newerApart ?? false),
       inFront: appInFront(),
       pending: _pendingRead,
       ready: _session != null && !state.refreshing,
@@ -217,12 +219,9 @@ class Conversation extends _$Conversation {
     );
     if (fromOthers) {
       _pendingRead = true;
-      if (appInFront()) {
-        _maybeMarkRead();
-      } else {
-        _unseen = true;
-      }
+      if (!appInFront()) _unseen = true;
     }
+    _maybeMarkRead();
   }
 
   List<ListRow> _rows(ConversationWindow window) => reuseRows(
@@ -402,7 +401,7 @@ class Conversation extends _$Conversation {
   /// the top; newer pages near the bottom of an older stretch.
   void onView(AnchoredListView view) {
     final window = state.window;
-    _atNewest = view.pinned && !(window?.newerApart ?? false);
+    _pinned = view.pinned;
     if (window == null || _actions == null) return;
     _maybeMarkRead();
     if (view.nearOlderEnd) {
