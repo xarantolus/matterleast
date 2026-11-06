@@ -144,7 +144,7 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
           ),
           SwitchListTile(
             title: const Text('Load images on mobile data'),
-            subtitle: const Text('Otherwise tap an image to load it'),
+            subtitle: Text('Otherwise ${tapWord()} an image to load it'),
             value: images,
             onChanged: (on) => store.write(Settings.imagesOnMobileData, on),
           ),

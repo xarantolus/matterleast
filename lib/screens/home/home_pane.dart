@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/conversation_actions.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
@@ -239,38 +240,50 @@ class _FilterChips extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    padding: const EdgeInsets.symmetric(
+  Widget build(BuildContext context) {
+    final chips = [
+      if (notice case final notice?)
+        ActionChip(
+          mouseCursor: clickCursor,
+          avatar: const Icon(Icons.cloud_off),
+          label: Text(notice),
+          tooltip: 'Retry',
+          onPressed: onRetry,
+        ),
+      for (final filter in InboxFilter.values)
+        ChoiceChip(
+          mouseCursor: clickCursor,
+          label: Text(switch (filter) {
+            InboxFilter.unread => 'Unread',
+            InboxFilter.mentions => 'Mentions',
+            InboxFilter.threads => 'Threads',
+            InboxFilter.saved => 'Saved',
+          }),
+          selected: filter == selected,
+          onSelected: (_) => onSelected(filter),
+        ),
+    ];
+    const padding = EdgeInsets.symmetric(
       horizontal: Spacing.md,
       vertical: Spacing.sm,
-    ),
-    child: Row(
-      spacing: Spacing.sm,
-      children: [
-        if (notice case final notice?)
-          ActionChip(
-            mouseCursor: clickCursor,
-            avatar: const Icon(Icons.cloud_off),
-            label: Text(notice),
-            tooltip: 'Retry',
-            onPressed: onRetry,
-          ),
-        for (final filter in InboxFilter.values)
-          ChoiceChip(
-            mouseCursor: clickCursor,
-            label: Text(switch (filter) {
-              InboxFilter.unread => 'Unread',
-              InboxFilter.mentions => 'Mentions',
-              InboxFilter.threads => 'Threads',
-              InboxFilter.saved => 'Saved',
-            }),
-            selected: filter == selected,
-            onSelected: (_) => onSelected(filter),
-          ),
-      ],
-    ),
-  );
+    );
+    // A mouse wheel doesn't scroll sideways, so on desktop the chips wrap.
+    if (isDesktop) {
+      return Padding(
+        padding: padding,
+        child: Wrap(
+          spacing: Spacing.sm,
+          runSpacing: Spacing.sm,
+          children: chips,
+        ),
+      );
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: padding,
+      child: Row(spacing: Spacing.sm, children: chips),
+    );
+  }
 }
 
 class _Empty extends StatelessWidget {

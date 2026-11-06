@@ -22,6 +22,7 @@ import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
+import 'package:matterleast/ui/picker_modes.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/try_action.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -644,6 +645,7 @@ Future<DateTime?> askReminderTime(BuildContext context) async {
   }
   final later = DateTime.now().add(const Duration(hours: 1));
   final day = await showDatePicker(
+    initialEntryMode: dateEntryMode,
     context: context,
     initialDate: later,
     firstDate: localDay(now),
@@ -651,6 +653,7 @@ Future<DateTime?> askReminderTime(BuildContext context) async {
   );
   if (day == null || !context.mounted) return null;
   final time = await showTimePicker(
+    initialEntryMode: timeEntryMode,
     context: context,
     initialTime: TimeOfDay.fromDateTime(later),
   );

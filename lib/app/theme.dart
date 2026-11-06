@@ -291,6 +291,11 @@ ThemeData desktopTheme(ThemeData theme) {
       mouseCursor: click,
       shape: corners,
     ),
+    // Desktop lists show where they are and how far they go, not only
+    // while they move.
+    scrollbarTheme: theme.scrollbarTheme.copyWith(
+      thumbVisibility: const WidgetStatePropertyAll(true),
+    ),
     // Ripples are for fingers.
     splashFactory: NoSplash.splashFactory,
     visualDensity: VisualDensity.compact,

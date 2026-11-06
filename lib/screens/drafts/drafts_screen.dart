@@ -21,7 +21,7 @@ import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
 /// Unsent messages of one team and of direct messages: tap to go on
-/// writing, swipe or long-press to delete. Where the server schedules
+/// writing, swipe, long-press or the delete button to delete. Where the server schedules
 /// messages, a second tab lists those.
 class DraftsScreen extends ConsumerWidget {
   const DraftsScreen({
@@ -103,6 +103,22 @@ class DraftsScreen extends ConsumerWidget {
         itemCount: drafts.length,
         itemBuilder: (context, i) {
           final draft = drafts[i];
+          final tile = _DraftTile(
+            url: url,
+            draft: draft,
+            onTap: () => openConversation(
+              Navigator.of(context),
+              url: url,
+              channelId: draft.channelId,
+              title: draft.title,
+              teamId: teamId,
+              rootId: draft.rootId.isEmpty ? null : draft.rootId,
+            ),
+            onOptions: (anchor) => _options(context, ref, draft, anchor),
+            onDelete: () => unawaited(_delete(context, ref, draft)),
+          );
+          // A mouse can't swipe; there the row has a delete button.
+          if (isDesktop) return tile;
           return Dismissible(
             key: ValueKey('${draft.channelId}/${draft.rootId}'),
             background: const _DeleteBackground(
@@ -112,19 +128,7 @@ class DraftsScreen extends ConsumerWidget {
               alignment: AlignmentDirectional.centerEnd,
             ),
             onDismissed: (_) => _delete(context, ref, draft),
-            child: _DraftTile(
-              url: url,
-              draft: draft,
-              onTap: () => openConversation(
-                Navigator.of(context),
-                url: url,
-                channelId: draft.channelId,
-                title: draft.title,
-                teamId: teamId,
-                rootId: draft.rootId.isEmpty ? null : draft.rootId,
-              ),
-              onOptions: (anchor) => _options(context, ref, draft, anchor),
-            ),
+            child: tile,
           );
         },
       ),
@@ -186,12 +190,13 @@ class DraftsScreen extends ConsumerWidget {
   }
 }
 
-class _DraftTile extends ConsumerWidget {
+class _DraftTile extends ConsumerStatefulWidget {
   const _DraftTile({
     required this.url,
     required this.draft,
     required this.onTap,
     required this.onOptions,
+    required this.onDelete,
   });
 
   final String url;
@@ -199,16 +204,43 @@ class _DraftTile extends ConsumerWidget {
   final VoidCallback onTap;
 
   final ValueChanged<Rect?> onOptions;
+  final VoidCallback onDelete;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DraftTile> createState() => _DraftTileState();
+}
+
+class _DraftTileState extends ConsumerState<_DraftTile> {
+  var _over = false;
+
+  void _hover(bool over) {
+    if (over != _over) setState(() => _over = over);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final url = widget.url;
+    final draft = widget.draft;
     final today = ref.watch(todayProvider);
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
     final thread = draft.rootId.isNotEmpty;
     final tile = ListTile(
-      onTap: onTap,
-      onLongPress: () => onOptions(null),
+      onTap: widget.onTap,
+      onLongPress: () => widget.onOptions(null),
+      trailing: isDesktop
+          ? Visibility(
+              visible: _over,
+              maintainState: true,
+              maintainAnimation: true,
+              maintainSize: true,
+              child: IconButton(
+                tooltip: 'Delete draft',
+                onPressed: widget.onDelete,
+                icon: const Icon(Icons.delete_outline),
+              ),
+            )
+          : null,
       leading: switch (draft.userId) {
         final userId? => UserAvatar(
           serverUrl: url,
@@ -258,11 +290,15 @@ class _DraftTile extends ConsumerWidget {
         style: TextStyle(color: tokens.muted),
       ),
     );
-    return GestureDetector(
-      onSecondaryTapUp: isDesktop
-          ? (d) => onOptions(d.globalPosition & Size.zero)
-          : null,
-      child: tile,
+    return MouseRegion(
+      onEnter: (_) => _hover(true),
+      onExit: (_) => _hover(false),
+      child: GestureDetector(
+        onSecondaryTapUp: isDesktop
+            ? (d) => widget.onOptions(d.globalPosition & Size.zero)
+            : null,
+        child: tile,
+      ),
     );
   }
 }

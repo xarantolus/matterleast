@@ -13,6 +13,7 @@ import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/root/root_shortcuts.dart';
+import 'package:matterleast/screens/settings/settings_page.dart';
 
 const _url = 'https://chat.example.test';
 const _team = 'team1';
@@ -59,6 +60,74 @@ final _list = ChannelList(
   synced: true,
 );
 
+ConversationTarget _target(String id) => ConversationTarget.channel(
+  url: _url,
+  channelId: id,
+  title: 'Channel $id',
+  teamId: _team,
+);
+
+const _teams = [
+  RailTeam(id: _team, displayName: 'Boats', unread: false, mentions: 0),
+  RailTeam(id: 'team2', displayName: 'Docks', unread: false, mentions: 0),
+];
+
+/// The root's shortcuts over an empty page, on a wide window, with the rail
+/// on the first team; the container shows what the keys did.
+Future<ProviderContainer> _pumpRoot(WidgetTester tester) async {
+  tester.view.physicalSize = const Size(1600, 1000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+  late ProviderContainer container;
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        railSelectionProvider.overrideWith(_Rail.new),
+        railTeamsProvider(_url).overrideWith((ref) => Stream.value(_teams)),
+        channelListProvider(
+          _url,
+          _team,
+        ).overrideWith((ref) => Stream.value(_list)),
+        // Marking the channel viewed is not what this checks.
+        channelActionsProvider(_url)
+            .overrideWith((ref) => Completer<ChannelActions>().future),
+      ],
+      child: MaterialApp(
+        builder: (_, child) => AppShortcuts(child: child!),
+        home: Consumer(
+          builder: (context, ref, _) {
+            container = ProviderScope.containerOf(context);
+            // Kept listened, as the root screen does.
+            ref
+              ..watch(railTeamsProvider(_url))
+              ..watch(channelListProvider(_url, _team));
+            return RootShortcuts(
+              onSwitcher: () {},
+              child: const Scaffold(body: SizedBox.expand()),
+            );
+          },
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  return container;
+}
+
+Future<void> _press(
+  WidgetTester tester,
+  LogicalKeyboardKey key, {
+  bool control = false,
+  bool shift = false,
+}) async {
+  if (control) await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+  await tester.sendKeyEvent(key);
+  if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+  if (control) await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
 
@@ -80,13 +149,16 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
     expect(find.text('Keyboard shortcuts'), findsWidgets);
-    for (final shortcut in appShortcuts) {
+    for (final shortcut in appShortcuts.where((s) => s.listed)) {
       final row = find.ancestor(
         of: find.text(shortcut.description),
         matching: find.byType(Row),
       );
       expect(
-        find.descendant(of: row, matching: find.text(keysLabel(shortcut.keys))),
+        find.descendant(
+          of: row,
+          matching: find.text(shortcut.listedKeys ?? keysLabel(shortcut.keys)),
+        ),
         findsOneWidget,
         reason: shortcut.description,
       );
@@ -127,61 +199,8 @@ void main() {
 
   testWidgets('Alt+Down opens the next channel, Alt+Shift+Down the next '
       'unread one', (tester) async {
-    tester.view.physicalSize = const Size(1600, 1000);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    late ProviderContainer container;
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          railSelectionProvider.overrideWith(_Rail.new),
-          railTeamsProvider(_url).overrideWith(
-            (ref) => Stream.value(const [
-              RailTeam(
-                id: _team,
-                displayName: 'Boats',
-                unread: false,
-                mentions: 0,
-              ),
-            ]),
-          ),
-          channelListProvider(
-            _url,
-            _team,
-          ).overrideWith((ref) => Stream.value(_list)),
-          // Marking the channel viewed is not what this checks.
-          channelActionsProvider(_url)
-              .overrideWith((ref) => Completer<ChannelActions>().future),
-        ],
-        child: MaterialApp(
-          builder: (_, child) => AppShortcuts(child: child!),
-          home: Consumer(
-            builder: (context, ref, _) {
-              container = ProviderScope.containerOf(context);
-              // Kept listened, as the root screen does.
-              ref
-                ..watch(railTeamsProvider(_url))
-                ..watch(channelListProvider(_url, _team));
-              return RootShortcuts(
-                onSwitcher: () {},
-                child: const Scaffold(body: TextField(autofocus: true)),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    container
-        .read(openPanesProvider.notifier)
-        .open(
-          const ConversationTarget.channel(
-            url: _url,
-            channelId: 'b',
-            title: 'Channel b',
-            teamId: _team,
-          ),
-        );
+    final container = await _pumpRoot(tester);
+    container.read(openPanesProvider.notifier).open(_target('b'));
     String? open() => container.read(openPanesProvider).channel?.channelId;
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
@@ -203,6 +222,69 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
     await tester.pumpAndSettle();
     expect(open(), 'e');
+  }, variant: desktop);
+
+  testWidgets('Ctrl+Tab and Ctrl+Shift+Tab step through the channels', (
+    tester,
+  ) async {
+    final container = await _pumpRoot(tester);
+    container.read(openPanesProvider.notifier).open(_target('b'));
+    String? open() => container.read(openPanesProvider).channel?.channelId;
+
+    await _press(tester, LogicalKeyboardKey.tab, control: true);
+    expect(open(), 'c');
+    await _press(tester, LogicalKeyboardKey.tab, control: true, shift: true);
+    expect(open(), 'b');
+  }, variant: desktop);
+
+  testWidgets('Ctrl+2 shows the second team of the server', (tester) async {
+    final container = await _pumpRoot(tester);
+    RailTarget? shown() => container.read(railSelectionProvider);
+    expect(shown()?.teamId, _team);
+
+    await _press(tester, LogicalKeyboardKey.digit2, control: true);
+    expect(shown()?.teamId, 'team2');
+
+    await _press(tester, LogicalKeyboardKey.digit1, control: true);
+    expect(shown()?.teamId, _team);
+
+    // There is no third team.
+    await _press(tester, LogicalKeyboardKey.digit3, control: true);
+    expect(shown()?.teamId, _team);
+  }, variant: desktop);
+
+  testWidgets('Ctrl+, opens the settings', (tester) async {
+    await _pumpRoot(tester);
+    expect(find.byType(SettingsPage), findsNothing);
+
+    await _press(tester, LogicalKeyboardKey.comma, control: true);
+    expect(find.byType(SettingsPage), findsOneWidget);
+  }, variant: desktop);
+
+  testWidgets('Esc closes the thread beside a channel, not the channel', (
+    tester,
+  ) async {
+    final container = await _pumpRoot(tester);
+    container
+        .read(openPanesProvider.notifier)
+        .open(
+          const ConversationTarget.thread(
+            url: _url,
+            channelId: 'b',
+            rootId: 'root1',
+            channelName: 'Channel b',
+            teamId: _team,
+          ),
+        );
+    Panes panes() => container.read(openPanesProvider);
+    expect(panes().thread, isNotNull);
+
+    await _press(tester, LogicalKeyboardKey.escape);
+    expect(panes().thread, isNull);
+    expect(panes().channel?.channelId, 'b');
+
+    await _press(tester, LogicalKeyboardKey.escape);
+    expect(panes().channel?.channelId, 'b');
   }, variant: desktop);
 
   test('stepping wraps round and skips read channels for unread', () {

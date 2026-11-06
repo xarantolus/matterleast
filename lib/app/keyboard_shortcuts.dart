@@ -130,6 +130,27 @@ class SearchChannelIntent extends AppIntent {
   const SearchChannelIntent();
 }
 
+class OpenSettingsIntent extends AppIntent {
+  const OpenSettingsIntent();
+}
+
+/// The [number]th team (counting from 1) of the shown server.
+class TeamNumberIntent extends AppIntent {
+  const TeamNumberIntent(this.number);
+
+  final int number;
+}
+
+/// Picks files to attach to the message being written.
+class UploadFileIntent extends AppIntent {
+  const UploadFileIntent();
+}
+
+/// Opens the emoji picker for the message being written.
+class EmojiPickerIntent extends AppIntent {
+  const EmojiPickerIntent();
+}
+
 /// An action that runs [onInvoke] while [enabled] says so; a key it
 /// doesn't take goes on to the field.
 class EnabledAction<T extends Intent> extends Action<T> {
@@ -155,6 +176,8 @@ class AppShortcut {
     this.keys,
     this.intent, {
     this.alsoKeys = const [],
+    this.listedKeys,
+    this.listed = true,
   });
 
   final String description;
@@ -163,6 +186,12 @@ class AppShortcut {
 
   /// Other keys for the same, not listed: keyboard layouts and the numpad.
   final List<SingleActivator> alsoKeys;
+
+  /// The keys as the list shows them, when [keys] alone says too little.
+  final String? listedKeys;
+
+  /// Whether the list shows it; false for one that another row covers.
+  final bool listed;
 }
 
 /// Every desktop shortcut, as Mattermost's web app has them where it has
@@ -179,11 +208,17 @@ const appShortcuts = <AppShortcut>[
     'Previous channel',
     SingleActivator(LogicalKeyboardKey.arrowUp, alt: true),
     ChannelStepIntent(forward: false),
+    alsoKeys: [
+      SingleActivator(LogicalKeyboardKey.tab, control: true, shift: true),
+    ],
+    listedKeys: 'Alt+Up or Ctrl+Shift+Tab',
   ),
   AppShortcut(
     'Next channel',
     SingleActivator(LogicalKeyboardKey.arrowDown, alt: true),
     ChannelStepIntent(forward: true),
+    alsoKeys: [SingleActivator(LogicalKeyboardKey.tab, control: true)],
+    listedKeys: 'Alt+Down or Ctrl+Tab',
   ),
   AppShortcut(
     'Previous unread channel',
@@ -194,6 +229,75 @@ const appShortcuts = <AppShortcut>[
     'Next unread channel',
     SingleActivator(LogicalKeyboardKey.arrowDown, alt: true, shift: true),
     ChannelStepIntent(forward: true, unreadOnly: true),
+  ),
+  AppShortcut(
+    'Settings',
+    SingleActivator(LogicalKeyboardKey.comma, control: true),
+    OpenSettingsIntent(),
+  ),
+  AppShortcut(
+    'Go to the nth team',
+    SingleActivator(LogicalKeyboardKey.digit1, control: true),
+    TeamNumberIntent(1),
+    listedKeys: 'Ctrl+1 to Ctrl+9',
+  ),
+  AppShortcut(
+    'Go to team 2',
+    SingleActivator(LogicalKeyboardKey.digit2, control: true),
+    TeamNumberIntent(2),
+    listed: false,
+  ),
+  AppShortcut(
+    'Go to team 3',
+    SingleActivator(LogicalKeyboardKey.digit3, control: true),
+    TeamNumberIntent(3),
+    listed: false,
+  ),
+  AppShortcut(
+    'Go to team 4',
+    SingleActivator(LogicalKeyboardKey.digit4, control: true),
+    TeamNumberIntent(4),
+    listed: false,
+  ),
+  AppShortcut(
+    'Go to team 5',
+    SingleActivator(LogicalKeyboardKey.digit5, control: true),
+    TeamNumberIntent(5),
+    listed: false,
+  ),
+  AppShortcut(
+    'Go to team 6',
+    SingleActivator(LogicalKeyboardKey.digit6, control: true),
+    TeamNumberIntent(6),
+    listed: false,
+  ),
+  AppShortcut(
+    'Go to team 7',
+    SingleActivator(LogicalKeyboardKey.digit7, control: true),
+    TeamNumberIntent(7),
+    listed: false,
+  ),
+  AppShortcut(
+    'Go to team 8',
+    SingleActivator(LogicalKeyboardKey.digit8, control: true),
+    TeamNumberIntent(8),
+    listed: false,
+  ),
+  AppShortcut(
+    'Go to team 9',
+    SingleActivator(LogicalKeyboardKey.digit9, control: true),
+    TeamNumberIntent(9),
+    listed: false,
+  ),
+  AppShortcut(
+    'Attach a file',
+    SingleActivator(LogicalKeyboardKey.keyU, control: true),
+    UploadFileIntent(),
+  ),
+  AppShortcut(
+    'Emoji picker',
+    SingleActivator(LogicalKeyboardKey.keyE, control: true, shift: true),
+    EmojiPickerIntent(),
   ),
   AppShortcut(
     'Back to the previous conversation',
@@ -510,14 +614,14 @@ Future<void> showShortcutList(BuildContext context) => showDialog<void>(
       child: ListView(
         shrinkWrap: true,
         children: [
-          for (final s in appShortcuts)
+          for (final s in appShortcuts.where((s) => s.listed))
             Padding(
               padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
               child: Row(
                 children: [
                   Expanded(child: Text(s.description)),
                   const SizedBox(width: Spacing.md),
-                  _Keys(keysLabel(s.keys)),
+                  _Keys(s.listedKeys ?? keysLabel(s.keys)),
                 ],
               ),
             ),

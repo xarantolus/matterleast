@@ -13,6 +13,7 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/you/profile_attributes_list.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/app_sheet.dart';
+import 'package:matterleast/ui/desktop_selection.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/failed_state.dart';
 import 'package:matterleast/ui/presence_dot.dart';
@@ -64,66 +65,68 @@ class UserProfileSheet extends ConsumerWidget {
     final presenceKnown = ref.watch(presenceKnownProvider(url, userId));
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(Spacing.lg, 0, Spacing.lg, Spacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
-            children: [
-              UserAvatar(
-                serverUrl: url,
-                userId: profile.id,
-                name: profile.name,
-                lastPictureUpdate: profile.pictureUpdate,
-                size: 96,
-              ),
-              PositionedDirectional(
-                end: 2,
-                bottom: 2,
-                child: presenceKnown
-                    ? PresenceDot(status: profile.status, size: 22)
-                    : const SizedBox.square(dimension: 22),
+      child: DesktopSelection(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              children: [
+                UserAvatar(
+                  serverUrl: url,
+                  userId: profile.id,
+                  name: profile.name,
+                  lastPictureUpdate: profile.pictureUpdate,
+                  size: 96,
+                ),
+                PositionedDirectional(
+                  end: 2,
+                  bottom: 2,
+                  child: presenceKnown
+                      ? PresenceDot(status: profile.status, size: 22)
+                      : const SizedBox.square(dimension: 22),
+                ),
+              ],
+            ),
+            const SizedBox(height: Spacing.md),
+            Text(
+              profile.name,
+              style: text.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              [
+                '@${profile.username}',
+                if (profile.isBot) 'Bot',
+                if (profile.isGuest) 'Guest',
+                if (presenceKnown) presenceLabel(profile.status),
+              ].join(' · '),
+              style: text.bodyMedium?.copyWith(color: tokens.muted),
+              textAlign: TextAlign.center,
+            ),
+            if (custom != null) ...[
+              const SizedBox(height: Spacing.md),
+              CustomStatusLine(url: url, status: custom, style: text.bodyLarge),
+            ],
+            const SizedBox(height: Spacing.md),
+            if (profile.nickname.isNotEmpty)
+              _Detail(label: 'Nickname', value: profile.nickname),
+            if (profile.position.isNotEmpty)
+              _Detail(label: 'Position', value: profile.position),
+            if (profile.timezone case final zone?) _LocalTime(zone: zone),
+            ProfileAttributesList(url: url, userId: userId),
+            if (!profile.isMe) ...[
+              const SizedBox(height: Spacing.lg),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('Message'),
+                  onPressed: () => _message(context, ref, profile),
+                ),
               ),
             ],
-          ),
-          const SizedBox(height: Spacing.md),
-          Text(
-            profile.name,
-            style: text.headlineSmall,
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            [
-              '@${profile.username}',
-              if (profile.isBot) 'Bot',
-              if (profile.isGuest) 'Guest',
-              if (presenceKnown) presenceLabel(profile.status),
-            ].join(' · '),
-            style: text.bodyMedium?.copyWith(color: tokens.muted),
-            textAlign: TextAlign.center,
-          ),
-          if (custom != null) ...[
-            const SizedBox(height: Spacing.md),
-            CustomStatusLine(url: url, status: custom, style: text.bodyLarge),
           ],
-          const SizedBox(height: Spacing.md),
-          if (profile.nickname.isNotEmpty)
-            _Detail(label: 'Nickname', value: profile.nickname),
-          if (profile.position.isNotEmpty)
-            _Detail(label: 'Position', value: profile.position),
-          if (profile.timezone case final zone?) _LocalTime(zone: zone),
-          ProfileAttributesList(url: url, userId: userId),
-          if (!profile.isMe) ...[
-            const SizedBox(height: Spacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('Message'),
-                onPressed: () => _message(context, ref, profile),
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

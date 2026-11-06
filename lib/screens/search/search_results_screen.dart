@@ -27,6 +27,7 @@ import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/pane_label.dart';
+import 'package:matterleast/ui/picker_modes.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -454,6 +455,7 @@ class _ScopeChips extends ConsumerWidget {
     String day(DateTime d) => dateLabel(d, DateTime.now());
 
     Future<DateTime?> pickDay(DateTime? current) => showDatePicker(
+      initialEntryMode: dateEntryMode,
       context: context,
       initialDate: current ?? DateTime.now(),
       firstDate: DateTime(2015),

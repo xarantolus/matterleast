@@ -30,6 +30,7 @@ import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
+import 'package:matterleast/ui/desktop_selection.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/try_action.dart';
@@ -517,19 +518,21 @@ class _Header extends StatelessWidget {
             const SizedBox(height: Spacing.md),
             Text('PURPOSE', style: tokens.smallCaps),
             const SizedBox(height: Spacing.xs),
-            Text(info.purpose, style: text.bodyMedium),
+            DesktopSelection(child: Text(info.purpose, style: text.bodyMedium)),
           ],
           if (info.header.isNotEmpty) ...[
             const SizedBox(height: Spacing.md),
             Text('HEADER', style: tokens.smallCaps),
             const SizedBox(height: Spacing.xs),
             // Keyed by the text, so an edited header is parsed again.
-            MessageEnvironment(
-              url: url,
-              teamId: info.teamId,
-              child: PostBody(
-                postId: 'header:${info.id}:${info.header.hashCode}',
-                message: info.header,
+            DesktopSelection(
+              child: MessageEnvironment(
+                url: url,
+                teamId: info.teamId,
+                child: PostBody(
+                  postId: 'header:${info.id}:${info.header.hashCode}',
+                  message: info.header,
+                ),
               ),
             ),
           ],
