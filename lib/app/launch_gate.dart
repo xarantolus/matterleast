@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/dev_sign_in.dart';
 import 'package:matterleast/app/image_memory.dart';
+import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/incoming_shares.dart';
 import 'package:matterleast/app/platform.dart';
@@ -13,6 +14,7 @@ import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/app/shortcuts.dart';
 import 'package:matterleast/app/sso_resume.dart';
 import 'package:matterleast/data/files/local_copies.dart';
+import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -252,7 +254,13 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       ref.watch(searchTabProvider),
       ref.watch(threadsTabProvider),
     ];
-    if (servers == null || saved.isLoading || choices.any((c) => c.isLoading)) {
+    // Whether pictures load is known too, so a link card never adds or drops
+    // its picture after it was shown.
+    final loadsPictures = ref.watch(autoLoadProvider(DataKind.linkPicture));
+    if (servers == null ||
+        saved.isLoading ||
+        choices.any((c) => c.isLoading) ||
+        loadsPictures == null) {
       return const Scaffold();
     }
     final signedIn = [

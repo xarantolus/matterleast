@@ -204,6 +204,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   final _text = TextEditingController();
   late final _focus = widget.focusNode ?? FocusNode();
   final _suggestionsShown = OverlayPortalController()..show();
+  final _fieldLink = LayerLink();
+  final _emojiButton = GlobalKey();
   final _blinking = ValueNotifier(true);
   static const _blinkFor = Duration(seconds: 10);
   Timer? _blinkStop;
@@ -487,27 +489,42 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
           info.childPaintTransform,
           Offset.zero & info.childSize,
         );
-        final span = suggestionSpan(
-          field,
+        final width = suggestionWidth(
+          _fieldLink.leaderSize?.width ?? field.width,
           info.overlaySize.width,
           desktop: isDesktop,
         );
-        return Positioned(
-          left: span.left,
-          width: span.width,
-          bottom: info.overlaySize.height - field.top,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: math.max(0, field.top)),
-            child: TextFieldTapRegion(
-              child: SuggestionList(
-                url: widget.url,
-                suggestions: suggestions,
-                highlighted: _highlight,
-                onPick: ref.read(_provider.notifier).pick,
-              ),
+        final list = ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: math.max(0, field.top)),
+          child: TextFieldTapRegion(
+            child: SuggestionList(
+              url: widget.url,
+              suggestions: suggestions,
+              highlighted: _highlight,
+              onPick: ref.read(_provider.notifier).pick,
             ),
           ),
         );
+        // A desktop card hangs from the text field's own left edge.
+        return isDesktop
+            ? Positioned(
+                left: 0,
+                top: 0,
+                width: width,
+                child: CompositedTransformFollower(
+                  link: _fieldLink,
+                  showWhenUnlinked: false,
+                  targetAnchor: Alignment.topLeft,
+                  followerAnchor: Alignment.bottomLeft,
+                  child: list,
+                ),
+              )
+            : Positioned(
+                left: field.left,
+                width: width,
+                bottom: info.overlaySize.height - field.top,
+                child: list,
+              );
       },
       child: Actions(
         actions: {
@@ -538,7 +555,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
           ),
           EmojiPickerIntent: EnabledAction<EmojiPickerIntent>(
             enabled: () => true,
-            onInvoke: (_) => unawaited(_pickEmoji(globalRectOf(context))),
+            onInvoke: (_) {
+              final button = _emojiButton.currentContext;
+              unawaited(
+                _pickEmoji(button == null ? null : globalRectOf(button)),
+              );
+            },
           ),
         },
         child: _field(context, value),
@@ -750,75 +772,80 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                         Expanded(
                           // On desktop the field grows up to a third of the
                           // window, then scrolls; a phone keeps six lines.
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: isDesktop
-                                  ? MediaQuery.sizeOf(context).height * 0.35
-                                  : double.infinity,
-                            ),
-                            child: Stack(
-                              children: [
-                                TickersWhile(
-                                  active: DesktopShell.focus,
-                                  child: TickersWhile(
-                                    active: _blinking,
-                                    child: TextField(
-                                      controller: _text,
-                                      onTap: _wake,
-                                      focusNode: _focus,
-                                      style: style,
-                                      minLines: 1,
-                                      maxLines: isDesktop ? null : 6,
-                                      textAlignVertical:
-                                          TextAlignVertical.center,
-                                      keyboardType: TextInputType.multiline,
-                                      textCapitalization:
-                                          TextCapitalization.sentences,
-                                      decoration: InputDecoration(
-                                        hintText: widget.hint,
-                                        hintMaxLines: 1,
-                                        filled: !context.density.plainComposer,
-                                        isDense: true,
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            context.density.fieldRadius,
-                                          ),
-                                          borderSide:
-                                              context.density.plainComposer
-                                              ? BorderSide(
-                                                  color: tokens.divider,
-                                                )
-                                              : BorderSide.none,
-                                        ),
-                                        contentPadding:
-                                            EdgeInsetsDirectional.fromSTEB(
-                                              Spacing.lg,
-                                              padding,
-                                              48,
-                                              padding,
+                          child: CompositedTransformTarget(
+                            link: _fieldLink,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: isDesktop
+                                    ? MediaQuery.sizeOf(context).height * 0.35
+                                    : double.infinity,
+                              ),
+                              child: Stack(
+                                children: [
+                                  TickersWhile(
+                                    active: DesktopShell.focus,
+                                    child: TickersWhile(
+                                      active: _blinking,
+                                      child: TextField(
+                                        controller: _text,
+                                        onTap: _wake,
+                                        focusNode: _focus,
+                                        style: style,
+                                        minLines: 1,
+                                        maxLines: isDesktop ? null : 6,
+                                        textAlignVertical:
+                                            TextAlignVertical.center,
+                                        keyboardType: TextInputType.multiline,
+                                        textCapitalization:
+                                            TextCapitalization.sentences,
+                                        decoration: InputDecoration(
+                                          hintText: widget.hint,
+                                          hintMaxLines: 1,
+                                          filled:
+                                              !context.density.plainComposer,
+                                          isDense: true,
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              context.density.fieldRadius,
                                             ),
+                                            borderSide:
+                                                context.density.plainComposer
+                                                ? BorderSide(
+                                                    color: tokens.divider,
+                                                  )
+                                                : BorderSide.none,
+                                          ),
+                                          contentPadding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                Spacing.lg,
+                                                padding,
+                                                48,
+                                                padding,
+                                              ),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                // At the bottom like send, so a long message keeps
-                                // it next to the line being written.
-                                PositionedDirectional(
-                                  end: 0,
-                                  bottom: 0,
-                                  child: Builder(
-                                    builder: (button) => _rowCentred(
-                                      rowHeight,
-                                      IconButton(
-                                        tooltip: 'Emoji',
-                                        onPressed: () =>
-                                            _pickEmoji(globalRectOf(button)),
-                                        icon: const Icon(Icons.mood),
+                                  // At the bottom like send, so a long message keeps
+                                  // it next to the line being written.
+                                  PositionedDirectional(
+                                    end: 0,
+                                    bottom: 0,
+                                    child: Builder(
+                                      builder: (button) => _rowCentred(
+                                        rowHeight,
+                                        IconButton(
+                                          key: _emojiButton,
+                                          tooltip: 'Emoji',
+                                          onPressed: () =>
+                                              _pickEmoji(globalRectOf(button)),
+                                          icon: const Icon(Icons.mood),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
