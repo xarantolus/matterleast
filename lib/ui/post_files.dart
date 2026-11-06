@@ -26,7 +26,7 @@ import 'package:matterleast/ui/hover_tint.dart';
 import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
-import 'package:matterleast/ui/play_on_hover.dart';
+import 'package:matterleast/ui/play_while_focused.dart';
 import 'package:matterleast/ui/server_image.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -246,8 +246,8 @@ class _MediaTile extends StatelessWidget {
               children: [
                 Hero(
                   tag: heroTag,
-                  child: PlayOnHover(
-                    hoverOnly: isDesktop,
+                  child: PlayWhileFocused(
+                    desktop: isDesktop,
                     child: MediaPicture(url: url, file: file, size: size),
                   ),
                 ),

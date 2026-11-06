@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/ui/play_on_hover.dart';
+import 'package:matterleast/app/desktop/desktop_shell.dart';
+import 'package:matterleast/ui/play_while_focused.dart';
 
 /// Two frames of one pixel, 100 ms each, looping forever.
 final _gif = Uint8List.fromList([
@@ -17,7 +17,7 @@ final _gif = Uint8List.fromList([
 /// The number of the frame the picture shows, once it has loaded.
 var _frame = -1;
 
-Future<void> pumpGif(WidgetTester tester, {required bool hoverOnly}) async {
+Future<void> pumpGif(WidgetTester tester, {required bool desktop}) async {
   _frame = -1;
   await tester.pumpWidget(
     Directionality(
@@ -26,8 +26,8 @@ Future<void> pumpGif(WidgetTester tester, {required bool hoverOnly}) async {
         alignment: Alignment.topLeft,
         child: SizedBox.square(
           dimension: 50,
-          child: PlayOnHover(
-            hoverOnly: hoverOnly,
+          child: PlayWhileFocused(
+            desktop: desktop,
             child: Image.memory(
               _gif,
               width: 50,
@@ -50,38 +50,54 @@ Future<void> pumpGif(WidgetTester tester, {required bool hoverOnly}) async {
 
 Future<void> wait(WidgetTester tester) async {
   for (var i = 0; i < 10; i++) {
+    // Decoding the next frame takes real time.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
 
 void main() {
-  testWidgets('a picture at rest shows its first frame and stays', (
-    tester,
-  ) async {
-    await pumpGif(tester, hoverOnly: true);
-    await wait(tester);
-
-    expect(_frame, 0);
+  tearDown(() {
+    DesktopShell.windowFocused = true;
+    // Each test decodes the picture afresh, not as the last one left it.
+    PaintingBinding.instance.imageCache
+      ..clear()
+      ..clearLiveImages();
   });
 
-  testWidgets('the picture plays while the pointer is over it', (tester) async {
-    await pumpGif(tester, hoverOnly: true);
-    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-    await mouse.addPointer(location: const Offset(25, 25));
+  testWidgets('on desktop the picture plays while the window has the focus', (
+    tester,
+  ) async {
+    await pumpGif(tester, desktop: true);
     await wait(tester);
 
     expect(_frame, greaterThan(0));
+  });
 
-    await mouse.moveTo(const Offset(300, 300));
+  testWidgets('it stays still while another window has the focus', (
+    tester,
+  ) async {
+    DesktopShell.windowFocused = false;
+    await pumpGif(tester, desktop: true);
+    await wait(tester);
+    expect(_frame, 0);
+
+    DesktopShell.windowFocused = true;
+    await wait(tester);
+    expect(_frame, greaterThan(0));
+
+    DesktopShell.windowFocused = false;
     await tester.pump();
     final stopped = _frame;
     await wait(tester);
-
     expect(_frame, stopped);
   });
 
-  testWidgets('without hover-only the picture always plays', (tester) async {
-    await pumpGif(tester, hoverOnly: false);
+  testWidgets('a phone always plays it', (tester) async {
+    DesktopShell.windowFocused = false;
+    await pumpGif(tester, desktop: false);
     await wait(tester);
 
     expect(_frame, greaterThan(0));
