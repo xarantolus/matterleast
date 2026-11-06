@@ -38,6 +38,7 @@ NoticeRouter noticeRouter(Ref ref) {
           ),
         ),
     inFront: appInFront(),
+    covered: appCovered(),
     desktop: isDesktop,
   );
 }
@@ -56,8 +57,8 @@ InAppNotifications inAppNotifications(Ref ref) {
 
 /// The notification check of a server as the UI isolate runs it: a notice
 /// for a conversation the user sees is dropped, one while the app is in
-/// front becomes a banner, and one while a desktop window is not in front a
-/// toast.
+/// front becomes a banner, and one while the app is covered, or a desktop
+/// window is not in front, a toast.
 NotificationCheck inAppCheck(
   ServerSession session,
   Notifier notifier, {

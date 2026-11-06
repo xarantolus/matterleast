@@ -221,6 +221,19 @@ void main() {
     await harness.close(tester);
   });
 
+  testWidgets('with recents or the shade over the app a phone notifies '
+      'instead of showing a banner', (tester) async {
+    await start(tester);
+    await open(tester, channelId, 'Boats');
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await arrives(tester, _directId, 'see you at the dock');
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(banner('see you at the dock'), findsNothing);
+    expect(toasts.shownNotices, hasLength(1));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await harness.close(tester);
+  });
+
   testWidgets('a message in the conversation on screen shows no banner', (
     tester,
   ) async {
