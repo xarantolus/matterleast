@@ -7,6 +7,7 @@ import 'package:matterleast/data/files/open_file_portal.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Hands a downloaded file to the rest of the phone: other apps, the share
 /// sheet and the shared Downloads, Pictures or Movies folders. Cached files
@@ -20,7 +21,9 @@ abstract final class FileHandoff {
   ) async {
     final dir = Directory(p.join(directory, file.id));
     await dir.create(recursive: true);
-    return cached.copy(p.join(dir.path, _safeName(file)));
+    final copy = await cached.copy(p.join(dir.path, _safeName(file)));
+    if (Platform.isLinux) await Process.run('chmod', ['a-x', copy.path]);
+    return copy;
   }
 
   /// Opens the file in an app; false when none can. [chooseApp] asks which;
@@ -35,6 +38,12 @@ abstract final class FileHandoff {
     if (Platform.isLinux) {
       return await openFileWithPortal(copy.path, ask: chooseApp) !=
           PortalOutcome.failed;
+    }
+    if (Platform.isWindows) {
+      return launchUrl(
+        Uri.file(copy.path, windows: true),
+        mode: LaunchMode.externalApplication,
+      );
     }
     return FileDownloader().openFile(
       filePath: copy.path,
@@ -107,12 +116,40 @@ String? _mime(PostFile file) => file.mimeType.isEmpty ? null : file.mimeType;
 String _safeName(PostFile file) =>
     safeFileName(file.name, file.id, file.extension);
 
-final _unsafe = RegExp(r'[/\\:*?"<>|\x00-\x1f\x7f]');
+final _unsafe = RegExp(
+  r'[/\\:*?"<>|&^%;\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]',
+);
 final _deviceName = RegExp(
   r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$',
   caseSensitive: false,
 );
 const _longestName = 120;
+
+const _windowsPrograms = {
+  'exe',
+  'com',
+  'bat',
+  'cmd',
+  'msi',
+  'msp',
+  'lnk',
+  'url',
+  'hta',
+  'scr',
+  'pif', //
+  'cpl', 'js', 'jse', 'vbs', 'vbe', 'wsf', 'wsh', 'ps1', 'psm1', 'reg', 'jar',
+  'appref-ms', 'application',
+};
+const _linuxPrograms = {'desktop', 'sh', 'run', 'appimage'};
+
+/// Pure: whether opening the file called [name] could run a program on a
+/// desktop, so it is only ever saved.
+bool isProgramFile(String name, {required bool windows}) {
+  final dot = name.lastIndexOf('.');
+  if (dot < 0) return false;
+  final extension = name.substring(dot + 1).toLowerCase();
+  return (windows ? _windowsPrograms : _linuxPrograms).contains(extension);
+}
 
 /// Pure: [name] without characters Windows or Linux reject, trailing dots
 /// and spaces, or a device name; [id] and [extension] stand in when nothing

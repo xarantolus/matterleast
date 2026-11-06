@@ -23,17 +23,17 @@ finish-args:
   - --socket=pulseaudio
   # The tray icon: the plugin speaks StatusNotifierItem itself, under the
   # name org.kde.StatusNotifierItem-<pid>-<n>; without a watcher it falls
-  # back to minimising.
+  # back to minimising. Flatpak accepts only a trailing `.*` in a name, so
+  # org.kde.* is the narrowest pattern that matches the item's name.
   - --talk-name=org.kde.StatusNotifierWatcher
   - --own-name=org.kde.*
   # flutter_local_notifications talks to the notification server directly,
   # not through the portal.
   - --talk-name=org.freedesktop.Notifications
-  # libsecret uses the Secret portal where the desktop offers one and the
-  # keyring itself where it doesn't (KWallet, older GNOME).
-  - --talk-name=org.freedesktop.secrets
-  # connectivity_plus asks NetworkManager whether there is a network.
-  - --system-talk-name=org.freedesktop.NetworkManager
+  # No access to the host keyring or NetworkManager: in a Flatpak libsecret
+  # keeps its items in an encrypted file under the app's data, locked with a
+  # key from the Secret portal, and connectivity_plus' failure to reach
+  # NetworkManager counts as an unknown network, not an offline one.
   # The unread count on the dock icon is a broadcast signal (Unity
   # LauncherEntry), which needs no permission.
 cleanup:

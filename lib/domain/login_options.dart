@@ -35,6 +35,10 @@ abstract class LoginOptions with _$LoginOptions {
     required String diagnosticId,
     required bool externalBrowserForSso,
 
+    /// The server answers a challenged mobile sign-in with a one-time code
+    /// (feature flag `MobileSSOCodeExchange`), never a bare session token.
+    @Default(false) bool ssoCodeExchange,
+
     /// Guests may sign in with a link the server emails them.
     required bool magicLink,
 
@@ -124,6 +128,7 @@ LoginOptions loginOptionsFrom(ClientConfig config, ClientLicense license) {
     serverVersion: _text(config.version, ''),
     diagnosticId: _text(config.diagnosticId, ''),
     externalBrowserForSso: config.mobileExternalBrowser == true,
+    ssoCodeExchange: config.featureFlags['MobileSSOCodeExchange'] == 'true',
     magicLink: config.enableGuestMagicLink == true,
     siteUrl: _webUrl(config.siteUrl),
   );
