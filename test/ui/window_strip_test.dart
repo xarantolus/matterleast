@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -97,6 +99,24 @@ void main() {
         });
       });
     }
+
+    testWidgets('the window buttons keep the arrow cursor, as caption '
+        'buttons do', (tester) async {
+      await on(TargetPlatform.windows, () async {
+        await tester.pumpWidget(app());
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        addTearDown(mouse.removePointer);
+        for (final button in ['Minimise', 'Maximise', 'Close']) {
+          await mouse.moveTo(tester.getCenter(find.byTooltip(button)));
+          await tester.pump();
+          expect(
+            RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1),
+            SystemMouseCursors.basic,
+            reason: button,
+          );
+        }
+      });
+    });
 
     testWidgets('every icon button on the window has a tooltip', (
       tester,

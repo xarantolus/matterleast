@@ -120,8 +120,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libgtk-3-dev libx11-dev libxi-dev
 
+      # package:test runs half as many test files at once as there are
+      # processors by default; the runner has nothing else to do.
       - name: Run tests
-        run: flutter test
+        run: flutter test --concurrency "$(nproc)"
         env:
           # A zone with summer time, so date labels are tested across
           # clock changes.
