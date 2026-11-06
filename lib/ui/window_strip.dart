@@ -6,7 +6,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/server_theme.dart';
-import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/link_status.dart';
 import 'package:matterleast/ui/update_indicator.dart';
 import 'package:window_manager/window_manager.dart';
@@ -180,7 +179,8 @@ class _StripButtonState extends State<StripButton> {
     return Tooltip(
       message: widget.tooltip,
       child: InkWell(
-        mouseCursor: clickCursor,
+        // Caption buttons keep the arrow, as in every other program.
+        mouseCursor: SystemMouseCursors.basic,
         onTap: widget.onPressed,
         onHover: widget.danger
             ? (hovered) => setState(() => _hovered = hovered)
