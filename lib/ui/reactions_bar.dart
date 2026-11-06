@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
@@ -89,7 +91,9 @@ class ReactionsBar extends StatelessWidget {
     return _fixed(
       density,
       GestureDetector(
-        onLongPress: () => showReactions(context, reactions, group),
+        onLongPress: isDesktop
+            ? null
+            : () => showReactions(context, reactions, group),
         onSecondaryTapUp: isDesktop
             ? (d) => showReactions(
                 context,
@@ -174,6 +178,17 @@ String reactionTooltip(ReactionGroup group, {required String myUsername}) {
       ' reacted with :${group.emojiName}:';
 }
 
+/// The height of the who-reacted sheet: half the window on a phone, on
+/// desktop as tall as its longest list of [people] needs, up to that.
+double reactionsHeight({required int people, required double window}) {
+  final most = window * 0.5;
+  if (!isDesktop) return most;
+  const tabBar = 48.0;
+  const label = 40.0;
+  const row = 56.0;
+  return math.min(most, tabBar + label + people * row);
+}
+
 /// Who reacted, one tab per emoji, starting at [initial].
 void showReactions(
   BuildContext context,
@@ -192,7 +207,10 @@ void showReactions(
         length: reactions.length,
         initialIndex: reactions.indexOf(initial).clamp(0, reactions.length - 1),
         child: SizedBox(
-          height: MediaQuery.sizeOf(sheet).height * 0.5,
+          height: reactionsHeight(
+            people: reactions.fold(0, (a, g) => math.max(a, g.people.length)),
+            window: MediaQuery.sizeOf(sheet).height,
+          ),
           child: Column(
             children: [
               TabBar(

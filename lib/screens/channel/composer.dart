@@ -704,24 +704,27 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                 canSchedule))
                           _rowCentred(
                             rowHeight,
-                            IconButton(
-                              tooltip: 'Attach',
-                              onPressed:
-                                  (!uploads ||
-                                          files.length >= maxAttachments) &&
-                                      !canPrioritize &&
-                                      !canBurn &&
-                                      !canSchedule
-                                  ? null
-                                  : () => _attach(
-                                      uploads: uploads,
-                                      acknowledgements: canPrioritize
-                                          ? options!.acknowledgements
-                                          : null,
-                                      burnOnRead: canBurn,
-                                      schedule: canSchedule ? sendable : null,
-                                    ),
-                              icon: const Icon(Icons.add_circle_outline),
+                            Builder(
+                              builder: (button) => IconButton(
+                                tooltip: 'Attach',
+                                onPressed:
+                                    (!uploads ||
+                                            files.length >= maxAttachments) &&
+                                        !canPrioritize &&
+                                        !canBurn &&
+                                        !canSchedule
+                                    ? null
+                                    : () => _attach(
+                                        anchor: globalRectOf(button),
+                                        uploads: uploads,
+                                        acknowledgements: canPrioritize
+                                            ? options!.acknowledgements
+                                            : null,
+                                        burnOnRead: canBurn,
+                                        schedule: canSchedule ? sendable : null,
+                                      ),
+                                icon: const Icon(Icons.add_circle_outline),
+                              ),
                             ),
                           )
                         else
@@ -836,10 +839,11 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     if (typing) _focus.requestFocus();
   }
 
-  Future<void> _pickPriority(bool acknowledgements) async {
+  Future<void> _pickPriority(bool acknowledgements, {Rect? anchor}) async {
     final draft = ref.read(_provider.notifier);
     final picked = await showAppSheet<api.PostPriority>(
       context: context,
+      anchor: anchor,
       showDragHandle: true,
       builder: (_) => PriorityPicker(
         initial: ref.read(_provider).priority,
@@ -856,6 +860,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   /// the burn-on-read switch with [burnOnRead]; scheduling unless
   /// [schedule] is null, usable once it is true.
   Future<void> _attach({
+    required Rect? anchor,
     required bool uploads,
     required bool? acknowledgements,
     bool burnOnRead = false,
@@ -864,6 +869,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     final room = maxAttachments - ref.read(_provider).attachments.length;
     final source = await showAppSheet<PickSource>(
       context: context,
+      anchor: anchor,
       showDragHandle: true,
       builder: (sheet) => SafeArea(
         child: Column(
@@ -885,7 +891,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 title: const Text('Message priority'),
                 onTap: () {
                   Navigator.of(sheet).pop();
-                  unawaited(_pickPriority(acknowledgements));
+                  unawaited(_pickPriority(acknowledgements, anchor: anchor));
                 },
               ),
             if (schedule != null)
