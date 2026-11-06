@@ -14,6 +14,7 @@ import 'package:matterleast/app/file_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
+import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/post_files.dart';
@@ -237,7 +238,7 @@ void main() {
         fileDownloadsProvider(_server)
             .overrideWith((ref) async => downloads ?? _Downloads()),
         imageProxyProvider(_server).overrideWith((ref) => Stream.value(false)),
-        autoLoadImagesProvider.overrideWith((ref) => true),
+        autoLoadProvider(DataKind.image).overrideWith((ref) => true),
         serverSessionProvider(
           _server,
         ).overrideWith((ref) => session ?? Completer<ServerSession>().future),

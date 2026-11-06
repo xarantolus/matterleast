@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:matterleast/app/data_saver.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/image_rules.dart';
@@ -31,15 +32,36 @@ Stream<List<ConnectivityResult>> connection(Ref ref) async* {
 Stream<bool> imagesOnMobileData(Ref ref) =>
     ref.watch(settingsStoreProvider).watch(Settings.imagesOnMobileData);
 
-/// Whether message images load without a tap; null until the connection
-/// and the setting are known.
+@Riverpod(keepAlive: true)
+Stream<bool> gifsOnMobileData(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.gifsOnMobileData);
+
+@Riverpod(keepAlive: true)
+Stream<bool> linkPicturesOnMobileData(Ref ref) =>
+    ref.watch(settingsStoreProvider).watch(Settings.linkPicturesOnMobileData);
+
+/// Whether [kind] loads without a tap; null until the connection and the
+/// settings are known.
 @riverpod
-bool? autoLoadImages(Ref ref) {
+bool? autoLoad(Ref ref, DataKind kind) {
   final connection = ref.watch(connectionProvider).value;
-  final onMobileData = ref.watch(imagesOnMobileDataProvider).value;
-  if (connection == null || onMobileData == null) return null;
-  return loadsImagesAutomatically(
-    onMobileData: onMobileData,
+  final images = ref.watch(imagesOnMobileDataProvider).value;
+  final gifs = ref.watch(gifsOnMobileDataProvider).value;
+  final linkPictures = ref.watch(linkPicturesOnMobileDataProvider).value;
+  final dataSaver = ref.watch(dataSaverProvider).value;
+  if (connection == null ||
+      images == null ||
+      gifs == null ||
+      linkPictures == null ||
+      dataSaver == null) {
+    return null;
+  }
+  return loadsAutomatically(
+    kind,
     connection: connection,
+    dataSaver: dataSaver,
+    images: images,
+    gifs: gifs,
+    linkPictures: linkPictures,
   );
 }

@@ -252,33 +252,106 @@ final class ImagesOnMobileDataProvider
 String _$imagesOnMobileDataHash() =>
     r'214327f9a38d21642922a9732b739709f3f0f0db';
 
-/// Whether message images load without a tap; null until the connection
-/// and the setting are known.
+@ProviderFor(gifsOnMobileData)
+final gifsOnMobileDataProvider = GifsOnMobileDataProvider._();
 
-@ProviderFor(autoLoadImages)
-final autoLoadImagesProvider = AutoLoadImagesProvider._();
-
-/// Whether message images load without a tap; null until the connection
-/// and the setting are known.
-
-final class AutoLoadImagesProvider
-    extends $FunctionalProvider<bool?, bool?, bool?>
-    with $Provider<bool?> {
-  /// Whether message images load without a tap; null until the connection
-  /// and the setting are known.
-  AutoLoadImagesProvider._()
+final class GifsOnMobileDataProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  GifsOnMobileDataProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'autoLoadImagesProvider',
-        isAutoDispose: true,
+        name: r'gifsOnMobileDataProvider',
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$autoLoadImagesHash();
+  String debugGetCreateSourceHash() => _$gifsOnMobileDataHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return gifsOnMobileData(ref);
+  }
+}
+
+String _$gifsOnMobileDataHash() => r'cb5ef715b2fb464fab2790df4ca23bc7bf5217e6';
+
+@ProviderFor(linkPicturesOnMobileData)
+final linkPicturesOnMobileDataProvider = LinkPicturesOnMobileDataProvider._();
+
+final class LinkPicturesOnMobileDataProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  LinkPicturesOnMobileDataProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'linkPicturesOnMobileDataProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$linkPicturesOnMobileDataHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return linkPicturesOnMobileData(ref);
+  }
+}
+
+String _$linkPicturesOnMobileDataHash() =>
+    r'1dfee27cc634f5c5cc3120ce289a0def08f1660f';
+
+/// Whether [kind] loads without a tap; null until the connection and the
+/// settings are known.
+
+@ProviderFor(autoLoad)
+final autoLoadProvider = AutoLoadFamily._();
+
+/// Whether [kind] loads without a tap; null until the connection and the
+/// settings are known.
+
+final class AutoLoadProvider extends $FunctionalProvider<bool?, bool?, bool?>
+    with $Provider<bool?> {
+  /// Whether [kind] loads without a tap; null until the connection and the
+  /// settings are known.
+  AutoLoadProvider._({
+    required AutoLoadFamily super.from,
+    required DataKind super.argument,
+  }) : super(
+         retry: null,
+         name: r'autoLoadProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$autoLoadHash();
+
+  @override
+  String toString() {
+    return r'autoLoadProvider'
+        ''
+        '($argument)';
+  }
 
   @$internal
   @override
@@ -287,7 +360,8 @@ final class AutoLoadImagesProvider
 
   @override
   bool? create(Ref ref) {
-    return autoLoadImages(ref);
+    final argument = this.argument as DataKind;
+    return autoLoad(ref, argument);
   }
 
   /// {@macro riverpod.override_with_value}
@@ -297,6 +371,40 @@ final class AutoLoadImagesProvider
       providerOverride: $SyncValueProvider<bool?>(value),
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AutoLoadProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
-String _$autoLoadImagesHash() => r'6299ed5c457a9ee870b71341519b750d34cecc8b';
+String _$autoLoadHash() => r'6e227f0105f1e3f12a598dc1fcad250a5242cb98';
+
+/// Whether [kind] loads without a tap; null until the connection and the
+/// settings are known.
+
+final class AutoLoadFamily extends $Family
+    with $FunctionalFamilyOverride<bool?, DataKind> {
+  AutoLoadFamily._()
+    : super(
+        retry: null,
+        name: r'autoLoadProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether [kind] loads without a tap; null until the connection and the
+  /// settings are known.
+
+  AutoLoadProvider call(DataKind kind) =>
+      AutoLoadProvider._(argument: kind, from: this);
+
+  @override
+  String toString() => r'autoLoadProvider';
+}

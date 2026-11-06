@@ -7,11 +7,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/clipboard_providers.dart';
 import 'package:matterleast/app/file_providers.dart';
+import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/files/file_handoff.dart';
+import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/log.dart';
@@ -203,7 +205,7 @@ class _MediaGrid extends StatelessWidget {
   );
 }
 
-class _MediaTile extends StatelessWidget {
+class _MediaTile extends ConsumerStatefulWidget {
   const _MediaTile({
     required this.url,
     required this.file,
@@ -223,9 +225,25 @@ class _MediaTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  ConsumerState<_MediaTile> createState() => _MediaTileState();
+}
+
+class _MediaTileState extends ConsumerState<_MediaTile> {
+  var _played = false;
+
+  @override
   Widget build(BuildContext context) {
+    final url = widget.url;
+    final file = widget.file;
+    final size = widget.size;
+    final more = widget.more;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final held =
+        file.kind == FileKind.gif &&
+        !_played &&
+        ref.watch(autoLoadProvider(DataKind.gif)) == false;
+    final onTap = held ? () => setState(() => _played = true) : widget.onTap;
     return Semantics(
       button: true,
       label: [
@@ -245,10 +263,16 @@ class _MediaTile extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 Hero(
-                  tag: heroTag,
+                  tag: widget.heroTag,
                   child: PlayWhileFocused(
                     desktop: isDesktop,
-                    child: MediaPicture(url: url, file: file, size: size),
+                    child: MediaPicture(
+                      url: url,
+                      file: file,
+                      size: size,
+                      still: held,
+                      loadNow: _played,
+                    ),
                   ),
                 ),
                 if (file.kind == FileKind.video)
@@ -302,7 +326,8 @@ class _MediaTile extends StatelessWidget {
 
 /// A picture of [file] filling [size]: its preview (or, for a GIF, the
 /// animated original), over the blurred tiny preview while it loads. A
-/// video shows a dark tile.
+/// video shows a dark tile. A [still] GIF shows the server's preview with
+/// a GIF tag instead of the animation.
 class MediaPicture extends ConsumerWidget {
   const MediaPicture({
     required this.url,
@@ -310,6 +335,8 @@ class MediaPicture extends ConsumerWidget {
     required this.size,
     this.fit = BoxFit.cover,
     this.decodeWidth,
+    this.still = false,
+    this.loadNow = false,
     super.key,
   });
 
@@ -317,6 +344,10 @@ class MediaPicture extends ConsumerWidget {
   final PostFile file;
   final Size size;
   final BoxFit fit;
+  final bool still;
+
+  /// Loads even where pictures wait for a tap.
+  final bool loadNow;
 
   /// The width the picture is decoded at when that isn't [size]'s.
   final double? decodeWidth;
@@ -360,10 +391,11 @@ class MediaPicture extends ConsumerWidget {
       );
     }
     if (downloads == null) return placeholder;
-    final source = file.kind == FileKind.image && file.hasPreview
+    final preview = file.hasPreview && (file.kind == FileKind.image || still);
+    final source = preview
         ? downloads.previewUri(file.id)
         : downloads.originalUri(file.id);
-    return ServerImage(
+    final picture = ServerImage(
       serverUrl: url,
       url: source.toString(),
       width: size.width,
@@ -372,6 +404,25 @@ class MediaPicture extends ConsumerWidget {
       decodeWidth: decodeWidth,
       semanticLabel: file.name,
       placeholder: SizedBox.fromSize(size: size, child: placeholder),
+      loadNow: loadNow,
+    );
+    if (!still) return picture;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Without a preview the original loads only when asked for.
+        if (preview) picture else placeholder,
+        const Align(
+          alignment: AlignmentDirectional.bottomStart,
+          child: Padding(
+            padding: EdgeInsets.all(Spacing.sm),
+            child: Chip(
+              label: Text('GIF'),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

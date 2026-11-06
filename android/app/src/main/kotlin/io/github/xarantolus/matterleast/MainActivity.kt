@@ -1,5 +1,10 @@
 package io.github.xarantolus.matterleast
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.ConnectivityManager
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -12,6 +17,35 @@ class MainActivity : FlutterActivity() {
         val args = super.getFlutterShellArgs()
         if (resources.getBoolean(R.bool.profiling)) args.add("--endless-trace-buffer")
         return args
+    }
+
+    private var dataSaver: MethodChannel? = null
+
+    private val dataSaverChanged = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) = reportDataSaver()
+    }
+
+    private fun dataSaverOn(): Boolean {
+        val manager = getSystemService(ConnectivityManager::class.java)
+        return manager.restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED
+    }
+
+    private fun reportDataSaver() {
+        dataSaver?.invokeMethod("changed", dataSaverOn())
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(
+            dataSaverChanged,
+            IntentFilter(ConnectivityManager.ACTION_RESTRICT_BACKGROUND_CHANGED),
+        )
+        reportDataSaver()
+    }
+
+    override fun onPause() {
+        unregisterReceiver(dataSaverChanged)
+        super.onPause()
     }
 
     override fun onDestroy() {
@@ -32,6 +66,15 @@ class MainActivity : FlutterActivity() {
                         ) == 1,
                     )
                     else -> result.notImplemented()
+                }
+            }
+        dataSaver = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "matterleast/data_saver")
+            .also { channel ->
+                channel.setMethodCallHandler { call, result ->
+                    when (call.method) {
+                        "restricted" -> result.success(dataSaverOn())
+                        else -> result.notImplemented()
+                    }
                 }
             }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "matterleast/stay_connected")
