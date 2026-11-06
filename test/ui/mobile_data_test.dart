@@ -52,7 +52,7 @@ Widget _scope(Widget child, {required List<Override> overrides}) =>
             server: _server,
             options: const ParseOptions(),
             myUsername: 'me',
-            onMention: (_) {},
+            onMention: (_, _) {},
             onChannel: (_) {},
             onLink: (_) {},
             child: Align(alignment: Alignment.topLeft, child: child),
