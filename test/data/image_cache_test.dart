@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/server_api.dart';
@@ -177,49 +176,6 @@ void main() {
         expect(imageRequestUri(odd, server, proxy: true), isNull, reason: odd);
         expect(imageRequestUri(odd, server, proxy: false), isNull, reason: odd);
       }
-    });
-  });
-
-  group('images on mobile data', () {
-    test('with the setting off, mobile data waits for a tap', () {
-      expect(
-        loadsImagesAutomatically(
-          onMobileData: false,
-          connection: [ConnectivityResult.mobile],
-        ),
-        isFalse,
-      );
-      expect(
-        loadsImagesAutomatically(
-          onMobileData: false,
-          connection: [ConnectivityResult.vpn, ConnectivityResult.mobile],
-        ),
-        isFalse,
-      );
-    });
-
-    test('Wi-Fi, Ethernet or the setting on load at once', () {
-      expect(
-        loadsImagesAutomatically(
-          onMobileData: false,
-          connection: [ConnectivityResult.wifi, ConnectivityResult.mobile],
-        ),
-        isTrue,
-      );
-      expect(
-        loadsImagesAutomatically(
-          onMobileData: false,
-          connection: [ConnectivityResult.ethernet],
-        ),
-        isTrue,
-      );
-      expect(
-        loadsImagesAutomatically(
-          onMobileData: true,
-          connection: [ConnectivityResult.mobile],
-        ),
-        isTrue,
-      );
     });
   });
 

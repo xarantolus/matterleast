@@ -787,8 +787,12 @@ class _VideoPageState extends ConsumerState<_VideoPage> {
       final session = await ref.read(serverSessionProvider(widget.url).future);
       final downloads = session.files;
       // libmpv doesn't verify TLS unless told to and the Linux plugin can't
-      // tell it, so Linux plays the file our own client downloaded.
-      final download = defaultTargetPlatform == TargetPlatform.linux;
+      // tell it; the Windows plugin sends the token to port 443 whatever the
+      // server's port and again on redirects. Both play the file our own
+      // client downloaded.
+      final download =
+          defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.windows;
       final cached = download
           ? await ref
                 .read(fileTransfersProvider(widget.url).notifier)

@@ -4,10 +4,10 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:matterleast/data/files/app_directories.dart';
 import 'package:matterleast/domain/ca_certificate.dart';
 import 'package:matterleast/log.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 /// Certificate authorities the user chose to trust, one per server origin,
 /// on top of the system's roots. Kept as PEM files under app support, read
@@ -16,8 +16,7 @@ class TrustedAuthorities {
   TrustedAuthorities(this._directory);
 
   static final instance = TrustedAuthorities(
-    () async =>
-        p.join((await getApplicationSupportDirectory()).path, 'trusted_ca'),
+    () async => p.join(await AppDirectories.support(), 'trusted_ca'),
   );
 
   final Future<String> Function() _directory;

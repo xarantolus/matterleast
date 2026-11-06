@@ -37,7 +37,7 @@ Widget _app(
         server: Uri.parse('https://chat.example.test'),
         options: const ParseOptions(),
         myUsername: 'me',
-        onMention: (_) {},
+        onMention: (_, _) {},
         onChannel: (_) {},
         onLink: (_) {},
         onHashtag: onHashtag,

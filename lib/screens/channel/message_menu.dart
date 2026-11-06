@@ -399,7 +399,14 @@ Future<void> showMessageContextMenu(
     ],
     for (final action in actions)
       MenuItem(
-        value: action.run,
+        value: action.kind == MessageActionKind.react
+            ? (c) => pickReaction(
+                c,
+                target.url,
+                target.post,
+                anchor: position & Size.zero,
+              )
+            : action.run,
         child: MenuEntry(
           icon: action.icon,
           label: action.label,

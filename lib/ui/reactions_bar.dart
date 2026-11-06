@@ -89,7 +89,9 @@ class ReactionsBar extends StatelessWidget {
     return _fixed(
       density,
       GestureDetector(
-        onLongPress: () => showReactions(context, reactions, group),
+        onLongPress: isDesktop
+            ? null
+            : () => showReactions(context, reactions, group),
         onSecondaryTapUp: isDesktop
             ? (d) => showReactions(
                 context,
@@ -188,12 +190,39 @@ void showReactions(
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheet) {
+      Widget list(ReactionGroup group, {bool shrinkWrap = false}) => ListView(
+        shrinkWrap: shrinkWrap,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.lg,
+              Spacing.md,
+              Spacing.lg,
+              Spacing.xs,
+            ),
+            child: Text(
+              ':${group.emojiName}:',
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: context.tokens.muted),
+            ),
+          ),
+          for (final person in group.people)
+            if (env == null)
+              ListTile(title: Text(person.name))
+            else
+              _Reactor(url: env.server.toString(), person: person),
+        ],
+      );
       final body = DefaultTabController(
         length: reactions.length,
         initialIndex: reactions.indexOf(initial).clamp(0, reactions.length - 1),
-        child: SizedBox(
-          height: MediaQuery.sizeOf(sheet).height * 0.5,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: isDesktop ? 0 : MediaQuery.sizeOf(sheet).height * 0.5,
+            maxHeight: MediaQuery.sizeOf(sheet).height * 0.5,
+          ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               TabBar(
                 isScrollable: true,
@@ -212,37 +241,23 @@ void showReactions(
                     ),
                 ],
               ),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    for (final group in reactions)
-                      ListView(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              Spacing.lg,
-                              Spacing.md,
-                              Spacing.lg,
-                              Spacing.xs,
+              Flexible(
+                child: isDesktop
+                    ? Builder(
+                        builder: (tabs) {
+                          final controller = DefaultTabController.of(tabs);
+                          return ListenableBuilder(
+                            listenable: controller,
+                            builder: (_, _) => list(
+                              reactions[controller.index],
+                              shrinkWrap: true,
                             ),
-                            child: Text(
-                              ':${group.emojiName}:',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: context.tokens.muted),
-                            ),
-                          ),
-                          for (final person in group.people)
-                            if (env == null)
-                              ListTile(title: Text(person.name))
-                            else
-                              _Reactor(
-                                url: env.server.toString(),
-                                person: person,
-                              ),
-                        ],
+                          );
+                        },
+                      )
+                    : TabBarView(
+                        children: [for (final g in reactions) list(g)],
                       ),
-                  ],
-                ),
               ),
             ],
           ),

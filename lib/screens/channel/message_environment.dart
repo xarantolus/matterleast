@@ -101,6 +101,7 @@ class MessageEnvironment extends ConsumerStatefulWidget {
     BuildContext context,
     WidgetRef ref,
     String typed,
+    Rect? anchor,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
     final links = ref.read(messageLinksProvider(url).future);
@@ -124,7 +125,9 @@ class MessageEnvironment extends ConsumerStatefulWidget {
       );
       return;
     }
-    unawaited(showUserProfile(context, url: url, userId: userId));
+    unawaited(
+      showUserProfile(context, url: url, userId: userId, anchor: anchor),
+    );
   }
 
   Future<void> _openChannel(
@@ -204,7 +207,8 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
   Object? _resolver;
   Widget? Function(String, double)? _customEmoji;
 
-  void _onMention(String name) => widget._showPerson(context, ref, name);
+  void _onMention(String name, Rect? at) =>
+      widget._showPerson(context, ref, name, at);
 
   void _onChannel(String name) => widget._openChannel(context, ref, name);
 

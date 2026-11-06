@@ -21,13 +21,15 @@ import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/try_action.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
-/// Someone's profile in a bottom sheet, with a button to message them.
+/// Someone's profile in a bottom sheet, or a popup at [anchor] on desktop, with a button to message them.
 Future<void> showUserProfile(
   BuildContext context, {
   required String url,
   required String userId,
+  Rect? anchor,
 }) => showAppSheet<void>(
   context: context,
+  anchor: anchor,
   showDragHandle: true,
   isScrollControlled: true,
   useSafeArea: true,

@@ -103,16 +103,33 @@ Uri? imageRequestUri(String url, Uri server, {required bool proxy}) {
   return serverUri(server, 'api/v4/image', {'url': resolved.toString()});
 }
 
+/// What a message can pull over the network that a reader may hold back
+/// on mobile data.
+enum DataKind { image, gif, linkPicture }
+
+/// Pure: whether [kind] loads without a tap. Wi-Fi and Ethernet always do.
+/// On mobile data Android's Data Saver holds everything back, otherwise
+/// the setting for the kind decides.
+bool loadsAutomatically(
+  DataKind kind, {
+  required List<ConnectivityResult> connection,
+  required bool dataSaver,
+  required bool images,
+  required bool gifs,
+  required bool linkPictures,
+}) {
+  if (!isMetered(connection)) return true;
+  if (dataSaver) return false;
+  return switch (kind) {
+    DataKind.image => images,
+    DataKind.gif => gifs,
+    DataKind.linkPicture => linkPictures,
+  };
+}
+
 /// Pure: whether the connection is likely billed by volume. Mobile data
-/// without Wi-Fi or Ethernet counts; Android's Data Saver can't be seen
-/// through connectivity_plus.
+/// without Wi-Fi or Ethernet counts.
 bool isMetered(List<ConnectivityResult> connection) =>
     connection.contains(ConnectivityResult.mobile) &&
     !connection.contains(ConnectivityResult.wifi) &&
     !connection.contains(ConnectivityResult.ethernet);
-
-/// Pure: whether images load without a tap.
-bool loadsImagesAutomatically({
-  required bool onMobileData,
-  required List<ConnectivityResult> connection,
-}) => onMobileData || !isMetered(connection);

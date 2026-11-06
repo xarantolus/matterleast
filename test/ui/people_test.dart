@@ -77,7 +77,7 @@ Future<void> _show(
         server: Uri.parse(_url),
         options: const ParseOptions(),
         myUsername: 'me',
-        onMention: (_) {},
+        onMention: (_, _) {},
         onChannel: (_) {},
         onLink: (_) {},
         child: ListView(children: [child]),

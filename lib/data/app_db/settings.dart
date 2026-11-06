@@ -46,6 +46,22 @@ abstract final class Settings {
     _encodeBool,
   );
 
+  /// Animated GIFs play without a tap on metered networks.
+  static const gifsOnMobileData = Setting<bool>(
+    'gifsOnMobileData',
+    true,
+    _decodeBool,
+    _encodeBool,
+  );
+
+  /// Link preview pictures load on metered networks.
+  static const linkPicturesOnMobileData = Setting<bool>(
+    'linkPicturesOnMobileData',
+    true,
+    _decodeBool,
+    _encodeBool,
+  );
+
   static const mediaCacheBytes = Setting<int>(
     'mediaCacheBytes',
     250 * mebibyte,
@@ -197,6 +213,8 @@ abstract final class Settings {
 
   static const all = <Setting<Object?>>[
     imagesOnMobileData,
+    gifsOnMobileData,
+    linkPicturesOnMobileData,
     mediaCacheBytes,
     filesCacheBytes,
     keepDays,

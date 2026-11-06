@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:matterleast/data/files/app_directories.dart';
 import 'package:matterleast/log.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 /// Short-lived copies of files in the app's cache folder: what other apps
 /// share (copied by receive_sharing_intent straight into the cache folder),
@@ -16,8 +16,7 @@ abstract final class LocalCopies {
   /// Copies older than this are deleted on start-up.
   static const maxAge = Duration(days: 1);
 
-  static Future<String> cacheDirectory() async =>
-      (await getTemporaryDirectory()).path;
+  static Future<String> cacheDirectory() => AppDirectories.cache();
 
   /// [path] with links and `..` resolved when it is a regular file, else
   /// null.

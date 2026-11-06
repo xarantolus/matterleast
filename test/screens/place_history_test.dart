@@ -17,6 +17,7 @@ import 'package:matterleast/app/mouse_navigation.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
+import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart' show PageKind;
@@ -194,7 +195,7 @@ void main() {
         overrides: [
           appDatabaseProvider.overrideWithValue(db),
           railSelectionProvider.overrideWith(_Rail.new),
-          autoLoadImagesProvider.overrideWith((ref) => false),
+          autoLoadProvider(DataKind.image).overrideWith((ref) => false),
           serversProvider.overrideWith((ref) {
             ref.keepAlive();
             return servers.stream;
