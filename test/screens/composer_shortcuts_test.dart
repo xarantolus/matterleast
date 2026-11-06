@@ -21,7 +21,7 @@ class _Picker extends FilePickerPlatform {
     String? initialDirectory,
     FileType type = FileType.any,
     List<String>? allowedExtensions,
-    Function(FilePickerStatus)? onFileLoading,
+    dynamic Function(FilePickerStatus)? onFileLoading,
     int compressionQuality = 0,
     AndroidOptions androidOptions = const AndroidOptions(),
     DarwinOptions darwinOptions = const DarwinOptions(),
