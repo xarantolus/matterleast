@@ -38,6 +38,7 @@ class ClientConfig {
     this.enableCustomTermsOfService,
     this.customTermsOfServiceId,
     this.mobileExternalBrowser,
+    this.enableGuestMagicLink,
     this.collapsedThreads,
     this.teammateNameDisplay,
     this.lockTeammateNameDisplay,
@@ -150,6 +151,8 @@ class ClientConfig {
   final String? customTermsOfServiceId;
   @LenientBool()
   final bool? mobileExternalBrowser;
+  @LenientBool()
+  final bool? enableGuestMagicLink;
 
   /// `disabled`, `default_on`, `default_off` or `always_on`.
   @LenientString()

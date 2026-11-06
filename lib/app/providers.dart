@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_custom_tabs/flutter_custom_tabs.dart' as tabs;
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/app/desktop/desktop_shell.dart';
@@ -10,6 +11,7 @@ import 'package:matterleast/data/secure/token_store.dart';
 import 'package:matterleast/data/servers/app_servers.dart';
 import 'package:matterleast/data/servers/browser_auth_session.dart';
 import 'package:matterleast/data/servers/entries.dart';
+import 'package:matterleast/data/servers/pending_sso_store.dart';
 import 'package:matterleast/data/servers/server_manager.dart';
 import 'package:matterleast/data/servers/server_probe.dart';
 import 'package:matterleast/data/servers/server_session.dart';
@@ -97,20 +99,40 @@ Notifier notifier(Ref ref) => Notifier();
 @riverpod
 ServerProbe serverProbe(Ref ref) => ServerProbe();
 
-/// The desktop SSO sign-in waiting for the browser; callback links that
-/// reach the app go to it.
+/// The SSO sign-in waiting for the browser; callback links that reach the
+/// app go to it. On Android it opens in a Custom Tab of the app's own task,
+/// which the callback closes.
 @Riverpod(keepAlive: true)
-BrowserAuthSession browserAuthSession(Ref ref) => BrowserAuthSession(
-  launch: (url) => launchUrl(url, mode: LaunchMode.externalApplication),
-  onReturn: () => unawaited(DesktopShell.open()),
-);
+BrowserAuthSession browserAuthSession(Ref ref) => isDesktop
+    ? BrowserAuthSession(
+        launch: (url) => launchUrl(url, mode: LaunchMode.externalApplication),
+        onReturn: () => unawaited(DesktopShell.open()),
+      )
+    : BrowserAuthSession(
+        launchExternal: (url) =>
+            launchUrl(url, mode: LaunchMode.externalApplication),
+        launch: (url) async {
+          await tabs.launchUrl(
+            url,
+            customTabsOptions: const tabs.CustomTabsOptions(showTitle: true),
+          );
+          return true;
+        },
+        onReturn: () => unawaited(tabs.closeCustomTabs()),
+      );
 
 @riverpod
-SignIn signIn(Ref ref) => SignIn(
-  openAuthSession: isDesktop
-      ? ref.watch(browserAuthSessionProvider).open
-      : null,
-);
+SignIn signIn(Ref ref) {
+  final session = ref.watch(browserAuthSessionProvider);
+  return SignIn(
+    openAuthSession: session.open,
+    openExternalAuthSession: session.openExternal,
+  );
+}
+
+@Riverpod(keepAlive: true)
+PendingSsoStore pendingSsoStore(Ref ref) =>
+    PendingSsoStore(ref.watch(tokenStoreProvider));
 
 /// Every added server, signed in or not, in rail order.
 @riverpod

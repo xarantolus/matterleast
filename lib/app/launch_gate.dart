@@ -11,6 +11,7 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/app/shortcuts.dart';
+import 'package:matterleast/app/sso_resume.dart';
 import 'package:matterleast/data/files/local_copies.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
@@ -112,11 +113,14 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       final notice = startNotifications(ref, navigator);
       final links = AppLinks();
       final authSession = ref.read(browserAuthSessionProvider);
-      _links = links.uriLinkStream.listen(
-        (uri) => isSsoCallbackLink(uri)
-            ? authSession.deliver(uri)
-            : unawaited(openIncomingLink(navigator, uri)),
-      );
+      final resume = ref.read(ssoResumeProvider);
+      _links = links.uriLinkStream.listen((uri) {
+        if (!isSsoCallbackLink(uri)) {
+          unawaited(openIncomingLink(navigator, uri));
+        } else if (!authSession.deliver(uri)) {
+          unawaited(resume.resume(uri));
+        }
+      });
       final initialMedia = IncomingShares.initial();
       unawaited(
         restoreConversation(

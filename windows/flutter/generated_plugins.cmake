@@ -6,7 +6,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   connectivity_plus
   desktop_drop
-  desktop_webview_window
   dynamic_color
   file_selector_windows
   flutter_secure_storage_windows
@@ -16,7 +15,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   url_launcher_windows
   video_player_win
   window_manager
-  window_to_front
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

@@ -56,11 +56,15 @@
                  servers, not routed by Flutter's own deep linking. -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
         </activity>
-        <!-- Receives the SSO redirect (mmauth://callback) from the Custom Tab. -->
+        <!-- Receives the SSO redirect (mmauth://callback) and forwards it to
+             MainActivity, closing the Custom Tab on top of it. -->
         <activity
             android:name=".SsoCallbackActivity"
             android:exported="true"
-            android:taskAffinity="">
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

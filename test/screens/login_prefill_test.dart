@@ -34,6 +34,7 @@ void main() {
         serverVersion: '12.0.1',
         diagnosticId: 'd1',
         externalBrowserForSso: false,
+        magicLink: false,
       ),
       config: const {},
       license: const {},

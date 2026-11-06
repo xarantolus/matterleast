@@ -5,6 +5,10 @@ import 'package:matterleast/markdown/links.dart';
 
 part 'login_options.freezed.dart';
 
+/// The `auth_service` the server answers a login id with when it has emailed
+/// that account a sign-in link.
+const magicLinkType = 'magic_link';
+
 enum SsoProvider { gitlab, google, office365, openid, saml }
 
 /// Which sign-in methods a server offers, read from the client config
@@ -30,6 +34,9 @@ abstract class LoginOptions with _$LoginOptions {
     required String serverVersion,
     required String diagnosticId,
     required bool externalBrowserForSso,
+
+    /// Guests may sign in with a link the server emails them.
+    required bool magicLink,
 
     /// The address the server knows itself by (`SiteURL`), which it names
     /// in an SSO redirect; it may differ from the one the user entered.
@@ -117,6 +124,7 @@ LoginOptions loginOptionsFrom(ClientConfig config, ClientLicense license) {
     serverVersion: _text(config.version, ''),
     diagnosticId: _text(config.diagnosticId, ''),
     externalBrowserForSso: config.mobileExternalBrowser == true,
+    magicLink: config.enableGuestMagicLink == true,
     siteUrl: _webUrl(config.siteUrl),
   );
 }

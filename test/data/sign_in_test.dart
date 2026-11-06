@@ -226,4 +226,104 @@ void main() {
     );
     expect(await signIn.withSso(probed, gitlab), isNull);
   });
+
+  test(
+    'a server asking for the full browser gets it, others the tab',
+    () async {
+      server.handle = me;
+      final opened = <String>[];
+      Future<Uri> opener(String name, Uri url, String scheme) async {
+        opened.add(name);
+        return Uri.parse(
+          '$scheme://callback?MMAUTHTOKEN=s3ss10n&MMCSRF=x'
+          '&srv=${Uri.encodeComponent(server.url.toString())}',
+        );
+      }
+
+      final signIn = SignIn(
+        openAuthSession: (url, scheme) => opener('tab', url, scheme),
+        openExternalAuthSession: (url, scheme) =>
+            opener('browser', url, scheme),
+      );
+      final external = ProbedServer(
+        url: probed.url,
+        options: probed.options.copyWith(externalBrowserForSso: true),
+        config: probed.config,
+        license: probed.license,
+      );
+      await signIn.withSso(probed, gitlab);
+      await signIn.withSso(external, gitlab);
+      expect(opened, ['tab', 'browser']);
+    },
+  );
+
+  test('the sign-in is saved before the browser opens', () async {
+    server.handle = me;
+    var savedBeforeOpen = false;
+    SsoChallenge? saved;
+    final signIn = SignIn(
+      openAuthSession: (url, scheme) async {
+        savedBeforeOpen = saved?.state == url.queryParameters['state'];
+        return Uri.parse(
+          '$scheme://callback?MMAUTHTOKEN=s3ss10n&MMCSRF=x'
+          '&srv=${Uri.encodeComponent(server.url.toString())}',
+        );
+      },
+    );
+    await signIn.withSso(probed, gitlab, onStarted: (c) async => saved = c);
+    expect(savedBeforeOpen, isTrue);
+  });
+
+  test(
+    'a callback after a restart finishes with the saved challenge',
+    () async {
+      server.handle = (r) => switch (r.path) {
+        '/api/v4/users/login/sso/code-exchange' => ok({'token': 's3ss10n'}),
+        '/api/v4/users/me' => me(r),
+        _ => error(404, 'not_found'),
+      };
+      final challenge = SsoChallenge.generate();
+      final signedIn = await SignIn().finishSso(
+        probed,
+        'mmauth',
+        challenge,
+        Uri.parse(
+          'mmauth://callback?login_code=one-time'
+          '&srv=${Uri.encodeComponent(server.url.toString())}',
+        ),
+      );
+      expect(signedIn.token, 's3ss10n');
+      final exchange = server.seen.first;
+      expect(exchange.body['code_verifier'], challenge.verifier);
+      expect(exchange.body['state'], challenge.state);
+    },
+  );
+
+  test('a magic link signs in with its token', () async {
+    server.handle = (r) => switch (r.path) {
+      '/api/v4/users/login' => ok(
+        fixtureMap('me'),
+        headers: {'Token': 's3ss10n'},
+      ),
+      '/api/v4/users/me' => me(r),
+      _ => error(404, 'not_found'),
+    };
+    final signedIn = await SignIn().withMagicLink(probed, 'a' * 64);
+    expect(signedIn.token, 's3ss10n');
+    final login = server.seen.first;
+    expect(login.body['magic_link_token'], 'a' * 64);
+    expect(login.body['password'], isNull);
+  });
+
+  test('the login type names what the server did for that login', () async {
+    server.handle = (r) => ok({'auth_service': 'magic_link'});
+    expect(
+      await SignIn().loginType(probed, ' Guest@Example.test '),
+      'magic_link',
+    );
+    expect(server.seen.single.path, '/api/v4/users/login/type');
+    expect(server.seen.single.body['login_id'], 'guest@example.test');
+    server.handle = (r) => ok({'auth_service': ''});
+    expect(await SignIn().loginType(probed, 'alice'), '');
+  });
 }

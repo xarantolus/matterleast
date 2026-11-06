@@ -432,14 +432,16 @@ final class ServerProbeProvider
 
 String _$serverProbeHash() => r'ee7b1e15a5fbd0aeaa4c0d524f1584e448f8b41e';
 
-/// The desktop SSO sign-in waiting for the browser; callback links that
-/// reach the app go to it.
+/// The SSO sign-in waiting for the browser; callback links that reach the
+/// app go to it. On Android it opens in a Custom Tab of the app's own task,
+/// which the callback closes.
 
 @ProviderFor(browserAuthSession)
 final browserAuthSessionProvider = BrowserAuthSessionProvider._();
 
-/// The desktop SSO sign-in waiting for the browser; callback links that
-/// reach the app go to it.
+/// The SSO sign-in waiting for the browser; callback links that reach the
+/// app go to it. On Android it opens in a Custom Tab of the app's own task,
+/// which the callback closes.
 
 final class BrowserAuthSessionProvider
     extends
@@ -449,8 +451,9 @@ final class BrowserAuthSessionProvider
           BrowserAuthSession
         >
     with $Provider<BrowserAuthSession> {
-  /// The desktop SSO sign-in waiting for the browser; callback links that
-  /// reach the app go to it.
+  /// The SSO sign-in waiting for the browser; callback links that reach the
+  /// app go to it. On Android it opens in a Custom Tab of the app's own task,
+  /// which the callback closes.
   BrowserAuthSessionProvider._()
     : super(
         from: null,
@@ -486,7 +489,7 @@ final class BrowserAuthSessionProvider
 }
 
 String _$browserAuthSessionHash() =>
-    r'5a35068e1772ba7d282b416c28deaf86dc17a2fc';
+    r'd3a9c0c128975f6cba62254c7f6e7039f516e3ee';
 
 @ProviderFor(signIn)
 final signInProvider = SignInProvider._();
@@ -526,7 +529,49 @@ final class SignInProvider extends $FunctionalProvider<SignIn, SignIn, SignIn>
   }
 }
 
-String _$signInHash() => r'a5dea4347eae281c9fb2b1e96fd0bda214082bcb';
+String _$signInHash() => r'213ec44023da96eadec7e1923baa73a967e84eeb';
+
+@ProviderFor(pendingSsoStore)
+final pendingSsoStoreProvider = PendingSsoStoreProvider._();
+
+final class PendingSsoStoreProvider
+    extends
+        $FunctionalProvider<PendingSsoStore, PendingSsoStore, PendingSsoStore>
+    with $Provider<PendingSsoStore> {
+  PendingSsoStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pendingSsoStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingSsoStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<PendingSsoStore> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PendingSsoStore create(Ref ref) {
+    return pendingSsoStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PendingSsoStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PendingSsoStore>(value),
+    );
+  }
+}
+
+String _$pendingSsoStoreHash() => r'a39f959a2fc8d9471708a5719b6aba7f8b1d5e5b';
 
 /// Every added server, signed in or not, in rail order.
 
