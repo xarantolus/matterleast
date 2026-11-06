@@ -70,6 +70,9 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
   mobileExternalBrowser: const LenientBool().fromJson(
     json['MobileExternalBrowser'],
   ),
+  enableGuestMagicLink: const LenientBool().fromJson(
+    json['EnableGuestMagicLink'],
+  ),
   collapsedThreads: const LenientString().fromJson(json['CollapsedThreads']),
   teammateNameDisplay: const LenientString().fromJson(
     json['TeammateNameDisplay'],

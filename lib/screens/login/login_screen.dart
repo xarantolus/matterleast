@@ -8,6 +8,7 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/screens/add_server/add_server_controller.dart';
 import 'package:matterleast/screens/login/forgot_password_sheet.dart';
+import 'package:matterleast/screens/login/link_sent_view.dart';
 import 'package:matterleast/screens/login/login_controller.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/narrow_page.dart';
@@ -73,6 +74,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (done) navigator.popUntil((route) => route.isFirst);
   }
 
+  Future<void> _submit() async {
+    final state = ref.read(loginControllerProvider(_url));
+    if (_options.magicLink && state.loginType == null && !state.mfaNeeded) {
+      await _controller.checkLoginType(widget.target, _loginId.text);
+    } else {
+      await _signIn();
+    }
+  }
+
+  Future<void> _magicLink(String pasted) async {
+    final navigator = Navigator.of(context);
+    final done = await _controller.withMagicLink(widget.target, pasted);
+    if (done) navigator.popUntil((route) => route.isFirst);
+  }
+
   Future<void> _sso(SsoButton button) async {
     FocusScope.of(context).unfocus();
     final navigator = Navigator.of(context);
@@ -114,168 +130,210 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final muted = text.bodyMedium?.copyWith(color: context.tokens.muted);
     final error = Theme.of(context).colorScheme.error;
     final enabled = !state.busy;
+    final showPasswordField =
+        !_options.magicLink || state.loginType != null || state.mfaNeeded;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.target.displayName),
         bottom: ProgressSlot(active: state.busy),
       ),
-      body: NarrowPage(
-        children: [
-          Text('Sign in', style: text.headlineSmall),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            [
-              server.url.authority,
-              if (server.options.siteName.isNotEmpty) server.options.siteName,
-            ].join(' · '),
-            style: muted,
-          ),
-          if (!server.versionSupported) ...[
-            const SizedBox(height: Spacing.lg),
-            _Notice(
-              icon: Icons.info_outline,
-              text:
-                  'This server runs Mattermost ${server.options.serverVersion}. '
-                  'The app is made for ${minimumServerVersion.$1}.'
-                  '${minimumServerVersion.$2} and newer, so some things '
-                  'may not work.',
-            ),
-          ],
-          if (state.inBrowser) ...[
-            const SizedBox(height: Spacing.lg),
-            _Notice(
-              icon: Icons.open_in_browser,
-              text:
-                  'Finish signing in in your browser. When it asks to open '
-                  'Matterleast, allow it.',
-              action: TextButton(
-                onPressed: _controller.cancelBrowser,
-                child: const Text('Cancel'),
-              ),
-            ),
-          ],
-          if (state.error case final message?) ...[
-            const SizedBox(height: Spacing.lg),
-            _Notice(icon: Icons.error_outline, text: message, color: error),
-          ],
-          if (!_options.any) ...[
-            const SizedBox(height: Spacing.lg),
-            Text(
-              'This server offers no sign-in method the app supports. Ask the '
-              "server's admin.",
-              style: muted,
-            ),
-          ],
-          if (_options.password) ...[
-            const SizedBox(height: Spacing.xl),
-            AutofillGroup(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _loginId,
-                    enabled: enabled && !state.mfaNeeded,
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    textInputAction: TextInputAction.next,
-                    autofillHints: const [
-                      AutofillHints.username,
-                      AutofillHints.email,
-                    ],
-                    decoration: InputDecoration(
-                      labelText: _options.loginIdLabel,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
+      body: state.linkSent
+          ? NarrowPage(
+              children: [
+                LinkSentView(
+                  busy: state.busy,
+                  error: state.error,
+                  onPasted: _magicLink,
+                  onBack: _controller.editLoginId,
+                ),
+              ],
+            )
+          : NarrowPage(
+              children: [
+                Text('Sign in', style: text.headlineSmall),
+                const SizedBox(height: Spacing.sm),
+                Text(
+                  [
+                    server.url.authority,
+                    if (server.options.siteName.isNotEmpty)
+                      server.options.siteName,
+                  ].join(' · '),
+                  style: muted,
+                ),
+                if (!server.versionSupported) ...[
                   const SizedBox(height: Spacing.lg),
-                  TextField(
-                    controller: _password,
-                    enabled: enabled && !state.mfaNeeded,
-                    obscureText: !_showPassword,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    textInputAction: TextInputAction.go,
-                    autofillHints: const [AutofillHints.password],
-                    onSubmitted: (_) => _signIn(),
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        tooltip: _showPassword
-                            ? 'Hide password'
-                            : 'Show password',
-                        icon: Icon(
-                          _showPassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        onPressed: () =>
-                            setState(() => _showPassword = !_showPassword),
-                      ),
+                  _Notice(
+                    icon: Icons.info_outline,
+                    text:
+                        'This server runs Mattermost ${server.options.serverVersion}. '
+                        'The app is made for ${minimumServerVersion.$1}.'
+                        '${minimumServerVersion.$2} and newer, so some things '
+                        'may not work.',
+                  ),
+                ],
+                if (state.inBrowser) ...[
+                  const SizedBox(height: Spacing.lg),
+                  _Notice(
+                    icon: Icons.open_in_browser,
+                    text:
+                        'Finish signing in in your browser. When it asks to open '
+                        'Matterleast, allow it.',
+                    action: TextButton(
+                      onPressed: _controller.cancelBrowser,
+                      child: const Text('Cancel'),
                     ),
                   ),
                 ],
-              ),
+                if (state.error case final message?) ...[
+                  const SizedBox(height: Spacing.lg),
+                  _Notice(
+                    icon: Icons.error_outline,
+                    text: message,
+                    color: error,
+                  ),
+                ],
+                if (!_options.any) ...[
+                  const SizedBox(height: Spacing.lg),
+                  Text(
+                    'This server offers no sign-in method the app supports. Ask the '
+                    "server's admin.",
+                    style: muted,
+                  ),
+                ],
+                if (_options.password) ...[
+                  const SizedBox(height: Spacing.xl),
+                  AutofillGroup(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextField(
+                          controller: _loginId,
+                          enabled: enabled && !state.mfaNeeded,
+                          keyboardType: TextInputType.emailAddress,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          textInputAction: showPasswordField
+                              ? TextInputAction.next
+                              : TextInputAction.go,
+                          onChanged: (_) {
+                            if (state.loginType != null && !state.mfaNeeded) {
+                              _controller.editLoginId();
+                            }
+                          },
+                          onSubmitted: showPasswordField
+                              ? null
+                              : (_) => _submit(),
+                          autofillHints: const [
+                            AutofillHints.username,
+                            AutofillHints.email,
+                          ],
+                          decoration: InputDecoration(
+                            labelText: _options.loginIdLabel,
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                        if (showPasswordField) ...[
+                          const SizedBox(height: Spacing.lg),
+                          TextField(
+                            controller: _password,
+                            enabled: enabled && !state.mfaNeeded,
+                            obscureText: !_showPassword,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            textInputAction: TextInputAction.go,
+                            autofillHints: const [AutofillHints.password],
+                            onSubmitted: (_) => _signIn(),
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                tooltip: _showPassword
+                                    ? 'Hide password'
+                                    : 'Show password',
+                                icon: Icon(
+                                  _showPassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                ),
+                                onPressed: () => setState(
+                                  () => _showPassword = !_showPassword,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (state.mfaNeeded) ...[
+                    const SizedBox(height: Spacing.lg),
+                    TextField(
+                      controller: _code,
+                      enabled: enabled,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.go,
+                      autofillHints: const [AutofillHints.oneTimeCode],
+                      onSubmitted: (_) => _signIn(),
+                      decoration: InputDecoration(
+                        labelText: 'Authentication code',
+                        helperText:
+                            'The 6-digit code from your authenticator app',
+                        border: const OutlineInputBorder(),
+                        errorText: state.mfaError,
+                        errorMaxLines: 3,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: Spacing.xl),
+                  FilledButton(
+                    onPressed: enabled ? _submit : null,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                    ),
+                    child: Text(
+                      state.busy
+                          ? (showPasswordField ? 'Signing in…' : 'Checking…')
+                          : (showPasswordField ? 'Sign in' : 'Continue'),
+                    ),
+                  ),
+                  if (_options.forgotPassword)
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TextButton(
+                        onPressed: _forgotPassword,
+                        child: const Text('Forgot password?'),
+                      ),
+                    ),
+                ],
+                if (_options.sso.isNotEmpty) ...[
+                  if (_options.password) const _OrDivider(),
+                  if (!_options.password) const SizedBox(height: Spacing.xl),
+                  for (final button in _options.sso) ...[
+                    OutlinedButton.icon(
+                      onPressed: enabled ? () => _sso(button) : null,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                      ),
+                      icon: const Icon(Icons.open_in_browser),
+                      label: Text('Continue with ${button.label}'),
+                    ),
+                    const SizedBox(height: Spacing.md),
+                  ],
+                  Text(
+                    isDesktop
+                        ? 'Opens the sign-in page in your browser. When it asks to '
+                              'open Matterleast, allow it.'
+                        : 'Opens the sign-in page in your browser. If Android asks '
+                              'which app should finish signing in, choose '
+                              'Matterleast.',
+                    style: text.bodySmall?.copyWith(
+                      color: context.tokens.muted,
+                    ),
+                  ),
+                ],
+              ],
             ),
-            if (state.mfaNeeded) ...[
-              const SizedBox(height: Spacing.lg),
-              TextField(
-                controller: _code,
-                enabled: enabled,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.go,
-                autofillHints: const [AutofillHints.oneTimeCode],
-                onSubmitted: (_) => _signIn(),
-                decoration: InputDecoration(
-                  labelText: 'Authentication code',
-                  helperText: 'The 6-digit code from your authenticator app',
-                  border: const OutlineInputBorder(),
-                  errorText: state.mfaError,
-                  errorMaxLines: 3,
-                ),
-              ),
-            ],
-            const SizedBox(height: Spacing.xl),
-            FilledButton(
-              onPressed: enabled ? _signIn : null,
-              style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
-              child: Text(state.busy ? 'Signing in…' : 'Sign in'),
-            ),
-            if (_options.forgotPassword)
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: TextButton(
-                  onPressed: _forgotPassword,
-                  child: const Text('Forgot password?'),
-                ),
-              ),
-          ],
-          if (_options.sso.isNotEmpty) ...[
-            if (_options.password) const _OrDivider(),
-            if (!_options.password) const SizedBox(height: Spacing.xl),
-            for (final button in _options.sso) ...[
-              OutlinedButton.icon(
-                onPressed: enabled ? () => _sso(button) : null,
-                style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
-                icon: const Icon(Icons.open_in_browser),
-                label: Text('Continue with ${button.label}'),
-              ),
-              const SizedBox(height: Spacing.md),
-            ],
-            Text(
-              isDesktop
-                  ? 'Opens the sign-in page in your browser. When it asks to '
-                        'open Matterleast, allow it.'
-                  : 'Opens the sign-in page in your browser. If Android asks '
-                        'which app should finish signing in, choose '
-                        'Matterleast.',
-              style: text.bodySmall?.copyWith(color: context.tokens.muted),
-            ),
-          ],
-        ],
-      ),
     );
   }
 }

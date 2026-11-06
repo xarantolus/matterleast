@@ -24,12 +24,12 @@ class SsoChallenge {
   /// Fresh random values for one sign-in.
   factory SsoChallenge.generate([Random? random]) {
     final source = random ?? Random.secure();
-    String token(int bytes) =>
-        base64UrlEncode([for (var i = 0; i < bytes; i++) source.nextInt(256)])
-            .replaceAll('=', '');
-    final verifier = token(48);
+    List<int> bytes(int count) => [
+      for (var i = 0; i < count; i++) source.nextInt(256),
+    ];
+    final verifier = base64UrlEncode(bytes(64)).replaceAll('=', '');
     return SsoChallenge(
-      state: token(16),
+      state: _uuid4(bytes(16)),
       verifier: verifier,
       challenge: s256Challenge(verifier),
     );
@@ -38,6 +38,15 @@ class SsoChallenge {
   final String state;
   final String verifier;
   final String challenge;
+}
+
+String _uuid4(List<int> bytes) {
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  final hex = [for (final b in bytes) b.toRadixString(16).padLeft(2, '0')];
+  return '${hex.sublist(0, 4).join()}-${hex.sublist(4, 6).join()}-'
+      '${hex.sublist(6, 8).join()}-${hex.sublist(8, 10).join()}-'
+      '${hex.sublist(10).join()}';
 }
 
 /// The S256 code challenge of [verifier].

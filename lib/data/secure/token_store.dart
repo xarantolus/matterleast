@@ -22,6 +22,8 @@ class TokenStore {
   var _unavailable = false;
   var _busy = Future<void>.value();
 
+  static const _pendingSsoKey = 'pendingSso';
+
   String _key(String serverUrl) => 'token:$serverUrl';
 
   /// The storage didn't answer, and reads fail at once with
@@ -55,6 +57,17 @@ class TokenStore {
     await _serial(() => _storage.write(key: _key(serverUrl), value: token));
     _cache[serverUrl] = token;
   }
+
+  /// The browser sign-in waiting for its callback, as JSON; holds the
+  /// challenge secrets, so it lives here and not in the settings.
+  Future<String?> readPendingSso() =>
+      _serial(() => _storage.read(key: _pendingSsoKey));
+
+  Future<void> writePendingSso(String json) =>
+      _serial(() => _storage.write(key: _pendingSsoKey, value: json));
+
+  Future<void> deletePendingSso() =>
+      _serial(() => _storage.delete(key: _pendingSsoKey));
 
   /// Signing out goes on without the storage; the stale token there is
   /// replaced by the next sign-in.

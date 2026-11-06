@@ -203,4 +203,41 @@ void main() {
       throwsA(isA<LoginRejected>()),
     );
   });
+
+  test('a callback says whether a sign-in was waiting for it', () async {
+    final waiting = session();
+    expect(waiting.deliver(callback()), isFalse);
+    final result = waiting.open(Uri.parse('https://a.test'), 'mmauth');
+    await settle();
+    expect(waiting.deliver(callback()), isTrue);
+    await result;
+    expect(waiting.deliver(callback()), isFalse);
+  });
+
+  test('the full browser is used when asked for', () async {
+    final external = <Uri>[];
+    final waiting = BrowserAuthSession(
+      launch: (url) async {
+        launched.add(url);
+        return true;
+      },
+      launchExternal: (url) async {
+        external.add(url);
+        return true;
+      },
+    );
+    final tab = waiting.open(Uri.parse('https://a.test/tab'), 'mmauth');
+    await settle();
+    waiting.deliver(callback());
+    await tab;
+    final browser = waiting.openExternal(
+      Uri.parse('https://a.test/browser'),
+      'mmauth',
+    );
+    await settle();
+    waiting.deliver(callback());
+    await browser;
+    expect(launched.map((u) => u.path), ['/tab']);
+    expect(external.map((u) => u.path), ['/browser']);
+  });
 }

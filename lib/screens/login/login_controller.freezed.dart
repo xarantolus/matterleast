@@ -15,8 +15,11 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LoginState {
 
- bool get busy; bool get mfaNeeded;/// Waiting for the sign-in to finish in the system browser (desktop).
- bool get inBrowser; String? get error; String? get mfaError;
+ bool get busy; bool get mfaNeeded;/// Waiting for the sign-in to finish in the browser.
+ bool get inBrowser; String? get error; String? get mfaError;/// With magic links on: what the server said about the login id. Null
+/// until asked, empty when a password is the way in.
+ String? get loginType;/// The server emailed a sign-in link.
+ bool get linkSent;
 /// Create a copy of LoginState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,20 +31,20 @@ $LoginStateCopyWith<LoginState> get copyWith => _$LoginStateCopyWithImpl<LoginSt
 @override
 bool operator ==(Object other) {
   final _this = this as LoginState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LoginState&&(identical(other.busy, _this.busy) || other.busy == _this.busy)&&(identical(other.mfaNeeded, _this.mfaNeeded) || other.mfaNeeded == _this.mfaNeeded)&&(identical(other.inBrowser, _this.inBrowser) || other.inBrowser == _this.inBrowser)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.mfaError, _this.mfaError) || other.mfaError == _this.mfaError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LoginState&&(identical(other.busy, _this.busy) || other.busy == _this.busy)&&(identical(other.mfaNeeded, _this.mfaNeeded) || other.mfaNeeded == _this.mfaNeeded)&&(identical(other.inBrowser, _this.inBrowser) || other.inBrowser == _this.inBrowser)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.mfaError, _this.mfaError) || other.mfaError == _this.mfaError)&&(identical(other.loginType, _this.loginType) || other.loginType == _this.loginType)&&(identical(other.linkSent, _this.linkSent) || other.linkSent == _this.linkSent));
 }
 
 
 @override
 int get hashCode {
   final _this = this as LoginState;
-  return Object.hash(runtimeType,_this.busy,_this.mfaNeeded,_this.inBrowser,_this.error,_this.mfaError);
+  return Object.hash(runtimeType,_this.busy,_this.mfaNeeded,_this.inBrowser,_this.error,_this.mfaError,_this.loginType,_this.linkSent);
 }
 
 @override
 String toString() {
   final _this = this as LoginState;
-  return 'LoginState(busy: ${_this.busy}, mfaNeeded: ${_this.mfaNeeded}, inBrowser: ${_this.inBrowser}, error: ${_this.error}, mfaError: ${_this.mfaError})';
+  return 'LoginState(busy: ${_this.busy}, mfaNeeded: ${_this.mfaNeeded}, inBrowser: ${_this.inBrowser}, error: ${_this.error}, mfaError: ${_this.mfaError}, loginType: ${_this.loginType}, linkSent: ${_this.linkSent})';
 }
 
 
@@ -52,7 +55,7 @@ abstract mixin class $LoginStateCopyWith<$Res>  {
   factory $LoginStateCopyWith(LoginState value, $Res Function(LoginState) _then) = _$LoginStateCopyWithImpl;
 @useResult
 $Res call({
- bool busy, bool mfaNeeded, bool inBrowser, String? error, String? mfaError
+ bool busy, bool mfaNeeded, bool inBrowser, String? error, String? mfaError, String? loginType, bool linkSent
 });
 
 
@@ -69,14 +72,16 @@ class _$LoginStateCopyWithImpl<$Res>
 
 /// Create a copy of LoginState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? busy = null,Object? mfaNeeded = null,Object? inBrowser = null,Object? error = freezed,Object? mfaError = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? busy = null,Object? mfaNeeded = null,Object? inBrowser = null,Object? error = freezed,Object? mfaError = freezed,Object? loginType = freezed,Object? linkSent = null,}) {
   return _then(LoginState(
 busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
 as bool,mfaNeeded: null == mfaNeeded ? _self.mfaNeeded : mfaNeeded // ignore: cast_nullable_to_non_nullable
 as bool,inBrowser: null == inBrowser ? _self.inBrowser : inBrowser // ignore: cast_nullable_to_non_nullable
 as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,mfaError: freezed == mfaError ? _self.mfaError : mfaError // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,loginType: freezed == loginType ? _self.loginType : loginType // ignore: cast_nullable_to_non_nullable
+as String?,linkSent: null == linkSent ? _self.linkSent : linkSent // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -161,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool busy,  bool mfaNeeded,  bool inBrowser,  String? error,  String? mfaError)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool busy,  bool mfaNeeded,  bool inBrowser,  String? error,  String? mfaError,  String? loginType,  bool linkSent)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LoginState() when $default != null:
-return $default(_that.busy,_that.mfaNeeded,_that.inBrowser,_that.error,_that.mfaError);case _:
+return $default(_that.busy,_that.mfaNeeded,_that.inBrowser,_that.error,_that.mfaError,_that.loginType,_that.linkSent);case _:
   return orElse();
 
 }
@@ -182,10 +187,10 @@ return $default(_that.busy,_that.mfaNeeded,_that.inBrowser,_that.error,_that.mfa
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool busy,  bool mfaNeeded,  bool inBrowser,  String? error,  String? mfaError)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool busy,  bool mfaNeeded,  bool inBrowser,  String? error,  String? mfaError,  String? loginType,  bool linkSent)  $default,) {final _that = this;
 switch (_that) {
 case _LoginState():
-return $default(_that.busy,_that.mfaNeeded,_that.inBrowser,_that.error,_that.mfaError);case _:
+return $default(_that.busy,_that.mfaNeeded,_that.inBrowser,_that.error,_that.mfaError,_that.loginType,_that.linkSent);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +207,10 @@ return $default(_that.busy,_that.mfaNeeded,_that.inBrowser,_that.error,_that.mfa
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool busy,  bool mfaNeeded,  bool inBrowser,  String? error,  String? mfaError)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool busy,  bool mfaNeeded,  bool inBrowser,  String? error,  String? mfaError,  String? loginType,  bool linkSent)?  $default,) {final _that = this;
 switch (_that) {
 case _LoginState() when $default != null:
-return $default(_that.busy,_that.mfaNeeded,_that.inBrowser,_that.error,_that.mfaError);case _:
+return $default(_that.busy,_that.mfaNeeded,_that.inBrowser,_that.error,_that.mfaError,_that.loginType,_that.linkSent);case _:
   return null;
 
 }
@@ -217,15 +222,20 @@ return $default(_that.busy,_that.mfaNeeded,_that.inBrowser,_that.error,_that.mfa
 
 
 class _LoginState implements LoginState {
-  const _LoginState({this.busy = false, this.mfaNeeded = false, this.inBrowser = false, this.error, this.mfaError});
+  const _LoginState({this.busy = false, this.mfaNeeded = false, this.inBrowser = false, this.error, this.mfaError, this.loginType, this.linkSent = false});
   
 
 @override@JsonKey() final  bool busy;
 @override@JsonKey() final  bool mfaNeeded;
-/// Waiting for the sign-in to finish in the system browser (desktop).
+/// Waiting for the sign-in to finish in the browser.
 @override@JsonKey() final  bool inBrowser;
 @override final  String? error;
 @override final  String? mfaError;
+/// With magic links on: what the server said about the login id. Null
+/// until asked, empty when a password is the way in.
+@override final  String? loginType;
+/// The server emailed a sign-in link.
+@override@JsonKey() final  bool linkSent;
 
 /// Create a copy of LoginState
 /// with the given fields replaced by the non-null parameter values.
@@ -237,18 +247,18 @@ _$LoginStateCopyWith<_LoginState> get copyWith => __$LoginStateCopyWithImpl<_Log
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LoginState&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.mfaNeeded, mfaNeeded) || other.mfaNeeded == mfaNeeded)&&(identical(other.inBrowser, inBrowser) || other.inBrowser == inBrowser)&&(identical(other.error, error) || other.error == error)&&(identical(other.mfaError, mfaError) || other.mfaError == mfaError));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LoginState&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.mfaNeeded, mfaNeeded) || other.mfaNeeded == mfaNeeded)&&(identical(other.inBrowser, inBrowser) || other.inBrowser == inBrowser)&&(identical(other.error, error) || other.error == error)&&(identical(other.mfaError, mfaError) || other.mfaError == mfaError)&&(identical(other.loginType, loginType) || other.loginType == loginType)&&(identical(other.linkSent, linkSent) || other.linkSent == linkSent));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,busy,mfaNeeded,inBrowser,error,mfaError);
+    return Object.hash(runtimeType,busy,mfaNeeded,inBrowser,error,mfaError,loginType,linkSent);
 }
 
 @override
 String toString() {
-    return 'LoginState(busy: $busy, mfaNeeded: $mfaNeeded, inBrowser: $inBrowser, error: $error, mfaError: $mfaError)';
+    return 'LoginState(busy: $busy, mfaNeeded: $mfaNeeded, inBrowser: $inBrowser, error: $error, mfaError: $mfaError, loginType: $loginType, linkSent: $linkSent)';
 }
 
 
@@ -259,7 +269,7 @@ abstract mixin class _$LoginStateCopyWith<$Res> implements $LoginStateCopyWith<$
   factory _$LoginStateCopyWith(_LoginState value, $Res Function(_LoginState) _then) = __$LoginStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool busy, bool mfaNeeded, bool inBrowser, String? error, String? mfaError
+ bool busy, bool mfaNeeded, bool inBrowser, String? error, String? mfaError, String? loginType, bool linkSent
 });
 
 
@@ -276,14 +286,16 @@ class __$LoginStateCopyWithImpl<$Res>
 
 /// Create a copy of LoginState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? busy = null,Object? mfaNeeded = null,Object? inBrowser = null,Object? error = freezed,Object? mfaError = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? busy = null,Object? mfaNeeded = null,Object? inBrowser = null,Object? error = freezed,Object? mfaError = freezed,Object? loginType = freezed,Object? linkSent = null,}) {
   return _then(_LoginState(
 busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
 as bool,mfaNeeded: null == mfaNeeded ? _self.mfaNeeded : mfaNeeded // ignore: cast_nullable_to_non_nullable
 as bool,inBrowser: null == inBrowser ? _self.inBrowser : inBrowser // ignore: cast_nullable_to_non_nullable
 as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,mfaError: freezed == mfaError ? _self.mfaError : mfaError // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,loginType: freezed == loginType ? _self.loginType : loginType // ignore: cast_nullable_to_non_nullable
+as String?,linkSent: null == linkSent ? _self.linkSent : linkSent // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

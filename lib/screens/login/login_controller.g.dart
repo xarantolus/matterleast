@@ -58,7 +58,7 @@ final class LoginControllerProvider
   }
 }
 
-String _$loginControllerHash() => r'930af9f03cfda35844c4afa85b3622153459b5a1';
+String _$loginControllerHash() => r'139608dbf629c414e8f3c05938f341ffddb1256b';
 
 final class LoginControllerFamily extends $Family
     with

@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
@@ -19,23 +18,19 @@ class SignedIn {
 /// Opens [url] in an auth session and returns the redirect it ended on.
 typedef OpenAuthSession = Future<Uri> Function(Uri url, String scheme);
 
-// A plain Custom Tab sharing the browser session, as the official Android
-// app does; the redirect comes back through the plugin's CallbackActivity.
-Future<Uri> _openAuthTab(Uri url, String scheme) async => Uri.parse(
-  await FlutterWebAuth2.authenticate(
-    url: url.toString(),
-    callbackUrlScheme: scheme,
-    options: const FlutterWebAuth2Options(preferEphemeral: false),
-  ),
-);
-
 /// Gets a session token from a server, by password or through SSO. Failures
 /// are thrown as [LoginProblem]s.
 class SignIn {
-  SignIn({OpenAuthSession? openAuthSession})
-    : _openAuthSession = openAuthSession ?? _openAuthTab;
+  SignIn({
+    OpenAuthSession? openAuthSession,
+    OpenAuthSession? openExternalAuthSession,
+  }) : _openAuthSession = openAuthSession,
+       _openExternalAuthSession = openExternalAuthSession ?? openAuthSession;
 
-  final OpenAuthSession _openAuthSession;
+  final OpenAuthSession? _openAuthSession;
+
+  /// For servers that want the full browser, not a Custom Tab.
+  final OpenAuthSession? _openExternalAuthSession;
 
   Future<SignedIn> withPassword(
     ProbedServer server, {
@@ -43,20 +38,59 @@ class SignIn {
     required String password,
     String? mfaCode,
     bool ldapOnly = false,
+  }) {
+    final sentCode = mfaCode != null && mfaCode.isNotEmpty;
+    return _login(server, {
+      'login_id': loginId.trim().toLowerCase(),
+      'password': password,
+      if (sentCode) 'token': mfaCode.trim(),
+      if (ldapOnly) 'ldap_only': 'true',
+    }, sentMfaCode: sentCode);
+  }
+
+  /// Signs in with the one-time token of a guest's emailed link.
+  Future<SignedIn> withMagicLink(ProbedServer server, String token) => _login(
+    server,
+    api.ApiV4UsersLoginRequestBody(
+      magicLinkToken: token,
+      deviceId: '',
+    ).toJson(),
+    sentMfaCode: false,
+  );
+
+  /// The auth service the server names for [loginId]: `magic_link` when it
+  /// has just emailed that account a sign-in link, empty for any other.
+  Future<String> loginType(ProbedServer server, String loginId) async {
+    final client = ServerApi(baseUrl: server.url, token: () => null);
+    try {
+      final response = await client.call(
+        () => client.client.users.getLoginType(
+          body: api.ApiV4UsersLoginTypeRequestBody(
+            loginId: loginId.trim().toLowerCase(),
+            deviceId: '',
+          ),
+        ),
+      );
+      return response.authService ?? '';
+    } on ApiError catch (e) {
+      throw LoginRejected(serverSaidText(e, server.url.authority));
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<SignedIn> _login(
+    ProbedServer server,
+    Map<String, Object?> data, {
+    required bool sentMfaCode,
   }) async {
     final host = server.url.authority;
-    final sentCode = mfaCode != null && mfaCode.isNotEmpty;
     final client = ServerApi(baseUrl: server.url, token: () => null);
     try {
       final response = await client.call(
         () => client.dio.post<Object?>(
           '/api/v4/users/login',
-          data: {
-            'login_id': loginId.trim().toLowerCase(),
-            'password': password,
-            if (sentCode) 'token': mfaCode.trim(),
-            if (ldapOnly) 'ldap_only': 'true',
-          },
+          data: data,
           options: Options(headers: {'Cache-Control': 'no-store'}),
         ),
       );
@@ -66,7 +100,7 @@ class SignIn {
       }
       return await _confirm(server, token);
     } on ApiError catch (e) {
-      throw loginProblemFrom(e, sentMfaCode: sentCode, host: host);
+      throw loginProblemFrom(e, sentMfaCode: sentMfaCode, host: host);
     } finally {
       client.close();
     }
@@ -88,16 +122,23 @@ class SignIn {
   }
 
   /// Runs the provider's login in an auth session. Returns null when the user
-  /// closed it.
+  /// closed it. [onStarted] gets the sign-in's challenge before the browser
+  /// opens.
   Future<SignedIn?> withSso(
     ProbedServer server,
     SsoButton button, {
     String scheme = defaultSsoScheme,
+    Future<void> Function(SsoChallenge challenge)? onStarted,
   }) async {
+    final open = server.options.externalBrowserForSso
+        ? _openExternalAuthSession
+        : _openAuthSession;
+    if (open == null) throw StateError('This SignIn has no auth session');
     final challenge = SsoChallenge.generate();
+    await onStarted?.call(challenge);
     final Uri callback;
     try {
-      callback = await _openAuthSession(
+      callback = await open(
         ssoStartUrl(
           server: server.url,
           path: button.path,
@@ -113,6 +154,17 @@ class SignIn {
         'installed and try again.',
       );
     }
+    return finishSso(server, scheme, challenge, callback);
+  }
+
+  /// Checks the redirect [callback] of a sign-in started with [challenge] and
+  /// turns it into a session.
+  Future<SignedIn> finishSso(
+    ProbedServer server,
+    String scheme,
+    SsoChallenge challenge,
+    Uri callback,
+  ) async {
     final result = parseSsoCallback(
       callback,
       scheme: scheme,
