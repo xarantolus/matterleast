@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/channel/header_strip.dart';
@@ -78,6 +79,30 @@ void main() {
       await h.close(tester);
     },
   );
+
+  testWidgets('a header that fits offers nothing to expand', (tester) async {
+    final h = await _open(tester, header: 'Boats only');
+
+    expect(find.byIcon(Icons.expand_more), findsNothing);
+    expect(find.byTooltip('Show the whole header'), findsNothing);
+    final oneLine = tester.getSize(find.byType(HeaderStrip)).height;
+    await tester.tapOnText(find.textRange.ofSubstring('Boats only'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.getSize(find.byType(HeaderStrip)).height, oneLine);
+    await h.close(tester);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+  testWidgets('a cut header shows that it opens', (tester) async {
+    final h = await _open(tester, header: _header);
+
+    expect(find.byIcon(Icons.expand_more), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byIcon(Icons.expand_less), findsOneWidget);
+    await h.close(tester);
+  });
 
   testWidgets('a channel without a header has no strip', (tester) async {
     final h = await _open(tester);
