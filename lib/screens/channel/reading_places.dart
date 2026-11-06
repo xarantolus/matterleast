@@ -15,6 +15,7 @@ ReadingPlaces readingPlaces(Ref ref) => ReadingPlaces();
 class ReadingPlaces {
   final _live = <ConversationKey, List<_Shown>>{};
   final _handed = <ConversationKey, ({OpenAt at, DateTime until})>{};
+  final _left = <ConversationKey, ReadingAt?>{};
 
   /// A handed-on place is for the views built right after it.
   static const _lifetime = Duration(seconds: 2);
@@ -31,8 +32,18 @@ class ReadingPlaces {
 
   void detach(ConversationKey conversation, AnchoredListController list) {
     final lists = _live[conversation];
-    lists?.removeWhere((s) => s.list == list);
-    if (lists?.isEmpty ?? false) _live.remove(conversation);
+    if (lists == null) return;
+    for (final shown in lists.where((s) => s.list == list)) {
+      _left[conversation] = _readingAt(shown);
+    }
+    lists.removeWhere((s) => s.list == list);
+    if (lists.isEmpty) _live.remove(conversation);
+  }
+
+  /// Opens the next view of [conversation] where its last one was closed,
+  /// at the bottom when it was left there.
+  void reopenWhereLeft(ConversationKey conversation) {
+    if (_left[conversation] case final at?) restore(conversation, at);
   }
 
   /// Notes where every shown conversation is read, for the views that
@@ -65,13 +76,16 @@ class ReadingPlaces {
   /// Null at the bottom, or when [conversation] is not shown.
   ReadingAt? placeOf(ConversationKey conversation) {
     for (final shown in _live[conversation] ?? const <_Shown>[]) {
-      final p = shown.list.position;
-      if (p == null) continue;
-      if (shown.list.pinned) return null;
-      final postId = shown.postIdOf(p.key);
-      if (postId != null) return (postId: postId, offset: p.offset);
+      if (_readingAt(shown) case final at?) return at;
     }
     return null;
+  }
+
+  static ReadingAt? _readingAt(_Shown shown) {
+    final p = shown.list.position;
+    if (p == null || shown.list.pinned) return null;
+    final postId = shown.postIdOf(p.key);
+    return postId == null ? null : (postId: postId, offset: p.offset);
   }
 
   /// Jumps the shown views to [at], or sets where the next view opens.

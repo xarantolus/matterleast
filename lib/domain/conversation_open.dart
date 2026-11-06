@@ -28,18 +28,16 @@ final class OpenCentred extends OpenAt {
 double centredOffset({required double viewport, required double rowHeight}) =>
     rowHeight >= viewport ? viewport - rowHeight : (viewport - rowHeight) / 2;
 
-/// A saved reading position.
-typedef SavedPlace = ({String postId, double offset, DateTime savedAt});
-
-const savedPlaceLifetime = Duration(days: 30);
+/// A saved reading position and the server time of the newest message
+/// when it was saved.
+typedef SavedPlace = ({String postId, double offset, DateTime newestAt});
 
 /// The message asked for first; then the new-messages line about a quarter
-/// from the top; then where the reader left off, unless it is old or newer
-/// messages came since; else the bottom. [rows] are newest first.
+/// from the top; then where the reader left off, unless newer messages came
+/// since; else the bottom. [rows] are newest first.
 OpenAt openPosition({
   required List<ListRow> rows,
   required double height,
-  required DateTime now,
   String? highlightKey,
   SavedPlace? saved,
 }) {
@@ -55,11 +53,9 @@ OpenAt openPosition({
         ? OpenAtRow(rows[line + 1].key, height * 0.75)
         : OpenAtRow(rows[line].key, height * 0.75 - 32);
   }
-  if (saved != null &&
-      keys.contains(saved.postId) &&
-      now.difference(saved.savedAt) < savedPlaceLifetime) {
+  if (saved != null && keys.contains(saved.postId)) {
     final newest = rows.whereType<MessageRow>().firstOrNull?.post.createAt;
-    if (newest == null || !newest.isAfter(saved.savedAt)) {
+    if (newest == null || !newest.isAfter(saved.newestAt)) {
       return OpenAtRow(saved.postId, saved.offset);
     }
   }

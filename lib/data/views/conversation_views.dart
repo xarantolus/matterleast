@@ -109,7 +109,7 @@ class ConversationViews {
     ({
       String? me,
       DateTime? lastViewedAt,
-      ({String postId, double offset, DateTime savedAt})? saved,
+      ({String postId, double offset, DateTime newestAt})? saved,
       DateTime? newestAt,
       DateTime deletedUpTo,
     })
@@ -146,7 +146,7 @@ class ConversationViews {
           : (
               postId: saved.anchorPostId,
               offset: saved.anchorOffsetPx,
-              savedAt: saved.savedAt,
+              newestAt: saved.savedAt,
             ),
     );
   }

@@ -531,14 +531,19 @@ class Conversation extends _$Conversation {
     if (session == null || window == null || position == null) return;
     final postId = postIdOfRow(position.key);
     if (postId == null) return;
-    unawaited(
-      session.store.saveViewState(
+    unawaited(() async {
+      final newestAt = await session.db.newestPostAt(
+        channelId: channelId,
+        rootId: rootId,
+      );
+      if (newestAt == null) return;
+      await session.store.saveViewState(
         _scope,
         _scopeId,
         postId: postId,
         offset: position.offset,
-        at: DateTime.now().toUtc(),
-      ),
-    );
+        newestAt: newestAt,
+      );
+    }());
   }
 }

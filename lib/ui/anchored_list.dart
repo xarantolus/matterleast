@@ -49,12 +49,13 @@ class AnchoredListController {
   _AnchoredListState<Object?>? _state;
 
   AnchoredPosition? _atRest;
+  bool _pinnedAtRest = true;
 
   /// The bottom-most visible row and where it sits, to restore later. Once
   /// the list is gone, where it last came to rest.
   AnchoredPosition? get position => _state?._measuredAnchor() ?? _atRest;
 
-  bool get pinned => _state?._lastView?.pinned ?? true;
+  bool get pinned => _state?._lastView?.pinned ?? _pinnedAtRest;
 
   bool get attached => _state != null;
 
@@ -296,7 +297,11 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
 
   @override
   void dispose() {
-    if (widget.controller._state == this) widget.controller._state = null;
+    if (widget.controller._state == this) {
+      widget.controller
+        .._pinnedAtRest = _lastView?.pinned ?? true
+        .._state = null;
+    }
     _scroll.dispose();
     _span.dispose();
     super.dispose();
