@@ -19,6 +19,23 @@ val releaseStoreFile: File? =
     System.getenv("X_KEYSTORE_PATH")?.takeIf { it.isNotEmpty() }?.let(::File)
         ?: keystoreProperties.getProperty("storeFile")?.let(rootProject::file)
 
+// Plugins bundle their native libraries for every ABI. Keeping only the
+// ABIs the build was asked for stops a phone Flutter wasn't built for
+// from installing the app and crashing at start. Flutter's own plugin
+// overwrites abiFilters, so this filters at packaging.
+val abiOfPlatform = mapOf(
+    "android-arm" to "armeabi-v7a",
+    "android-arm64" to "arm64-v8a",
+    "android-x86" to "x86",
+    "android-x64" to "x86_64",
+)
+val unwantedAbis: List<String> =
+    (findProperty("target-platform") as String?)
+        ?.split(',')
+        ?.mapNotNull(abiOfPlatform::get)
+        ?.let { wanted -> abiOfPlatform.values - wanted.toSet() }
+        .orEmpty()
+
 fun signingProperty(name: String): String =
     keystoreProperties.getProperty(name)
         ?: throw GradleException("android/key.properties has no $name, so the release build cannot be signed.")
@@ -49,6 +66,7 @@ android {
     packaging {
         jniLibs {
             excludes += "**/libcnativeapi.so"
+            unwantedAbis.forEach { excludes += "lib/$it/**" }
             // A smaller download; Android unpacks the libraries on install.
             useLegacyPackaging = true
         }
