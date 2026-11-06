@@ -50,6 +50,13 @@ notes, and they win over this summary.
 - One bad element never fails a page: decode lists per element and skip
   what doesn't parse, store unknown enum values as unknown, and log the
   id and type of what was skipped.
+- Server times only, never the phone clock, for anything compared with
+  server data. Store the server's own timestamp of the fact (the newest
+  message's `create_at` for a read mark, a sync cursor or a saved place, a
+  time the server returned) instead of when we received or saved it, so
+  no comparison with local time is needed at all. Prefer "is there a newer
+  message than X" over elapsed-time checks; keep the phone clock for
+  local-only timers and display.
 - Errors keep what the server said. Show the server's message when there is
   one; "offline" or "check the connection" only when no answer arrived.
   One mapper from failure to user-facing text.

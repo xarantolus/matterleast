@@ -941,13 +941,14 @@ class ServerStore {
         ChannelsCompanion(memberCount: Value(memberCount)),
       );
 
-  /// Where the reader left a channel (`channel`) or thread (`thread`).
+  /// Where the reader left a channel (`channel`) or thread (`thread`), with
+  /// the server time of its newest message then.
   Future<void> saveViewState(
     String scope,
     String scopeId, {
     required String postId,
     required double offset,
-    required DateTime at,
+    required DateTime newestAt,
   }) => db
       .into(db.viewStates)
       .insertOnConflictUpdate(
@@ -956,7 +957,7 @@ class ServerStore {
           scopeId: scopeId,
           anchorPostId: postId,
           anchorOffsetPx: Value(offset),
-          savedAt: at,
+          savedAt: newestAt,
         ),
       );
 

@@ -554,6 +554,75 @@ void main() {
     await finish(tester);
   });
 
+  testWidgets('a left swipe brings the conversation back where it was read, '
+      'even after a new message arrived', (tester) async {
+    await start(tester, more: known());
+    final at = DateTime.utc(2026, 10, 25, 10);
+    // The last one arrives after the reader left, later than any clock.
+    Map<String, Object?> post(int i) => {
+      'id': 'p$i',
+      'channel_id': channelId,
+      'user_id': 'someone',
+      'create_at':
+          (i == 120 ? DateTime.utc(2100) : at.add(Duration(minutes: i)))
+              .millisecondsSinceEpoch,
+      'message': 'line $i',
+    };
+    await tester.runAsync(
+      () => session.store.applyChannelPage(
+        channelId: channelId,
+        page: api.PostList.fromJson({
+          'order': [for (var i = 119; i >= 0; i--) 'p$i'],
+          'posts': {for (var i = 0; i < 120; i++) 'p$i': post(i)},
+        }),
+        kind: PageKind.page,
+        requested: 120,
+      ),
+    );
+    unawaited(
+      openConversation(
+        navigator(tester),
+        url: server.url.toString(),
+        channelId: channelId,
+        title: 'Boats',
+        teamId: teamId,
+      ),
+    );
+    await settle(tester);
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
+      await settle(tester);
+    }
+    final top = [
+      for (var i = 0; i < 120; i++)
+        if (find.text('line $i').evaluate().isNotEmpty &&
+            tester.getTopLeft(find.text('line $i')).dy > 100)
+          'line $i',
+    ].first;
+    final before = tester.getTopLeft(find.text(top)).dy;
+
+    navigator(tester).pop();
+    await settle(tester);
+    await tester.runAsync(
+      () => session.store.applyChannelPage(
+        channelId: channelId,
+        page: api.PostList.fromJson({
+          'order': ['p120'],
+          'posts': {'p120': post(120)},
+        }),
+        kind: PageKind.since,
+      ),
+    );
+    await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
+    await settle(tester);
+
+    expect(find.text(top), findsOneWidget);
+    expect(tester.getTopLeft(find.text(top)).dy, closeTo(before, 0.5));
+    navigator(tester).pop();
+    await settle(tester);
+    await finish(tester);
+  });
+
   testWidgets('an agent citation link opens its post highlighted', (
     tester,
   ) async {

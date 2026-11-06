@@ -24,7 +24,6 @@ void main() {
       final at = openPosition(
         rows: rows(lastViewedAt: base),
         height: 800,
-        now: base,
         highlightKey: 'p3',
       );
       expect(at, isA<OpenCentred>().having((o) => o.key, 'key', 'p3'));
@@ -35,7 +34,6 @@ void main() {
       final at = openPosition(
         rows: rows(lastViewedAt: base.add(const Duration(minutes: 45))),
         height: 800,
-        now: base,
       );
       expect(
         at,
@@ -49,14 +47,9 @@ void main() {
       final saved = (
         postId: 'p5',
         offset: 120.0,
-        savedAt: base.add(const Duration(hours: 2)),
+        newestAt: base.add(const Duration(minutes: 90)),
       );
-      final at = openPosition(
-        rows: rows(),
-        height: 800,
-        now: base.add(const Duration(days: 2)),
-        saved: saved,
-      );
+      final at = openPosition(rows: rows(), height: 800, saved: saved);
       expect(
         at,
         isA<OpenAtRow>()
@@ -65,31 +58,22 @@ void main() {
       );
     });
 
-    test('a saved place is dropped after newer messages or 30 days', () {
-      final before = (postId: 'p5', offset: 120.0, savedAt: base);
-      expect(
-        openPosition(rows: rows(), height: 800, now: base, saved: before),
-        isA<OpenAtBottom>(),
-      );
-      final old = (
+    test('a saved place is dropped once newer messages arrived', () {
+      // The newest message is at minute 90; the place was saved at 80.
+      final before = (
         postId: 'p5',
         offset: 120.0,
-        savedAt: base.add(const Duration(hours: 2)),
+        newestAt: base.add(const Duration(minutes: 80)),
       );
       expect(
-        openPosition(
-          rows: rows(),
-          height: 800,
-          now: base.add(const Duration(days: 31)),
-          saved: old,
-        ),
+        openPosition(rows: rows(), height: 800, saved: before),
         isA<OpenAtBottom>(),
       );
     });
 
     test('otherwise the bottom', () {
       expect(
-        openPosition(rows: rows(), height: 800, now: base),
+        openPosition(rows: rows(), height: 800),
         isA<OpenAtBottom>(),
       );
     });

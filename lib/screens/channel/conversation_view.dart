@@ -138,7 +138,6 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
             : openPosition(
                 rows: state.rows,
                 height: height,
-                now: DateTime.now().toUtc(),
                 highlightKey: state.highlightKey,
                 saved: state.saved,
               ));

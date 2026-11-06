@@ -6,7 +6,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
+import 'package:matterleast/domain/panes.dart';
 import 'package:matterleast/log.dart';
+import 'package:matterleast/screens/channel/reading_places.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/conversation_memory.dart';
 import 'package:matterleast/ui/slide_route.dart';
@@ -55,8 +57,14 @@ class _ReopenSwipeState extends ConsumerState<ReopenSwipe> {
         ProviderScope.containerOf(context, listen: false),
         saved,
       );
-      if (stack.isEmpty || !navigator.mounted) return;
-      await reopenConversation(navigator, stack.last);
+      if (stack.isEmpty || !navigator.mounted || !mounted) return;
+      final target = stack.last;
+      ref.read(readingPlacesProvider).reopenWhereLeft((
+        url: target.url,
+        channelId: target.channelId,
+        rootId: target is ThreadTarget ? target.rootId : null,
+      ));
+      await reopenConversation(navigator, target);
     } on Object catch (e) {
       Log.warn('launch', 'Bringing back the closed conversation failed', e);
     }
