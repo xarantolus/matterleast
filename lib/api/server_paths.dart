@@ -1,10 +1,24 @@
+/// [segments] with `.` and `..` (also when they were percent-encoded)
+/// applied, as the server and any proxy in front of it will.
+List<String> _resolveDots(List<String> segments) {
+  final result = <String>[];
+  for (final s in segments) {
+    if (s == '..') {
+      if (result.isNotEmpty) result.removeLast();
+    } else if (s != '.') {
+      result.add(s);
+    }
+  }
+  return result;
+}
+
 /// The segments of [url] below [server]'s own path, which may be a
 /// sub-path; null when [url] is elsewhere.
 List<String>? _below(Uri url, Uri server) {
   if (!url.isScheme('https') && !url.isScheme('http')) return null;
   if (url.origin != server.origin) return null;
   final base = server.pathSegments.where((s) => s.isNotEmpty).toList();
-  final path = url.pathSegments;
+  final path = _resolveDots(url.pathSegments);
   if (path.length < base.length) return null;
   for (final (i, segment) in base.indexed) {
     if (path[i] != segment) return null;

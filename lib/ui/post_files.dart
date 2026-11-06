@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
@@ -489,10 +491,23 @@ Future<void> _runFileAction(
   final viewers = Navigator.of(context, rootNavigator: true);
   void say(String message) =>
       messenger.showSnackBar(SnackBar(content: Text(message)));
-  final features = await ref.read(featuresProvider(url).future);
   final inApp =
       action == _FileAction.view &&
       (file.kind == FileKind.pdf || file.kind == FileKind.text);
+  if (isDesktop &&
+      !inApp &&
+      (action == _FileAction.view || action == _FileAction.openWith) &&
+      isProgramFile(
+        file.name,
+        windows: defaultTargetPlatform == TargetPlatform.windows,
+      )) {
+    say(
+      '${file.name} could run a program, so it is not opened. '
+      'Use Save as instead.',
+    );
+    return;
+  }
+  final features = await ref.read(featuresProvider(url).future);
   if (!features.fileDownloads && !inApp) {
     say(
       "This server doesn't allow taking files out of the app, so "

@@ -232,13 +232,50 @@ void main() {
       Uri? on,
       Uri? siteUrl,
       String version = '12.0.1',
+      String? state,
+      bool codeExchange = false,
     }) => parseSsoCallback(
       Uri.parse(callback),
       scheme: 'mmauth',
       server: on ?? server,
       siteUrl: siteUrl,
       serverVersion: version,
+      state: state,
+      codeExchange: codeExchange,
     );
+
+    test('a bare token is refused where the server does the code exchange', () {
+      const srv = 'srv=http%3A%2F%2F10.0.2.2%3A8065';
+      const bare = 'mmauth://callback?MMAUTHTOKEN=abc&$srv';
+      expect(parse(bare), const SsoResult.token('abc'));
+      expect(parse(bare, codeExchange: true), isA<SsoRejected>());
+      expect(
+        parse('mmauth://callback?login_code=one&$srv', codeExchange: true),
+        const SsoResult.code('one'),
+      );
+    });
+
+    test('an echoed state must be the one sent', () {
+      const srv = 'srv=http%3A%2F%2F10.0.2.2%3A8065';
+      expect(
+        parse(
+          'mmauth://callback?login_code=one&state=mine&$srv',
+          state: 'mine',
+        ),
+        const SsoResult.code('one'),
+      );
+      expect(
+        parse(
+          'mmauth://callback?login_code=one&state=theirs&$srv',
+          state: 'mine',
+        ),
+        isA<SsoRejected>(),
+      );
+      expect(
+        parse('mmauth://callback?login_code=one&$srv', state: 'mine'),
+        const SsoResult.code('one'),
+      );
+    });
 
     test('a login code is passed on, with the same server checks', () {
       expect(

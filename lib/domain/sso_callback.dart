@@ -106,7 +106,10 @@ sealed class SsoResult with _$SsoResult {
 }
 
 /// Reads the session token out of `<scheme>://callback?MMAUTHTOKEN=…&srv=…`,
-/// or the `login_code` a server answers a challenge with.
+/// or the `login_code` a server answers a challenge with. A server that does
+/// the code exchange ([codeExchange]) never sends a bare token, so one is
+/// refused: a link someone else made could sign the user in to their account.
+/// A `state` the server echoes must be ours ([state]).
 /// Servers from 12.0 name themselves in `srv` (their configured site URL), so
 /// a redirect planted by another site or app cannot hand us its token; only
 /// servers known to be older may leave it out, as the official app accepts.
@@ -120,6 +123,8 @@ SsoResult parseSsoCallback(
   required Uri server,
   required Uri? siteUrl,
   required String serverVersion,
+  String? state,
+  bool codeExchange = false,
 }) {
   if (!isSsoCallbackFor(callback, scheme)) {
     return SsoResult.rejected(
@@ -147,8 +152,19 @@ SsoResult parseSsoCallback(
       "The redirect didn't say which server it came from.",
     );
   }
+  final echoed = callback.queryParameters['state'];
+  if (echoed != null && state != null && echoed != state) {
+    return const SsoResult.rejected(
+      "The sign-in doesn't belong to the one that was started.",
+    );
+  }
   final code = callback.queryParameters['login_code'];
   if (code != null && code.isNotEmpty) return SsoResult.code(code);
+  if (codeExchange) {
+    return const SsoResult.rejected(
+      'The server sent no one-time code for this sign-in.',
+    );
+  }
   final token = callback.queryParameters['MMAUTHTOKEN'];
   if (token == null || token.isEmpty) {
     return const SsoResult.rejected('The server sent no session.');

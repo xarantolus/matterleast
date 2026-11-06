@@ -171,6 +171,8 @@ class SignIn {
       server: server.url,
       siteUrl: server.options.siteUrl,
       serverVersion: server.options.serverVersion,
+      state: challenge.state,
+      codeExchange: server.options.ssoCodeExchange,
     );
     return switch (result) {
       SsoToken(:final token) => await _confirm(server, token),

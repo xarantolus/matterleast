@@ -3,9 +3,9 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:matterleast/data/app_db/app_database.steps.dart';
 import 'package:matterleast/data/app_db/tables.dart';
 import 'package:matterleast/data/db/millis.dart';
+import 'package:matterleast/data/files/app_directories.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 part 'app_database.g.dart';
 
@@ -25,10 +25,8 @@ class AppDatabase extends _$AppDatabase {
     driftDatabase(
       name: 'matterleast_app',
       native: DriftNativeOptions(
-        databasePath: () async => p.join(
-          (await getApplicationSupportDirectory()).path,
-          appDatabaseFileName,
-        ),
+        databasePath: () async =>
+            p.join(await AppDirectories.support(), appDatabaseFileName),
         shareAcrossIsolates: shared,
         setup: configureConnection,
       ),

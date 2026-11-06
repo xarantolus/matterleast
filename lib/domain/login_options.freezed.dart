@@ -18,7 +18,9 @@ mixin _$LoginOptions {
  bool get password; bool get ldap; String get ldapFieldLabel;/// "Email or username", with the LDAP field name when LDAP is on.
  String get loginIdLabel;/// Whether to offer a password reset, and the admin's own reset page if
 /// one is configured (else the server's web page).
- bool get forgotPassword; String? get forgotPasswordLink; List<SsoButton> get sso; bool get mfaPossible; bool get mfaEnforced; String get siteName; String get serverVersion; String get diagnosticId; bool get externalBrowserForSso;/// Guests may sign in with a link the server emails them.
+ bool get forgotPassword; String? get forgotPasswordLink; List<SsoButton> get sso; bool get mfaPossible; bool get mfaEnforced; String get siteName; String get serverVersion; String get diagnosticId; bool get externalBrowserForSso;/// The server answers a challenged mobile sign-in with a one-time code
+/// (feature flag `MobileSSOCodeExchange`), never a bare session token.
+ bool get ssoCodeExchange;/// Guests may sign in with a link the server emails them.
  bool get magicLink;/// The address the server knows itself by (`SiteURL`), which it names
 /// in an SSO redirect; it may differ from the one the user entered.
  Uri? get siteUrl;
@@ -33,20 +35,20 @@ $LoginOptionsCopyWith<LoginOptions> get copyWith => _$LoginOptionsCopyWithImpl<L
 @override
 bool operator ==(Object other) {
   final _this = this as LoginOptions;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LoginOptions&&(identical(other.password, _this.password) || other.password == _this.password)&&(identical(other.ldap, _this.ldap) || other.ldap == _this.ldap)&&(identical(other.ldapFieldLabel, _this.ldapFieldLabel) || other.ldapFieldLabel == _this.ldapFieldLabel)&&(identical(other.loginIdLabel, _this.loginIdLabel) || other.loginIdLabel == _this.loginIdLabel)&&(identical(other.forgotPassword, _this.forgotPassword) || other.forgotPassword == _this.forgotPassword)&&(identical(other.forgotPasswordLink, _this.forgotPasswordLink) || other.forgotPasswordLink == _this.forgotPasswordLink)&&const DeepCollectionEquality().equals(other.sso, _this.sso)&&(identical(other.mfaPossible, _this.mfaPossible) || other.mfaPossible == _this.mfaPossible)&&(identical(other.mfaEnforced, _this.mfaEnforced) || other.mfaEnforced == _this.mfaEnforced)&&(identical(other.siteName, _this.siteName) || other.siteName == _this.siteName)&&(identical(other.serverVersion, _this.serverVersion) || other.serverVersion == _this.serverVersion)&&(identical(other.diagnosticId, _this.diagnosticId) || other.diagnosticId == _this.diagnosticId)&&(identical(other.externalBrowserForSso, _this.externalBrowserForSso) || other.externalBrowserForSso == _this.externalBrowserForSso)&&(identical(other.magicLink, _this.magicLink) || other.magicLink == _this.magicLink)&&(identical(other.siteUrl, _this.siteUrl) || other.siteUrl == _this.siteUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LoginOptions&&(identical(other.password, _this.password) || other.password == _this.password)&&(identical(other.ldap, _this.ldap) || other.ldap == _this.ldap)&&(identical(other.ldapFieldLabel, _this.ldapFieldLabel) || other.ldapFieldLabel == _this.ldapFieldLabel)&&(identical(other.loginIdLabel, _this.loginIdLabel) || other.loginIdLabel == _this.loginIdLabel)&&(identical(other.forgotPassword, _this.forgotPassword) || other.forgotPassword == _this.forgotPassword)&&(identical(other.forgotPasswordLink, _this.forgotPasswordLink) || other.forgotPasswordLink == _this.forgotPasswordLink)&&const DeepCollectionEquality().equals(other.sso, _this.sso)&&(identical(other.mfaPossible, _this.mfaPossible) || other.mfaPossible == _this.mfaPossible)&&(identical(other.mfaEnforced, _this.mfaEnforced) || other.mfaEnforced == _this.mfaEnforced)&&(identical(other.siteName, _this.siteName) || other.siteName == _this.siteName)&&(identical(other.serverVersion, _this.serverVersion) || other.serverVersion == _this.serverVersion)&&(identical(other.diagnosticId, _this.diagnosticId) || other.diagnosticId == _this.diagnosticId)&&(identical(other.externalBrowserForSso, _this.externalBrowserForSso) || other.externalBrowserForSso == _this.externalBrowserForSso)&&(identical(other.ssoCodeExchange, _this.ssoCodeExchange) || other.ssoCodeExchange == _this.ssoCodeExchange)&&(identical(other.magicLink, _this.magicLink) || other.magicLink == _this.magicLink)&&(identical(other.siteUrl, _this.siteUrl) || other.siteUrl == _this.siteUrl));
 }
 
 
 @override
 int get hashCode {
   final _this = this as LoginOptions;
-  return Object.hash(runtimeType,_this.password,_this.ldap,_this.ldapFieldLabel,_this.loginIdLabel,_this.forgotPassword,_this.forgotPasswordLink,const DeepCollectionEquality().hash(_this.sso),_this.mfaPossible,_this.mfaEnforced,_this.siteName,_this.serverVersion,_this.diagnosticId,_this.externalBrowserForSso,_this.magicLink,_this.siteUrl);
+  return Object.hash(runtimeType,_this.password,_this.ldap,_this.ldapFieldLabel,_this.loginIdLabel,_this.forgotPassword,_this.forgotPasswordLink,const DeepCollectionEquality().hash(_this.sso),_this.mfaPossible,_this.mfaEnforced,_this.siteName,_this.serverVersion,_this.diagnosticId,_this.externalBrowserForSso,_this.ssoCodeExchange,_this.magicLink,_this.siteUrl);
 }
 
 @override
 String toString() {
   final _this = this as LoginOptions;
-  return 'LoginOptions(password: ${_this.password}, ldap: ${_this.ldap}, ldapFieldLabel: ${_this.ldapFieldLabel}, loginIdLabel: ${_this.loginIdLabel}, forgotPassword: ${_this.forgotPassword}, forgotPasswordLink: ${_this.forgotPasswordLink}, sso: ${_this.sso}, mfaPossible: ${_this.mfaPossible}, mfaEnforced: ${_this.mfaEnforced}, siteName: ${_this.siteName}, serverVersion: ${_this.serverVersion}, diagnosticId: ${_this.diagnosticId}, externalBrowserForSso: ${_this.externalBrowserForSso}, magicLink: ${_this.magicLink}, siteUrl: ${_this.siteUrl})';
+  return 'LoginOptions(password: ${_this.password}, ldap: ${_this.ldap}, ldapFieldLabel: ${_this.ldapFieldLabel}, loginIdLabel: ${_this.loginIdLabel}, forgotPassword: ${_this.forgotPassword}, forgotPasswordLink: ${_this.forgotPasswordLink}, sso: ${_this.sso}, mfaPossible: ${_this.mfaPossible}, mfaEnforced: ${_this.mfaEnforced}, siteName: ${_this.siteName}, serverVersion: ${_this.serverVersion}, diagnosticId: ${_this.diagnosticId}, externalBrowserForSso: ${_this.externalBrowserForSso}, ssoCodeExchange: ${_this.ssoCodeExchange}, magicLink: ${_this.magicLink}, siteUrl: ${_this.siteUrl})';
 }
 
 
@@ -57,7 +59,7 @@ abstract mixin class $LoginOptionsCopyWith<$Res>  {
   factory $LoginOptionsCopyWith(LoginOptions value, $Res Function(LoginOptions) _then) = _$LoginOptionsCopyWithImpl;
 @useResult
 $Res call({
- bool password, bool ldap, String ldapFieldLabel, String loginIdLabel, bool forgotPassword, String? forgotPasswordLink, List<SsoButton> sso, bool mfaPossible, bool mfaEnforced, String siteName, String serverVersion, String diagnosticId, bool externalBrowserForSso, bool magicLink, Uri? siteUrl
+ bool password, bool ldap, String ldapFieldLabel, String loginIdLabel, bool forgotPassword, String? forgotPasswordLink, List<SsoButton> sso, bool mfaPossible, bool mfaEnforced, String siteName, String serverVersion, String diagnosticId, bool externalBrowserForSso, bool ssoCodeExchange, bool magicLink, Uri? siteUrl
 });
 
 
@@ -74,7 +76,7 @@ class _$LoginOptionsCopyWithImpl<$Res>
 
 /// Create a copy of LoginOptions
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? password = null,Object? ldap = null,Object? ldapFieldLabel = null,Object? loginIdLabel = null,Object? forgotPassword = null,Object? forgotPasswordLink = freezed,Object? sso = null,Object? mfaPossible = null,Object? mfaEnforced = null,Object? siteName = null,Object? serverVersion = null,Object? diagnosticId = null,Object? externalBrowserForSso = null,Object? magicLink = null,Object? siteUrl = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? password = null,Object? ldap = null,Object? ldapFieldLabel = null,Object? loginIdLabel = null,Object? forgotPassword = null,Object? forgotPasswordLink = freezed,Object? sso = null,Object? mfaPossible = null,Object? mfaEnforced = null,Object? siteName = null,Object? serverVersion = null,Object? diagnosticId = null,Object? externalBrowserForSso = null,Object? ssoCodeExchange = null,Object? magicLink = null,Object? siteUrl = freezed,}) {
   return _then(LoginOptions(
 password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
 as bool,ldap: null == ldap ? _self.ldap : ldap // ignore: cast_nullable_to_non_nullable
@@ -89,6 +91,7 @@ as bool,siteName: null == siteName ? _self.siteName : siteName // ignore: cast_n
 as String,serverVersion: null == serverVersion ? _self.serverVersion : serverVersion // ignore: cast_nullable_to_non_nullable
 as String,diagnosticId: null == diagnosticId ? _self.diagnosticId : diagnosticId // ignore: cast_nullable_to_non_nullable
 as String,externalBrowserForSso: null == externalBrowserForSso ? _self.externalBrowserForSso : externalBrowserForSso // ignore: cast_nullable_to_non_nullable
+as bool,ssoCodeExchange: null == ssoCodeExchange ? _self.ssoCodeExchange : ssoCodeExchange // ignore: cast_nullable_to_non_nullable
 as bool,magicLink: null == magicLink ? _self.magicLink : magicLink // ignore: cast_nullable_to_non_nullable
 as bool,siteUrl: freezed == siteUrl ? _self.siteUrl : siteUrl // ignore: cast_nullable_to_non_nullable
 as Uri?,
@@ -176,10 +179,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool password,  bool ldap,  String ldapFieldLabel,  String loginIdLabel,  bool forgotPassword,  String? forgotPasswordLink,  List<SsoButton> sso,  bool mfaPossible,  bool mfaEnforced,  String siteName,  String serverVersion,  String diagnosticId,  bool externalBrowserForSso,  bool magicLink,  Uri? siteUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool password,  bool ldap,  String ldapFieldLabel,  String loginIdLabel,  bool forgotPassword,  String? forgotPasswordLink,  List<SsoButton> sso,  bool mfaPossible,  bool mfaEnforced,  String siteName,  String serverVersion,  String diagnosticId,  bool externalBrowserForSso,  bool ssoCodeExchange,  bool magicLink,  Uri? siteUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LoginOptions() when $default != null:
-return $default(_that.password,_that.ldap,_that.ldapFieldLabel,_that.loginIdLabel,_that.forgotPassword,_that.forgotPasswordLink,_that.sso,_that.mfaPossible,_that.mfaEnforced,_that.siteName,_that.serverVersion,_that.diagnosticId,_that.externalBrowserForSso,_that.magicLink,_that.siteUrl);case _:
+return $default(_that.password,_that.ldap,_that.ldapFieldLabel,_that.loginIdLabel,_that.forgotPassword,_that.forgotPasswordLink,_that.sso,_that.mfaPossible,_that.mfaEnforced,_that.siteName,_that.serverVersion,_that.diagnosticId,_that.externalBrowserForSso,_that.ssoCodeExchange,_that.magicLink,_that.siteUrl);case _:
   return orElse();
 
 }
@@ -197,10 +200,10 @@ return $default(_that.password,_that.ldap,_that.ldapFieldLabel,_that.loginIdLabe
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool password,  bool ldap,  String ldapFieldLabel,  String loginIdLabel,  bool forgotPassword,  String? forgotPasswordLink,  List<SsoButton> sso,  bool mfaPossible,  bool mfaEnforced,  String siteName,  String serverVersion,  String diagnosticId,  bool externalBrowserForSso,  bool magicLink,  Uri? siteUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool password,  bool ldap,  String ldapFieldLabel,  String loginIdLabel,  bool forgotPassword,  String? forgotPasswordLink,  List<SsoButton> sso,  bool mfaPossible,  bool mfaEnforced,  String siteName,  String serverVersion,  String diagnosticId,  bool externalBrowserForSso,  bool ssoCodeExchange,  bool magicLink,  Uri? siteUrl)  $default,) {final _that = this;
 switch (_that) {
 case _LoginOptions():
-return $default(_that.password,_that.ldap,_that.ldapFieldLabel,_that.loginIdLabel,_that.forgotPassword,_that.forgotPasswordLink,_that.sso,_that.mfaPossible,_that.mfaEnforced,_that.siteName,_that.serverVersion,_that.diagnosticId,_that.externalBrowserForSso,_that.magicLink,_that.siteUrl);case _:
+return $default(_that.password,_that.ldap,_that.ldapFieldLabel,_that.loginIdLabel,_that.forgotPassword,_that.forgotPasswordLink,_that.sso,_that.mfaPossible,_that.mfaEnforced,_that.siteName,_that.serverVersion,_that.diagnosticId,_that.externalBrowserForSso,_that.ssoCodeExchange,_that.magicLink,_that.siteUrl);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -217,10 +220,10 @@ return $default(_that.password,_that.ldap,_that.ldapFieldLabel,_that.loginIdLabe
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool password,  bool ldap,  String ldapFieldLabel,  String loginIdLabel,  bool forgotPassword,  String? forgotPasswordLink,  List<SsoButton> sso,  bool mfaPossible,  bool mfaEnforced,  String siteName,  String serverVersion,  String diagnosticId,  bool externalBrowserForSso,  bool magicLink,  Uri? siteUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool password,  bool ldap,  String ldapFieldLabel,  String loginIdLabel,  bool forgotPassword,  String? forgotPasswordLink,  List<SsoButton> sso,  bool mfaPossible,  bool mfaEnforced,  String siteName,  String serverVersion,  String diagnosticId,  bool externalBrowserForSso,  bool ssoCodeExchange,  bool magicLink,  Uri? siteUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _LoginOptions() when $default != null:
-return $default(_that.password,_that.ldap,_that.ldapFieldLabel,_that.loginIdLabel,_that.forgotPassword,_that.forgotPasswordLink,_that.sso,_that.mfaPossible,_that.mfaEnforced,_that.siteName,_that.serverVersion,_that.diagnosticId,_that.externalBrowserForSso,_that.magicLink,_that.siteUrl);case _:
+return $default(_that.password,_that.ldap,_that.ldapFieldLabel,_that.loginIdLabel,_that.forgotPassword,_that.forgotPasswordLink,_that.sso,_that.mfaPossible,_that.mfaEnforced,_that.siteName,_that.serverVersion,_that.diagnosticId,_that.externalBrowserForSso,_that.ssoCodeExchange,_that.magicLink,_that.siteUrl);case _:
   return null;
 
 }
@@ -232,7 +235,7 @@ return $default(_that.password,_that.ldap,_that.ldapFieldLabel,_that.loginIdLabe
 
 
 class _LoginOptions extends LoginOptions {
-  const _LoginOptions({required this.password, required this.ldap, required this.ldapFieldLabel, required this.loginIdLabel, required this.forgotPassword, required this.forgotPasswordLink, required  List<SsoButton> sso, required this.mfaPossible, required this.mfaEnforced, required this.siteName, required this.serverVersion, required this.diagnosticId, required this.externalBrowserForSso, required this.magicLink, this.siteUrl}): _sso = sso,super._();
+  const _LoginOptions({required this.password, required this.ldap, required this.ldapFieldLabel, required this.loginIdLabel, required this.forgotPassword, required this.forgotPasswordLink, required  List<SsoButton> sso, required this.mfaPossible, required this.mfaEnforced, required this.siteName, required this.serverVersion, required this.diagnosticId, required this.externalBrowserForSso, this.ssoCodeExchange = false, required this.magicLink, this.siteUrl}): _sso = sso,super._();
   
 
 @override final  bool password;
@@ -257,6 +260,9 @@ class _LoginOptions extends LoginOptions {
 @override final  String serverVersion;
 @override final  String diagnosticId;
 @override final  bool externalBrowserForSso;
+/// The server answers a challenged mobile sign-in with a one-time code
+/// (feature flag `MobileSSOCodeExchange`), never a bare session token.
+@override@JsonKey() final  bool ssoCodeExchange;
 /// Guests may sign in with a link the server emails them.
 @override final  bool magicLink;
 /// The address the server knows itself by (`SiteURL`), which it names
@@ -273,18 +279,18 @@ _$LoginOptionsCopyWith<_LoginOptions> get copyWith => __$LoginOptionsCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LoginOptions&&(identical(other.password, password) || other.password == password)&&(identical(other.ldap, ldap) || other.ldap == ldap)&&(identical(other.ldapFieldLabel, ldapFieldLabel) || other.ldapFieldLabel == ldapFieldLabel)&&(identical(other.loginIdLabel, loginIdLabel) || other.loginIdLabel == loginIdLabel)&&(identical(other.forgotPassword, forgotPassword) || other.forgotPassword == forgotPassword)&&(identical(other.forgotPasswordLink, forgotPasswordLink) || other.forgotPasswordLink == forgotPasswordLink)&&const DeepCollectionEquality().equals(other.sso, _sso)&&(identical(other.mfaPossible, mfaPossible) || other.mfaPossible == mfaPossible)&&(identical(other.mfaEnforced, mfaEnforced) || other.mfaEnforced == mfaEnforced)&&(identical(other.siteName, siteName) || other.siteName == siteName)&&(identical(other.serverVersion, serverVersion) || other.serverVersion == serverVersion)&&(identical(other.diagnosticId, diagnosticId) || other.diagnosticId == diagnosticId)&&(identical(other.externalBrowserForSso, externalBrowserForSso) || other.externalBrowserForSso == externalBrowserForSso)&&(identical(other.magicLink, magicLink) || other.magicLink == magicLink)&&(identical(other.siteUrl, siteUrl) || other.siteUrl == siteUrl));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LoginOptions&&(identical(other.password, password) || other.password == password)&&(identical(other.ldap, ldap) || other.ldap == ldap)&&(identical(other.ldapFieldLabel, ldapFieldLabel) || other.ldapFieldLabel == ldapFieldLabel)&&(identical(other.loginIdLabel, loginIdLabel) || other.loginIdLabel == loginIdLabel)&&(identical(other.forgotPassword, forgotPassword) || other.forgotPassword == forgotPassword)&&(identical(other.forgotPasswordLink, forgotPasswordLink) || other.forgotPasswordLink == forgotPasswordLink)&&const DeepCollectionEquality().equals(other.sso, _sso)&&(identical(other.mfaPossible, mfaPossible) || other.mfaPossible == mfaPossible)&&(identical(other.mfaEnforced, mfaEnforced) || other.mfaEnforced == mfaEnforced)&&(identical(other.siteName, siteName) || other.siteName == siteName)&&(identical(other.serverVersion, serverVersion) || other.serverVersion == serverVersion)&&(identical(other.diagnosticId, diagnosticId) || other.diagnosticId == diagnosticId)&&(identical(other.externalBrowserForSso, externalBrowserForSso) || other.externalBrowserForSso == externalBrowserForSso)&&(identical(other.ssoCodeExchange, ssoCodeExchange) || other.ssoCodeExchange == ssoCodeExchange)&&(identical(other.magicLink, magicLink) || other.magicLink == magicLink)&&(identical(other.siteUrl, siteUrl) || other.siteUrl == siteUrl));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,password,ldap,ldapFieldLabel,loginIdLabel,forgotPassword,forgotPasswordLink,const DeepCollectionEquality().hash(_sso),mfaPossible,mfaEnforced,siteName,serverVersion,diagnosticId,externalBrowserForSso,magicLink,siteUrl);
+    return Object.hash(runtimeType,password,ldap,ldapFieldLabel,loginIdLabel,forgotPassword,forgotPasswordLink,const DeepCollectionEquality().hash(_sso),mfaPossible,mfaEnforced,siteName,serverVersion,diagnosticId,externalBrowserForSso,ssoCodeExchange,magicLink,siteUrl);
 }
 
 @override
 String toString() {
-    return 'LoginOptions(password: $password, ldap: $ldap, ldapFieldLabel: $ldapFieldLabel, loginIdLabel: $loginIdLabel, forgotPassword: $forgotPassword, forgotPasswordLink: $forgotPasswordLink, sso: $sso, mfaPossible: $mfaPossible, mfaEnforced: $mfaEnforced, siteName: $siteName, serverVersion: $serverVersion, diagnosticId: $diagnosticId, externalBrowserForSso: $externalBrowserForSso, magicLink: $magicLink, siteUrl: $siteUrl)';
+    return 'LoginOptions(password: $password, ldap: $ldap, ldapFieldLabel: $ldapFieldLabel, loginIdLabel: $loginIdLabel, forgotPassword: $forgotPassword, forgotPasswordLink: $forgotPasswordLink, sso: $sso, mfaPossible: $mfaPossible, mfaEnforced: $mfaEnforced, siteName: $siteName, serverVersion: $serverVersion, diagnosticId: $diagnosticId, externalBrowserForSso: $externalBrowserForSso, ssoCodeExchange: $ssoCodeExchange, magicLink: $magicLink, siteUrl: $siteUrl)';
 }
 
 
@@ -295,7 +301,7 @@ abstract mixin class _$LoginOptionsCopyWith<$Res> implements $LoginOptionsCopyWi
   factory _$LoginOptionsCopyWith(_LoginOptions value, $Res Function(_LoginOptions) _then) = __$LoginOptionsCopyWithImpl;
 @override @useResult
 $Res call({
- bool password, bool ldap, String ldapFieldLabel, String loginIdLabel, bool forgotPassword, String? forgotPasswordLink, List<SsoButton> sso, bool mfaPossible, bool mfaEnforced, String siteName, String serverVersion, String diagnosticId, bool externalBrowserForSso, bool magicLink, Uri? siteUrl
+ bool password, bool ldap, String ldapFieldLabel, String loginIdLabel, bool forgotPassword, String? forgotPasswordLink, List<SsoButton> sso, bool mfaPossible, bool mfaEnforced, String siteName, String serverVersion, String diagnosticId, bool externalBrowserForSso, bool ssoCodeExchange, bool magicLink, Uri? siteUrl
 });
 
 
@@ -312,7 +318,7 @@ class __$LoginOptionsCopyWithImpl<$Res>
 
 /// Create a copy of LoginOptions
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? password = null,Object? ldap = null,Object? ldapFieldLabel = null,Object? loginIdLabel = null,Object? forgotPassword = null,Object? forgotPasswordLink = freezed,Object? sso = null,Object? mfaPossible = null,Object? mfaEnforced = null,Object? siteName = null,Object? serverVersion = null,Object? diagnosticId = null,Object? externalBrowserForSso = null,Object? magicLink = null,Object? siteUrl = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? password = null,Object? ldap = null,Object? ldapFieldLabel = null,Object? loginIdLabel = null,Object? forgotPassword = null,Object? forgotPasswordLink = freezed,Object? sso = null,Object? mfaPossible = null,Object? mfaEnforced = null,Object? siteName = null,Object? serverVersion = null,Object? diagnosticId = null,Object? externalBrowserForSso = null,Object? ssoCodeExchange = null,Object? magicLink = null,Object? siteUrl = freezed,}) {
   return _then(_LoginOptions(
 password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
 as bool,ldap: null == ldap ? _self.ldap : ldap // ignore: cast_nullable_to_non_nullable
@@ -327,6 +333,7 @@ as bool,siteName: null == siteName ? _self.siteName : siteName // ignore: cast_n
 as String,serverVersion: null == serverVersion ? _self.serverVersion : serverVersion // ignore: cast_nullable_to_non_nullable
 as String,diagnosticId: null == diagnosticId ? _self.diagnosticId : diagnosticId // ignore: cast_nullable_to_non_nullable
 as String,externalBrowserForSso: null == externalBrowserForSso ? _self.externalBrowserForSso : externalBrowserForSso // ignore: cast_nullable_to_non_nullable
+as bool,ssoCodeExchange: null == ssoCodeExchange ? _self.ssoCodeExchange : ssoCodeExchange // ignore: cast_nullable_to_non_nullable
 as bool,magicLink: null == magicLink ? _self.magicLink : magicLink // ignore: cast_nullable_to_non_nullable
 as bool,siteUrl: freezed == siteUrl ? _self.siteUrl : siteUrl // ignore: cast_nullable_to_non_nullable
 as Uri?,
