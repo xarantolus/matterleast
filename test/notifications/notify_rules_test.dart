@@ -590,4 +590,30 @@ void main() {
       test(name, () => expect(got, want));
     }
   });
+
+  group('noticeRoute', () {
+    NoticeRoute route({
+      bool inView = false,
+      bool inFront = true,
+      bool desktop = false,
+    }) => noticeRoute(inView: inView, inFront: inFront, desktop: desktop);
+
+    test('a conversation on screen gives nothing', () {
+      expect(route(inView: true), NoticeRoute.none);
+      expect(route(inView: true, desktop: true), NoticeRoute.none);
+    });
+
+    test('with the app in front it is a banner, on either platform', () {
+      expect(route(), NoticeRoute.banner);
+      expect(route(desktop: true), NoticeRoute.banner);
+    });
+
+    test('a desktop window not in front toasts', () {
+      expect(route(inFront: false, desktop: true), NoticeRoute.toast);
+    });
+
+    test('a phone not in front leaves it to the background engines', () {
+      expect(route(inFront: false), NoticeRoute.none);
+    });
+  });
 }

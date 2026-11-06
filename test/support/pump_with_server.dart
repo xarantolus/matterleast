@@ -17,6 +17,7 @@ import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/screens/root/open_panes.dart';
 
 import 'fake_server.dart';
 import 'memory_database.dart';
@@ -63,7 +64,8 @@ class ServerHarness {
 /// on that session, and pumps [home] inside providers that serve it (plus
 /// [overrides], which know the server's url), with image caches and file
 /// [downloads] left pending unless given; [appDatabase] replaces the empty
-/// app database. [size] and [platform] are reset afterwards.
+/// app database. [size] and [platform] are reset afterwards. With
+/// [trackRoutes] the navigator reports its conversations, as in the app.
 Future<ServerHarness> pumpWithServer(
   WidgetTester tester, {
   required Widget Function(String url) home,
@@ -75,6 +77,7 @@ Future<ServerHarness> pumpWithServer(
   Size? size,
   TargetPlatform? platform,
   bool settle = true,
+  bool trackRoutes = false,
 }) async {
   HttpOverrides.global = null;
   if (size != null) {
@@ -110,7 +113,15 @@ Future<ServerHarness> pumpWithServer(
         ),
         ...?overrides?.call(url),
       ],
-      child: MaterialApp(theme: MatterleastApp.lightTheme, home: home(url)),
+      child: Consumer(
+        builder: (context, ref, _) => MaterialApp(
+          theme: MatterleastApp.lightTheme,
+          navigatorObservers: [
+            if (trackRoutes) ref.watch(conversationRoutesProvider),
+          ],
+          home: home(url),
+        ),
+      ),
     ),
   );
   if (settle) await harness.settle(tester);

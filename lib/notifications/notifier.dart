@@ -73,6 +73,16 @@ class ConversationNotice {
 
   /// Whether a desktop notification plays the system's message sound.
   final bool sound;
+
+  /// Where a tap on it leads: its newest message.
+  NoticeTarget get target => NoticeTarget(
+    serverUrl: serverUrl,
+    channelId: key.channelId,
+    rootId: key.rootId,
+    postId: newestPostId,
+    teamId: teamId ?? '',
+    newestAt: newestAt,
+  );
 }
 
 /// Where a notification leads, carried in its payload.
@@ -312,14 +322,7 @@ class Notifier {
   }
 
   Future<void> show(ConversationNotice notice) async {
-    final target = NoticeTarget(
-      serverUrl: notice.serverUrl,
-      channelId: notice.key.channelId,
-      rootId: notice.key.rootId,
-      postId: notice.newestPostId,
-      teamId: notice.teamId ?? '',
-      newestAt: notice.newestAt,
-    );
+    final target = notice.target;
     final tag = tagOf(notice.serverUrl, notice.key);
     if (isDesktop) {
       final newest = notice.messages.last;

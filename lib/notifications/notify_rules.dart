@@ -318,3 +318,30 @@ bool conversationInView(
     null => false,
   };
 }
+
+/// Where a notice the UI isolate's check finds goes.
+enum NoticeRoute {
+  /// Nowhere: the user sees the conversation, or the UI isolate isn't the
+  /// one to tell them (a phone's background engines are).
+  none,
+
+  /// A banner over the window, which the user looks at.
+  banner,
+
+  /// The system's own notification.
+  toast,
+}
+
+/// Pure: what to do with a notice for a conversation that the user looks at
+/// ([inView]) or not, with the app in front or not. A window that is not in
+/// front still toasts on a desktop, where the process runs on; a phone in
+/// that state leaves it to the background engines.
+NoticeRoute noticeRoute({
+  required bool inView,
+  required bool inFront,
+  required bool desktop,
+}) {
+  if (inView) return NoticeRoute.none;
+  if (inFront) return NoticeRoute.banner;
+  return desktop ? NoticeRoute.toast : NoticeRoute.none;
+}

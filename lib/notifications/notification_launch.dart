@@ -90,12 +90,15 @@ Future<void> followSignedIn(List<ServerEntry> servers) async {
 
 /// Opens the conversation a notification is about, at its newest message.
 /// A channel not stored yet, such as a new direct message, is looked up on
-/// the server by that message.
+/// the server by that message. A notification tap leads from outside the
+/// app, so Back leads to the list; with [overCurrent], as from a banner, it
+/// opens over what the user has open, so Back returns there.
 Future<void> openNotice(
   NavigatorState navigator,
   WidgetRef ref,
-  NoticeTarget target,
-) async {
+  NoticeTarget target, {
+  bool overCurrent = false,
+}) async {
   final servers = await readOnce(ref, serversProvider.future);
   if (!servers.any((s) => s.signedIn && s.url == target.serverUrl)) return;
   final items = await readOnce(
@@ -110,7 +113,7 @@ Future<void> openNotice(
       navigator,
       target.serverUrl,
       target.postId,
-      fromOutside: true,
+      fromOutside: !overCurrent,
     );
     return;
   }
@@ -122,7 +125,8 @@ Future<void> openNotice(
     teamId: channel.teamId,
     rootId: target.rootId.isEmpty ? null : target.rootId,
     highlightPostId: target.postId,
-    fromOutside: true,
+    fromOutside: !overCurrent,
+    followed: overCurrent,
   );
 }
 

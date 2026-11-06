@@ -14,6 +14,7 @@ import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/ui/keyboard_focus_rings.dart';
 import 'package:matterleast/ui/message_display.dart';
+import 'package:matterleast/ui/notice_banner_layer.dart';
 import 'package:matterleast/ui/window_strip.dart';
 
 class MatterleastApp extends ConsumerWidget {
@@ -60,7 +61,7 @@ class MatterleastApp extends ConsumerWidget {
         ),
       ),
       navigatorObservers: [ref.watch(conversationRoutesProvider)],
-      home: const LaunchGate(),
+      home: const NoticeBannerOverlay(child: LaunchGate()),
     );
   }
 }
