@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme_providers.dart';
@@ -85,7 +84,6 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
   Widget build(BuildContext context) {
     final store = ref.read(settingsStoreProvider);
     final clock = _Clock.of(ref.watch(use24HourClockProvider).value);
-    final images = ref.watch(imagesOnMobileDataProvider).value ?? true;
     final textSize =
         ref.watch(messageTextSizeProvider).value ?? MessageTextSize.normal;
     final wrapCode = ref.watch(wrapCodeProvider).value ?? false;
@@ -141,12 +139,6 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
             ),
             value: wrapCode,
             onChanged: (on) => store.write(Settings.wrapCode, on),
-          ),
-          SwitchListTile(
-            title: const Text('Load images on mobile data'),
-            subtitle: const Text('Otherwise tap an image to load it'),
-            value: images,
-            onChanged: (on) => store.write(Settings.imagesOnMobileData, on),
           ),
           if (server != null) ..._serverTiles(context, server),
         ],

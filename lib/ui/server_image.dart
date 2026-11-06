@@ -21,6 +21,7 @@ class ServerImage extends ConsumerStatefulWidget {
     this.decodeWidth,
     this.semanticLabel,
     this.placeholder,
+    this.loadNow = false,
     super.key,
   });
 
@@ -41,6 +42,9 @@ class ServerImage extends ConsumerStatefulWidget {
   /// Shown while the bytes load, instead of a tonal box.
   final Widget? placeholder;
 
+  /// Loads at once, as after the reader asked for this very picture.
+  final bool loadNow;
+
   @override
   ConsumerState<ServerImage> createState() => _ServerImageState();
 }
@@ -52,11 +56,11 @@ class _ServerImageState extends ConsumerState<ServerImage> {
   Widget build(BuildContext context) {
     final caches = ref.watch(serverImageCachesProvider(widget.serverUrl)).value;
     final proxy = ref.watch(imageProxyProvider(widget.serverUrl)).value;
-    final automatic = ref.watch(autoLoadImagesProvider);
+    final automatic = ref.watch(autoLoadProvider(DataKind.image));
     if (caches == null || proxy == null || automatic == null) {
       return _Box(width: widget.width, height: widget.height);
     }
-    if (!automatic && !_asked) {
+    if (!automatic && !_asked && !widget.loadNow) {
       return _Box(
         width: widget.width,
         height: widget.height,

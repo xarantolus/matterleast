@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/settings/account_providers.dart';
 import 'package:matterleast/screens/settings/advanced_settings_page.dart';
 import 'package:matterleast/screens/settings/custom_emoji_page.dart';
 import 'package:matterleast/screens/settings/display_settings_page.dart';
+import 'package:matterleast/screens/settings/mobile_data_settings_page.dart';
 import 'package:matterleast/screens/settings/notification_settings_page.dart';
 import 'package:matterleast/screens/settings/sessions_page.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
@@ -74,6 +76,13 @@ class SettingsPage extends ConsumerWidget {
               title: const Text('Custom emoji'),
               subtitle: const Text("Browse, add and delete the server's emoji"),
               onTap: () => push(CustomEmojiPage(server: server)),
+            ),
+          if (!isDesktop)
+            ListTile(
+              leading: const Icon(Icons.signal_cellular_alt),
+              title: const Text('Mobile data'),
+              subtitle: const Text('Images, GIFs and link pictures'),
+              onTap: () => push(const MobileDataSettingsPage()),
             ),
           ListTile(
             leading: const Icon(Icons.storage_outlined),

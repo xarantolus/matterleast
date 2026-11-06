@@ -1,5 +1,8 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/data/images/image_rules.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/markdown/links.dart';
 import 'package:matterleast/ui/clickable.dart';
@@ -9,16 +12,16 @@ import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The server's OpenGraph preview of a link in the message.
-class LinkPreviewCard extends StatefulWidget {
+class LinkPreviewCard extends ConsumerStatefulWidget {
   const LinkPreviewCard({required this.preview, super.key});
 
   final LinkPreview preview;
 
   @override
-  State<LinkPreviewCard> createState() => _LinkPreviewCardState();
+  ConsumerState<LinkPreviewCard> createState() => _LinkPreviewCardState();
 }
 
-class _LinkPreviewCardState extends State<LinkPreviewCard> {
+class _LinkPreviewCardState extends ConsumerState<LinkPreviewCard> {
   var _hovered = false;
 
   @override
@@ -27,7 +30,8 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
     final env = PostEnvironment.maybeOf(context);
-    final imageUrl = preview.imageUrl;
+    final pictures = ref.watch(autoLoadProvider(DataKind.linkPicture)) ?? true;
+    final imageUrl = pictures ? preview.imageUrl : null;
     final size = preview.imageSize;
     return Padding(
       padding: const EdgeInsets.only(top: Spacing.xs),
