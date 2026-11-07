@@ -2,21 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/app/agent_providers.dart';
-import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/agents/agents_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/thread/thread_screen.dart';
 
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
-
-class _Rail extends RailSelection {
-  @override
-  RailTarget? build() => null;
-
-  @override
-  void select(RailTarget? target) => state = target;
-}
+import '../support/rail.dart';
 
 const _route = '/plugins/mattermost-ai';
 const _botId = 'bt000000000000000000000b01';
@@ -82,7 +74,7 @@ void main() {
       handle: handle,
       overrides: (url) => [
         agentsAvailableProvider(url).overrideWithValue(true),
-        railSelectionProvider.overrideWith(_Rail.new),
+        railSelectionProvider.overrideWith(MemoryRailSelection.new),
       ],
       home: (url) => AgentsScreen(url: url),
     );
@@ -119,7 +111,7 @@ void main() {
     expect(find.text('Background request'), findsNothing);
 
     await tester.tap(find.text('Summarize Channel'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     final thread = tester.widget<ThreadScreen>(find.byType(ThreadScreen));
     expect(thread.rootId, 'sm000000000000000000000s01');
     expect(thread.channelId, _directId);

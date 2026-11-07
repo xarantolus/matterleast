@@ -122,7 +122,7 @@ void main() {
 
   Future<void> key(WidgetTester tester, LogicalKeyboardKey k) async {
     await tester.sendKeyEvent(k);
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
   }
 
   testWidgets('Up in an empty composer edits the newest own message with '
@@ -155,13 +155,13 @@ void main() {
     container
         .read(draft.notifier)
         .changed(const TextEditingValue(text: 'my draft'));
-    await h.settle(tester, rounds: 3);
+    await h.settle(tester);
     final post = lastOwnPost(
       container.read(conversationProvider(h.url, channelId)).rows,
       meId,
     )!;
     container.read(draft.notifier).startEditing(post);
-    await h.settle(tester, rounds: 3);
+    await h.settle(tester);
     expect(field(tester).controller.text, 'my first words');
 
     await key(tester, LogicalKeyboardKey.escape);

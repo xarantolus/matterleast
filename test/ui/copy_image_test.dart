@@ -88,7 +88,7 @@ void main() {
   /// The file is read on the real clock; waits for it under load.
   Future<void> copiedBy(WidgetTester tester) async {
     for (var i = 0; i < 100 && copied.isEmpty; i++) {
-      await h.settle(tester, rounds: 1);
+      await h.settle(tester);
     }
   }
 

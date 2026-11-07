@@ -72,7 +72,7 @@ void main() {
     expect(find.text('Archive Boats?'), findsOneWidget);
     expect(h.server.seen.any((r) => r.method == 'DELETE'), isFalse);
     await tester.tap(find.text('Archive').last);
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(
       h.server.seen.where((r) => r.method == 'DELETE').single.path,
       endsWith('/channels/$channelId'),
@@ -84,7 +84,7 @@ void main() {
     await start(tester, permissions: const ['delete_public_channel']);
     await openArchiveDialog(tester);
     await tester.tap(find.text('Cancel'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     expect(h.server.seen.any((r) => r.method == 'DELETE'), isFalse);
     await h.close(tester);
   });
@@ -97,7 +97,7 @@ void main() {
     );
     await openArchiveDialog(tester);
     await tester.tap(find.text('Archive').last);
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(find.textContaining("Couldn't archive Boats"), findsOneWidget);
     await h.close(tester);
   });
@@ -115,7 +115,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     await tester.tap(find.text('Convert').last);
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     final put = h.server.seen.singleWhere((r) => r.method == 'PUT');
     expect(put.path, endsWith('/privacy'));
     expect(put.body['privacy'], 'P');

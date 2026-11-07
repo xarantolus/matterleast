@@ -14,7 +14,6 @@ import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
-import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/composer_desktop.dart';
@@ -25,16 +24,8 @@ import 'package:matterleast/screens/root/rail_selection.dart';
 
 import '../support/fake_server.dart';
 import '../support/memory_database.dart';
+import '../support/rail.dart';
 import '../support/test_session.dart';
-
-/// Remembers what was picked without touching settings.
-class _Rail extends RailSelection {
-  @override
-  RailTarget? build() => null;
-
-  @override
-  void select(RailTarget? target) => state = target;
-}
 
 ComposerKey? press(
   LogicalKeyboardKey key, {
@@ -238,7 +229,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            railSelectionProvider.overrideWith(_Rail.new),
+            railSelectionProvider.overrideWith(MemoryRailSelection.new),
             appDatabaseProvider.overrideWithValue(db),
             serverSessionProvider(server.url.toString())
                 .overrideWith((ref) async => session),

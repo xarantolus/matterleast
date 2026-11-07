@@ -1,23 +1,17 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:drift/drift.dart' show DatabaseConnection;
-import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
-import 'package:matterleast/app/app.dart';
-import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
-import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart' show PageKind;
@@ -25,7 +19,6 @@ import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/rail.dart';
-import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/user_profile.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
@@ -57,16 +50,11 @@ import 'package:matterleast/ui/conversation_route.dart';
 import 'package:matterleast/ui/slide_route.dart';
 
 import '../support/fake_server.dart';
+import '../support/memory_database.dart';
+import '../support/pump_with_server.dart';
+import '../support/rail.dart';
+import '../support/servers.dart';
 import '../support/test_session.dart';
-
-/// Remembers what was picked without touching settings.
-class _Rail extends RailSelection {
-  @override
-  RailTarget? build() => null;
-
-  @override
-  void select(RailTarget? target) => state = target;
-}
 
 void main() {
   late FakeServer server;
@@ -74,6 +62,7 @@ void main() {
   late ProviderContainer container;
   late WidgetRef widgetRef;
   late AppDatabase db;
+  late ServerHarness h;
 
   Future<void> start(
     WidgetTester tester, {
@@ -81,55 +70,37 @@ void main() {
     bool panes = false,
     bool keys = false,
   }) async {
-    HttpOverrides.global = null;
-    (server, session) = (await tester.runAsync(() async {
-      final server = await FakeServer.start();
-      server.handle = (_) => ok(const <String, Object?>{});
-      return (server, await testSession(server));
-    }))!;
-    db = AppDatabase(DatabaseConnection(NativeDatabase.memory()));
+    db = memoryAppDatabase();
     addTearDown(db.close);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(db),
-          serverSessionProvider(server.url.toString())
-              .overrideWith((ref) async => session),
-          railSelectionProvider.overrideWith(_Rail.new),
-          ...?more?.call(server.url.toString()),
-          serverImageCachesProvider(server.url.toString())
-              .overrideWith((ref) => Completer<ServerImageCaches>().future),
-          userProfileProvider(
-            server.url.toString(),
-            _pat.id,
-          ).overrideWith((ref) => Stream.value(_pat)),
-          profileRefreshProvider(
-            server.url.toString(),
-            _pat.id,
-          ).overrideWith((ref) async {}),
-        ],
-        child: Consumer(
-          builder: (context, ref, _) => MaterialApp(
-            theme: MatterleastApp.lightTheme,
-            navigatorObservers: [ref.watch(conversationRoutesProvider)],
-            builder: keys ? (_, child) => AppShortcuts(child: child!) : null,
-            home: Consumer(
-              builder: (context, ref, _) {
-                widgetRef = ref;
-                container = ProviderScope.containerOf(context);
-                const list = Scaffold(
-                  body: ReopenSwipe(child: SizedBox.expand()),
-                );
-                final layout = panes ? const PaneLayout(list: list) : list;
-                return keys
-                    ? RootShortcuts(onSwitcher: () {}, child: layout)
-                    : layout;
-              },
-            ),
-          ),
-        ),
+    h = await pumpWithServer(
+      tester,
+      settle: false,
+      trackRoutes: true,
+      appDatabase: db,
+      builder: keys ? (_, child) => AppShortcuts(child: child!) : null,
+      overrides: (url) => [
+        railSelectionProvider.overrideWith(MemoryRailSelection.new),
+        ...?more?.call(url),
+        userProfileProvider(
+          url,
+          _pat.id,
+        ).overrideWith((ref) => Stream.value(_pat)),
+        profileRefreshProvider(url, _pat.id).overrideWith((ref) async {}),
+      ],
+      home: (_) => Consumer(
+        builder: (context, ref, _) {
+          widgetRef = ref;
+          container = ProviderScope.containerOf(context);
+          const list = Scaffold(body: ReopenSwipe(child: SizedBox.expand()));
+          final layout = panes ? const PaneLayout(list: list) : list;
+          return keys
+              ? RootShortcuts(onSwitcher: () {}, child: layout)
+              : layout;
+        },
       ),
     );
+    server = h.server;
+    session = h.session;
     container.read(placeReconcilerProvider);
     await tester.runAsync(container.read(conversationMemoryProvider).start);
   }
@@ -141,53 +112,23 @@ void main() {
     Stream<List<SwitchItem>>? listed,
   }) =>
       (url) => [
-        serversProvider.overrideWith((ref) {
-          ref.keepAlive();
-          return Stream.value([
-            ServerEntry(
-              url: url,
-              displayName: 'Test',
-              siteName: null,
-              serverVersion: null,
-              diagnosticId: null,
-              lastActiveAt: DateTime(2026),
-              ssoScheme: null,
+        serversOverride([testServerEntry(url)]),
+        if (listed != null)
+          switchItemsProvider(url).overrideWith((ref) {
+            ref.keepAlive();
+            return listed;
+          })
+        else
+          switchItemsOverride(url, [
+            SwitchItem(
+              serverUrl: url,
+              kind: kind,
+              id: channelId,
+              title: 'Boats',
+              teamId: teamId,
             ),
-          ]);
-        }),
-        switchItemsProvider(url).overrideWith((ref) {
-          ref.keepAlive();
-          return listed ??
-              Stream.value([
-                SwitchItem(
-                  serverUrl: url,
-                  kind: kind,
-                  id: channelId,
-                  title: 'Boats',
-                  teamId: teamId,
-                ),
-              ]);
-        }),
+          ]),
       ];
-
-  Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 20; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-  }
-
-  Future<void> finish(WidgetTester tester) async {
-    await tester.pumpWidget(const SizedBox());
-    // Closing the database in the same frame as the unmount hangs.
-    await settle(tester);
-    await tester.runAsync(() async {
-      await closeTestSession(session);
-      await server.close();
-    });
-  }
 
   NavigatorState navigator(WidgetTester tester) =>
       tester.state<NavigatorState>(find.byType(Navigator).first);
@@ -209,12 +150,12 @@ void main() {
         highlightPostId: highlight,
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
   }
 
   Future<void> back(WidgetTester tester) async {
     navigator(tester).pop();
-    await settle(tester);
+    await h.settle(tester);
   }
 
   /// A page such as a channel's info or its pinned messages.
@@ -226,7 +167,7 @@ void main() {
         ),
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
   }
 
   Finder conversations() => find.byWidgetPredicate(
@@ -245,6 +186,32 @@ void main() {
       }),
     ]);
   });
+
+  /// A message in [channel] that the user sees once it is open.
+  Future<void> seedMessage(WidgetTester tester, String channel, String text) =>
+      tester.runAsync(
+        () => session.store.applyChannelPage(
+          channelId: channel,
+          page: api.PostList.fromJson({
+            'order': ['seed-$channel'],
+            'posts': {
+              'seed-$channel': {
+                'id': 'seed-$channel',
+                'channel_id': channel,
+                'user_id': 'someone',
+                'create_at': DateTime.utc(
+                  2026,
+                  10,
+                  25,
+                  9,
+                ).millisecondsSinceEpoch,
+                'message': text,
+              },
+            },
+          }),
+          kind: PageKind.page,
+        ),
+      );
 
   /// Whether the composer of the [screen] on top has the keyboard.
   bool typingIn(WidgetTester tester, Type screen) {
@@ -268,7 +235,7 @@ void main() {
     await back(tester);
     expect(conversations(), findsNothing);
     expect(find.byType(ReopenSwipe), findsOneWidget);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('a direct message opened at a message names the other person', (
@@ -310,7 +277,7 @@ void main() {
         highlightPostId: 'old1',
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(
       find.descendant(
         of: find.byType(ChannelScreen),
@@ -319,50 +286,49 @@ void main() {
       findsWidgets,
     );
     await back(tester);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('another conversation takes the place of the open one', (
     tester,
   ) async {
     await start(tester);
+    await seedMessage(tester, channelId, 'boats message');
+    await seedMessage(tester, _directId, 'pat message');
     await open(tester);
+    expect(find.text('boats message'), findsOneWidget);
     await open(tester, rootId: 'old1');
     await page(tester, 'Profile');
     await open(tester, channel: _directId);
     expect(conversations(), findsOneWidget);
-    expect(
-      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).channelId,
-      _directId,
-    );
+    expect(find.text('pat message'), findsOneWidget);
+    expect(find.text('boats message'), findsNothing);
     await back(tester);
     expect(conversations(), findsNothing);
-    await finish(tester);
+    await h.close(tester);
   });
 
   group('Esc on a wide window', () {
     final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
 
+    /// F6 moves the focus between the parts of the window.
     Future<void> focusIn(WidgetTester tester, Type screen) async {
-      tester
-          .widget<Focus>(
-            find
-                .descendant(
-                  of: find.byType(screen),
-                  matching: find.byWidgetPredicate(
-                    (w) => w is Focus && w.focusNode?.debugLabel == 'Region',
-                  ),
-                )
-                .first,
-          )
-          .focusNode!
-          .requestFocus();
-      await tester.pump();
+      final focused = find.descendant(
+        of: find.byType(screen),
+        matching: find.byWidgetPredicate(
+          (w) => w is Focus && (w.focusNode?.hasPrimaryFocus ?? false),
+        ),
+      );
+      for (var i = 0; i < 6 && focused.evaluate().isEmpty; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.f6);
+        await tester.pump();
+      }
+      expect(focused, findsOneWidget, reason: 'F6 reaches the $screen');
     }
 
     Future<void> esc(WidgetTester tester) async {
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await settle(tester);
+      await h.settle(tester);
     }
 
     testWidgets('closes the thread, never the channel, from the message list', (
@@ -382,7 +348,7 @@ void main() {
       await focusIn(tester, ChannelScreen);
       await esc(tester);
       expect(find.byType(ChannelScreen), findsOneWidget);
-      await finish(tester);
+      await h.close(tester);
       await tester.pump(Duration.zero);
     }, variant: desktop);
 
@@ -407,8 +373,8 @@ void main() {
       await esc(tester);
       expect(find.byType(ThreadScreen), findsNothing);
       closeConversations(navigator(tester));
-      await settle(tester);
-      await finish(tester);
+      await h.settle(tester);
+      await h.close(tester);
       await tester.pump(Duration.zero);
     }, variant: desktop);
   });
@@ -420,7 +386,7 @@ void main() {
     await open(tester, rootId: 'old1');
     expect(find.byType(ThreadScreen), findsOneWidget);
     await tester.fling(find.byType(ThreadScreen), const Offset(300, 0), 1000);
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ThreadScreen), findsNothing);
     expect(find.byType(ChannelScreen), findsOneWidget);
     await open(tester, rootId: 'old1');
@@ -430,7 +396,7 @@ void main() {
     expect(find.byType(ThreadScreen), findsNothing);
     await back(tester);
     expect(conversations(), findsNothing);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('a channel slides in, its team is picked and it is remembered', (
@@ -445,7 +411,7 @@ void main() {
       title: 'Boats',
       teamId: teamId,
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ChannelScreen), findsOneWidget);
     expect(
       ModalRoute.of(tester.element(find.byType(ChannelScreen))),
@@ -460,9 +426,9 @@ void main() {
     );
     expect(last, channelId);
     navigator(tester).pop();
-    await settle(tester);
+    await h.settle(tester);
     await opening;
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('a thread slides in the same way and leaves the channel be', (
@@ -477,7 +443,7 @@ void main() {
       teamId: teamId,
       rootId: 'old1',
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ThreadScreen), findsOneWidget);
     expect(
       ModalRoute.of(tester.element(find.byType(ThreadScreen))),
@@ -488,15 +454,16 @@ void main() {
     );
     expect(last, isNull);
     navigator(tester).pop();
-    await settle(tester);
+    await h.settle(tester);
     await opening;
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets("Message in someone's profile opens the direct message", (
     tester,
   ) async {
     await start(tester);
+    await seedMessage(tester, _directId, 'pat message');
     server.handle = (request) => request.path == '/api/v4/channels/direct'
         ? ok({
             'id': _directId,
@@ -512,18 +479,15 @@ void main() {
         userId: _pat.id,
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     await tester.tap(find.text('Message'));
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(UserProfileSheet), findsNothing);
     expect(find.byType(ChannelScreen), findsOneWidget);
-    expect(
-      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).channelId,
-      _directId,
-    );
+    expect(find.text('pat message'), findsOneWidget);
     navigator(tester).pop();
-    await settle(tester);
-    await finish(tester);
+    await h.settle(tester);
+    await h.close(tester);
   });
 
   testWidgets('a left swipe brings back the conversation just closed', (
@@ -540,18 +504,18 @@ void main() {
         highlightPostId: 'old1',
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     navigator(tester).pop();
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ChannelScreen), findsNothing);
     await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
-    await settle(tester);
+    await h.settle(tester);
     final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
     expect(screen.channelId, channelId);
     expect(screen.highlightPostId, isNull);
     navigator(tester).pop();
-    await settle(tester);
-    await finish(tester);
+    await h.settle(tester);
+    await h.close(tester);
   });
 
   testWidgets('a left swipe brings the conversation back where it was read, '
@@ -588,10 +552,10 @@ void main() {
         teamId: teamId,
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     for (var i = 0; i < 4; i++) {
       await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
-      await settle(tester);
+      await h.settle(tester);
     }
     final top = [
       for (var i = 0; i < 120; i++)
@@ -602,7 +566,7 @@ void main() {
     final before = tester.getTopLeft(find.text(top)).dy;
 
     navigator(tester).pop();
-    await settle(tester);
+    await h.settle(tester);
     await tester.runAsync(
       () => session.store.applyChannelPage(
         channelId: channelId,
@@ -614,13 +578,13 @@ void main() {
       ),
     );
     await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
-    await settle(tester);
+    await h.settle(tester);
 
     expect(find.text(top), findsOneWidget);
     expect(tester.getTopLeft(find.text(top)).dy, closeTo(before, 0.5));
     navigator(tester).pop();
-    await settle(tester);
-    await finish(tester);
+    await h.settle(tester);
+    await h.close(tester);
   });
 
   testWidgets('an agent citation link opens its post highlighted', (
@@ -654,7 +618,7 @@ void main() {
     // The rail keeps the server list alive in the app.
     final servers = container.listen(serversProvider, (_, _) {});
     addTearDown(servers.close);
-    await settle(tester);
+    await h.settle(tester);
     unawaited(
       openLinkFromMessage(
         navigator(tester),
@@ -664,14 +628,14 @@ void main() {
         ),
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(
       tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
       postId,
     );
     navigator(tester).pop();
-    await settle(tester);
-    await finish(tester);
+    await h.settle(tester);
+    await h.close(tester);
   });
 
   testWidgets('a tapped notification opens its conversation', (tester) async {
@@ -686,15 +650,15 @@ void main() {
         newestAt: DateTime(2026),
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(
       tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
       'old1',
     );
     navigator(tester).pop();
-    await settle(tester);
+    await h.settle(tester);
     await opening;
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets("a left swipe doesn't bring back a channel the user left", (
@@ -704,9 +668,9 @@ void main() {
     await open(tester);
     await back(tester);
     await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
-    await settle(tester);
+    await h.settle(tester);
     expect(conversations(), findsNothing);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('leaving a channel closes it and its thread in the panes', (
@@ -725,7 +689,7 @@ void main() {
       channelId: channelId,
     );
     expect(container.read(openPanesProvider).isEmpty, isTrue);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('leaving a channel closes its routes and its threads', (
@@ -739,44 +703,14 @@ void main() {
       url: server.url.toString(),
       channelId: channelId,
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(conversations(), findsNothing);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('a restored channel opens like any other: team picked, '
       'remembered, and a left swipe brings it back', (tester) async {
-    await start(
-      tester,
-      more: (url) => [
-        serversProvider.overrideWith((ref) {
-          ref.keepAlive();
-          return Stream.value([
-            ServerEntry(
-              url: url,
-              displayName: 'Test',
-              siteName: null,
-              serverVersion: null,
-              diagnosticId: null,
-              lastActiveAt: DateTime(2026),
-              ssoScheme: null,
-            ),
-          ]);
-        }),
-        switchItemsProvider(url).overrideWith((ref) {
-          ref.keepAlive();
-          return Stream.value([
-            SwitchItem(
-              serverUrl: url,
-              kind: SwitchKind.channel,
-              id: channelId,
-              title: 'Boats',
-              teamId: teamId,
-            ),
-          ]);
-        }),
-      ],
-    );
+    await start(tester, more: known());
     final url = server.url.toString();
     await tester.runAsync(() async {
       await db.writeSetting(
@@ -798,7 +732,7 @@ void main() {
       navigator(tester),
       launchedByIntent: Future.value(false),
     );
-    await settle(tester);
+    await h.settle(tester);
     await restoring;
     expect(find.byType(ChannelScreen), findsOneWidget);
     expect(
@@ -810,14 +744,14 @@ void main() {
     );
     expect(last, channelId);
     navigator(tester).pop();
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ChannelScreen), findsNothing);
     await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ChannelScreen), findsOneWidget);
     navigator(tester).pop();
-    await settle(tester);
-    await finish(tester);
+    await h.settle(tester);
+    await h.close(tester);
   });
 
   group('each team keeps its own conversation', () {
@@ -868,7 +802,7 @@ void main() {
       unawaited(
         showPlace(navigator(tester), RailTarget(url: url, teamId: team)),
       );
-      await settle(tester);
+      await h.settle(tester);
     }
 
     String? shownChannel(WidgetTester tester) => tester
@@ -888,12 +822,12 @@ void main() {
           teamId: otherTeam,
         ),
       );
-      await settle(tester);
+      await h.settle(tester);
     }
 
     Future<void> step(WidgetTester tester, {required bool forward}) async {
       unawaited(stepHistory(container, forward: forward));
-      await settle(tester);
+      await h.settle(tester);
     }
 
     testWidgets('Back and Forward walk what was opened, across teams', (
@@ -913,7 +847,7 @@ void main() {
       await open(tester, channel: _directId);
       await step(tester, forward: true);
       expect(shownChannel(tester), _directId);
-      await finish(tester);
+      await h.close(tester);
     });
 
     testWidgets('Back from a link followed into another team returns to '
@@ -930,7 +864,7 @@ void main() {
           followed: true,
         ),
       );
-      await settle(tester);
+      await h.settle(tester);
       String top() => tester
           .widgetList<ChannelScreen>(find.byType(ChannelScreen))
           .last
@@ -942,7 +876,7 @@ void main() {
       expect(container.read(railSelectionProvider)?.teamId, teamId);
       await back(tester);
       expect(conversations(), findsNothing);
-      await finish(tester);
+      await h.close(tester);
     });
 
     testWidgets('Back skips a channel that is gone', (tester) async {
@@ -950,17 +884,17 @@ void main() {
       await open(tester);
       await openShips(tester, url);
       listed.add(channels(url, boats: false));
-      await settle(tester);
+      await h.settle(tester);
       await step(tester, forward: false);
       expect(shownChannel(tester), isNull, reason: 'Home, not the lost one');
       await step(tester, forward: true);
       expect(shownChannel(tester), shipsId);
-      await finish(tester);
+      await h.close(tester);
     });
 
     Future<void> swipeBack(WidgetTester tester) async {
       await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
-      await settle(tester);
+      await h.settle(tester);
     }
 
     testWidgets('switching team closes the open conversation; switching back '
@@ -974,7 +908,7 @@ void main() {
       await swipeBack(tester);
       expect(shownChannel(tester), channelId);
       await show(tester, url, otherTeam);
-      await finish(tester);
+      await h.close(tester);
     });
 
     testWidgets("a team shows what was open in it, never another team's", (
@@ -992,7 +926,7 @@ void main() {
           teamId: otherTeam,
         ),
       );
-      await settle(tester);
+      await h.settle(tester);
       expect(shownChannel(tester), shipsId);
       await show(tester, url, teamId);
       await swipeBack(tester);
@@ -1000,7 +934,7 @@ void main() {
       await show(tester, url, otherTeam);
       await swipeBack(tester);
       expect(shownChannel(tester), shipsId);
-      await finish(tester);
+      await h.close(tester);
     });
 
     testWidgets('a channel left since shows the list instead', (tester) async {
@@ -1008,10 +942,10 @@ void main() {
       await open(tester);
       await show(tester, url, otherTeam);
       listed.add(channels(url, boats: false));
-      await settle(tester);
+      await h.settle(tester);
       await show(tester, url, teamId);
       expect(conversations(), findsNothing);
-      await finish(tester);
+      await h.close(tester);
     });
 
     testWidgets("the swipe back brings only this team's closed "
@@ -1021,15 +955,15 @@ void main() {
       await back(tester);
       await show(tester, url, otherTeam);
       await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
-      await settle(tester);
+      await h.settle(tester);
       expect(conversations(), findsNothing);
       await show(tester, url, teamId);
       await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
-      await settle(tester);
+      await h.settle(tester);
       expect(shownChannel(tester), channelId);
       // The harness hangs closing a reopened conversation's database.
       await show(tester, url, otherTeam);
-      await finish(tester);
+      await h.close(tester);
     });
 
     testWidgets('on a wide window the panes follow the team, channel and '
@@ -1047,7 +981,7 @@ void main() {
       final panes = container.read(openPanesProvider);
       expect(panes.channel?.channelId, channelId);
       expect(panes.thread?.rootId, 'old1');
-      await finish(tester);
+      await h.close(tester);
     });
   });
 
@@ -1072,11 +1006,11 @@ void main() {
         ),
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(header(TeamThreadsScreen).height, channel.height);
     await back(tester);
     await back(tester);
-    await finish(tester);
+    await h.close(tester);
   });
 
   group('the Threads list', () {
@@ -1118,12 +1052,12 @@ void main() {
           ),
         ),
       );
-      await settle(tester);
+      await h.settle(tester);
     }
 
     Future<void> pickThread(WidgetTester tester) async {
       await tester.tap(find.textContaining('Slipway repairs'));
-      await settle(tester);
+      await h.settle(tester);
     }
 
     testWidgets('on a large window a picked thread opens beside the list', (
@@ -1143,8 +1077,8 @@ void main() {
         reason: 'in the thread pane',
       );
       closeConversations(navigator(tester));
-      await settle(tester);
-      await finish(tester);
+      await h.settle(tester);
+      await h.close(tester);
       await tester.pump(Duration.zero);
     });
 
@@ -1157,7 +1091,7 @@ void main() {
       expect(find.byType(ThreadScreen), findsOneWidget);
       await back(tester);
       expect(find.byType(ThreadScreen), findsNothing);
-      await finish(tester);
+      await h.close(tester);
     });
 
     testWidgets("the channel in a thread's header opens that channel", (
@@ -1184,12 +1118,12 @@ void main() {
         expect(panes.thread, isNull);
         expect(find.text('No conversation open'), findsNothing);
       }
-      await settle(tester);
+      await h.settle(tester);
       expect(find.byType(ThreadScreen), findsNothing);
       expect(find.byType(ChannelScreen), findsOneWidget);
       closeConversations(navigator(tester));
-      await settle(tester);
-      await finish(tester);
+      await h.settle(tester);
+      await h.close(tester);
       await tester.pump(Duration.zero);
     });
   });
@@ -1214,8 +1148,8 @@ void main() {
     expect(thread.top, channel.top);
     expect(thread.height, channel.height);
     closeConversations(navigator(tester));
-    await settle(tester);
-    await finish(tester);
+    await h.settle(tester);
+    await h.close(tester);
     // Drift closes the pane's queries on a zero timer.
     await tester.pump(Duration.zero);
   });
@@ -1244,8 +1178,8 @@ void main() {
       reason: 'at the pane edge',
     );
     closeConversations(navigator(tester));
-    await settle(tester);
-    await finish(tester);
+    await h.settle(tester);
+    await h.close(tester);
     await tester.pump(Duration.zero);
   });
 
@@ -1272,13 +1206,13 @@ void main() {
         teamId: teamId,
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     final list = find.byType(ConversationView);
     final field = find.byType(TextField);
     final before = tester.getRect(list);
 
     await tester.enterText(field, ':smil');
-    await settle(tester);
+    await h.settle(tester);
 
     final suggestions = find.byType(SuggestionList);
     expect(suggestions, findsOneWidget);
@@ -1288,13 +1222,13 @@ void main() {
       lessThanOrEqualTo(tester.getTopLeft(field).dy),
     );
     await tester.tap(find.textContaining(':smile:').first);
-    await settle(tester);
+    await h.settle(tester);
     expect(suggestions, findsNothing);
     // The pick replaced the typed word.
     expect(tester.widget<TextField>(field).controller!.text, isNot(':smil'));
     navigator(tester).pop();
-    await settle(tester);
-    await finish(tester);
+    await h.settle(tester);
+    await h.close(tester);
   });
 
   testWidgets('Reply in the message menu opens the thread ready to type; '
@@ -1303,21 +1237,21 @@ void main() {
     await mayPost(tester);
     await open(tester);
     await tester.longPress(find.text('morning'));
-    await settle(tester);
+    await h.settle(tester);
     await tester.tap(find.text('Reply'));
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ThreadScreen), findsOneWidget);
     expect(typingIn(tester, ThreadScreen), isTrue);
     await back(tester);
     expect(find.byType(ThreadScreen), findsNothing);
     expect(tester.testTextInput.isVisible, isFalse);
     await tester.tap(find.text('morning'));
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ThreadScreen), findsOneWidget);
     expect(tester.testTextInput.isVisible, isFalse);
     await back(tester);
     await back(tester);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('closing the message menu gives the keyboard back to the '
@@ -1326,15 +1260,15 @@ void main() {
     await mayPost(tester);
     await open(tester);
     await tester.showKeyboard(find.byType(TextField));
-    await settle(tester);
+    await h.settle(tester);
     await tester.longPress(find.text('morning'));
-    await settle(tester);
+    await h.settle(tester);
     expect(tester.testTextInput.isVisible, isFalse);
     navigator(tester).pop();
-    await settle(tester);
+    await h.settle(tester);
     expect(typingIn(tester, ChannelScreen), isTrue);
     await back(tester);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('a notification for a thread of the open channel opens over '
@@ -1355,14 +1289,14 @@ void main() {
         ),
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ThreadScreen), findsOneWidget);
     expect(find.text('Info', skipOffstage: false), findsNothing);
     await back(tester);
     expect(find.byType(ChannelScreen), findsOneWidget);
     await back(tester);
     expect(conversations(), findsNothing);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('a notification for another channel opens over the list, not '
@@ -1381,12 +1315,12 @@ void main() {
         ),
       ),
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ChannelScreen), findsOneWidget);
     await back(tester);
     expect(conversations(), findsNothing);
     expect(find.text('Settings'), findsNothing);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('a notification for a channel not stored yet opens it from '
@@ -1421,13 +1355,10 @@ void main() {
         ),
       ),
     );
-    await settle(tester);
-    expect(
-      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).channelId,
-      _directId,
-    );
+    await h.settle(tester);
+    expect(find.text('hello there'), findsOneWidget);
     await back(tester);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('a message link the server takes a while to find says it is '
@@ -1467,7 +1398,7 @@ void main() {
     }
     expect(said, isTrue);
     found.complete();
-    await settle(tester);
+    await h.settle(tester);
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('Opening the message…'), findsNothing);
     expect(
@@ -1475,7 +1406,7 @@ void main() {
       'far1',
     );
     await back(tester);
-    await finish(tester);
+    await h.close(tester);
   });
 
   testWidgets('going back to a conversation that is open completes once it '
@@ -1492,12 +1423,12 @@ void main() {
         teamId: teamId,
       ).then((_) => closed = true),
     );
-    await settle(tester);
+    await h.settle(tester);
     expect(find.byType(ChannelScreen), findsOneWidget);
     expect(closed, isFalse);
     await back(tester);
     expect(closed, isTrue);
-    await finish(tester);
+    await h.close(tester);
   });
 
   group('removed from an open channel', () {
@@ -1526,14 +1457,14 @@ void main() {
       await open(tester, rootId: 'old1');
       await page(tester, 'Thread info');
       listed.add([boats()]);
-      await settle(tester);
+      await h.settle(tester);
       expect(find.text('Thread info'), findsOneWidget);
       listed.add(const []);
-      await settle(tester);
+      await h.settle(tester);
       expect(conversations(), findsNothing);
       expect(find.text('Thread info'), findsNothing);
       expect(find.text('You were removed from Boats.'), findsOneWidget);
-      await finish(tester);
+      await h.close(tester);
     });
 
     testWidgets('a conversation opened before its channel is listed stays', (
@@ -1542,10 +1473,10 @@ void main() {
       await startListing(tester);
       await open(tester);
       listed.add(const []);
-      await settle(tester);
+      await h.settle(tester);
       expect(find.byType(ChannelScreen), findsOneWidget);
       await back(tester);
-      await finish(tester);
+      await h.close(tester);
     });
   });
 }

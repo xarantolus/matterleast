@@ -130,7 +130,10 @@ void main() {
     await start(tester);
     expect(top(tester, 'BA'), lessThan(top(tester, 'HA')));
     await dragDown(tester, find.text('BA'), 120);
-    await h.settle(tester, rounds: 20);
+    await h.settle(
+      tester,
+      until: () => h.server.seen.any((r) => r.method == 'PUT'),
+    );
     expect(top(tester, 'HA'), lessThan(top(tester, 'BA')));
     final sent = h.server.seen.singleWhere((r) => r.method == 'PUT');
     final preference = (sent.json! as List).single as Map;
@@ -144,7 +147,10 @@ void main() {
     refuse = true;
     await start(tester);
     await dragDown(tester, find.text('BA'), 120);
-    await h.settle(tester, rounds: 20);
+    await h.settle(
+      tester,
+      until: () => h.server.seen.any((r) => r.method == 'PUT'),
+    );
     expect(top(tester, 'BA'), lessThan(top(tester, 'HA')));
     expect(find.textContaining("Couldn't move the team."), findsOneWidget);
     expect(find.textContaining('no_way'), findsOneWidget);
@@ -164,7 +170,7 @@ void main() {
         value: '$teamId,$_bay',
       ),
     ]);
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(top(tester, 'HA'), lessThan(top(tester, 'BA')));
     await h.close(tester);
   });
@@ -175,7 +181,7 @@ void main() {
     await start(tester, second: true);
     final first = find.byTooltip('Drag to move this server').first;
     await dragDown(tester, first, 300);
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(
       [for (final s in await appDb.allServers()) s.url],
       [_otherServer, h.url],

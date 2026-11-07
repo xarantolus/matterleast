@@ -84,7 +84,7 @@ Future<ServerHarness> _pasteAnImage(WidgetTester tester) async {
 /// which takes as long as the machine is busy.
 Future<void> _until(WidgetTester tester, ServerHarness h, Finder finder) async {
   for (var i = 0; i < 100 && finder.evaluate().isEmpty; i++) {
-    await h.settle(tester, rounds: 1);
+    await h.settle(tester);
   }
 }
 

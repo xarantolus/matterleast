@@ -21,6 +21,7 @@ import 'package:matterleast/screens/root/open_panes.dart';
 
 import 'fake_server.dart';
 import 'memory_database.dart';
+import 'settle.dart';
 import 'test_session.dart';
 
 /// A fake server and a seeded session behind a widget under test.
@@ -35,16 +36,9 @@ class ServerHarness {
 
   String get url => server.url.toString();
 
-  /// Lets the server and database, which answer on the real clock, and the
-  /// widgets' timers, on the fake one, run for a while.
-  Future<void> settle(WidgetTester tester, {int rounds = 15}) async {
-    for (var i = 0; i < rounds; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-  }
+  /// Pumps until the app is idle, once [until] holds; see [settleApp].
+  Future<void> settle(WidgetTester tester, {bool Function()? until}) =>
+      settleApp(tester, servers: [server], until: until);
 
   /// Unmounts the widget and closes the server and session. Call it last in
   /// the test body: pending timers are checked before tear-downs run.
@@ -65,7 +59,8 @@ class ServerHarness {
 /// [overrides], which know the server's url), with image caches and file
 /// [downloads] left pending unless given; [appDatabase] replaces the empty
 /// app database. [size] and [platform] are reset afterwards. With
-/// [trackRoutes] the navigator reports its conversations, as in the app.
+/// [trackRoutes] the navigator reports its conversations, as in the app;
+/// [builder] wraps the navigator.
 Future<ServerHarness> pumpWithServer(
   WidgetTester tester, {
   required Widget Function(String url) home,
@@ -78,6 +73,7 @@ Future<ServerHarness> pumpWithServer(
   TargetPlatform? platform,
   bool settle = true,
   bool trackRoutes = false,
+  TransitionBuilder? builder,
 }) async {
   HttpOverrides.global = null;
   if (size != null) {
@@ -119,6 +115,7 @@ Future<ServerHarness> pumpWithServer(
           navigatorObservers: [
             if (trackRoutes) ref.watch(conversationRoutesProvider),
           ],
+          builder: builder,
           home: home(url),
         ),
       ),

@@ -9,18 +9,7 @@ import 'package:matterleast/screens/root/place_reconciler.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 
-/// Remembers what was picked without touching settings.
-class _Rail extends RailSelection {
-  _Rail(this.start);
-
-  final RailTarget? start;
-
-  @override
-  RailTarget? build() => start;
-
-  @override
-  void select(RailTarget? target) => state = target;
-}
+import '../support/rail.dart';
 
 const _url = 'https://chat.example.test';
 
@@ -36,7 +25,7 @@ void main() {
     addTearDown(teams.close);
     container = ProviderContainer(
       overrides: [
-        railSelectionProvider.overrideWith(() => _Rail(selected)),
+        railSelectionProvider.overrideWith(() => MemoryRailSelection(selected)),
         serversProvider.overrideWith(
           (ref) => Stream.value([
             ServerEntry(

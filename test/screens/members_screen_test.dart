@@ -43,10 +43,10 @@ void main() {
     await start(tester, canRemove: true);
     expect(find.text('Mira'), findsOneWidget);
     await tester.tap(find.byTooltip('Remove Mira from channel'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(find.text('Remove from Channel'), findsOneWidget);
     await tester.tap(find.text('Remove'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(find.text('Mira'), findsNothing);
     expect(
       h.server.seen.any(
@@ -60,9 +60,9 @@ void main() {
   testWidgets('cancelling the confirm keeps the member', (tester) async {
     await start(tester, canRemove: true);
     await tester.tap(find.byTooltip('Remove Mira from channel'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     await tester.tap(find.text('Cancel'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(find.text('Mira'), findsOneWidget);
     expect(h.server.seen.any((r) => r.method == 'DELETE'), isFalse);
     await h.close(tester);

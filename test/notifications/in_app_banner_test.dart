@@ -6,11 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/desktop/desktop_shell.dart';
-import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/quick_switch.dart';
-import 'package:matterleast/domain/rail.dart';
-import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/notifications/in_app_notifications.dart';
 import 'package:matterleast/notifications/notice_banner.dart';
 import 'package:matterleast/notifications/notification_check.dart';
@@ -24,15 +21,9 @@ import 'package:matterleast/ui/notice_banner_layer.dart';
 
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
+import '../support/rail.dart';
+import '../support/servers.dart';
 import '../support/test_session.dart';
-
-class _Rail extends RailSelection {
-  @override
-  RailTarget? build() => null;
-
-  @override
-  void select(RailTarget? target) => state = target;
-}
 
 /// Records what reaches the system instead of showing it.
 class _Toasts extends Notifier {
@@ -68,21 +59,8 @@ void main() {
       home: (_) =>
           const NoticeBannerOverlay(child: Scaffold(body: SizedBox.expand())),
       overrides: (url) => [
-        railSelectionProvider.overrideWith(_Rail.new),
-        serversProvider.overrideWith((ref) {
-          ref.keepAlive();
-          return Stream.value([
-            ServerEntry(
-              url: url,
-              displayName: 'Test',
-              siteName: null,
-              serverVersion: null,
-              diagnosticId: null,
-              lastActiveAt: DateTime(2026),
-              ssoScheme: null,
-            ),
-          ]);
-        }),
+        railSelectionProvider.overrideWith(MemoryRailSelection.new),
+        serversOverride([testServerEntry(url)]),
         switchItemsProvider(url).overrideWith((ref) {
           ref.keepAlive();
           return Stream.value([

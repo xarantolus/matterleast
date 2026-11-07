@@ -45,16 +45,10 @@ import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/ui/content_page.dart';
 
 import '../support/fake_server.dart';
+import '../support/rail.dart';
+import '../support/servers.dart';
+import '../support/settle.dart';
 import '../support/test_session.dart';
-
-/// Remembers what was picked without touching settings.
-class _Rail extends RailSelection {
-  @override
-  RailTarget? build() => null;
-
-  @override
-  void select(RailTarget? target) => state = target;
-}
 
 const _xId = 'ch000000000000000000000c10';
 const _yId = 'ch000000000000000000000c11';
@@ -78,15 +72,7 @@ void main() {
   String urlA() => serverA.url.toString();
   String urlB() => serverB.url.toString();
 
-  ServerEntry entry(String url) => ServerEntry(
-    url: url,
-    displayName: url,
-    siteName: null,
-    serverVersion: null,
-    diagnosticId: null,
-    lastActiveAt: DateTime(2026),
-    ssoScheme: null,
-  );
+  ServerEntry entry(String url) => testServerEntry(url, name: url);
 
   List<SwitchItem> channelsOf(String url, {Set<String> without = const {}}) => [
     for (final (id, name) in [(_xId, 'x'), (_yId, 'y'), (_zId, 'z')])
@@ -144,14 +130,8 @@ void main() {
     }
   }
 
-  Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 20; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-  }
+  Future<void> settle(WidgetTester tester) =>
+      settleApp(tester, servers: [serverA, serverB]);
 
   Future<void> start(WidgetTester tester, {bool panes = false}) async {
     HttpOverrides.global = null;
@@ -194,7 +174,7 @@ void main() {
       ProviderScope(
         overrides: [
           appDatabaseProvider.overrideWithValue(db),
-          railSelectionProvider.overrideWith(_Rail.new),
+          railSelectionProvider.overrideWith(MemoryRailSelection.new),
           autoLoadProvider(DataKind.image).overrideWith((ref) => false),
           serversProvider.overrideWith((ref) {
             ref.keepAlive();

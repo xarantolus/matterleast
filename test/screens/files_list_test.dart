@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/providers.dart';
-import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
@@ -10,16 +9,8 @@ import 'package:matterleast/screens/search/search_results_screen.dart';
 
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
+import '../support/rail.dart';
 import '../support/test_session.dart';
-
-/// Remembers what was picked without touching settings.
-class _Rail extends RailSelection {
-  @override
-  RailTarget? build() => null;
-
-  @override
-  void select(RailTarget? target) => state = target;
-}
 
 void main() {
   late ServerHarness h;
@@ -68,7 +59,7 @@ void main() {
         );
       },
       overrides: (url) => [
-        railSelectionProvider.overrideWith(_Rail.new),
+        railSelectionProvider.overrideWith(MemoryRailSelection.new),
         serversProvider.overrideWith(
           (ref) => Stream.value([
             ServerEntry(
@@ -97,7 +88,7 @@ void main() {
     (tester) async {
       await start(tester);
       await tester.tap(find.text('harbour.txt'));
-      await h.settle(tester, rounds: 20);
+      await h.settle(tester);
       expect(find.byType(ChannelScreen), findsNothing);
       await h.close(tester);
     },
@@ -108,11 +99,11 @@ void main() {
     await start(tester);
     expect(find.byTooltip('More'), findsNothing);
     await tester.tap(find.byTooltip('Jump to message'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
     expect(screen.highlightPostId, 'pic1');
     Navigator.of(tester.element(find.byType(ChannelScreen))).pop();
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     await h.close(tester);
   });
 }
