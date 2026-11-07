@@ -73,8 +73,7 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
     return onlyPrivate || _private;
   }
 
-  bool get _valid =>
-      _headerOnly || (_name.text.trim().isNotEmpty && _name.text.length <= 64);
+  bool get _valid => _headerOnly || _name.text.trim().isNotEmpty;
 
   Future<void> _save() async {
     final navigator = Navigator.of(context);

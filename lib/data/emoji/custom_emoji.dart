@@ -80,7 +80,7 @@ Stream<List<EmojiEntry>> watchEmojiEntries(ServerStore store) {
 bool _sameMap(Map<String, String> a, Map<String, String> b) =>
     a.length == b.length && a.entries.every((e) => b[e.key] == e.value);
 
-final _validName = RegExp(r'^[a-z0-9_+-]{1,64}$');
+final _validName = RegExp(r'^[a-zA-Z0-9_+-]{1,64}$');
 
 /// Looks up custom emoji names that text uses but the database doesn't
 /// know yet. Callers report such names with [want]; they are collected for

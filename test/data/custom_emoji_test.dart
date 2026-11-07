@@ -87,6 +87,13 @@ void main() {
     });
   });
 
+  test('names with capital letters are asked for as they are', () async {
+    onServer = {'PartyBlob'};
+    resolver.want(['PartyBlob']);
+    await resolver.settled;
+    expect(await stored(), {'PartyBlob': 'id-PartyBlob'});
+  });
+
   test('many names go in batches of 200', () async {
     resolver.want([for (var i = 0; i < 250; i++) 'custom_$i']);
     await resolver.settled;

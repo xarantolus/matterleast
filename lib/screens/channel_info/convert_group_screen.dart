@@ -100,10 +100,7 @@ class _ConvertGroupState extends ConsumerState<ConvertGroupScreen> {
         : targets.any((t) => t.id == widget.initialTeamId)
         ? widget.initialTeamId
         : targets.firstOrNull?.id;
-    final valid =
-        teamId != null &&
-        _name.text.trim().isNotEmpty &&
-        _name.text.length <= 64;
+    final valid = teamId != null && _name.text.trim().isNotEmpty;
     return ContentPage(
       title: const Text('Convert to private channel'),
       progress: _saving,
