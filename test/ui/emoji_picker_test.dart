@@ -68,15 +68,17 @@ void main() {
 
     Future<void> open(
       WidgetTester tester,
-      ValueChanged<String?> onPicked,
-    ) async {
+      ValueChanged<String?> onPicked, {
+      ValueChanged<String>? onKeepOpen,
+    }) async {
       await pumpApp(
         tester,
         Scaffold(
           body: Builder(
             builder: (context) => TextButton(
-              onPressed: () async =>
-                  onPicked(await showEmojiPicker(context, _url)),
+              onPressed: () async => onPicked(
+                await showEmojiPicker(context, _url, onKeepOpen: onKeepOpen),
+              ),
               child: const Text('open'),
             ),
           ),
@@ -107,6 +109,27 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
       expect(picked, namesInCategory('smileys-emotion')[1]);
+    }, variant: desktop);
+
+    testWidgets('a click with Shift held adds the emoji and keeps the '
+        'picker open; a plain click closes it', (tester) async {
+      final kept = <String>[];
+      String? picked;
+      await open(tester, (name) => picked = name, onKeepOpen: kept.add);
+      final [first, second, ...] = namesInCategory('smileys-emotion');
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.tap(find.byTooltip(':$first:'));
+      await tester.tap(find.byTooltip(':$second:'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+      expect(kept, [first, second]);
+      expect(find.byType(EmojiPicker), findsOneWidget);
+
+      await tester.tap(find.byTooltip(':$first:'));
+      await tester.pumpAndSettle();
+      expect(picked, first);
+      expect(find.byType(EmojiPicker), findsNothing);
     }, variant: desktop);
 
     testWidgets('Up from the first row goes back to search; Esc closes', (

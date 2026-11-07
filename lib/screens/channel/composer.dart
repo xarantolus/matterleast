@@ -877,10 +877,16 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     // The keyboard comes back only if it was up: picking an emoji alone
     // shouldn't pull it over the messages.
     final typing = _focus.hasFocus || isDesktop;
-    final name = await showEmojiPicker(context, widget.url, anchor: anchor);
+    void insert(String name) =>
+        draft.insert(unicodeForName(name) ?? ':$name: ');
+    final name = await showEmojiPicker(
+      context,
+      widget.url,
+      anchor: anchor,
+      onKeepOpen: insert,
+    );
     if (name == null) return;
-    final unicode = unicodeForName(name);
-    draft.insert(unicode ?? ':$name: ');
+    insert(name);
     if (typing) _focus.requestFocus();
   }
 

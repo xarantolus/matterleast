@@ -43,6 +43,7 @@ Future<String?> showEmojiPicker(
   BuildContext context,
   String url, {
   Rect? anchor,
+  ValueChanged<String>? onKeepOpen,
 }) => showAppSheet<String>(
   context: context,
   showDragHandle: true,
@@ -51,7 +52,7 @@ Future<String?> showEmojiPicker(
   anchor: anchor,
   constraints: isDesktop ? BoxConstraints.tight(desktopPickerSize) : null,
   builder: (sheet) => isDesktop
-      ? EmojiPicker(url: url, keyboard: true)
+      ? EmojiPicker(url: url, keyboard: true, onKeepOpen: onKeepOpen)
       : SizedBox(
           height: MediaQuery.sizeOf(sheet).height * 0.7,
           child: EmojiPicker(url: url),
@@ -167,13 +168,22 @@ double cellTop(
 
 /// Search, a category bar and every emoji in one list, by category.
 class EmojiPicker extends ConsumerStatefulWidget {
-  const EmojiPicker({required this.url, this.keyboard = false, super.key});
+  const EmojiPicker({
+    required this.url,
+    this.keyboard = false,
+    this.onKeepOpen,
+    super.key,
+  });
 
   final String url;
 
   /// Used with a keyboard: search has the focus from the start and Enter
   /// picks the first match.
   final bool keyboard;
+
+  /// Takes a pick made with Shift held on desktop, and the picker stays
+  /// open for the next one.
+  final ValueChanged<String>? onKeepOpen;
 
   @override
   ConsumerState<EmojiPicker> createState() => _EmojiPickerState();
@@ -256,13 +266,22 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
     return KeyEventResult.handled;
   }
 
+  void _pick(String name) {
+    final keep = widget.onKeepOpen;
+    if (keep != null && isDesktop && HardwareKeyboard.instance.isShiftPressed) {
+      keep(name);
+    } else {
+      Navigator.of(context).pop(name);
+    }
+  }
+
   KeyEventResult _gridKey(FocusNode node, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter ||
         key == LogicalKeyboardKey.space) {
-      if (_pickable(_cursor) case final name?) Navigator.of(context).pop(name);
+      if (_pickable(_cursor) case final name?) _pick(name);
       return KeyEventResult.handled;
     }
     if (![
@@ -421,7 +440,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
           mouseCursor: clickCursor,
           customBorder: const CircleBorder(),
           canRequestFocus: false,
-          onTap: () => Navigator.of(context).pop(shown),
+          onTap: () => _pick(shown),
           child: Tooltip(
             message: ':$name:',
             child: DecoratedBox(
