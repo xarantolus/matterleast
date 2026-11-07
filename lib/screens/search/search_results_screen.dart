@@ -92,6 +92,11 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       widget.scope ?? SearchScope(teamId: widget.teamId, allTeams: true);
   SearchTab? _picked;
 
+  /// Searching is an act: submitting, picking a tab or a filter, or opening
+  /// Files. Before it the start page shows; after it the server answers for
+  /// whatever the query is, empty included.
+  late bool _searched = widget.query.isNotEmpty || widget.files;
+
   SearchTab get _tab =>
       _picked ??
       (widget.files
@@ -138,11 +143,12 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   }
 
   void _submit(String text) {
-    setState(() => _query = text.trim());
+    setState(() {
+      _query = text.trim();
+      _searched = true;
+    });
     _remember(_query);
   }
-
-  bool get _hasTerms => searchTerms(_query, _scope).isNotEmpty;
 
   /// Fetches the results again; a pull says when that failed, while Retry
   /// on a failed search shows the cause in place already.
@@ -193,7 +199,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         for (final s in servers) s.url: s.displayName,
     };
     final refreshing =
-        _hasTerms &&
+        _searched &&
         (requests == null ||
             requests.any(
               (r) =>
@@ -256,7 +262,10 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   ],
                   selected: {_tab},
                   onSelectionChanged: (s) {
-                    setState(() => _picked = s.first);
+                    setState(() {
+                      _picked = s.first;
+                      _searched = true;
+                    });
                     unawaited(
                       ref
                           .read(settingsStoreProvider)
@@ -271,7 +280,10 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
               servers: servers,
               pickServer: widget.url == null && servers.length > 1,
               scope: _scope,
-              onChanged: (scope) => setState(() => _scope = scope),
+              onChanged: (scope) => setState(() {
+                _scope = scope;
+                _searched = true;
+              }),
               onServer: (url) => setState(() {
                 _server = url;
                 _scope = _scope.copyWith(
@@ -289,11 +301,13 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
             if (_tab == SearchTab.files)
               _FileKindChips(
                 selected: _scope.fileKind,
-                onSelected: (kind) =>
-                    setState(() => _scope = _scope.copyWith(fileKind: kind)),
+                onSelected: (kind) => setState(() {
+                  _scope = _scope.copyWith(fileKind: kind);
+                  _searched = true;
+                }),
               ),
             Expanded(
-              child: !_hasTerms
+              child: !_searched
                   ? _Start(
                       request: requests?.firstOrNull,
                       onPick: (term) {

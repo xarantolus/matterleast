@@ -212,4 +212,79 @@ void main() {
     expect(find.text('MORE FROM SECOND'), findsOneWidget);
     await closeApp(tester);
   });
+
+  testWidgets('submitting an empty message search asks the server', (
+    tester,
+  ) async {
+    await show(
+      tester,
+      url: _a,
+      home: const SearchResultsScreen(url: _a, teamId: 't', query: ''),
+    );
+    expect(asked, isEmpty);
+    expect(find.text('Search messages and files'), findsOneWidget);
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(asked, [_a]);
+    expect(find.textContaining('first'), findsOneWidget);
+    await closeApp(tester);
+  });
+
+  testWidgets('a person filter alone searches without words', (tester) async {
+    await show(
+      tester,
+      url: _a,
+      home: const SearchResultsScreen(
+        url: _a,
+        teamId: 't',
+        query: '',
+        scope: SearchScope(teamId: 't', username: 'wren'),
+      ),
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(asked, [_a]);
+    expect(find.textContaining('first'), findsOneWidget);
+    await closeApp(tester);
+  });
+
+  testWidgets('opening Files with no words lists the server files', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pumpApp(
+      tester,
+      const SearchResultsScreen(url: _a, teamId: 't', query: '', files: true),
+      overrides: [
+        serversProvider.overrideWith((ref) => Stream.value([_server(_a, 'A')])),
+        featuresProvider(_a).overrideWith(
+          (ref) => Stream.value(const ServerFeatures(crossTeamSearch: true)),
+        ),
+        currentTeamProvider(_a).overrideWith((ref) async => 't'),
+        messageSearchProvider(_a)
+            .overrideWith((ref) => Completer<MessageSearch>().future),
+        localFileResultsProvider.overrideWith((ref, args) async => const []),
+        serverFileResultsProvider.overrideWith(
+          (ref, args) async => [
+            FileHit(
+              id: 'f1',
+              name: 'plan.txt',
+              extension: 'txt',
+              mimeType: 'text/plain',
+              size: 10,
+              postId: 'p1',
+              channelId: 'c',
+              place: '#town',
+              createAt: DateTime.utc(2026, 1, 1),
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('plan.txt'), findsOneWidget);
+    await closeApp(tester);
+  });
 }
