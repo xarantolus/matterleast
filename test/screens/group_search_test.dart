@@ -36,7 +36,7 @@ void main() {
       ),
     );
     controller.text = 'bobby';
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
   }
 
   testWidgets('a group message the phone has not stored is found by member', (

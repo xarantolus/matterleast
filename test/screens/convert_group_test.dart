@@ -47,7 +47,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Crew Plans');
     await tester.pump();
     await tester.tap(find.text('Convert'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     final sent = h.server.seen.singleWhere(
       (r) => r.path.endsWith('/convert_to_channel'),
     );
@@ -68,7 +68,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Crew Plans');
     await tester.pump();
     await tester.tap(find.text('Convert'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     expect(
       h.server.seen.any((r) => r.path.endsWith('/convert_to_channel')),
       isFalse,

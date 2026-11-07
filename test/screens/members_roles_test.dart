@@ -61,9 +61,9 @@ void main() {
   ) async {
     await start(tester, canChangeRoles: true);
     await tester.tap(find.byTooltip('Roles of Mira'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     await tester.tap(find.text('Make channel admin'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     final put = h.server.seen.singleWhere((r) => r.method == 'PUT');
     expect(put.path, endsWith('/members/u2/schemeRoles'));
     expect(put.body['scheme_admin'], isTrue);
@@ -75,7 +75,7 @@ void main() {
   ) async {
     await start(tester, canChangeRoles: true);
     await tester.tap(find.byTooltip('Roles of Odin'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     expect(find.text('Remove channel admin'), findsOneWidget);
     expect(find.text('Make channel admin'), findsNothing);
     await h.close(tester);
@@ -90,9 +90,9 @@ void main() {
       change: error(403, 'api.context.permissions.app_error'),
     );
     await tester.tap(find.byTooltip('Roles of Mira'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     await tester.tap(find.text('Make channel admin'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(find.textContaining("Couldn't change Mira"), findsOneWidget);
     expect(find.byTooltip('Roles of Mira'), findsNothing);
     await h.close(tester);

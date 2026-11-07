@@ -224,7 +224,7 @@ void main() {
   Future<void> pumpMenuClosed(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(seconds: 1));
-    await h.settle(tester, rounds: 3);
+    await h.settle(tester);
   }
 
   group('Edit from', () {
@@ -234,7 +234,7 @@ void main() {
       await tester.pump();
       final before = tester.state(find.byType(EditableText));
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-      await h.settle(tester, rounds: 5);
+      await h.settle(tester);
       await expectEditing(tester, fieldIn(null), 'my first words');
       expect(tester.state(find.byType(EditableText)), same(before));
       await h.close(tester);
@@ -245,7 +245,7 @@ void main() {
       await open(tester);
       final before = tester.state(find.byType(EditableText));
       await tester.tap(find.text('my first words'), buttons: kSecondaryButton);
-      await h.settle(tester, rounds: 5);
+      await h.settle(tester);
       await tester.tap(find.text('Edit'));
       await tester.pump();
       await tester.pump();
@@ -264,9 +264,9 @@ void main() {
       await mouse.addPointer(location: Offset.zero);
       addTearDown(mouse.removePointer);
       await mouse.moveTo(tester.getCenter(find.text('my first words')));
-      await h.settle(tester, rounds: 5);
+      await h.settle(tester);
       await tester.tap(find.byTooltip('More actions'));
-      await h.settle(tester, rounds: 5);
+      await h.settle(tester);
       await tester.tap(find.text('Edit'));
       await tester.pump();
       await tester.pump();
@@ -285,7 +285,7 @@ void main() {
         find.descendant(of: pane, matching: find.text('my thread words')),
         buttons: kSecondaryButton,
       );
-      await h.settle(tester, rounds: 5);
+      await h.settle(tester);
       await tester.tap(find.text('Edit'));
       await tester.pump();
       await tester.pump();
@@ -300,7 +300,7 @@ void main() {
       await open(tester);
       final before = tester.state(find.byType(EditableText));
       await tester.longPress(find.text('my first words'));
-      await h.settle(tester, rounds: 5);
+      await h.settle(tester);
       await tester.tap(find.text('Edit'));
       await tester.pump();
       await tester.pump();

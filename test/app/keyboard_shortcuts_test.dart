@@ -16,16 +16,10 @@ import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/screens/root/root_shortcuts.dart';
 import 'package:matterleast/screens/settings/settings_page.dart';
 
+import '../support/rail.dart';
+
 const _url = 'https://chat.example.test';
 const _team = 'team1';
-
-class _Rail extends RailSelection {
-  @override
-  RailTarget? build() => const RailTarget(url: _url, teamId: _team);
-
-  @override
-  void select(RailTarget? target) => state = target;
-}
 
 ChannelItem _channel(String id, {bool unread = false}) => ChannelItem(
   id: id,
@@ -83,7 +77,9 @@ Future<ProviderContainer> _pumpRoot(WidgetTester tester) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        railSelectionProvider.overrideWith(_Rail.new),
+        railSelectionProvider.overrideWith(
+          () => MemoryRailSelection(const RailTarget(url: _url, teamId: _team)),
+        ),
         railTeamsProvider(_url).overrideWith((ref) => Stream.value(_teams)),
         channelListProvider(
           _url,

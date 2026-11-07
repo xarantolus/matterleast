@@ -29,7 +29,7 @@ void main() {
       ),
     );
     await tester.tap(find.text('Open link'));
-    await h.settle(tester, rounds: 10);
+    await h.settle(tester);
   }
 
   testWidgets('an invite link shows the team and joins it on confirm', (
@@ -47,7 +47,7 @@ void main() {
     expect(find.text('Join Dockside?'), findsOneWidget);
     expect(find.text('Ships in and out'), findsOneWidget);
     await tester.tap(find.text('Join'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     final join = h.server.seen.singleWhere(
       (r) => r.path == '/api/v4/teams/members/invite',
     );
@@ -58,7 +58,7 @@ void main() {
   testWidgets('declining joins nothing', (tester) async {
     await open(tester, ok({'id': 'tm00000000000000000000t02', 'name': 'dock'}));
     await tester.tap(find.text('Cancel'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     expect(
       h.server.seen.any((r) => r.path == '/api/v4/teams/members/invite'),
       isFalse,

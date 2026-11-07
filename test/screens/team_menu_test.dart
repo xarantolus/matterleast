@@ -86,7 +86,7 @@ void main() {
       ),
     );
     await tester.tap(find.byTooltip('Team'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
   }
 
   testWidgets('people who may invite get the email form and send it', (
@@ -94,13 +94,13 @@ void main() {
   ) async {
     await start(tester);
     await tester.tap(find.text('Invite people'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     await tester.enterText(
       find.byType(TextField),
       'kit@example.test, rowan@example.test',
     );
     await tester.tap(find.text('Send invitations'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     final sent = h.server.seen.singleWhere(
       (r) => r.path.endsWith('/invite/email'),
     );
@@ -112,10 +112,10 @@ void main() {
   testWidgets('a wrong address is named and nothing is sent', (tester) async {
     await start(tester);
     await tester.tap(find.text('Invite people'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     await tester.enterText(find.byType(TextField), 'kit@example.test nope');
     await tester.tap(find.text('Send invitations'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     expect(find.text('nope is not an email address.'), findsOneWidget);
     expect(h.server.seen.any((r) => r.path.endsWith('/invite/email')), isFalse);
     await h.close(tester);
@@ -126,10 +126,10 @@ void main() {
   ) async {
     await start(tester, invite: error(501, 'api.team.invite_members.disabled'));
     await tester.tap(find.text('Invite people'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     await tester.enterText(find.byType(TextField), 'kit@example.test');
     await tester.tap(find.text('Send invitations'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(
       find.textContaining('api.team.invite_members.disabled'),
       findsOneWidget,
@@ -160,7 +160,12 @@ void main() {
   testWidgets('a team with unread channels can be marked read', (tester) async {
     await start(tester, unread: true);
     await tester.tap(find.text('Mark all as read'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(
+      tester,
+      until: () => h.server.seen.any(
+        (r) => r.path == '/api/v4/channels/members/me/view',
+      ),
+    );
     expect(
       h.server.seen.any((r) => r.path == '/api/v4/channels/members/me/view'),
       isTrue,
@@ -179,10 +184,10 @@ void main() {
   ) async {
     await start(tester);
     await tester.tap(find.text('Leave Harbour'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     expect(find.text('Leave Harbour?'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
-    await h.settle(tester, rounds: 10);
+    await h.settle(tester);
     expect(h.server.seen.where((r) => r.method == 'DELETE'), isEmpty);
     await h.close(tester);
   });
@@ -192,9 +197,9 @@ void main() {
   ) async {
     await start(tester);
     await tester.tap(find.text('Leave Harbour'));
-    await h.settle(tester, rounds: 5);
+    await h.settle(tester);
     await tester.tap(find.widgetWithText(TextButton, 'Leave'));
-    await h.settle(tester, rounds: 20);
+    await h.settle(tester);
     expect(
       h.server.seen.where(
         (r) =>
