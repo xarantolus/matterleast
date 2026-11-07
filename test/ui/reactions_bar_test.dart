@@ -69,6 +69,26 @@ void main() {
     });
   });
 
+  testWidgets('reactions keep a little gap below what is above them', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 50, width: 200),
+            ReactionsBar(reactions: [_group('tada', mine: false)]),
+          ],
+        ),
+      ),
+    );
+    final gap = tester.getTopLeft(find.byType(FilterChip)).dy - 50;
+    expect(gap, greaterThanOrEqualTo(4));
+    expect(gap, lessThan(12));
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
   testWidgets('an own reaction is outlined in the primary colour, others not', (
     tester,
   ) async {

@@ -56,24 +56,28 @@ class ReactionsBar extends StatelessWidget {
               ),
             ),
           );
-    return Wrap(
-      spacing: Spacing.xs,
-      children: [
-        ?leading,
-        if (add != null && chips.isNotEmpty) ...[
-          ...chips.take(chips.length - 1),
-          // The add button wraps together with the last reaction, never
-          // onto a line of its own.
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: Spacing.xs,
-            children: [chips.last, add],
-          ),
-        ] else ...[
-          ...chips,
-          ?add,
+    // A little air between the reactions and whatever is above them.
+    return Padding(
+      padding: const EdgeInsets.only(top: Spacing.xs),
+      child: Wrap(
+        spacing: Spacing.xs,
+        children: [
+          ?leading,
+          if (add != null && chips.isNotEmpty) ...[
+            ...chips.take(chips.length - 1),
+            // The add button wraps together with the last reaction, never
+            // onto a line of its own.
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: Spacing.xs,
+              children: [chips.last, add],
+            ),
+          ] else ...[
+            ...chips,
+            ?add,
+          ],
         ],
-      ],
+      ),
     );
   }
 
