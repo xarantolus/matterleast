@@ -13,7 +13,8 @@ const emojiImageTypes = <String, String>{
   'gif': 'image/gif',
 };
 
-final _nameChars = RegExp(r'^[a-z0-9_+-]+$');
+// The server takes capitals and stores the name in lowercase.
+final _nameChars = RegExp(r'^[a-zA-Z0-9_+-]+$');
 
 /// Pure: why [name] can't be a new custom emoji's name, or null when it
 /// can. [taken] says whether a name is a standard or custom emoji already.
@@ -23,9 +24,9 @@ String? emojiNameProblem(String name, {required bool Function(String) taken}) {
     return 'Use at most $maxEmojiNameLength characters.';
   }
   if (!_nameChars.hasMatch(name)) {
-    return 'Use lowercase letters, digits, - _ and + only.';
+    return 'Use letters, digits, - _ and + only.';
   }
-  if (taken(name)) return 'That name is already used.';
+  if (taken(name.toLowerCase())) return 'That name is already used.';
   return null;
 }
 

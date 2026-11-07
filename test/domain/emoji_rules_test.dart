@@ -7,8 +7,16 @@ void main() {
     String? problem(String name, {Set<String> taken = const {}}) =>
         emojiNameProblem(name, taken: taken.contains);
 
-    test('accepts lowercase letters, digits, - _ and +', () {
-      for (final ok in ['party', 'a', 'ship-it', 'x_1', '+1ish', 'a' * 64]) {
+    test('accepts letters, digits, - _ and +, capitals too', () {
+      for (final ok in [
+        'party',
+        'PartyBlob',
+        'a',
+        'ship-it',
+        'x_1',
+        '+1ish',
+        'a' * 64,
+      ]) {
         expect(problem(ok), isNull, reason: ok);
       }
     });
@@ -17,7 +25,6 @@ void main() {
       for (final bad in [
         '',
         'a' * 65,
-        'Party',
         'two words',
         'dot.name',
         'colon:',
@@ -30,6 +37,8 @@ void main() {
     test('refuses a name already used', () {
       expect(problem('party', taken: {'party'}), isNotNull);
       expect(problem('parties', taken: {'party'}), isNull);
+      // The server keeps names in lowercase.
+      expect(problem('Party', taken: {'party'}), isNotNull);
     });
   });
 
