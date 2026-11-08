@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// A conversation as a shortcut: a [label], a picture (round PNG) and whether
@@ -20,8 +21,8 @@ class ShortcutSpec {
   final bool group;
 }
 
-/// Android's long-lived conversation shortcuts. Every call does nothing where
-/// the plugin is absent (desktops, tests).
+/// Android's long-lived conversation shortcuts. Every call does nothing on
+/// other platforms and where the plugin is absent (tests).
 class ConversationShortcuts {
   const ConversationShortcuts();
 
@@ -61,6 +62,7 @@ class ConversationShortcuts {
   }
 
   Future<T?> _call<T>(String method, [Map<String, Object?>? arguments]) async {
+    if (defaultTargetPlatform != TargetPlatform.android) return null;
     try {
       return await _channel.invokeMethod<T>(method, arguments);
     } on MissingPluginException {

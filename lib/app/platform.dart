@@ -14,6 +14,15 @@ bool get isDesktop => switch (defaultTargetPlatform) {
 /// before the desktop shell sizes the window; the shell then shows it.
 bool get appBeforeShell => defaultTargetPlatform == TargetPlatform.windows;
 
+/// Android's own services: the stay-connected service, Data Saver,
+/// conversation shortcuts and the rotation setting. Off on iOS, which is
+/// otherwise a phone like Android.
+bool get hasAndroidServices => defaultTargetPlatform == TargetPlatform.android;
+
+/// The phone's system by name, for sentences about its settings.
+String get phoneSystem =>
+    defaultTargetPlatform == TargetPlatform.iOS ? 'iOS' : 'Android';
+
 /// "tap" on a phone, "click" with a mouse; [capital] for a sentence start.
 String tapWord({bool capital = false}) => switch ((isDesktop, capital)) {
   (true, true) => 'Click',

@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:conversation_shortcuts/conversation_shortcuts.dart';
-import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 
 /// How many recent conversations are published as shortcuts, at most; the
@@ -116,7 +115,6 @@ class ShortcutPublisher {
     required Set<String> signedIn,
     required Set<String> loaded,
   }) async {
-    if (isDesktop) return;
     final max = math.min(shortcutCount, await shortcuts.maxCount());
     if (max == 0) return;
     final recent = recentConversations(items, count: max);

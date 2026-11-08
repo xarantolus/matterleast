@@ -11,6 +11,7 @@ import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/conversation_tile.dart';
 import 'package:matterleast/notifications/notice_format.dart';
 import 'package:matterleast/notifications/notify_rules.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 part 'notifier.g.dart';
 
@@ -204,6 +205,9 @@ abstract final class NoticeChannels {
 abstract final class NoticeActions {
   static const reply = 'reply';
   static const read = 'read';
+
+  /// The iOS category that carries both, registered at start.
+  static const category = 'message';
 }
 
 enum NoticeActionKind { reply, read }
@@ -253,6 +257,11 @@ class Notifier {
         AndroidFlutterLocalNotificationsPlugin
       >();
 
+  IOSFlutterLocalNotificationsPlugin? get _ios => _plugin
+      .resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin
+      >();
+
   Future<void> init({
     DidReceiveNotificationResponseCallback? onTap,
     required DidReceiveBackgroundNotificationResponseCallback onAction,
@@ -281,6 +290,26 @@ class Notifier {
   /// without its settings.
   static final initializationSettings = InitializationSettings(
     android: const AndroidInitializationSettings('ic_notification'),
+    // The app asks for permission itself, once, with its own explanation.
+    iOS: DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+      notificationCategories: [
+        DarwinNotificationCategory(
+          NoticeActions.category,
+          actions: [
+            DarwinNotificationAction.text(
+              NoticeActions.reply,
+              'Reply',
+              buttonTitle: 'Send',
+              placeholder: 'Reply',
+            ),
+            DarwinNotificationAction.plain(NoticeActions.read, 'Mark as read'),
+          ],
+        ),
+      ],
+    ),
     linux: LinuxInitializationSettings(
       defaultActionName: 'Open',
       defaultIcon: AssetsLinuxIcon(appIconAsset),
@@ -304,15 +333,30 @@ class Notifier {
     return details?.notificationResponse;
   }
 
-  Future<bool> permitted() async =>
-      await _android?.areNotificationsEnabled() ?? false;
+  Future<bool> permitted() async => switch ((_android, _ios)) {
+    (final android?, _) => await android.areNotificationsEnabled() ?? false,
+    (_, final ios?) => (await ios.checkPermissions())?.isEnabled ?? false,
+    _ => false,
+  };
 
-  Future<bool> requestPermission() async =>
-      await _android?.requestNotificationsPermission() ?? false;
+  Future<bool> requestPermission() async => switch ((_android, _ios)) {
+    (final android?, _) =>
+      await android.requestNotificationsPermission() ?? false,
+    (_, final ios?) =>
+      await ios.requestPermissions(alert: true, sound: true) ?? false,
+    _ => false,
+  };
 
   /// The system's notification settings for this app, where a refused
-  /// permission and each channel can be changed.
-  Future<void> openSettings() async => _android?.openAppNotificationSettings();
+  /// permission and each channel can be changed. iOS opens the app's page
+  /// in Settings, which holds its notification settings.
+  Future<void> openSettings() async {
+    if (_android case final android?) {
+      await android.openAppNotificationSettings();
+    } else if (_ios != null) {
+      await launchUrl(Uri.parse('app-settings:'));
+    }
+  }
 
   static String tagOf(String serverUrl, ConversationKey key) =>
       '$serverUrl#$key';
@@ -358,14 +402,22 @@ class Notifier {
       );
       return;
     }
-    await _publishShortcut(notice);
+    if (hasAndroidServices) await _publishShortcut(notice);
+    final newest = notice.messages.last;
     await _plugin.show(
       id: idOf(tag),
       title: notice.title,
-      body: notice.messages.last.text,
+      // Android shows each sender in the conversation; this is iOS's text.
+      body: toastText(
+        title: notice.title,
+        group: notice.group,
+        sender: newest.senderName,
+        text: newest.text,
+      ).body,
       payload: target.encode(),
       notificationDetails: NotificationDetails(
         android: detailsOf(notice, now: DateTime.now().toUtc()),
+        iOS: darwinDetailsOf(notice),
       ),
     );
   }
@@ -389,6 +441,19 @@ class Notifier {
       Log.warn('notify', 'No conversation shortcut', e);
     }
   }
+
+  /// How iOS shows [notice]: grouped by conversation, the server and team
+  /// under the title, with Reply and Mark as read.
+  static DarwinNotificationDetails darwinDetailsOf(ConversationNotice notice) =>
+      DarwinNotificationDetails(
+        threadIdentifier: tagOf(notice.serverUrl, notice.key),
+        categoryIdentifier: NoticeActions.category,
+        subtitle: noticeSubText(
+          serverName: notice.serverName,
+          teamName: notice.teamName,
+        ),
+        presentSound: true,
+      );
 
   /// Most Linux notification servers have no text field: no Reply there.
   static NotificationDetails desktopDetailsOf(
@@ -536,12 +601,10 @@ class Notifier {
   }
 
   Future<void> clearServer(String serverUrl) async {
-    if (!isDesktop) {
-      await _shortcuts.remove([
-        for (final id in await _shortcuts.published())
-          if (parseShortcutType(id)?.url == serverUrl) id,
-      ]);
-    }
+    await _shortcuts.remove([
+      for (final id in await _shortcuts.published())
+        if (parseShortcutType(id)?.url == serverUrl) id,
+    ]);
     for (final s in await shown(serverUrl)) {
       await clear(serverUrl, s.key);
     }

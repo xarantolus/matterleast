@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/screens/add_server/add_server_controller.dart';
@@ -321,12 +321,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: Spacing.md),
                   ],
                   Text(
-                    isDesktop
-                        ? 'Opens the sign-in page in your browser. When it asks to '
-                              'open Matterleast, allow it.'
-                        : 'Opens the sign-in page in your browser. If Android asks '
-                              'which app should finish signing in, choose '
-                              'Matterleast.',
+                    ssoHint(defaultTargetPlatform),
                     style: text.bodySmall?.copyWith(
                       color: context.tokens.muted,
                     ),
@@ -390,3 +385,16 @@ class _OrDivider extends StatelessWidget {
     ),
   );
 }
+
+/// What the system asks before the browser hands the sign-in back.
+String ssoHint(TargetPlatform platform) => switch (platform) {
+  TargetPlatform.android =>
+    'Opens the sign-in page in your browser. If Android asks which app '
+        'should finish signing in, choose Matterleast.',
+  TargetPlatform.iOS =>
+    'Opens the sign-in page in your browser. When iOS asks to open '
+        'Matterleast, allow it.',
+  _ =>
+    'Opens the sign-in page in your browser. When it asks to open '
+        'Matterleast, allow it.',
+};

@@ -85,14 +85,24 @@ abstract final class FileHandoff {
     PostFile file,
     String directory,
   ) async {
+    final destination = switch (file.kind) {
+      FileKind.image || FileKind.gif => SharedStorage.images,
+      FileKind.video => SharedStorage.video,
+      _ => SharedStorage.downloads,
+    };
+    // iOS puts pictures and videos into Photos, which asks first; the
+    // other platforms grant it without asking.
+    if (destination != SharedStorage.downloads &&
+        await FileDownloader().permissions.request(
+              PermissionType.iosAddToPhotoLibrary,
+            ) !=
+            PermissionStatus.granted) {
+      return null;
+    }
     final copy = await _namedCopy(cached, file, directory);
     return FileDownloader().moveFileToSharedStorage(
       copy.path,
-      switch (file.kind) {
-        FileKind.image || FileKind.gif => SharedStorage.images,
-        FileKind.video => SharedStorage.video,
-        _ => SharedStorage.downloads,
-      },
+      destination,
       mimeType: _mime(file),
     );
   }

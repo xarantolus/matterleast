@@ -28,7 +28,7 @@ class ShortcutFollower {
   var _queue = Future<void>.value();
 
   void start() {
-    if (isDesktop) return;
+    if (!hasAndroidServices) return;
     final servers = _ref.listenManual(serversProvider, (_, next) {
       if (next case AsyncData(:final value)) {
         _follow({
