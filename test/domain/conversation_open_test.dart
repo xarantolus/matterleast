@@ -79,30 +79,22 @@ void main() {
   group('refresh plan', () {
     test('nothing stored: the newest page', () {
       expect(
-        refreshPlan(hasRange: false, postsFetchedAt: base, newestStored: base),
+        refreshPlan(hasRange: false, postsFetchedAt: base),
         isA<FetchNewestPage>(),
       );
     });
 
-    test('stored: changes since the last fetch, else the newest message', () {
+    test('stored: changes since the last fetch', () {
       final fetched = base.add(const Duration(minutes: 5));
       expect(
-        refreshPlan(
-          hasRange: true,
-          postsFetchedAt: fetched,
-          newestStored: base,
-        ),
+        refreshPlan(hasRange: true, postsFetchedAt: fetched),
         isA<FetchSince>().having((p) => p.since, 'since', fetched),
-      );
-      expect(
-        refreshPlan(hasRange: true, postsFetchedAt: null, newestStored: base),
-        isA<FetchSince>().having((p) => p.since, 'since', base),
       );
     });
 
-    test('an empty range with no time: the newest page', () {
+    test('stored but never fetched since: the newest page', () {
       expect(
-        refreshPlan(hasRange: true, postsFetchedAt: null, newestStored: null),
+        refreshPlan(hasRange: true, postsFetchedAt: null),
         isA<FetchNewestPage>(),
       );
     });

@@ -194,7 +194,7 @@ class EntrySync {
   }
 
   Future<void> _team(String teamId) async {
-    final started = _clock();
+    final started = store.generation;
     final since = await _db.syncInt(SyncKeys.channelsSince(teamId)) ?? 0;
     final channels = server.call(
       () => _client.channels.getChannelsForTeamForUser(
@@ -222,7 +222,7 @@ class EntrySync {
       channels: await channels,
       members: await members,
       categories: await categories,
-      syncedAt: started,
+      startedAt: started,
     );
   }
 

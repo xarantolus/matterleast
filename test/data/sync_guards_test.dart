@@ -84,7 +84,7 @@ void main() {
       );
       await letItIn();
       expect((await session.store.post('old1'))!.message, 'good morning');
-    }, skip: 'fix not built yet: posts are stored without a server-time guard');
+    });
 
     test('does not bring back a deleted message', () async {
       await staleAnswer(post('old1', 0, message: 'morning', metadata: {}));
@@ -93,29 +93,23 @@ void main() {
       final row = (await session.store.post('old1'))!;
       expect(row.deleteAt, isNotNull);
       expect(row.message, isEmpty);
-    }, skip: 'fix not built yet: posts are stored without a server-time guard');
+    });
 
-    test(
-      'does not drop a reaction that was added after it was made',
-      () async {
-        await staleAnswer(
-          post('old1', 0, metadata: {'reactions': <Object?>[]}),
-        );
-        await session.store.applyReaction(
-          api.Reaction.fromJson({
-            'user_id': 'someone',
-            'post_id': 'old1',
-            'emoji_name': 'tada',
-            'create_at': ms(5),
-          }),
-          added: true,
-        );
-        await letItIn();
-        final reactions = await session.db.select(session.db.reactions).get();
-        expect(reactions.map((r) => r.emojiName), ['tada']);
-      },
-      skip: 'fix not built yet: a page replaces the reactions unconditionally',
-    );
+    test('does not drop a reaction that was added after it was made', () async {
+      await staleAnswer(post('old1', 0, metadata: {'reactions': <Object?>[]}));
+      await session.store.applyReaction(
+        api.Reaction.fromJson({
+          'user_id': 'someone',
+          'post_id': 'old1',
+          'emoji_name': 'tada',
+          'create_at': ms(5),
+        }),
+        added: true,
+      );
+      await letItIn();
+      final reactions = await session.db.select(session.db.reactions).get();
+      expect(reactions.map((r) => r.emojiName), ['tada']);
+    });
 
     test(
       'still brings in an edit made by someone while we were away',
@@ -130,38 +124,33 @@ void main() {
   });
 
   group('history after a gap in the socket', () {
-    test(
-      'posts missed while disconnected appear when the channel opens, '
-      'although a live post arrived after them',
-      () async {
-        // `old1` (minute 0) is the newest stored post. Posts m1..m3 were
-        // sent while the socket was down; m4 arrived live after it came back.
-        final missed = [for (var i = 1; i <= 3; i++) post('m$i', i * 10)];
-        await session.store.applyLivePost(
-          asPost(post('m4', 40)),
-          fromSelf: false,
-          mentionsMe: false,
-        );
-        server.handle = (r) {
-          if (r.path != '/api/v4/channels/$channelId/posts') {
-            return emptyAnswer(r);
-          }
-          final since = int.parse(r.raw.uri.queryParameters['since'] ?? '0');
-          return ok(
-            pageOf([
-              for (final p in [...missed, post('m4', 40)])
-                if ((p['update_at']! as int) > since) p,
-            ]),
-          );
-        };
-        await ConversationActions(session).refreshChannel(channelId);
-        for (final id in ['m1', 'm2', 'm3']) {
-          expect(await session.store.post(id), isNotNull, reason: id);
+    test('posts missed while disconnected appear when the channel opens, '
+        'although a live post arrived after them', () async {
+      // `old1` (minute 0) is the newest stored post. Posts m1..m3 were
+      // sent while the socket was down; m4 arrived live after it came back.
+      final missed = [for (var i = 1; i <= 3; i++) post('m$i', i * 10)];
+      await session.store.applyLivePost(
+        asPost(post('m4', 40)),
+        fromSelf: false,
+        mentionsMe: false,
+      );
+      server.handle = (r) {
+        if (r.path != '/api/v4/channels/$channelId/posts') {
+          return emptyAnswer(r);
         }
-      },
-      skip:
-          'fix not built yet: the since-fetch starts at the newest stored post',
-    );
+        final since = int.parse(r.raw.uri.queryParameters['since'] ?? '0');
+        return ok(
+          pageOf([
+            for (final p in [...missed, post('m4', 40)])
+              if ((p['update_at']! as int) > since) p,
+          ]),
+        );
+      };
+      await ConversationActions(session).refreshChannel(channelId);
+      for (final id in ['m1', 'm2', 'm3']) {
+        expect(await session.store.post(id), isNotNull, reason: id);
+      }
+    });
   });
 
   group('a team answer that predates a change', () {
@@ -219,7 +208,7 @@ void main() {
       final row = await channelRow();
       expect(row.lastPostAt, at(30));
       expect(row.totalMsgCount, 2);
-    }, skip: 'fix not built yet: channel rows are overwritten verbatim');
+    });
 
     test(
       'does not bring the unread badge back after I read the channel',
@@ -238,7 +227,6 @@ void main() {
         expect(mine.lastViewedAt, at(10));
         expect(mine.mentionCount, 0);
       },
-      skip: 'fix not built yet: memberships are overwritten verbatim',
     );
 
     test(
@@ -263,7 +251,6 @@ void main() {
         expect(await session.db.select(session.db.channels).get(), isEmpty);
         expect(await session.db.select(session.db.myChannels).get(), isEmpty);
       },
-      skip: 'fix not built yet: only a later store counts, not a removal',
     );
   });
 }

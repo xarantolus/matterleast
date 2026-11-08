@@ -13,6 +13,20 @@ import 'package:matterleast/log.dart';
 Value<T> _opt<T extends Object>(T? value) =>
     value == null ? const Value.absent() : Value(value);
 
+/// Pure: whether a post as the server sent it may replace the stored copy.
+/// A deleted post stays deleted, and an answer made before a newer edit
+/// (or reaction, which moves the server's `update_at` too) must not undo it.
+/// Equal times pass: replies and previews change without moving it.
+bool postIsCurrent({
+  required DateTime? storedUpdateAt,
+  required DateTime? storedDeleteAt,
+  required DateTime? incomingUpdateAt,
+}) {
+  if (storedDeleteAt != null) return false;
+  if (storedUpdateAt == null || incomingUpdateAt == null) return true;
+  return !incomingUpdateAt.isBefore(storedUpdateAt);
+}
+
 /// Pure: stored post metadata with [ack] added, or with its user's
 /// acknowledgement taken out; everything else stays as it was.
 String metadataWithAcknowledgement(
@@ -131,6 +145,45 @@ ChannelsCompanion channelCompanion(api.Channel c) => ChannelsCompanion(
   shared: _opt(c.shared),
   groupConstrained: _opt(c.groupConstrained),
 );
+
+/// [incoming] with the last-post times and message counts raised to what is
+/// stored: the server's never go down, so an older answer must not lower
+/// what a newer event already set.
+ChannelsCompanion channelKeepingNewer(
+  ChannelsCompanion incoming,
+  ChannelRow? stored,
+) {
+  if (stored == null) return incoming;
+  Value<DateTime?> later(Value<DateTime?> value, DateTime? was) =>
+      value.present &&
+          was != null &&
+          (value.value == null || was.isAfter(value.value!))
+      ? Value(was)
+      : value;
+  Value<int> more(Value<int> value, int was) =>
+      value.present && was > value.value ? Value(was) : value;
+  return incoming.copyWith(
+    lastPostAt: later(incoming.lastPostAt, stored.lastPostAt),
+    lastRootPostAt: later(incoming.lastRootPostAt, stored.lastRootPostAt),
+    totalMsgCount: more(incoming.totalMsgCount, stored.totalMsgCount),
+    totalMsgCountRoot: more(
+      incoming.totalMsgCountRoot,
+      stored.totalMsgCountRoot,
+    ),
+  );
+}
+
+/// [incoming] without the read state, for a channel read or changed here
+/// after the answer was asked for.
+MyChannelsCompanion myChannelKeepingReadState(MyChannelsCompanion incoming) =>
+    incoming.copyWith(
+      lastViewedAt: const Value.absent(),
+      msgCount: const Value.absent(),
+      msgCountRoot: const Value.absent(),
+      mentionCount: const Value.absent(),
+      mentionCountRoot: const Value.absent(),
+      urgentMentionCount: const Value.absent(),
+    );
 
 MyChannelsCompanion myChannelCompanion(api.ChannelMember m) =>
     MyChannelsCompanion(
