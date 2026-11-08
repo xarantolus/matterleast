@@ -230,6 +230,15 @@ Future<void> _openGallery(
           sentAt: m.file.createAt ?? DateTime.fromMillisecondsSinceEpoch(0),
         ),
     },
+    extras: _extras,
+    onExtra: (action, file) {
+      if (!context.mounted) return;
+      final shown = media.firstWhere((m) => m.file.id == file.id);
+      if (action == MediaAction.openInChannel) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      unawaited(_runExtra(context, ref, shown, action));
+    },
   );
 }
 
