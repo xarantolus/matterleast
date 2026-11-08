@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
+import 'package:conversation_shortcuts/conversation_shortcuts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/dev_sign_in.dart';
@@ -8,9 +9,9 @@ import 'package:matterleast/app/image_memory.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/incoming_shares.dart';
-import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/restore_conversation.dart';
+import 'package:matterleast/app/shortcut_follower.dart';
 import 'package:matterleast/app/shortcuts.dart';
 import 'package:matterleast/app/sso_resume.dart';
 import 'package:matterleast/data/files/local_copies.dart';
@@ -50,48 +51,37 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   StreamSubscription<Uri>? _links;
   StreamSubscription<List<SharedMediaFile>>? _shares;
   GoneChannels? _gone;
-  final _shortcuts = const LauncherShortcuts();
-  String? _shortcutsShown;
-  ProviderSubscription<AsyncValue<List<SwitchItem>>>? _shortcutSource;
+  final _shortcuts = const ConversationShortcuts();
+  late final _shortcutFollower = ShortcutFollower(ref);
 
-  void _followShortcuts(String? url) {
-    if (isDesktop) return;
-    _shortcutSource?.close();
-    _shortcutSource = null;
-    if (url == null) {
-      _showShortcuts(const []);
-      return;
-    }
-    _shortcutSource = ref.listenManual(switchItemsProvider(url), (_, next) {
-      if (next case AsyncData(:final value)) _showShortcuts(value);
-    }, fireImmediately: true);
+  /// The conversation of a shortcut id, if it is one of the user's.
+  Future<SwitchItem?> _shortcutTarget(String? id) async {
+    final target = id == null ? null : parseShortcutType(id);
+    if (target == null) return null;
+    final servers = await readOnce(ref, serversProvider.future);
+    final signedIn = {
+      for (final s in servers)
+        if (s.signedIn) s.url,
+    };
+    if (!signedIn.contains(target.url)) return null;
+    return shortcutItem(
+      id,
+      signedIn: signedIn,
+      items: await readOnce(ref, switchItemsProvider(target.url).future),
+    );
   }
 
-  Future<void> _openShortcut(NavigatorState navigator, String type) async {
-    final target = parseShortcutType(type);
-    if (target == null) return;
-    final servers = await readOnce(ref, serversProvider.future);
-    if (!servers.any((s) => s.signedIn && s.url == target.url)) return;
-    final items = await readOnce(ref, switchItemsProvider(target.url).future);
-    final channel = items.where((i) => i.id == target.channelId).firstOrNull;
+  Future<void> _openShortcut(NavigatorState navigator) async {
+    final channel = await _shortcutTarget(await _shortcuts.takeLaunch());
     if (channel == null || !navigator.mounted) return;
     await openConversation(
       navigator,
-      url: target.url,
+      url: channel.serverUrl,
       channelId: channel.id,
       title: channel.title,
       teamId: channel.teamId,
       fromOutside: true,
     );
-  }
-
-  void _showShortcuts(List<SwitchItem> items) {
-    final recent = recentConversations(items);
-    final key = [for (final i in recent) '${shortcutType(i)}\t${i.title}']
-        .join('\n');
-    if (key == _shortcutsShown) return;
-    _shortcutsShown = key;
-    unawaited(_shortcuts.show(recent));
   }
 
   @override
@@ -145,19 +135,21 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
           cacheDir: LocalCopies.resolveDirectory(await cacheDir),
           resolve: LocalCopies.resolveFile,
         );
+        final target = await _shortcutTarget(
+          await _shortcuts.takeShareTarget(),
+        );
         if (shared == null || !navigator.mounted) return;
         unawaited(
           navigator.push(
-            SlideRoute<void>.page(builder: (_) => ShareScreen(shared: shared)),
+            SlideRoute<void>.page(
+              builder: (_) => ShareScreen(shared: shared, target: target),
+            ),
           ),
         );
       }
 
-      unawaited(
-        _shortcuts.initialize(
-          (type) => unawaited(_openShortcut(navigator, type)),
-        ),
-      );
+      _shortcuts.listen(() => unawaited(_openShortcut(navigator)));
+      unawaited(_openShortcut(navigator));
       _shares = IncomingShares.later().listen((m) => unawaited(open(m)));
       unawaited(
         initialMedia.then((media) async {
@@ -166,11 +158,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         }),
       );
     });
-    ref.listenManual(
-      settingsServerProvider.select((s) => s?.url),
-      (_, url) => _followShortcuts(url),
-      fireImmediately: true,
-    );
+    _shortcutFollower.start();
     _lifecycle = AppLifecycleListener(
       onShow: () => unawaited(
         AppVisibility.shown().then((_) {
@@ -185,7 +173,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   void dispose() {
     unawaited(_links?.cancel());
     unawaited(_shares?.cancel());
-    _shortcutSource?.close();
+    _shortcutFollower.dispose();
     _gone?.dispose();
     _lifecycle.dispose();
     _imageMemory.dispose();

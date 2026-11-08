@@ -76,6 +76,13 @@ List<String> _shadeOrder(Map<String, AndroidNotificationDetails> shown) {
 }
 
 void main() {
+  test('a notification names the shortcut of its conversation', () {
+    expect(
+      _details(_notice(channel: 'town')).shortcutId,
+      'https://chat.example.test\ntown',
+    );
+  });
+
   group('heading', () {
     test('a direct message is headed by its sender alone', () {
       expect(

@@ -8,7 +8,6 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/notifications/stay_connected.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'package:quick_actions_platform_interface/quick_actions_platform_interface.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -43,19 +42,6 @@ class _FakeWorkmanager extends WorkmanagerPlatform
       calls.add('cancel $uniqueName');
 }
 
-class _FakeQuickActions extends QuickActionsPlatform
-    with MockPlatformInterfaceMixin {
-  final calls = <String>[];
-
-  @override
-  Future<void> initialize(QuickActionHandler handler) async =>
-      calls.add('initialize');
-
-  @override
-  Future<void> setShortcutItems(List<ShortcutItem> items) async =>
-      calls.add('show ${items.length}');
-}
-
 final _server = ServerEntry(
   url: 'https://chat.example.com',
   displayName: 'Example',
@@ -70,7 +56,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late _FakeWorkmanager workmanager;
-  late _FakeQuickActions quickActions;
+  late List<String> shortcutCalls;
   late List<String> stayConnected;
 
   setUp(() {
@@ -79,8 +65,15 @@ void main() {
     Workmanager();
     workmanager = _FakeWorkmanager();
     WorkmanagerPlatform.instance = workmanager;
-    quickActions = _FakeQuickActions();
-    QuickActionsPlatform.instance = quickActions;
+    shortcutCalls = [];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('matterleast/conversation_shortcuts'),
+          (call) async {
+            shortcutCalls.add(call.method);
+            return call.method == 'maxCount' ? 10 : null;
+          },
+        );
     stayConnected = [];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
@@ -104,9 +97,8 @@ void main() {
     await followSignedIn([_server]);
     await followSignedIn([]);
     await StayConnected.resume();
-    const shortcuts = LauncherShortcuts();
-    await shortcuts.initialize((_) {});
-    await shortcuts.show(const <SwitchItem>[]);
+    await ShortcutPublisher(iconOf: (_) async => null)
+        .publish(const <SwitchItem>[], signedIn: {}, loaded: {});
   }
 
   test('on the phone, the background check, the stay-connected service, '
@@ -116,7 +108,7 @@ void main() {
     expect(workmanager.calls, contains('register notification-check'));
     expect(workmanager.calls, contains('cancel notification-check'));
     expect(stayConnected, containsAll(['disable', 'resume']));
-    expect(quickActions.calls, ['initialize', 'show 0']);
+    expect(shortcutCalls, contains('maxCount'));
     expect(await IncomingShares.initial(), hasLength(1));
   });
 
@@ -128,7 +120,7 @@ void main() {
       expect(workmanager.calls, isEmpty);
       expect(stayConnected, isEmpty);
       expect(await StayConnected.enabled(), isFalse);
-      expect(quickActions.calls, isEmpty);
+      expect(shortcutCalls, isEmpty);
       expect(await IncomingShares.initial(), isEmpty);
       expect(await IncomingShares.later().isEmpty, isTrue);
     });
