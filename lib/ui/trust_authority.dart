@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/trusted_authorities.dart';
 import 'package:matterleast/domain/ca_certificate.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 
 /// Lets the user pick a CA certificate file for [server], shows what it is
 /// and stores it once they confirm. True when a CA was added.
@@ -30,9 +31,9 @@ Future<bool> trustAuthority(BuildContext context, Uri server) async {
   }
   final now = DateTime.now();
   String date(DateTime at) => dateLabel(at.toLocal(), now, alwaysYear: true);
-  final confirmed = await showDialog<bool>(
+  final confirmed = await showAdaptiveDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (context) => AlertDialog.adaptive(
       title: const Text('Trust this certificate authority?'),
       content: SingleChildScrollView(
         child: Column(
@@ -52,11 +53,11 @@ Future<bool> trustAuthority(BuildContext context, Uri server) async {
         ),
       ),
       actions: [
-        TextButton(
+        DialogAction(
           onPressed: () => Navigator.pop(context, false),
           child: const Text('Cancel'),
         ),
-        TextButton(
+        DialogAction(
           onPressed: () => Navigator.pop(context, true),
           child: const Text('Trust'),
         ),

@@ -223,10 +223,7 @@ void main() {
     await tester.tap(find.text('Restore').last);
     await h.settle(tester);
     await tester.tap(
-      find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.text('Restore'),
-      ),
+      find.descendant(of: find.byType(Dialog), matching: find.text('Restore')),
     );
     await h.settle(tester);
     expect(

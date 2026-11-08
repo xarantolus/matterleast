@@ -156,7 +156,7 @@ class _HomePaneState extends ConsumerState<HomePane> {
                 HomeLoading() => const [
                   SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator.adaptive()),
                   ),
                 ],
                 HomeFailed(:final title, :final detail) => [

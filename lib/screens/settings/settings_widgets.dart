@@ -1,4 +1,6 @@
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/ui/tokens.dart';
 
 /// The small-caps title over a group of settings.
@@ -27,6 +29,27 @@ Future<T?> pickOne<T>(
   required T current,
   required String Function(T) label,
 }) async {
+  if (usesCupertinoDialogs) {
+    final picked = await showCupertinoModalPopup<T>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: Text(title),
+        actions: [
+          for (final option in options)
+            CupertinoActionSheetAction(
+              isDefaultAction: option == current,
+              onPressed: () => Navigator.of(context).pop(option),
+              child: Text(label(option)),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+    return picked == current ? null : picked;
+  }
   final picked = await showDialog<T>(
     context: context,
     builder: (context) => SimpleDialog(

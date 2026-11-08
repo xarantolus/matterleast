@@ -207,7 +207,7 @@ class _ThreadList extends StatelessWidget {
         if (all == null || items == null || (all.isEmpty && refreshing))
           const SliverFillRemaining(
             hasScrollBody: false,
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CircularProgressIndicator.adaptive()),
           )
         else if (all.isEmpty && failure != null)
           SliverFillRemaining(

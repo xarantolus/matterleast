@@ -602,7 +602,7 @@ class _ButtonState extends State<_Button> with _Acting {
             children: [
               const SizedBox.square(
                 dimension: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator.adaptive(strokeWidth: 2),
               ),
               Flexible(child: _Label(b.text)),
             ],
@@ -749,7 +749,7 @@ class _SelectState extends State<_Select> with _Acting {
               if (busy)
                 const SizedBox.square(
                   dimension: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator.adaptive(strokeWidth: 2),
                 )
               else
                 const Icon(Icons.arrow_drop_down),

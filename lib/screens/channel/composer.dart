@@ -1026,7 +1026,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                     widget.url,
                     widget.channelId,
                   );
-                  return SwitchListTile(
+                  return SwitchListTile.adaptive(
                     secondary: const Icon(Icons.local_fire_department_outlined),
                     title: const Text('Burn on read'),
                     subtitle: const Text(
@@ -1232,7 +1232,7 @@ class _PriorityPickerState extends State<PriorityPicker> {
           ),
         ),
         if (widget.acknowledgements)
-          SwitchListTile(
+          SwitchListTile.adaptive(
             value: _ack,
             onChanged: (v) => setState(() => _ack = v),
             title: const Text('Request acknowledgement'),

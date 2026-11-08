@@ -196,7 +196,7 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
     final help = e.helpText?.isNotEmpty ?? false ? e.helpText : null;
     switch (e.type) {
       case DialogElementType.bool:
-        return CheckboxListTile(
+        return CheckboxListTile.adaptive(
           contentPadding: EdgeInsets.zero,
           value: _values[e.name] == true,
           onChanged: (v) => set(v ?? false),

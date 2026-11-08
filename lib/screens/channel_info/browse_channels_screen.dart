@@ -198,7 +198,9 @@ class _BrowseChannelsScreenState extends ConsumerState<BrowseChannelsScreen> {
                             (term.isNotEmpty &&
                                 list.found == null &&
                                 !_archived)
-                        ? const Center(child: CircularProgressIndicator())
+                        ? const Center(
+                            child: CircularProgressIndicator.adaptive(),
+                          )
                         : list.error != null
                         ? FailedState(
                             title: "Couldn't load channels",

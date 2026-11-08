@@ -97,7 +97,7 @@ class _ReportSheetState extends State<_ReportSheet> {
                     child: const Text('Retry'),
                   ),
                 ] else
-                  const CircularProgressIndicator(
+                  const CircularProgressIndicator.adaptive(
                     semanticsLabel: 'Loading reasons',
                   ),
               ],

@@ -68,7 +68,7 @@ class _TimeZonePageState extends ConsumerState<TimeZonePage> {
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
-            child: SwitchListTile(
+            child: SwitchListTile.adaptive(
               title: const Text('Set automatically'),
               subtitle: Text(
                 automatic && setting?.automaticZone != null

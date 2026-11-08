@@ -84,7 +84,7 @@ class _BurnOnReadViewState extends ConsumerState<BurnOnReadView> {
               icon: _revealing
                   ? const SizedBox.square(
                       dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator.adaptive(strokeWidth: 2),
                     )
                   : const Icon(Icons.visibility_outlined),
               label: const Text('View message'),

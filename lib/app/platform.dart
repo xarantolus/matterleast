@@ -23,6 +23,10 @@ bool get hasAndroidServices => defaultTargetPlatform == TargetPlatform.android;
 /// Saver only restricts metered networks.
 bool get dataSaverCoversWifi => defaultTargetPlatform == TargetPlatform.iOS;
 
+/// iOS asks with its own dialogs and action sheets; everywhere else,
+/// Material's.
+bool get usesCupertinoDialogs => defaultTargetPlatform == TargetPlatform.iOS;
+
 /// The phone's name for its data saving mode.
 String get dataSaverName => defaultTargetPlatform == TargetPlatform.iOS
     ? 'Low Data Mode'

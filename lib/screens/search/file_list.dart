@@ -435,7 +435,7 @@ class _FileRowState extends ConsumerState<FileRow> {
             : _locating
             ? const SizedBox.square(
                 dimension: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator.adaptive(strokeWidth: 2),
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,
