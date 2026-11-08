@@ -112,6 +112,17 @@ void main() {
     expect(await IncomingShares.initial(), hasLength(1));
   });
 
+  test('on iOS, the background check runs, but none of the Android-only '
+      'services starts', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    await startUp();
+    expect(workmanager.calls, contains('register notification-check'));
+    expect(stayConnected, isEmpty);
+    expect(await StayConnected.enabled(), isFalse);
+    expect(shortcutCalls, isEmpty);
+    expect(await IncomingShares.initial(), isEmpty);
+  });
+
   for (final platform in [TargetPlatform.linux, TargetPlatform.windows]) {
     test('on ${platform.name}, nothing polls while the app is closed and no '
         'phone-only service starts', () async {

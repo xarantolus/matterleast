@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:conversation_shortcuts/conversation_shortcuts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/shortcuts.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/conversation_stack.dart';
@@ -54,11 +53,9 @@ Future<void> openConversation(
   bool recordHistory = true,
 }) async {
   if (!from.mounted) return;
-  if (!isDesktop) {
-    unawaited(
-      const ConversationShortcuts().reportUsed(shortcutId(url, channelId)),
-    );
-  }
+  unawaited(
+    const ConversationShortcuts().reportUsed(shortcutId(url, channelId)),
+  );
   final navigator = outsidePopout(from);
   final container = ProviderScope.containerOf(navigator.context, listen: false);
   if (recordHistory) settleLocation(container);

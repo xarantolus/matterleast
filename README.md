@@ -1,5 +1,5 @@
 # Matterleast
-Matterleast is an unofficial Android, Windows and Linux client for [Mattermost](https://mattermost.com) servers that tries have a feel closer to Discord.
+Matterleast is an unofficial Android, Windows and Linux client (and an iOS build you make yourself) for [Mattermost](https://mattermost.com) servers that tries have a feel closer to Discord.
 
 ### Features
 - Discord-style feel and navigation: you can swipe between chats, swipe on messages to react/reply etc.
@@ -51,6 +51,27 @@ Alternatively, you can [download the APK file](https://github.com/xarantolus/mat
 - **Linux:** [download `matterleast.flatpak`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast.flatpak), install it with `flatpak install --user matterleast.flatpak` and start Matterleast from your app menu (or `flatpak run io.github.xarantolus.matterleast`). Flatpak fetches the GNOME runtime from Flathub if needed; on GNOME the tray icon needs the AppIndicator extension.
 
 
+### iOS
+There is no App Store version. Each release has an unsigned [`matterleast.ipa`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast.ipa), or you build the app yourself. What Apple asks for:
+
+- **Free Apple Account:** build from Xcode on a Mac onto your own iPhone, or re-sign the release `.ipa` with a sideloading tool such as [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io). Either way the app stops starting after **7 days** until you install it again, and a free account can have at most 3 such apps on a device.
+- **Xcode Cloud and TestFlight** need the paid [Apple Developer Program](https://developer.apple.com/programs/) (99 USD a year, 25 Xcode Cloud hours a month included) and **a fork of this repository**: Xcode Cloud only connects to repositories you administer, and it needs your team in the project.
+
+Building from Xcode (Mac with Xcode and [Flutter](https://docs.flutter.dev/get-started/install/macos/mobile-ios)):
+
+1. `flutter pub get`, then open `ios/Runner.xcworkspace` in Xcode.
+2. Runner target → Signing & Capabilities: pick your team (with a free account, "Personal Team") and change the Bundle Identifier to one of your own.
+3. Turn on Developer Mode on the iPhone, plug it in and run `flutter run --release`.
+
+Xcode Cloud (paid program):
+
+1. Fork this repository, set your team and Bundle Identifier as above, and commit that in your fork.
+2. In App Store Connect, create an app with that Bundle Identifier.
+3. In Xcode: Product → Xcode Cloud → Create Workflow. Workspace `ios/Runner.xcworkspace`, scheme `Runner`, an Archive action with TestFlight (Internal Testing Only). Limit the start conditions to changes in `lib/`, `ios/` and `pubspec.*` to save hours.
+4. [`ios/ci_scripts/ci_post_clone.sh`](ios/ci_scripts/ci_post_clone.sh) installs the Flutter version CI uses and the pods, and numbers each build. Install the build with the TestFlight app.
+
+On iOS, notifications while the app is closed come when iOS lets the app check, which can be much less often than every 15 minutes. Stay connected, sharing into the app, Direct Share shortcuts and the Data Saver setting are Android only for now.
+
 ### Development
 Matterleast is a Flutter app. [Install Flutter](https://docs.flutter.dev/get-started/install) with the Android toolchain, then:
 
@@ -68,7 +89,7 @@ There is also a dev container with Flutter, the Android SDK, an emulator and a l
 ### Limitations
 - Calls, Playbooks and Boards are not supported, nor are Apps framework forms and message translation.
 - Notifications don't go through Mattermost's push proxy, so new messages arrive when the app checks (about every 15 minutes) unless "Stay connected" is on.
-- No iOS or macOS version.
+- No macOS version, and no App Store or signed iOS release; see [iOS](#ios).
 - The Windows and Linux app doesn't set you to "away" when you're inactive; you show as online while it runs, unless you pick a status yourself.
 - The Windows and Linux composer has no spell check: Flutter offers none on desktop, and the packages for it ship their own word lists instead of using the system dictionary.
 - On Linux, the app draws at most 60 frames per second, not in step with the screen: Flutter's Linux engine uses a fixed 60 Hz timer instead of the display's refresh, so a 90 or 120 Hz screen shows uneven scrolling.

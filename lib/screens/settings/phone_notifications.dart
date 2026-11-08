@@ -5,14 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/desktop_shell.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/notifications/stay_connected.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/ui/tokens.dart';
 
-/// Notifications on this phone, for every server: whether Android lets the
-/// app notify, and the opt-in stay-connected service.
+/// Notifications on this phone, for every server: whether the system lets
+/// the app notify, and on Android the opt-in stay-connected service.
 class PhoneNotifications extends ConsumerStatefulWidget {
   const PhoneNotifications({super.key});
 
@@ -78,9 +79,9 @@ class _PhoneNotificationsState extends ConsumerState<PhoneNotifications> {
           ListTile(
             leading: const Icon(Icons.notifications_off_outlined),
             title: const Text('Notifications are off'),
-            subtitle: const Text(
-              'Android blocks them for Matterleast. Allow them to hear about '
-              'new messages while the app is closed.',
+            subtitle: Text(
+              '$phoneSystem blocks them for Matterleast. Allow them to hear '
+              'about new messages while the app is closed.',
             ),
             trailing: FilledButton.tonal(
               onPressed: _allow,
@@ -91,20 +92,25 @@ class _PhoneNotificationsState extends ConsumerState<PhoneNotifications> {
           ListTile(
             leading: const Icon(Icons.tune),
             title: const Text('Sound and importance'),
-            subtitle: const Text('Per kind of message, in the system settings'),
+            subtitle: Text(
+              hasAndroidServices
+                  ? 'Per kind of message, in the system settings'
+                  : 'In the system settings',
+            ),
             onTap: () => unawaited(ref.read(notifierProvider).openSettings()),
           ),
-        SwitchListTile(
-          secondary: const Icon(Icons.sync),
-          title: const Text('Stay connected'),
-          subtitle: const Text(
-            'Notifications right away instead of about every 15 minutes. '
-            'Keeps a connection open, with a permanent notification, and '
-            'uses more battery.',
+        if (hasAndroidServices)
+          SwitchListTile(
+            secondary: const Icon(Icons.sync),
+            title: const Text('Stay connected'),
+            subtitle: const Text(
+              'Notifications right away instead of about every 15 minutes. '
+              'Keeps a connection open, with a permanent notification, and '
+              'uses more battery.',
+            ),
+            value: _stayConnected ?? false,
+            onChanged: _stayConnected == null ? null : _setStayConnected,
           ),
-          value: _stayConnected ?? false,
-          onChanged: _stayConnected == null ? null : _setStayConnected,
-        ),
       ],
     );
   }

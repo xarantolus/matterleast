@@ -8,19 +8,19 @@ part of 'data_saver.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Whether Android's Data Saver restricts this app; never on desktop. The
+/// Whether Android's Data Saver restricts this app; never elsewhere. The
 /// phone reports every change.
 
 @ProviderFor(dataSaver)
 final dataSaverProvider = DataSaverProvider._();
 
-/// Whether Android's Data Saver restricts this app; never on desktop. The
+/// Whether Android's Data Saver restricts this app; never elsewhere. The
 /// phone reports every change.
 
 final class DataSaverProvider
     extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
     with $FutureModifier<bool>, $StreamProvider<bool> {
-  /// Whether Android's Data Saver restricts this app; never on desktop. The
+  /// Whether Android's Data Saver restricts this app; never elsewhere. The
   /// phone reports every change.
   DataSaverProvider._()
     : super(
@@ -47,4 +47,4 @@ final class DataSaverProvider
   }
 }
 
-String _$dataSaverHash() => r'ed8d4b4dc75a0cdcc36d9d563be95e422fa239b5';
+String _$dataSaverHash() => r'0a5f1047abe0c3b2bdff55fda3367aa72943badc';
