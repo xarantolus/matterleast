@@ -25,6 +25,35 @@ void main() {
     );
   });
 
+  testWidgets('on a phone the search has the cursor at once; dragging the '
+      'emoji puts the keyboard away', (tester) async {
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showEmojiPicker(context, _url),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+      overrides: [
+        recentEmojiProvider(_url).overrideWith((ref) async => ['smile']),
+        customEmojiProvider(_url)
+            .overrideWith((ref) => Stream.value(const <String, String>{})),
+        customEmojiCatalogProvider(_url).overrideWith((ref) async {}),
+        skinToneProvider(_url).overrideWith((ref) => Stream.value(0)),
+      ],
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+
+    await tester.drag(find.text('RECENT'), const Offset(0, -200));
+    await tester.pumpAndSettle();
+    expect(tester.testTextInput.hasAnyClients, isFalse);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
   testWidgets('the category bar jumps to its section in one list', (
     tester,
   ) async {

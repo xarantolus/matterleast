@@ -177,8 +177,7 @@ class EmojiPicker extends ConsumerStatefulWidget {
 
   final String url;
 
-  /// Used with a keyboard: search has the focus from the start and Enter
-  /// picks the first match.
+  /// Used with a keyboard: Enter in search picks the first match.
   final bool keyboard;
 
   /// Takes a pick made with Shift held on desktop, and the picker stays
@@ -472,6 +471,8 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
               ? Center(child: Text(_asking ? 'Searching…' : 'No emoji match.'))
               : GridView.builder(
                   controller: _scroll,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: EdgeInsets.fromLTRB(
                     Spacing.sm,
                     Spacing.sm,
@@ -500,6 +501,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
         }
         return CustomScrollView(
           controller: _scroll,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           slivers: [
             for (final (k, section) in sections.indexed) ...[
               SliverToBoxAdapter(
@@ -550,7 +552,7 @@ class _EmojiPickerState extends ConsumerState<EmojiPicker> {
                   onKeyEvent: _searchKey,
                   child: SearchBar(
                     focusNode: _searchFocus,
-                    autoFocus: widget.keyboard,
+                    autoFocus: true,
                     onSubmitted: widget.keyboard
                         ? (_) {
                             final first = _matches(query).firstOrNull;
