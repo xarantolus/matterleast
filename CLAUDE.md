@@ -91,7 +91,19 @@ notes, and they win over this summary.
 - Navigation: every content view opens through `openPage` as a
   `ContentPage` under the one shared header (same height everywhere);
   only previews (gallery, PDF), login and add-server are full screen.
-- Releases ship an APK, a Windows installer and a Linux Flatpak from CI.
+- iOS is built only by CI (no Mac here), and only on releases or a manual
+  run, so a break shows up late. Run `gh workflow run android_build.yml
+  --ref <branch> -f platforms=true` before merging anything that adds or
+  upgrades a plugin, adds a permission, or touches `ios/` or a
+  `packages/*/ios`. A new plugin must support iOS at our deployment target
+  (15.0, in the Podfile and the project); a feature that needs a
+  permission adds its `NS…UsageDescription` to `ios/Runner/Info.plist`; a
+  new Swift file is registered in `project.pbxproj`; native code added for
+  Android only gets a no-op on iOS behind a pure platform check. Bundle
+  ids and the App Group live in `ios/Flutter/Identity.xcconfig` and must
+  match the Apple developer portal.
+- Releases ship an APK, a Windows installer, a Linux Flatpak and an
+  unsigned iOS app from CI, and upload the iOS build to TestFlight.
   Keep CI to build, test, package and cache; no GUI or probe harnesses.
 
 ## Code style
