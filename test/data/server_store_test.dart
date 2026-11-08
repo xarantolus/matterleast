@@ -75,9 +75,7 @@ void main() {
     });
 
     test('is not removed when that refresh was answered without it', () async {
-      final now = DateTime.utc(2026, 1, 1, 12);
-      store = ServerStore(db, clock: () => now);
-      final started = now.subtract(const Duration(seconds: 2));
+      final started = store.generation;
       await store.applyChannels(
         channels: [
           api.Channel.fromJson({'id': 'dm1', 'name': 'a__b', 'type': 'D'}),
@@ -91,15 +89,13 @@ void main() {
         channels: const [],
         members: const [],
         categories: empty,
-        syncedAt: started,
+        startedAt: started,
       );
       expect(await db.select(db.channels).get(), hasLength(1));
       expect(await db.select(db.myChannels).get(), hasLength(1));
     });
 
     test('is removed by a refresh that started after it was stored', () async {
-      var now = DateTime.utc(2026, 1, 1, 12);
-      store = ServerStore(db, clock: () => now);
       await store.applyChannels(
         channels: [
           api.Channel.fromJson({'id': 'dm1', 'name': 'a__b', 'type': 'D'}),
@@ -108,13 +104,12 @@ void main() {
           api.ChannelMember.fromJson({'channel_id': 'dm1', 'user_id': 'me'}),
         ],
       );
-      now = now.add(const Duration(seconds: 5));
       await store.applyTeamChannels(
         teamId: 't1',
         channels: const [],
         members: const [],
         categories: empty,
-        syncedAt: now,
+        startedAt: store.generation,
       );
       expect(await db.select(db.channels).get(), isEmpty);
     });
@@ -449,6 +444,32 @@ void main() {
       expect(mine.mentionCount, 1);
     });
 
+    test(
+      'a post the channel list already counted is not counted again',
+      () async {
+        await store.applyChannels(
+          channels: [
+            api.Channel.fromJson({
+              'id': 'c1',
+              'team_id': 't1',
+              'name': 'town-square',
+              'type': 'O',
+              'total_msg_count': 2,
+              'last_post_at': 200,
+            }),
+          ],
+          members: const [],
+        );
+        await store.applyLivePost(
+          post('p2', createAt: 200),
+          fromSelf: false,
+          mentionsMe: false,
+        );
+        final before = (await db.select(db.channels).getSingle()).totalMsgCount;
+        expect(before, 2);
+      },
+    );
+
     test("someone else's post makes the channel unread", () async {
       await store.applyLivePost(
         post('p2', createAt: 200),
@@ -721,7 +742,7 @@ void main() {
           api.ChannelMember.fromJson({'channel_id': 'c1', 'user_id': 'me'}),
         ],
         categories: empty,
-        syncedAt: device,
+        startedAt: store.generation,
       );
       expect(await db.syncInt(SyncKeys.channelsSince('t1')), 600000);
     });

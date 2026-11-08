@@ -78,14 +78,14 @@ final class FetchSince extends RefreshPlan {
   final DateTime since;
 }
 
+/// Without a fetch time the stored range may end before posts that were
+/// missed, since live posts extend it; the newest page shows the truth.
 RefreshPlan refreshPlan({
   required bool hasRange,
   required DateTime? postsFetchedAt,
-  required DateTime? newestStored,
 }) {
-  if (!hasRange) return const FetchNewestPage();
-  final since = postsFetchedAt ?? newestStored;
-  return since == null ? const FetchNewestPage() : FetchSince(since);
+  if (!hasRange || postsFetchedAt == null) return const FetchNewestPage();
+  return FetchSince(postsFetchedAt);
 }
 
 /// The team a thread's read mark goes to: its channel's, or for direct and

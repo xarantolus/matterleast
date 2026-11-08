@@ -6,7 +6,6 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/conversation_open.dart';
-import 'package:matterleast/domain/post_ranges.dart';
 
 /// Fetches the history of an open channel or thread through the sync
 /// runner and stores it; the screen follows from the database. Each fetch
@@ -41,7 +40,6 @@ class ConversationActions {
       final plan = refreshPlan(
         hasRange: ranges.isNotEmpty,
         postsFetchedAt: await _postsFetchedAt(channelId),
-        newestStored: newestRange(ranges)?.latest,
       );
       final crt = await _db.collapsedThreads();
       switch (plan) {

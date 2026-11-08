@@ -71,9 +71,21 @@ class ServerStore {
   final ServerDatabase db;
   final DateTime Function() _clock;
 
-  /// When each channel was last stored here, so a refresh that started
-  /// before that, and so may not know the channel yet, doesn't remove it.
-  final _storedAt = <String, DateTime>{};
+  /// Orders what happens here against requests in flight, without a clock:
+  /// each local change to a channel (stored, read, removed) takes the next
+  /// number, and a request remembers the number it started at. One isolate
+  /// writes a server's channels: the background check skips its work while
+  /// the app is visible, so no other writer races these numbers.
+  var _generation = 0;
+  final _changedAt = <String, int>{};
+
+  /// The number to give [applyTeamChannels] as the start of a request.
+  int get generation => _generation;
+
+  void _changed(String channelId) => _changedAt[channelId] = ++_generation;
+
+  bool _changedSince(String channelId, int started) =>
+      (_changedAt[channelId] ?? 0) > started;
 
   final _read = StreamController<ReadMark>.broadcast(sync: true);
 
@@ -193,19 +205,39 @@ class ServerStore {
     required Iterable<api.Channel> channels,
     required Iterable<api.ChannelMember> members,
     api.OrderedSidebarCategories? categories,
+    int? startedAt,
   }) => db.transaction(() async {
-    final at = _clock();
+    final stored = {
+      for (final row in await (db.select(
+        db.channels,
+      )..where((c) => c.id.isIn([for (final c in channels) ?c.id]))).get())
+        row.id: row,
+    };
+    // Read here after the request began: the answer's read state is older.
+    final readHere = {
+      for (final c in channels)
+        if (startedAt != null &&
+            c.id != null &&
+            stored.containsKey(c.id) &&
+            _changedSince(c.id!, startedAt))
+          c.id,
+    };
     for (final c in channels) {
-      if (c.id != null) _storedAt[c.id!] = at;
+      if (c.id != null) _changed(c.id!);
     }
     await db.batch((b) {
       b.insertAllOnConflictUpdate(db.channels, [
         for (final c in channels)
-          if (c.id != null) channelCompanion(c),
+          if (c.id != null)
+            channelKeepingNewer(channelCompanion(c), stored[c.id]),
       ]);
       b.insertAllOnConflictUpdate(db.myChannels, [
         for (final m in members)
-          if (m.channelId != null) myChannelCompanion(m),
+          if (m.channelId != null)
+            if (readHere.contains(m.channelId))
+              myChannelKeepingReadState(myChannelCompanion(m))
+            else
+              myChannelCompanion(m),
       ]);
     });
     if (categories != null) await _applyCategories(categories);
@@ -344,12 +376,19 @@ class ServerStore {
     required List<api.Channel> channels,
     required List<api.ChannelMember> members,
     required api.OrderedSidebarCategories categories,
-    required DateTime syncedAt,
+    required int startedAt,
   }) => db.transaction(() async {
     final memberOf = {for (final m in members) ?m.channelId};
+    final known = {
+      for (final row in await db.select(db.channels).get()) row.id,
+    };
+    // Changed here since the request started yet not stored: removed
+    // meanwhile, and the older answer must not bring it back.
     final listed = [
       for (final c in channels)
-        if (memberOf.contains(c.id)) c,
+        if (memberOf.contains(c.id) &&
+            (known.contains(c.id) || !_changedSince(c.id!, startedAt)))
+          c,
     ];
     final listedIds = [for (final c in listed) c.id!];
     final stale =
@@ -361,13 +400,14 @@ class ServerStore {
             ))
             .get();
     for (final channel in stale) {
-      if (_storedAt[channel.id]?.isAfter(syncedAt) ?? false) continue;
+      if (_changedSince(channel.id, startedAt)) continue;
       await removeChannel(channel.id);
     }
     await applyChannels(
       channels: listed,
       members: members.where((m) => listedIds.contains(m.channelId)),
       categories: categories,
+      startedAt: startedAt,
     );
     // The server's newest time in the answer: anything archived later is
     // archived after this sync.
@@ -422,9 +462,14 @@ class ServerStore {
 
   Future<void> applyChannel(api.Channel channel) async {
     if (channel.id == null) return;
+    final stored = await (db.select(
+      db.channels,
+    )..where((c) => c.id.equals(channel.id!))).getSingleOrNull();
     await db
         .into(db.channels)
-        .insertOnConflictUpdate(channelCompanion(channel));
+        .insertOnConflictUpdate(
+          channelKeepingNewer(channelCompanion(channel), stored),
+        );
   }
 
   Future<void> applyChannelMember(api.ChannelMember member) async {
@@ -449,6 +494,7 @@ class ServerStore {
 
   /// The user left the channel or was removed from it.
   Future<void> removeChannel(String channelId) => db.transaction(() async {
+    _changed(channelId);
     await (db.delete(db.channels)..where((c) => c.id.equals(channelId))).go();
     await (db.delete(
       db.myChannels,
@@ -888,7 +934,7 @@ class ServerStore {
     };
     await _writeRanges('channel', channelId, updated);
 
-    if (kind == PageKind.since) {
+    if (kind != PageKind.before) {
       await _advanceWatermark(channelId, [...posts, ...others]);
     }
     return PageOutcome(stored: posts.length + others.length, capped: capped);
@@ -1085,7 +1131,23 @@ class ServerStore {
     ];
   }
 
-  Future<void> _upsertPostRows(List<api.Post> posts) async {
+  Future<void> _upsertPostRows(List<api.Post> all) async {
+    final stored = {
+      for (final row in await (db.select(
+        db.posts,
+      )..where((p) => p.id.isIn([for (final p in all) p.id!]))).get())
+        row.id: row,
+    };
+    final posts = [
+      for (final p in all)
+        if (postIsCurrent(
+          storedUpdateAt: stored[p.id]?.updateAt,
+          storedDeleteAt: stored[p.id]?.deleteAt,
+          incomingUpdateAt: p.updateAt,
+        ))
+          p,
+    ];
+    if (posts.isEmpty) return;
     final pendingIds = posts
         .map((p) => p.pendingPostId)
         .where((id) => id != null && id.isNotEmpty)
@@ -1160,6 +1222,13 @@ class ServerStore {
     final known = await (db.select(
       db.posts,
     )..where((p) => p.id.equals(post.id!))).getSingleOrNull();
+    // A channel list fetched before the event may already count the post:
+    // its last-post time, read before this post raises it, says so.
+    final channelBefore = await (db.select(
+      db.channels,
+    )..where((c) => c.id.equals(channelId))).getSingleOrNull();
+    final counted =
+        channelBefore?.lastPostAt?.isBefore(post.createAt!) == false;
     await _upsertPosts([post]);
     if (mentionsMe && !fromSelf) {
       await _prependToList(PostListNames.mentions, post.id!);
@@ -1176,7 +1245,7 @@ class ServerStore {
     final channel = await (db.select(
       db.channels,
     )..where((c) => c.id.equals(channelId))).getSingleOrNull();
-    if (channel != null && !isJoinLeave(post.type)) {
+    if (channel != null && !counted && !isJoinLeave(post.type)) {
       await (db.update(
         db.channels,
       )..where((c) => c.id.equals(channelId))).write(
@@ -1371,8 +1440,23 @@ class ServerStore {
                   ..where(db.reactions.postId.equals(reaction.postId!)))
                 .map((row) => row.read(db.reactions.postId.count())!)
                 .getSingle();
-        await (db.update(db.posts)..where((p) => p.id.equals(reaction.postId!)))
-            .write(PostsCompanion(reactionCount: Value(count)));
+        // The server moves the post's update_at with every reaction; taking
+        // that time keeps an older answer from replacing the reactions. A
+        // removal that carries no time is not covered.
+        final changedAt = reaction.updateAt ?? reaction.createAt;
+        await (db.update(
+          db.posts,
+        )..where((p) => p.id.equals(reaction.postId!))).write(
+          PostsCompanion.custom(
+            reactionCount: Constant(count),
+            updateAt: changedAt == null
+                ? null
+                : CustomExpression<int>(
+                    'MAX(COALESCE(update_at, 0), '
+                    '${changedAt.millisecondsSinceEpoch})',
+                  ),
+          ),
+        );
       });
 
   /// Someone acknowledged a message, or took the acknowledgement back.
@@ -1397,22 +1481,23 @@ class ServerStore {
 
   /// The server noted a visit at [at]; only a later time is taken, and the
   /// counters stay as they are.
-  Future<void> raiseLastViewed(String channelId, DateTime at) =>
-      (db.update(db.myChannels)..where(
-            (m) =>
-                m.channelId.equals(channelId) &
-                (m.lastViewedAt.isNull() |
-                    m.lastViewedAt.isSmallerThanValue(
-                      at.millisecondsSinceEpoch,
-                    )),
-          ))
-          .write(MyChannelsCompanion(lastViewedAt: Value(at)));
+  Future<void> raiseLastViewed(String channelId, DateTime at) {
+    _changed(channelId);
+    return (db.update(db.myChannels)..where(
+          (m) =>
+              m.channelId.equals(channelId) &
+              (m.lastViewedAt.isNull() |
+                  m.lastViewedAt.isSmallerThanValue(at.millisecondsSinceEpoch)),
+        ))
+        .write(MyChannelsCompanion(lastViewedAt: Value(at)));
+  }
 
   /// The channel counts as read up to [at], by default up to its newest
   /// message: the member counters catch up with the channel's, which is
   /// what the server does on `view`.
   Future<void> markViewed(String channelId, {DateTime? at}) =>
       db.transaction(() async {
+        _changed(channelId);
         final channel = await (db.select(
           db.channels,
         )..where((c) => c.id.equals(channelId))).getSingleOrNull();
