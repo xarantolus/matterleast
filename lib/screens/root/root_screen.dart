@@ -79,11 +79,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       return _RootLayout(
         servers: servers,
         title: 'Home',
-        refreshing: servers.any(
-          (s) =>
-              ref.watch(syncStatusProvider(s.url)).value is SyncRefreshing ||
-              ref.watch(serverCatchingUpProvider(s.url)),
-        ),
+        refreshingUrls: [for (final s in servers) s.url],
         actions: [
           const MessageSearchButton(),
           QuickSearchAnchor(
@@ -96,9 +92,60 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         pane: HomePane(servers: servers, onSearch: _openSearch),
       );
     }
-    final teams = ref.watch(railTeamsProvider(server.url)).value ?? const [];
-    final teamId = shownTeam(target, teams);
-    final team = teams.where((t) => t.id == teamId).firstOrNull;
+    // Only what this screen shows itself, so unread counts and a changed
+    // channel list rebuild the list pane, not the whole window.
+    final team = ref.watch(
+      railTeamsProvider(server.url).select((teams) {
+        final all = teams.value ?? const <RailTeam>[];
+        final id = shownTeam(target, all);
+        return (
+          id: id,
+          name: all.where((t) => t.id == id).firstOrNull?.displayName,
+        );
+      }),
+    );
+    final teamId = team.id;
+    return _RootLayout(
+      servers: servers,
+      teamId: teamId,
+      title: team.name ?? server.displayName,
+      refreshingUrls: [server.url],
+      actions: [
+        MessageSearchButton(url: server.url, teamId: teamId ?? ''),
+        QuickSearchAnchor(
+          opener: _search,
+          servers: servers,
+          target: teamId == null ? null : (url: server.url, teamId: teamId),
+        ),
+        if (teamId != null) _NewMenu(url: server.url, teamId: teamId),
+        if (teamId != null)
+          TeamMenu(url: server.url, teamId: teamId, teamName: team.name ?? ''),
+      ],
+      pane: _ChannelListSlot(
+        server: server,
+        teamId: teamId,
+        onFind: _openSearch,
+      ),
+    );
+  }
+}
+
+/// The picked team's channel list, or what stands in for it while there is
+/// none.
+class _ChannelListSlot extends ConsumerWidget {
+  const _ChannelListSlot({
+    required this.server,
+    required this.teamId,
+    required this.onFind,
+  });
+
+  final ServerEntry server;
+  final String? teamId;
+  final VoidCallback onFind;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final teamId = this.teamId;
     final status = ref.watch(syncStatusProvider(server.url)).value;
     final list = teamId == null
         ? null
@@ -110,39 +157,17 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       host: hostOf(server.url),
       liveUpdatesDown: ref.watch(socketDownProvider(server.url)).value ?? false,
     );
-    return _RootLayout(
-      servers: servers,
-      teamId: teamId,
-      title: team?.displayName ?? server.displayName,
-      refreshing:
-          status is SyncRefreshing ||
-          ref.watch(serverCatchingUpProvider(server.url)),
-      actions: [
-        MessageSearchButton(url: server.url, teamId: teamId ?? ''),
-        QuickSearchAnchor(
-          opener: _search,
-          servers: servers,
-          target: teamId == null ? null : (url: server.url, teamId: teamId),
-        ),
-        if (teamId != null) _NewMenu(url: server.url, teamId: teamId),
-        if (teamId != null)
-          TeamMenu(
-            url: server.url,
-            teamId: teamId,
-            teamName: team?.displayName ?? '',
-          ),
-      ],
-      pane: teamId == null && state is! ChannelListFailed
-          ? status is SyncIdle && status.lastSuccess != null
-                ? _NoTeam(url: server.url, serverName: server.displayName)
-                : const DelayedSpinner()
-          : ChannelListPane(
-              url: server.url,
-              teamId: teamId ?? '',
-              serverLabel: {server.displayName, server.address}.join(' · '),
-              state: state,
-              onFind: _openSearch,
-            ),
+    if (teamId == null && state is! ChannelListFailed) {
+      return status is SyncIdle && status.lastSuccess != null
+          ? _NoTeam(url: server.url, serverName: server.displayName)
+          : const DelayedSpinner();
+    }
+    return ChannelListPane(
+      url: server.url,
+      teamId: teamId ?? '',
+      serverLabel: {server.displayName, server.address}.join(' · '),
+      state: state,
+      onFind: onFind,
     );
   }
 }
@@ -152,8 +177,8 @@ class _RootLayout extends ConsumerWidget {
     required this.servers,
     required this.title,
     required this.pane,
+    required this.refreshingUrls,
     this.teamId,
-    this.refreshing = false,
     this.actions = const [],
   });
 
@@ -161,17 +186,17 @@ class _RootLayout extends ConsumerWidget {
   final String title;
   final Widget pane;
   final String? teamId;
-  final bool refreshing;
+
+  /// The servers whose refreshing runs the progress bar.
+  final List<String> refreshingUrls;
   final List<Widget> actions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => PaneLayout(
-    list: ContentPage(
-      focusRegion: false,
-      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+    list: _ListPage(
+      refreshingUrls: refreshingUrls,
+      title: title,
       actions: actions,
-      progress: refreshing,
-      progressDelay: ProgressSlot.settleDelay,
       body: SafeArea(
         top: false,
         child: Row(
@@ -187,6 +212,38 @@ class _RootLayout extends ConsumerWidget {
         ),
       ),
     ),
+  );
+}
+
+/// The list's page, with the progress bar running while one of
+/// [refreshingUrls] refreshes; only this page rebuilds when that changes.
+class _ListPage extends ConsumerWidget {
+  const _ListPage({
+    required this.refreshingUrls,
+    required this.title,
+    required this.actions,
+    required this.body,
+  });
+
+  final List<String> refreshingUrls;
+  final String title;
+  final List<Widget> actions;
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => ContentPage(
+    focusRegion: false,
+    title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+    actions: actions,
+    progress: refreshingUrls.any(
+      (url) =>
+          ref.watch(
+            syncStatusProvider(url).select((s) => s.value is SyncRefreshing),
+          ) ||
+          ref.watch(serverCatchingUpProvider(url)),
+    ),
+    progressDelay: ProgressSlot.settleDelay,
+    body: body,
   );
 }
 

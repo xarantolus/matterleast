@@ -13,6 +13,7 @@ import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/emoji_card.dart';
+import 'package:matterleast/ui/hover_tooltip.dart';
 import 'package:matterleast/ui/link_status.dart';
 import 'package:matterleast/ui/markdown/inline_actions.dart';
 import 'package:matterleast/ui/markdown/link_gestures.dart';
@@ -307,7 +308,7 @@ class _InlineTextState extends State<InlineText> {
               WidgetSpan(
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
-                child: Tooltip(
+                child: HoverTooltip(
                   message: ':$name:',
                   child: Text(unicode, style: base.merge(styled(marks))),
                 ),
@@ -333,7 +334,7 @@ class _InlineTextState extends State<InlineText> {
                 child: !named
                     ? custom
                     : isDesktop
-                    ? Tooltip(message: ':$name:', child: custom)
+                    ? HoverTooltip(message: ':$name:', child: custom)
                     : GestureDetector(onTap: showCard, child: custom),
               ),
             );
