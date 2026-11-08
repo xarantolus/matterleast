@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/message_search.dart';
 import 'package:matterleast/data/actions/switch_search.dart';
@@ -164,4 +165,15 @@ Future<String?> postLink(
 ) async {
   final session = await ref.watch(serverSessionProvider(url).future);
   return SearchViews(session.db, serverUrl: url).postLink(channelId, postId);
+}
+
+/// The name of [userId] as the stored users give it, once; empty when
+/// unknown.
+Future<String> senderName(WidgetRef ref, String url, String userId) async {
+  final session = await ref.read(serverSessionProvider(url).future);
+  final sender = await SearchViews(
+    session.db,
+    serverUrl: url,
+  ).sender(userId).first;
+  return sender?.name ?? '';
 }

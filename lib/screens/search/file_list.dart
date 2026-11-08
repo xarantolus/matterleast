@@ -211,8 +211,7 @@ Future<void> _openGallery(
   for (final m in media) {
     final id = m.file.userId;
     if (id.isEmpty || senders.containsKey(id)) continue;
-    final sender = await ref.read(fileSenderProvider(m.url, id).future);
-    senders[id] = sender?.name ?? '';
+    senders[id] = await senderName(ref, m.url, id);
   }
   if (!context.mounted) return;
   openGallery(
