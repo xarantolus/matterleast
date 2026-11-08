@@ -379,8 +379,12 @@ class ServerStore {
     required int startedAt,
   }) => db.transaction(() async {
     final memberOf = {for (final m in members) ?m.channelId};
+    final ids = db.channels.id;
     final known = {
-      for (final row in await db.select(db.channels).get()) row.id,
+      for (final row in await (db.selectOnly(
+        db.channels,
+      )..addColumns([ids])).get())
+        row.read(ids)!,
     };
     // Changed here since the request started yet not stored: removed
     // meanwhile, and the older answer must not bring it back.
