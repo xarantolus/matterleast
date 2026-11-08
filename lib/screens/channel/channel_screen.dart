@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/live_providers.dart';
+import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/bookmark_bar.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
@@ -115,7 +117,11 @@ class ChannelScreen extends ConsumerWidget {
       ),
       composerHint: 'Write to $name',
       dropTarget: name,
-      focusComposer: focusComposer,
+      focusComposer: focusComposerOnOpen(
+        asked: focusComposer,
+        desktop: isDesktop,
+        channelType: window?.channelType,
+      ),
       startText: 'This is the start of $name.',
       onOpenThread: (post, {reply = false}) => openConversation(
         Navigator.of(context),

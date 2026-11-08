@@ -100,3 +100,12 @@ String? threadReadTeam({
   final team = channelTeamId.isNotEmpty ? channelTeamId : currentTeamId;
   return team == null || team.isEmpty ? null : team;
 }
+
+/// Whether the composer takes the keyboard as a conversation opens: when
+/// [asked], and on desktop for direct and group messages, which are mostly
+/// opened to write. Phones keep the keyboard down.
+bool focusComposerOnOpen({
+  required bool asked,
+  required bool desktop,
+  required String? channelType,
+}) => asked || (desktop && (channelType == 'D' || channelType == 'G'));
