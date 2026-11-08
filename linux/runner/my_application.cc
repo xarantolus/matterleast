@@ -51,6 +51,9 @@ static void my_application_activate(GApplication* application) {
   }
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
+  // Skia: on the GTK embedder Impeller takes about a quarter more CPU and
+  // GPU per frame for the same conversation, with no visible difference.
+  fl_dart_project_set_enable_impeller(project, FALSE);
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
 
