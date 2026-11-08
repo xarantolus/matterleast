@@ -23,7 +23,20 @@ import workmanager_apple
     WorkmanagerPlugin.registerPeriodicTask(
       withIdentifier: "notification-check", earliestBeginInSeconds: NSNumber(value: 15 * 60))
     UNUserNotificationCenter.current().delegate = self
+    excludeDataFromBackup()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // Like Android's allowBackup="false": the server databases hold messages
+  // and stay on this phone.
+  private func excludeDataFromBackup() {
+    let files = FileManager.default
+    guard var support = files.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+    else { return }
+    try? files.createDirectory(at: support, withIntermediateDirectories: true)
+    var values = URLResourceValues()
+    values.isExcludedFromBackup = true
+    try? support.setResourceValues(values)
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
