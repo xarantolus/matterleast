@@ -383,11 +383,15 @@ jobs:
 
   # Unsigned, so it needs no Apple account here: sideloading tools re-sign
   # it with the user's own. Runs on every push to notice when iOS breaks.
+  # On main it also signs the app and uploads it to TestFlight; the release
+  # environment with the team's certificate only serves main. A manual run
+  # with "platforms" retries a failed upload.
   ios:
     name: Build for iOS
     needs: check
     if: needs.check.outputs.release == 'true' || inputs.platforms
     runs-on: macos-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'release' || '' }}
 
     steps:
       - name: Check out the code
@@ -423,7 +427,7 @@ jobs:
         run: flutter pub get
 
       - name: Build for iOS
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign --build-number "${{ github.run_number }}"
 
       # An .ipa is the app in a Payload folder, zipped.
       - name: Pack the app
@@ -441,52 +445,9 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  # Signs the iOS app with the team's distribution certificate and uploads
-  # it to TestFlight. The release environment only serves main; a manual run
-  # with "platforms" retries a failed upload.
-  testflight:
-    name: Upload to TestFlight
-    needs: check
-    if: >-
-      github.ref == 'refs/heads/main'
-      && (needs.check.outputs.release == 'true' || inputs.platforms)
-    runs-on: macos-latest
-    environment: release
-
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: stable
-          flutter-version: 3.47.8
-          cache: true
-
-      - name: Restore the native build hook outputs
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .dart_tool/hooks_runner
-          key: build-hooks-ios-${{ hashFiles('pubspec.lock') }}
-          restore-keys: build-hooks-ios-
-
-      - name: Restore the pods
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: |
-            ios/Pods
-            ~/Library/Caches/CocoaPods
-          key: pods-${{ hashFiles('ios/Podfile.lock', 'pubspec.lock') }}
-          restore-keys: pods-
-
-      - name: Get packages
-        run: flutter pub get
-
       # A keychain of its own, deleted with the runner.
       - name: Import the signing certificate and the API key
+        if: github.ref == 'refs/heads/main'
         env:
           IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
           IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
@@ -505,14 +466,15 @@ jobs:
           rm "$RUNNER_TEMP/certificate.p12"
           printf '%s' "$APPSTORE_KEY_P8" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
 
-      # Each upload needs a build number TestFlight hasn't seen.
+      # Each upload needs a build number TestFlight hasn't seen; the run
+      # number came in with the build above.
       - name: Archive the app
+        if: github.ref == 'refs/heads/main'
         env:
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           APPSTORE_KEY_ID: ${{ vars.APPSTORE_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ vars.APPSTORE_ISSUER_ID }}
         run: |
-          flutter build ios --release --config-only --no-codesign --build-number "${{ github.run_number }}"
           xcodebuild archive \
             -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
             -destination generic/platform=iOS \
@@ -527,6 +489,7 @@ jobs:
             "CODE_SIGN_IDENTITY[sdk=iphoneos*]=Apple Distribution"
 
       - name: Upload to TestFlight
+        if: github.ref == 'refs/heads/main'
         env:
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           APPSTORE_KEY_ID: ${{ vars.APPSTORE_KEY_ID }}
