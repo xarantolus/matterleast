@@ -1,10 +1,14 @@
 import 'dart:convert';
 
+import 'package:conversation_shortcuts/conversation_shortcuts.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/app/shortcuts.dart';
 import 'package:matterleast/log.dart';
+import 'package:matterleast/notifications/conversation_tile.dart';
 import 'package:matterleast/notifications/notice_format.dart';
 import 'package:matterleast/notifications/notify_rules.dart';
 
@@ -239,6 +243,7 @@ class Notifier {
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
+  final _shortcuts = const ConversationShortcuts();
 
   /// Desktop: the toasts shown by this process, by tag.
   final _shownHere = <String, ShownConversation>{};
@@ -353,6 +358,7 @@ class Notifier {
       );
       return;
     }
+    await _publishShortcut(notice);
     await _plugin.show(
       id: idOf(tag),
       title: notice.title,
@@ -362,6 +368,26 @@ class Notifier {
         android: detailsOf(notice, now: DateTime.now().toUtc()),
       ),
     );
+  }
+
+  /// Android lists a notification under Conversations only when a long-lived
+  /// shortcut of its conversation exists, so it is published first.
+  Future<void> _publishShortcut(ConversationNotice notice) async {
+    try {
+      await _shortcuts.push(
+        ShortcutSpec(
+          id: shortcutId(notice.serverUrl, notice.key.channelId),
+          label: notice.title,
+          rank: 0,
+          icon: notice.group
+              ? await conversationTile(notice.title)
+              : notice.largeIcon ?? await conversationTile(notice.title),
+          group: notice.group,
+        ),
+      );
+    } on PlatformException catch (e) {
+      Log.warn('notify', 'No conversation shortcut', e);
+    }
   }
 
   /// Most Linux notification servers have no text field: no Reply there.
@@ -417,6 +443,7 @@ class Notifier {
           ? null
           : ByteArrayAndroidBitmap(largeIcon),
       tag: tagOf(notice.serverUrl, notice.key),
+      shortcutId: shortcutId(notice.serverUrl, notice.key.channelId),
       category: AndroidNotificationCategory.message,
       visibility: NotificationVisibility.private,
       styleInformation: MessagingStyleInformation(
@@ -509,6 +536,12 @@ class Notifier {
   }
 
   Future<void> clearServer(String serverUrl) async {
+    if (!isDesktop) {
+      await _shortcuts.remove([
+        for (final id in await _shortcuts.published())
+          if (parseShortcutType(id)?.url == serverUrl) id,
+      ]);
+    }
     for (final s in await shown(serverUrl)) {
       await clear(serverUrl, s.key);
     }

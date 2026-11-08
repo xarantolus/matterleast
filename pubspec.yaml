@@ -11,6 +11,8 @@ dependencies:
   background_downloader: ^9.6.4
   cached_network_image: ^4.0.5
   connectivity_plus: ^7.3.2
+  conversation_shortcuts:
+    path: packages/conversation_shortcuts
   crypto: ^3.0.8
   dbus: ^0.8.0
   desktop_drop: ^0.8.0
@@ -43,7 +45,6 @@ dependencies:
   path: ^1.9.1
   path_provider: ^2.1.6
   pdfrx: ^2.10.1
-  quick_actions: ^1.1.1
   re_highlight: 0.0.3
   receive_sharing_intent: ^1.9.0
   retrofit: ^4.10.0
@@ -81,7 +82,6 @@ dev_dependencies:
   drift_dev: ^2.35.2
   flutter_launcher_icons: ^0.14.4
   plugin_platform_interface: ^2.1.8
-  quick_actions_platform_interface: ^1.1.0
 
 flutter:
   uses-material-design: true
