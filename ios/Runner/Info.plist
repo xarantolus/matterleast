@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AppGroup</key>
+	<string>group.$(APP_BUNDLE_ID)</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>notification-check</string>
@@ -37,6 +39,14 @@
 				<string>matterleast</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>io.github.xarantolus.matterleast.share</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>matterleast-share</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
@@ -48,6 +58,10 @@
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>INSendMessageIntent</string>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoadsForMedia</key>

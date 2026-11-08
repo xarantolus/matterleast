@@ -1,22 +1,20 @@
 import 'package:matterleast/app/platform.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:share_intake/share_intake.dart';
 
-/// What other apps share into this one. Android only: iOS would need a
-/// Share Extension, and desktops share nothing this way.
+/// What other apps share into this one: Android's share sheet and the iOS
+/// Share Extension. Desktops share nothing this way.
 abstract final class IncomingShares {
-  /// The share the app was launched with; empty when none.
-  static Future<List<SharedMediaFile>> initial() async => !hasAndroidServices
-      ? const []
-      : ReceiveSharingIntent.instance.getInitialMedia();
+  static Stream<ShareEvent> get events =>
+      isDesktop ? const Stream.empty() : ShareIntake.instance.events;
 
-  /// Shares arriving while the app runs.
-  static Stream<List<SharedMediaFile>> later() => !hasAndroidServices
-      ? const Stream.empty()
-      : ReceiveSharingIntent.instance.getMediaStream();
+  /// Starts delivering shares, copied below [cacheDir]; true when the app
+  /// was launched by one. Listen to [events] first.
+  static Future<bool> start(String cacheDir) async =>
+      !isDesktop && await ShareIntake.instance.start(cacheDir);
 
-  /// Forgets the launch share, so it is not handled again.
-  static Future<void> reset() async {
-    if (!hasAndroidServices) return;
-    await ReceiveSharingIntent.instance.reset();
-  }
+  static Future<void> cancel() => ShareIntake.instance.cancel();
 }
+
+/// Pure: whether [uri] is the iOS Share Extension bringing the app forward;
+/// the share itself arrives through [IncomingShares.events].
+bool isShareWakeLink(Uri uri) => uri.scheme == 'matterleast-share';

@@ -8,12 +8,12 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/notifications/stay_connected.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:workmanager/workmanager.dart';
 
 class _FakeWorkmanager extends WorkmanagerPlatform
     with MockPlatformInterfaceMixin {
   final calls = <String>[];
+  Duration? initialDelay;
 
   @override
   Future<void> initialize(
@@ -35,7 +35,10 @@ class _FakeWorkmanager extends WorkmanagerPlatform
     Duration? backoffPolicyDelay,
     String? tag,
     ForegroundServiceConfig? foregroundServiceConfig,
-  }) async => calls.add('register $uniqueName');
+  }) async {
+    calls.add('register $uniqueName');
+    this.initialDelay = initialDelay;
+  }
 
   @override
   Future<void> cancelByUniqueName(String uniqueName) async =>
@@ -83,12 +86,12 @@ void main() {
             return null;
           },
         );
-    ReceiveSharingIntent.setMockValues(
-      initialMedia: [
-        SharedMediaFile(path: '/shared/photo.jpg', type: SharedMediaType.image),
-      ],
-      mediaStream: const Stream.empty(),
-    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('matterleast/share_intake'),
+          // Launched by a share.
+          (call) async => call.method == 'start',
+        );
   });
 
   tearDown(() => debugDefaultTargetPlatformOverride = null);
@@ -109,18 +112,21 @@ void main() {
     expect(workmanager.calls, contains('cancel notification-check'));
     expect(stayConnected, containsAll(['disable', 'resume']));
     expect(shortcutCalls, contains('maxCount'));
-    expect(await IncomingShares.initial(), hasLength(1));
+    expect(await IncomingShares.start('/cache'), isTrue);
+    expect(workmanager.initialDelay, isNull);
   });
 
-  test('on iOS, the background check runs, but none of the Android-only '
-      'services starts', () async {
+  test('on iOS, the background check runs no sooner than 15 minutes after '
+      'scheduling and shares arrive, but none of the Android-only services '
+      'starts', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     await startUp();
     expect(workmanager.calls, contains('register notification-check'));
     expect(stayConnected, isEmpty);
     expect(await StayConnected.enabled(), isFalse);
     expect(shortcutCalls, isEmpty);
-    expect(await IncomingShares.initial(), isEmpty);
+    expect(await IncomingShares.start('/cache'), isTrue);
+    expect(workmanager.initialDelay, const Duration(minutes: 15));
   });
 
   for (final platform in [TargetPlatform.linux, TargetPlatform.windows]) {
@@ -132,8 +138,8 @@ void main() {
       expect(stayConnected, isEmpty);
       expect(await StayConnected.enabled(), isFalse);
       expect(shortcutCalls, isEmpty);
-      expect(await IncomingShares.initial(), isEmpty);
-      expect(await IncomingShares.later().isEmpty, isTrue);
+      expect(await IncomingShares.start('/cache'), isFalse);
+      expect(await IncomingShares.events.isEmpty, isTrue);
     });
   }
 }

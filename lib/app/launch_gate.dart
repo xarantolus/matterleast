@@ -11,6 +11,7 @@ import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/incoming_shares.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/restore_conversation.dart';
+import 'package:matterleast/app/share_receiver.dart';
 import 'package:matterleast/app/shortcut_follower.dart';
 import 'package:matterleast/app/shortcuts.dart';
 import 'package:matterleast/app/sso_resume.dart';
@@ -30,10 +31,8 @@ import 'package:matterleast/screens/root/place_reconciler.dart';
 import 'package:matterleast/screens/root/root_screen.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
-import 'package:matterleast/screens/share/share_screen.dart';
 import 'package:matterleast/screens/terms/terms_gate.dart';
 import 'package:matterleast/ui/slide_route.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 /// Picks the first screen from the server list on disk: the root with the
 /// rail when any server is signed in, else Add server. Also tells the user
@@ -49,7 +48,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   late final AppLifecycleListener _lifecycle;
   final _imageMemory = ReleaseImagesWhenHidden();
   StreamSubscription<Uri>? _links;
-  StreamSubscription<List<SharedMediaFile>>? _shares;
+  ShareReceiver? _shares;
   GoneChannels? _gone;
   final _shortcuts = const ConversationShortcuts();
   late final _shortcutFollower = ShortcutFollower(ref);
@@ -107,13 +106,20 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       final authSession = ref.read(browserAuthSessionProvider);
       final resume = ref.read(ssoResumeProvider);
       _links = links.uriLinkStream.listen((uri) {
+        if (isShareWakeLink(uri)) return;
         if (!isSsoCallbackLink(uri)) {
           unawaited(openIncomingLink(navigator, uri));
         } else if (!authSession.deliver(uri)) {
           unawaited(resume.resume(uri));
         }
       });
-      final initialMedia = IncomingShares.initial();
+      final cacheDir = LocalCopies.cacheDirectory();
+      unawaited(cacheDir.then((dir) => LocalCopies.sweep(dir, DateTime.now())));
+      final shares = _shares = ShareReceiver(
+        navigator,
+        target: _shortcutTarget,
+      );
+      final sharedAtLaunch = shares.start(cacheDir);
       unawaited(
         restoreConversation(
           ref,
@@ -121,42 +127,17 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
           launchedByIntent: Future.wait([
             notice,
             links.getInitialLink().then(
-              (link) => link != null && !isSsoCallbackLink(link),
+              (link) =>
+                  link != null &&
+                  !isSsoCallbackLink(link) &&
+                  !isShareWakeLink(link),
             ),
-            initialMedia.then((media) => media.isNotEmpty),
+            sharedAtLaunch,
           ]).then((launches) => launches.any((l) => l)),
         ),
       );
-      final cacheDir = LocalCopies.cacheDirectory();
-      unawaited(cacheDir.then((dir) => LocalCopies.sweep(dir, DateTime.now())));
-      Future<void> open(List<SharedMediaFile> media) async {
-        final shared = sharedContentOf(
-          media,
-          cacheDir: LocalCopies.resolveDirectory(await cacheDir),
-          resolve: LocalCopies.resolveFile,
-        );
-        final target = await _shortcutTarget(
-          await _shortcuts.takeShareTarget(),
-        );
-        if (shared == null || !navigator.mounted) return;
-        unawaited(
-          navigator.push(
-            SlideRoute<void>.page(
-              builder: (_) => ShareScreen(shared: shared, target: target),
-            ),
-          ),
-        );
-      }
-
       _shortcuts.listen(() => unawaited(_openShortcut(navigator)));
       unawaited(_openShortcut(navigator));
-      _shares = IncomingShares.later().listen((m) => unawaited(open(m)));
-      unawaited(
-        initialMedia.then((media) async {
-          await open(media);
-          return IncomingShares.reset();
-        }),
-      );
     });
     _shortcutFollower.start();
     _lifecycle = AppLifecycleListener(
@@ -172,7 +153,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   @override
   void dispose() {
     unawaited(_links?.cancel());
-    unawaited(_shares?.cancel());
+    _shares?.dispose();
     _shortcutFollower.dispose();
     _gone?.dispose();
     _lifecycle.dispose();

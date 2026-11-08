@@ -107,9 +107,11 @@ Uri? imageRequestUri(String url, Uri server, {required bool proxy}) {
 /// on mobile data.
 enum DataKind { image, gif, linkPicture }
 
-/// Pure: whether [kind] loads without a tap. Wi-Fi and Ethernet always do.
-/// On mobile data Android's Data Saver holds everything back, otherwise
-/// the setting for the kind decides.
+/// Pure: whether [kind] loads without a tap. The phone's [dataSaver] holds
+/// everything back: on mobile data, and also on Wi-Fi where it
+/// [dataSaverCoversWifi] (iOS Low Data Mode is set per network). Otherwise
+/// Wi-Fi and Ethernet always load, and on mobile data the setting for the
+/// kind decides.
 bool loadsAutomatically(
   DataKind kind, {
   required List<ConnectivityResult> connection,
@@ -117,9 +119,11 @@ bool loadsAutomatically(
   required bool images,
   required bool gifs,
   required bool linkPictures,
+  bool dataSaverCoversWifi = false,
 }) {
-  if (!isMetered(connection)) return true;
-  if (dataSaver) return false;
+  final metered = isMetered(connection);
+  if (dataSaver && (metered || dataSaverCoversWifi)) return false;
+  if (!metered) return true;
   return switch (kind) {
     DataKind.image => images,
     DataKind.gif => gifs,

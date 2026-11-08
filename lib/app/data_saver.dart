@@ -8,8 +8,8 @@ part 'data_saver.g.dart';
 
 const _channel = MethodChannel('matterleast/data_saver');
 
-/// Whether Android's Data Saver restricts this app; never elsewhere. The
-/// phone reports every change.
+/// Whether Android's Data Saver or iOS Low Data Mode restricts this app;
+/// never on desktop. The phone reports every change.
 @Riverpod(keepAlive: true)
 Stream<bool> dataSaver(Ref ref) {
   final changes = StreamController<bool>();
@@ -17,7 +17,7 @@ Stream<bool> dataSaver(Ref ref) {
     _channel.setMethodCallHandler(null);
     unawaited(changes.close());
   });
-  if (!hasAndroidServices) {
+  if (isDesktop) {
     changes.add(false);
     return changes.stream;
   }

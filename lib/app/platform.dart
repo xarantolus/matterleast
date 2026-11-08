@@ -19,6 +19,29 @@ bool get appBeforeShell => defaultTargetPlatform == TargetPlatform.windows;
 /// otherwise a phone like Android.
 bool get hasAndroidServices => defaultTargetPlatform == TargetPlatform.android;
 
+/// iOS Low Data Mode is set per network, Wi-Fi included; Android's Data
+/// Saver only restricts metered networks.
+bool get dataSaverCoversWifi => defaultTargetPlatform == TargetPlatform.iOS;
+
+/// The phone's name for its data saving mode.
+String get dataSaverName => defaultTargetPlatform == TargetPlatform.iOS
+    ? 'Low Data Mode'
+    : 'Data Saver';
+
+/// The earliest the background check runs after it is scheduled. iOS takes
+/// this, not a frequency, for every run; WorkManager on Android spaces the
+/// runs itself.
+Duration? get periodicCheckDelay => defaultTargetPlatform == TargetPlatform.iOS
+    ? const Duration(minutes: 15)
+    : null;
+
+/// How long a background check may take before it stops: iOS gives a
+/// refresh task about 30 seconds and ends an app that takes longer.
+Duration? get backgroundCheckLimit =>
+    defaultTargetPlatform == TargetPlatform.iOS
+    ? const Duration(seconds: 25)
+    : null;
+
 /// The phone's system by name, for sentences about its settings.
 String get phoneSystem =>
     defaultTargetPlatform == TargetPlatform.iOS ? 'iOS' : 'Android';

@@ -218,6 +218,7 @@ void main() {
       bool images = false,
       bool gifs = false,
       bool linkPictures = false,
+      bool coversWifi = false,
     }) => loadsAutomatically(
       kind,
       connection: connection,
@@ -225,6 +226,7 @@ void main() {
       images: images,
       gifs: gifs,
       linkPictures: linkPictures,
+      dataSaverCoversWifi: coversWifi,
     );
 
     test('each kind follows its own switch on mobile data', () {
@@ -266,6 +268,16 @@ void main() {
     test('Data Saver does not hold back Wi-Fi', () {
       for (final kind in DataKind.values) {
         expect(decide(kind, connection: wifi, dataSaver: true), isTrue);
+      }
+    });
+
+    test('Low Data Mode on a Wi-Fi network holds everything back', () {
+      for (final kind in DataKind.values) {
+        expect(
+          decide(kind, connection: wifi, dataSaver: true, coversWifi: true),
+          isFalse,
+        );
+        expect(decide(kind, connection: wifi, coversWifi: true), isTrue);
       }
     });
   });

@@ -34,7 +34,7 @@ ServerManager appServerManager({
     mediaBudget: () => settings.read(Settings.mediaCacheBytes),
     filesBudget: () => settings.read(Settings.filesCacheBytes),
     clearShared: () async =>
-        LocalCopies.clearLooseFiles(await LocalCopies.cacheDirectory()),
+        LocalCopies.clearShared(await LocalCopies.cacheDirectory()),
     openDatabase: (path) => ServerDatabase.open(path, shared: shared),
     onRead: onRead ?? (_, _) {},
     onWiped: onWiped ?? (_) async {},

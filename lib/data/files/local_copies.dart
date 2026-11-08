@@ -5,12 +5,12 @@ import 'package:matterleast/log.dart';
 import 'package:path/path.dart' as p;
 
 /// Short-lived copies of files in the app's cache folder: what other apps
-/// share (copied by receive_sharing_intent straight into the cache folder),
-/// what the pickers copy (`file_picker/<stamp>/`, image_picker's `<uuid>/`
+/// share (copied by share_intake into `share/<uuid>/`), what the pickers copy (`file_picker/<stamp>/`, image_picker's `<uuid>/`
 /// and loose files), and files handed to other apps
 /// (`images/<server>/handoff/<file id>/`).
 abstract final class LocalCopies {
   static const serverCachesFolder = 'images';
+  static const shareFolder = 'share';
   static const handoffFolder = 'handoff';
 
   /// Copies older than this are deleted on start-up.
@@ -29,7 +29,7 @@ abstract final class LocalCopies {
     }
   }
 
-  /// [cacheDir] with links resolved, as plugin copies are checked against.
+  /// [cacheDir] with links resolved, as share copies are checked against.
   static String resolveDirectory(String cacheDir) {
     try {
       return Directory(cacheDir).resolveSymbolicLinksSync();
@@ -38,8 +38,8 @@ abstract final class LocalCopies {
     }
   }
 
-  /// Deletes the share plugin's copies among [paths]; anything else is left
-  /// alone.
+  /// Deletes the share folders of the share copies among [paths]; anything
+  /// else is left alone.
   static Future<void> deleteShared(
     String cacheDir,
     Iterable<String> paths,
@@ -47,14 +47,16 @@ abstract final class LocalCopies {
     final root = resolveDirectory(cacheDir);
     for (final path in paths) {
       final resolved = resolveFile(path);
-      if (resolved != null && isPluginCopy(root, resolved)) {
-        await _delete(resolved);
+      if (resolved != null && isShareCopy(root, resolved)) {
+        await _delete(p.dirname(resolved));
       }
     }
   }
 
-  /// Deletes every loose file in the cache folder: share and camera copies.
-  static Future<void> clearLooseFiles(String cacheDir) async {
+  /// Deletes every share and every loose file in the cache folder (camera
+  /// shots, resized pictures).
+  static Future<void> clearShared(String cacheDir) async {
+    await _delete(p.join(cacheDir, shareFolder));
     for (final path in _children(cacheDir)) {
       if (FileSystemEntity.isFileSync(path) &&
           !FileSystemEntity.isLinkSync(path)) {
@@ -81,6 +83,7 @@ abstract final class LocalCopies {
     final candidates = <String>[
       ..._children(cacheDir),
       ..._children(p.join(cacheDir, 'file_picker')),
+      ..._children(p.join(cacheDir, shareFolder)),
       ..._children(p.join(cacheDir, handoffFolder)),
       for (final server in _children(p.join(cacheDir, serverCachesFolder)))
         ..._children(p.join(server, handoffFolder)),
@@ -133,14 +136,17 @@ List<String>? _below(String dir, String path) {
   return p.split(p.relative(normal, from: root));
 }
 
-/// Pure: whether the shared file at [path] is a copy the share plugin made:
-/// a file directly in [cacheDir]. Both must have links and `..` resolved.
-/// Anything else may be another of the app's own files, which a share must
-/// never send or delete.
-bool isPluginCopy(String cacheDir, String path) {
-  final parts = _below(cacheDir, path);
-  return parts != null && parts.length == 1;
-}
+/// Pure: whether the shared file at [path] is a copy share_intake made:
+/// `[cacheDir]/share/<uuid>/<name>`. Both must have links and `..`
+/// resolved. Anything else may be another of the app's own files, which a
+/// share must never send or delete.
+bool isShareCopy(String cacheDir, String path) =>
+    switch (_below(cacheDir, path)) {
+      [LocalCopies.shareFolder, final folder, _] => _uuid.hasMatch(
+        folder.toLowerCase(),
+      ),
+      _ => false,
+    };
 
 /// Pure: what to delete for the picker copy at [path] (its own folder, or
 /// the loose file for a camera shot or resized picture), or null when
@@ -159,7 +165,7 @@ String? pickerCopyOf(String cacheDir, String path) {
 
 /// Pure: whether the start-up sweep deletes [path], last changed at
 /// [modified]: a temporary copy older than [LocalCopies.maxAge]. Loose
-/// files in the cache folder are all copies (shares, camera shots, resized
+/// files in the cache folder are all copies (camera shots, resized
 /// pictures); folders there are caches unless image_picker named them.
 bool isStaleCopy(
   String cacheDir,
@@ -172,7 +178,9 @@ bool isStaleCopy(
   final parts = _below(cacheDir, path);
   if (parts == null) return false;
   return switch (parts) {
-    ['file_picker', _] || [LocalCopies.handoffFolder, _] => true,
+    ['file_picker', _] ||
+    [LocalCopies.handoffFolder, _] ||
+    [LocalCopies.shareFolder, _] => true,
     [LocalCopies.serverCachesFolder, _, LocalCopies.handoffFolder, _] => true,
     [final name] => isFile || _uuid.hasMatch(name),
     _ => false,

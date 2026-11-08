@@ -174,6 +174,7 @@ abstract final class PeriodicCheck {
       name,
       name,
       frequency: const Duration(minutes: 15),
+      initialDelay: periodicCheckDelay,
       existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
       constraints: Constraints(networkType: NetworkType.connected),
     );
@@ -195,7 +196,11 @@ void backgroundDispatcher() {
         await AppVisibility.answers(AppVisibility.serviceName)) {
       return true;
     }
-    await BackgroundApp.run((app) => app.checkAll(refresh: true));
+    final check = BackgroundApp.run((app) => app.checkAll(refresh: true));
+    final limit = backgroundCheckLimit;
+    // Answering in time ends the task; the check goes on until the phone
+    // suspends the app.
+    await (limit == null ? check : check.timeout(limit, onTimeout: () {}));
     return true;
   });
 }

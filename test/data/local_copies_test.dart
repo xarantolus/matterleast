@@ -9,48 +9,80 @@ void main() {
   const id = '0b9d3c4e-5f60-4a71-8b92-a3b4c5d6e7f8';
 
   group('share copies', () {
-    test('a file directly in the cache folder is a plugin copy', () {
-      expect(isPluginCopy(cache, '$cache/harbour.png'), isTrue);
+    test('a file in a share folder of its own is a share copy', () {
+      expect(isShareCopy(cache, '$cache/share/$id/harbour.png'), isTrue);
+      expect(
+        isShareCopy(cache, '$cache/share/${id.toUpperCase()}/harbour.png'),
+        isTrue,
+      );
     });
 
-    test('nothing else counts as a plugin copy', () {
+    test('nothing else counts as a share copy', () {
       for (final path in [
         '/data/user/0/app/files/server-chat.sqlite',
         '$cache/../files/server-chat.sqlite',
+        '$cache/share/$id/../../files/server-chat.sqlite',
         '$cache/images/server/files/a.png',
+        '$cache/harbour.png',
         '$cache/$id/harbour.png',
+        '$cache/share/harbour.png',
+        '$cache/share/not-a-uuid/harbour.png',
+        '$cache/share/$id/deeper/harbour.png',
+        '$cache/share/$id',
         cache,
         '/storage/emulated/0/Download/harbour.png',
         'harbour.png',
       ]) {
-        expect(isPluginCopy(cache, path), isFalse, reason: path);
+        expect(isShareCopy(cache, path), isFalse, reason: path);
       }
     });
 
-    test('deleting shares never touches other files', () async {
+    test(
+      'deleting shares removes their folders and never other files',
+      () async {
+        final root = await Directory.systemTemp.createTemp('copies');
+        addTearDown(() => root.delete(recursive: true));
+        final cacheDir = p.join(root.path, 'cache');
+        final share = p.join(cacheDir, 'share', id);
+        final copy = File(p.join(share, 'harbour.png'))
+          ..createSync(recursive: true);
+        final database = File(p.join(root.path, 'files', 'server.sqlite'))
+          ..createSync(recursive: true);
+        final link = Link(p.join(cacheDir, 'share', id, 'innocent.png'))
+          ..createSync(database.path);
+        final avatar = File(p.join(cacheDir, 'images', 's', 'a.png'))
+          ..createSync(recursive: true);
+
+        await LocalCopies.deleteShared(cacheDir, [
+          database.path,
+          p.join(cacheDir, '..', 'files', 'server.sqlite'),
+          link.path,
+          avatar.path,
+        ]);
+        expect(database.existsSync(), isTrue);
+        expect(avatar.existsSync(), isTrue);
+        expect(copy.existsSync(), isTrue);
+
+        await LocalCopies.deleteShared(cacheDir, [copy.path]);
+        expect(Directory(share).existsSync(), isFalse);
+        expect(database.existsSync(), isTrue);
+      },
+    );
+
+    test('signing out clears shares and loose copies, not caches', () async {
       final root = await Directory.systemTemp.createTemp('copies');
       addTearDown(() => root.delete(recursive: true));
-      final cacheDir = p.join(root.path, 'cache');
-      final copy = File(p.join(cacheDir, 'harbour.png'))
+      final copy = File(p.join(root.path, 'share', id, 'harbour.png'))
         ..createSync(recursive: true);
-      final database = File(p.join(root.path, 'files', 'server.sqlite'))
-        ..createSync(recursive: true);
-      final link = Link(p.join(cacheDir, 'innocent.png'))
-        ..createSync(database.path);
-      final avatar = File(p.join(cacheDir, 'images', 's', 'a.png'))
+      final shot = File(p.join(root.path, 'camera.jpg'))..createSync();
+      final avatar = File(p.join(root.path, 'images', 's', 'a.png'))
         ..createSync(recursive: true);
 
-      await LocalCopies.deleteShared(cacheDir, [
-        database.path,
-        p.join(cacheDir, '..', 'files', 'server.sqlite'),
-        link.path,
-        avatar.path,
-        copy.path,
-      ]);
+      await LocalCopies.clearShared(root.path);
 
-      expect(database.existsSync(), isTrue);
-      expect(avatar.existsSync(), isTrue);
       expect(copy.existsSync(), isFalse);
+      expect(shot.existsSync(), isFalse);
+      expect(avatar.existsSync(), isTrue);
     });
   });
 
@@ -96,6 +128,7 @@ void main() {
         ('$cache/harbour.png', true),
         ('$cache/$id', false),
         ('$cache/file_picker/1761400000000', false),
+        ('$cache/share/$id', false),
         ('$cache/handoff/file1', false),
         ('$cache/images/server-chat/handoff/file1', false),
       ]) {

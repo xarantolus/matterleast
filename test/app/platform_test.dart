@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/post_files.dart';
+import 'package:matterleast/notifications/background_refresh.dart';
 import 'package:matterleast/screens/login/login_screen.dart';
 import 'package:matterleast/ui/post_files.dart';
 
@@ -35,6 +36,32 @@ void main() {
     expect(phoneSystem, 'Android');
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     expect(phoneSystem, 'iOS');
+  });
+
+  test('iOS checks in the background no sooner than 15 minutes after '
+      'scheduling and stops before iOS ends the app; Android paces itself', () {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    expect(periodicCheckDelay, const Duration(minutes: 15));
+    expect(backgroundCheckLimit, lessThan(const Duration(seconds: 30)));
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    expect(periodicCheckDelay, isNull);
+    expect(backgroundCheckLimit, isNull);
+  });
+
+  test("iOS Low Data Mode covers Wi-Fi; Android's Data Saver does not", () {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    expect((dataSaverName, dataSaverCoversWifi), ('Low Data Mode', true));
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    expect((dataSaverName, dataSaverCoversWifi), ('Data Saver', false));
+  });
+
+  test('iOS settings say when the app checks while closed, and when iOS '
+      'does not let it', () {
+    final on = backgroundCheckNotice(refreshAllowed: true);
+    expect(on.subtitle, contains('Open the app to get messages right away'));
+    final off = backgroundCheckNotice(refreshAllowed: false);
+    expect(off.title, 'Background App Refresh is off');
+    expect(off.subtitle, contains('Turn on Background App Refresh'));
   });
 
   test('the sign-in hint names what each system asks', () {

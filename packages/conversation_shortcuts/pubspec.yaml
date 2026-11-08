@@ -1,5 +1,5 @@
 name: conversation_shortcuts
-description: Android long-lived shortcuts for conversations, used by notifications and Direct Share.
+description: Conversation shortcuts for Android notifications and Direct Share, and iOS share-sheet suggestions.
 publish_to: none
 version: 0.0.1
 
@@ -12,6 +12,8 @@ flutter:
     platforms:
       android:
         package: io.github.xarantolus.conversation_shortcuts
+        pluginClass: ConversationShortcutsPlugin
+      ios:
         pluginClass: ConversationShortcutsPlugin
 
 dependencies:

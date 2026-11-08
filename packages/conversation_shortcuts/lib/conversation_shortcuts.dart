@@ -21,8 +21,10 @@ class ShortcutSpec {
   final bool group;
 }
 
-/// Android's long-lived conversation shortcuts. Every call does nothing on
-/// other platforms and where the plugin is absent (tests).
+/// Android's long-lived conversation shortcuts; on iOS the conversations
+/// a message arrives in are donated for share-sheet suggestions. Every
+/// call does nothing on other platforms and where the plugin is absent
+/// (tests).
 class ConversationShortcuts {
   const ConversationShortcuts();
 
@@ -34,6 +36,7 @@ class ConversationShortcuts {
   Future<Set<String>> published() async =>
       {...?await _call<List<Object?>>('published')}.whereType<String>().toSet();
 
+  /// Publishes [spec] on Android; on iOS donates a message received in it.
   Future<void> push(ShortcutSpec spec) => _call('push', {
     'id': spec.id,
     'label': spec.label,
@@ -48,11 +51,12 @@ class ConversationShortcuts {
   /// Tells Android the user opened or wrote in [id], which ranks it higher.
   Future<void> reportUsed(String id) => _call('reportUsed', {'id': id});
 
-  /// The shortcut a share was sent to, once; untrusted.
-  Future<String?> takeShareTarget() => _call<String>('takeShareTarget');
-
   /// The shortcut the app was opened by, once; untrusted.
   Future<String?> takeLaunch() => _call<String>('takeLaunch');
+
+  /// Withdraws what iOS was told about the conversations of [serverUrl].
+  Future<void> forgetServer(String serverUrl) =>
+      _call('forgetServer', {'serverUrl': serverUrl});
 
   /// Calls [onOpened] when a shortcut opens the running app.
   void listen(void Function() onOpened) {
@@ -62,7 +66,12 @@ class ConversationShortcuts {
   }
 
   Future<T?> _call<T>(String method, [Map<String, Object?>? arguments]) async {
-    if (defaultTargetPlatform != TargetPlatform.android) return null;
+    final supported = switch (defaultTargetPlatform) {
+      TargetPlatform.android => method != 'forgetServer',
+      TargetPlatform.iOS => const {'push', 'forgetServer'}.contains(method),
+      _ => false,
+    };
+    if (!supported) return null;
     try {
       return await _channel.invokeMethod<T>(method, arguments);
     } on MissingPluginException {

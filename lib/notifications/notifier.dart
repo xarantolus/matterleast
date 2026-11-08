@@ -402,7 +402,7 @@ class Notifier {
       );
       return;
     }
-    if (hasAndroidServices) await _publishShortcut(notice);
+    await _publishShortcut(notice);
     final newest = notice.messages.last;
     await _plugin.show(
       id: idOf(tag),
@@ -423,7 +423,8 @@ class Notifier {
   }
 
   /// Android lists a notification under Conversations only when a long-lived
-  /// shortcut of its conversation exists, so it is published first.
+  /// shortcut of its conversation exists, so it is published first; iOS
+  /// learns the conversation for share-sheet suggestions.
   Future<void> _publishShortcut(ConversationNotice notice) async {
     try {
       await _shortcuts.push(
@@ -601,6 +602,7 @@ class Notifier {
   }
 
   Future<void> clearServer(String serverUrl) async {
+    await _shortcuts.forgetServer(serverUrl);
     await _shortcuts.remove([
       for (final id in await _shortcuts.published())
         if (parseShortcutType(id)?.url == serverUrl) id,
