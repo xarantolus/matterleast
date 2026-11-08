@@ -60,17 +60,26 @@ There is no App Store version. Each release has an unsigned [`matterleast.ipa`](
 Building from Xcode (Mac with Xcode and [Flutter](https://docs.flutter.dev/get-started/install/macos/mobile-ios)):
 
 1. `flutter pub get`, then open `ios/Runner.xcworkspace` in Xcode.
-2. Runner target → Signing & Capabilities: pick your team (with a free account, "Personal Team") and change the Bundle Identifier to one of your own.
-3. Turn on Developer Mode on the iPhone, plug it in and run `flutter run --release`.
+2. Change `APP_BUNDLE_ID` in [`ios/Flutter/Identity.xcconfig`](ios/Flutter/Identity.xcconfig) to a bundle id of your own. The Share Extension (`<id>.ShareExtension`) and the App Group (`group.<id>`) follow it.
+3. In Xcode, for both the Runner and the ShareExtension target → Signing & Capabilities: pick your team (with a free account, "Personal Team"). Xcode registers the App Group, which free accounts can use too.
+4. Turn on Developer Mode on the iPhone, plug it in and run `flutter run --release`.
+
+The Share Extension is a second App ID, and a free account gets 10 App IDs a week. To build without it: in Xcode, select the ShareExtension target and delete it (Runner then no longer embeds it), and the app simply receives no shares. Sideloading tools can also strip extensions from the release `.ipa`.
 
 Xcode Cloud (paid program):
 
-1. Fork this repository, set your team and Bundle Identifier as above, and commit that in your fork.
+1. Fork this repository, set `APP_BUNDLE_ID` and your team as above, and commit that in your fork.
 2. In App Store Connect, create an app with that Bundle Identifier.
 3. In Xcode: Product → Xcode Cloud → Create Workflow. Workspace `ios/Runner.xcworkspace`, scheme `Runner`, an Archive action with TestFlight (Internal Testing Only). Limit the start conditions to changes in `lib/`, `ios/` and `pubspec.*` to save hours.
 4. [`ios/ci_scripts/ci_post_clone.sh`](ios/ci_scripts/ci_post_clone.sh) installs the Flutter version CI uses and the pods, and numbers each build. Install the build with the TestFlight app.
 
-On iOS, notifications while the app is closed come when iOS lets the app check, which can be much less often than every 15 minutes. Stay connected, sharing into the app, Direct Share shortcuts and the Data Saver setting are Android only for now.
+What differs on iOS:
+
+- **Notifications while the app is closed** come when iOS lets the app check (Background App Refresh), which can be much less often than every 15 minutes. Stay connected doesn't exist on iOS: iOS lets no app keep a connection open in the background, except through push, which Matterleast doesn't use.
+- **Sharing into the app** goes through the Share Extension, which then opens Matterleast. If iOS doesn't open it, open Matterleast yourself and the share is waiting.
+- **Share-sheet suggestions:** conversations you get messages in show up in the share sheet.
+- **Low Data Mode** holds images, GIFs and link pictures back like Android's Data Saver, on Wi-Fi networks where it is on too.
+- **Not yet:** the sender's picture on notifications (Communication Notifications), which needs the paid program.
 
 ### Development
 Matterleast is a Flutter app. [Install Flutter](https://docs.flutter.dev/get-started/install) with the Android toolchain, then:

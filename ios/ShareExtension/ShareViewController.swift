@@ -179,15 +179,24 @@ class ShareViewController: UIViewController {
         return candidate
     }
 
-    /// Share extensions have no API to open their app; the responder chain
-    /// reaches the application object, as every share extension does.
+    private typealias OpenURL = @convention(c) (
+        AnyObject, Selector, URL, [UIApplication.OpenExternalURLOptionsKey: Any], ((Bool) -> Void)?
+    ) -> Void
+
+    /// Share extensions have no API to open their app (and may not link
+    /// `UIApplication.open`); the responder chain reaches the application
+    /// object, whose method is called by name, as every share extension does.
     @MainActor
     private func openApp() async -> Bool {
         guard let url = URL(string: "matterleast-share://open") else { return false }
+        let selector = NSSelectorFromString("openURL:options:completionHandler:")
         var responder: UIResponder? = self
         while let current = responder {
-            if let application = current as? UIApplication {
-                return await application.open(url, options: [:])
+            if current is UIApplication, current.responds(to: selector) {
+                let open = unsafeBitCast(current.method(for: selector), to: OpenURL.self)
+                return await withCheckedContinuation { continuation in
+                    open(current, selector, url, [:]) { continuation.resume(returning: $0) }
+                }
             }
             responder = current.next
         }

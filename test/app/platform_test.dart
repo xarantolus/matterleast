@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/notifications/background_refresh.dart';
+import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/screens/login/login_screen.dart';
 import 'package:matterleast/ui/post_files.dart';
 
@@ -62,6 +63,18 @@ void main() {
     final off = backgroundCheckNotice(refreshAllowed: false);
     expect(off.title, 'Background App Refresh is off');
     expect(off.subtitle, contains('Turn on Background App Refresh'));
+  });
+
+  test('the notifications prompt offers Stay connected only where it '
+      'exists', () {
+    expect(
+      notificationsPromptText(stayConnected: true),
+      contains('turn on Stay connected'),
+    );
+    expect(
+      notificationsPromptText(stayConnected: false),
+      allOf(contains('when iOS lets it'), isNot(contains('Stay connected'))),
+    );
   });
 
   test('the sign-in hint names what each system asks', () {
