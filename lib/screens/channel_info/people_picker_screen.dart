@@ -102,7 +102,7 @@ class _PeoplePickerScreenState extends ConsumerState<PeoplePickerScreen> {
         onTap: _toggle,
         emptyTitle: widget.emptyTitle,
         emptyBody: widget.emptyBody,
-        trailing: (person) => Checkbox(
+        trailing: (person) => Checkbox.adaptive(
           value: _picked.any((p) => p.id == person.id),
           onChanged: (_) => _toggle(person),
         ),

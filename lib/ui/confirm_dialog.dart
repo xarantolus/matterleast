@@ -1,4 +1,47 @@
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/platform.dart';
+
+/// A button of an adaptive dialog: Material's text button, an iOS dialog
+/// action on iOS. A [primary] one is the answer the dialog hopes for
+/// (filled on Material, bold on iOS); a [destructive] one is drawn in the
+/// error colour.
+class DialogAction extends StatelessWidget {
+  const DialogAction({
+    required this.onPressed,
+    required this.child,
+    this.primary = false,
+    this.destructive = false,
+    super.key,
+  });
+
+  final VoidCallback? onPressed;
+  final Widget child;
+  final bool primary;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    if (usesCupertinoDialogs) {
+      return CupertinoDialogAction(
+        onPressed: onPressed,
+        isDefaultAction: primary,
+        isDestructiveAction: destructive,
+        child: child,
+      );
+    }
+    if (primary) return FilledButton(onPressed: onPressed, child: child);
+    return TextButton(
+      style: destructive
+          ? TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            )
+          : null,
+      onPressed: onPressed,
+      child: child,
+    );
+  }
+}
 
 /// Asks before something that is hard to undo; true when confirmed. A
 /// [destructive] action is drawn in the error colour.
@@ -9,22 +52,18 @@ Future<bool> confirm(
   required String action,
   bool destructive = false,
 }) async =>
-    await showDialog<bool>(
+    await showAdaptiveDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(title),
         content: Text(body),
         actions: [
-          TextButton(
+          DialogAction(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
-          TextButton(
-            style: destructive
-                ? TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                  )
-                : null,
+          DialogAction(
+            destructive: destructive,
             onPressed: () => Navigator.pop(context, true),
             child: Text(action),
           ),
@@ -68,13 +107,13 @@ Future<void> inform(
   BuildContext context, {
   required String title,
   required String body,
-}) => showDialog<void>(
+}) => showAdaptiveDialog<void>(
   context: context,
-  builder: (context) => AlertDialog(
+  builder: (context) => AlertDialog.adaptive(
     title: Text(title),
     content: Text(body),
     actions: [
-      TextButton(
+      DialogAction(
         onPressed: () => Navigator.pop(context),
         child: const Text('OK'),
       ),

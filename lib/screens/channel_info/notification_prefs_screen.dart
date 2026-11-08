@@ -49,7 +49,7 @@ class NotificationPrefsScreen extends ConsumerWidget {
           : ListView(
               padding: EdgeInsets.only(bottom: bottom + Spacing.lg),
               children: [
-                SwitchListTile(
+                SwitchListTile.adaptive(
                   secondary: const Icon(Icons.notifications_off_outlined),
                   title: const Text('Mute channel'),
                   subtitle: const Text(
@@ -61,7 +61,7 @@ class NotificationPrefsScreen extends ConsumerWidget {
                       save((a) => a.setMuted(channelId, muted: muted)),
                 ),
                 if (!info.conversation)
-                  SwitchListTile(
+                  SwitchListTile.adaptive(
                     secondary: const Icon(Icons.campaign_outlined),
                     title: const Text('Ignore @channel, @here and @all'),
                     subtitle: const Text(

@@ -50,7 +50,7 @@ class _RefreshAreaState extends State<RefreshArea> {
   }
 
   @override
-  Widget build(BuildContext context) => RefreshIndicator(
+  Widget build(BuildContext context) => RefreshIndicator.adaptive(
     key: _indicator,
     onRefresh: widget.onRefresh,
     child: widget.child,

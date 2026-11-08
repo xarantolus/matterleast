@@ -451,7 +451,7 @@ class MessageMenu extends ConsumerWidget {
                     ),
                   ],
                 )
-              : const CircularProgressIndicator(
+              : const CircularProgressIndicator.adaptive(
                   semanticsLabel: 'Loading options',
                 ),
         ),

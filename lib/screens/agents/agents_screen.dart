@@ -157,7 +157,7 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
           ),
         ),
         AsyncValue(value: null) => const Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator.adaptive(),
         ),
         _ when bot == null => const EmptyState(
           icon: Icons.smart_toy_outlined,
@@ -220,7 +220,7 @@ class _History extends ConsumerWidget {
           ),
         );
       }
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator.adaptive());
     }
     if (list.isEmpty) {
       return EmptyState(

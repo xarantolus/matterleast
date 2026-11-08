@@ -142,7 +142,7 @@ class AgentPostBody extends ConsumerWidget {
               children: [
                 const SizedBox.square(
                   dimension: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator.adaptive(strokeWidth: 2),
                 ),
                 const SizedBox(width: Spacing.sm),
                 Text('Generating response…', style: muted),
@@ -551,7 +551,7 @@ class _ToolCardState extends State<_ToolCard> {
               const SizedBox(height: Spacing.sm),
               if (question.multiSelect == true)
                 for (final option in question.options)
-                  CheckboxListTile(
+                  CheckboxListTile.adaptive(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     value: _picked.contains(option.label),

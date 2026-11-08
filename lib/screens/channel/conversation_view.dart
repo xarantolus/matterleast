@@ -645,7 +645,7 @@ class _OlderEdge extends StatelessWidget {
             child: Center(
               child: SizedBox.square(
                 dimension: 20,
-                child: CircularProgressIndicator(
+                child: CircularProgressIndicator.adaptive(
                   strokeWidth: 2,
                   semanticsLabel: 'Loading older messages',
                 ),

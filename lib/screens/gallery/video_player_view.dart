@@ -505,7 +505,7 @@ class _ScrubberState extends State<_Scrubber> {
                     overlayRadius: 16,
                   ),
                 ),
-                child: Slider(
+                child: Slider.adaptive(
                   value: at,
                   max: max(total, 1).toDouble(),
                   onChangeStart: (v) {

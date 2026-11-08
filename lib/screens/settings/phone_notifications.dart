@@ -104,7 +104,7 @@ class _PhoneNotificationsState extends ConsumerState<PhoneNotifications> {
             onTap: () => unawaited(ref.read(notifierProvider).openSettings()),
           ),
         if (hasAndroidServices)
-          SwitchListTile(
+          SwitchListTile.adaptive(
             secondary: const Icon(Icons.sync),
             title: const Text('Stay connected'),
             subtitle: const Text(
@@ -169,7 +169,7 @@ class ComputerNotifications extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SettingsHeader('On this computer'),
-        SwitchListTile(
+        SwitchListTile.adaptive(
           secondary: const Icon(Icons.move_to_inbox_outlined),
           title: const Text('Close to tray'),
           subtitle: const Text(

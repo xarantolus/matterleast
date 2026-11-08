@@ -32,7 +32,7 @@ void main() {
   }
 
   Color errorColour(WidgetTester tester) =>
-      Theme.of(tester.element(find.byType(AlertDialog))).colorScheme.error;
+      Theme.of(tester.element(find.byType(Dialog))).colorScheme.error;
 
   testWidgets('leaving is drawn as destructive and answers true', (
     tester,

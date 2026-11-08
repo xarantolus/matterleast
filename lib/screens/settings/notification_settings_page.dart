@@ -65,7 +65,7 @@ class _NotificationSettingsPageState
               onRetry: () =>
                   ref.invalidate(notifySettingsRefreshProvider(_url)),
             )
-          : const Center(child: CircularProgressIndicator()),
+          : const Center(child: CircularProgressIndicator.adaptive()),
     );
   }
 
@@ -100,7 +100,7 @@ class _NotificationSettingsPageState
             if (level != null) await _save(props, props.withPush(level));
           },
         ),
-        SwitchListTile(
+        SwitchListTile.adaptive(
           title: const Text('Replies in threads I follow'),
           value: props.threadReplies,
           onChanged: enabled
@@ -125,14 +125,14 @@ class _NotificationSettingsPageState
           },
         ),
         const SettingsHeader('Mentions'),
-        SwitchListTile(
+        SwitchListTile.adaptive(
           title: const Text('My first name'),
           value: props.firstName,
           onChanged: enabled
               ? (on) => _save(props, props.withFirstName(on))
               : null,
         ),
-        SwitchListTile(
+        SwitchListTile.adaptive(
           title: const Text('My username'),
           subtitle: Text('"$username", any capitalisation'),
           value: props.usernameMention(username),
@@ -140,7 +140,7 @@ class _NotificationSettingsPageState
               ? (on) => _save(props, props.withUsernameMention(username, on))
               : null,
         ),
-        SwitchListTile(
+        SwitchListTile.adaptive(
           title: const Text('@channel, @all and @here'),
           value: props.channelWide,
           onChanged: enabled
@@ -168,7 +168,7 @@ class _NotificationSettingsPageState
         ),
         if (features?.emailNotifications ?? false) ...[
           const SettingsHeader('Email'),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             title: const Text('Email notifications'),
             subtitle: const Text(
               'Mentions and direct messages while you are away or offline',
@@ -181,7 +181,7 @@ class _NotificationSettingsPageState
         ],
         if (features?.automaticReplies ?? false) ...[
           const SettingsHeader('Automatic replies'),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             title: const Text('Reply automatically'),
             subtitle: const Text(
               'Answers direct messages for you and sets your status to out '

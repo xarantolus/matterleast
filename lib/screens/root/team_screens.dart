@@ -304,7 +304,7 @@ class _JoinTeamScreenState extends ConsumerState<JoinTeamScreen> {
           host: _host,
           onRetry: () => ref.invalidate(joinableTeamListProvider(widget.url)),
         ),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => const Center(child: CircularProgressIndicator.adaptive()),
       },
     );
   }

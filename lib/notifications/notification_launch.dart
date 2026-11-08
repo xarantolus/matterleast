@@ -17,6 +17,7 @@ import 'package:matterleast/notifications/stay_connected.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 
 /// Sets up notifications in the UI isolate: taps open their conversation,
 /// the app counts as on screen, and the stay-connected service comes back
@@ -151,7 +152,7 @@ Future<void> askForNotificationsOnce(
     return;
   }
   if (!context.mounted) return;
-  final wanted = await showDialog<bool>(
+  final wanted = await showAdaptiveDialog<bool>(
     context: context,
     builder: (context) => const _NotificationsDialog(),
   );
@@ -174,16 +175,17 @@ class _NotificationsDialog extends StatelessWidget {
   const _NotificationsDialog();
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => AlertDialog.adaptive(
     icon: const Icon(Icons.notifications_outlined),
     title: const Text('Get notified about new messages?'),
     content: Text(notificationsPromptText(stayConnected: hasAndroidServices)),
     actions: [
-      TextButton(
+      DialogAction(
         onPressed: () => Navigator.pop(context, false),
         child: const Text('Not now'),
       ),
-      FilledButton(
+      DialogAction(
+        primary: true,
         onPressed: () => Navigator.pop(context, true),
         child: const Text('Continue'),
       ),

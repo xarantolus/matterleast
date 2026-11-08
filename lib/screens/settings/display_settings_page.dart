@@ -129,7 +129,7 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
               }
             },
           ),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             title: const Text('Wrap lines in code'),
             subtitle: Text(
               isDesktop
@@ -185,7 +185,7 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
               openPage(Navigator.of(context), TimeZonePage(server: server)),
         ),
       if (prefs != null) ...[
-        SwitchListTile(
+        SwitchListTile.adaptive(
           title: const Text('Collapsed reply threads'),
           subtitle: Text(
             prefs.threadsChangeable

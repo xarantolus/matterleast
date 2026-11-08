@@ -13,6 +13,6 @@ class DelayedSpinner extends StatelessWidget {
     curve: const Interval(0.5, 1),
     builder: (context, opacity, child) =>
         Opacity(opacity: opacity, child: child),
-    child: const Center(child: CircularProgressIndicator()),
+    child: const Center(child: CircularProgressIndicator.adaptive()),
   );
 }

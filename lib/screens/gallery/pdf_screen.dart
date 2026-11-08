@@ -305,7 +305,7 @@ class _PdfScreenState extends State<PdfScreen> {
         theme.appBarTheme.foregroundColor ?? theme.colorScheme.onPrimary;
     return AppBar(
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
+        icon: Icon(Icons.adaptive.arrow_back),
         tooltip: 'Close search',
         onPressed: _endSearch,
       ),

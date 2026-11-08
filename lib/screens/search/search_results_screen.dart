@@ -317,7 +317,9 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                     )
                   : requests == null
                   ? const FillScrollable(
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(
+                        child: CircularProgressIndicator.adaptive(),
+                      ),
                     )
                   : RefreshArea(
                       onRefresh: _refresh,
@@ -749,7 +751,7 @@ class _MessageResults extends ConsumerWidget {
     ];
     return switch (mergeSearch(sources)) {
       SearchLoading() => const FillScrollable(
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: CircularProgressIndicator.adaptive()),
       ),
       SearchEmpty() => _NoResults(query: query),
       SearchFailed(:final cause) => _Failed(cause: cause, onRetry: onRetry),
@@ -909,7 +911,7 @@ class _FileResults extends ConsumerWidget {
     ];
     return switch (mergeSearch(sources)) {
       SearchLoading() => const FillScrollable(
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: CircularProgressIndicator.adaptive()),
       ),
       SearchEmpty() when query.isEmpty && !filtered => const FillScrollable(
         child: EmptyState(

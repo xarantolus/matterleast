@@ -135,7 +135,7 @@ class _PeopleListState extends ConsumerState<PeopleList> {
         Expanded(
           child: local.isEmpty
               ? busy
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(child: CircularProgressIndicator.adaptive())
                     : list.error != null
                     ? FailedState(
                         title: "Couldn't load people",

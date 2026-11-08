@@ -37,13 +37,13 @@ class MobileDataSettingsPage extends ConsumerWidget {
                 style: TextStyle(color: context.tokens.muted),
               ),
             ),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             title: const Text('Load images'),
             subtitle: const Text('Otherwise tap an image to load it'),
             value: images,
             onChanged: (on) => store.write(Settings.imagesOnMobileData, on),
           ),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             title: const Text('Play GIFs'),
             subtitle: const Text(
               'Otherwise a GIF stays still until you tap it',
@@ -51,7 +51,7 @@ class MobileDataSettingsPage extends ConsumerWidget {
             value: gifs,
             onChanged: (on) => store.write(Settings.gifsOnMobileData, on),
           ),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             title: const Text('Show link preview pictures'),
             subtitle: const Text('Otherwise previews show only their text'),
             value: linkPictures,

@@ -338,7 +338,7 @@ class _ServerTile extends ConsumerWidget {
       onLongPress: () => _showMenu(context, ref),
       trailing: IconButton(
         tooltip: 'More for ${server.displayName}',
-        icon: const Icon(Icons.more_vert),
+        icon: Icon(Icons.adaptive.more),
         onPressed: () => _showMenu(context, ref),
       ),
     );

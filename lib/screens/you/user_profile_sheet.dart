@@ -59,7 +59,7 @@ class UserProfileSheet extends ConsumerWidget {
             host: hostOf(url),
             onRetry: () => ref.invalidate(profileRefreshProvider(url, userId)),
           ),
-          _ => const Center(child: CircularProgressIndicator()),
+          _ => const Center(child: CircularProgressIndicator.adaptive()),
         },
       );
     }

@@ -205,7 +205,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
           ],
         ),
         body: stored == null
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator.adaptive())
             : server == null
             ? EmptyState(
                 icon: Icons.dns_outlined,

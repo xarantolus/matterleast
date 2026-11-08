@@ -91,7 +91,7 @@ void main() {
     await settleApp(
       tester,
       servers: [server],
-      until: () => find.byType(AlertDialog).evaluate().isNotEmpty,
+      until: () => find.byType(Dialog).evaluate().isNotEmpty,
     );
 
     expect(find.text('Message @skipper?'), findsOneWidget);
