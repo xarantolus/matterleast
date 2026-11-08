@@ -79,6 +79,39 @@ void main() {
       }, variant: desktop);
     }
 
+    testWidgets('hovering an emoji in a message names it', (tester) async {
+      await tester.pumpWidget(
+        _app(
+          const InlineText(
+            inlines: [TextPart('nice '), EmojiPart('tada', ':tada:')],
+            style: TextStyle(fontSize: 14),
+          ),
+        ),
+      );
+      expect(find.text(':tada:'), findsNothing);
+
+      await _hover(tester, find.text('🎉'));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text(':tada:'), findsOneWidget);
+    }, variant: desktop);
+
+    testWidgets('a screen reader hears the name of an emoji nobody hovered', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        _app(
+          const InlineText(
+            inlines: [TextPart('nice '), EmojiPart('tada', ':tada:')],
+            style: TextStyle(fontSize: 14),
+          ),
+        ),
+      );
+      final read = tester.getSemantics(find.text('🎉')).getSemanticsData();
+      expect((read.label, read.tooltip), ('nice \n🎉', ':tada:'));
+      semantics.dispose();
+    }, variant: desktop);
+
     testWidgets('a 12-hour clock names the time that way', (tester) async {
       await tester.pumpWidget(
         _app(
