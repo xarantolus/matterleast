@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -215,28 +216,46 @@ void main() {
     });
 
     test('a changed channel scheme fetches the roles it now gives', () async {
-      server.handle = (r) => switch (r.path) {
-        '/api/v4/channels/$channelId' => ok({
-          'id': channelId,
-          'team_id': teamId,
-          'type': 'O',
-          'name': 'boats',
-        }),
-        '/api/v4/channels/$channelId/members/me' => ok({
-          'channel_id': channelId,
-          'user_id': meId,
-          'roles': 'scheme1_channel_user',
-        }),
-        '/api/v4/roles/names' => ok([
-          {
-            'id': 'r1',
-            'name': 'scheme1_channel_user',
-            'permissions': ['create_post'],
-          },
-        ]),
+      final rolesHeld = Completer<void>();
+      final channel = {
+        'id': channelId,
+        'team_id': teamId,
+        'type': 'O',
+        'name': 'boats',
+      };
+      final membership = {
+        'channel_id': channelId,
+        'user_id': meId,
+        'roles': 'scheme1_channel_user',
+      };
+      // The team's lists agree with the single answers: a server that
+      // listed no channels would make the refresh drop the one it just
+      // stored.
+      server.handle = (r) async => switch (r.path) {
+        '/api/v4/channels/$channelId' => ok(channel),
+        '/api/v4/channels/$channelId/members/me' => ok(membership),
+        '/api/v4/users/me/teams/$teamId/channels' => ok([channel]),
+        '/api/v4/users/me/teams/$teamId/channels/members' => ok([membership]),
+        '/api/v4/roles/names' => await rolesHeld.future.then(
+          (_) => ok([
+            {
+              'id': 'r1',
+              'name': 'scheme1_channel_user',
+              'permissions': ['create_post'],
+            },
+          ]),
+        ),
         _ => emptyAnswer(r),
       };
       await receive('channel_scheme_updated', {});
+      // The roles come last, after the team's refresh has been applied.
+      await eventually(
+        () => server.paths.contains(
+          '/api/v4/users/me/teams/$teamId/channels/members',
+        ),
+      );
+      await afterWork();
+      rolesHeld.complete();
       // The roles and the membership come from separate requests.
       await eventually(
         () async =>
