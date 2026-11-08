@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:matterleast/app/data_saver.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/image_rules.dart';
@@ -63,5 +64,6 @@ bool? autoLoad(Ref ref, DataKind kind) {
     images: images,
     gifs: gifs,
     linkPictures: linkPictures,
+    dataSaverCoversWifi: dataSaverCoversWifi,
   );
 }

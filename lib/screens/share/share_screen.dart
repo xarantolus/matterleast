@@ -19,12 +19,12 @@ import 'package:matterleast/ui/slide_route.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/try_action.dart';
 import 'package:path/path.dart' as p;
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:share_intake/share_intake.dart';
 
 part 'share_screen.g.dart';
 
-/// What another app handed over: text, files the share plugin copied into
+/// What another app handed over: text, files share_intake copied into
 /// the app's cache, and the names of shared files the app refused.
 typedef SharedContent = ({
   String text,
@@ -32,39 +32,27 @@ typedef SharedContent = ({
   List<String> refused,
 });
 
-/// The text and files of a share; null when there is nothing to show, such
-/// as a link opened in the app, which is not a share. A file is taken only
-/// when its path, [resolve]d (links and `..`, null when it is no regular
-/// file), lies directly in [cacheDir], where the plugin puts its copies:
-/// anything else may be another of the app's own files, which must never be
-/// sent or deleted.
+/// The text and files of a share; null when there is nothing in it. A file
+/// is taken only when its path, [resolve]d (links and `..`, null when it is
+/// no regular file), is a share copy in [cacheDir]: anything else may be
+/// another of the app's own files, which must never be sent or deleted.
 SharedContent? sharedContentOf(
-  List<SharedMediaFile> media, {
+  IncomingShare share, {
   required String cacheDir,
   required String? Function(String path) resolve,
 }) {
-  final text = [
-    for (final m in media)
-      if (m.type == SharedMediaType.text) m.path,
-  ].join('\n\n');
   final files = <String>[];
-  final refused = <String>[];
-  for (final m in media) {
-    if (!const {
-      SharedMediaType.image,
-      SharedMediaType.video,
-      SharedMediaType.file,
-    }.contains(m.type)) {
-      continue;
-    }
-    final resolved = resolve(m.path);
-    if (resolved != null && isPluginCopy(cacheDir, resolved)) {
+  final refused = [...share.refused];
+  for (final file in share.files) {
+    final resolved = resolve(file.path);
+    if (resolved != null && isShareCopy(cacheDir, resolved)) {
       files.add(resolved);
     } else {
-      Log.warn('share', 'Refused a shared file outside the cache folder');
-      refused.add(p.basename(m.path));
+      Log.warn('share', 'Refused a shared file outside the share folder');
+      refused.add(p.basename(file.path));
     }
   }
+  final text = share.text.trim();
   if (text.isEmpty && files.isEmpty && refused.isEmpty) return null;
   return (text: text, files: files, refused: refused);
 }

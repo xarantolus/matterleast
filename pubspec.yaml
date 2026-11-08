@@ -46,10 +46,11 @@ dependencies:
   path_provider: ^2.1.6
   pdfrx: ^2.10.1
   re_highlight: 0.0.3
-  receive_sharing_intent: ^1.9.0
   retrofit: ^4.10.0
   riverpod_annotation: ^4.0.7
   screen_retriever: ^0.2.2
+  share_intake:
+    path: packages/share_intake
   share_plus: ^13.3.1
   sqflite_common_ffi: ^2.4.5
   sqlite3: ^3.8.0

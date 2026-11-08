@@ -383,7 +383,7 @@ final class AutoLoadProvider extends $FunctionalProvider<bool?, bool?, bool?>
   }
 }
 
-String _$autoLoadHash() => r'6e227f0105f1e3f12a598dc1fcad250a5242cb98';
+String _$autoLoadHash() => r'4667135019d532a50c141c474cc02d25a0d6babe';
 
 /// Whether [kind] loads without a tap; null until the connection and the
 /// settings are known.

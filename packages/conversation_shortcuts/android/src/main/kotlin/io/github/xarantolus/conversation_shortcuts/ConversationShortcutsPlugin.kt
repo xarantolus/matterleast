@@ -21,7 +21,6 @@ class ConversationShortcutsPlugin :
     private lateinit var channel: MethodChannel
     private var binding: ActivityPluginBinding? = null
     private var launchId: String? = null
-    private var shareId: String? = null
 
     override fun onAttachedToEngine(flutter: FlutterPlugin.FlutterPluginBinding) {
         context = flutter.applicationContext
@@ -56,18 +55,10 @@ class ConversationShortcutsPlugin :
     /** Remembers what a shortcut asked for; true when it opens a conversation. */
     private fun record(intent: Intent?): Boolean {
         intent ?: return false
-        when (intent.action) {
-            Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE -> {
-                shareId = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID)
-                intent.removeExtra(Intent.EXTRA_SHORTCUT_ID)
-            }
-            ACTION_OPEN -> {
-                launchId = intent.getStringExtra(EXTRA_ID)
-                intent.removeExtra(EXTRA_ID)
-                return launchId != null
-            }
-        }
-        return false
+        if (intent.action != ACTION_OPEN) return false
+        launchId = intent.getStringExtra(EXTRA_ID)
+        intent.removeExtra(EXTRA_ID)
+        return launchId != null
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -89,7 +80,6 @@ class ConversationShortcutsPlugin :
                     ShortcutManagerCompat.reportShortcutUsed(context, call.argument<String>("id")!!)
                     result.success(null)
                 }
-                "takeShareTarget" -> result.success(shareId.also { shareId = null })
                 "takeLaunch" -> result.success(launchId.also { launchId = null })
                 else -> result.notImplemented()
             }

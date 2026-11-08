@@ -1,0 +1,21 @@
+name: share_intake
+description: Files and text other apps share, copied into the app's cache under names of its own.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.13.7
+  flutter: ">=3.44.0"
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: io.github.xarantolus.share_intake
+        pluginClass: ShareIntakePlugin
+      ios:
+        pluginClass: ShareIntakePlugin
+
+dependencies:
+  flutter:
+    sdk: flutter

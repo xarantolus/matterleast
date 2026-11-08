@@ -8,6 +8,7 @@ import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
+import 'package:matterleast/notifications/background_refresh.dart';
 import 'package:matterleast/notifications/stay_connected.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -24,6 +25,7 @@ class PhoneNotifications extends ConsumerStatefulWidget {
 class _PhoneNotificationsState extends ConsumerState<PhoneNotifications> {
   bool? _permitted;
   bool? _stayConnected;
+  bool? _refreshAllowed;
   late final AppLifecycleListener _lifecycle;
 
   @override
@@ -43,10 +45,12 @@ class _PhoneNotificationsState extends ConsumerState<PhoneNotifications> {
   Future<void> _load() async {
     final permitted = await ref.read(notifierProvider).permitted();
     final stay = await StayConnected.enabled();
+    final refresh = await backgroundRefreshAllowed();
     if (!mounted) return;
     setState(() {
       _permitted = permitted;
       _stayConnected = stay;
+      _refreshAllowed = refresh;
     });
   }
 
@@ -110,8 +114,41 @@ class _PhoneNotificationsState extends ConsumerState<PhoneNotifications> {
             ),
             value: _stayConnected ?? false,
             onChanged: _stayConnected == null ? null : _setStayConnected,
+          )
+        else if (_refreshAllowed case final allowed?)
+          _BackgroundChecks(
+            refreshAllowed: allowed,
+            onOpenSettings: () =>
+                unawaited(ref.read(notifierProvider).openSettings()),
           ),
       ],
+    );
+  }
+}
+
+/// iOS's checks while the app is closed, in place of Stay connected.
+class _BackgroundChecks extends StatelessWidget {
+  const _BackgroundChecks({
+    required this.refreshAllowed,
+    required this.onOpenSettings,
+  });
+
+  final bool refreshAllowed;
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    final notice = backgroundCheckNotice(refreshAllowed: refreshAllowed);
+    return ListTile(
+      leading: const Icon(Icons.schedule),
+      title: Text(notice.title),
+      subtitle: Text(notice.subtitle),
+      trailing: refreshAllowed
+          ? null
+          : FilledButton.tonal(
+              onPressed: onOpenSettings,
+              child: const Text('Settings'),
+            ),
     );
   }
 }

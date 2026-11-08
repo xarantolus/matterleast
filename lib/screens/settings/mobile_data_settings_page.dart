@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/data_saver.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/ui/content_page.dart';
@@ -28,8 +29,11 @@ class MobileDataSettingsPage extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.data_saver_on_outlined),
               title: Text(
-                'Data Saver is on: on mobile data nothing below loads until '
-                'you tap it, whatever the switches say.',
+                dataSaverCoversWifi
+                    ? '$dataSaverName is on: nothing below loads until you tap '
+                          'it, whatever the switches say.'
+                    : '$dataSaverName is on: on mobile data nothing below '
+                          'loads until you tap it, whatever the switches say.',
                 style: TextStyle(color: context.tokens.muted),
               ),
             ),

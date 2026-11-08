@@ -159,6 +159,17 @@ Future<void> askForNotificationsOnce(
   if (wanted ?? false) await notifier.requestPermission();
 }
 
+/// Pure: what the notifications prompt says; only Android has Stay
+/// connected, and iOS decides itself when the app may check.
+String notificationsPromptText({required bool stayConnected}) => stayConnected
+    ? 'While Matterleast is closed it looks for direct messages, mentions '
+          'and replies about every 15 minutes, as your notification settings '
+          'on each server say. For notifications right away, turn on Stay '
+          'connected in Settings › Notifications.'
+    : 'While Matterleast is closed it looks for direct messages, mentions '
+          'and replies when iOS lets it, as your notification settings on '
+          'each server say. Open the app to get messages right away.';
+
 class _NotificationsDialog extends StatelessWidget {
   const _NotificationsDialog();
 
@@ -166,12 +177,7 @@ class _NotificationsDialog extends StatelessWidget {
   Widget build(BuildContext context) => AlertDialog(
     icon: const Icon(Icons.notifications_outlined),
     title: const Text('Get notified about new messages?'),
-    content: const Text(
-      'While Matterleast is closed it looks for direct messages, mentions '
-      'and replies about every 15 minutes, as your notification settings on '
-      'each server say. For notifications right away, turn on Stay '
-      'connected in Settings › Notifications.',
-    ),
+    content: Text(notificationsPromptText(stayConnected: hasAndroidServices)),
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context, false),
