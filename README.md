@@ -1,5 +1,5 @@
 # Matterleast
-Matterleast is an unofficial Android, Windows and Linux client (and an iOS build you make yourself) for [Mattermost](https://mattermost.com) servers that tries have a feel closer to Discord.
+Matterleast is an unofficial Android, Windows and Linux client (and an unsigned iOS build) for [Mattermost](https://mattermost.com) servers that tries have a feel closer to Discord.
 
 ### Features
 - Discord-style feel and navigation: you can swipe between chats, swipe on messages to react/reply etc.
@@ -52,49 +52,7 @@ Alternatively, you can [download the APK file](https://github.com/xarantolus/mat
 
 
 ### iOS
-There is no App Store version. Each release goes to TestFlight for invited testers, and has an unsigned [`matterleast.ipa`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast.ipa), or you build the app yourself. What Apple asks for:
-
-- **Free Apple Account:** build from Xcode on a Mac onto your own iPhone, or re-sign the release `.ipa` with a sideloading tool such as [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io). Either way the app stops starting after **7 days** until you install it again, and a free account can have at most 3 such apps on a device.
-- **Xcode Cloud and TestFlight** need the paid [Apple Developer Program](https://developer.apple.com/programs/) (99 USD a year, 25 Xcode Cloud hours a month included) and **a fork of this repository**: Xcode Cloud only connects to repositories you administer, and it needs your team in the project.
-
-Building from Xcode (Mac with Xcode and [Flutter](https://docs.flutter.dev/get-started/install/macos/mobile-ios)):
-
-1. `flutter pub get`, then open `ios/Runner.xcworkspace` in Xcode.
-2. `APP_BUNDLE_ID` in [`ios/Flutter/Identity.xcconfig`](ios/Flutter/Identity.xcconfig) is `me.creaxx.matterleast`; change it to a bundle id of your own. The Share Extension (`<id>.share`) and the App Group (`group.<id>`) follow it.
-3. In Xcode, for both the Runner and the ShareExtension target → Signing & Capabilities: pick your team (with a free account, "Personal Team"). Xcode registers the App Group, which free accounts can use too.
-4. Turn on Developer Mode on the iPhone, plug it in and run `flutter run --release`.
-
-The Share Extension is a second App ID, and a free account gets 10 App IDs a week. To build without it: in Xcode, select the ShareExtension target and delete it (Runner then no longer embeds it), and the app simply receives no shares. Sideloading tools can also strip extensions from the release `.ipa`.
-
-Xcode Cloud (paid program):
-
-1. Fork this repository, set `APP_BUNDLE_ID` and your team as above, and commit that in your fork.
-2. In App Store Connect, create an app with that Bundle Identifier.
-3. In Xcode: Product → Xcode Cloud → Create Workflow. Workspace `ios/Runner.xcworkspace`, scheme `Runner`, an Archive action with TestFlight (Internal Testing Only). Limit the start conditions to changes in `lib/`, `ios/` and `pubspec.*` to save hours.
-4. [`ios/ci_scripts/ci_post_clone.sh`](ios/ci_scripts/ci_post_clone.sh) installs the Flutter version CI uses and the pods, and numbers each build. Install the build with the TestFlight app.
-
-What differs on iOS:
-
-- **Notifications while the app is closed** come when iOS lets the app check (Background App Refresh), which can be much less often than every 15 minutes. Stay connected doesn't exist on iOS: iOS lets no app keep a connection open in the background, except through push, which Matterleast doesn't use.
-- **Sharing into the app** goes through the Share Extension, which then opens Matterleast. If iOS doesn't open it, open Matterleast yourself and the share is waiting.
-- **Share-sheet suggestions:** conversations you get messages in show up in the share sheet.
-- **Low Data Mode** holds images, GIFs and link pictures back like Android's Data Saver, on Wi-Fi networks where it is on too.
-- **Not yet:** the sender's picture on notifications (Communication Notifications), which needs the paid program.
-
-### Development
-Matterleast is a Flutter app. [Install Flutter](https://docs.flutter.dev/get-started/install) with the Android toolchain, then:
-
-```sh
-git clone https://github.com/xarantolus/matterleast.git
-cd matterleast
-flutter pub get
-flutter build apk --debug    # or: flutter run
-```
-
-Please commit generated code, and regenerate it after changing models, providers or the database. To do this, run `dart run build_runner build`.
-
-There is also a dev container with Flutter, the Android SDK, an emulator and a local Mattermost test server, see [`.devcontainer/README.md`](.devcontainer/README.md).
-
+There is no App Store version. Each release has an unsigned [`matterleast.ipa`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast.ipa) that you sign and install yourself, see Apple's [running your app on a device](https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices) and Flutter's [iOS deployment](https://docs.flutter.dev/deployment/ios) docs. iOS has limits the other platforms don't: notifications while the app is closed come only when iOS lets the app check, and "Stay connected" doesn't exist.
 ### Limitations
 - Calls, Playbooks and Boards are not supported, nor are Apps framework forms and message translation.
 - Notifications don't go through Mattermost's push proxy, so new messages arrive when the app checks (about every 15 minutes) unless "Stay connected" is on.
