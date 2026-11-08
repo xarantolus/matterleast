@@ -15,6 +15,7 @@ import 'package:matterleast/screens/root/open_panes.dart';
 import 'package:matterleast/ui/keyboard_focus_rings.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/notice_banner_layer.dart';
+import 'package:matterleast/ui/still_in_background.dart';
 import 'package:matterleast/ui/window_strip.dart';
 
 class MatterleastApp extends ConsumerWidget {
@@ -41,17 +42,19 @@ class MatterleastApp extends ConsumerWidget {
             alwaysUse24HourFormat:
                 use24 ?? MediaQuery.alwaysUse24HourFormatOf(context),
           ),
-          child: UiZoom(
-            child: MessageDisplay(
-              textScale: (textSize ?? MessageTextSize.normal).scale,
-              wrapCode: wrapCode,
-              child: KeyboardFocusRings(
-                child: AppShortcuts(
-                  child: MouseNavigation(
-                    child: TouchpadNavigation(
-                      child: isDesktop
-                          ? MiddleAutoscroll(child: child!)
-                          : child!,
+          child: StillInBackground(
+            child: UiZoom(
+              child: MessageDisplay(
+                textScale: (textSize ?? MessageTextSize.normal).scale,
+                wrapCode: wrapCode,
+                child: KeyboardFocusRings(
+                  child: AppShortcuts(
+                    child: MouseNavigation(
+                      child: TouchpadNavigation(
+                        child: isDesktop
+                            ? MiddleAutoscroll(child: child!)
+                            : child!,
+                      ),
                     ),
                   ),
                 ),
