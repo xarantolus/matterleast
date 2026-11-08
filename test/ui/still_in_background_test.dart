@@ -1,14 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/desktop_shell.dart';
-import 'package:matterleast/ui/play_while_focused.dart';
+import 'package:matterleast/ui/still_in_background.dart';
 
 import '../support/animated_gif.dart';
 
 /// The number of the frame the picture shows, once it has loaded.
 var _frame = -1;
 
-Future<void> pumpGif(WidgetTester tester, {required bool desktop}) async {
+Future<void> pumpGif(WidgetTester tester) async {
   _frame = -1;
   await tester.pumpWidget(
     Directionality(
@@ -17,8 +17,7 @@ Future<void> pumpGif(WidgetTester tester, {required bool desktop}) async {
         alignment: Alignment.topLeft,
         child: SizedBox.square(
           dimension: 50,
-          child: PlayWhileFocused(
-            desktop: desktop,
+          child: StillInBackground(
             child: Image.memory(
               animatedGif,
               width: 50,
@@ -50,6 +49,8 @@ Future<void> wait(WidgetTester tester) async {
 }
 
 void main() {
+  final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
+
   tearDown(() {
     DesktopShell.windowFocused = true;
     // Each test decodes the picture afresh, not as the last one left it.
@@ -61,17 +62,17 @@ void main() {
   testWidgets('on desktop the picture plays while the window has the focus', (
     tester,
   ) async {
-    await pumpGif(tester, desktop: true);
+    await pumpGif(tester);
     await wait(tester);
 
     expect(_frame, greaterThan(0));
-  });
+  }, variant: desktop);
 
   testWidgets('it stays still while another window has the focus', (
     tester,
   ) async {
     DesktopShell.windowFocused = false;
-    await pumpGif(tester, desktop: true);
+    await pumpGif(tester);
     await wait(tester);
     expect(_frame, 0);
 
@@ -84,11 +85,11 @@ void main() {
     final stopped = _frame;
     await wait(tester);
     expect(_frame, stopped);
-  });
+  }, variant: desktop);
 
   testWidgets('a phone always plays it', (tester) async {
     DesktopShell.windowFocused = false;
-    await pumpGif(tester, desktop: false);
+    await pumpGif(tester);
     await wait(tester);
 
     expect(_frame, greaterThan(0));
