@@ -17,4 +17,6 @@ flutter pub get
 HOMEBREW_NO_AUTO_UPDATE=1 brew install cocoapods
 
 # Xcode Cloud's build number grows with every build, as TestFlight wants.
-flutter build ios --config-only --release --build-number "${CI_BUILD_NUMBER:-1}"
+# Xcode Cloud signs when it archives; there is no certificate here yet.
+flutter build ios --config-only --release --no-codesign \
+    --build-number "${CI_BUILD_NUMBER:-1}"
