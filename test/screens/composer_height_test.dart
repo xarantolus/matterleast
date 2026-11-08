@@ -18,7 +18,7 @@ void main() {
       final h = await pumpWithServer(
         tester,
         size: window,
-        handle: (_) => ok(<String, Object?>{}),
+        handle: emptyAnswer,
         overrides: (url) => [
           channelRightsProvider(url, channelId).overrideWith(
             (ref) => Stream.value((
@@ -74,7 +74,7 @@ void main() {
       final h = await pumpWithServer(
         tester,
         size: const Size(900, 600),
-        handle: (_) => ok(<String, Object?>{}),
+        handle: emptyAnswer,
         overrides: (url) => [
           channelRightsProvider(url, channelId).overrideWith(
             (ref) => Stream.value((

@@ -17,7 +17,7 @@ void main() {
           'team_id': 'tm00000000000000000000t02',
           'user_id': 'me',
         }),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(r),
       },
       home: (url) => Scaffold(
         body: Builder(

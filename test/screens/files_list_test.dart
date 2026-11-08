@@ -3,9 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
-import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/message_search.dart';
-import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
@@ -14,6 +12,7 @@ import 'package:matterleast/screens/search/search_results_screen.dart';
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
 import '../support/rail.dart';
+import '../support/servers.dart';
 import '../support/test_session.dart';
 
 const _bobId = 'us0000000000000000000000bob';
@@ -90,7 +89,7 @@ void main() {
                         for (final f in found ?? files) f['id']: f,
                       },
                     })
-              : ok(const <String, Object?>{}),
+              : emptyAnswer(r),
       seed: (session) async {
         await session.store.applyUsers([
           api.User.fromJson({'id': _bobId, 'username': 'bobby'}),
@@ -119,19 +118,7 @@ void main() {
       },
       overrides: (url) => [
         railSelectionProvider.overrideWith(MemoryRailSelection.new),
-        serversProvider.overrideWith(
-          (ref) => Stream.value([
-            ServerEntry(
-              url: url,
-              displayName: 'Test',
-              siteName: null,
-              serverVersion: null,
-              diagnosticId: null,
-              lastActiveAt: DateTime.utc(2026),
-              ssoScheme: null,
-            ),
-          ]),
-        ),
+        serversOverride([testServerEntry(url, name: 'Test')]),
       ],
       home: (url) => SearchResultsScreen(
         url: url,

@@ -29,7 +29,7 @@ void main() {
     final h = await pumpWithServer(
       tester,
       size: const Size(400, 800),
-      handle: (r) => ok(const <String, Object?>{}),
+      handle: emptyAnswer,
       seed: (session) async {
         final store = session.store;
         await store.applyUsers([

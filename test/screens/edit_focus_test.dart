@@ -108,7 +108,7 @@ void main() {
           return ok({'order': <String>[], 'posts': <String, Object?>{}});
         }
         if (r.path == '/api/v4/users/ids') return ok(<Object?>[]);
-        return ok(<String, Object?>{});
+        return emptyAnswer(r);
       },
       overrides: (url) => [
         channelRightsProvider(url, channelId).overrideWith(

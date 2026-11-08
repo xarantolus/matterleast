@@ -104,7 +104,7 @@ void main() {
           'root_id': '',
           'message': 'Here is the summary.',
         }),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(request),
       },
     );
     expect(find.text('Knots for sailing'), findsOneWidget);
@@ -125,7 +125,7 @@ void main() {
       tester,
       (request) => request.path.startsWith(_route)
           ? error(404, 'not_found')
-          : ok(const <String, Object?>{}),
+          : emptyAnswer(request),
     );
     expect(find.text('No agents for you'), findsOneWidget);
     expect(find.text('Retry'), findsNothing);

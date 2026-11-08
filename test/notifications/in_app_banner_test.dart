@@ -53,9 +53,8 @@ void main() {
       tester,
       platform: platform,
       trackRoutes: true,
-      handle: (r) => r.path.contains('/users/')
-          ? ok(<Object?>[])
-          : ok(<String, Object?>{}),
+      handle: (r) =>
+          r.path.contains('/users/') ? ok(<Object?>[]) : emptyAnswer(r),
       home: (_) =>
           const NoticeBannerOverlay(child: Scaffold(body: SizedBox.expand())),
       overrides: (url) => [

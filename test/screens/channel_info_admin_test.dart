@@ -30,7 +30,7 @@ void main() {
           'name': 'boats',
           'display_name': 'Boats',
         }),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(r),
       },
       seed: (session) async {
         await session.db.setSyncText(SyncKeys.currentUserRoles, 'system_user');

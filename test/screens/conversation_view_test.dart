@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show Tristate;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -121,7 +122,7 @@ void main() {
           return ok({'order': <String>[], 'posts': <String, Object?>{}});
         }
         if (r.path == '/api/v4/users/ids') return ok(<Object?>[]);
-        return ok(<String, Object?>{});
+        return emptyAnswer(r);
       },
       overrides: (url) => [
         serversProvider.overrideWith((ref) => Stream.value(const [])),
@@ -192,9 +193,7 @@ void main() {
     final notice = find.textContaining("Couldn't load older messages");
     for (var i = 0; i < 10 && notice.evaluate().isEmpty; i++) {
       await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
-      for (var j = 0; j < 5; j++) {
-        await tester.pump(const Duration(milliseconds: 100));
-      }
+      await h.settle(tester);
     }
     expect(notice, findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
@@ -748,10 +747,29 @@ void main() {
       expect(rebuilt.where((r) => r.startsWith('tile')), isEmpty);
       expect(rebuilt.toSet(), hasLength(1));
 
-      bool inToolbar() =>
-          FocusManager.instance.primaryFocus?.context
-              ?.findAncestorWidgetOfExactType<MessageToolbar>() !=
-          null;
+      // The keyboard is on one of the toolbar's buttons, as a screen reader
+      // would announce it.
+      final semantics = tester.ensureSemantics();
+      final toolbarButton = find.byWidgetPredicate(
+        (w) =>
+            w is Tooltip &&
+            (const [
+                  'Add reaction',
+                  'Reply',
+                  'More actions',
+                ].contains(w.message) ||
+                (w.message?.startsWith(':') ?? false)),
+      );
+      bool inToolbar() => toolbarButton
+          .evaluate()
+          .map(
+            (e) => tester.getSemantics(find.byElementPredicate((x) => x == e)),
+          )
+          .any(
+            (node) =>
+                node.getSemanticsData().flagsCollection.isFocused ==
+                Tristate.isTrue,
+          );
       for (var i = 0; i < 6 && !inToolbar(); i++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.pump();
@@ -764,6 +782,7 @@ void main() {
       await tester.pump();
       await tester.pump();
       expect(find.byTooltip('More actions'), findsNothing);
+      semantics.dispose();
       await h.close(tester);
     }, variant: desktop);
 
@@ -1094,13 +1113,4 @@ int topVisible(WidgetTester tester) {
         ? a
         : b,
   );
-}
-
-Future<void> settle(WidgetTester tester) async {
-  for (var i = 0; i < 10; i++) {
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 20)),
-    );
-    await tester.pump(const Duration(milliseconds: 100));
-  }
 }

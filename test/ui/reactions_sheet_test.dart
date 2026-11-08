@@ -22,7 +22,7 @@ void main() {
           'username': 'quinn',
           'first_name': 'Quinn',
         }),
-        _ => ok(<String, Object?>{}),
+        _ => emptyAnswer(r),
       },
       home: (url) => Scaffold(
         body: PostEnvironment(
@@ -63,7 +63,7 @@ void main() {
   ) async {
     final h = await pumpWithServer(
       tester,
-      handle: (r) => ok(<String, Object?>{}),
+      handle: emptyAnswer,
       home: (url) => const Scaffold(
         body: ReactionsBar(
           reactions: [
@@ -89,7 +89,7 @@ void main() {
   ) async {
     final h = await pumpWithServer(
       tester,
-      handle: (r) => ok(<String, Object?>{}),
+      handle: emptyAnswer,
       home: (url) => const Scaffold(
         body: ReactionsBar(
           reactions: [
@@ -113,7 +113,7 @@ void main() {
   Future<double> sheetHeight(WidgetTester tester, int people) async {
     final h = await pumpWithServer(
       tester,
-      handle: (r) => ok(<String, Object?>{}),
+      handle: emptyAnswer,
       home: (url) => Scaffold(
         body: ReactionsBar(
           reactions: [

@@ -11,6 +11,7 @@ import 'package:matterleast/screens/channel/conversation_controller.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 Map<String, Object?> postJson(String id, int hour) => {
   'id': id,
@@ -53,7 +54,7 @@ void main() {
           return ok({'order': <String>[], 'posts': <String, Object?>{}});
         }
         if (r.path.endsWith('/users/ids')) return ok(<Object?>[]);
-        return ok(<String, Object?>{});
+        return emptyAnswer(r);
       };
       final container = ProviderContainer(
         overrides: [
@@ -63,11 +64,10 @@ void main() {
       );
       final provider = conversationProvider(server.url.toString(), channelId);
       final sub = container.listen(provider, (_, _) {});
-      for (var i = 0; i < 200; i++) {
+      await eventually(() {
         final s = container.read(provider);
-        if ((s.window?.posts.length ?? 0) >= 2 && !s.refreshing) break;
-        await Future<void>.delayed(const Duration(milliseconds: 20));
-      }
+        return (s.window?.posts.length ?? 0) >= 2 && !s.refreshing;
+      });
       container.read(provider.notifier).retryOlder();
       await olderAsked.future.timeout(const Duration(seconds: 5));
 

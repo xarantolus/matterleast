@@ -6,12 +6,12 @@ import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/quick_switch.dart';
-import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/root/root_shortcuts.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 
 import '../support/pump_app.dart';
+import '../support/servers.dart';
 
 const _url = 'https://chat.example.test';
 
@@ -24,15 +24,7 @@ SwitchItem _channel(String id, String title) => SwitchItem(
 );
 
 void main() {
-  final server = ServerEntry(
-    url: _url,
-    displayName: 'Test',
-    siteName: null,
-    serverVersion: null,
-    diagnosticId: null,
-    lastActiveAt: DateTime(2026),
-    ssoScheme: null,
-  );
+  final server = testServerEntry(_url, name: 'Test');
 
   late List<String> opened;
 

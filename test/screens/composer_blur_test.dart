@@ -16,7 +16,7 @@ Future<ServerHarness> _pumpComposer(
 }) async {
   final h = await pumpWithServer(
     tester,
-    handle: (_) => ok(<String, Object?>{}),
+    handle: emptyAnswer,
     overrides: (url) => [
       featuresProvider(url).overrideWith((ref) => Stream.value(features)),
       channelRightsProvider(url, channelId).overrideWith(

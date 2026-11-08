@@ -6,6 +6,7 @@ import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/screens/root/pane_layout.dart';
 
 import '../support/pump_app.dart';
+import '../support/settle.dart';
 
 void main() {
   testWidgets('a snack bar shows once in a window of several panes', (
@@ -23,11 +24,7 @@ void main() {
       ),
       appDatabase: db,
     );
-    // The database answers outside the fake clock.
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 20)),
-    );
-    await tester.pump();
+    await settleApp(tester);
     // The list and the empty conversation pane are both on screen.
     expect(find.text('Channels'), findsOneWidget);
     expect(find.text('No conversation open'), findsOneWidget);

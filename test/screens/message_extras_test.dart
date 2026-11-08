@@ -91,7 +91,7 @@ void main() {
       'create_at': DateTime.now().millisecondsSinceEpoch,
       'message': r.body['message'],
     }),
-    _ => ok(const <String, Object?>{}),
+    _ => emptyAnswer(r),
   };
 
   testWidgets('forwarding posts the comment and the link to the channel '
@@ -176,7 +176,7 @@ void main() {
       _post('someone'),
       handle: (r) => r.path.startsWith('/api/v4/content_flagging')
           ? error(501, 'api.content_flagging.disabled')
-          : ok(const <String, Object?>{}),
+          : emptyAnswer(r),
     );
     expect(find.text('Copy text'), findsOneWidget);
     expect(find.text('Report'), findsNothing);
@@ -211,7 +211,7 @@ void main() {
           'edit_at': 1761500000000,
           'message': 'first try',
         }),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(r),
       },
     );
     await tester.tapAt(const Offset(5, 5));
@@ -246,7 +246,7 @@ void main() {
       _post(meId),
       handle: (r) => r.path.endsWith('/edit_history')
           ? error(404, 'app.post.get.app_error')
-          : ok(const <String, Object?>{}),
+          : emptyAnswer(r),
     );
     await tester.tapAt(const Offset(5, 5));
     await h.settle(tester);

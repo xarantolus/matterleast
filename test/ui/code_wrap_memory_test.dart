@@ -8,6 +8,7 @@ import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/message_display.dart';
 
 import '../support/memory_database.dart';
+import '../support/settle.dart';
 
 const _long =
     'final answer = computeTheAnswerToEverything(lifeTheUniverse, '
@@ -39,15 +40,6 @@ void main() {
       (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
     ),
   );
-
-  Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 3; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 20));
-    }
-  }
 
   /// Drift closes its queries on a zero timer.
   Future<void> unmount(WidgetTester tester) async {
@@ -81,7 +73,7 @@ void main() {
         ),
       ),
     );
-    await settle(tester);
+    await settleApp(tester);
   }
 
   testWidgets('wrapping one block wraps every block, and stays so after a '
@@ -90,7 +82,7 @@ void main() {
     expect(sideways(), findsNWidgets(2));
 
     await tester.tap(find.byTooltip('Wrap lines').first);
-    await settle(tester);
+    await settleApp(tester);
     expect(sideways(), findsNothing);
     expect(find.byTooltip("Don't wrap lines"), findsNWidgets(2));
 
@@ -99,7 +91,7 @@ void main() {
     expect(find.byTooltip("Don't wrap lines"), findsNWidgets(2));
 
     await tester.tap(find.byTooltip("Don't wrap lines").first);
-    await settle(tester);
+    await settleApp(tester);
     await launch(tester, 2);
     expect(sideways(), findsNWidgets(2));
     await unmount(tester);
@@ -109,7 +101,7 @@ void main() {
       'them too', (tester) async {
     await launch(tester, 1);
     await tester.tap(find.byTooltip('Wrap lines'));
-    await settle(tester);
+    await settleApp(tester);
     await tester.tap(
       find.textContaining('computeTheAnswer', findRichText: true),
     );
@@ -122,7 +114,7 @@ void main() {
     expect(inFull, findsOneWidget);
 
     await tester.tap(inFull);
-    await settle(tester);
+    await settleApp(tester);
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.byType(CodeScreen), findsNothing);

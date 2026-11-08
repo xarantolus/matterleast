@@ -210,7 +210,7 @@ void main() {
     });
 
     test('answers go to the integration, numbers as numbers', () async {
-      server.handle = (r) => ok(<String, Object?>{});
+      server.handle = emptyAnswer;
       final outcome = await actions.submitDialog(
         dialog,
         channelId: channelId,
@@ -244,7 +244,7 @@ void main() {
     });
 
     test('cancelling tells the integration only when it asked', () async {
-      server.handle = (r) => ok(<String, Object?>{});
+      server.handle = emptyAnswer;
       await actions.submitDialog(dialog, channelId: channelId, cancelled: true);
       expect(server.seen.single.body['cancelled'], isTrue);
     });

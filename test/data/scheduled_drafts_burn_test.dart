@@ -201,8 +201,9 @@ void main() {
         server.handle = (r) => error(501, 'api.drafts.disabled');
         composer.saveDraft(const Draft(channelId: channelId, message: 'x'));
         await composer.leaveDraft(channelId);
-        await settle();
-        expect((await session.db.features()).syncedDrafts, isFalse);
+        await eventually(
+          () async => !(await session.db.features()).syncedDrafts,
+        );
       },
     );
   });
@@ -442,7 +443,7 @@ void main() {
             : error(404, 'not_found');
         await composer.send(channelId, message: 'secret', burnOnRead: true);
         await session.outbox.start();
-        await settle();
+        await eventually(() => requests('POST', '/api/v4/posts').isNotEmpty);
         expect(
           requests('POST', '/api/v4/posts').single.body['type'],
           'burn_on_read',

@@ -25,6 +25,7 @@ import 'package:matterleast/screens/root/rail_selection.dart';
 import '../support/fake_server.dart';
 import '../support/memory_database.dart';
 import '../support/rail.dart';
+import '../support/settle.dart';
 import '../support/test_session.dart';
 
 ComposerKey? press(
@@ -171,32 +172,21 @@ void main() {
 
     setUp(() => debugDefaultTargetPlatformOverride = TargetPlatform.linux);
 
-    Future<void> settle(WidgetTester tester) async {
-      for (var i = 0; i < 15; i++) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 20)),
-        );
-        await tester.pump(const Duration(milliseconds: 100));
-      }
-    }
-
     Future<void> start(WidgetTester tester) async {
       HttpOverrides.global = null;
       unhandled.clear();
       (server, session) = (await tester.runAsync(() async {
         final server = await FakeServer.start();
-        server.handle = (r) => ok(
-          r.method == 'POST' && r.path == '/api/v4/posts'
-              ? {
-                  'id': 'sent1',
-                  'channel_id': channelId,
-                  'user_id': meId,
-                  'create_at': DateTime.now().millisecondsSinceEpoch,
-                  'message': r.body['message'],
-                  'pending_post_id': r.body['pending_post_id'],
-                }
-              : const <String, Object?>{},
-        );
+        server.handle = (r) => r.method == 'POST' && r.path == '/api/v4/posts'
+            ? ok({
+                'id': 'sent1',
+                'channel_id': channelId,
+                'user_id': meId,
+                'create_at': DateTime.now().millisecondsSinceEpoch,
+                'message': r.body['message'],
+                'pending_post_id': r.body['pending_post_id'],
+              })
+            : emptyAnswer(r);
         final session = await testSession(server);
         await session.store.applyChannelPage(
           channelId: channelId,
@@ -262,7 +252,7 @@ void main() {
           teamId: teamId,
         ),
       );
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       await tester.tap(find.byType(TextField));
       await tester.pump();
     }
@@ -270,7 +260,7 @@ void main() {
     Future<void> finish(WidgetTester tester) async {
       debugDefaultTargetPlatformOverride = null;
       tester.state<NavigatorState>(find.byType(Navigator).first).pop();
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       await tester.pumpWidget(const SizedBox());
       await tester.runAsync(() async {
         await session.outbox.close();
@@ -301,14 +291,14 @@ void main() {
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       expect(await queued(tester), 0);
       expect(text(tester), 'ahoy');
       expect(unhandled, contains(LogicalKeyboardKey.enter));
 
       unhandled.clear();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       expect(unhandled, isEmpty);
       expect(text(tester), isEmpty);
       expect(await queued(tester), 1);
@@ -326,7 +316,7 @@ void main() {
       );
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       expect(await queued(tester), 0);
       expect(text(tester), 'ni');
       await finish(tester);
@@ -336,7 +326,7 @@ void main() {
         'it and Esc closes the list', (tester) async {
       await start(tester);
       await tester.enterText(find.byType(TextField), ':smil');
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       ListTile row(int i) => tester.widget<ListTile>(
         find
             .descendant(
@@ -357,14 +347,14 @@ void main() {
       expect(row(0).selected, isTrue);
 
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       expect(find.byType(SuggestionList), findsNothing);
       expect(text(tester), ':smil');
 
       await tester.enterText(find.byType(TextField), ':smile');
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       expect(text(tester), startsWith('😄'));
       expect(await queued(tester), 0);
       await finish(tester);
@@ -494,7 +484,7 @@ void main() {
     ) async {
       await start(tester);
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-      await settle(tester);
+      await settleApp(tester, servers: [server]);
       expect(text(tester), 'on my way');
       await finish(tester);
     });

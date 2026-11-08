@@ -11,6 +11,7 @@ import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/ui/window_strip.dart';
 
 import '../support/fake_releases.dart';
+import '../support/settle.dart';
 
 void main() {
   late AppDatabase db;
@@ -43,12 +44,7 @@ void main() {
       ),
     );
     // The check and the settings database run outside the fake clock.
-    for (var i = 0; i < 3; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 20));
-    }
+    await settleApp(tester);
   }
 
   Future<void> closeApp(WidgetTester tester) async {

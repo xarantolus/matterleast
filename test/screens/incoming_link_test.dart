@@ -6,10 +6,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/providers.dart';
-import 'package:matterleast/domain/server_entry.dart';
 
 import '../support/fake_server.dart';
 import '../support/pump_app.dart';
+import '../support/servers.dart';
+import '../support/settle.dart';
 import '../support/test_session.dart';
 
 void main() {
@@ -32,7 +33,7 @@ void main() {
           ),
         ),
       ),
-      overrides: [serversProvider.overrideWith((ref) => Stream.value([]))],
+      overrides: [serversOverride([])],
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
@@ -40,9 +41,7 @@ void main() {
     expect(find.text('Sign in to $host?'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 100)),
-    );
+    await settleApp(tester, servers: [server]);
     expect(server.paths, isEmpty);
 
     await tester.runAsync(server.close);
@@ -82,40 +81,23 @@ void main() {
         ),
       ),
       overrides: [
-        serversProvider.overrideWith(
-          (ref) => Stream.value([
-            ServerEntry(
-              url: url,
-              displayName: 'Harbour',
-              siteName: null,
-              serverVersion: '12.0.1',
-              diagnosticId: null,
-              lastActiveAt: DateTime.utc(2026, 10, 25),
-              ssoScheme: null,
-            ),
-          ]),
-        ),
+        serversOverride([
+          testServerEntry(url, name: 'Harbour', serverVersion: '12.0.1'),
+        ]),
         serverSessionProvider(url).overrideWith((ref) async => session),
       ],
     );
     await tester.tap(find.text('open'));
-    for (
-      var i = 0;
-      i < 100 && find.byType(AlertDialog).evaluate().isEmpty;
-      i++
-    ) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump();
-    }
+    await settleApp(
+      tester,
+      servers: [server],
+      until: () => find.byType(AlertDialog).evaluate().isNotEmpty,
+    );
 
     expect(find.text('Message @skipper?'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 100)),
-    );
+    await settleApp(tester, servers: [server]);
     expect(server.paths, isNot(contains('/api/v4/channels/direct')));
 
     await tester.runAsync(() async {

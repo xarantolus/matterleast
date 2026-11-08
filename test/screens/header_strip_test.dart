@@ -18,7 +18,7 @@ const _header =
 Future<ServerHarness> _open(WidgetTester tester, {String header = ''}) =>
     pumpWithServer(
       tester,
-      handle: (r) => ok(<String, Object?>{}),
+      handle: emptyAnswer,
       seed: (session) => session.store.applyChannels(
         channels: [
           api.Channel.fromJson({
