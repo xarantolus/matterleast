@@ -52,6 +52,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
             </intent-filter>
+            <!-- Direct Share: recent chats offered in the share sheet. -->
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
             <!-- Links are read by app_links and checked against the signed-in
                  servers, not routed by Flutter's own deep linking. -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
