@@ -256,10 +256,18 @@ List<ListRow> buildRows(
   final rows = <ListRow>[];
   PostItem? previous;
   DateTime? previousDay;
+  // The time zone is read once per local day, not per post: each read is a
+  // system call on Windows, and this runs for every loaded post on each update.
+  DateTime? day;
+  DateTime? nextDay;
   var lineAt = -1;
   for (final post in posts.reversed) {
-    final local = post.createAt.toLocal();
-    final day = DateTime(local.year, local.month, local.day);
+    final at = post.createAt;
+    if (day == null || at.isBefore(day) || !at.isBefore(nextDay!)) {
+      final local = at.toLocal();
+      day = DateTime(local.year, local.month, local.day);
+      nextDay = DateTime(local.year, local.month, local.day + 1);
+    }
     var startsGroup = previous == null;
     if (day != previousDay) {
       rows.add(ListRow.day(day));
