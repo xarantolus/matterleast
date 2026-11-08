@@ -192,6 +192,27 @@ void main() {
     await h.close(tester);
   });
 
+  testWidgets('a picture in the gallery opens in its channel', (tester) async {
+    await start(tester);
+    await tester.tap(find.byTooltip('harbour.png'));
+    await h.settle(tester);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(GalleryScreen),
+        matching: find.byTooltip('More'),
+      ),
+    );
+    await h.settle(tester);
+    await tester.tap(find.text('Open in channel'));
+    await h.settle(tester);
+    expect(find.byType(GalleryScreen), findsNothing);
+    final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
+    expect(screen.highlightPostId, 'pic1');
+    Navigator.of(tester.element(find.byType(ChannelScreen))).pop();
+    await h.settle(tester);
+    await h.close(tester);
+  });
+
   testWidgets('a channel without files says how they get there', (
     tester,
   ) async {

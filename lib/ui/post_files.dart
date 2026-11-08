@@ -110,6 +110,8 @@ void openGallery(
   required DateTime sentAt,
   double? tileWidth,
   Map<String, Byline>? bylines,
+  List<MediaAction> extras = const [],
+  GalleryExtra? onExtra,
 }) {
   // Coming back must not bring the keyboard up for a field that kept its
   // focus behind the gallery.
@@ -125,6 +127,8 @@ void openGallery(
         sentAt: sentAt,
         tileWidth: tileWidth,
         bylines: bylines,
+        extras: extras,
+        onExtra: onExtra,
       ),
     ),
   );

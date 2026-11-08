@@ -34,6 +34,9 @@ import 'package:video_player/video_player.dart';
 /// Who sent a file and when, where the files of a gallery differ in it.
 typedef Byline = ({String author, DateTime sentAt});
 
+/// Runs a menu entry the opener added for [file], such as "Open in channel".
+typedef GalleryExtra = void Function(MediaAction action, PostFile file);
+
 /// The gallery over the page underneath, which shows through while the
 /// picture is slid away.
 Route<void> galleryRoute({
@@ -45,6 +48,8 @@ Route<void> galleryRoute({
   required DateTime sentAt,
   double? tileWidth,
   Map<String, Byline>? bylines,
+  List<MediaAction> extras = const [],
+  GalleryExtra? onExtra,
 }) => PageRouteBuilder<void>(
   opaque: false,
   transitionDuration: const Duration(milliseconds: 250),
@@ -58,6 +63,8 @@ Route<void> galleryRoute({
     sentAt: sentAt,
     tileWidth: tileWidth,
     bylines: bylines,
+    extras: extras,
+    onExtra: onExtra,
   ),
   transitionsBuilder: (_, animation, _, child) =>
       FadeTransition(opacity: animation, child: child),
@@ -76,8 +83,14 @@ class GalleryScreen extends ConsumerStatefulWidget {
     required this.sentAt,
     this.tileWidth,
     this.bylines,
+    this.extras = const [],
+    this.onExtra,
     super.key,
   });
+
+  /// Menu entries above the file's own, run by [onExtra].
+  final List<MediaAction> extras;
+  final GalleryExtra? onExtra;
 
   /// Byline per file id, for those that differ from [author] and [sentAt].
   final Map<String, Byline>? bylines;
@@ -489,6 +502,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                                   url: widget.url,
                                   file: file,
                                   color: Colors.white,
+                                  extras: widget.extras,
+                                  onExtra: (action) =>
+                                      widget.onExtra?.call(action, file),
                                 )
                               : const SizedBox.shrink(),
                         ),
