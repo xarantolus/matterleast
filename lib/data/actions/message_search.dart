@@ -4,6 +4,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/search_views.dart';
 import 'package:matterleast/data/wait_limited.dart';
 import 'package:matterleast/domain/message_search.dart';
+import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/server_features.dart';
 
 /// Searches one server's messages and files. Found posts are stored with
@@ -95,6 +96,7 @@ class MessageSearch {
               f,
         ];
         final channelIds = {for (final f in infos) ?f.channelId};
+        await session.users.ensure([for (final f in infos) ?f.userId]);
         await session.store.applySearchResults(
           const [],
           channels: await _missingChannels(channelIds),
@@ -115,6 +117,8 @@ class MessageSearch {
               width: f.width,
               height: f.height,
               hasPreview: f.hasPreviewImage ?? false,
+              userId: f.userId ?? '',
+              miniPreview: PostFile.from(f).miniPreview,
             ),
         ];
       });

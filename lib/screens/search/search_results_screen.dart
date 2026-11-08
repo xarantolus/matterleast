@@ -7,28 +7,24 @@ import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/message_search.dart';
-import 'package:matterleast/domain/post_files.dart'
-    show fileKindOf, formatBytes;
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/time_labels.dart';
-import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/search/file_list.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/switch_picker.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/empty_state.dart';
-import 'package:matterleast/ui/file_icon.dart';
 import 'package:matterleast/ui/fill_scrollable.dart';
 import 'package:matterleast/ui/message_preview_tile.dart';
 import 'package:matterleast/ui/pane_label.dart';
 import 'package:matterleast/ui/picker_modes.dart';
-import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/refresh_area.dart';
 import 'package:matterleast/ui/tokens.dart';
 
@@ -213,6 +209,8 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                       .isLoading,
             ));
     final foreground = Theme.of(context).appBarTheme.foregroundColor;
+    // A channel's files are only searched and narrowed by type.
+    final scopedFiles = widget.files && widget.scope?.channelId != null;
     return ContentPage(
       title: TextField(
         controller: _text,
@@ -238,71 +236,73 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         bottom: false,
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.md,
-                Spacing.md,
-                Spacing.md,
-                0,
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<SearchTab>(
-                  segments: const [
-                    ButtonSegment(
-                      value: SearchTab.messages,
-                      label: Text('Messages'),
-                      icon: Icon(Icons.chat_bubble_outline),
-                    ),
-                    ButtonSegment(
-                      value: SearchTab.files,
-                      label: Text('Files'),
-                      icon: Icon(Icons.description_outlined),
-                    ),
-                  ],
-                  selected: {_tab},
-                  onSelectionChanged: (s) {
-                    setState(() {
-                      _picked = s.first;
-                      _searched = true;
-                    });
-                    unawaited(
-                      ref
-                          .read(settingsStoreProvider)
-                          .write(Settings.searchTab, s.first),
-                    );
-                  },
+            if (!scopedFiles) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.md,
+                  Spacing.md,
+                  Spacing.md,
+                  0,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<SearchTab>(
+                    segments: const [
+                      ButtonSegment(
+                        value: SearchTab.messages,
+                        label: Text('Messages'),
+                        icon: Icon(Icons.chat_bubble_outline),
+                      ),
+                      ButtonSegment(
+                        value: SearchTab.files,
+                        label: Text('Files'),
+                        icon: Icon(Icons.description_outlined),
+                      ),
+                    ],
+                    selected: {_tab},
+                    onSelectionChanged: (s) {
+                      setState(() {
+                        _picked = s.first;
+                        _searched = true;
+                      });
+                      unawaited(
+                        ref
+                            .read(settingsStoreProvider)
+                            .write(Settings.searchTab, s.first),
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            _ScopeChips(
-              server: _server,
-              servers: servers,
-              pickServer: widget.url == null && servers.length > 1,
-              scope: _scope,
-              onChanged: (scope) => setState(() {
-                _scope = scope;
-                _searched = true;
-              }),
-              onServer: (url) => setState(() {
-                _server = url;
-                _scope = _scope.copyWith(
-                  teamId: '',
-                  allTeams: true,
-                  channelId: null,
-                  channelName: null,
-                  channelLabel: null,
-                  userId: null,
-                  username: null,
-                  userLabel: null,
-                );
-              }),
-            ),
+              _ScopeChips(
+                server: _server,
+                servers: servers,
+                pickServer: widget.url == null && servers.length > 1,
+                scope: _scope,
+                onChanged: (scope) => setState(() {
+                  _scope = scope;
+                  _searched = true;
+                }),
+                onServer: (url) => setState(() {
+                  _server = url;
+                  _scope = _scope.copyWith(
+                    teamId: '',
+                    allTeams: true,
+                    channelId: null,
+                    channelName: null,
+                    channelLabel: null,
+                    userId: null,
+                    username: null,
+                    userLabel: null,
+                  );
+                }),
+              ),
+            ],
             if (_tab == SearchTab.files)
-              _FileKindChips(
-                selected: _scope.fileKind,
+              FileFilterChips(
+                selected: _scope.fileFilter,
                 onSelected: (kind) => setState(() {
-                  _scope = _scope.copyWith(fileKind: kind);
+                  _scope = _scope.copyWith(fileFilter: kind);
                   _searched = true;
                 }),
               ),
@@ -340,6 +340,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                               requests: requests,
                               names: names,
                               query: _query,
+                              filtered: _scope.fileFilter != null,
                               onRetry: _retry,
                             ),
                     ),
@@ -399,38 +400,6 @@ class _Start extends ConsumerWidget {
       ],
     );
   }
-}
-
-/// Narrows file results to one kind of file.
-class _FileKindChips extends StatelessWidget {
-  const _FileKindChips({required this.selected, required this.onSelected});
-
-  final FileKind? selected;
-  final ValueChanged<FileKind?> onSelected;
-
-  @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    padding: const EdgeInsets.fromLTRB(Spacing.md, 0, Spacing.md, Spacing.sm),
-    child: Row(
-      spacing: Spacing.sm,
-      children: [
-        ChoiceChip(
-          mouseCursor: clickCursor,
-          label: const Text('All types'),
-          selected: selected == null,
-          onSelected: (_) => onSelected(null),
-        ),
-        for (final kind in FileKind.values)
-          ChoiceChip(
-            mouseCursor: clickCursor,
-            label: Text(kind.label),
-            selected: kind == selected,
-            onSelected: (_) => onSelected(kind),
-          ),
-      ],
-    ),
-  );
 }
 
 class _ScopeChips extends ConsumerWidget {
@@ -895,26 +864,28 @@ class _PostListState extends ConsumerState<_PostList> {
   }
 }
 
-typedef _Found = ({String url, FileHit file});
-
 class _FileResults extends ConsumerWidget {
   const _FileResults({
     required this.requests,
     required this.names,
     required this.query,
+    required this.filtered,
     required this.onRetry,
   });
 
   final List<SearchRequest> requests;
   final Map<String, String> names;
   final String query;
+
+  /// A file type is picked, so an empty answer is not "no files yet".
+  final bool filtered;
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sources = <({String name, SearchView<_Found> view})>[
+    final sources = <({String name, SearchView<FoundFile> view})>[
       for (final r in requests)
-        _source<_Found>(
+        _source<FoundFile>(
           r,
           names,
           ref
@@ -934,6 +905,15 @@ class _FileResults extends ConsumerWidget {
       SearchLoading() => const FillScrollable(
         child: Center(child: CircularProgressIndicator()),
       ),
+      SearchEmpty() when query.isEmpty && !filtered => const FillScrollable(
+        child: EmptyState(
+          icon: Icons.description_outlined,
+          title: 'No files yet',
+          body:
+              'Pictures, videos and documents attached to messages show up '
+              'here.',
+        ),
+      ),
       SearchEmpty() => _NoResults(query: query),
       SearchFailed(:final cause) => _Failed(cause: cause, onRetry: onRetry),
       SearchShown(:final results, :final more, :final failures) => _FileList(
@@ -948,7 +928,7 @@ class _FileResults extends ConsumerWidget {
   }
 }
 
-class _FileList extends StatefulWidget {
+class _FileList extends ConsumerStatefulWidget {
   const _FileList({
     required this.urls,
     required this.results,
@@ -959,17 +939,17 @@ class _FileList extends StatefulWidget {
   });
 
   final List<String> urls;
-  final List<_Found> results;
-  final List<_Found> more;
+  final List<FoundFile> results;
+  final List<FoundFile> more;
   final Map<String, String> names;
   final List<({String name, String cause})> failures;
   final VoidCallback onRetry;
 
   @override
-  State<_FileList> createState() => _FileListState();
+  ConsumerState<_FileList> createState() => _FileListState();
 }
 
-class _FileListState extends State<_FileList> {
+class _FileListState extends ConsumerState<_FileList> {
   late List<List<String>> _arrivals = arrivalGroups(const [], _ready);
 
   Iterable<String> get _ready => {for (final f in widget.results) f.url};
@@ -984,62 +964,83 @@ class _FileListState extends State<_FileList> {
   Widget build(BuildContext context) {
     final names = widget.names;
     final failures = widget.failures;
-    DateTime? time(_Found f) => f.file.createAt;
+    final now = ref.watch(todayProvider);
+    DateTime? time(FoundFile f) => f.file.createAt;
     // Each server's hits are already newest first.
-    List<List<_Found>> byServer(List<_Found> all, Iterable<String> urls) => [
+    List<List<FoundFile>> byServer(
+      List<FoundFile> all,
+      Iterable<String> urls,
+    ) => [
       for (final url in urls)
         [
           for (final f in all)
             if (f.url == url) f,
         ],
     ];
-    final rows = <Object>[];
+    // Later arrivals are sections below, so nothing shown moves.
+    final sections = <({String? label, List<FoundFile> items})>[];
     for (final (i, urls) in _arrivals.indexed) {
       final items = mergeNewestFirst(byServer(widget.results, urls), time);
       if (items.isEmpty) continue;
-      if (i > 0) {
-        rows.add(
-          PaneLabel('More from ${urls.map((u) => names[u] ?? u).join(', ')}'),
-        );
-      }
-      rows.addAll(withDays(items, time));
+      sections.add((
+        label: i > 0
+            ? 'More from ${urls.map((u) => names[u] ?? u).join(', ')}'
+            : null,
+        items: items,
+      ));
     }
     if (widget.more.isNotEmpty) {
-      rows
-        ..add(const PaneLabel('More from the server'))
-        ..addAll(
-          withDays(
-            mergeNewestFirst(byServer(widget.more, widget.urls), time),
-            time,
-          ),
-        );
+      sections.add((
+        label: 'More from the server',
+        items: mergeNewestFirst(byServer(widget.more, widget.urls), time),
+      ));
     }
-    final count = widget.results.length + widget.more.length;
-    final top = failures.isEmpty ? 1 : 2;
-    return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
-      ),
-      itemCount: rows.length + top,
-      itemBuilder: (context, i) {
-        if (i == 0) {
-          return PaneLabel('$count ${count == 1 ? 'file' : 'files'}');
-        }
-        if (i < top) {
-          return _Failures(failures: failures, onRetry: widget.onRetry);
-        }
-        return switch (rows[i - top]) {
-          final DateTime day => _DayHeader(day: day),
-          final PaneLabel label => label,
-          final _Found found => _FileTile(
-            url: found.url,
-            file: found.file,
-            serverName: names[found.url],
+    final groups = [
+      for (final section in sections)
+        (
+          label: section.label,
+          groups: groupFiles<FoundFile>(
+            section.items,
+            timeOf: time,
+            isMedia: (f) => f.file.postFile.isMedia,
+            now: now,
           ),
-          _ => const SizedBox.shrink(),
-        };
-      },
+        ),
+    ];
+    final media = [
+      for (final section in groups)
+        for (final group in section.groups) ...group.media,
+    ];
+    final count = widget.results.length + widget.more.length;
+    return LayoutBuilder(
+      builder: (context, box) => CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: PaneLabel('$count ${count == 1 ? 'file' : 'files'}'),
+          ),
+          if (failures.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _Failures(failures: failures, onRetry: widget.onRetry),
+            ),
+          for (final section in groups) ...[
+            if (section.label case final label?)
+              SliverToBoxAdapter(child: PaneLabel(label)),
+            for (final group in section.groups)
+              FileGroupSliver(
+                group: group,
+                columns: mediaColumns(box.maxWidth - 2 * Spacing.md),
+                media: media,
+                names: names,
+              ),
+          ],
+          SliverPadding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1062,82 +1063,6 @@ class _DayHeader extends ConsumerWidget {
       style: context.tokens.smallCaps,
     ),
   );
-}
-
-class _FileTile extends ConsumerStatefulWidget {
-  const _FileTile({required this.url, required this.file, this.serverName});
-
-  final String url;
-  final FileHit file;
-  final String? serverName;
-
-  @override
-  ConsumerState<_FileTile> createState() => _FileTileState();
-}
-
-class _FileTileState extends ConsumerState<_FileTile> {
-  bool _locating = false;
-
-  Future<void> _openInChannel() async {
-    if (_locating) return;
-    setState(() => _locating = true);
-    try {
-      await openPost(
-        Navigator.of(context),
-        widget.url,
-        widget.file.postId,
-        showsProgress: true,
-      );
-    } finally {
-      if (mounted) setState(() => _locating = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final file = widget.file;
-    return ListTile(
-      onTap: () => openFile(
-        context,
-        ref,
-        url: widget.url,
-        file: file.postFile,
-        author: file.place,
-        sentAt: file.createAt ?? DateTime.now(),
-      ),
-      leading: SizedBox(
-        width: 40,
-        child: Icon(
-          fileIcon(
-            fileKindOf(extension: file.extension, mimeType: file.mimeType),
-            file.extension,
-          ),
-          color: context.tokens.accent,
-        ),
-      ),
-      title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(
-        [
-          formatBytes(file.size),
-          if (file.place.isNotEmpty) file.place,
-          ?widget.serverName,
-        ].join(' · '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: context.tokens.muted),
-      ),
-      trailing: _locating
-          ? const SizedBox.square(
-              dimension: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : IconButton(
-              tooltip: 'Jump to message',
-              icon: const Icon(Icons.move_down),
-              onPressed: _openInChannel,
-            ),
-    );
-  }
 }
 
 class _NoResults extends StatelessWidget {

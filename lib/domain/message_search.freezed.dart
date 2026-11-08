@@ -21,7 +21,7 @@ mixin _$SearchScope {
 /// message); [channelLabel] is what the chip says.
  String? get channelId; String? get channelName; String? get channelLabel;/// `from:` takes the username.
  String? get userId; String? get username; String? get userLabel; DateTime? get on; DateTime? get before; DateTime? get after;/// Files only: `ext:` for each of its extensions.
- FileKind? get fileKind;
+ FileFilter? get fileFilter;
 /// Create a copy of SearchScope
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -33,20 +33,20 @@ $SearchScopeCopyWith<SearchScope> get copyWith => _$SearchScopeCopyWithImpl<Sear
 @override
 bool operator ==(Object other) {
   final _this = this as SearchScope;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SearchScope&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.allTeams, _this.allTeams) || other.allTeams == _this.allTeams)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.channelName, _this.channelName) || other.channelName == _this.channelName)&&(identical(other.channelLabel, _this.channelLabel) || other.channelLabel == _this.channelLabel)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.userLabel, _this.userLabel) || other.userLabel == _this.userLabel)&&(identical(other.on, _this.on) || other.on == _this.on)&&(identical(other.before, _this.before) || other.before == _this.before)&&(identical(other.after, _this.after) || other.after == _this.after)&&(identical(other.fileKind, _this.fileKind) || other.fileKind == _this.fileKind));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SearchScope&&(identical(other.teamId, _this.teamId) || other.teamId == _this.teamId)&&(identical(other.allTeams, _this.allTeams) || other.allTeams == _this.allTeams)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.channelName, _this.channelName) || other.channelName == _this.channelName)&&(identical(other.channelLabel, _this.channelLabel) || other.channelLabel == _this.channelLabel)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.userLabel, _this.userLabel) || other.userLabel == _this.userLabel)&&(identical(other.on, _this.on) || other.on == _this.on)&&(identical(other.before, _this.before) || other.before == _this.before)&&(identical(other.after, _this.after) || other.after == _this.after)&&(identical(other.fileFilter, _this.fileFilter) || other.fileFilter == _this.fileFilter));
 }
 
 
 @override
 int get hashCode {
   final _this = this as SearchScope;
-  return Object.hash(runtimeType,_this.teamId,_this.allTeams,_this.channelId,_this.channelName,_this.channelLabel,_this.userId,_this.username,_this.userLabel,_this.on,_this.before,_this.after,_this.fileKind);
+  return Object.hash(runtimeType,_this.teamId,_this.allTeams,_this.channelId,_this.channelName,_this.channelLabel,_this.userId,_this.username,_this.userLabel,_this.on,_this.before,_this.after,_this.fileFilter);
 }
 
 @override
 String toString() {
   final _this = this as SearchScope;
-  return 'SearchScope(teamId: ${_this.teamId}, allTeams: ${_this.allTeams}, channelId: ${_this.channelId}, channelName: ${_this.channelName}, channelLabel: ${_this.channelLabel}, userId: ${_this.userId}, username: ${_this.username}, userLabel: ${_this.userLabel}, on: ${_this.on}, before: ${_this.before}, after: ${_this.after}, fileKind: ${_this.fileKind})';
+  return 'SearchScope(teamId: ${_this.teamId}, allTeams: ${_this.allTeams}, channelId: ${_this.channelId}, channelName: ${_this.channelName}, channelLabel: ${_this.channelLabel}, userId: ${_this.userId}, username: ${_this.username}, userLabel: ${_this.userLabel}, on: ${_this.on}, before: ${_this.before}, after: ${_this.after}, fileFilter: ${_this.fileFilter})';
 }
 
 
@@ -57,7 +57,7 @@ abstract mixin class $SearchScopeCopyWith<$Res>  {
   factory $SearchScopeCopyWith(SearchScope value, $Res Function(SearchScope) _then) = _$SearchScopeCopyWithImpl;
 @useResult
 $Res call({
- String teamId, bool allTeams, String? channelId, String? channelName, String? channelLabel, String? userId, String? username, String? userLabel, DateTime? on, DateTime? before, DateTime? after, FileKind? fileKind
+ String teamId, bool allTeams, String? channelId, String? channelName, String? channelLabel, String? userId, String? username, String? userLabel, DateTime? on, DateTime? before, DateTime? after, FileFilter? fileFilter
 });
 
 
@@ -74,7 +74,7 @@ class _$SearchScopeCopyWithImpl<$Res>
 
 /// Create a copy of SearchScope
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? teamId = null,Object? allTeams = null,Object? channelId = freezed,Object? channelName = freezed,Object? channelLabel = freezed,Object? userId = freezed,Object? username = freezed,Object? userLabel = freezed,Object? on = freezed,Object? before = freezed,Object? after = freezed,Object? fileKind = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? teamId = null,Object? allTeams = null,Object? channelId = freezed,Object? channelName = freezed,Object? channelLabel = freezed,Object? userId = freezed,Object? username = freezed,Object? userLabel = freezed,Object? on = freezed,Object? before = freezed,Object? after = freezed,Object? fileFilter = freezed,}) {
   return _then(SearchScope(
 teamId: null == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String,allTeams: null == allTeams ? _self.allTeams : allTeams // ignore: cast_nullable_to_non_nullable
@@ -87,8 +87,8 @@ as String?,userLabel: freezed == userLabel ? _self.userLabel : userLabel // igno
 as String?,on: freezed == on ? _self.on : on // ignore: cast_nullable_to_non_nullable
 as DateTime?,before: freezed == before ? _self.before : before // ignore: cast_nullable_to_non_nullable
 as DateTime?,after: freezed == after ? _self.after : after // ignore: cast_nullable_to_non_nullable
-as DateTime?,fileKind: freezed == fileKind ? _self.fileKind : fileKind // ignore: cast_nullable_to_non_nullable
-as FileKind?,
+as DateTime?,fileFilter: freezed == fileFilter ? _self.fileFilter : fileFilter // ignore: cast_nullable_to_non_nullable
+as FileFilter?,
   ));
 }
 
@@ -173,10 +173,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String teamId,  bool allTeams,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after,  FileKind? fileKind)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String teamId,  bool allTeams,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after,  FileFilter? fileFilter)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SearchScope() when $default != null:
-return $default(_that.teamId,_that.allTeams,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after,_that.fileKind);case _:
+return $default(_that.teamId,_that.allTeams,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after,_that.fileFilter);case _:
   return orElse();
 
 }
@@ -194,10 +194,10 @@ return $default(_that.teamId,_that.allTeams,_that.channelId,_that.channelName,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String teamId,  bool allTeams,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after,  FileKind? fileKind)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String teamId,  bool allTeams,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after,  FileFilter? fileFilter)  $default,) {final _that = this;
 switch (_that) {
 case _SearchScope():
-return $default(_that.teamId,_that.allTeams,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after,_that.fileKind);case _:
+return $default(_that.teamId,_that.allTeams,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after,_that.fileFilter);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -214,10 +214,10 @@ return $default(_that.teamId,_that.allTeams,_that.channelId,_that.channelName,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String teamId,  bool allTeams,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after,  FileKind? fileKind)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String teamId,  bool allTeams,  String? channelId,  String? channelName,  String? channelLabel,  String? userId,  String? username,  String? userLabel,  DateTime? on,  DateTime? before,  DateTime? after,  FileFilter? fileFilter)?  $default,) {final _that = this;
 switch (_that) {
 case _SearchScope() when $default != null:
-return $default(_that.teamId,_that.allTeams,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after,_that.fileKind);case _:
+return $default(_that.teamId,_that.allTeams,_that.channelId,_that.channelName,_that.channelLabel,_that.userId,_that.username,_that.userLabel,_that.on,_that.before,_that.after,_that.fileFilter);case _:
   return null;
 
 }
@@ -229,7 +229,7 @@ return $default(_that.teamId,_that.allTeams,_that.channelId,_that.channelName,_t
 
 
 class _SearchScope implements SearchScope {
-  const _SearchScope({required this.teamId, this.allTeams = false, this.channelId, this.channelName, this.channelLabel, this.userId, this.username, this.userLabel, this.on, this.before, this.after, this.fileKind});
+  const _SearchScope({required this.teamId, this.allTeams = false, this.channelId, this.channelName, this.channelLabel, this.userId, this.username, this.userLabel, this.on, this.before, this.after, this.fileFilter});
   
 
 @override final  String teamId;
@@ -249,7 +249,7 @@ class _SearchScope implements SearchScope {
 @override final  DateTime? before;
 @override final  DateTime? after;
 /// Files only: `ext:` for each of its extensions.
-@override final  FileKind? fileKind;
+@override final  FileFilter? fileFilter;
 
 /// Create a copy of SearchScope
 /// with the given fields replaced by the non-null parameter values.
@@ -261,18 +261,18 @@ _$SearchScopeCopyWith<_SearchScope> get copyWith => __$SearchScopeCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SearchScope&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.allTeams, allTeams) || other.allTeams == allTeams)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.channelLabel, channelLabel) || other.channelLabel == channelLabel)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.username, username) || other.username == username)&&(identical(other.userLabel, userLabel) || other.userLabel == userLabel)&&(identical(other.on, on) || other.on == on)&&(identical(other.before, before) || other.before == before)&&(identical(other.after, after) || other.after == after)&&(identical(other.fileKind, fileKind) || other.fileKind == fileKind));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SearchScope&&(identical(other.teamId, teamId) || other.teamId == teamId)&&(identical(other.allTeams, allTeams) || other.allTeams == allTeams)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.channelName, channelName) || other.channelName == channelName)&&(identical(other.channelLabel, channelLabel) || other.channelLabel == channelLabel)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.username, username) || other.username == username)&&(identical(other.userLabel, userLabel) || other.userLabel == userLabel)&&(identical(other.on, on) || other.on == on)&&(identical(other.before, before) || other.before == before)&&(identical(other.after, after) || other.after == after)&&(identical(other.fileFilter, fileFilter) || other.fileFilter == fileFilter));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,teamId,allTeams,channelId,channelName,channelLabel,userId,username,userLabel,on,before,after,fileKind);
+    return Object.hash(runtimeType,teamId,allTeams,channelId,channelName,channelLabel,userId,username,userLabel,on,before,after,fileFilter);
 }
 
 @override
 String toString() {
-    return 'SearchScope(teamId: $teamId, allTeams: $allTeams, channelId: $channelId, channelName: $channelName, channelLabel: $channelLabel, userId: $userId, username: $username, userLabel: $userLabel, on: $on, before: $before, after: $after, fileKind: $fileKind)';
+    return 'SearchScope(teamId: $teamId, allTeams: $allTeams, channelId: $channelId, channelName: $channelName, channelLabel: $channelLabel, userId: $userId, username: $username, userLabel: $userLabel, on: $on, before: $before, after: $after, fileFilter: $fileFilter)';
 }
 
 
@@ -283,7 +283,7 @@ abstract mixin class _$SearchScopeCopyWith<$Res> implements $SearchScopeCopyWith
   factory _$SearchScopeCopyWith(_SearchScope value, $Res Function(_SearchScope) _then) = __$SearchScopeCopyWithImpl;
 @override @useResult
 $Res call({
- String teamId, bool allTeams, String? channelId, String? channelName, String? channelLabel, String? userId, String? username, String? userLabel, DateTime? on, DateTime? before, DateTime? after, FileKind? fileKind
+ String teamId, bool allTeams, String? channelId, String? channelName, String? channelLabel, String? userId, String? username, String? userLabel, DateTime? on, DateTime? before, DateTime? after, FileFilter? fileFilter
 });
 
 
@@ -300,7 +300,7 @@ class __$SearchScopeCopyWithImpl<$Res>
 
 /// Create a copy of SearchScope
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? teamId = null,Object? allTeams = null,Object? channelId = freezed,Object? channelName = freezed,Object? channelLabel = freezed,Object? userId = freezed,Object? username = freezed,Object? userLabel = freezed,Object? on = freezed,Object? before = freezed,Object? after = freezed,Object? fileKind = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? teamId = null,Object? allTeams = null,Object? channelId = freezed,Object? channelName = freezed,Object? channelLabel = freezed,Object? userId = freezed,Object? username = freezed,Object? userLabel = freezed,Object? on = freezed,Object? before = freezed,Object? after = freezed,Object? fileFilter = freezed,}) {
   return _then(_SearchScope(
 teamId: null == teamId ? _self.teamId : teamId // ignore: cast_nullable_to_non_nullable
 as String,allTeams: null == allTeams ? _self.allTeams : allTeams // ignore: cast_nullable_to_non_nullable
@@ -313,8 +313,8 @@ as String?,userLabel: freezed == userLabel ? _self.userLabel : userLabel // igno
 as String?,on: freezed == on ? _self.on : on // ignore: cast_nullable_to_non_nullable
 as DateTime?,before: freezed == before ? _self.before : before // ignore: cast_nullable_to_non_nullable
 as DateTime?,after: freezed == after ? _self.after : after // ignore: cast_nullable_to_non_nullable
-as DateTime?,fileKind: freezed == fileKind ? _self.fileKind : fileKind // ignore: cast_nullable_to_non_nullable
-as FileKind?,
+as DateTime?,fileFilter: freezed == fileFilter ? _self.fileFilter : fileFilter // ignore: cast_nullable_to_non_nullable
+as FileFilter?,
   ));
 }
 
@@ -325,7 +325,9 @@ as FileKind?,
 mixin _$FileHit {
 
  String get id; String get name; String get extension; String get mimeType; int get size; String get postId; String get channelId;/// Where it was posted, such as `#town-square` or a person's name.
- String get place; DateTime? get createAt; int? get width; int? get height; bool get hasPreview;
+ String get place; DateTime? get createAt; int? get width; int? get height; bool get hasPreview;/// Who posted it.
+ String get userId;/// A tiny JPEG to blur while the picture loads.
+ Uint8List? get miniPreview;
 /// Create a copy of FileHit
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -337,20 +339,20 @@ $FileHitCopyWith<FileHit> get copyWith => _$FileHitCopyWithImpl<FileHit>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as FileHit;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FileHit&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.extension, _this.extension) || other.extension == _this.extension)&&(identical(other.mimeType, _this.mimeType) || other.mimeType == _this.mimeType)&&(identical(other.size, _this.size) || other.size == _this.size)&&(identical(other.postId, _this.postId) || other.postId == _this.postId)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.place, _this.place) || other.place == _this.place)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.width, _this.width) || other.width == _this.width)&&(identical(other.height, _this.height) || other.height == _this.height)&&(identical(other.hasPreview, _this.hasPreview) || other.hasPreview == _this.hasPreview));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FileHit&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.extension, _this.extension) || other.extension == _this.extension)&&(identical(other.mimeType, _this.mimeType) || other.mimeType == _this.mimeType)&&(identical(other.size, _this.size) || other.size == _this.size)&&(identical(other.postId, _this.postId) || other.postId == _this.postId)&&(identical(other.channelId, _this.channelId) || other.channelId == _this.channelId)&&(identical(other.place, _this.place) || other.place == _this.place)&&(identical(other.createAt, _this.createAt) || other.createAt == _this.createAt)&&(identical(other.width, _this.width) || other.width == _this.width)&&(identical(other.height, _this.height) || other.height == _this.height)&&(identical(other.hasPreview, _this.hasPreview) || other.hasPreview == _this.hasPreview)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&const DeepCollectionEquality().equals(other.miniPreview, _this.miniPreview));
 }
 
 
 @override
 int get hashCode {
   final _this = this as FileHit;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.extension,_this.mimeType,_this.size,_this.postId,_this.channelId,_this.place,_this.createAt,_this.width,_this.height,_this.hasPreview);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.extension,_this.mimeType,_this.size,_this.postId,_this.channelId,_this.place,_this.createAt,_this.width,_this.height,_this.hasPreview,_this.userId,const DeepCollectionEquality().hash(_this.miniPreview));
 }
 
 @override
 String toString() {
   final _this = this as FileHit;
-  return 'FileHit(id: ${_this.id}, name: ${_this.name}, extension: ${_this.extension}, mimeType: ${_this.mimeType}, size: ${_this.size}, postId: ${_this.postId}, channelId: ${_this.channelId}, place: ${_this.place}, createAt: ${_this.createAt}, width: ${_this.width}, height: ${_this.height}, hasPreview: ${_this.hasPreview})';
+  return 'FileHit(id: ${_this.id}, name: ${_this.name}, extension: ${_this.extension}, mimeType: ${_this.mimeType}, size: ${_this.size}, postId: ${_this.postId}, channelId: ${_this.channelId}, place: ${_this.place}, createAt: ${_this.createAt}, width: ${_this.width}, height: ${_this.height}, hasPreview: ${_this.hasPreview}, userId: ${_this.userId}, miniPreview: ${_this.miniPreview})';
 }
 
 
@@ -361,7 +363,7 @@ abstract mixin class $FileHitCopyWith<$Res>  {
   factory $FileHitCopyWith(FileHit value, $Res Function(FileHit) _then) = _$FileHitCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String extension, String mimeType, int size, String postId, String channelId, String place, DateTime? createAt, int? width, int? height, bool hasPreview
+ String id, String name, String extension, String mimeType, int size, String postId, String channelId, String place, DateTime? createAt, int? width, int? height, bool hasPreview, String userId, Uint8List? miniPreview
 });
 
 
@@ -378,7 +380,7 @@ class _$FileHitCopyWithImpl<$Res>
 
 /// Create a copy of FileHit
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? extension = null,Object? mimeType = null,Object? size = null,Object? postId = null,Object? channelId = null,Object? place = null,Object? createAt = freezed,Object? width = freezed,Object? height = freezed,Object? hasPreview = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? extension = null,Object? mimeType = null,Object? size = null,Object? postId = null,Object? channelId = null,Object? place = null,Object? createAt = freezed,Object? width = freezed,Object? height = freezed,Object? hasPreview = null,Object? userId = null,Object? miniPreview = freezed,}) {
   return _then(FileHit(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -392,7 +394,9 @@ as String,createAt: freezed == createAt ? _self.createAt : createAt // ignore: c
 as DateTime?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
 as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
 as int?,hasPreview: null == hasPreview ? _self.hasPreview : hasPreview // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,miniPreview: freezed == miniPreview ? _self.miniPreview : miniPreview // ignore: cast_nullable_to_non_nullable
+as Uint8List?,
   ));
 }
 
@@ -477,10 +481,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt,  int? width,  int? height,  bool hasPreview)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt,  int? width,  int? height,  bool hasPreview,  String userId,  Uint8List? miniPreview)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _FileHit() when $default != null:
-return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt,_that.width,_that.height,_that.hasPreview);case _:
+return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt,_that.width,_that.height,_that.hasPreview,_that.userId,_that.miniPreview);case _:
   return orElse();
 
 }
@@ -498,10 +502,10 @@ return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt,  int? width,  int? height,  bool hasPreview)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt,  int? width,  int? height,  bool hasPreview,  String userId,  Uint8List? miniPreview)  $default,) {final _that = this;
 switch (_that) {
 case _FileHit():
-return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt,_that.width,_that.height,_that.hasPreview);case _:
+return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt,_that.width,_that.height,_that.hasPreview,_that.userId,_that.miniPreview);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -518,10 +522,10 @@ return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt,  int? width,  int? height,  bool hasPreview)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String extension,  String mimeType,  int size,  String postId,  String channelId,  String place,  DateTime? createAt,  int? width,  int? height,  bool hasPreview,  String userId,  Uint8List? miniPreview)?  $default,) {final _that = this;
 switch (_that) {
 case _FileHit() when $default != null:
-return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt,_that.width,_that.height,_that.hasPreview);case _:
+return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_that.postId,_that.channelId,_that.place,_that.createAt,_that.width,_that.height,_that.hasPreview,_that.userId,_that.miniPreview);case _:
   return null;
 
 }
@@ -533,7 +537,7 @@ return $default(_that.id,_that.name,_that.extension,_that.mimeType,_that.size,_t
 
 
 class _FileHit extends FileHit {
-  const _FileHit({required this.id, required this.name, required this.extension, required this.mimeType, required this.size, required this.postId, required this.channelId, required this.place, this.createAt, this.width, this.height, this.hasPreview = false}): super._();
+  const _FileHit({required this.id, required this.name, required this.extension, required this.mimeType, required this.size, required this.postId, required this.channelId, required this.place, this.createAt, this.width, this.height, this.hasPreview = false, this.userId = '', this.miniPreview}): super._();
   
 
 @override final  String id;
@@ -549,6 +553,10 @@ class _FileHit extends FileHit {
 @override final  int? width;
 @override final  int? height;
 @override@JsonKey() final  bool hasPreview;
+/// Who posted it.
+@override@JsonKey() final  String userId;
+/// A tiny JPEG to blur while the picture loads.
+@override final  Uint8List? miniPreview;
 
 /// Create a copy of FileHit
 /// with the given fields replaced by the non-null parameter values.
@@ -560,18 +568,18 @@ _$FileHitCopyWith<_FileHit> get copyWith => __$FileHitCopyWithImpl<_FileHit>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _FileHit&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.extension, extension) || other.extension == extension)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.size, size) || other.size == size)&&(identical(other.postId, postId) || other.postId == postId)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.place, place) || other.place == place)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.hasPreview, hasPreview) || other.hasPreview == hasPreview));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _FileHit&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.extension, extension) || other.extension == extension)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.size, size) || other.size == size)&&(identical(other.postId, postId) || other.postId == postId)&&(identical(other.channelId, channelId) || other.channelId == channelId)&&(identical(other.place, place) || other.place == place)&&(identical(other.createAt, createAt) || other.createAt == createAt)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.hasPreview, hasPreview) || other.hasPreview == hasPreview)&&(identical(other.userId, userId) || other.userId == userId)&&const DeepCollectionEquality().equals(other.miniPreview, miniPreview));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,extension,mimeType,size,postId,channelId,place,createAt,width,height,hasPreview);
+    return Object.hash(runtimeType,id,name,extension,mimeType,size,postId,channelId,place,createAt,width,height,hasPreview,userId,const DeepCollectionEquality().hash(miniPreview));
 }
 
 @override
 String toString() {
-    return 'FileHit(id: $id, name: $name, extension: $extension, mimeType: $mimeType, size: $size, postId: $postId, channelId: $channelId, place: $place, createAt: $createAt, width: $width, height: $height, hasPreview: $hasPreview)';
+    return 'FileHit(id: $id, name: $name, extension: $extension, mimeType: $mimeType, size: $size, postId: $postId, channelId: $channelId, place: $place, createAt: $createAt, width: $width, height: $height, hasPreview: $hasPreview, userId: $userId, miniPreview: $miniPreview)';
 }
 
 
@@ -582,7 +590,7 @@ abstract mixin class _$FileHitCopyWith<$Res> implements $FileHitCopyWith<$Res> {
   factory _$FileHitCopyWith(_FileHit value, $Res Function(_FileHit) _then) = __$FileHitCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String extension, String mimeType, int size, String postId, String channelId, String place, DateTime? createAt, int? width, int? height, bool hasPreview
+ String id, String name, String extension, String mimeType, int size, String postId, String channelId, String place, DateTime? createAt, int? width, int? height, bool hasPreview, String userId, Uint8List? miniPreview
 });
 
 
@@ -599,7 +607,7 @@ class __$FileHitCopyWithImpl<$Res>
 
 /// Create a copy of FileHit
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? extension = null,Object? mimeType = null,Object? size = null,Object? postId = null,Object? channelId = null,Object? place = null,Object? createAt = freezed,Object? width = freezed,Object? height = freezed,Object? hasPreview = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? extension = null,Object? mimeType = null,Object? size = null,Object? postId = null,Object? channelId = null,Object? place = null,Object? createAt = freezed,Object? width = freezed,Object? height = freezed,Object? hasPreview = null,Object? userId = null,Object? miniPreview = freezed,}) {
   return _then(_FileHit(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -613,7 +621,9 @@ as String,createAt: freezed == createAt ? _self.createAt : createAt // ignore: c
 as DateTime?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
 as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
 as int?,hasPreview: null == hasPreview ? _self.hasPreview : hasPreview // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,miniPreview: freezed == miniPreview ? _self.miniPreview : miniPreview // ignore: cast_nullable_to_non_nullable
+as Uint8List?,
   ));
 }
 

@@ -911,3 +911,172 @@ final class SearchPostItemsFamily extends $Family
   @override
   String toString() => r'searchPostItemsProvider';
 }
+
+/// Who sent a file, for its row.
+
+@ProviderFor(fileSender)
+final fileSenderProvider = FileSenderFamily._();
+
+/// Who sent a file, for its row.
+
+final class FileSenderProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<({String name, int? picture})?>,
+          ({String name, int? picture})?,
+          Stream<({String name, int? picture})?>
+        >
+    with
+        $FutureModifier<({String name, int? picture})?>,
+        $StreamProvider<({String name, int? picture})?> {
+  /// Who sent a file, for its row.
+  FileSenderProvider._({
+    required FileSenderFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'fileSenderProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$fileSenderHash();
+
+  @override
+  String toString() {
+    return r'fileSenderProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<({String name, int? picture})?> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<({String name, int? picture})?> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return fileSender(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FileSenderProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$fileSenderHash() => r'67f1f9189b4df8ab2ead5ad669f0914ae4238aac';
+
+/// Who sent a file, for its row.
+
+final class FileSenderFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          Stream<({String name, int? picture})?>,
+          (String, String)
+        > {
+  FileSenderFamily._()
+    : super(
+        retry: null,
+        name: r'fileSenderProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Who sent a file, for its row.
+
+  FileSenderProvider call(String url, String userId) =>
+      FileSenderProvider._(argument: (url, userId), from: this);
+
+  @override
+  String toString() => r'fileSenderProvider';
+}
+
+/// The web link of a message, null while its team isn't known.
+
+@ProviderFor(postLink)
+final postLinkProvider = PostLinkFamily._();
+
+/// The web link of a message, null while its team isn't known.
+
+final class PostLinkProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// The web link of a message, null while its team isn't known.
+  PostLinkProvider._({
+    required PostLinkFamily super.from,
+    required (String, String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'postLinkProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$postLinkHash();
+
+  @override
+  String toString() {
+    return r'postLinkProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as (String, String, String);
+    return postLink(ref, argument.$1, argument.$2, argument.$3);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PostLinkProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$postLinkHash() => r'd04c59f336d8ae14cf4469aa676e14c70b77cd32';
+
+/// The web link of a message, null while its team isn't known.
+
+final class PostLinkFamily extends $Family
+    with
+        $FunctionalFamilyOverride<FutureOr<String?>, (String, String, String)> {
+  PostLinkFamily._()
+    : super(
+        retry: null,
+        name: r'postLinkProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The web link of a message, null while its team isn't known.
+
+  PostLinkProvider call(String url, String channelId, String postId) =>
+      PostLinkProvider._(argument: (url, channelId, postId), from: this);
+
+  @override
+  String toString() => r'postLinkProvider';
+}

@@ -31,6 +31,9 @@ import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:video_player/video_player.dart';
 
+/// Who sent a file and when, where the files of a gallery differ in it.
+typedef Byline = ({String author, DateTime sentAt});
+
 /// The gallery over the page underneath, which shows through while the
 /// picture is slid away.
 Route<void> galleryRoute({
@@ -41,6 +44,7 @@ Route<void> galleryRoute({
   required String author,
   required DateTime sentAt,
   double? tileWidth,
+  Map<String, Byline>? bylines,
 }) => PageRouteBuilder<void>(
   opaque: false,
   transitionDuration: const Duration(milliseconds: 250),
@@ -53,6 +57,7 @@ Route<void> galleryRoute({
     author: author,
     sentAt: sentAt,
     tileWidth: tileWidth,
+    bylines: bylines,
   ),
   transitionsBuilder: (_, animation, _, child) =>
       FadeTransition(opacity: animation, child: child),
@@ -70,8 +75,12 @@ class GalleryScreen extends ConsumerStatefulWidget {
     required this.author,
     required this.sentAt,
     this.tileWidth,
+    this.bylines,
     super.key,
   });
+
+  /// Byline per file id, for those that differ from [author] and [sentAt].
+  final Map<String, Byline>? bylines;
 
   /// The width of the tile that was tapped; its decoded picture is the first
   /// thing the gallery shows.
@@ -464,9 +473,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                         ),
                         _Bars(
                           visible: _bars && !_fullScreen,
-                          title: widget.author,
+                          title:
+                              widget.bylines?[file.id]?.author ?? widget.author,
                           subtitle: whenLabel(
-                            widget.sentAt,
+                            widget.bylines?[file.id]?.sentAt ?? widget.sentAt,
                             ref.watch(todayProvider),
                             use24: MediaQuery.alwaysUse24HourFormatOf(context),
                           ),

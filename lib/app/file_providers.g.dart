@@ -202,3 +202,86 @@ abstract class _$FileTransfers extends $Notifier<Map<String, double?>> {
     return element.handleCreate(ref, () => build(_$args));
   }
 }
+
+/// Whether the file is already on this device; asked again when a download
+/// of it starts or ends.
+
+@ProviderFor(fileDownloaded)
+final fileDownloadedProvider = FileDownloadedFamily._();
+
+/// Whether the file is already on this device; asked again when a download
+/// of it starts or ends.
+
+final class FileDownloadedProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Whether the file is already on this device; asked again when a download
+  /// of it starts or ends.
+  FileDownloadedProvider._({
+    required FileDownloadedFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'fileDownloadedProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$fileDownloadedHash();
+
+  @override
+  String toString() {
+    return r'fileDownloadedProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return fileDownloaded(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FileDownloadedProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$fileDownloadedHash() => r'c0d8eb4c3ab60e5acb6031365c02e58be3fa108d';
+
+/// Whether the file is already on this device; asked again when a download
+/// of it starts or ends.
+
+final class FileDownloadedFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, (String, String)> {
+  FileDownloadedFamily._()
+    : super(
+        retry: null,
+        name: r'fileDownloadedProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether the file is already on this device; asked again when a download
+  /// of it starts or ends.
+
+  FileDownloadedProvider call(String url, String fileId) =>
+      FileDownloadedProvider._(argument: (url, fileId), from: this);
+
+  @override
+  String toString() => r'fileDownloadedProvider';
+}

@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:matterleast/domain/post_files.dart';
+import 'package:matterleast/domain/time_labels.dart';
 
 part 'message_search.freezed.dart';
 
@@ -32,13 +35,13 @@ abstract class SearchScope with _$SearchScope {
     DateTime? after,
 
     /// Files only: `ext:` for each of its extensions.
-    FileKind? fileKind,
+    FileFilter? fileFilter,
   }) = _SearchScope;
 }
 
 /// The file types the Files results can be narrowed to, with the
 /// extensions the official app searches for each.
-enum FileKind {
+enum FileFilter {
   documents('Documents', ['doc', 'docx', 'odt', 'pdf', 'txt', 'rtf']),
   spreadsheets('Spreadsheets', ['xls', 'xlsx', 'csv', 'ods']),
   presentations('Presentations', ['ppt', 'pptx', 'odp']),
@@ -102,7 +105,7 @@ enum FileKind {
     'mpeg',
   ]);
 
-  const FileKind(this.label, this.extensions);
+  const FileFilter(this.label, this.extensions);
 
   final String label;
   final List<String> extensions;
@@ -126,6 +129,12 @@ abstract class FileHit with _$FileHit {
     int? width,
     int? height,
     @Default(false) bool hasPreview,
+
+    /// Who posted it.
+    @Default('') String userId,
+
+    /// A tiny JPEG to blur while the picture loads.
+    Uint8List? miniPreview,
   }) = _FileHit;
 
   const FileHit._();
@@ -139,6 +148,7 @@ abstract class FileHit with _$FileHit {
     width: width,
     height: height,
     hasPreview: hasPreview,
+    miniPreview: miniPreview,
   );
 }
 
@@ -153,10 +163,11 @@ String searchTerms(String query, SearchScope scope) => [
 ].where((part) => part.isNotEmpty).join(' ');
 
 /// Pure: the terms sent to the server's file search, which also narrow by
-/// [SearchScope.fileKind].
+/// [SearchScope.fileFilter].
 String fileSearchTerms(String query, SearchScope scope) => [
   searchTerms(query, scope),
-  for (final ext in scope.fileKind?.extensions ?? const <String>[]) 'ext:$ext',
+  for (final ext in scope.fileFilter?.extensions ?? const <String>[])
+    'ext:$ext',
 ].where((part) => part.isNotEmpty).join(' ');
 
 final _dayModifier = RegExp(r'\b(?:on|before|after):(\d{4})-(\d{2})-(\d{2})\b');
@@ -431,4 +442,65 @@ SearchView<T> mergeSearch<T>(
     refreshing: loading,
     failures: failures,
   );
+}
+
+/// The files of one date group: a day within the past week, else a month.
+class FileGroup<T> {
+  FileGroup(this.start, {required this.month});
+
+  /// Local midnight of the day, or of the month's first day.
+  final DateTime start;
+  final bool month;
+
+  /// Pictures and videos, for the grid.
+  final media = <T>[];
+
+  /// Everything else, listed after the grid.
+  final others = <T>[];
+
+  String label(DateTime now) =>
+      month ? monthLabel(start, now) : dayLabel(start, now);
+}
+
+/// Pure: [items], newest first, in groups: a day each within the past
+/// week of [now], a month each before it. An item without a time joins the
+/// last group. Each group keeps the order of its items.
+List<FileGroup<T>> groupFiles<T>(
+  List<T> items, {
+  required DateTime? Function(T) timeOf,
+  required bool Function(T) isMedia,
+  required DateTime now,
+}) {
+  final groups = <FileGroup<T>>[];
+  for (final item in items) {
+    final time = timeOf(item)?.toLocal();
+    if (time != null) {
+      final month = calendarDaysBetween(time, now) >= 7;
+      final start = month
+          ? DateTime(time.year, time.month)
+          : DateTime(time.year, time.month, time.day);
+      if (groups.isEmpty ||
+          groups.last.start != start ||
+          groups.last.month != month) {
+        groups.add(FileGroup<T>(start, month: month));
+      }
+    } else if (groups.isEmpty) {
+      groups.add(
+        FileGroup<T>(DateTime.fromMillisecondsSinceEpoch(0), month: true),
+      );
+    }
+    (isMedia(item) ? groups.last.media : groups.last.others).add(item);
+  }
+  return groups;
+}
+
+/// Pure: how many tiles of a media grid fit across [width], never fewer
+/// than 3 (the smallest phone) and growing with the window.
+int mediaColumns(double width) => (width / 130).floor().clamp(3, 12);
+
+/// Pure: the type shown on a file's tile, such as `PDF`.
+String fileTypeLabel(String extension) {
+  final ext = extension.toUpperCase();
+  if (ext.isEmpty) return 'FILE';
+  return ext.length > 4 ? ext.substring(0, 4) : ext;
 }

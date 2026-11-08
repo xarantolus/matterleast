@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/files/file_downloads.dart';
@@ -64,4 +65,13 @@ class FileTransfers extends _$FileTransfers {
   void _set(String fileId, double? progress) {
     if (ref.mounted) state = {...state, fileId: progress};
   }
+}
+
+/// Whether the file is already on this device; asked again when a download
+/// of it starts or ends.
+@riverpod
+Future<bool> fileDownloaded(Ref ref, String url, String fileId) async {
+  ref.watch(fileTransfersProvider(url).select((t) => t.containsKey(fileId)));
+  final downloads = await ref.watch(fileDownloadsProvider(url).future);
+  return await downloads.cached(fileId) != null;
 }

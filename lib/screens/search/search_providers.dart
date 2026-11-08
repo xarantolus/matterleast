@@ -142,3 +142,26 @@ Stream<List<InboxItem>> searchPostItems(
     serverUrl: url,
   ).postItems(ids.isEmpty ? const [] : ids.split(','));
 }
+
+/// Who sent a file, for its row.
+@riverpod
+Stream<({String name, int? picture})?> fileSender(
+  Ref ref,
+  String url,
+  String userId,
+) async* {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  yield* SearchViews(session.db, serverUrl: url).sender(userId);
+}
+
+/// The web link of a message, null while its team isn't known.
+@riverpod
+Future<String?> postLink(
+  Ref ref,
+  String url,
+  String channelId,
+  String postId,
+) async {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  return SearchViews(session.db, serverUrl: url).postLink(channelId, postId);
+}
