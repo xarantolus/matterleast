@@ -460,10 +460,11 @@ jobs:
           security unlock-keychain -p "$password" "$keychain"
           printf '%s' "$IOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
           security import "$RUNNER_TEMP/certificate.p12" -P "$IOS_CERTIFICATE_PASSWORD" \
-            -A -t cert -f pkcs12 -k "$keychain"
+            -A -f pkcs12 -k "$keychain"
           security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain" > /dev/null
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
           rm "$RUNNER_TEMP/certificate.p12"
+          security find-identity -v -p codesigning "$keychain"
           printf '%s' "$APPSTORE_KEY_P8" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
 
       # Each upload needs a build number TestFlight hasn't seen; the run
