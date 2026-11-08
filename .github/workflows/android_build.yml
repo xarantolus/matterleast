@@ -440,6 +440,22 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # TEMPORARY: adds the Share Extension target with the xcodeproj gem.
+  ios-project:
+    name: Add the Share Extension target
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - run: gem install --user-install xcodeproj
+      - run: ruby -e 'Gem.paths; require "rubygems"; puts Gem.user_dir'
+      - run: GEM_PATH="$(ruby -e 'print Gem.user_dir'):$GEM_PATH" ruby tool/ios-add-share-extension.rb
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ios-project
+          path: ios/Runner.xcodeproj/project.pbxproj
+
   # The only job that can write to the repository. Without always() it
   # runs only when every build succeeded, so a release has all its files.
   publish:
