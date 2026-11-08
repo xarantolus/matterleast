@@ -22,6 +22,7 @@ UserNotifyProps _$UserNotifyPropsFromJson(Map<String, dynamic> json) =>
       comments: const LenientString().fromJson(json['comments']),
       desktopThreads: const LenientString().fromJson(json['desktop_threads']),
       emailThreads: const LenientString().fromJson(json['email_threads']),
+      highlightKeys: const LenientString().fromJson(json['highlight_keys']),
     );
 
 Map<String, dynamic> _$UserNotifyPropsToJson(UserNotifyProps instance) =>
@@ -40,4 +41,5 @@ Map<String, dynamic> _$UserNotifyPropsToJson(UserNotifyProps instance) =>
       'comments': const LenientString().toJson(instance.comments),
       'desktop_threads': const LenientString().toJson(instance.desktopThreads),
       'email_threads': const LenientString().toJson(instance.emailThreads),
+      'highlight_keys': const LenientString().toJson(instance.highlightKeys),
     };

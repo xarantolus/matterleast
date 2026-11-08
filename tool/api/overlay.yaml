@@ -257,6 +257,10 @@ actions:
       guest_count: {type: integer, format: int64}
       pinnedpost_count: {type: integer, format: int64}
       files_count: {type: integer, format: int64}
+  # --- highlight words (model/user.go UserNotifyProps): licensed servers send them ---
+  - target: "$.components.schemas.UserNotifyProps.properties"
+    update:
+      highlight_keys: {type: string}
   # --- composer and writing (M4), checked against server/public/model and api4 ---
   - target: "$.paths['/api/v4/posts'].post.requestBody.content['application/json'].schema.properties.metadata.properties.priority"
     remove: true

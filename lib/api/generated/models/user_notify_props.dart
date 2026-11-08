@@ -22,6 +22,7 @@ class UserNotifyProps {
     this.comments,
     this.desktopThreads,
     this.emailThreads,
+    this.highlightKeys,
   });
 
   factory UserNotifyProps.fromJson(Map<String, Object?> json) =>
@@ -58,6 +59,9 @@ class UserNotifyProps {
   @LenientString()
   @JsonKey(name: 'email_threads')
   final String? emailThreads;
+  @LenientString()
+  @JsonKey(name: 'highlight_keys')
+  final String? highlightKeys;
 
   Map<String, Object?> toJson() => _$UserNotifyPropsToJson(this);
 }
