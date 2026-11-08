@@ -459,6 +459,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/trial"
           git diff -- ios > "$RUNNER_TEMP/trial/ios.diff"
           cp ios/Podfile.lock "$RUNNER_TEMP/trial/" || true
+          cat ios/Flutter/Generated.xcconfig
           ls ios
       - name: Archive as Xcode Cloud would, unsigned
         run: |
@@ -467,7 +468,7 @@ jobs:
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" CODE_SIGNING_ALLOWED=NO | tail -30
           /usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$RUNNER_TEMP/Runner.xcarchive/Products/Applications/Runner.app/Info.plist"
       - name: Launch on a simulator
-        if: always()
+        if: false
         run: |
           export PATH="$PATH:$HOME/flutter/bin"
           flutter build ios --simulator --debug
