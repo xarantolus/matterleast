@@ -59,8 +59,8 @@ class MessageSearch {
       });
 
   /// Files found on the server; none when it has no file search.
-  Future<List<FileHit>> files(String? teamId, String terms) =>
-      session.api.coalesced('search:files:$teamId:$terms', () async {
+  Future<List<FileHit>> files(String? teamId, String terms, {int page = 0}) =>
+      session.api.coalesced('search:files:$teamId:$terms:$page', () async {
         if (!(await _db.features()).fileSearch) return const <FileHit>[];
         final api.FileInfoList found;
         try {
@@ -72,6 +72,8 @@ class MessageSearch {
                       isOrSearch: false,
                       timeZoneOffset: _offsetSeconds(terms),
                       includeDeletedChannels: true,
+                      page: page,
+                      perPage: filePageSize,
                     ),
                   )
                 : _client.teams.searchFiles(
@@ -81,6 +83,8 @@ class MessageSearch {
                       isOrSearch: false,
                       timeZoneOffset: _offsetSeconds(terms),
                       includeDeletedChannels: true,
+                      page: page,
+                      perPage: filePageSize,
                     ),
                   ),
           );

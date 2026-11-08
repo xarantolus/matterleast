@@ -103,4 +103,39 @@ void main() {
     expect(fileTypeLabel('torrent'), 'TORR');
     expect(fileTypeLabel(''), 'FILE');
   });
+
+  group('filePageAfter', () {
+    FileHit hit(String id) => FileHit(
+      id: id,
+      name: '$id.pdf',
+      extension: 'pdf',
+      mimeType: 'application/pdf',
+      size: 1,
+      postId: 'p',
+      channelId: 'c',
+      place: '',
+    );
+    List<FileHit> page(Iterable<String> ids) => [for (final i in ids) hit(i)];
+
+    test('a full page of new files may be followed by another', () {
+      final r = filePageAfter({}, page(['a', 'b']), size: 2);
+      expect(r.fresh.map((f) => f.id), ['a', 'b']);
+      expect(r.more, isTrue);
+    });
+
+    test('a short page is the last', () {
+      expect(filePageAfter({}, page(['a']), size: 2).more, isFalse);
+      expect(filePageAfter({}, const [], size: 2).more, isFalse);
+    });
+
+    test('files already shown are left out, and a page of nothing new stops '
+        'the paging', () {
+      final r = filePageAfter({'a'}, page(['a', 'b']), size: 2);
+      expect(r.fresh.map((f) => f.id), ['b']);
+      expect(r.more, isTrue);
+      final again = filePageAfter({'a', 'b'}, page(['a', 'b']), size: 2);
+      expect(again.fresh, isEmpty);
+      expect(again.more, isFalse);
+    });
+  });
 }

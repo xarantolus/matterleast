@@ -896,7 +896,13 @@ class _FileResults extends ConsumerWidget {
           ref
               .watch(serverFileResultsProvider(r.url, r.scope, query))
               .whenData(
-                (files) => [for (final f in files) (url: r.url, file: f)],
+                (files) => [
+                  for (final f in [
+                    ...files,
+                    ...ref.watch(moreFilesProvider(r.url, r.scope, query)).hits,
+                  ])
+                    (url: r.url, file: f),
+                ],
               ),
           (f) => f.file.id,
         ),
@@ -917,7 +923,8 @@ class _FileResults extends ConsumerWidget {
       SearchEmpty() => _NoResults(query: query),
       SearchFailed(:final cause) => _Failed(cause: cause, onRetry: onRetry),
       SearchShown(:final results, :final more, :final failures) => _FileList(
-        urls: [for (final r in requests) r.url],
+        requests: requests,
+        query: query,
         results: results,
         more: more,
         names: names,
@@ -930,7 +937,8 @@ class _FileResults extends ConsumerWidget {
 
 class _FileList extends ConsumerStatefulWidget {
   const _FileList({
-    required this.urls,
+    required this.requests,
+    required this.query,
     required this.results,
     required this.more,
     required this.names,
@@ -938,7 +946,8 @@ class _FileList extends ConsumerStatefulWidget {
     required this.onRetry,
   });
 
-  final List<String> urls;
+  final List<SearchRequest> requests;
+  final String query;
   final List<FoundFile> results;
   final List<FoundFile> more;
   final Map<String, String> names;
@@ -992,7 +1001,10 @@ class _FileListState extends ConsumerState<_FileList> {
     if (widget.more.isNotEmpty) {
       sections.add((
         label: 'More from the server',
-        items: mergeNewestFirst(byServer(widget.more, widget.urls), time),
+        items: mergeNewestFirst(
+          byServer(widget.more, [for (final r in widget.requests) r.url]),
+          time,
+        ),
       ));
     }
     final groups = [
@@ -1012,36 +1024,75 @@ class _FileListState extends ConsumerState<_FileList> {
         for (final group in section.groups) ...group.media,
     ];
     final count = widget.results.length + widget.more.length;
+    final paging = [
+      for (final r in widget.requests)
+        ref.watch(moreFilesProvider(r.url, r.scope, widget.query)),
+    ];
+    final loadingMore = paging.any((p) => p.loading);
+    final moreFailure = paging.map((p) => p.failure).nonNulls.firstOrNull;
     return LayoutBuilder(
-      builder: (context, box) => CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: PaneLabel('$count ${count == 1 ? 'file' : 'files'}'),
-          ),
-          if (failures.isNotEmpty)
+      builder: (context, box) => NotificationListener<ScrollNotification>(
+        onNotification: (n) {
+          if (n.metrics.extentAfter < box.maxHeight) _loadMore();
+          return false;
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
             SliverToBoxAdapter(
-              child: _Failures(failures: failures, onRetry: widget.onRetry),
+              child: PaneLabel('$count ${count == 1 ? 'file' : 'files'}'),
             ),
-          for (final section in groups) ...[
-            if (section.label case final label?)
-              SliverToBoxAdapter(child: PaneLabel(label)),
-            for (final group in section.groups)
-              FileGroupSliver(
-                group: group,
-                columns: mediaColumns(box.maxWidth - 2 * Spacing.md),
-                media: media,
-                names: names,
+            if (failures.isNotEmpty)
+              SliverToBoxAdapter(
+                child: _Failures(failures: failures, onRetry: widget.onRetry),
               ),
-          ],
-          SliverPadding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
+            for (final section in groups) ...[
+              if (section.label case final label?)
+                SliverToBoxAdapter(child: PaneLabel(label)),
+              for (final group in section.groups)
+                FileGroupSliver(
+                  group: group,
+                  columns: mediaColumns(box.maxWidth - 2 * Spacing.md),
+                  media: media,
+                  names: names,
+                ),
+            ],
+            if (loadingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(Spacing.lg),
+                  child: LinearProgressIndicator(minHeight: 4),
+                ),
+              ),
+            if (moreFailure != null)
+              SliverToBoxAdapter(
+                child: ListTile(
+                  title: Text("Couldn't load more files. $moreFailure"),
+                  trailing: TextButton(
+                    onPressed: () => _loadMore(retry: true),
+                    child: const Text('Retry'),
+                  ),
+                ),
+              ),
+            SliverPadding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.paddingOf(context).bottom + Spacing.lg,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  /// Asks each server for its next page, unless one failed and the reader
+  /// hasn't asked again.
+  void _loadMore({bool retry = false}) {
+    for (final r in widget.requests) {
+      final provider = moreFilesProvider(r.url, r.scope, widget.query);
+      if (!retry && ref.read(provider).failure != null) continue;
+      unawaited(ref.read(provider.notifier).loadNext());
+    }
   }
 }
 

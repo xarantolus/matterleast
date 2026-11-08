@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
@@ -14,6 +16,8 @@ import '../support/pump_with_server.dart';
 import '../support/rail.dart';
 import '../support/test_session.dart';
 
+const _bobId = 'us0000000000000000000000bob';
+
 Map<String, Object?> _file(
   String id,
   String name,
@@ -21,10 +25,11 @@ Map<String, Object?> _file(
   String mime, {
   int size = 1200,
   bool picture = false,
+  String user = meId,
   required DateTime at,
 }) => {
   'id': id,
-  'user_id': meId,
+  'user_id': user,
   'post_id': 'pic1',
   'channel_id': channelId,
   'create_at': at.millisecondsSinceEpoch,
@@ -45,6 +50,7 @@ void main() {
       'png',
       'image/png',
       picture: true,
+      user: _bobId,
       at: DateTime.utc(2025, 10, 25, 10),
     ),
     _file(
@@ -53,6 +59,7 @@ void main() {
       'png',
       'image/png',
       picture: true,
+      user: _bobId,
       at: DateTime.utc(2025, 10, 24, 10),
     ),
     _file(
@@ -69,17 +76,25 @@ void main() {
     WidgetTester tester, {
     List<Map<String, Object?>>? found,
     Reply? answer,
+    FutureOr<Reply?> Function(SeenRequest request)? serve,
   }) async {
     h = await pumpWithServer(
       tester,
-      handle: (r) => r.path.endsWith('/files/search')
-          ? answer ??
-                ok({
-                  'order': [for (final f in found ?? files) f['id']],
-                  'file_infos': {for (final f in found ?? files) f['id']: f},
-                })
-          : ok(const <String, Object?>{}),
+      handle:
+          serve ??
+          (r) => r.path.endsWith('/files/search')
+              ? answer ??
+                    ok({
+                      'order': [for (final f in found ?? files) f['id']],
+                      'file_infos': {
+                        for (final f in found ?? files) f['id']: f,
+                      },
+                    })
+              : ok(const <String, Object?>{}),
       seed: (session) async {
+        await session.store.applyUsers([
+          api.User.fromJson({'id': _bobId, 'username': 'bobby'}),
+        ]);
         await session.store.applyPostList(
           'saved',
           api.PostList.fromJson({
@@ -168,6 +183,8 @@ void main() {
     await h.settle(tester);
     expect(find.byType(GalleryScreen), findsOneWidget);
     expect(find.text('1 / 2'), findsOneWidget);
+    // The bar names who sent this file, who has no row in the list.
+    expect(find.text('bobby'), findsOneWidget);
     await tester.fling(find.byType(GalleryScreen), const Offset(-600, 0), 1500);
     await h.settle(tester);
     expect(find.text('2 / 2'), findsOneWidget);
@@ -202,6 +219,53 @@ void main() {
     await start(tester, answer: error(500, 'files_are_down'));
     expect(find.textContaining('files_are_down'), findsWidgets);
     expect(find.text('Retry'), findsOneWidget);
+    await h.close(tester);
+  });
+
+  testWidgets('the next page loads at the end and appears below without '
+      'moving what is shown', (tester) async {
+    DateTime at(int i) =>
+        DateTime.utc(2025, 10, 25, 10).subtract(Duration(minutes: i));
+    String name(int i) => 'doc-${i.toString().padLeft(2, '0')}.pdf';
+    Map<String, Object?> doc(int i) =>
+        _file('d$i', name(i), 'pdf', 'application/pdf', at: at(i));
+    final pages = <int>[];
+    final second = Completer<void>();
+    await start(
+      tester,
+      serve: (r) async {
+        if (!r.path.endsWith('/files/search')) {
+          return ok(const <String, Object?>{});
+        }
+        final page = r.body['page']! as int;
+        pages.add(page);
+        if (page == 1) await second.future;
+        final batch = page == 0
+            ? [for (var i = 0; i < filePageSize; i++) doc(i)]
+            : [for (var i = filePageSize; i < filePageSize + 3; i++) doc(i)];
+        return ok({
+          'order': [for (final f in batch) f['id']],
+          'file_infos': {for (final f in batch) f['id']: f},
+        });
+      },
+    );
+    expect(pages, [0]);
+    final list = find.byType(CustomScrollView);
+    await tester.drag(list, const Offset(0, -20000));
+    await h.settle(tester, until: () => pages.length > 1);
+    expect(pages, [0, 1]);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    final last = find.text(name(filePageSize - 1));
+    final before = tester.getTopLeft(last);
+    second.complete();
+    await h.settle(tester);
+    expect(tester.getTopLeft(last), before);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    await tester.drag(list, const Offset(0, -20000));
+    await h.settle(tester);
+    expect(find.text(name(filePageSize + 2)), findsOneWidget);
+    // The short page was the last.
+    expect(pages, [0, 1]);
     await h.close(tester);
   });
 }

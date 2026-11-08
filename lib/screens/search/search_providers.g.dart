@@ -828,6 +828,130 @@ final class ServerFileResultsFamily extends $Family
   String toString() => r'serverFileResultsProvider';
 }
 
+/// Loads the file search's later pages one at a time, as the reader gets to
+/// the end of what is shown. Starts over when the first page is fetched
+/// again.
+
+@ProviderFor(MoreFiles)
+final moreFilesProvider = MoreFilesFamily._();
+
+/// Loads the file search's later pages one at a time, as the reader gets to
+/// the end of what is shown. Starts over when the first page is fetched
+/// again.
+final class MoreFilesProvider
+    extends $NotifierProvider<MoreFiles, MoreFilesState> {
+  /// Loads the file search's later pages one at a time, as the reader gets to
+  /// the end of what is shown. Starts over when the first page is fetched
+  /// again.
+  MoreFilesProvider._({
+    required MoreFilesFamily super.from,
+    required (String, SearchScope, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'moreFilesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$moreFilesHash();
+
+  @override
+  String toString() {
+    return r'moreFilesProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  MoreFiles create() => MoreFiles();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(MoreFilesState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MoreFilesState>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MoreFilesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$moreFilesHash() => r'de9c431045a300dab8c4178c34b51ac7797e92ad';
+
+/// Loads the file search's later pages one at a time, as the reader gets to
+/// the end of what is shown. Starts over when the first page is fetched
+/// again.
+
+final class MoreFilesFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          MoreFiles,
+          MoreFilesState,
+          MoreFilesState,
+          MoreFilesState,
+          (String, SearchScope, String)
+        > {
+  MoreFilesFamily._()
+    : super(
+        retry: null,
+        name: r'moreFilesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Loads the file search's later pages one at a time, as the reader gets to
+  /// the end of what is shown. Starts over when the first page is fetched
+  /// again.
+
+  MoreFilesProvider call(String url, SearchScope scope, String query) =>
+      MoreFilesProvider._(argument: (url, scope, query), from: this);
+
+  @override
+  String toString() => r'moreFilesProvider';
+}
+
+/// Loads the file search's later pages one at a time, as the reader gets to
+/// the end of what is shown. Starts over when the first page is fetched
+/// again.
+
+abstract class _$MoreFiles extends $Notifier<MoreFilesState> {
+  late final _$args = ref.$arg as (String, SearchScope, String);
+  String get url => _$args.$1;
+  SearchScope get scope => _$args.$2;
+  String get query => _$args.$3;
+
+  MoreFilesState build(String url, SearchScope scope, String query);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<MoreFilesState, MoreFilesState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<MoreFilesState, MoreFilesState>,
+              MoreFilesState,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(
+      ref,
+      () => build(_$args.$1, _$args.$2, _$args.$3),
+    );
+  }
+}
+
 /// Message previews of the posts [ids] (comma-separated), in that order.
 
 @ProviderFor(searchPostItems)

@@ -504,3 +504,21 @@ String fileTypeLabel(String extension) {
   if (ext.isEmpty) return 'FILE';
   return ext.length > 4 ? ext.substring(0, 4) : ext;
 }
+
+/// How many files one page of the server's file search holds.
+const filePageSize = 60;
+
+/// Pure: the hits of the next [page] that aren't [known] yet, and whether
+/// another page may follow: only after a full page that brought something
+/// new, since a server without paging answers the first page again.
+({List<FileHit> fresh, bool more}) filePageAfter(
+  Set<String> known,
+  List<FileHit> page, {
+  int size = filePageSize,
+}) {
+  final fresh = [
+    for (final f in page)
+      if (!known.contains(f.id)) f,
+  ];
+  return (fresh: fresh, more: page.length >= size && fresh.isNotEmpty);
+}

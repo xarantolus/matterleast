@@ -8,6 +8,7 @@ import 'package:matterleast/data/views/switch_views.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/message_search.dart';
 import 'package:matterleast/domain/quick_switch.dart';
+import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'search_providers.g.dart';
@@ -128,6 +129,82 @@ Future<List<FileHit>> serverFileResults(
     scope.allTeams ? null : scope.teamId,
     fileSearchTerms(query, scope),
   );
+}
+
+/// The pages after the first of one server's file search.
+class MoreFilesState {
+  const MoreFilesState({
+    this.hits = const [],
+    this.page = 0,
+    this.done = true,
+    this.loading = false,
+    this.failure,
+  });
+
+  final List<FileHit> hits;
+
+  /// The last page loaded; the first is 0.
+  final int page;
+  final bool done;
+  final bool loading;
+
+  /// What the server said when the last page failed.
+  final String? failure;
+
+  MoreFilesState copyWith({
+    List<FileHit>? hits,
+    int? page,
+    bool? done,
+    bool? loading,
+    String? failure,
+  }) => MoreFilesState(
+    hits: hits ?? this.hits,
+    page: page ?? this.page,
+    done: done ?? this.done,
+    loading: loading ?? this.loading,
+    failure: failure,
+  );
+}
+
+/// Loads the file search's later pages one at a time, as the reader gets to
+/// the end of what is shown. Starts over when the first page is fetched
+/// again.
+@riverpod
+class MoreFiles extends _$MoreFiles {
+  @override
+  MoreFilesState build(String url, SearchScope scope, String query) {
+    final first = ref.watch(serverFileResultsProvider(url, scope, query)).value;
+    return MoreFilesState(done: first == null || first.length < filePageSize);
+  }
+
+  Future<void> loadNext() async {
+    if (state.done || state.loading) return;
+    final shown = state;
+    state = shown.copyWith(loading: true);
+    try {
+      final first =
+          ref.read(serverFileResultsProvider(url, scope, query)).value ??
+          const <FileHit>[];
+      final search = await ref.read(messageSearchProvider(url).future);
+      final page = await search.files(
+        scope.allTeams ? null : scope.teamId,
+        fileSearchTerms(query, scope),
+        page: shown.page + 1,
+      );
+      if (!ref.mounted) return;
+      final next = filePageAfter({
+        for (final f in [...first, ...shown.hits]) f.id,
+      }, page);
+      state = MoreFilesState(
+        hits: [...shown.hits, ...next.fresh],
+        page: shown.page + 1,
+        done: !next.more,
+      );
+    } on Object catch (e) {
+      if (!ref.mounted) return;
+      state = shown.copyWith(failure: requestProblemText(e, hostOf(url)));
+    }
+  }
 }
 
 /// Message previews of the posts [ids] (comma-separated), in that order.
