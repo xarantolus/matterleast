@@ -9,10 +9,13 @@ import 'package:matterleast/data/actions/integration_actions.dart';
 import 'package:matterleast/data/actions/message_links.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
+import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/domain/integration_blocks.dart';
+import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/markdown/links.dart';
+import 'package:matterleast/markdown/mention_keys.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/screens/channel/edit_history_sheet.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
@@ -39,7 +42,41 @@ Future<IntegrationActions> integrationActions(Ref ref, String url) async =>
 @riverpod
 Stream<ParseOptions> parseOptions(Ref ref, String url) async* {
   final links = await ref.watch(messageLinksProvider(url).future);
-  yield* links.parseOptions();
+  final keys = ref.watch(mentionKeysProvider(url)).value ?? const MentionKeys();
+  yield* links.parseOptions().map((o) => o.copyWith(mentions: keys));
+}
+
+/// The reader's mention and highlight words, from their notification
+/// settings as they change.
+@riverpod
+Stream<MentionKeys> mentionKeys(Ref ref, String url) async* {
+  final db = (await ref.watch(serverSessionProvider(url).future)).db;
+  final me = await ref.watch(currentUserProvider(url).future);
+  if (me == null) return;
+  yield* db
+      .watchSyncText(SyncKeys.accountNotifyProps)
+      .map(
+        (text) => MentionKeys.forUser(
+          username: me.username,
+          firstName: me.firstName,
+          props: NotifyProps.fromJsonText(text),
+        ),
+      )
+      .distinct();
+}
+
+/// Whether the user turned off `@channel`, `@all` and `@here` for a channel.
+@riverpod
+Stream<bool> ignoresChannelMentions(
+  Ref ref,
+  String url,
+  String channelId,
+) async* {
+  final db = (await ref.watch(serverSessionProvider(url).future)).db;
+  yield* (db.select(db.myChannels)..where((c) => c.channelId.equals(channelId)))
+      .watchSingleOrNull()
+      .map((row) => row?.notifyProps?.ignoreChannelMentions == 'on')
+      .distinct();
 }
 
 /// What message rows show of what integrations and links bring: preview
@@ -87,11 +124,15 @@ class MessageEnvironment extends ConsumerStatefulWidget {
     required this.url,
     required this.teamId,
     required this.child,
+    this.channelId = '',
     super.key,
   });
 
   final String url;
   final String teamId;
+
+  /// The channel the messages are in, when they are in one.
+  final String channelId;
   final Widget child;
 
   @override
@@ -270,6 +311,12 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
       return const SizedBox.shrink();
     }
     final me = ref.watch(currentUserProvider(url)).value;
+    final ignored =
+        widget.channelId.isNotEmpty &&
+        (ref
+                .watch(ignoresChannelMentionsProvider(url, widget.channelId))
+                .value ??
+            false);
     final resolver = ref.watch(customEmojiResolverProvider(url)).value;
     final display = shown.value;
     return PostEnvironment(
@@ -289,6 +336,8 @@ class _MessageEnvironmentState extends ConsumerState<MessageEnvironment> {
       mmBlocks: display?.mmBlocks ?? false,
       onAction: _onAction,
       acknowledgements: display?.acknowledgements ?? false,
+      broadcastHighlight:
+          !ignored && (options.value?.mentions.broadcast ?? false),
       child: widget.child,
     );
   }

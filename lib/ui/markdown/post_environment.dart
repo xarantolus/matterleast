@@ -24,6 +24,7 @@ class PostEnvironment extends InheritedWidget {
     this.onHashtag,
     this.onEditHistory,
     this.acknowledgements = false,
+    this.broadcastHighlight = false,
     super.key,
   });
 
@@ -66,6 +67,10 @@ class PostEnvironment extends InheritedWidget {
   /// the words for its failure, if it failed.
   final Future<String?> Function(PostActionRequest request)? onAction;
 
+  /// `@channel`, `@all` and `@here` are marked as mentions of the reader:
+  /// they asked for it and the channel doesn't ignore them.
+  final bool broadcastHighlight;
+
   /// Messages can ask readers to acknowledge them.
   final bool acknowledgements;
 
@@ -86,5 +91,6 @@ class PostEnvironment extends InheritedWidget {
       onAction != old.onAction ||
       onHashtag != old.onHashtag ||
       onEditHistory != old.onEditHistory ||
-      acknowledgements != old.acknowledgements;
+      acknowledgements != old.acknowledgements ||
+      broadcastHighlight != old.broadcastHighlight;
 }

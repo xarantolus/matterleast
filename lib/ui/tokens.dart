@@ -44,6 +44,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color accentWash;
 
   /// Towards [text], so contrast only grows.
+  /// Behind a highlight word, lighter than a mention.
+  Color get keywordWash => Color.alphaBlend(accentWash.withAlpha(128), page);
+
   Color get hoveredAccent => Color.lerp(accent, text, 0.35)!;
   final Color codeBackground;
 
@@ -98,6 +101,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     'hovered link on page': (hoveredAccent, page),
     'accent on wash': (accent, accentWash),
     'text on wash (the open channel row)': (text, accentWash),
+    'text on a highlight word': (text, keywordWash),
     'text on code': (text, codeBackground),
     'muted on code': (muted, codeBackground),
     'accent on panel': (accent, panel),

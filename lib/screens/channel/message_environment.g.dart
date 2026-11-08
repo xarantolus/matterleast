@@ -226,7 +226,7 @@ final class ParseOptionsProvider
   }
 }
 
-String _$parseOptionsHash() => r'a8487d7429a29fefd85aef6b3314b012efeb68b4';
+String _$parseOptionsHash() => r'27139a880fa10cf718f243511059433df467cd4d';
 
 final class ParseOptionsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<ParseOptions>, String> {
@@ -244,6 +244,175 @@ final class ParseOptionsFamily extends $Family
 
   @override
   String toString() => r'parseOptionsProvider';
+}
+
+/// The reader's mention and highlight words, from their notification
+/// settings as they change.
+
+@ProviderFor(mentionKeys)
+final mentionKeysProvider = MentionKeysFamily._();
+
+/// The reader's mention and highlight words, from their notification
+/// settings as they change.
+
+final class MentionKeysProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<MentionKeys>,
+          MentionKeys,
+          Stream<MentionKeys>
+        >
+    with $FutureModifier<MentionKeys>, $StreamProvider<MentionKeys> {
+  /// The reader's mention and highlight words, from their notification
+  /// settings as they change.
+  MentionKeysProvider._({
+    required MentionKeysFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'mentionKeysProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$mentionKeysHash();
+
+  @override
+  String toString() {
+    return r'mentionKeysProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<MentionKeys> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<MentionKeys> create(Ref ref) {
+    final argument = this.argument as String;
+    return mentionKeys(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MentionKeysProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$mentionKeysHash() => r'9a6354a3e7a817ae6f54ea5da930717628139191';
+
+/// The reader's mention and highlight words, from their notification
+/// settings as they change.
+
+final class MentionKeysFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<MentionKeys>, String> {
+  MentionKeysFamily._()
+    : super(
+        retry: null,
+        name: r'mentionKeysProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The reader's mention and highlight words, from their notification
+  /// settings as they change.
+
+  MentionKeysProvider call(String url) =>
+      MentionKeysProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'mentionKeysProvider';
+}
+
+/// Whether the user turned off `@channel`, `@all` and `@here` for a channel.
+
+@ProviderFor(ignoresChannelMentions)
+final ignoresChannelMentionsProvider = IgnoresChannelMentionsFamily._();
+
+/// Whether the user turned off `@channel`, `@all` and `@here` for a channel.
+
+final class IgnoresChannelMentionsProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  /// Whether the user turned off `@channel`, `@all` and `@here` for a channel.
+  IgnoresChannelMentionsProvider._({
+    required IgnoresChannelMentionsFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'ignoresChannelMentionsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$ignoresChannelMentionsHash();
+
+  @override
+  String toString() {
+    return r'ignoresChannelMentionsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return ignoresChannelMentions(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is IgnoresChannelMentionsProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$ignoresChannelMentionsHash() =>
+    r'38b94075c61604b56bf6a54c568175220e061984';
+
+/// Whether the user turned off `@channel`, `@all` and `@here` for a channel.
+
+final class IgnoresChannelMentionsFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<bool>, (String, String)> {
+  IgnoresChannelMentionsFamily._()
+    : super(
+        retry: null,
+        name: r'ignoresChannelMentionsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether the user turned off `@channel`, `@all` and `@here` for a channel.
+
+  IgnoresChannelMentionsProvider call(String url, String channelId) =>
+      IgnoresChannelMentionsProvider._(argument: (url, channelId), from: this);
+
+  @override
+  String toString() => r'ignoresChannelMentionsProvider';
 }
 
 @ProviderFor(postDisplay)

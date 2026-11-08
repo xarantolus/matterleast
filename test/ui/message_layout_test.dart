@@ -4,7 +4,6 @@ import 'package:matterleast/api/json/post_extras.dart';
 import 'package:matterleast/markdown/parse_post.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
-import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/markdown/show_more.dart';
@@ -124,12 +123,6 @@ void main() {
         (parsePost(text, const ParseOptions()) as ParsedPost).blocks;
     expect(isJumbo(blocks(':tada: :+1:')), isTrue);
     expect(isJumbo(blocks(':tada: yes')), isFalse);
-  });
-
-  test('a trailing full stop after a mention is not part of the name', () {
-    expect(mentionedUsername('bob.', {'bob'}), 'bob');
-    expect(mentionedUsername('bob.smith', {'bob'}), isNull);
-    expect(mentionedUsername('bob_', {'bob_'}), 'bob_');
   });
 
   testWidgets('an image at an address no image comes from shows its alt '

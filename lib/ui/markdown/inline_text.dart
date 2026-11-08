@@ -8,6 +8,7 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/markdown/links.dart';
+import 'package:matterleast/markdown/mention_keys.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/context_menu.dart';
@@ -187,13 +188,19 @@ class _InlineTextState extends State<InlineText> {
 
     for (final (i, part) in widget.inlines.indexed) {
       switch (part) {
-        case TextPart(:final text, :final marks, :final link):
+        case TextPart(:final text, :final marks, :final link, :final highlight):
           spans.add(
             hoverable(
               linkKey(link),
               TextSpan(
                 text: text,
-                style: styled(marks, link: link),
+                style: styled(marks, link: link).copyWith(
+                  backgroundColor: switch (highlight) {
+                    Highlight.none => null,
+                    Highlight.mention => tokens.accentWash,
+                    Highlight.keyword => tokens.keywordWash,
+                  },
+                ),
                 recognizer: linkTap(i, link),
               ),
             ),
@@ -213,11 +220,12 @@ class _InlineTextState extends State<InlineText> {
               ),
             ),
           );
-        case MentionPart(:final name, :final marks):
+        case MentionPart(:final name, :final marks, mine: final named):
           final lower = name.toLowerCase();
           final mine =
-              _specialMentions.contains(lower) ||
-              mentionedUsername(lower, {env?.myUsername ?? ''}) != null;
+              named ||
+              _specialMentions.contains(lower) &&
+                  (env?.broadcastHighlight ?? false);
           spans.add(
             hoverable(
               ('part', i),
@@ -389,20 +397,6 @@ Color seeThroughCode(AppTokens tokens) {
       ? 0.06
       : shares.reduce((a, b) => a + b) / shares.length;
   return text.withValues(alpha: alpha.clamp(0.02, 0.5));
-}
-
-/// Pure: which of [usernames] a typed `@name` refers to. Mattermost lets a
-/// mention end in `.`, `-` or `_` that belongs to the sentence, so those are
-/// trimmed one at a time until a name matches.
-String? mentionedUsername(String typed, Set<String> usernames) {
-  var name = typed.toLowerCase();
-  while (name.isNotEmpty) {
-    if (usernames.contains(name)) return name;
-    final last = name[name.length - 1];
-    if (last != '.' && last != '-' && last != '_') return null;
-    name = name.substring(0, name.length - 1);
-  }
-  return null;
 }
 
 /// Holding or right-clicking a link or its preview: only a way to copy the
