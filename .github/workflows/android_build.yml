@@ -482,8 +482,9 @@ jobs:
           mkdir -p "$share"
           cp assets/icon/legacy.png "$share/harbour.png"
           printf '{"text":"Low tide at six.","files":[{"name":"harbour.png","mime":"image/png"}],"refused":["Holiday.mov"],"target":null}' > "$share/share.json"
-          xcrun simctl openurl "$udid" matterleast-share://open
-          sleep 15
+          xcrun simctl terminate "$udid" io.github.xarantolus.matterleast
+          xcrun simctl launch "$udid" io.github.xarantolus.matterleast
+          sleep 30
           xcrun simctl io "$udid" screenshot "$RUNNER_TEMP/sim/2-shared.png"
           ls -R "$group" || true
           xcrun simctl spawn "$udid" log show --last 3m --style compact --predicate 'process == "Runner" OR process == "ShareExtension"' > "$RUNNER_TEMP/sim/log.txt" || true
