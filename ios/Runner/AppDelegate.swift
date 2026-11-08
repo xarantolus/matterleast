@@ -17,9 +17,11 @@ import workmanager_apple
     FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { registry in
       GeneratedPluginRegistrant.register(with: registry)
     }
-    // With scenes, a check scheduled in an earlier launch must be known
-    // before launching finishes.
-    WorkmanagerPlugin.registerLaunchHandlers()
+    // iOS ends the app when a background task's handler is registered after
+    // launching finishes, which the plugin would do when sign-in schedules
+    // the first check. The identifier is PeriodicCheck.name.
+    WorkmanagerPlugin.registerPeriodicTask(
+      withIdentifier: "notification-check", earliestBeginInSeconds: 15 * 60)
     UNUserNotificationCenter.current().delegate = self
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
