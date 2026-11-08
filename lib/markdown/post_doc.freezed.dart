@@ -17,7 +17,8 @@ mixin _$ParseOptions {
 
  bool get latexBlocks; bool get latexInline; int get minimumHashtagLength;/// More nodes than this and the post is not rendered.
  int? get maxNodes;/// Links, channel links, hashtags, images and LaTeX stay plain text.
- bool get unsafeLinks;
+ bool get unsafeLinks;/// The reader's mention and highlight words.
+ MentionKeys get mentions;
 /// Create a copy of ParseOptions
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,20 +30,20 @@ $ParseOptionsCopyWith<ParseOptions> get copyWith => _$ParseOptionsCopyWithImpl<P
 @override
 bool operator ==(Object other) {
   final _this = this as ParseOptions;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ParseOptions&&(identical(other.latexBlocks, _this.latexBlocks) || other.latexBlocks == _this.latexBlocks)&&(identical(other.latexInline, _this.latexInline) || other.latexInline == _this.latexInline)&&(identical(other.minimumHashtagLength, _this.minimumHashtagLength) || other.minimumHashtagLength == _this.minimumHashtagLength)&&(identical(other.maxNodes, _this.maxNodes) || other.maxNodes == _this.maxNodes)&&(identical(other.unsafeLinks, _this.unsafeLinks) || other.unsafeLinks == _this.unsafeLinks));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ParseOptions&&(identical(other.latexBlocks, _this.latexBlocks) || other.latexBlocks == _this.latexBlocks)&&(identical(other.latexInline, _this.latexInline) || other.latexInline == _this.latexInline)&&(identical(other.minimumHashtagLength, _this.minimumHashtagLength) || other.minimumHashtagLength == _this.minimumHashtagLength)&&(identical(other.maxNodes, _this.maxNodes) || other.maxNodes == _this.maxNodes)&&(identical(other.unsafeLinks, _this.unsafeLinks) || other.unsafeLinks == _this.unsafeLinks)&&(identical(other.mentions, _this.mentions) || other.mentions == _this.mentions));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ParseOptions;
-  return Object.hash(runtimeType,_this.latexBlocks,_this.latexInline,_this.minimumHashtagLength,_this.maxNodes,_this.unsafeLinks);
+  return Object.hash(runtimeType,_this.latexBlocks,_this.latexInline,_this.minimumHashtagLength,_this.maxNodes,_this.unsafeLinks,_this.mentions);
 }
 
 @override
 String toString() {
   final _this = this as ParseOptions;
-  return 'ParseOptions(latexBlocks: ${_this.latexBlocks}, latexInline: ${_this.latexInline}, minimumHashtagLength: ${_this.minimumHashtagLength}, maxNodes: ${_this.maxNodes}, unsafeLinks: ${_this.unsafeLinks})';
+  return 'ParseOptions(latexBlocks: ${_this.latexBlocks}, latexInline: ${_this.latexInline}, minimumHashtagLength: ${_this.minimumHashtagLength}, maxNodes: ${_this.maxNodes}, unsafeLinks: ${_this.unsafeLinks}, mentions: ${_this.mentions})';
 }
 
 
@@ -53,7 +54,7 @@ abstract mixin class $ParseOptionsCopyWith<$Res>  {
   factory $ParseOptionsCopyWith(ParseOptions value, $Res Function(ParseOptions) _then) = _$ParseOptionsCopyWithImpl;
 @useResult
 $Res call({
- bool latexBlocks, bool latexInline, int minimumHashtagLength, int? maxNodes, bool unsafeLinks
+ bool latexBlocks, bool latexInline, int minimumHashtagLength, int? maxNodes, bool unsafeLinks, MentionKeys mentions
 });
 
 
@@ -70,14 +71,15 @@ class _$ParseOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ParseOptions
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? latexBlocks = null,Object? latexInline = null,Object? minimumHashtagLength = null,Object? maxNodes = freezed,Object? unsafeLinks = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? latexBlocks = null,Object? latexInline = null,Object? minimumHashtagLength = null,Object? maxNodes = freezed,Object? unsafeLinks = null,Object? mentions = null,}) {
   return _then(ParseOptions(
 latexBlocks: null == latexBlocks ? _self.latexBlocks : latexBlocks // ignore: cast_nullable_to_non_nullable
 as bool,latexInline: null == latexInline ? _self.latexInline : latexInline // ignore: cast_nullable_to_non_nullable
 as bool,minimumHashtagLength: null == minimumHashtagLength ? _self.minimumHashtagLength : minimumHashtagLength // ignore: cast_nullable_to_non_nullable
 as int,maxNodes: freezed == maxNodes ? _self.maxNodes : maxNodes // ignore: cast_nullable_to_non_nullable
 as int?,unsafeLinks: null == unsafeLinks ? _self.unsafeLinks : unsafeLinks // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_nullable_to_non_nullable
+as MentionKeys,
   ));
 }
 
@@ -162,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool latexBlocks,  bool latexInline,  int minimumHashtagLength,  int? maxNodes,  bool unsafeLinks)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool latexBlocks,  bool latexInline,  int minimumHashtagLength,  int? maxNodes,  bool unsafeLinks,  MentionKeys mentions)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ParseOptions() when $default != null:
-return $default(_that.latexBlocks,_that.latexInline,_that.minimumHashtagLength,_that.maxNodes,_that.unsafeLinks);case _:
+return $default(_that.latexBlocks,_that.latexInline,_that.minimumHashtagLength,_that.maxNodes,_that.unsafeLinks,_that.mentions);case _:
   return orElse();
 
 }
@@ -183,10 +185,10 @@ return $default(_that.latexBlocks,_that.latexInline,_that.minimumHashtagLength,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool latexBlocks,  bool latexInline,  int minimumHashtagLength,  int? maxNodes,  bool unsafeLinks)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool latexBlocks,  bool latexInline,  int minimumHashtagLength,  int? maxNodes,  bool unsafeLinks,  MentionKeys mentions)  $default,) {final _that = this;
 switch (_that) {
 case _ParseOptions():
-return $default(_that.latexBlocks,_that.latexInline,_that.minimumHashtagLength,_that.maxNodes,_that.unsafeLinks);case _:
+return $default(_that.latexBlocks,_that.latexInline,_that.minimumHashtagLength,_that.maxNodes,_that.unsafeLinks,_that.mentions);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +205,10 @@ return $default(_that.latexBlocks,_that.latexInline,_that.minimumHashtagLength,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool latexBlocks,  bool latexInline,  int minimumHashtagLength,  int? maxNodes,  bool unsafeLinks)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool latexBlocks,  bool latexInline,  int minimumHashtagLength,  int? maxNodes,  bool unsafeLinks,  MentionKeys mentions)?  $default,) {final _that = this;
 switch (_that) {
 case _ParseOptions() when $default != null:
-return $default(_that.latexBlocks,_that.latexInline,_that.minimumHashtagLength,_that.maxNodes,_that.unsafeLinks);case _:
+return $default(_that.latexBlocks,_that.latexInline,_that.minimumHashtagLength,_that.maxNodes,_that.unsafeLinks,_that.mentions);case _:
   return null;
 
 }
@@ -218,7 +220,7 @@ return $default(_that.latexBlocks,_that.latexInline,_that.minimumHashtagLength,_
 
 
 class _ParseOptions implements ParseOptions {
-  const _ParseOptions({this.latexBlocks = false, this.latexInline = false, this.minimumHashtagLength = 3, this.maxNodes, this.unsafeLinks = false});
+  const _ParseOptions({this.latexBlocks = false, this.latexInline = false, this.minimumHashtagLength = 3, this.maxNodes, this.unsafeLinks = false, this.mentions = const MentionKeys()});
   
 
 @override@JsonKey() final  bool latexBlocks;
@@ -228,6 +230,8 @@ class _ParseOptions implements ParseOptions {
 @override final  int? maxNodes;
 /// Links, channel links, hashtags, images and LaTeX stay plain text.
 @override@JsonKey() final  bool unsafeLinks;
+/// The reader's mention and highlight words.
+@override@JsonKey() final  MentionKeys mentions;
 
 /// Create a copy of ParseOptions
 /// with the given fields replaced by the non-null parameter values.
@@ -239,18 +243,18 @@ _$ParseOptionsCopyWith<_ParseOptions> get copyWith => __$ParseOptionsCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ParseOptions&&(identical(other.latexBlocks, latexBlocks) || other.latexBlocks == latexBlocks)&&(identical(other.latexInline, latexInline) || other.latexInline == latexInline)&&(identical(other.minimumHashtagLength, minimumHashtagLength) || other.minimumHashtagLength == minimumHashtagLength)&&(identical(other.maxNodes, maxNodes) || other.maxNodes == maxNodes)&&(identical(other.unsafeLinks, unsafeLinks) || other.unsafeLinks == unsafeLinks));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ParseOptions&&(identical(other.latexBlocks, latexBlocks) || other.latexBlocks == latexBlocks)&&(identical(other.latexInline, latexInline) || other.latexInline == latexInline)&&(identical(other.minimumHashtagLength, minimumHashtagLength) || other.minimumHashtagLength == minimumHashtagLength)&&(identical(other.maxNodes, maxNodes) || other.maxNodes == maxNodes)&&(identical(other.unsafeLinks, unsafeLinks) || other.unsafeLinks == unsafeLinks)&&(identical(other.mentions, mentions) || other.mentions == mentions));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,latexBlocks,latexInline,minimumHashtagLength,maxNodes,unsafeLinks);
+    return Object.hash(runtimeType,latexBlocks,latexInline,minimumHashtagLength,maxNodes,unsafeLinks,mentions);
 }
 
 @override
 String toString() {
-    return 'ParseOptions(latexBlocks: $latexBlocks, latexInline: $latexInline, minimumHashtagLength: $minimumHashtagLength, maxNodes: $maxNodes, unsafeLinks: $unsafeLinks)';
+    return 'ParseOptions(latexBlocks: $latexBlocks, latexInline: $latexInline, minimumHashtagLength: $minimumHashtagLength, maxNodes: $maxNodes, unsafeLinks: $unsafeLinks, mentions: $mentions)';
 }
 
 
@@ -261,7 +265,7 @@ abstract mixin class _$ParseOptionsCopyWith<$Res> implements $ParseOptionsCopyWi
   factory _$ParseOptionsCopyWith(_ParseOptions value, $Res Function(_ParseOptions) _then) = __$ParseOptionsCopyWithImpl;
 @override @useResult
 $Res call({
- bool latexBlocks, bool latexInline, int minimumHashtagLength, int? maxNodes, bool unsafeLinks
+ bool latexBlocks, bool latexInline, int minimumHashtagLength, int? maxNodes, bool unsafeLinks, MentionKeys mentions
 });
 
 
@@ -278,14 +282,15 @@ class __$ParseOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ParseOptions
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? latexBlocks = null,Object? latexInline = null,Object? minimumHashtagLength = null,Object? maxNodes = freezed,Object? unsafeLinks = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? latexBlocks = null,Object? latexInline = null,Object? minimumHashtagLength = null,Object? maxNodes = freezed,Object? unsafeLinks = null,Object? mentions = null,}) {
   return _then(_ParseOptions(
 latexBlocks: null == latexBlocks ? _self.latexBlocks : latexBlocks // ignore: cast_nullable_to_non_nullable
 as bool,latexInline: null == latexInline ? _self.latexInline : latexInline // ignore: cast_nullable_to_non_nullable
 as bool,minimumHashtagLength: null == minimumHashtagLength ? _self.minimumHashtagLength : minimumHashtagLength // ignore: cast_nullable_to_non_nullable
 as int,maxNodes: freezed == maxNodes ? _self.maxNodes : maxNodes // ignore: cast_nullable_to_non_nullable
 as int?,unsafeLinks: null == unsafeLinks ? _self.unsafeLinks : unsafeLinks // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_nullable_to_non_nullable
+as MentionKeys,
   ));
 }
 
@@ -1823,12 +1828,12 @@ return lineBreak(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text,  int marks,  String? link)?  text,TResult Function( String text,  int marks,  String? link)?  code,TResult Function( String name,  int marks,  String? link)?  mention,TResult Function( String name,  int marks,  String? link)?  channel,TResult Function( String name,  String literal,  int marks,  String? link)?  emoji,TResult Function( String tag,  int marks,  String? link)?  hashtag,TResult Function( String tex,  int marks,  String? link)?  math,TResult Function( String url,  String alt,  int? width,  int? height,  int marks,  String? link)?  image,TResult Function( int marks,  String? link)?  lineBreak,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text,  int marks,  String? link,  Highlight highlight)?  text,TResult Function( String text,  int marks,  String? link)?  code,TResult Function( String name,  int marks,  String? link,  bool mine)?  mention,TResult Function( String name,  int marks,  String? link)?  channel,TResult Function( String name,  String literal,  int marks,  String? link)?  emoji,TResult Function( String tag,  int marks,  String? link)?  hashtag,TResult Function( String tex,  int marks,  String? link)?  math,TResult Function( String url,  String alt,  int? width,  int? height,  int marks,  String? link)?  image,TResult Function( int marks,  String? link)?  lineBreak,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case TextPart() when text != null:
-return text(_that.text,_that.marks,_that.link);case CodePart() when code != null:
+return text(_that.text,_that.marks,_that.link,_that.highlight);case CodePart() when code != null:
 return code(_that.text,_that.marks,_that.link);case MentionPart() when mention != null:
-return mention(_that.name,_that.marks,_that.link);case ChannelPart() when channel != null:
+return mention(_that.name,_that.marks,_that.link,_that.mine);case ChannelPart() when channel != null:
 return channel(_that.name,_that.marks,_that.link);case EmojiPart() when emoji != null:
 return emoji(_that.name,_that.literal,_that.marks,_that.link);case HashtagPart() when hashtag != null:
 return hashtag(_that.tag,_that.marks,_that.link);case MathPart() when math != null:
@@ -1852,12 +1857,12 @@ return lineBreak(_that.marks,_that.link);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text,  int marks,  String? link)  text,required TResult Function( String text,  int marks,  String? link)  code,required TResult Function( String name,  int marks,  String? link)  mention,required TResult Function( String name,  int marks,  String? link)  channel,required TResult Function( String name,  String literal,  int marks,  String? link)  emoji,required TResult Function( String tag,  int marks,  String? link)  hashtag,required TResult Function( String tex,  int marks,  String? link)  math,required TResult Function( String url,  String alt,  int? width,  int? height,  int marks,  String? link)  image,required TResult Function( int marks,  String? link)  lineBreak,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text,  int marks,  String? link,  Highlight highlight)  text,required TResult Function( String text,  int marks,  String? link)  code,required TResult Function( String name,  int marks,  String? link,  bool mine)  mention,required TResult Function( String name,  int marks,  String? link)  channel,required TResult Function( String name,  String literal,  int marks,  String? link)  emoji,required TResult Function( String tag,  int marks,  String? link)  hashtag,required TResult Function( String tex,  int marks,  String? link)  math,required TResult Function( String url,  String alt,  int? width,  int? height,  int marks,  String? link)  image,required TResult Function( int marks,  String? link)  lineBreak,}) {final _that = this;
 switch (_that) {
 case TextPart():
-return text(_that.text,_that.marks,_that.link);case CodePart():
+return text(_that.text,_that.marks,_that.link,_that.highlight);case CodePart():
 return code(_that.text,_that.marks,_that.link);case MentionPart():
-return mention(_that.name,_that.marks,_that.link);case ChannelPart():
+return mention(_that.name,_that.marks,_that.link,_that.mine);case ChannelPart():
 return channel(_that.name,_that.marks,_that.link);case EmojiPart():
 return emoji(_that.name,_that.literal,_that.marks,_that.link);case HashtagPart():
 return hashtag(_that.tag,_that.marks,_that.link);case MathPart():
@@ -1877,12 +1882,12 @@ return lineBreak(_that.marks,_that.link);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text,  int marks,  String? link)?  text,TResult? Function( String text,  int marks,  String? link)?  code,TResult? Function( String name,  int marks,  String? link)?  mention,TResult? Function( String name,  int marks,  String? link)?  channel,TResult? Function( String name,  String literal,  int marks,  String? link)?  emoji,TResult? Function( String tag,  int marks,  String? link)?  hashtag,TResult? Function( String tex,  int marks,  String? link)?  math,TResult? Function( String url,  String alt,  int? width,  int? height,  int marks,  String? link)?  image,TResult? Function( int marks,  String? link)?  lineBreak,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text,  int marks,  String? link,  Highlight highlight)?  text,TResult? Function( String text,  int marks,  String? link)?  code,TResult? Function( String name,  int marks,  String? link,  bool mine)?  mention,TResult? Function( String name,  int marks,  String? link)?  channel,TResult? Function( String name,  String literal,  int marks,  String? link)?  emoji,TResult? Function( String tag,  int marks,  String? link)?  hashtag,TResult? Function( String tex,  int marks,  String? link)?  math,TResult? Function( String url,  String alt,  int? width,  int? height,  int marks,  String? link)?  image,TResult? Function( int marks,  String? link)?  lineBreak,}) {final _that = this;
 switch (_that) {
 case TextPart() when text != null:
-return text(_that.text,_that.marks,_that.link);case CodePart() when code != null:
+return text(_that.text,_that.marks,_that.link,_that.highlight);case CodePart() when code != null:
 return code(_that.text,_that.marks,_that.link);case MentionPart() when mention != null:
-return mention(_that.name,_that.marks,_that.link);case ChannelPart() when channel != null:
+return mention(_that.name,_that.marks,_that.link,_that.mine);case ChannelPart() when channel != null:
 return channel(_that.name,_that.marks,_that.link);case EmojiPart() when emoji != null:
 return emoji(_that.name,_that.literal,_that.marks,_that.link);case HashtagPart() when hashtag != null:
 return hashtag(_that.tag,_that.marks,_that.link);case MathPart() when math != null:
@@ -1900,12 +1905,13 @@ return lineBreak(_that.marks,_that.link);case _:
 
 
 class TextPart implements Inline {
-  const TextPart(this.text, {this.marks = 0, this.link});
+  const TextPart(this.text, {this.marks = 0, this.link, this.highlight = Highlight.none});
   
 
  final  String text;
 @override@JsonKey() final  int marks;
 @override final  String? link;
+@JsonKey() final  Highlight highlight;
 
 /// Create a copy of Inline
 /// with the given fields replaced by the non-null parameter values.
@@ -1917,18 +1923,18 @@ $TextPartCopyWith<TextPart> get copyWith => _$TextPartCopyWithImpl<TextPart>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is TextPart&&(identical(other.text, text) || other.text == text)&&(identical(other.marks, marks) || other.marks == marks)&&(identical(other.link, link) || other.link == link));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is TextPart&&(identical(other.text, text) || other.text == text)&&(identical(other.marks, marks) || other.marks == marks)&&(identical(other.link, link) || other.link == link)&&(identical(other.highlight, highlight) || other.highlight == highlight));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,text,marks,link);
+    return Object.hash(runtimeType,text,marks,link,highlight);
 }
 
 @override
 String toString() {
-    return 'Inline.text(text: $text, marks: $marks, link: $link)';
+    return 'Inline.text(text: $text, marks: $marks, link: $link, highlight: $highlight)';
 }
 
 
@@ -1939,7 +1945,7 @@ abstract mixin class $TextPartCopyWith<$Res> implements $InlineCopyWith<$Res> {
   factory $TextPartCopyWith(TextPart value, $Res Function(TextPart) _then) = _$TextPartCopyWithImpl;
 @override @useResult
 $Res call({
- String text, int marks, String? link
+ String text, int marks, String? link, Highlight highlight
 });
 
 
@@ -1956,12 +1962,13 @@ class _$TextPartCopyWithImpl<$Res>
 
 /// Create a copy of Inline
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? text = null,Object? marks = null,Object? link = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? text = null,Object? marks = null,Object? link = freezed,Object? highlight = null,}) {
   return _then(TextPart(
 null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,marks: null == marks ? _self.marks : marks // ignore: cast_nullable_to_non_nullable
 as int,link: freezed == link ? _self.link : link // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,highlight: null == highlight ? _self.highlight : highlight // ignore: cast_nullable_to_non_nullable
+as Highlight,
   ));
 }
 
@@ -2044,12 +2051,14 @@ as String?,
 
 
 class MentionPart implements Inline {
-  const MentionPart(this.name, {this.marks = 0, this.link});
+  const MentionPart(this.name, {this.marks = 0, this.link, this.mine = false});
   
 
  final  String name;
 @override@JsonKey() final  int marks;
 @override final  String? link;
+/// The name is one of the reader's mention words.
+@JsonKey() final  bool mine;
 
 /// Create a copy of Inline
 /// with the given fields replaced by the non-null parameter values.
@@ -2061,18 +2070,18 @@ $MentionPartCopyWith<MentionPart> get copyWith => _$MentionPartCopyWithImpl<Ment
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is MentionPart&&(identical(other.name, name) || other.name == name)&&(identical(other.marks, marks) || other.marks == marks)&&(identical(other.link, link) || other.link == link));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is MentionPart&&(identical(other.name, name) || other.name == name)&&(identical(other.marks, marks) || other.marks == marks)&&(identical(other.link, link) || other.link == link)&&(identical(other.mine, mine) || other.mine == mine));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,name,marks,link);
+    return Object.hash(runtimeType,name,marks,link,mine);
 }
 
 @override
 String toString() {
-    return 'Inline.mention(name: $name, marks: $marks, link: $link)';
+    return 'Inline.mention(name: $name, marks: $marks, link: $link, mine: $mine)';
 }
 
 
@@ -2083,7 +2092,7 @@ abstract mixin class $MentionPartCopyWith<$Res> implements $InlineCopyWith<$Res>
   factory $MentionPartCopyWith(MentionPart value, $Res Function(MentionPart) _then) = _$MentionPartCopyWithImpl;
 @override @useResult
 $Res call({
- String name, int marks, String? link
+ String name, int marks, String? link, bool mine
 });
 
 
@@ -2100,12 +2109,13 @@ class _$MentionPartCopyWithImpl<$Res>
 
 /// Create a copy of Inline
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? marks = null,Object? link = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? marks = null,Object? link = freezed,Object? mine = null,}) {
   return _then(MentionPart(
 null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,marks: null == marks ? _self.marks : marks // ignore: cast_nullable_to_non_nullable
 as int,link: freezed == link ? _self.link : link // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,mine: null == mine ? _self.mine : mine // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

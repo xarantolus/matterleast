@@ -331,6 +331,7 @@ class _ConversationViewState extends ConsumerState<ConversationView> {
         child: MessageEnvironment(
           url: widget.url,
           teamId: state.window?.teamId ?? '',
+          channelId: _controller.channelId,
           // The hover toolbar floats over the rows, clipped to the list.
           child: Overlay.wrap(
             child: AnchoredList<ListRow>(

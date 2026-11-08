@@ -11,11 +11,27 @@ String formatTooltip(Format format) {
   return '${shortcut.description} (${keysLabel(shortcut.keys)})';
 }
 
+/// Pure: the tooltip of the preview button, with its shortcut.
+String previewTooltip() {
+  final shortcut = appShortcuts.firstWhere(
+    (s) => s.intent is TogglePreviewIntent,
+  );
+  return '${shortcut.description} (${keysLabel(shortcut.keys)})';
+}
+
 /// Buttons that format the composer's selection, as the shortcuts do.
 class FormatBar extends StatelessWidget {
-  const FormatBar({required this.onFormat, super.key});
+  const FormatBar({
+    required this.onFormat,
+    required this.onPreview,
+    required this.previewing,
+    super.key,
+  });
 
-  final ValueChanged<Format> onFormat;
+  /// Null while the draft is previewed: nothing to format then.
+  final ValueChanged<Format>? onFormat;
+  final VoidCallback onPreview;
+  final bool previewing;
 
   static const _icons = {
     Format.bold: Icons.format_bold,
@@ -34,9 +50,18 @@ class FormatBar extends StatelessWidget {
           IconButton(
             tooltip: formatTooltip(format),
             iconSize: 18,
-            onPressed: () => onFormat(format),
+            onPressed: onFormat == null ? null : () => onFormat!(format),
             icon: Icon(_icons[format]),
           ),
+        const Spacer(),
+        IconButton(
+          tooltip: previewTooltip(),
+          iconSize: 18,
+          isSelected: previewing,
+          onPressed: onPreview,
+          icon: const Icon(Icons.visibility_outlined),
+          selectedIcon: const Icon(Icons.visibility),
+        ),
       ],
     ),
   );

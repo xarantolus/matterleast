@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/markdown/mention_keys.dart';
 
 part 'post_doc.freezed.dart';
 
@@ -16,6 +17,9 @@ abstract class ParseOptions with _$ParseOptions {
 
     /// Links, channel links, hashtags, images and LaTeX stay plain text.
     @Default(false) bool unsafeLinks,
+
+    /// The reader's mention and highlight words.
+    @Default(MentionKeys()) MentionKeys mentions,
   }) = _ParseOptions;
 }
 
@@ -78,6 +82,7 @@ sealed class Inline with _$Inline {
     String text, {
     @Default(0) int marks,
     String? link,
+    @Default(Highlight.none) Highlight highlight,
   }) = TextPart;
   const factory Inline.code(
     String text, {
@@ -90,6 +95,9 @@ sealed class Inline with _$Inline {
     String name, {
     @Default(0) int marks,
     String? link,
+
+    /// The name is one of the reader's mention words.
+    @Default(false) bool mine,
   }) = MentionPart;
   const factory Inline.channel(
     String name, {

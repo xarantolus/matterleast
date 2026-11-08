@@ -7,8 +7,10 @@ import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
+import 'package:matterleast/domain/notify_props.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_ranges.dart';
+import 'package:matterleast/markdown/mention_keys.dart';
 
 import '../support/memory_database.dart';
 
@@ -137,6 +139,36 @@ void main() {
       final links = await db.select(db.categoryChannels).get();
       expect(links, isNotEmpty);
       expect(await db.syncText(SyncKeys.currentUserId), isNotEmpty);
+    });
+
+    test('a user update carrying highlight words makes them available to '
+        'the matcher, and one without keeps them', () async {
+      final me = fixtureMap('me');
+      Map<String, Object?> withProps(Map<String, Object?> props) => {
+        ...me,
+        'notify_props': {
+          ...((me['notify_props'] ?? const <String, Object?>{}) as Map)
+              .cast<String, Object?>(),
+          ...props,
+        },
+      };
+      Future<MentionKeys> keys() async => MentionKeys.forUser(
+        username: 'me',
+        firstName: '',
+        props: NotifyProps.fromJsonText(
+          await db.syncText(SyncKeys.accountNotifyProps),
+        ),
+      );
+
+      await store.applyMe(
+        api.User.fromJson(withProps({'highlight_keys': 'fika, lunch'})),
+      );
+      final marked = highlightRanges('fika at lunch', await keys());
+      expect(marked.map((r) => r.kind).toSet(), {Highlight.keyword});
+      expect(marked, hasLength(2));
+
+      await store.applyMe(api.User.fromJson(me));
+      expect((await keys()).highlights, ['fika', 'lunch']);
     });
 
     test('a second sync keeps local-only columns', () async {

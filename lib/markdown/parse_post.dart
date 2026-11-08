@@ -1,4 +1,5 @@
 import 'package:markdown/markdown.dart' as md;
+import 'package:matterleast/markdown/mention_keys.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/markdown/syntaxes.dart';
 
@@ -141,13 +142,20 @@ class _Converter {
         :final text,
         :final marks,
         :final link,
+        :final highlight,
       )) {
         final task = _taskPrefix.firstMatch(text);
         if (task != null) {
           final rest = text.substring(task.end);
           return ListItem([
             Block.paragraph([
-              if (rest.isNotEmpty) Inline.text(rest, marks: marks, link: link),
+              if (rest.isNotEmpty)
+                Inline.text(
+                  rest,
+                  marks: marks,
+                  link: link,
+                  highlight: highlight,
+                ),
               ...inlines.skip(1),
             ]),
             ...content.skip(1),
@@ -194,7 +202,29 @@ class _Converter {
   void _inline(md.Node node, int marks, String? link, List<Inline> out) {
     count++;
     if (node is md.Text) {
-      out.add(Inline.text(node.text, marks: marks, link: link));
+      if (link != null) {
+        out.add(Inline.text(node.text, marks: marks, link: link));
+        return;
+      }
+      var from = 0;
+      for (final r in highlightRanges(node.text, options.mentions)) {
+        if (r.start > from) {
+          out.add(
+            Inline.text(node.text.substring(from, r.start), marks: marks),
+          );
+        }
+        out.add(
+          Inline.text(
+            node.text.substring(r.start, r.end),
+            marks: marks,
+            highlight: r.kind,
+          ),
+        );
+        from = r.end;
+      }
+      if (from < node.text.length) {
+        out.add(Inline.text(node.text.substring(from), marks: marks));
+      }
       return;
     }
     if (node is! md.Element) {
@@ -242,7 +272,13 @@ class _Converter {
         if (link != null) {
           text('@${a['name']}');
         } else {
-          out.add(Inline.mention(a['name']!, marks: marks));
+          out.add(
+            Inline.mention(
+              a['name']!,
+              marks: marks,
+              mine: options.mentions.mentionsName(a['name']!),
+            ),
+          );
         }
       case 'channel':
         if (link != null || plain) {
@@ -278,6 +314,7 @@ class _Converter {
       if (part is TextPart &&
           last is TextPart &&
           last.marks == part.marks &&
+          last.highlight == part.highlight &&
           last.link == part.link) {
         merged[merged.length - 1] = last.copyWith(text: last.text + part.text);
       } else if (part is TextPart && part.text.isEmpty) {

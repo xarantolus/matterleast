@@ -94,6 +94,11 @@ class FormatIntent extends AppIntent {
   final Format format;
 }
 
+/// Shows the draft as it will look, or the field again.
+class TogglePreviewIntent extends AppIntent {
+  const TogglePreviewIntent();
+}
+
 /// Replaces the composer's text with an older (or newer) message of the
 /// user's own.
 class StepHistoryIntent extends AppIntent {
@@ -363,6 +368,11 @@ const appShortcuts = <AppShortcut>[
     'Code',
     SingleActivator(LogicalKeyboardKey.keyC, control: true, alt: true),
     FormatIntent(Format.code),
+  ),
+  AppShortcut(
+    'Show preview',
+    SingleActivator(LogicalKeyboardKey.keyP, control: true, alt: true),
+    TogglePreviewIntent(),
   ),
   AppShortcut(
     'Scroll the messages up a page',

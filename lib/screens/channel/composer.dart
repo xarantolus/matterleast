@@ -32,6 +32,7 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/composer_desktop.dart';
 import 'package:matterleast/screens/channel/composer_extras.dart';
 import 'package:matterleast/screens/channel/composer_keys.dart';
+import 'package:matterleast/screens/channel/composer_preview.dart';
 import 'package:matterleast/screens/channel/format_bar.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
@@ -210,6 +211,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   static const _blinkFor = Duration(seconds: 10);
   Timer? _blinkStop;
 
+  /// The draft is shown as it will look instead of the field.
+  bool _preview = false;
+
+  /// The field takes the cursor when it comes back from the preview.
+  bool _refocus = false;
+
   /// The suggestion Enter and Tab take.
   int _highlight = 0;
 
@@ -243,6 +250,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   @override
   void didUpdateWidget(_ComposerField old) {
     super.didUpdateWidget(old);
+    if (old.channelId != widget.channelId || old.rootId != widget.rootId) {
+      _preview = false;
+    }
     if (old.teamId != widget.teamId) {
       ref.read(_provider.notifier).inTeam(widget.teamId);
     }
@@ -536,8 +546,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 suggestions.isEmpty,
             onInvoke: (_) => widget.onReplyToNewest!(),
           ),
+          TogglePreviewIntent: EnabledAction<TogglePreviewIntent>(
+            enabled: () => _preview || _focus.hasFocus,
+            onInvoke: (_) => _showPreview(!_preview),
+          ),
           FormatIntent: EnabledAction<FormatIntent>(
-            enabled: () => _focus.hasFocus,
+            enabled: () => _focus.hasFocus && !_preview,
             onInvoke: (intent) => _format(intent.format),
           ),
           // Typing keeps the page keys the field leaves unused to itself.
@@ -715,6 +729,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                     ),
                   ),
                 ),
+              if (_preview) PreviewChip(onEdit: () => _showPreview(false)),
               Padding(
                 // Keeps the field itself when bars appear above it.
                 key: const ValueKey('composer-field'),
@@ -728,10 +743,14 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                   children: [
                     if (context.density.plainComposer)
                       FormatBar(
-                        onFormat: (format) {
-                          _format(format);
-                          _focus.requestFocus();
-                        },
+                        previewing: _preview,
+                        onPreview: () => _showPreview(!_preview),
+                        onFormat: _preview
+                            ? null
+                            : (format) {
+                                _format(format);
+                                _focus.requestFocus();
+                              },
                       ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -741,7 +760,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                             (uploads ||
                                 canPrioritize ||
                                 canBurn ||
-                                canSchedule))
+                                canSchedule ||
+                                !context.density.plainComposer))
                           _rowCentred(
                             rowHeight,
                             Builder(
@@ -752,7 +772,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                             files.length >= maxAttachments) &&
                                         !canPrioritize &&
                                         !canBurn &&
-                                        !canSchedule
+                                        !canSchedule &&
+                                        context.density.plainComposer
                                     ? null
                                     : () => _attach(
                                         anchor: globalRectOf(button),
@@ -762,6 +783,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                             : null,
                                         burnOnRead: canBurn,
                                         schedule: canSchedule ? sendable : null,
+                                        preview: !context.density.plainComposer,
                                       ),
                                 icon: const Icon(Icons.add_circle_outline),
                               ),
@@ -772,82 +794,105 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                         Expanded(
                           // On desktop the field grows up to a third of the
                           // window, then scrolls; a phone keeps six lines.
-                          child: CompositedTransformTarget(
-                            link: _fieldLink,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxHeight: isDesktop
-                                    ? MediaQuery.sizeOf(context).height * 0.35
-                                    : double.infinity,
-                              ),
-                              child: Stack(
-                                children: [
-                                  TickersWhile(
-                                    active: DesktopShell.focus,
-                                    child: TickersWhile(
-                                      active: _blinking,
-                                      child: TextField(
-                                        controller: _text,
-                                        onTap: _wake,
-                                        focusNode: _focus,
-                                        style: style,
-                                        minLines: 1,
-                                        maxLines: isDesktop ? null : 6,
-                                        textAlignVertical:
-                                            TextAlignVertical.center,
-                                        keyboardType: TextInputType.multiline,
-                                        textCapitalization:
-                                            TextCapitalization.sentences,
-                                        decoration: InputDecoration(
-                                          hintText: widget.hint,
-                                          hintMaxLines: 1,
-                                          filled:
-                                              !context.density.plainComposer,
-                                          isDense: true,
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              context.density.fieldRadius,
-                                            ),
-                                            borderSide:
-                                                context.density.plainComposer
-                                                ? BorderSide(
-                                                    color: tokens.divider,
-                                                  )
-                                                : BorderSide.none,
-                                          ),
-                                          contentPadding:
-                                              EdgeInsetsDirectional.fromSTEB(
-                                                Spacing.lg,
-                                                padding,
-                                                48,
-                                                padding,
+                          child: _preview
+                              ? ComposerPreview(
+                                  url: widget.url,
+                                  teamId: widget.teamId,
+                                  channelId: widget.channelId,
+                                  text: value.text.text,
+                                  style: style,
+                                  padding: padding,
+                                  maxHeight: isDesktop
+                                      ? MediaQuery.sizeOf(context).height * 0.35
+                                      : line * 6 + 2 * padding,
+                                  onEdit: () => _showPreview(false),
+                                )
+                              : CompositedTransformTarget(
+                                  link: _fieldLink,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxHeight: isDesktop
+                                          ? MediaQuery.sizeOf(context).height *
+                                                0.35
+                                          : double.infinity,
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        TickersWhile(
+                                          active: DesktopShell.focus,
+                                          child: TickersWhile(
+                                            active: _blinking,
+                                            child: TextField(
+                                              controller: _text,
+                                              onTap: _wake,
+                                              focusNode: _focus,
+                                              autofocus: _refocus,
+                                              style: style,
+                                              minLines: 1,
+                                              maxLines: isDesktop ? null : 6,
+                                              textAlignVertical:
+                                                  TextAlignVertical.center,
+                                              keyboardType:
+                                                  TextInputType.multiline,
+                                              textCapitalization:
+                                                  TextCapitalization.sentences,
+                                              decoration: InputDecoration(
+                                                hintText: widget.hint,
+                                                hintMaxLines: 1,
+                                                filled: !context
+                                                    .density
+                                                    .plainComposer,
+                                                isDense: true,
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        context
+                                                            .density
+                                                            .fieldRadius,
+                                                      ),
+                                                  borderSide:
+                                                      context
+                                                          .density
+                                                          .plainComposer
+                                                      ? BorderSide(
+                                                          color: tokens.divider,
+                                                        )
+                                                      : BorderSide.none,
+                                                ),
+                                                contentPadding:
+                                                    EdgeInsetsDirectional.fromSTEB(
+                                                      Spacing.lg,
+                                                      padding,
+                                                      48,
+                                                      padding,
+                                                    ),
                                               ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                        // At the bottom like send, so a long message keeps
+                                        // it next to the line being written.
+                                        PositionedDirectional(
+                                          end: 0,
+                                          bottom: 0,
+                                          child: Builder(
+                                            builder: (button) => _rowCentred(
+                                              rowHeight,
+                                              IconButton(
+                                                key: _emojiButton,
+                                                tooltip: 'Emoji',
+                                                onPressed: () => _pickEmoji(
+                                                  globalRectOf(button),
+                                                ),
+                                                icon: const Icon(Icons.mood),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  // At the bottom like send, so a long message keeps
-                                  // it next to the line being written.
-                                  PositionedDirectional(
-                                    end: 0,
-                                    bottom: 0,
-                                    child: Builder(
-                                      builder: (button) => _rowCentred(
-                                        rowHeight,
-                                        IconButton(
-                                          key: _emojiButton,
-                                          tooltip: 'Emoji',
-                                          onPressed: () =>
-                                              _pickEmoji(globalRectOf(button)),
-                                          icon: const Icon(Icons.mood),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                                ),
                         ),
                         const SizedBox(width: Spacing.xs),
                         _rowCentred(
@@ -870,6 +915,14 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
         ),
       ),
     );
+  }
+
+  void _showPreview(bool on) {
+    if (on == _preview) return;
+    setState(() {
+      _preview = on;
+      _refocus = !on;
+    });
   }
 
   Future<void> _pickEmoji(Rect? anchor) async {
@@ -916,6 +969,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     required bool? acknowledgements,
     bool burnOnRead = false,
     bool? schedule,
+    bool preview = false,
   }) async {
     final room = maxAttachments - ref.read(_provider).attachments.length;
     final source = await showAppSheet<PickSource>(
@@ -936,6 +990,15 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                   enabled: room > 0,
                   onTap: () => Navigator.of(sheet).pop(source),
                 ),
+            if (preview)
+              ListTile(
+                leading: const Icon(Icons.visibility_outlined),
+                title: const Text('Preview'),
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  _showPreview(true);
+                },
+              ),
             if (acknowledgements != null)
               ListTile(
                 leading: const Icon(Icons.flag_outlined),
@@ -1056,6 +1119,12 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 message,
               ),
         );
+    if (_preview && mounted) {
+      setState(() {
+        _preview = false;
+        _refocus = isDesktop;
+      });
+    }
     switch (outcome) {
       case SubmitOpenLink(:final uri):
         await openLinkFromMessage(navigator, uri);
