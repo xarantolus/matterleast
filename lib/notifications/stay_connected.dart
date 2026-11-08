@@ -19,7 +19,8 @@ abstract final class StayConnected {
   static const _channel = MethodChannel('matterleast/stay_connected');
 
   static Future<bool> enabled() async =>
-      !isDesktop && (await _channel.invokeMethod<bool>('isEnabled') ?? false);
+      hasAndroidServices &&
+      (await _channel.invokeMethod<bool>('isEnabled') ?? false);
 
   static Future<void> enable() => _call('enable');
 
@@ -29,7 +30,7 @@ abstract final class StayConnected {
   static Future<void> resume() => _call('resume');
 
   static Future<void> _call(String method) async {
-    if (isDesktop) return;
+    if (!hasAndroidServices) return;
     await _channel.invokeMethod<void>(method);
   }
 }

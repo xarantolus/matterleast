@@ -804,8 +804,15 @@ class FileRightClick extends ConsumerWidget {
   }
 }
 
-String _folderOf(PostFile file) => switch (file.kind) {
-  FileKind.image || FileKind.gif => 'Pictures',
-  FileKind.video => 'Movies',
-  _ => 'Downloads',
-};
+String _folderOf(PostFile file) => saveFolder(file.kind, defaultTargetPlatform);
+
+/// Pure: where Save puts a file of [kind]. iOS has no shared folders:
+/// pictures and videos go to Photos, the rest to the app's folder in Files.
+String saveFolder(FileKind kind, TargetPlatform platform) =>
+    switch ((kind, platform == TargetPlatform.iOS)) {
+      (FileKind.image || FileKind.gif || FileKind.video, true) => 'Photos',
+      (_, true) => 'Files',
+      (FileKind.image || FileKind.gif, false) => 'Pictures',
+      (FileKind.video, false) => 'Movies',
+      _ => 'Downloads',
+    };

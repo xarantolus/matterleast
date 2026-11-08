@@ -6,7 +6,7 @@ const _display = MethodChannel('matterleast/display');
 /// Whether the user lets the screen follow the device's rotation; false
 /// when the platform can't tell.
 Future<bool> autoRotateEnabled() async {
-  if (isDesktop) return false;
+  if (!hasAndroidServices) return false;
   try {
     return await _display.invokeMethod<bool>('autoRotate') ?? false;
   } on PlatformException {

@@ -76,6 +76,38 @@ List<String> _shadeOrder(Map<String, AndroidNotificationDetails> shown) {
 }
 
 void main() {
+  test('on iOS a conversation is one thread with Reply and Mark as read, '
+      'under its server and team', () {
+    final notice = ConversationNotice(
+      serverUrl: 'https://chat.example.test',
+      key: const ConversationKey('town'),
+      kind: NotifyKind.direct,
+      title: 'Town Square',
+      group: true,
+      messages: [_message('first', 1)],
+      newestPostId: 'p-newest',
+      newestAt: _t0,
+      serverName: 'Example',
+      teamName: 'Crew',
+    );
+    final details = Notifier.darwinDetailsOf(notice);
+    expect(
+      details.threadIdentifier,
+      Notifier.tagOf(notice.serverUrl, notice.key),
+    );
+    expect(
+      Notifier.darwinDetailsOf(_notice(channel: 'other')).threadIdentifier,
+      isNot(details.threadIdentifier),
+    );
+    expect(details.subtitle, 'Example · Crew');
+    final category = Notifier.initializationSettings.iOS!.notificationCategories
+        .singleWhere((c) => c.identifier == details.categoryIdentifier);
+    expect(
+      [for (final a in category.actions) a.identifier],
+      [NoticeActions.reply, NoticeActions.read],
+    );
+  });
+
   test('a notification names the shortcut of its conversation', () {
     expect(
       _details(_notice(channel: 'town')).shortcutId,

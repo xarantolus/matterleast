@@ -6,14 +6,19 @@ import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/log.dart';
 
 /// Session tokens, one per server URL, in the platform's encrypted storage
-/// (Keystore, Credential Manager, the Secret Service keyring). Nothing else
-/// in the app reads or writes them.
+/// (Keystore, Keychain, Credential Manager, the Secret Service keyring).
+/// Nothing else in the app reads or writes them.
 class TokenStore {
   TokenStore([FlutterSecureStorage? storage])
     : _storage =
           storage ??
           const FlutterSecureStorage(
             aOptions: AndroidOptions(resetOnError: true),
+            // The background check reads them while the phone is locked;
+            // they never move to another device with a backup.
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock_this_device,
+            ),
           );
 
   final FlutterSecureStorage _storage;
