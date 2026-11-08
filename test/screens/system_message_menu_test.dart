@@ -75,7 +75,7 @@ void main() {
   }) => pumpWithServer(
     tester,
     size: const Size(400, 800),
-    handle: (r) => ok(const <String, Object?>{}),
+    handle: emptyAnswer,
     seed: (session) => _seed(session, admin: admin, twice: twice),
     home: (url) => Scaffold(
       body: ConversationView(

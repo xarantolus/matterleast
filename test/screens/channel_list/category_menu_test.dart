@@ -67,7 +67,7 @@ void main() {
           views.add(r.body['channel_id']);
         }
         if (r.path.endsWith('/preferences')) preferences.add(r.json);
-        return ok(const <String, Object?>{});
+        return emptyAnswer(r);
       },
       seed: (session) => session.store.applyCategoryUpdates([
         api.SidebarCategoryWithChannels.fromJson({

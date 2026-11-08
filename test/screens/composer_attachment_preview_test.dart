@@ -44,7 +44,7 @@ Future<ServerHarness> _pasteAnImage(WidgetTester tester) async {
     tester,
     size: const Size(900, 700),
     platform: TargetPlatform.linux,
-    handle: (_) => ok(<String, Object?>{}),
+    handle: emptyAnswer,
     overrides: (url) => [
       channelRightsProvider(url, channelId).overrideWith(
         (ref) => Stream.value((

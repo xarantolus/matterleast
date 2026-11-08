@@ -31,6 +31,30 @@ Reply error(int status, String id) => (
   headers: const {},
 );
 
+/// What a server with nothing to report answers to [request]: an empty list
+/// or post list where the API returns one, an empty object elsewhere.
+Reply emptyAnswer(SeenRequest request) {
+  final path = request.path;
+  bool matches(String method, String pattern) =>
+      request.method == method && RegExp(pattern).hasMatch(path);
+  if (matches('POST', r'^/api/v4/(users/ids|roles/names)$') ||
+      matches('GET', r'^/api/v4/channels/[^/]+/members$') ||
+      matches('GET', r'^/api/v4/plugins/webapp$') ||
+      matches(
+        'GET',
+        r'^/api/v4/users/me/(preferences|teams|teams/members|teams/unread)$',
+      ) ||
+      matches('GET', r'^/api/v4/users/me/teams/[^/]+/channels(/members)?$')) {
+    return ok(const <Object?>[]);
+  }
+  if (matches('GET', r'^/api/v4/channels/[^/]+/(posts|pinned)$') ||
+      matches('GET', r'^/api/v4/posts/[^/]+/thread$') ||
+      matches('GET', r'^/api/v4/users/me/posts/flagged$')) {
+    return ok({'order': <String>[], 'posts': <String, Object?>{}});
+  }
+  return ok(const <String, Object?>{});
+}
+
 /// A loopback HTTP server that answers each request with [handle], standing
 /// in for a Mattermost server.
 class FakeServer {

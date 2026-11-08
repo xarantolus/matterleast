@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/search/quick_search.dart';
 
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
+import '../support/servers.dart';
 
 void main() {
   late ServerHarness h;
@@ -20,17 +20,7 @@ void main() {
       },
       home: (url) => QuickSearchView(
         controller: controller,
-        servers: [
-          ServerEntry(
-            url: url,
-            displayName: 'Test',
-            siteName: null,
-            serverVersion: null,
-            diagnosticId: null,
-            lastActiveAt: DateTime(2026),
-            ssoScheme: null,
-          ),
-        ],
+        servers: [testServerEntry(url, name: 'Test')],
         target: null,
         onOpen: (_) {},
       ),

@@ -30,7 +30,7 @@ void main() {
           'status': 'OK',
           'last_viewed_at_times': {channelId: 1},
         }),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(r),
       },
       seed: (ServerSession session) async {
         await session.db.setSyncText(SyncKeys.currentUserRoles, 'system_user');

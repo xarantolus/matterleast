@@ -45,6 +45,7 @@ import 'package:matterleast/screens/threads/team_threads_screen.dart';
 import 'package:matterleast/ui/content_page.dart';
 
 import '../support/fake_server.dart';
+import '../support/message_look.dart';
 import '../support/rail.dart';
 import '../support/servers.dart';
 import '../support/settle.dart';
@@ -55,8 +56,11 @@ const _yId = 'ch000000000000000000000c11';
 const _zId = 'ch000000000000000000000c12';
 const _otherTeam = 'tm000000000000000000000t02';
 
-/// A message of channel [channel] that reads as its number.
-String _text(String channel, int i) => '$channel message $i';
+/// A message of channel [channel] on server [server] (A or B) that reads as
+/// its number, so what is on screen says where it is.
+String _text(String channel, int i, String server) =>
+    '$channel message $i ($server)';
+final _textPattern = RegExp(r'^(\w) message (\d+) \((A|B)\)$');
 
 void main() {
   late FakeServer serverA;
@@ -86,7 +90,7 @@ void main() {
         ),
   ];
 
-  Future<void> seed(ServerSession session) async {
+  Future<void> seed(ServerSession session, String server) async {
     final store = session.store;
     final channels = [
       for (final (id, name) in [(_xId, 'x'), (_yId, 'y'), (_zId, 'z')])
@@ -117,7 +121,7 @@ void main() {
         'channel_id': id,
         'user_id': 'someone',
         'create_at': start.add(Duration(minutes: i)).millisecondsSinceEpoch,
-        'message': _text(name, i),
+        'message': _text(name, i, server),
       };
       await store.applyChannelPage(
         channelId: id,
@@ -139,12 +143,12 @@ void main() {
       final a = await FakeServer.start();
       final b = await FakeServer.start();
       for (final s in [a, b]) {
-        s.handle = (_) => ok(const <String, Object?>{});
+        s.handle = emptyAnswer;
       }
       final sa = await testSession(a);
       final sb = await testSession(b);
-      await seed(sa);
-      await seed(sb);
+      await seed(sa, 'A');
+      await seed(sb, 'B');
       return (a, b, sa, sb);
     }))!;
     db = AppDatabase(DatabaseConnection(NativeDatabase.memory()));
@@ -277,20 +281,33 @@ void main() {
     await settle(tester);
   }
 
-  /// The channels and threads that show, as `url channel` and
-  /// `url channel root`.
+  /// The channels and threads that show, as `server channel` and
+  /// `server channel root`, read from the messages on their screens.
   List<String> shown(WidgetTester tester) => [
-    for (final w in tester.widgetList(
+    for (final screen in tester.widgetList(
       find.byWidgetPredicate(
         (w) => w is ChannelScreen || w is ThreadScreen,
         skipOffstage: false,
       ),
     ))
-      switch (w) {
-        ChannelScreen() => '${w.url} ${w.channelId}',
-        ThreadScreen() => '${w.url} ${w.channelId} ${w.rootId}',
-        _ => '',
-      },
+      () {
+        final texts = tester.widgetList<RichText>(
+          find.descendant(
+            of: find.byWidget(screen),
+            matching: find.byType(RichText),
+            skipOffstage: false,
+          ),
+        );
+        final first = texts
+            .map((t) => _textPattern.firstMatch(t.text.toPlainText()))
+            .nonNulls
+            .firstOrNull;
+        if (first == null) return 'nothing readable';
+        final (channel, number, server) = (first[1]!, first[2]!, first[3]!);
+        return screen is ThreadScreen
+            ? '$server $channel $channel$number'
+            : '$server $channel';
+      }(),
   ];
 
   /// Where each message of [channel] on screen is, by its number.
@@ -298,7 +315,7 @@ void main() {
     final name = channel == _xId ? 'x' : (channel == _yId ? 'y' : 'z');
     final found = <int, double>{};
     for (var i = 1; i <= 40; i++) {
-      final f = find.text(_text(name, i));
+      final f = find.textContaining(RegExp('^$name message $i \\('));
       if (f.evaluate().isEmpty) continue;
       final top = tester.getTopLeft(f.first).dy;
       if (top > 80 && top < 560) found[i] = top;
@@ -335,23 +352,23 @@ void main() {
       final atX = onScreen(tester, _xId);
       await open(tester, urlB(), _yId);
       await open(tester, urlB(), _yId, rootId: 'y5');
-      expect(shown(tester), contains('${urlB()} $_yId y5'));
+      expect(shown(tester), contains('B y y5'));
 
       await step(tester, forward: false);
-      expect(shown(tester), ['${urlB()} $_yId']);
+      expect(shown(tester), ['B y']);
       expect(place()?.url, urlB());
 
       await step(tester, forward: false);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       expect(place()?.url, urlA());
       expectSameSpot(atX, onScreen(tester, _xId));
 
       await step(tester, forward: true);
-      expect(shown(tester), ['${urlB()} $_yId']);
+      expect(shown(tester), ['B y']);
       expect(place()?.url, urlB());
 
       await step(tester, forward: true);
-      expect(shown(tester), contains('${urlB()} $_yId y5'));
+      expect(shown(tester), contains('B y y5'));
       await finish(tester);
     });
 
@@ -364,22 +381,17 @@ void main() {
       final before = onScreen(tester, _xId);
 
       await open(tester, urlA(), _zId, highlight: 'z10');
-      expect(shown(tester), ['${urlA()} $_zId']);
-      expect(find.text(_text('z', 10)), findsOneWidget);
+      expect(shown(tester), ['A z']);
+      expect(find.text(_text('z', 10, 'A')), findsOneWidget);
 
       await step(tester, forward: false);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       expectSameSpot(before, onScreen(tester, _xId));
 
       await step(tester, forward: true);
-      expect(shown(tester), ['${urlA()} $_zId']);
-      expect(
-        tester
-            .widget<ChannelScreen>(find.byType(ChannelScreen))
-            .highlightPostId,
-        'z10',
-      );
-      expect(find.text(_text('z', 10)), findsOneWidget);
+      expect(shown(tester), ['A z']);
+      expect(isHighlighted(tester, _text('z', 10, 'A')), isTrue);
+      expect(find.text(_text('z', 10, 'A')), findsOneWidget);
       await finish(tester);
     });
 
@@ -391,11 +403,11 @@ void main() {
       final before = onScreen(tester, _xId);
 
       await open(tester, urlA(), _xId, highlight: 'x3');
-      expect(find.text(_text('x', 3)), findsOneWidget);
+      expect(find.text(_text('x', 3, 'A')), findsOneWidget);
       expect(onScreen(tester, _xId).keys, isNot(containsAll(before.keys)));
 
       await step(tester, forward: false);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       expectSameSpot(before, onScreen(tester, _xId));
       await finish(tester);
     });
@@ -407,10 +419,10 @@ void main() {
       await open(tester, urlA(), _xId);
       await open(tester, urlA(), _xId, rootId: 'x5');
       await open(tester, urlA(), _zId, highlight: 'z10');
-      expect(shown(tester), ['${urlA()} $_zId']);
+      expect(shown(tester), ['A z']);
 
       await step(tester, forward: false);
-      expect(shown(tester), contains('${urlA()} $_xId x5'));
+      expect(shown(tester), contains('A x x5'));
       await finish(tester);
     });
 
@@ -420,7 +432,7 @@ void main() {
       await start(tester);
       await open(tester, urlA(), _xId);
       await step(tester, forward: true);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       await step(tester, forward: false);
       expect(shown(tester), isEmpty, reason: 'Home before the first channel');
       await step(tester, forward: false);
@@ -439,9 +451,9 @@ void main() {
       await step(tester, forward: false);
       await open(tester, urlA(), _zId);
       await step(tester, forward: true);
-      expect(shown(tester), ['${urlA()} $_zId']);
+      expect(shown(tester), ['A z']);
       await step(tester, forward: false);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       await finish(tester);
     });
 
@@ -457,7 +469,7 @@ void main() {
       await open(tester, urlA(), _xId, highlight: 'x30');
       await step(tester, forward: false);
       expect(shown(tester), [
-        '${urlA()} $_xId',
+        'A x',
       ], reason: 'not the left channel, not the signed-out server');
       expect(tester.takeException(), isNull);
       await finish(tester);
@@ -471,7 +483,7 @@ void main() {
       await open(tester, urlA(), _zId);
       await open(tester, urlA(), _zId);
       await step(tester, forward: false);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       await finish(tester);
     });
 
@@ -481,12 +493,12 @@ void main() {
       await start(tester);
       expect(place(), isNull);
       await open(tester, urlA(), _xId, highlight: 'x12');
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       await step(tester, forward: false);
       expect(shown(tester), isEmpty);
       expect(place(), isNull);
       await step(tester, forward: true);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       await finish(tester);
     });
 
@@ -495,10 +507,10 @@ void main() {
       await start(tester);
       await open(tester, urlA(), _xId);
       await open(tester, urlA(), _xId, rootId: 'x5');
-      expect(shown(tester), contains('${urlA()} $_xId x5'));
+      expect(shown(tester), contains('A x x5'));
       await tester.binding.handlePopRoute();
       await settle(tester);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       await tester.binding.handlePopRoute();
       await settle(tester);
       expect(shown(tester), isEmpty);
@@ -571,7 +583,7 @@ void main() {
       await open(tester, urlA(), _xId);
       await open(tester, urlA(), _xId, rootId: 'x5');
       await open(tester, urlB(), _yId);
-      expect(shown(tester), ['${urlB()} $_yId']);
+      expect(shown(tester), ['B y']);
       await finish(tester);
       await tester.pump(Duration.zero);
     }, variant: desktop);
@@ -586,7 +598,7 @@ void main() {
       expect(shown(tester), isEmpty);
       unawaited(showPlace(navigator(tester), a));
       await settle(tester);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       await finish(tester);
       await tester.pump(Duration.zero);
     }, variant: desktop);
@@ -600,10 +612,10 @@ void main() {
       final before = place();
       unawaited(showPlace(navigator(tester), a));
       expect(place(), before);
-      expect(shown(tester), ['${urlB()} $_yId']);
+      expect(shown(tester), ['B y']);
       await settle(tester);
       expect(place(), a);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       await finish(tester);
       await tester.pump(Duration.zero);
     }, variant: desktop);
@@ -616,14 +628,14 @@ void main() {
       await open(tester, urlB(), _yId, rootId: 'y5');
       expect(shown(tester), hasLength(2));
       await step(tester, forward: false);
-      expect(shown(tester), ['${urlB()} $_yId']);
+      expect(shown(tester), ['B y']);
       await step(tester, forward: false);
-      expect(shown(tester), ['${urlA()} $_xId']);
+      expect(shown(tester), ['A x']);
       expect(place()?.url, urlA());
       await step(tester, forward: true);
       await step(tester, forward: true);
       expect(shown(tester), hasLength(2));
-      expect(shown(tester).last, '${urlB()} $_yId y5');
+      expect(shown(tester).last, 'B y y5');
       await finish(tester);
       await tester.pump(Duration.zero);
     }, variant: desktop);
@@ -675,10 +687,10 @@ void main() {
 
         await mouse(tester, kBackMouseButton);
         expect(find.byType(GalleryScreen), findsNothing);
-        expect(shown(tester), ['${urlA()} $_yId']);
+        expect(shown(tester), ['A y']);
 
         await mouse(tester, kBackMouseButton);
-        expect(shown(tester), ['${urlA()} $_xId']);
+        expect(shown(tester), ['A x']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);
@@ -703,7 +715,7 @@ void main() {
 
         await alt(tester, LogicalKeyboardKey.arrowLeft);
         expect(find.byType(GalleryScreen), findsNothing);
-        expect(shown(tester), ['${urlA()} $_yId']);
+        expect(shown(tester), ['A y']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);
@@ -713,12 +725,12 @@ void main() {
         await open(tester, urlA(), _xId);
         await open(tester, urlA(), _yId);
         await step(tester, forward: false);
-        expect(shown(tester), ['${urlA()} $_xId']);
+        expect(shown(tester), ['A x']);
         await openGalleryOver(tester);
 
         await mouse(tester, kForwardMouseButton);
         expect(find.byType(GalleryScreen), findsOneWidget);
-        expect(shown(tester), ['${urlA()} $_xId']);
+        expect(shown(tester), ['A x']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);
@@ -767,7 +779,7 @@ void main() {
 
         await mouseBack(tester);
         expect(find.text('First page'), findsNothing);
-        expect(shown(tester), ['${urlA()} $_xId']);
+        expect(shown(tester), ['A x']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);
@@ -798,7 +810,7 @@ void main() {
 
         await step(tester, forward: false);
         expect(find.byType(TeamThreadsScreen), findsNothing);
-        expect(shown(tester), ['${urlB()} $_yId']);
+        expect(shown(tester), ['B y']);
         expect(place()?.url, urlB());
 
         await step(tester, forward: true);
@@ -825,11 +837,11 @@ void main() {
           ),
         );
         await settle(tester);
-        expect(shown(tester), contains('${urlB()} $_yId y5'));
+        expect(shown(tester), contains('B y y5'));
 
         await step(tester, forward: false);
         expect(find.byType(TeamThreadsScreen), findsOneWidget);
-        expect(shown(tester), ['${urlB()} $_yId']);
+        expect(shown(tester), ['B y']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);
@@ -844,7 +856,7 @@ void main() {
         expect(shown(tester), isEmpty);
 
         await step(tester, forward: false);
-        expect(shown(tester), ['${urlB()} $_yId']);
+        expect(shown(tester), ['B y']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);
@@ -858,7 +870,7 @@ void main() {
         expect(shown(tester), isEmpty);
 
         await step(tester, forward: false);
-        expect(shown(tester), ['${urlA()} $_yId']);
+        expect(shown(tester), ['A y']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);
@@ -880,10 +892,10 @@ void main() {
 
         await step(tester, forward: false);
         expect(find.text('Info body'), findsNothing);
-        expect(shown(tester), ['${urlA()} $_yId']);
+        expect(shown(tester), ['A y']);
 
         await step(tester, forward: false);
-        expect(shown(tester), ['${urlA()} $_xId']);
+        expect(shown(tester), ['A x']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);
@@ -906,7 +918,7 @@ void main() {
         await settle(tester);
 
         await step(tester, forward: false);
-        expect(shown(tester), ['${urlB()} $_yId']);
+        expect(shown(tester), ['B y']);
         await finish(tester);
         await tester.pump(Duration.zero);
       }, variant: desktop);

@@ -83,7 +83,7 @@ void main() {
           return ok({'order': <String>[], 'posts': <String, Object?>{}});
         }
         if (r.path == '/api/v4/users/ids') return ok(<Object?>[]);
-        return ok(<String, Object?>{});
+        return emptyAnswer(r);
       },
       overrides: (url) => [
         channelRightsProvider(url, channelId).overrideWith(
@@ -142,16 +142,12 @@ void main() {
     );
   }
 
-  /// The reader has the keyboard in the message list.
+  /// The reader clicks into the message field and presses F6 to move the
+  /// keyboard to the message list, the page's one region.
   Future<void> focusList(WidgetTester tester) async {
-    tester
-        .widget<Focus>(
-          find.byWidgetPredicate(
-            (w) => w is Focus && w.focusNode?.debugLabel == 'Region',
-          ),
-        )
-        .focusNode!
-        .requestFocus();
+    await tester.tap(find.byType(EditableText));
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.f6);
     await tester.pump();
   }
 

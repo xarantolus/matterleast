@@ -77,7 +77,7 @@ void main() {
         ('POST', '/api/v4/emoji/search') =>
           search?.call(r) ?? ok([emojiJson('sparklefox')]),
         ('GET', '/api/v4/emoji') => ok(const <Object?>[]),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(r),
       },
       seed: (s) => seedEmoji(s, enabled: enabled),
       home: (url) => Scaffold(body: EmojiPicker(url: url)),
@@ -213,7 +213,7 @@ void main() {
       size: _tall,
       handle: (r) => r.method == 'POST' && r.path == '/api/v4/emoji'
           ? create?.call(r) ?? ok(emojiJson('spark_fox', creator: 'me'))
-          : ok(const <String, Object?>{}),
+          : emptyAnswer(r),
       seed: (s) => seedEmoji(s, stored: [emojiJson('partyblob')]),
       home: (url) => Scaffold(
         body: AddEmojiForm(url: url, pick: _pickPng),
@@ -292,7 +292,7 @@ void main() {
           emojiJson('mine', creator: _me),
           emojiJson('theirs'),
         ]),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(r),
       },
       seed: (s) => seedEmoji(
         s,

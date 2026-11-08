@@ -46,7 +46,7 @@ void main() {
           return ok(page(range(200, 81)));
         }
         if (r.path == '/api/v4/users/ids') return ok(<Object?>[]);
-        return ok(<String, Object?>{});
+        return emptyAnswer(r);
       },
       home: (url) => Scaffold(
         body: ConversationView(
@@ -86,7 +86,7 @@ void main() {
           return ok(page(range(200, 141)));
         }
         if (r.path == '/api/v4/users/ids') return ok(<Object?>[]);
-        return ok(<String, Object?>{});
+        return emptyAnswer(r);
       },
       home: (url) => Scaffold(
         body: ConversationView(

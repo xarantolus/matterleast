@@ -5,11 +5,15 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 
 /// A signed-in server at [url].
-ServerEntry testServerEntry(String url, {String name = 'Test'}) => ServerEntry(
+ServerEntry testServerEntry(
+  String url, {
+  String name = 'Test',
+  String? serverVersion,
+}) => ServerEntry(
   url: url,
   displayName: name,
   siteName: null,
-  serverVersion: null,
+  serverVersion: serverVersion,
   diagnosticId: null,
   lastActiveAt: DateTime(2026),
   ssoScheme: null,

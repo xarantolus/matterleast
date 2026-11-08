@@ -1,6 +1,7 @@
 // Usage: `final h = await pumpWithServer(tester, handle: (r) => ok({}),
 // home: (url) => MyScreen(url: url));` then `h.settle(tester)`, `h.server`
-// and `h.session`; end the test with `await h.close(tester)`.
+// and `h.session`; end the test with `await h.close(tester)`, which a failed
+// test gets from a tear-down.
 import 'dart:async';
 import 'dart:io';
 
@@ -34,6 +35,8 @@ class ServerHarness {
   final FakeServer server;
   final ServerSession session;
 
+  var _closed = false;
+
   String get url => server.url.toString();
 
   /// Pumps until the app is idle, once [until] holds; see [settleApp].
@@ -41,8 +44,11 @@ class ServerHarness {
       settleApp(tester, servers: [server], until: until);
 
   /// Unmounts the widget and closes the server and session. Call it last in
-  /// the test body: pending timers are checked before tear-downs run.
+  /// the test body: pending timers are checked before tear-downs run, which
+  /// only close what a failed test left open.
   Future<void> close(WidgetTester tester) async {
+    if (_closed) return;
+    _closed = true;
     if (platform != null) debugDefaultTargetPlatformOverride = null;
     await tester.pumpWidget(const SizedBox());
     // Closing the database in the same frame as the unmount hangs.
@@ -87,7 +93,7 @@ Future<ServerHarness> pumpWithServer(
   }
   final harness = (await tester.runAsync(() async {
     final server = await FakeServer.start();
-    server.handle = handle ?? (_) => ok(const <String, Object?>{});
+    server.handle = handle ?? emptyAnswer;
     final session = await testSession(server);
     await seed?.call(session);
     return ServerHarness(server, session, platform: platform);
@@ -95,6 +101,8 @@ Future<ServerHarness> pumpWithServer(
   final url = harness.url;
   final appDb = appDatabase ?? memoryAppDatabase();
   if (appDatabase == null) addTearDown(appDb.close);
+  // Runs before the app database closes, and after a failed test too.
+  addTearDown(() => harness.close(tester));
   await tester.pumpWidget(
     ProviderScope(
       overrides: [

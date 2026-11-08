@@ -13,19 +13,13 @@ import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 
 import '../support/pump_app.dart';
+import '../support/servers.dart';
 
 const _a = 'https://a.example.test';
 const _b = 'https://b.example.test';
 
-ServerEntry _server(String url, String name) => ServerEntry(
-  url: url,
-  displayName: name,
-  siteName: null,
-  serverVersion: null,
-  diagnosticId: null,
-  lastActiveAt: DateTime.utc(2026),
-  ssoScheme: null,
-);
+ServerEntry _server(String url, String name) =>
+    testServerEntry(url, name: name);
 
 InboxItem _hit(String url, String id, String text, int minute) => InboxItem(
   serverUrl: url,
@@ -69,9 +63,7 @@ void main() {
             query: 'boat',
           ),
       overrides: [
-        serversProvider.overrideWith(
-          (ref) => Stream.value([_server(_a, 'First'), _server(_b, 'Second')]),
-        ),
+        serversOverride([_server(_a, 'First'), _server(_b, 'Second')]),
         for (final u in [_a, _b]) ...[
           featuresProvider(u).overrideWith(
             (ref) => Stream.value(const ServerFeatures(crossTeamSearch: true)),
@@ -176,9 +168,7 @@ void main() {
         files: true,
       ),
       overrides: [
-        serversProvider.overrideWith(
-          (ref) => Stream.value([_server(_a, 'First'), _server(_b, 'Second')]),
-        ),
+        serversOverride([_server(_a, 'First'), _server(_b, 'Second')]),
         for (final u in [_a, _b]) ...[
           featuresProvider(u).overrideWith(
             (ref) => Stream.value(const ServerFeatures(crossTeamSearch: true)),
@@ -258,7 +248,7 @@ void main() {
       tester,
       const SearchResultsScreen(url: _a, teamId: 't', query: '', files: true),
       overrides: [
-        serversProvider.overrideWith((ref) => Stream.value([_server(_a, 'A')])),
+        serversOverride([_server(_a, 'A')]),
         featuresProvider(_a).overrideWith(
           (ref) => Stream.value(const ServerFeatures(crossTeamSearch: true)),
         ),

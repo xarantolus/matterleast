@@ -29,7 +29,7 @@ void main() {
           'total_unread_threads': 0,
           'total_unread_mentions': 0,
         }),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(r),
       },
       seed: (session) async {
         await session.db

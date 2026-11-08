@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
-import 'package:matterleast/app/providers.dart';
-import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
@@ -10,6 +8,7 @@ import 'package:matterleast/screens/search/search_results_screen.dart';
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
 import '../support/rail.dart';
+import '../support/servers.dart';
 import '../support/test_session.dart';
 
 void main() {
@@ -18,7 +17,7 @@ void main() {
   Future<void> start(WidgetTester tester) async {
     h = await pumpWithServer(
       tester,
-      handle: (_) => ok(const <String, Object?>{}),
+      handle: emptyAnswer,
       seed: (session) async {
         await session.store.applyPostList(
           'saved',
@@ -60,19 +59,7 @@ void main() {
       },
       overrides: (url) => [
         railSelectionProvider.overrideWith(MemoryRailSelection.new),
-        serversProvider.overrideWith(
-          (ref) => Stream.value([
-            ServerEntry(
-              url: url,
-              displayName: 'Test',
-              siteName: null,
-              serverVersion: null,
-              diagnosticId: null,
-              lastActiveAt: DateTime.utc(2026),
-              ssoScheme: null,
-            ),
-          ]),
-        ),
+        serversOverride([testServerEntry(url, name: 'Test')]),
       ],
       home: (url) => SearchResultsScreen(
         url: url,

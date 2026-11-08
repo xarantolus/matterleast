@@ -15,6 +15,8 @@ import 'package:matterleast/screens/root/pane_layout.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/post_files.dart';
 
+import '../support/settle.dart';
+
 /// A content view such as Threads, with a button that opens a picture.
 class _Threads extends StatelessWidget {
   const _Threads();
@@ -102,11 +104,7 @@ void main() {
         ),
       ),
     );
-    // The database answers outside the fake clock.
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 20)),
-    );
-    await tester.pump();
+    await settleApp(tester);
   }
 
   Future<void> finish(WidgetTester tester) async {

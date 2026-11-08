@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/domain/rail.dart';
-import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/screens/root/place_reconciler.dart';
 import 'package:matterleast/screens/root/rail_selection.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 
 import '../support/rail.dart';
+import '../support/servers.dart';
 
 const _url = 'https://chat.example.test';
 
@@ -26,19 +26,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         railSelectionProvider.overrideWith(() => MemoryRailSelection(selected)),
-        serversProvider.overrideWith(
-          (ref) => Stream.value([
-            ServerEntry(
-              url: _url,
-              displayName: 'Chat',
-              siteName: null,
-              serverVersion: null,
-              diagnosticId: null,
-              lastActiveAt: DateTime(2026),
-              ssoScheme: null,
-            ),
-          ]),
-        ),
+        serversOverride([testServerEntry(_url, name: 'Chat')]),
         railTeamsProvider(_url).overrideWith((ref) {
           ref.keepAlive();
           return teams.stream;

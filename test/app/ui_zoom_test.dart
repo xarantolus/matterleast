@@ -11,6 +11,8 @@ import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/domain/ui_zoom.dart';
 
+import '../support/settle.dart';
+
 void main() {
   final desktop = TargetPlatformVariant.only(TargetPlatform.windows);
 
@@ -45,14 +47,14 @@ void main() {
         ),
       ),
     );
-    await settle(tester);
+    await settleApp(tester);
   }
 
   Future<void> press(WidgetTester tester, LogicalKeyboardKey key) async {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(key);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-    await settle(tester);
+    await settleApp(tester);
   }
 
   testWidgets('Ctrl+plus and Ctrl+minus zoom the whole window in steps, '
@@ -125,14 +127,6 @@ void main() {
 
 Future<void> close(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox());
-  await settle(tester);
+  await settleApp(tester);
   await tester.pump(const Duration(seconds: 1));
-}
-
-/// Lets the settings database answer outside the fake clock.
-Future<void> settle(WidgetTester tester) async {
-  for (var i = 0; i < 5; i++) {
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
-    await tester.pump();
-  }
 }

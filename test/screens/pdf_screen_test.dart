@@ -10,6 +10,7 @@ import 'package:matterleast/screens/gallery/pdf_screen.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../support/pump_app.dart';
+import '../support/settle.dart';
 
 const _server = 'http://localhost:8065';
 
@@ -52,12 +53,7 @@ void main() {
 
   Future<void> close(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox());
-    for (var i = 0; i < 5; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    await settleApp(tester);
   }
 
   testWidgets('a search finds and counts every match in the document', (

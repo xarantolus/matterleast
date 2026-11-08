@@ -9,6 +9,7 @@ import 'package:matterleast/domain/pane_widths.dart';
 import 'package:matterleast/screens/root/resizable_panes.dart';
 
 import '../support/pump_app.dart';
+import '../support/settle.dart';
 
 /// How often each row was built, by name.
 final _builds = <String, int>{};
@@ -62,16 +63,6 @@ void main() {
       tester.getSize(listPane).width - _rail;
   double threadWidth(WidgetTester tester) => tester.getSize(threadPane).width;
 
-  /// The database answers outside the fake clock.
-  Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 3; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 20));
-    }
-  }
-
   Future<void> show(
     WidgetTester tester, {
     double width = 1600,
@@ -92,7 +83,7 @@ void main() {
       ),
       appDatabase: db,
     );
-    await settle(tester);
+    await settleApp(tester);
   }
 
   Future<void> close(WidgetTester tester) async {
@@ -154,7 +145,7 @@ void main() {
     await show(tester, thread: true);
     await drag(tester, listDivider, -60);
     await drag(tester, threadDivider, -100);
-    await settle(tester);
+    await settleApp(tester);
     expect(
       await tester.runAsync(stored),
       const PaneWidths(list: 300, thread: 500),
@@ -197,7 +188,7 @@ void main() {
     await show(tester);
     await drag(tester, listDivider, 100);
     final wanted = _defaultList + 100;
-    await settle(tester);
+    await settleApp(tester);
     await show(tester, width: 1000, thread: true);
     expect(listWidth(tester), lessThan(wanted));
     await show(tester, width: 1000);
@@ -243,7 +234,7 @@ void main() {
     await tester.tap(listDivider);
     await tester.pumpAndSettle();
     expect(listWidth(tester), _defaultList);
-    await settle(tester);
+    await settleApp(tester);
     expect(await tester.runAsync(stored), const PaneWidths());
     await close(tester);
   });

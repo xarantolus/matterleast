@@ -20,7 +20,7 @@ void main() {
           400,
           'api.channel.convert_group_message_to_channel.name_exists',
         ),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(r),
       },
       seed: (session) async {
         await session.db.setSyncText(SyncKeys.currentUserRoles, 'system_user');

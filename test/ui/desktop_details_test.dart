@@ -21,6 +21,8 @@ import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/moment_tooltip.dart';
 
+import '../support/settle.dart';
+
 Widget _app(
   Widget child, {
   bool use24 = true,
@@ -113,7 +115,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Copy link'), findsOneWidget);
       expect(find.text('Open link'), findsNothing);
-      expect(find.byType(PopupMenuItem<VoidCallback>), findsOneWidget);
+      for (final other in ['Copy', 'Copy text', 'Select all', 'Open']) {
+        expect(find.text(other), findsNothing, reason: other);
+      }
     }, variant: desktop);
 
     testWidgets('a link shows the hand cursor', (tester) async {
@@ -392,12 +396,7 @@ void main() {
           child: const MaterialApp(home: DisplaySettingsPage(server: null)),
         ),
       );
-      for (var i = 0; i < 3; i++) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 20)),
-        );
-        await tester.pump(const Duration(milliseconds: 20));
-      }
+      await settleApp(tester);
       expect(find.text('Use system setting'), findsOneWidget);
       expect(find.textContaining('phone'), findsNothing);
       await tester.pumpWidget(const SizedBox());

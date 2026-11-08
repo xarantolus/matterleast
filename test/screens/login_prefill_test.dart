@@ -13,6 +13,8 @@ import 'package:matterleast/domain/login_options.dart';
 import 'package:matterleast/screens/add_server/add_server_controller.dart';
 import 'package:matterleast/screens/login/login_screen.dart';
 
+import '../support/settle.dart';
+
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   const url = 'https://chat.example.test';
@@ -70,10 +72,7 @@ void main() {
         ),
       ),
     );
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 50)),
-    );
-    await tester.pump();
+    await settleApp(tester);
   }
 
   String field(WidgetTester tester, String label) => tester

@@ -23,8 +23,37 @@ import 'package:matterleast/screens/gallery/video_player_view.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import '../support/pump_app.dart';
+import '../support/settle.dart';
 
 const _server = 'https://chat.example.test';
+
+/// The size the picture on show is drawn at.
+Size drawnPicture(WidgetTester tester) {
+  Size? size;
+  expect(
+    tester.renderObject(
+      find.descendant(
+        of: find.byType(ExtendedImageGesture),
+        matching: find.byType(ExtendedRawImage),
+      ),
+    ),
+    paints..something((method, arguments) {
+      if (method != #drawImageRect) return false;
+      size = (arguments[2] as Rect).size;
+      return true;
+    }),
+  );
+  return size!;
+}
+
+/// Waits for a picture to be drawn; a loading page's spinner never stops, so
+/// the app is not waited on to go idle.
+Future<void> pictureShown(WidgetTester tester) => settleApp(
+  tester,
+  until: () => find.byType(ExtendedImageGesture).evaluate().isNotEmpty,
+  quietRounds: 1,
+  animationRounds: 1,
+);
 
 /// Answers each picture with [answer]: progress that never ends, or a file.
 class _Media implements CacheManager {
@@ -367,26 +396,19 @@ void main() {
       '$_server/api/v4/files/${_photo.id}/preview',
     );
     await show(tester, answer);
-    for (
-      var i = 0;
-      i < 100 && find.byType(ExtendedImageGesture).evaluate().isEmpty;
-      i++
-    ) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 50));
-    }
+    await pictureShown(tester);
     expect(cache.containsKey(picture), isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    await settleApp(
+      tester,
+      until: () => !cache.containsKey(picture),
+      quietRounds: 1,
+      animationRounds: 1,
     );
-
     expect(cache.containsKey(picture), isFalse);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
@@ -412,16 +434,7 @@ void main() {
     Future<(TestPointer, double Function())> start(WidgetTester tester) async {
       final answer = await _pictures(tester);
       await show(tester, answer, files: const [_photo, _second, _third]);
-      for (
-        var i = 0;
-        i < 100 && find.byType(ExtendedImageGesture).evaluate().isEmpty;
-        i++
-      ) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 20)),
-        );
-        await tester.pump(const Duration(milliseconds: 50));
-      }
+      await pictureShown(tester);
       final pad = TestPointer(1, PointerDeviceKind.trackpad);
       final at = tester.getCenter(find.byType(GalleryScreen));
       await tester.sendEventToBinding(pad.panZoomStart(at));
@@ -487,25 +500,10 @@ void main() {
     tester,
   ) async {
     final answer = await _pictures(tester);
-    double? scale() => tester
-        .state<ExtendedImageGestureState>(find.byType(ExtendedImageGesture))
-        .gestureDetails
-        ?.totalScale;
-    Future<void> loaded() async {
-      for (
-        var i = 0;
-        i < 100 && find.byType(ExtendedImageGesture).evaluate().isEmpty;
-        i++
-      ) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 20)),
-        );
-        await tester.pump(const Duration(milliseconds: 50));
-      }
-    }
-
     await show(tester, answer);
-    await loaded();
+    await pictureShown(tester);
+    final fitted = drawnPicture(tester).width;
+    double scale() => drawnPicture(tester).width / fitted;
     expect(scale(), 1);
     final centre = tester.getCenter(find.byType(ExtendedImageGesture));
     await tester.tapAt(centre);
@@ -519,7 +517,7 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await loaded();
+    await pictureShown(tester);
     expect(scale(), 1);
   });
 
@@ -547,16 +545,7 @@ void main() {
 
     Future<void> showThree(WidgetTester tester) async {
       await show(tester, await _pictures(tester), files: files);
-      for (
-        var i = 0;
-        i < 100 && find.byType(ExtendedImageGesture).evaluate().isEmpty;
-        i++
-      ) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 20)),
-        );
-        await tester.pump(const Duration(milliseconds: 50));
-      }
+      await pictureShown(tester);
     }
 
     testWidgets('previous and next buttons step, and hide at the ends', (
@@ -617,10 +606,8 @@ void main() {
       await tester.sendEventToBinding(
         mouse.hover(tester.getCenter(find.byType(GalleryScreen))),
       );
-      double scale() => tester
-          .state<ExtendedImageGestureState>(find.byType(ExtendedImageGesture))
-          .gestureDetails!
-          .totalScale!;
+      final fitted = drawnPicture(tester).width;
+      double scale() => drawnPicture(tester).width / fitted;
 
       // A notch smoothed into a burst of events.
       for (var i = 0; i < 4; i++) {
@@ -639,6 +626,7 @@ void main() {
 
     testWidgets('Ctrl and the wheel zoom instead of stepping', (tester) async {
       await showThree(tester);
+      final fitted = drawnPicture(tester).width;
       final mouse = TestPointer(1, PointerDeviceKind.mouse);
       await tester.sendEventToBinding(
         mouse.hover(tester.getCenter(find.byType(GalleryScreen))),
@@ -648,13 +636,7 @@ void main() {
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await settle(tester);
       expect(find.text('1 / 3'), findsOneWidget);
-      expect(
-        tester
-            .state<ExtendedImageGestureState>(find.byType(ExtendedImageGesture))
-            .gestureDetails!
-            .totalScale!,
-        greaterThan(1),
-      );
+      expect(drawnPicture(tester).width, greaterThan(fitted));
     }, variant: desktop);
 
     testWidgets('a wheel over a zoomed picture pans it', (tester) async {

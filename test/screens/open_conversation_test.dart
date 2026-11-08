@@ -51,9 +51,11 @@ import 'package:matterleast/ui/slide_route.dart';
 
 import '../support/fake_server.dart';
 import '../support/memory_database.dart';
+import '../support/message_look.dart';
 import '../support/pump_with_server.dart';
 import '../support/rail.dart';
 import '../support/servers.dart';
+import '../support/settle.dart';
 import '../support/test_session.dart';
 
 void main() {
@@ -213,14 +215,15 @@ void main() {
         ),
       );
 
-  /// Whether the composer of the [screen] on top has the keyboard.
-  bool typingIn(WidgetTester tester, Type screen) {
-    final field = find.descendant(
-      of: find.byType(screen),
-      matching: find.byType(EditableText),
-    );
-    return tester.widget<EditableText>(field).focusNode.hasFocus &&
-        tester.testTextInput.isVisible;
+  /// Whether what the user types goes into the composer of the [screen].
+  Future<bool> typingIn(WidgetTester tester, Type screen) async {
+    if (!tester.testTextInput.isVisible) return false;
+    tester.testTextInput.enterText('typed words');
+    await tester.pump();
+    return find
+        .descendant(of: find.byType(screen), matching: find.text('typed words'))
+        .evaluate()
+        .isNotEmpty;
   }
 
   testWidgets('a message picked under a channel\'s info opens in that '
@@ -471,7 +474,7 @@ void main() {
             'name': '${_pat.id}__$meId',
             'display_name': '',
           })
-        : ok(const <String, Object?>{});
+        : emptyAnswer(request);
     unawaited(
       showUserProfile(
         tester.element(find.byType(Scaffold)),
@@ -510,9 +513,9 @@ void main() {
     expect(find.byType(ChannelScreen), findsNothing);
     await tester.drag(find.byType(ReopenSwipe), const Offset(-200, 0));
     await h.settle(tester);
-    final screen = tester.widget<ChannelScreen>(find.byType(ChannelScreen));
-    expect(screen.channelId, channelId);
-    expect(screen.highlightPostId, isNull);
+    expect(find.byType(ChannelScreen), findsOneWidget);
+    expect(find.text('morning'), findsOneWidget);
+    expect(isHighlighted(tester, 'morning'), isFalse);
     navigator(tester).pop();
     await h.settle(tester);
     await h.close(tester);
@@ -629,10 +632,7 @@ void main() {
       ),
     );
     await h.settle(tester);
-    expect(
-      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
-      postId,
-    );
+    expect(isHighlighted(tester, 'cited'), isTrue);
     navigator(tester).pop();
     await h.settle(tester);
     await h.close(tester);
@@ -651,10 +651,7 @@ void main() {
       ),
     );
     await h.settle(tester);
-    expect(
-      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
-      'old1',
-    );
+    expect(isHighlighted(tester, 'morning'), isTrue);
     navigator(tester).pop();
     await h.settle(tester);
     await opening;
@@ -1241,7 +1238,7 @@ void main() {
     await tester.tap(find.text('Reply'));
     await h.settle(tester);
     expect(find.byType(ThreadScreen), findsOneWidget);
-    expect(typingIn(tester, ThreadScreen), isTrue);
+    expect(await typingIn(tester, ThreadScreen), isTrue);
     await back(tester);
     expect(find.byType(ThreadScreen), findsNothing);
     expect(tester.testTextInput.isVisible, isFalse);
@@ -1266,7 +1263,7 @@ void main() {
     expect(tester.testTextInput.isVisible, isFalse);
     navigator(tester).pop();
     await h.settle(tester);
-    expect(typingIn(tester, ChannelScreen), isTrue);
+    expect(await typingIn(tester, ChannelScreen), isTrue);
     await back(tester);
     await h.close(tester);
   });
@@ -1341,7 +1338,7 @@ void main() {
         'message': 'hello there',
         'create_at': DateTime.utc(2026, 10, 26).millisecondsSinceEpoch,
       }),
-      _ => ok(const <String, Object?>{}),
+      _ => emptyAnswer(request),
     };
     unawaited(
       openNotice(
@@ -1376,35 +1373,35 @@ void main() {
           'channel_display_name': 'Boats',
         });
       }
-      if (request.path == '/api/v4/posts/far1') {
+      final far = {
+        'id': 'far1',
+        'channel_id': channelId,
+        'user_id': 'someone',
+        'message': 'far back',
+        'create_at': DateTime.utc(2026, 1, 2).millisecondsSinceEpoch,
+      };
+      if (request.path == '/api/v4/posts/far1') return ok(far);
+      if (request.path == '/api/v4/channels/$channelId/posts') {
         return ok({
-          'id': 'far1',
-          'channel_id': channelId,
-          'user_id': 'someone',
-          'message': 'far back',
-          'create_at': DateTime.utc(2026, 1, 2).millisecondsSinceEpoch,
+          'order': ['far1'],
+          'posts': {'far1': far},
         });
       }
-      return ok(const <String, Object?>{});
+      return emptyAnswer(request);
     };
     unawaited(openPost(navigator(tester), server.url.toString(), 'far1'));
-    var said = false;
-    for (var i = 0; i < 20 && !said; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 50)),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
-      said = find.text('Opening the message…').evaluate().isNotEmpty;
-    }
-    expect(said, isTrue);
+    await settleApp(
+      tester,
+      until: () => find.text('Opening the message…').evaluate().isNotEmpty,
+      quietRounds: 1,
+      animationRounds: 1,
+    );
+    expect(find.text('Opening the message…'), findsOneWidget);
     found.complete();
     await h.settle(tester);
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('Opening the message…'), findsNothing);
-    expect(
-      tester.widget<ChannelScreen>(find.byType(ChannelScreen)).highlightPostId,
-      'far1',
-    );
+    expect(isHighlighted(tester, 'far back'), isTrue);
     await back(tester);
     await h.close(tester);
   });

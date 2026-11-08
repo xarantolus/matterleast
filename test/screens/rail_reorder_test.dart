@@ -38,7 +38,7 @@ void main() {
       appDatabase: appDb,
       handle: (r) => r.method == 'PUT' && r.path.endsWith('/preferences')
           ? (refuse ? error(403, 'no_way') : ok({'status': 'OK'}))
-          : ok(const <String, Object?>{}),
+          : emptyAnswer(r),
       seed: (session) async {
         for (final (i, url) in [
           session.url.toString(),

@@ -24,6 +24,8 @@ import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/threads/team_threads_screen.dart';
 
 import '../support/memory_database.dart';
+import '../support/servers.dart';
+import '../support/settle.dart';
 
 const _url = 'https://chat.example.test';
 const _server = ServerEntry(
@@ -59,15 +61,6 @@ void main() {
   setUp(() => db = memoryAppDatabase());
   tearDown(() => db.close());
 
-  Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 3; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump(const Duration(milliseconds: 20));
-    }
-  }
-
   /// Drift closes its queries on a zero timer.
   Future<void> unmount(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox());
@@ -96,7 +89,7 @@ void main() {
       container.listen(searchTabProvider, (_, _) {}),
       container.listen(threadsTabProvider, (_, _) {}),
     ];
-    await settle(tester);
+    await settleApp(tester);
     expect(warm.every((w) => w.read().hasValue), isTrue);
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -140,7 +133,7 @@ void main() {
       expect(chip(tester, 'Unread').selected, isTrue);
 
       await tester.tap(find.text('Mentions'));
-      await settle(tester);
+      await settleApp(tester);
       expect(find.text('Mentioned in Dock'), findsOneWidget);
 
       await openHome(tester);
@@ -180,7 +173,7 @@ void main() {
 
       await tester.tap(find.text('Unread'));
       await tester.pumpAndSettle();
-      await settle(tester);
+      await settleApp(tester);
       expect(row('Kayak rack'), findsNothing);
 
       await openThreads(tester);
@@ -190,7 +183,7 @@ void main() {
 
       await tester.tap(find.text('All'));
       await tester.pumpAndSettle();
-      await settle(tester);
+      await settleApp(tester);
       await openThreads(tester);
       await tester.pumpAndSettle();
       expect(row('Kayak rack'), findsOneWidget);
@@ -203,7 +196,7 @@ void main() {
       tester,
       const SearchResultsScreen(url: _url, teamId: 't1', query: ''),
       [
-        serversProvider.overrideWith((ref) => Stream.value([_server])),
+        serversOverride([_server]),
         featuresProvider(_url).overrideWith(
           (ref) => Stream.value(const ServerFeatures(crossTeamSearch: true)),
         ),
@@ -227,7 +220,7 @@ void main() {
       expect(filesSelected(tester), isFalse);
 
       await tester.tap(find.text('Files'));
-      await settle(tester);
+      await settleApp(tester);
       expect(filesSelected(tester), isTrue);
 
       await openSearch(tester);
@@ -235,7 +228,7 @@ void main() {
       expect(find.text('Search files'), findsWidgets);
 
       await tester.tap(find.text('Messages'));
-      await settle(tester);
+      await settleApp(tester);
       await openSearch(tester);
       expect(filesSelected(tester), isFalse);
       await unmount(tester);

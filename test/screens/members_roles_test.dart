@@ -34,7 +34,7 @@ void main() {
         ]),
         ('PUT', final p) when p.endsWith('/schemeRoles') =>
           change ?? ok({'status': 'OK'}),
-        _ => ok(const <String, Object?>{}),
+        _ => emptyAnswer(r),
       },
       home: (url) => MembersScreen(
         url: url,
