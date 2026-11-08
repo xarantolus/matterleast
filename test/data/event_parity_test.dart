@@ -87,6 +87,10 @@ void main() {
     session.db.myChannels,
   )..where((m) => m.channelId.equals(channelId))).getSingle();
 
+  Future<String?> myRoles() async => (await (session.db.select(
+    session.db.myChannels,
+  )..where((m) => m.channelId.equals(channelId))).getSingleOrNull())?.roles;
+
   Future<void> markUnreadHere() => session.store.applyMarkedUnread(
     api.ChannelMember.fromJson({
       'channel_id': channelId,
@@ -233,11 +237,14 @@ void main() {
         _ => emptyAnswer(r),
       };
       await receive('channel_scheme_updated', {});
+      // The roles and the membership come from separate requests.
       await eventually(
         () async =>
-            (await session.store.roleNames()).contains('scheme1_channel_user'),
+            (await session.store.roleNames()).contains(
+              'scheme1_channel_user',
+            ) &&
+            (await myRoles()) == 'scheme1_channel_user',
       );
-      expect((await member()).roles, 'scheme1_channel_user');
     });
 
     test('a toast from a plugin and a refused download reach the user, a '
