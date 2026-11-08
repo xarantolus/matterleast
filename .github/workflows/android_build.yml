@@ -440,57 +440,6 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  # TEMPORARY (lane/ios): what Xcode Cloud does, and one simulator launch.
-  ios-trial:
-    name: iOS trial
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-      - name: Post-clone script as Xcode Cloud runs it
-        env:
-          CI_BUILD_NUMBER: '7'
-        run: CI_PRIMARY_REPOSITORY_PATH="$GITHUB_WORKSPACE" ios/ci_scripts/ci_post_clone.sh
-      - name: What the script changed in ios/
-        if: always()
-        run: |
-          git status --porcelain
-          mkdir -p "$RUNNER_TEMP/trial"
-          git diff -- ios > "$RUNNER_TEMP/trial/ios.diff"
-          cp ios/Podfile.lock "$RUNNER_TEMP/trial/" || true
-          cat ios/Flutter/Generated.xcconfig
-          ls ios
-      - name: Archive as Xcode Cloud would, unsigned
-        run: |
-          xcodebuild archive -workspace ios/Runner.xcworkspace -scheme Runner \
-            -configuration Release -destination generic/platform=iOS \
-            -archivePath "$RUNNER_TEMP/Runner.xcarchive" CODE_SIGNING_ALLOWED=NO | tail -30
-          /usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$RUNNER_TEMP/Runner.xcarchive/Products/Applications/Runner.app/Info.plist"
-      - name: Launch on a simulator
-        if: false
-        run: |
-          export PATH="$PATH:$HOME/flutter/bin"
-          flutter build ios --simulator --debug
-          udid=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
-          xcrun simctl boot "$udid"
-          xcrun simctl bootstatus "$udid" -b
-          xcrun simctl install "$udid" build/ios/iphonesimulator/Runner.app
-          xcrun simctl spawn "$udid" log stream --style compact --predicate 'process == "Runner"' > "$RUNNER_TEMP/trial/sim.log" 2>&1 &
-          xcrun simctl launch "$udid" io.github.xarantolus.matterleast
-          sleep 45
-          xcrun simctl io "$udid" screenshot "$RUNNER_TEMP/trial/launch.png"
-          xcrun simctl launch "$udid" io.github.xarantolus.matterleast || true
-          sleep 5
-          kill %1 || true
-          grep -iE "flutter|exception|error" "$RUNNER_TEMP/trial/sim.log" | tail -80 || true
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: always()
-        with:
-          name: ios-trial
-          path: ${{ runner.temp }}/trial
-          retention-days: 3
-
   # The only job that can write to the repository. Without always() it
   # runs only when every build succeeded, so a release has all its files.
   publish:
