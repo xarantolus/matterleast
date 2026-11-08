@@ -38,6 +38,7 @@ end
 
 runner_group = project.main_group.children.find { |g| g.display_name == 'Runner' }
 runner_group.new_reference('Runner.entitlements')
+runner.add_file_references([runner_group.new_reference('DeviceStatus.swift')])
 runner.build_configurations.each do |config|
   config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = '$(APP_BUNDLE_ID)'
   config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'Runner/Runner.entitlements'
