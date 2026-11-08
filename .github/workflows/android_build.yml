@@ -381,11 +381,70 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # Unsigned, so it needs no Apple account here: sideloading tools re-sign
+  # it with the user's own. Runs on every push to notice when iOS breaks.
+  ios:
+    name: Build for iOS
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+
+      # SQLite, built for iOS.
+      - name: Restore the native build hook outputs
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .dart_tool/hooks_runner
+          key: build-hooks-ios-${{ hashFiles('pubspec.lock') }}
+          restore-keys: build-hooks-ios-
+
+      - name: Restore the pods
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: pods-${{ hashFiles('ios/Podfile.lock', 'pubspec.lock') }}
+          restore-keys: pods-
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Build for iOS
+        run: flutter build ios --release --no-codesign
+
+      # An .ipa is the app in a Payload folder, zipped.
+      - name: Pack the app
+        run: |
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R build/ios/iphoneos/Runner.app "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qr -y "$RUNNER_TEMP/matterleast.ipa" Payload)
+          shasum -a 256 "$RUNNER_TEMP/matterleast.ipa"
+
+      - name: Upload the app
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ios
+          path: ${{ runner.temp }}/matterleast.ipa
+          if-no-files-found: error
+          retention-days: 30
+
   # The only job that can write to the repository. Without always() it
   # runs only when every build succeeded, so a release has all its files.
   publish:
     name: Publish the release
-    needs: [check, android, windows, linux]
+    needs: [check, android, windows, linux, ios]
     if: needs.check.outputs.release == 'true'
     runs-on: ubuntu-26.04
     environment: release
@@ -422,6 +481,7 @@ jobs:
             ${{ runner.temp }}/dist/matterleast.apk
             ${{ runner.temp }}/dist/matterleast-setup.exe
             ${{ runner.temp }}/dist/matterleast.flatpak
+            ${{ runner.temp }}/dist/matterleast.ipa
           tag_name: v${{ needs.check.outputs.version }}
           target_commitish: ${{ github.sha }}
           name: v${{ needs.check.outputs.version }}

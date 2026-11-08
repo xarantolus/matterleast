@@ -71,6 +71,7 @@ setup-specific-guide.md
 !.devcontainer/*.sh
 !.devcontainer/server/*.sh
 !tool/*.sh
+!ios/ci_scripts/*.sh
 node_modules/
 .lane.pid
 .desktop.pid
