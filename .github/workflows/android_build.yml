@@ -5,6 +5,10 @@ on:
   # Pull requests from forks; a branch in this repo is already checked on
   # push.
   pull_request:
+  # TestFlight builds expire after 90 days; this uploads main again in
+  # time even when no release came out in between.
+  schedule:
+    - cron: '0 5 1 */2 *'
   workflow_dispatch:
     inputs:
       platforms:
@@ -391,7 +395,7 @@ jobs:
   ios:
     name: Build for iOS
     needs: check
-    if: needs.check.outputs.release == 'true' || inputs.platforms
+    if: needs.check.outputs.release == 'true' || inputs.platforms || github.event_name == 'schedule'
     runs-on: macos-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'release' || '' }}
 
