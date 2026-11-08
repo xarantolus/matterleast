@@ -1222,6 +1222,13 @@ class ServerStore {
     final known = await (db.select(
       db.posts,
     )..where((p) => p.id.equals(post.id!))).getSingleOrNull();
+    // A channel list fetched before the event may already count the post:
+    // its last-post time, read before this post raises it, says so.
+    final channelBefore = await (db.select(
+      db.channels,
+    )..where((c) => c.id.equals(channelId))).getSingleOrNull();
+    final counted =
+        channelBefore?.lastPostAt?.isBefore(post.createAt!) == false;
     await _upsertPosts([post]);
     if (mentionsMe && !fromSelf) {
       await _prependToList(PostListNames.mentions, post.id!);
@@ -1238,7 +1245,7 @@ class ServerStore {
     final channel = await (db.select(
       db.channels,
     )..where((c) => c.id.equals(channelId))).getSingleOrNull();
-    if (channel != null && !isJoinLeave(post.type)) {
+    if (channel != null && !counted && !isJoinLeave(post.type)) {
       await (db.update(
         db.channels,
       )..where((c) => c.id.equals(channelId))).write(

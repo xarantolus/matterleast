@@ -444,6 +444,32 @@ void main() {
       expect(mine.mentionCount, 1);
     });
 
+    test(
+      'a post the channel list already counted is not counted again',
+      () async {
+        await store.applyChannels(
+          channels: [
+            api.Channel.fromJson({
+              'id': 'c1',
+              'team_id': 't1',
+              'name': 'town-square',
+              'type': 'O',
+              'total_msg_count': 2,
+              'last_post_at': 200,
+            }),
+          ],
+          members: const [],
+        );
+        await store.applyLivePost(
+          post('p2', createAt: 200),
+          fromSelf: false,
+          mentionsMe: false,
+        );
+        final before = (await db.select(db.channels).getSingle()).totalMsgCount;
+        expect(before, 2);
+      },
+    );
+
     test("someone else's post makes the channel unread", () async {
       await store.applyLivePost(
         post('p2', createAt: 200),
