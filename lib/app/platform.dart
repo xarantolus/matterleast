@@ -9,6 +9,11 @@ bool get isDesktop => switch (defaultTargetPlatform) {
   _ => false,
 };
 
+/// Windows blocks each window resize until a frame of the new size arrives,
+/// up to a timeout when the app isn't drawing yet, so there the app starts
+/// before the desktop shell sizes the window; the shell then shows it.
+bool get appBeforeShell => defaultTargetPlatform == TargetPlatform.windows;
+
 /// "tap" on a phone, "click" with a mouse; [capital] for a sentence start.
 String tapWord({bool capital = false}) => switch ((isDesktop, capital)) {
   (true, true) => 'Click',

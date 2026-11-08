@@ -12,6 +12,19 @@ final _shortcode = RegExp(r':([a-zA-Z0-9_+-]+):');
 /// leave their text, known `:emoji:` become the emoji, and `@user`,
 /// `~channel` and words with underscores stay as written.
 String previewText(String markdown) {
+  final known = _previews.remove(markdown);
+  final text = known ?? _preview(markdown);
+  _previews[markdown] = text;
+  if (_previews.length > _previewLimit) _previews.remove(_previews.keys.first);
+  return text;
+}
+
+// Home rebuilds its rows whenever posts are stored, mostly from the same
+// messages, so each is formatted once while it keeps being shown.
+const _previewLimit = 2000;
+final _previews = <String, String>{};
+
+String _preview(String markdown) {
   final lines = markdown
       .split('\n')
       .where((line) => !line.trimLeft().startsWith('```'))
