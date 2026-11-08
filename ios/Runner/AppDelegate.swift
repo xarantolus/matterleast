@@ -21,7 +21,7 @@ import workmanager_apple
     // launching finishes, which the plugin would do when sign-in schedules
     // the first check. The identifier is PeriodicCheck.name.
     WorkmanagerPlugin.registerPeriodicTask(
-      withIdentifier: "notification-check", earliestBeginInSeconds: 15 * 60)
+      withIdentifier: "notification-check", earliestBeginInSeconds: NSNumber(value: 15 * 60))
     UNUserNotificationCenter.current().delegate = self
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
