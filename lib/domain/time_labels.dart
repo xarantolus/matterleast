@@ -82,6 +82,13 @@ String dayLabel(DateTime at, DateTime now) {
   return local.year == now.toLocal().year ? label : '$label ${local.year}';
 }
 
+/// A month header: "October", or "October 2025" when it isn't this year.
+String monthLabel(DateTime at, DateTime now) {
+  final local = at.toLocal();
+  final name = _monthNames[local.month - 1];
+  return local.year == now.toLocal().year ? name : '$name ${local.year}';
+}
+
 /// List rows: the time today, "Yesterday", "Tue" within the past week,
 /// "20 Oct", or "20 Oct 2025".
 String shortWhen(DateTime at, DateTime now, {required bool use24}) {

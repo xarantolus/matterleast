@@ -4,6 +4,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/search_views.dart';
 import 'package:matterleast/data/wait_limited.dart';
 import 'package:matterleast/domain/message_search.dart';
+import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/server_features.dart';
 
 /// Searches one server's messages and files. Found posts are stored with
@@ -58,8 +59,8 @@ class MessageSearch {
       });
 
   /// Files found on the server; none when it has no file search.
-  Future<List<FileHit>> files(String? teamId, String terms) =>
-      session.api.coalesced('search:files:$teamId:$terms', () async {
+  Future<List<FileHit>> files(String? teamId, String terms, {int page = 0}) =>
+      session.api.coalesced('search:files:$teamId:$terms:$page', () async {
         if (!(await _db.features()).fileSearch) return const <FileHit>[];
         final api.FileInfoList found;
         try {
@@ -71,6 +72,8 @@ class MessageSearch {
                       isOrSearch: false,
                       timeZoneOffset: _offsetSeconds(terms),
                       includeDeletedChannels: true,
+                      page: page,
+                      perPage: filePageSize,
                     ),
                   )
                 : _client.teams.searchFiles(
@@ -80,6 +83,8 @@ class MessageSearch {
                       isOrSearch: false,
                       timeZoneOffset: _offsetSeconds(terms),
                       includeDeletedChannels: true,
+                      page: page,
+                      perPage: filePageSize,
                     ),
                   ),
           );
@@ -95,6 +100,7 @@ class MessageSearch {
               f,
         ];
         final channelIds = {for (final f in infos) ?f.channelId};
+        await session.users.ensure([for (final f in infos) ?f.userId]);
         await session.store.applySearchResults(
           const [],
           channels: await _missingChannels(channelIds),
@@ -115,6 +121,8 @@ class MessageSearch {
               width: f.width,
               height: f.height,
               hasPreview: f.hasPreviewImage ?? false,
+              userId: f.userId ?? '',
+              miniPreview: PostFile.from(f).miniPreview,
             ),
         ];
       });

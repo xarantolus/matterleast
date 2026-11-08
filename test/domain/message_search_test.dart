@@ -26,7 +26,7 @@ void main() {
     });
 
     test('a file type narrows file searches by extension only', () {
-      final scope = team.copyWith(fileKind: FileKind.spreadsheets);
+      final scope = team.copyWith(fileFilter: FileFilter.spreadsheets);
       expect(
         fileSearchTerms('rota', scope),
         'rota ext:xls ext:xlsx ext:csv ext:ods',

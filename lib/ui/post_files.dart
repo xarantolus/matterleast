@@ -110,6 +110,7 @@ void openGallery(
   required String author,
   required DateTime sentAt,
   double? tileWidth,
+  Map<String, Byline>? bylines,
 }) {
   // Coming back must not bring the keyboard up for a field that kept its
   // focus behind the gallery.
@@ -124,6 +125,7 @@ void openGallery(
         author: author,
         sentAt: sentAt,
         tileWidth: tileWidth,
+        bylines: bylines,
       ),
     ),
   );
@@ -429,6 +431,21 @@ class MediaPicture extends ConsumerWidget {
   }
 }
 
+/// Whether the file is being downloaded, and how far it is (null while
+/// unknown). While the server isn't live the last progress may not hold.
+({bool running, double? progress}) fileTransferOf(
+  WidgetRef ref,
+  String url,
+  String fileId,
+) {
+  final transfers = ref.watch(fileTransfersProvider(url));
+  final running = transfers.containsKey(fileId);
+  final progress = running && ref.watch(serverLiveProvider(url))
+      ? transfers[fileId]
+      : null;
+  return (running: running, progress: progress);
+}
+
 /// A file that isn't an image or video: its type, name and size. A tap
 /// downloads it with progress and opens it.
 class FileCard extends ConsumerWidget {
@@ -440,12 +457,7 @@ class FileCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
-    final transfers = ref.watch(fileTransfersProvider(url));
-    final running = transfers.containsKey(file.id);
-    // While the server isn't live the last progress may no longer hold.
-    final progress = running && ref.watch(serverLiveProvider(url))
-        ? transfers[file.id]
-        : null;
+    final (:running, :progress) = fileTransferOf(ref, url, file.id);
     return Padding(
       padding: const EdgeInsets.only(top: Spacing.xs),
       child: FileRightClick(
@@ -662,9 +674,21 @@ Future<void> runMediaAction(
   MediaAction.share => _FileAction.share,
   MediaAction.openWith => _FileAction.openWith,
   MediaAction.copyImage => _FileAction.copyImage,
+  MediaAction.openInChannel ||
+  MediaAction.copyLink => throw ArgumentError.value(action),
 });
 
-enum MediaAction { save, saveAs, share, openWith, copyImage }
+enum MediaAction {
+  save,
+  saveAs,
+  share,
+  openWith,
+  copyImage,
+
+  /// Not about the file's bytes: the caller of the menu runs these.
+  openInChannel,
+  copyLink,
+}
 
 /// The three-dot menu every file viewer and card carries.
 class FileActionsMenu extends ConsumerWidget {
@@ -672,6 +696,8 @@ class FileActionsMenu extends ConsumerWidget {
     required this.url,
     required this.file,
     this.color,
+    this.extras = const [],
+    this.onExtra,
     super.key,
   });
 
@@ -679,37 +705,56 @@ class FileActionsMenu extends ConsumerWidget {
   final PostFile file;
   final Color? color;
 
+  /// Entries above the file's own, run by [onExtra].
+  final List<MediaAction> extras;
+  final ValueChanged<MediaAction>? onExtra;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Each action hands the file out of the app.
-    if (!(ref.watch(featuresProvider(url)).value?.fileDownloads ?? true)) {
-      return const SizedBox.shrink();
-    }
+    final downloads =
+        ref.watch(featuresProvider(url)).value?.fileDownloads ?? true;
+    if (!downloads && extras.isEmpty) return const SizedBox.shrink();
     return PopupMenuButton<MediaAction>(
       tooltip: 'More',
       iconColor: color,
-      onSelected: (action) => runMediaAction(context, ref, url, file, action),
-      itemBuilder: (_) => _fileMenuItems(file),
+      onSelected: (action) => extras.contains(action)
+          ? onExtra?.call(action)
+          : unawaited(runMediaAction(context, ref, url, file, action)),
+      itemBuilder: (_) => _fileMenuItems(file, downloads, extras),
     );
   }
 }
 
-List<PopupMenuEntry<MediaAction>> _fileMenuItems(PostFile file) => [
-  if (isDesktop) ...[
+List<PopupMenuEntry<MediaAction>> _fileMenuItems(
+  PostFile file,
+  bool downloads,
+  List<MediaAction> extras,
+) => [
+  for (final extra in extras)
+    MenuItem(
+      value: extra,
+      child: Text(switch (extra) {
+        MediaAction.openInChannel => 'Open in channel',
+        _ => 'Copy link',
+      }),
+    ),
+  if (downloads && isDesktop) ...[
     if (file.kind == FileKind.image)
       const MenuItem(value: MediaAction.copyImage, child: Text('Copy image')),
     MenuItem(
       value: MediaAction.saveAs,
       child: Text(file.kind == FileKind.image ? 'Save image as…' : 'Save as…'),
     ),
-  ] else ...[
+  ] else if (downloads) ...[
     MenuItem(
       value: MediaAction.save,
       child: Text('Save to ${_folderOf(file)}'),
     ),
     const MenuItem(value: MediaAction.share, child: Text('Share')),
   ],
-  const MenuItem(value: MediaAction.openWith, child: Text('Open with…')),
+  if (downloads)
+    const MenuItem(value: MediaAction.openWith, child: Text('Open with…')),
 ];
 
 /// On desktop, a right click on [child] opens [file]'s menu at the pointer,
@@ -719,30 +764,41 @@ class FileRightClick extends ConsumerWidget {
     required this.url,
     required this.file,
     required this.child,
+    this.extras = const [],
+    this.onExtra,
+    this.longPress = false,
     super.key,
   });
 
   final String url;
   final PostFile file;
   final Widget child;
+  final List<MediaAction> extras;
+  final ValueChanged<MediaAction>? onExtra;
+
+  /// Opens the menu on a long press too, where nothing else takes it.
+  final bool longPress;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!isDesktop) return child;
+    if (!isDesktop && !longPress) return child;
+    Future<void> open(Offset at) async {
+      // Each action hands the file out of the app.
+      final features = await ref.read(featuresProvider(url).future);
+      final items = _fileMenuItems(file, features.fileDownloads, extras);
+      if (items.isEmpty || !context.mounted) return;
+      final action = await showMenuAt(context, at, items);
+      if (action == null || !context.mounted) return;
+      if (extras.contains(action)) {
+        onExtra?.call(action);
+      } else {
+        await runMediaAction(context, ref, url, file, action);
+      }
+    }
+
     return GestureDetector(
-      onSecondaryTapUp: (d) async {
-        // Each action hands the file out of the app.
-        final features = await ref.read(featuresProvider(url).future);
-        if (!features.fileDownloads || !context.mounted) return;
-        final action = await showMenuAt(
-          context,
-          d.globalPosition,
-          _fileMenuItems(file),
-        );
-        if (action != null && context.mounted) {
-          await runMediaAction(context, ref, url, file, action);
-        }
-      },
+      onSecondaryTapUp: isDesktop ? (d) => open(d.globalPosition) : null,
+      onLongPressStart: longPress ? (d) => open(d.globalPosition) : null,
       child: child,
     );
   }

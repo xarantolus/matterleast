@@ -4,6 +4,7 @@ import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/views/channel_input.dart';
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/domain/forward.dart';
 import 'package:matterleast/domain/inbox.dart';
 import 'package:matterleast/domain/message_search.dart';
 
@@ -175,7 +176,7 @@ class SearchViews {
     for (final word in words) {
       query.where(db.files.name.lower().like('%${_escape(word)}%'));
     }
-    if (scope.fileKind case final kind?) {
+    if (scope.fileFilter case final kind?) {
       query.where(db.files.extension.lower().isIn(kind.extensions));
     }
     _narrow(
@@ -206,6 +207,8 @@ class SearchViews {
             width: f.width,
             height: f.height,
             hasPreview: f.hasPreview,
+            userId: p.userId,
+            miniPreview: f.miniPreview,
           );
         }(),
     ];
@@ -261,6 +264,38 @@ class SearchViews {
               ).title
             : '#${c.input.displayName}',
     };
+  }
+
+  /// Who [userId] is as a file's sender, as it changes.
+  Stream<({String name, int? picture})?> sender(String userId) =>
+      throttledWatch(
+        db.tableUpdates(TableUpdateQuery.onAllTables([db.users, db.config])),
+        () async {
+          final u = await db.usersById([userId]);
+          if (u.isEmpty) return null;
+          return (
+            name: personName(u.first.person, await db.nameFormat()),
+            picture: u.first.lastPictureUpdate,
+          );
+        },
+        interval: _interval,
+      ).distinct();
+
+  /// The web link of the message [postId] in [channelId], null when its
+  /// team isn't known.
+  Future<String?> postLink(String channelId, String postId) async {
+    final channel = await (db.select(
+      db.channels,
+    )..where((c) => c.id.equals(channelId))).getSingleOrNull();
+    final teamId = channel?.teamId;
+    final id = teamId == null || teamId.isEmpty
+        ? await db.syncText(SyncKeys.currentTeamId)
+        : teamId;
+    if (id == null) return null;
+    final team = await (db.select(
+      db.teams,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    return team == null ? null : postPermalink(serverUrl, team.name, postId);
   }
 
   /// The team's recent searches, newest first.
