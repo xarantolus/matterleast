@@ -126,8 +126,19 @@ notes, and they win over this summary.
 - Tests use recorded fixtures or the local test server, never real servers.
 - A new test must fail when the behaviour it checks is broken.
 - Server-backed widget tests use `pumpWithServer`
-  (`test/support/pump_with_server.dart`); no real waits, inject durations
-  or drive the clock.
+  (`test/support/pump_with_server.dart`). Shared setup (servers, rail,
+  seeds) lives in `test/support`; never copy harness code into a test.
+- Wait for a condition, never a fixed time: `h.settle` / `settleApp`
+  (`until:` for what the test needs), `eventually`. To show that nothing
+  happens, hold the server's answer on a Completer or inject the duration
+  (with the production default) and drive the clock; no sleeps.
+- Find what the user finds: text, tooltips, semantics, keys a user presses.
+  No debug labels, widget fields, other packages' `State`, or tree walks;
+  a widget type only to say that a screen is open.
+- Data tests assert through the views the screens read, not table
+  columns, unless the stored value is the contract (a cursor, a read mark).
+- Fakes answer with the server's shapes (`emptyAnswer` by default), so a
+  test never runs an error path by accident.
 
 ## UI
 
