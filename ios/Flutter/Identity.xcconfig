@@ -1,3 +1,3 @@
 // The bundle id of the app; the Share Extension's and the App Group's follow
 // it. Change it to one of your own when you build with your Apple account.
-APP_BUNDLE_ID = io.github.xarantolus.matterleast
+APP_BUNDLE_ID = me.creaxx.matterleast

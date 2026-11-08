@@ -60,7 +60,7 @@ There is no App Store version. Each release has an unsigned [`matterleast.ipa`](
 Building from Xcode (Mac with Xcode and [Flutter](https://docs.flutter.dev/get-started/install/macos/mobile-ios)):
 
 1. `flutter pub get`, then open `ios/Runner.xcworkspace` in Xcode.
-2. Change `APP_BUNDLE_ID` in [`ios/Flutter/Identity.xcconfig`](ios/Flutter/Identity.xcconfig) to a bundle id of your own. The Share Extension (`<id>.ShareExtension`) and the App Group (`group.<id>`) follow it.
+2. `APP_BUNDLE_ID` in [`ios/Flutter/Identity.xcconfig`](ios/Flutter/Identity.xcconfig) is `me.creaxx.matterleast`; change it to a bundle id of your own. The Share Extension (`<id>.share`) and the App Group (`group.<id>`) follow it.
 3. In Xcode, for both the Runner and the ShareExtension target → Signing & Capabilities: pick your team (with a free account, "Personal Team"). Xcode registers the App Group, which free accounts can use too.
 4. Turn on Developer Mode on the iPhone, plug it in and run `flutter run --release`.
 
