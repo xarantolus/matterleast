@@ -28,8 +28,11 @@ import '../support/settle.dart';
 const _server = 'https://chat.example.test';
 
 /// The size the picture on show is drawn at.
-Size drawnPicture(WidgetTester tester) {
-  Size? size;
+Size drawnPicture(WidgetTester tester) => drawnRect(tester).size;
+
+/// Where the picture on show is drawn, in its own box.
+Rect drawnRect(WidgetTester tester) {
+  Rect? rect;
   expect(
     tester.renderObject(
       find.descendant(
@@ -39,11 +42,11 @@ Size drawnPicture(WidgetTester tester) {
     ),
     paints..something((method, arguments) {
       if (method != #drawImageRect) return false;
-      size = (arguments[2] as Rect).size;
+      rect = arguments[2] as Rect;
       return true;
     }),
   );
-  return size!;
+  return rect!;
 }
 
 /// Waits for a picture to be drawn; a loading page's spinner never stops, so
@@ -648,13 +651,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       await tester.tapAt(centre);
       await settle(tester);
-      ExtendedImageGestureState gesture() =>
-          tester.state(find.byType(ExtendedImageGesture));
-      final before = gesture().gestureDetails!.offset!;
+      final before = drawnRect(tester).top;
       await tester.sendEventToBinding(mouse.scroll(const Offset(0, 60)));
       await settle(tester);
       expect(find.text('1 / 3'), findsOneWidget);
-      expect(gesture().gestureDetails!.offset!.dy, lessThan(before.dy));
+      expect(drawnRect(tester).top, lessThan(before));
     }, variant: desktop);
   });
 

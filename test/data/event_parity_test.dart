@@ -146,7 +146,7 @@ void main() {
         'msg_count': 1,
         'mention_count': 1,
       }),
-      _ => ok({'status': 'OK'}),
+      _ => emptyAnswer(r),
     };
     await receive(
       'post_unread',
@@ -187,7 +187,7 @@ void main() {
           'name': 'quay',
           'display_name': 'Quay',
         }),
-        _ => ok(<Object?>[]),
+        _ => emptyAnswer(r),
       };
       await receive('restore_team', {
         'team': jsonEncode({'id': other, 'name': 'quay'}),
@@ -206,7 +206,7 @@ void main() {
       await eventually(
         () => server.paths.contains('/api/v4/teams/$other/members/me'),
       );
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await afterWork();
       expect((await RootViews(session.db).railTeams().first).length, 1);
     });
 
@@ -230,7 +230,7 @@ void main() {
             'permissions': ['create_post'],
           },
         ]),
-        _ => ok(<Object?>[]),
+        _ => emptyAnswer(r),
       };
       await receive('channel_scheme_updated', {});
       await eventually(

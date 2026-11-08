@@ -169,7 +169,9 @@ void main() {
 
   group(
     'the time zone of the picked day',
-    skip: _berlin ? false : 'needs TZ=Europe/Berlin',
+    skip: _berlin
+        ? false
+        : 'runs under TZ=Europe/Berlin, as tool/gate.sh sets it',
     () {
       final winter = DateTime(2026, 11, 2, 9);
 

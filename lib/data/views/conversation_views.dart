@@ -37,7 +37,12 @@ typedef PostMenuFacts = ({
 /// The reads of an open channel or thread: one batched query each, re-run
 /// at most every 100 ms while writes land, passed on only when changed.
 class ConversationViews {
-  ConversationViews(this.db, {this.server, this.missingPeople});
+  ConversationViews(
+    this.db, {
+    this.server,
+    this.missingPeople,
+    this.interval = const Duration(milliseconds: 100),
+  });
 
   final ServerDatabase db;
 
@@ -47,7 +52,8 @@ class ConversationViews {
   /// Links to messages on this server show a card of a stored message.
   final Uri? server;
 
-  static const _interval = Duration(milliseconds: 100);
+  /// How often a watched window answers at most.
+  final Duration interval;
 
   /// What the message menu needs to know about [post] beyond the post
   /// itself; [teamId] is the open channel's team, empty when unknown.
@@ -244,7 +250,7 @@ class ConversationViews {
   }) => throttledWatch(
     _changes(),
     () => _channel(channelId, limit, deletedUpTo, rangeAt, unreadAfter, keepAt),
-    interval: _interval,
+    interval: interval,
   ).distinct();
 
   /// The thread of [rootId]: its first message and the newest [limit]
@@ -256,7 +262,7 @@ class ConversationViews {
   }) => throttledWatch(
     _changes(),
     () => _thread(rootId, limit, deletedUpTo),
-    interval: _interval,
+    interval: interval,
   ).distinct();
 
   Stream<Object?> _changes() => db.tableUpdates(

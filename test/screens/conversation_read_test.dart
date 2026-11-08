@@ -55,7 +55,9 @@ void main() {
 
   setUp(() async {
     binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    (server, session) = await startServerSession();
+    (server, session) = await startServerSession(
+      watchInterval: const Duration(milliseconds: 5),
+    );
     server.handle = (r) {
       if (r.path == '/api/v4/posts/root1/thread') {
         return ok({
@@ -108,7 +110,7 @@ void main() {
             ),
           );
     }
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+    await afterWork();
   }
 
   group('a thread under collapsed threads', () {
@@ -170,7 +172,7 @@ void main() {
           }),
         ),
       );
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await afterWork();
     }
 
     test(
@@ -192,7 +194,7 @@ void main() {
         container.listen(provider, (_, _) {});
         await eventually(() => container.read(provider).window != null);
         container.read(provider.notifier).onView(atBottom);
-        await Future<void>.delayed(const Duration(milliseconds: 300));
+        await afterWork();
         expect(views(), 0);
         answer.complete();
         await eventually(() => views() == 1);
@@ -216,7 +218,7 @@ void main() {
         final s = container.read(provider);
         return s.window != null && !s.refreshing;
       });
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await afterWork();
       expect(views(), 0);
       DesktopShell.windowFocused = true;
       await eventually(() => views() == 1);
@@ -232,7 +234,7 @@ void main() {
         return s.window != null && !s.refreshing;
       });
       await postFromSomeone(1);
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await afterWork();
       expect(views(), 0);
 
       container.read(provider.notifier).onView(atBottom);
@@ -279,7 +281,7 @@ void main() {
         final s = container.read(provider);
         return s.window != null && !s.refreshing;
       });
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await afterWork();
       expect(container.read(provider).window?.newerApart, isTrue);
       expect(views(), 0);
       container.read(provider.notifier).onView(atBottom);
@@ -317,7 +319,7 @@ void main() {
           }),
         ),
       );
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await afterWork();
     }
 
     test('is read again when a new message arrives', () async {

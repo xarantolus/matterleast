@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
@@ -10,6 +12,7 @@ import 'package:matterleast/data/users/user_loader.dart';
 import '../support/fake_server.dart';
 import '../support/memory_database.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 Map<String, Object?> _user(String id) => {
   'id': id,
@@ -100,13 +103,16 @@ void main() {
 
   test('a person already on the way is not asked for again', () async {
     final handle = server.handle;
+    final answer = Completer<void>();
     server.handle = (r) async {
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+      await answer.future;
       return handle(r);
     };
     final first = users.ensure(['u7']);
-    await Future<void>.delayed(const Duration(milliseconds: 40));
+    await eventually(() => asked('/api/v4/users/ids').isNotEmpty);
     final second = users.ensure(['u7']);
+    await afterWork();
+    answer.complete();
     await Future.wait([first, second]);
     expect(asked('/api/v4/users/ids'), [
       ['u7'],

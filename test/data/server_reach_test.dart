@@ -112,7 +112,7 @@ void main() {
       await serverStopsAnswering();
       await session.composer.send(channelId, message: 'into the fog');
       await session.outbox.kick();
-      final waiting = await session.db.select(session.db.outbox).getSingle();
+      final waiting = (await session.store.outboxRows()).single;
       expect(waiting.attempts, 0);
       expect(waiting.state, OutboxStates.queued);
       expect(server.paths, isNot(contains('/api/v4/posts')));
@@ -130,9 +130,7 @@ void main() {
       // The socket's next ping finds the server; a failed ping stands
       // for a few seconds.
       await eventually(() => session.api.reach.probe());
-      await eventually(
-        () async => (await session.db.select(session.db.outbox).get()).isEmpty,
-      );
+      await eventually(() async => (await session.store.outboxRows()).isEmpty);
     });
   });
 

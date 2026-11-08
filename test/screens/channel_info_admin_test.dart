@@ -1,11 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/api/generated/export.dart' as api;
-import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
+import '../support/seed.dart';
 import '../support/test_session.dart';
 
 void main() {
@@ -33,14 +32,7 @@ void main() {
         _ => emptyAnswer(r),
       },
       seed: (session) async {
-        await session.db.setSyncText(SyncKeys.currentUserRoles, 'system_user');
-        await session.store.applyRoles([
-          api.Role.fromJson({
-            'id': 'rl000000000000000000000r01',
-            'name': 'system_user',
-            'permissions': permissions,
-          }),
-        ]);
+        await seedMyPermissions(session, permissions);
         if (archived) {
           await session.store.applyChannelArchived(
             channelId,

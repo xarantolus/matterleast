@@ -15,16 +15,20 @@ void main() {
   late ComposerActions actions;
 
   setUp(() async {
-    (_, session) = await startServerSession();
-    actions = ComposerActions(session);
+    (_, session) = await startServerSession(
+      draftDelay: const Duration(milliseconds: 50),
+    );
+    actions = session.composer;
     addTearDown(actions.dispose);
   });
 
+  /// The draft as a screen opening the channel finds it once written.
+  Future<Draft?> stored([String rootId = '']) =>
+      ComposerActions(session).loadDraft(channelId, rootId: rootId);
+
   /// Waits until the stored draft of the channel reads [message].
-  Future<void> saved(String message) => eventually(() async {
-    final rows = await session.db.select(session.db.drafts).get();
-    return rows.any((r) => r.message == message);
-  });
+  Future<void> saved(String message, {String rootId = ''}) =>
+      eventually(() async => (await stored(rootId))?.message == message);
 
   final photo = api.FileInfo.fromJson({
     'id': 'file1',
@@ -52,7 +56,7 @@ void main() {
         ),
       ),
     );
-    expect(await session.db.select(session.db.drafts).get(), isEmpty);
+    expect(await stored(), isNull);
     await saved('half a thought');
 
     final fresh = ComposerActions(session);
@@ -71,17 +75,13 @@ void main() {
       ..saveDraft(const Draft(channelId: channelId, message: 'he'))
       ..saveDraft(const Draft(channelId: channelId, message: 'hey'));
     await saved('hey');
-    final rows = await session.db.select(session.db.drafts).get();
-    expect(rows.single.message, 'hey');
+    expect((await stored())?.message, 'hey');
   });
 
   test('flushing writes a waiting draft at once', () async {
     actions.saveDraft(const Draft(channelId: channelId, message: 'bye'));
     await actions.flushDrafts();
-    expect(
-      (await session.db.select(session.db.drafts).get()).single.message,
-      'bye',
-    );
+    expect((await stored())?.message, 'bye');
   });
 
   test('thread drafts are kept apart from the channel draft', () async {
@@ -115,7 +115,7 @@ void main() {
       actions.saveDraft(
         const Draft(channelId: channelId, rootId: 'root1', message: 'mark'),
       );
-      await saved('mark');
+      await saved('mark', rootId: 'root1');
       expect(await actions.loadDraft(channelId), isNull);
     },
   );

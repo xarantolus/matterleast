@@ -37,7 +37,7 @@ void main() {
         'username': 'river',
         'notify_props': r.body['notify_props'],
       }),
-      _ => ok({'status': 'OK'}),
+      _ => emptyAnswer(r),
     };
     actions = SettingsActions(session);
   });

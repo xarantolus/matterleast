@@ -127,7 +127,9 @@ void main() {
 
   group(
     'clock changes in Europe/Berlin',
-    skip: _berlin ? false : 'needs TZ=Europe/Berlin',
+    skip: _berlin
+        ? false
+        : 'runs under TZ=Europe/Berlin, as tool/gate.sh sets it',
     () {
       final rows = <_Row>[
         (

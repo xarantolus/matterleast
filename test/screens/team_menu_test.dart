@@ -2,12 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/data/server_db/server_config.dart';
-import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/screens/root/team_screens.dart';
 
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
+import '../support/seed.dart';
 import '../support/test_session.dart';
 
 void main() {
@@ -33,18 +33,11 @@ void main() {
         _ => emptyAnswer(r),
       },
       seed: (ServerSession session) async {
-        await session.db.setSyncText(SyncKeys.currentUserRoles, 'system_user');
         await session.store.applyConfig(ConfigKeys.clientConfig, {
           'EnableEmailInvitations': emailInvitations ? 'true' : 'false',
         });
-        await session.store.applyRoles([
-          api.Role.fromJson({
-            'id': 'rl000000000000000000000r01',
-            'name': 'system_user',
-            'permissions': [
-              if (admin) ...['invite_user', 'add_user_to_team'],
-            ],
-          }),
+        await seedMyPermissions(session, [
+          if (admin) ...['invite_user', 'add_user_to_team'],
         ]);
         if (unread) {
           await session.store.applyCategoryUpdates([

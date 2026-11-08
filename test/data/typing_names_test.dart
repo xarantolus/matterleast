@@ -7,6 +7,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 void main() {
   late FakeServer server;
@@ -31,14 +32,17 @@ void main() {
       fireImmediately: true,
     );
     session.connection.typing.typing(channelId, '', 'newcomer');
-    await pumpEventQueue();
-    await Future<void>.delayed(const Duration(milliseconds: 200));
+    await eventually(
+      () => names.last.length == 1 && names.last.single == 'Someone',
+    );
     expect(names.last, ['Someone']);
 
     await session.store.applyUsers([
       api.User.fromJson({'id': 'newcomer', 'username': 'quinn'}),
     ]);
-    await Future<void>.delayed(const Duration(milliseconds: 200));
+    await eventually(
+      () => names.last.length == 1 && names.last.single == 'quinn',
+    );
     expect(names.last, ['quinn']);
   });
 }

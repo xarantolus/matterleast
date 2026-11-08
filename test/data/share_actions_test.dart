@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/data/actions/share_actions.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/data/views/conversation_views.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
@@ -16,6 +17,13 @@ void main() {
   late Directory dir;
   late List<String> files;
   var uploads = 0;
+
+  Future<List<String>> shownMessages() async {
+    final window = await ConversationViews(session.db)
+        .channel(channelId, limit: 50, deletedUpTo: DateTime.utc(0))
+        .first;
+    return [for (final p in window.posts) p.message];
+  }
 
   /// Lets a test hold an upload's answer back.
   Completer<void>? holdUpload;
@@ -91,14 +99,9 @@ void main() {
     cancel.complete();
     await expectLater(send, throwsA(isA<Cancelled>()));
     holdUpload!.complete();
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-    final db = session.db;
-    final queued = await (db.select(
-      db.posts,
-    )..where((p) => p.message.equals('For the crew'))).get();
-
+    await afterWork();
     expect(uploads, lessThanOrEqualTo(1));
-    expect(queued, isEmpty);
+    expect(await shownMessages(), isNot(contains('For the crew')));
   });
 
   test("one refused file sends nothing, keeps the files and says the server's "
@@ -139,12 +142,8 @@ void main() {
         ),
       ),
     );
-    final db = session.db;
-    final queued = await (db.select(
-      db.posts,
-    )..where((p) => p.message.equals('For the crew'))).get();
-    expect(queued, isEmpty);
-    expect(await db.select(db.outbox).get(), isEmpty);
+    expect(await shownMessages(), isNot(contains('For the crew')));
+    expect(await session.store.outboxRows(), isEmpty);
     for (final path in files) {
       expect(File(path).existsSync(), isTrue, reason: path);
     }

@@ -95,7 +95,7 @@ void main() {
     expect(rows.map((p) => p.id), ['old1', 'srv1']);
     expect(rows.last.sendState, isNull);
     expect(await shownKeys(), [id, 'old1']);
-    expect(await db().select(db().outbox).get(), isEmpty);
+    expect(await session.store.outboxRows(), isEmpty);
   });
 
   test('a later refresh of the sent post keeps its key', () async {
@@ -172,7 +172,7 @@ void main() {
     final second = await actions.send(channelId, message: 'two');
     await sender.start();
     expect(sends().map((r) => r.body['message']), ['one']);
-    final outbox = await db().select(db().outbox).get();
+    final outbox = await session.store.outboxRows();
     final waiting = outbox.firstWhere((o) => o.pendingPostId == first);
     expect(waiting.attempts, 1);
     expect(waiting.nextAttemptAt, now.add(const Duration(seconds: 2)));
@@ -187,7 +187,7 @@ void main() {
       first,
       second,
     ]);
-    expect(await db().select(db().outbox).get(), isEmpty);
+    expect(await session.store.outboxRows(), isEmpty);
   });
 
   test(
@@ -198,7 +198,7 @@ void main() {
       await sender.start();
       await sender.wake();
       expect(sends().length, 2);
-      expect(await db().select(db().outbox).get(), isEmpty);
+      expect(await session.store.outboxRows(), isEmpty);
     },
   );
 
@@ -214,7 +214,7 @@ void main() {
     final post = (await posts()).last;
     expect(post.id, id);
     expect(post.sendState, SendStates.failed);
-    final row = (await db().select(db().outbox).get()).single;
+    final row = (await session.store.outboxRows()).single;
     expect(row.state, 'failed');
 
     now = now.add(const Duration(minutes: 1));
@@ -297,7 +297,7 @@ void main() {
     expect(rejected.pendingPostId, id);
     expect(rejected.channelId, channelId);
     expect((await posts()).map((p) => p.id), ['old1']);
-    expect(await db().select(db().outbox).get(), isEmpty);
+    expect(await session.store.outboxRows(), isEmpty);
   });
 
   test('discarding a failed post removes it', () async {
@@ -306,7 +306,7 @@ void main() {
     await sender.start();
     await actions.discard(id);
     expect((await posts()).map((p) => p.id), ['old1']);
-    expect(await db().select(db().outbox).get(), isEmpty);
+    expect(await session.store.outboxRows(), isEmpty);
   });
 
   test('queued and failed posts survive a restart; one cut off while '
@@ -318,7 +318,7 @@ void main() {
     sender = newSender();
     await sender.start();
     expect(sends().single.body['pending_post_id'], hanging);
-    expect(await db().select(db().outbox).get(), isEmpty);
+    expect(await session.store.outboxRows(), isEmpty);
   });
 
   test('sending clears the draft of the conversation', () async {

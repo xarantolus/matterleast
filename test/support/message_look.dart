@@ -19,3 +19,24 @@ bool isHighlighted(WidgetTester tester, String text) {
         },
       );
 }
+
+/// Runs [settle] and says whether the message showing [text] was drawn on
+/// the highlight at any round of it. The wash fades after a moment, so
+/// looking only once settling is over would depend on how long it took.
+Future<bool> highlightedWhileSettling(
+  WidgetTester tester,
+  String text,
+  Future<void> Function({bool Function()? until}) settle,
+) async {
+  var seen = false;
+  await settle(
+    until: () {
+      if (find.text(text).evaluate().isNotEmpty &&
+          isHighlighted(tester, text)) {
+        seen = true;
+      }
+      return true;
+    },
+  );
+  return seen;
+}

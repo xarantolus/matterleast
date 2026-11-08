@@ -161,6 +161,7 @@ class Conversation extends _$Conversation {
       _session!.db,
       server: _session!.url,
       missingPeople: _session!.users.fetchMissing,
+      interval: _session!.watchInterval,
     );
     unawaited(_subscription?.cancel());
     _subscription =
@@ -184,7 +185,7 @@ class Conversation extends _$Conversation {
 
   /// A fetch is done; what it stored shows up within one watch interval.
   void _fetched() =>
-      _quietUntil = DateTime.now().add(const Duration(milliseconds: 300));
+      _quietUntil = DateTime.now().add(_session!.watchInterval * 3);
 
   void _onWindow(ConversationWindow window) {
     if (!ref.mounted) return;
