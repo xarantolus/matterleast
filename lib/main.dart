@@ -35,6 +35,7 @@ Future<void> main() async {
     databaseFactory = databaseFactoryFfi;
     settleVideoEnds();
     useMpvOnLinux();
+    if (appBeforeShell) _run(container);
     final shell = await DesktopShell.start(
       container.read(settingsStoreProvider),
       setStatus: (status) => setStatusEverywhere(container, status),
@@ -55,6 +56,10 @@ Future<void> main() async {
       fireImmediately: true,
     );
   }
+  if (!appBeforeShell) _run(container);
+}
+
+void _run(ProviderContainer container) {
   runApp(
     UncontrolledProviderScope(
       container: container,

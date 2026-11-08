@@ -89,6 +89,22 @@ void main() {
     expect(shown(rows), ['day 20', 'a', 'day 21', 'b']);
   });
 
+  test('separators follow local midnight across clock changes', () {
+    final rows = rowsOf([
+      post('a', DateTime(2026, 3, 28, 23, 59, 59, 999)),
+      post('b', DateTime(2026, 3, 29)),
+      post('c', DateTime(2026, 3, 29, 23, 59), user: 'carol'),
+      post('d', DateTime(2026, 3, 30)),
+      post('e', DateTime(2026, 10, 25, 0, 30)),
+      post('f', DateTime(2026, 10, 25, 23, 30), user: 'carol'),
+      post('g', DateTime(2026, 10, 26)),
+    ]);
+    expect(shown(rows), [
+      'day 28', 'a', 'day 29', 'b', 'c', 'day 30', 'd', //
+      'day 25', 'e', 'f', 'day 26', 'g',
+    ]);
+  });
+
   test('the new-messages line sits before the first unseen message from '
       'someone else and counts what follows', () {
     final rows = rowsOf([
