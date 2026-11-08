@@ -20,11 +20,15 @@ import 'package:matterleast/domain/typing.dart';
 /// suggestions, slash commands and changes to existing posts. Writes go
 /// through the store; screens follow from the database.
 class ComposerActions {
-  ComposerActions(this.session, {DateTime Function()? clock})
-    : _clock = clock ?? (() => DateTime.now().toUtc());
+  ComposerActions(
+    this.session, {
+    DateTime Function()? clock,
+    this.draftDelay = const Duration(milliseconds: 500),
+  }) : _clock = clock ?? (() => DateTime.now().toUtc());
 
   final ServerSession session;
   final DateTime Function() _clock;
+  final Duration draftDelay;
 
   ServerDatabase get _db => session.db;
   ServerStore get _store => session.store;
@@ -32,6 +36,7 @@ class ComposerActions {
   DateTime? _lastQueuedAt;
   late final _drafts = DraftSaver(
     _store,
+    delay: draftDelay,
     clock: _clock,
     onWritten: session.connection.drafts.changedSoon,
     onCleared: _synced,

@@ -11,7 +11,6 @@ import 'package:matterleast/app/app.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
-import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/screens/channel/composer.dart';
@@ -25,6 +24,7 @@ import 'package:matterleast/screens/root/rail_selection.dart';
 import '../support/fake_server.dart';
 import '../support/memory_database.dart';
 import '../support/rail.dart';
+import '../support/seed.dart';
 import '../support/settle.dart';
 import '../support/test_session.dart';
 
@@ -204,14 +204,7 @@ void main() {
           }),
           kind: PageKind.page,
         );
-        await session.store.applyRoles([
-          api.Role.fromJson({
-            'id': 'rl000000000000000000000r01',
-            'name': 'system_user',
-            'permissions': ['create_post', 'edit_post'],
-          }),
-        ]);
-        await session.db.setSyncText(SyncKeys.currentUserRoles, 'system_user');
+        await seedMyPermissions(session, ['create_post', 'edit_post']);
         return (server, session);
       }))!;
       final db = memoryAppDatabase();
@@ -278,9 +271,7 @@ void main() {
 
     /// Messages queued to be sent.
     Future<int> queued(WidgetTester tester) => tester
-        .runAsync(
-          () async => (await session.db.select(session.db.outbox).get()).length,
-        )
+        .runAsync(() async => (await session.store.outboxRows()).length)
         .then((n) => n!);
 
     testWidgets('Enter sends and Shift+Enter is left for a new line', (

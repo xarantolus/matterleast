@@ -196,8 +196,9 @@ void main() {
   test('a GET that joined another still gets its answer when the first '
       'caller gives up', () async {
     var answered = 0;
+    final gate = Completer<void>();
     respond = (req) async {
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await gate.future;
       req.response
         ..headers.contentType = ContentType.json
         ..write(jsonEncode({'id': 'me', 'username': 'alice'}));
@@ -207,10 +208,11 @@ void main() {
     final api = ServerApi(baseUrl: base(), token: () => 't');
     final first = api.call(
       () => api.client.users.getUser(userId: 'me'),
-      deadline: const Duration(milliseconds: 100),
+      deadline: const Duration(milliseconds: 30),
     );
     final second = api.call(() => api.client.users.getUser(userId: 'me'));
     await expectLater(first, throwsA(isA<RequestTimeout>()));
+    gate.complete();
     expect((await second).username, 'alice');
     expect(answered, greaterThanOrEqualTo(1));
     api.close();

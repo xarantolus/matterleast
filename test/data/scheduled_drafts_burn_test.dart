@@ -8,6 +8,7 @@ import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/drafts.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/data/views/draft_views.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 
 import '../support/fake_server.dart';
@@ -20,13 +21,22 @@ void main() {
   late ComposerActions composer;
 
   setUp(() async {
-    (server, session) = await startServerSession();
+    (server, session) = await startServerSession(
+      draftDelay: const Duration(milliseconds: 5),
+    );
     composer = session.composer;
     addTearDown(composer.dispose);
   });
 
-  Future<void> settle() =>
-      Future<void>.delayed(const Duration(milliseconds: 700));
+  Future<List<String>> draftMessages() async => [
+    for (final d in await DraftViews(session.db).drafts(teamId).first)
+      d.preview,
+  ];
+
+  Future<void> draftWritten() async {
+    await eventually(() async => (await draftMessages()).isNotEmpty);
+    await afterWork();
+  }
 
   Future<void> receive(String event, Map<String, Object?> data) =>
       session.connection.events.add(
@@ -53,10 +63,6 @@ void main() {
 
   Iterable<SeenRequest> requests(String method, String path) =>
       server.seen.where((r) => r.method == method && r.path == path);
-
-  Future<List<String>> draftMessages() async => [
-    for (final d in await session.db.select(session.db.drafts).get()) d.message,
-  ];
 
   group('synced drafts', () {
     final serverAt = DateTime.utc(2026, 10, 26, 9).millisecondsSinceEpoch;
@@ -90,7 +96,7 @@ void main() {
       composer.saveDraft(
         const Draft(channelId: channelId, message: 'half a thought'),
       );
-      await settle();
+      await draftWritten();
       expect(requests('POST', '/api/v4/drafts'), isEmpty, reason: 'typing');
       await composer.leaveDraft(channelId);
       await eventually(() => requests('POST', '/api/v4/drafts').isNotEmpty);
@@ -123,7 +129,7 @@ void main() {
           ),
         ]);
         composer.saveDraft(const Draft(channelId: channelId, message: 'local'));
-        await settle();
+        await draftWritten();
         expect(server.seen, isEmpty);
         expect(await draftMessages(), ['local']);
       },
@@ -132,7 +138,7 @@ void main() {
     test('nothing goes to the server when it does not allow syncing', () async {
       await config({'AllowSyncedDrafts': 'false'});
       composer.saveDraft(const Draft(channelId: channelId, message: 'local'));
-      await settle();
+      await draftWritten();
       expect(server.seen, isEmpty);
     });
 
@@ -162,7 +168,7 @@ void main() {
       };
       server.seen.clear();
       await session.connection.drafts.pull(teamId);
-      await settle();
+      await eventually(() => requests('POST', '/api/v4/drafts').isNotEmpty);
       expect(await draftMessages(), ['newer']);
       expect(requests('POST', '/api/v4/drafts').last.body['message'], 'newer');
     });

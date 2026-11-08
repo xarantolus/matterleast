@@ -74,13 +74,13 @@ void main() {
       sub.close();
       container.dispose();
       release.complete();
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await afterWork();
       reads.count = 0;
       await session.db.customUpdate(
         "UPDATE posts SET message = 'edited' WHERE id = 'n2'",
         updates: {session.db.posts},
       );
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await afterWork();
 
       expect(reads.count, 0);
     },

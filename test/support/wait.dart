@@ -19,3 +19,14 @@ Future<void> eventually(
     await Future<void>.delayed(const Duration(milliseconds: 5));
   }
 }
+
+/// Lets what is already under way finish before a test asserts that nothing
+/// more happens: database streams and loopback requests get several turns of
+/// the event loop. A test that needs a thing to have happened waits for that
+/// with [eventually] instead.
+Future<void> afterWork() async {
+  for (var round = 0; round < 3; round++) {
+    await pumpEventQueue(times: 100);
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+  }
+}

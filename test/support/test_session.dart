@@ -27,6 +27,8 @@ Future<ServerSession> testSession(
   QueryInterceptor? interceptor,
   NetworkState? network,
   Duration catchUpLimit = const Duration(seconds: 20),
+  Duration watchInterval = const Duration(milliseconds: 100),
+  Duration draftDelay = const Duration(milliseconds: 500),
 }) async {
   var connection = DatabaseConnection(NativeDatabase.memory());
   if (interceptor != null) connection = connection.interceptWith(interceptor);
@@ -57,6 +59,8 @@ Future<ServerSession> testSession(
     token: () => 'token',
     retryDelayOf: (_) => const Duration(milliseconds: 50),
     catchUpLimit: catchUpLimit,
+    watchInterval: watchInterval,
+    draftDelay: draftDelay,
   );
   if (db != null) return session;
   final store = session.store;
@@ -128,12 +132,16 @@ Future<void> closeTestSession(ServerSession session) async {
 Future<(FakeServer, ServerSession)> startServerSession({
   QueryInterceptor? interceptor,
   NetworkState? network,
+  Duration watchInterval = const Duration(milliseconds: 100),
+  Duration draftDelay = const Duration(milliseconds: 500),
 }) async {
   final server = await FakeServer.start();
   final session = await testSession(
     server,
     interceptor: interceptor,
     network: network,
+    watchInterval: watchInterval,
+    draftDelay: draftDelay,
   );
   addTearDown(() async {
     await closeTestSession(session);

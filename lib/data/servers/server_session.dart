@@ -43,6 +43,8 @@ class ServerSession {
     required String? Function() token,
     Duration Function(int failCount) retryDelayOf = jitteredRetryDelay,
     Duration catchUpLimit = const Duration(seconds: 20),
+    this.watchInterval = const Duration(milliseconds: 100),
+    this.draftDelay = const Duration(milliseconds: 500),
     this.network,
   }) : store = ServerStore(db) {
     users = UserLoader(server: api, store: store);
@@ -77,6 +79,12 @@ class ServerSession {
   /// The device's network; null where it isn't watched (tests).
   final NetworkState? network;
 
+  /// How often an open conversation's window answers at most.
+  final Duration watchInterval;
+
+  /// How long a draft waits for the next key before it is written.
+  final Duration draftDelay;
+
   /// The database file, for its size on the status page.
   final String dbPath;
   final ServerImageCaches images;
@@ -104,7 +112,7 @@ class ServerSession {
   // The user's actions on this server, one of each for the session's
   // lifetime, so every screen and the background share their state (such
   // as drafts waiting to be written).
-  late final composer = ComposerActions(this);
+  late final composer = ComposerActions(this, draftDelay: draftDelay);
   late final posts = PostActions(this);
   late final contentFlagging = ContentFlagging(this);
   late final channels = ChannelActions(this);

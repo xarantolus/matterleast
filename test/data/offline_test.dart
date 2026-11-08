@@ -105,16 +105,14 @@ void main() {
       await session.outbox.start();
       await session.composer.send(channelId, message: 'from the tunnel');
       await session.outbox.kick();
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      final waiting = await session.db.select(session.db.outbox).getSingle();
+      await afterWork();
+      final waiting = (await session.store.outboxRows()).single;
       expect(waiting.attempts, 0);
       expect(waiting.state, OutboxStates.queued);
       expect(server.paths, isNot(contains('/api/v4/posts')));
 
       await report(wifi);
-      await eventually(
-        () async => (await session.db.select(session.db.outbox).get()).isEmpty,
-      );
+      await eventually(() async => (await session.store.outboxRows()).isEmpty);
       expect(server.paths.where((p) => p == '/api/v4/posts'), hasLength(1));
     });
   });
@@ -124,7 +122,7 @@ void main() {
     await report(none);
     session.connection.foreground();
     await eventually(() => server.paths.contains('/api/v4/websocket'));
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await afterWork();
     server.seen.clear();
 
     await report(wifi);

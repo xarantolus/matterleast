@@ -19,7 +19,7 @@ Future<ServerHarness> _pumpComposer(WidgetTester tester) async {
   final h = await pumpWithServer(
     tester,
     size: const Size(1200, 800),
-    handle: (_) => ok(<String, Object?>{}),
+    handle: emptyAnswer,
     overrides: (url) => [
       featuresProvider(url)
           .overrideWith((ref) => Stream.value(const ServerFeatures())),

@@ -134,8 +134,8 @@ void main() {
     }
   }
 
-  Future<void> settle(WidgetTester tester) =>
-      settleApp(tester, servers: [serverA, serverB]);
+  Future<void> settle(WidgetTester tester, {bool Function()? until}) =>
+      settleApp(tester, servers: [serverA, serverB], until: until);
 
   Future<void> start(WidgetTester tester, {bool panes = false}) async {
     HttpOverrides.global = null;
@@ -388,9 +388,14 @@ void main() {
       expect(shown(tester), ['A x']);
       expectSameSpot(before, onScreen(tester, _xId));
 
-      await step(tester, forward: true);
+      unawaited(stepHistory(container, forward: true));
+      final lit = await highlightedWhileSettling(
+        tester,
+        _text('z', 10, 'A'),
+        ({until}) => settle(tester, until: until),
+      );
       expect(shown(tester), ['A z']);
-      expect(isHighlighted(tester, _text('z', 10, 'A')), isTrue);
+      expect(lit, isTrue);
       expect(find.text(_text('z', 10, 'A')), findsOneWidget);
       await finish(tester);
     });

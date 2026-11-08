@@ -368,10 +368,13 @@ void main() {
         of: find.byType(ThreadScreen),
         matching: find.byType(EditableText),
       );
-      tester.widget<EditableText>(field).focusNode.requestFocus();
+      await tester.tap(field);
+      await tester.pump();
+      expect(await typingIn(tester, ThreadScreen), isTrue);
+      tester.testTextInput.enterText('');
       await tester.pump();
       await esc(tester);
-      expect(tester.widget<EditableText>(field).focusNode.hasFocus, isFalse);
+      expect(await typingIn(tester, ThreadScreen), isFalse);
       expect(find.byType(ThreadScreen), findsOneWidget);
       await esc(tester);
       expect(find.byType(ThreadScreen), findsNothing);
@@ -631,8 +634,14 @@ void main() {
         ),
       ),
     );
-    await h.settle(tester);
-    expect(isHighlighted(tester, 'cited'), isTrue);
+    expect(
+      await highlightedWhileSettling(
+        tester,
+        'cited',
+        ({until}) => h.settle(tester, until: until),
+      ),
+      isTrue,
+    );
     navigator(tester).pop();
     await h.settle(tester);
     await h.close(tester);
@@ -650,8 +659,14 @@ void main() {
         newestAt: DateTime(2026),
       ),
     );
-    await h.settle(tester);
-    expect(isHighlighted(tester, 'morning'), isTrue);
+    expect(
+      await highlightedWhileSettling(
+        tester,
+        'morning',
+        ({until}) => h.settle(tester, until: until),
+      ),
+      isTrue,
+    );
     navigator(tester).pop();
     await h.settle(tester);
     await opening;
@@ -1398,10 +1413,15 @@ void main() {
     );
     expect(find.text('Opening the message…'), findsOneWidget);
     found.complete();
-    await h.settle(tester);
-    await tester.pump(const Duration(seconds: 1));
+    expect(
+      await highlightedWhileSettling(
+        tester,
+        'far back',
+        ({until}) => h.settle(tester, until: until),
+      ),
+      isTrue,
+    );
     expect(find.text('Opening the message…'), findsNothing);
-    expect(isHighlighted(tester, 'far back'), isTrue);
     await back(tester);
     await h.close(tester);
   });

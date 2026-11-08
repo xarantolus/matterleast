@@ -5,10 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/permission_providers.dart';
-import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/time_labels.dart';
 import 'package:matterleast/screens/channel/composer.dart';
@@ -23,6 +21,7 @@ import 'package:matterleast/ui/post_tile.dart';
 
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
+import '../support/seed.dart';
 import '../support/test_session.dart';
 
 const _viewPath = '/api/v4/channels/members/me/view';
@@ -54,30 +53,7 @@ void main() {
     h = await pumpWithServer(
       tester,
       size: const Size(900, 700),
-      seed: (session) => session.store.applyChannelPage(
-        channelId: channelId,
-        page: api.PostList.fromJson({
-          'order': [for (var i = count - 1; i >= 0; i--) 'n$i'],
-          'posts': {
-            for (var i = 0; i < count; i++)
-              'n$i': {
-                'id': 'n$i',
-                'channel_id': channelId,
-                'user_id': 'someone',
-                'create_at': DateTime.utc(
-                  2026,
-                  10,
-                  26,
-                  8,
-                  i,
-                ).millisecondsSinceEpoch,
-                'message': 'message $i',
-              },
-          },
-        }),
-        kind: PageKind.page,
-        requested: count,
-      ),
+      seed: (session) => seedChannel(session, count: count),
       handle: (r) {
         if (r.path.endsWith('/posts')) {
           return ok({'order': <String>[], 'posts': <String, Object?>{}});

@@ -222,7 +222,7 @@ void main() {
       tester,
       serve: (r) async {
         if (!r.path.endsWith('/files/search')) {
-          return ok(const <String, Object?>{});
+          return emptyAnswer(r);
         }
         final page = r.body['page']! as int;
         pages.add(page);

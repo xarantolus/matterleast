@@ -6,7 +6,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/permission_providers.dart';
-import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/screens/channel/composer.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
@@ -16,6 +15,7 @@ import 'package:matterleast/screens/channel/conversation_view.dart';
 
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
+import '../support/seed.dart';
 import '../support/test_session.dart';
 
 void main() {
@@ -29,14 +29,7 @@ void main() {
       tester,
       size: const Size(900, 700),
       seed: (session) async {
-        await session.db.setSyncText(SyncKeys.currentUserRoles, 'system_user');
-        await session.store.applyRoles([
-          api.Role.fromJson({
-            'id': 'rl000000000000000000000r01',
-            'name': 'system_user',
-            'permissions': ['create_post', 'edit_post'],
-          }),
-        ]);
+        await seedMyPermissions(session, ['create_post', 'edit_post']);
         await session.store.applyChannelPage(
           channelId: channelId,
           page: api.PostList.fromJson({
