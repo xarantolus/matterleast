@@ -52,7 +52,7 @@ Alternatively, you can [download the APK file](https://github.com/xarantolus/mat
 
 
 ### iOS
-There is no App Store version. Each release has an unsigned [`matterleast.ipa`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast.ipa), or you build the app yourself. What Apple asks for:
+There is no App Store version. Each release goes to TestFlight for invited testers, and has an unsigned [`matterleast.ipa`](https://github.com/xarantolus/matterleast/releases/latest/download/matterleast.ipa), or you build the app yourself. What Apple asks for:
 
 - **Free Apple Account:** build from Xcode on a Mac onto your own iPhone, or re-sign the release `.ipa` with a sideloading tool such as [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io). Either way the app stops starting after **7 days** until you install it again, and a free account can have at most 3 such apps on a device.
 - **Xcode Cloud and TestFlight** need the paid [Apple Developer Program](https://developer.apple.com/programs/) (99 USD a year, 25 Xcode Cloud hours a month included) and **a fork of this repository**: Xcode Cloud only connects to repositories you administer, and it needs your team in the project.
@@ -89,7 +89,7 @@ There is also a dev container with Flutter, the Android SDK, an emulator and a l
 ### Limitations
 - Calls, Playbooks and Boards are not supported, nor are Apps framework forms and message translation.
 - Notifications don't go through Mattermost's push proxy, so new messages arrive when the app checks (about every 15 minutes) unless "Stay connected" is on.
-- No macOS version, and no App Store or signed iOS release; see [iOS](#ios).
+- No macOS version, and no App Store release; see [iOS](#ios).
 - The Windows and Linux app doesn't set you to "away" when you're inactive; you show as online while it runs, unless you pick a status yourself.
 - The Windows and Linux composer has no spell check: Flutter offers none on desktop, and the packages for it ship their own word lists instead of using the system dictionary.
 - On Linux, the app draws at most 60 frames per second, not in step with the screen: Flutter's Linux engine uses a fixed 60 Hz timer instead of the display's refresh, so a 90 or 120 Hz screen shows uneven scrolling.

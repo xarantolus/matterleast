@@ -30,7 +30,7 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>io.github.xarantolus.matterleast</string>
+			<string>me.creaxx.matterleast</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>mmauth</string>
