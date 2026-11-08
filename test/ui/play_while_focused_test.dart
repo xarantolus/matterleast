@@ -1,18 +1,9 @@
-import 'dart:typed_data';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/ui/play_while_focused.dart';
 
-/// Two frames of one pixel, 100 ms each, looping forever.
-final _gif = Uint8List.fromList([
-  71, 73, 70, 56, 57, 97, 1, 0, 1, 0, 128, 0, 0, 255, 0, 0, 0, 0, 255, //
-  33, 255, 11, 78, 69, 84, 83, 67, 65, 80, 69, 50, 46, 48, 3, 1, 0, 0, 0, //
-  33, 249, 4, 0, 10, 0, 0, 0, 44, 0, 0, 0, 0, 1, 0, 1, 0, 0, 2, 2, 68, 1, 0, //
-  33, 249, 4, 0, 10, 0, 0, 0, 44, 0, 0, 0, 0, 1, 0, 1, 0, 0, 2, 2, 68, 1, 0, //
-  59,
-]);
+import '../support/animated_gif.dart';
 
 /// The number of the frame the picture shows, once it has loaded.
 var _frame = -1;
@@ -29,7 +20,7 @@ Future<void> pumpGif(WidgetTester tester, {required bool desktop}) async {
           child: PlayWhileFocused(
             desktop: desktop,
             child: Image.memory(
-              _gif,
+              animatedGif,
               width: 50,
               height: 50,
               frameBuilder: (context, child, frame, synchronous) {

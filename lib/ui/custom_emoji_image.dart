@@ -28,22 +28,30 @@ class CustomEmojiImage extends ConsumerWidget {
     final url = serverUri(Uri.parse(serverUrl), 'api/v4/emoji/$emojiId/image');
     final pixels = (size * MediaQuery.devicePixelRatioOf(context)).round();
     // Sized by the Image itself rather than a box, so the fallback text
-    // can take the room it needs.
-    return Image(
-      image: ResizeImage(
-        CachedNetworkImageProvider(
-          url.toString(),
-          cacheManager: caches.identity,
+    // can take the room it needs. Its own layer, so each frame of an
+    // animated emoji repaints only the emoji, not the message around it;
+    // the image role is set outside, where a frame doesn't rebuild it.
+    return Semantics(
+      image: true,
+      child: RepaintBoundary(
+        child: Image(
+          image: ResizeImage(
+            CachedNetworkImageProvider(
+              url.toString(),
+              cacheManager: caches.identity,
+            ),
+            width: pixels,
+            height: pixels,
+            policy: ResizeImagePolicy.fit,
+          ),
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          gaplessPlayback: true,
+          excludeFromSemantics: true,
+          errorBuilder: (context, error, stack) => fallback,
         ),
-        width: pixels,
-        height: pixels,
-        policy: ResizeImagePolicy.fit,
       ),
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      gaplessPlayback: true,
-      errorBuilder: (context, error, stack) => fallback,
     );
   }
 }
