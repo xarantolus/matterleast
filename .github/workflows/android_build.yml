@@ -473,17 +473,17 @@ jobs:
           xcrun simctl boot "$udid"
           xcrun simctl bootstatus "$udid" -b
           xcrun simctl install "$udid" build/ios/iphonesimulator/Runner.app
-          xcrun simctl launch "$udid" io.github.xarantolus.matterleast
+          xcrun simctl launch "$udid" me.creaxx.matterleast
           sleep 45
           xcrun simctl io "$udid" screenshot "$RUNNER_TEMP/sim/1-launched.png"
-          group=$(xcrun simctl get_app_container "$udid" io.github.xarantolus.matterleast group.io.github.xarantolus.matterleast)
+          group=$(xcrun simctl get_app_container "$udid" me.creaxx.matterleast group.me.creaxx.matterleast)
           echo "group container: $group"
           share="$group/shares/0B9D3C4E-5F60-4A71-8B92-A3B4C5D6E7F8"
           mkdir -p "$share"
           cp assets/icon/legacy.png "$share/harbour.png"
           printf '{"text":"Low tide at six.","files":[{"name":"harbour.png","mime":"image/png"}],"refused":["Holiday.mov"],"target":null}' > "$share/share.json"
-          xcrun simctl terminate "$udid" io.github.xarantolus.matterleast
-          xcrun simctl launch "$udid" io.github.xarantolus.matterleast
+          xcrun simctl terminate "$udid" me.creaxx.matterleast
+          xcrun simctl launch "$udid" me.creaxx.matterleast
           sleep 30
           xcrun simctl io "$udid" screenshot "$RUNNER_TEMP/sim/2-shared.png"
           ls -R "$group" || true
