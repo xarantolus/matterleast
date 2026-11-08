@@ -85,9 +85,12 @@ Future<int?> shareSizeLimit(Ref ref, String url) async {
 
 /// Sends shared text and files to a channel the user picks.
 class ShareScreen extends ConsumerStatefulWidget {
-  const ShareScreen({required this.shared, super.key});
+  const ShareScreen({required this.shared, this.target, super.key});
 
   final SharedContent shared;
+
+  /// The chat the user picked in the share sheet, if any.
+  final SwitchItem? target;
 
   @override
   ConsumerState<ShareScreen> createState() => _ShareScreenState();
@@ -95,8 +98,8 @@ class ShareScreen extends ConsumerStatefulWidget {
 
 class _ShareScreenState extends ConsumerState<ShareScreen> {
   late final _message = TextEditingController(text: widget.shared.text);
-  String? _serverUrl;
-  SwitchItem? _channel;
+  late String? _serverUrl = widget.target?.serverUrl;
+  late SwitchItem? _channel = widget.target;
   var _sending = false;
   late final Map<String, int?> _sizes = {
     for (final path in widget.shared.files) path: _sizeOf(path),
