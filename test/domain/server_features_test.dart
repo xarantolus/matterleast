@@ -342,6 +342,13 @@ void main() {
       ).channelBanners,
       isTrue,
     );
+    expect(
+      features(
+        {'BuildEnterpriseReady': 'false'},
+        license: {'IsLicensed': 'true', 'SkuShortName': 'advanced'},
+      ).channelBanners,
+      isTrue,
+    );
   });
 
   group('persistent notifications', () {

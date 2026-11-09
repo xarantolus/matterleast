@@ -7,15 +7,16 @@ import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
 import '../support/test_session.dart';
 
-api.Channel _channel({Map<String, Object?>? banner}) => api.Channel.fromJson({
-  'id': channelId,
-  'team_id': teamId,
-  'type': 'O',
-  'name': 'boats',
-  'display_name': 'Boats',
-  'total_msg_count': 1,
-  'banner_info': ?banner,
-});
+api.Channel _channel({Map<String, Object?>? banner, String type = 'O'}) =>
+    api.Channel.fromJson({
+      'id': channelId,
+      'team_id': teamId,
+      'type': type,
+      'name': 'boats',
+      'display_name': 'Boats',
+      'total_msg_count': 1,
+      'banner_info': ?banner,
+    });
 
 const _banner = {
   'enabled': true,
@@ -27,6 +28,7 @@ Future<ServerHarness> _open(
   WidgetTester tester, {
   Map<String, Object?>? banner = _banner,
   String sku = 'advanced',
+  String type = 'O',
 }) => pumpWithServer(
   tester,
   handle: emptyAnswer,
@@ -36,7 +38,7 @@ Future<ServerHarness> _open(
       'SkuShortName': sku,
     });
     await session.store.applyChannels(
-      channels: [_channel(banner: banner)],
+      channels: [_channel(banner: banner, type: type)],
       members: const [],
     );
   },
@@ -88,6 +90,17 @@ void main() {
 
     expect(find.textContaining('harbour rules'), findsNothing);
     await h.close(tester);
+  });
+
+  testWidgets('a private channel shows its banner and a direct message does '
+      'not', (tester) async {
+    final private = await _open(tester, type: 'P');
+    expect(find.text('Read the harbour rules first'), findsOneWidget);
+    await private.close(tester);
+
+    final direct = await _open(tester, type: 'D');
+    expect(find.textContaining('harbour rules'), findsNothing);
+    await direct.close(tester);
   });
 
   testWidgets('a change to the banner shows at once', (tester) async {

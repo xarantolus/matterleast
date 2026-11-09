@@ -123,7 +123,8 @@ class ChannelViews {
       header: channel.header,
       banner: switch (channel.bannerInfo) {
         api.ChannelBanner(enabled: true, :final text?, :final backgroundColor)
-            when text.trim().isNotEmpty =>
+            when text.trim().isNotEmpty &&
+                (channel.type == 'O' || channel.type == 'P') =>
           (text: text.trim(), colour: backgroundColor),
         _ => null,
       },
