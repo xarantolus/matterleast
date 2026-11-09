@@ -86,13 +86,13 @@ CallAction callActionIn(
   );
 }
 
-/// Starts and joins calls; null where the app can't (the desktop).
+/// Starts and joins calls.
 @Riverpod(keepAlive: true)
 CallController? callController(Ref ref) {
   if (isDesktop) return null;
   final controller = RtcCallController(
     sessionOf: (url) => ref.read(serverSessionProvider(url).future),
-    platform: PhoneCallPlatform(),
+    platform: isDesktop ? DesktopCallPlatform() : PhoneCallPlatform(),
     createPeer: WebRtcPeer.new,
     network: ref.watch(networkStateProvider),
   );

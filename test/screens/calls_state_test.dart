@@ -42,6 +42,9 @@ class _FakeCalls implements CallController {
 
   @override
   Future<void> setRoute(AudioRoute route) async {}
+
+  @override
+  Future<void> setDevice({required bool input, required String id}) async {}
 }
 
 const _postId = 'cp000000000000000000000p01';

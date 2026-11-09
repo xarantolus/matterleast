@@ -176,3 +176,23 @@ AudioRoute? chooseRoute({
 /// gone.
 AudioRoute? keepPin(AudioRoute? pinned, List<AudioRoute> available) =>
     pinned != null && available.contains(pinned) ? pinned : null;
+
+/// The device to use: the user's pick while it is there, else the system
+/// default (the entry the platform names `default`), else the first.
+AudioDevice? chooseDevice({
+  required List<AudioDevice> available,
+  required String? pinned,
+}) {
+  if (available.isEmpty) return null;
+  for (final d in available) {
+    if (d.id == pinned) return d;
+  }
+  for (final d in available) {
+    if (d.id == 'default' || d.id.startsWith('default:')) return d;
+  }
+  return available.first;
+}
+
+/// Whether a pinned device stays pinned: it is dropped once it is gone.
+String? keepDevicePin(String? pinned, List<AudioDevice> available) =>
+    available.any((d) => d.id == pinned) ? pinned : null;

@@ -60,6 +60,18 @@ class CallFailure {
 
 enum AudioRoute { earpiece, speaker, bluetooth, wired }
 
+/// A microphone or speaker the desktop offers; [id] is what the platform
+/// takes to select it.
+typedef AudioDevice = ({String id, String label});
+
+/// The devices the desktop offers right now.
+typedef AudioDevices = ({List<AudioDevice> inputs, List<AudioDevice> outputs});
+
+const AudioDevices noDevices = (
+  inputs: <AudioDevice>[],
+  outputs: <AudioDevice>[],
+);
+
 /// The state of the user's own call connection, for the screens to render.
 /// Who else is in the call and what they do lives in the calls state.
 @freezed
@@ -79,6 +91,12 @@ abstract class CallConnection with _$CallConnection {
     @Default(false) bool listenOnly,
     AudioRoute? route,
     @Default(<AudioRoute>[]) List<AudioRoute> routes,
+
+    /// The desktop's microphones and speakers, and the ones in use.
+    @Default(<AudioDevice>[]) List<AudioDevice> inputs,
+    @Default(<AudioDevice>[]) List<AudioDevice> outputs,
+    AudioDevice? input,
+    AudioDevice? output,
     CallFailure? failure,
     CallEnd? endedBy,
   }) = _CallConnection;

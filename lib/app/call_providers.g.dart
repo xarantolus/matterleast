@@ -623,18 +623,18 @@ final class CallActionInFamily extends $Family
   String toString() => r'callActionInProvider';
 }
 
-/// Starts and joins calls; null where the app can't (the desktop).
+/// Starts and joins calls.
 
 @ProviderFor(callController)
 final callControllerProvider = CallControllerProvider._();
 
-/// Starts and joins calls; null where the app can't (the desktop).
+/// Starts and joins calls.
 
 final class CallControllerProvider
     extends
         $FunctionalProvider<CallController?, CallController?, CallController?>
     with $Provider<CallController?> {
-  /// Starts and joins calls; null where the app can't (the desktop).
+  /// Starts and joins calls.
   CallControllerProvider._()
     : super(
         from: null,
@@ -668,4 +668,4 @@ final class CallControllerProvider
   }
 }
 
-String _$callControllerHash() => r'fe92696fa6919227078564b364ed77fd52528295';
+String _$callControllerHash() => r'93eed28061c91f047e5a2181d0f1a6211bc467ff';

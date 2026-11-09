@@ -286,15 +286,21 @@ class WebRtcPeer implements CallPeer {
   Future<void> close() async {
     final pc = _pc;
     _pc = null;
-    try {
-      await _channel?.close();
-      await _track?.stop();
-      await _microphone?.dispose();
-      await pc?.close();
-      await pc?.dispose();
-    } on Object catch (e) {
-      Log.warn('calls', 'Closing the peer failed', e);
+    // Each step on its own: one that throws (on Windows a stopped track
+    // can fail the next call) must not leave the connection open.
+    Future<void> step(Future<void>? Function() run) async {
+      try {
+        await run();
+      } on Object catch (e) {
+        Log.warn('calls', 'Closing the peer failed', e);
+      }
     }
+
+    await step(() => _channel?.close());
+    await step(() => _track?.stop());
+    await step(() => _microphone?.dispose());
+    await step(() => pc?.close());
+    await step(() => pc?.dispose());
     await _events.close();
   }
 }

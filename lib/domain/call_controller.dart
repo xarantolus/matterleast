@@ -32,4 +32,7 @@ abstract interface class CallController {
   /// Mutes or unmutes the microphone; ignored when listening only.
   Future<void> setMuted({required bool muted});
   Future<void> setRoute(AudioRoute route);
+
+  /// Picks the microphone or speaker on a desktop.
+  Future<void> setDevice({required bool input, required String id});
 }
