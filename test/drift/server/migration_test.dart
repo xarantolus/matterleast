@@ -11,6 +11,7 @@ import 'generated/schema_v4.dart' as v4;
 import 'generated/schema_v5.dart' as v5;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
+import 'generated/schema_v8.dart' as v8;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -127,4 +128,31 @@ void main() {
       },
     );
   });
+
+  test(
+    'keeps the channels when going from v7 to v8, with no banner yet',
+    () async {
+      await verifier.testWithDataIntegrity(
+        oldVersion: 7,
+        newVersion: 8,
+        createOld: v7.DatabaseAtV7.new,
+        createNew: v8.DatabaseAtV8.new,
+        openTestedDatabase: ServerDatabase.new,
+        createItems: (batch, oldDb) => batch.insert(
+          oldDb.channels,
+          const v7.ChannelsCompanion(
+            id: Value('c1'),
+            type: Value('O'),
+            name: Value('town-square'),
+            displayName: Value('Town Square'),
+          ),
+        ),
+        validateItems: (newDb) async {
+          final row = await newDb.select(newDb.channels).getSingle();
+          expect(row.name, 'town-square');
+          expect(row.bannerInfo, isNull);
+        },
+      );
+    },
+  );
 }
