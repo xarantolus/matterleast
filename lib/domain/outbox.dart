@@ -91,6 +91,11 @@ const _dropErrorIds = {
   'plugin.message_will_be_posted.dismiss_post',
 };
 
+/// Validation failures the server reports as 500; asking again can't help.
+const _refusedErrorIds = {
+  'api.post.post_priority.persistent_notification_validation_error.request_error',
+};
+
 sealed class SendFailure {
   const SendFailure();
 }
@@ -121,6 +126,7 @@ SendFailure classifySendError(ApiError error, int failures) {
     // 501: the server lacks something the post asks for; trying again
     // won't change that.
     final refused =
+        _refusedErrorIds.contains(id) ||
         statusCode == 501 ||
         statusCode >= 400 &&
             statusCode < 500 &&
