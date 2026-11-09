@@ -18,6 +18,7 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/call_actions_ui.dart';
 import 'package:matterleast/ui/call_join_banner.dart';
 import 'package:matterleast/ui/clickable.dart';
 
@@ -123,9 +124,13 @@ class ChannelScreen extends ConsumerWidget {
           IconButton(
             tooltip: callAction == CallAction.join ? 'Join call' : 'Start call',
             icon: const Icon(Icons.call_outlined),
-            onPressed: () => callAction == CallAction.join
-                ? calls.join(url, channelId)
-                : calls.start(url, channelId),
+            onPressed: () => joinCall(
+              context,
+              calls,
+              url: url,
+              channelId: channelId,
+              start: callAction != CallAction.join,
+            ),
           ),
         IconButton(
           tooltip: 'Details',

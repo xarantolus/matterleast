@@ -7,6 +7,7 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/notifications/notice_banner.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/ui/incoming_call_banners.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -23,22 +24,27 @@ class NoticeBannerOverlay extends StatefulWidget {
 }
 
 class _NoticeBannerOverlayState extends State<NoticeBannerOverlay> {
-  OverlayEntry? _entry;
+  final _entries = <OverlayEntry>[];
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _entry = OverlayEntry(builder: (_) => const _NoticeBannerLayer());
-      Overlay.of(context).insert(_entry!);
+      _entries.addAll([
+        OverlayEntry(builder: (_) => const _NoticeBannerLayer()),
+        OverlayEntry(builder: (_) => const IncomingCallBanners()),
+      ]);
+      Overlay.of(context).insertAll(_entries);
     });
   }
 
   @override
   void dispose() {
-    _entry?.remove();
-    _entry?.dispose();
+    for (final entry in _entries) {
+      entry.remove();
+      entry.dispose();
+    }
     super.dispose();
   }
 

@@ -32,4 +32,11 @@ abstract interface class CallController {
   /// Mutes or unmutes the microphone; ignored when listening only.
   Future<void> setMuted({required bool muted});
   Future<void> setRoute(AudioRoute route);
+
+  /// Raises or lowers the user's hand.
+  Future<void> setHandRaised({required bool raised});
+
+  /// Shows [name], a standard emoji's short name written as [character], to
+  /// everyone in the call.
+  Future<void> react(String name, String character);
 }

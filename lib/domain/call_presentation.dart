@@ -22,3 +22,10 @@ String callConnectionText(CallConnection state) => switch (state.phase) {
   },
   CallPhase.failed => state.failure?.message ?? "The call couldn't continue",
 };
+
+String audioRouteLabel(AudioRoute route) => switch (route) {
+  AudioRoute.earpiece => 'Phone',
+  AudioRoute.speaker => 'Speaker',
+  AudioRoute.bluetooth => 'Bluetooth',
+  AudioRoute.wired => 'Headset',
+};
