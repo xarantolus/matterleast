@@ -13,6 +13,7 @@ import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/ui/clickable.dart';
 
@@ -62,6 +63,7 @@ class ChannelScreen extends ConsumerWidget {
                   activeCustomStatusProvider(url, partnerId),
                 ),
               );
+    final liveNotice = ref.watch(serverLiveNoticeProvider(url));
     final presenceKnown =
         partnerId != null && ref.watch(presenceKnownProvider(url, partnerId));
     void openInfo() => openPage(
@@ -90,9 +92,15 @@ class ChannelScreen extends ConsumerWidget {
                 state,
                 partner: partner,
                 presenceKnown: presenceKnown,
+                liveNotice: liveNotice,
               ),
               statusOf:
-                  conversationSubtitleEmoji(state, partner: partner) == null
+                  conversationSubtitleEmoji(
+                        state,
+                        partner: partner,
+                        liveNotice: liveNotice,
+                      ) ==
+                      null
                   ? null
                   : partnerId,
               url: url,

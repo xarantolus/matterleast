@@ -149,7 +149,7 @@ final class SocketDownProvider
   }
 }
 
-String _$socketDownHash() => r'0d9b1fc0eb5088e6a26ad8f7efabbb4f3116d96f';
+String _$socketDownHash() => r'408d3ed6a1b732173adc4d0154af40baba15720e';
 
 /// Whether the WebSocket has been down for longer than a short blip, so
 /// the list can say live updates are paused.
@@ -174,6 +174,138 @@ final class SocketDownFamily extends $Family
   @override
   String toString() => r'socketDownProvider';
 }
+
+/// What to say about the live connection, once it has been down a while.
+
+@ProviderFor(serverLiveNotice)
+final serverLiveNoticeProvider = ServerLiveNoticeFamily._();
+
+/// What to say about the live connection, once it has been down a while.
+
+final class ServerLiveNoticeProvider
+    extends $FunctionalProvider<String?, String?, String?>
+    with $Provider<String?> {
+  /// What to say about the live connection, once it has been down a while.
+  ServerLiveNoticeProvider._({
+    required ServerLiveNoticeFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'serverLiveNoticeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverLiveNoticeHash();
+
+  @override
+  String toString() {
+    return r'serverLiveNoticeProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  String? create(Ref ref) {
+    final argument = this.argument as String;
+    return serverLiveNotice(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ServerLiveNoticeProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$serverLiveNoticeHash() => r'895272c3d91cbc715d45bdf8858ccc89346d2a49';
+
+/// What to say about the live connection, once it has been down a while.
+
+final class ServerLiveNoticeFamily extends $Family
+    with $FunctionalFamilyOverride<String?, String> {
+  ServerLiveNoticeFamily._()
+    : super(
+        retry: null,
+        name: r'serverLiveNoticeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// What to say about the live connection, once it has been down a while.
+
+  ServerLiveNoticeProvider call(String url) =>
+      ServerLiveNoticeProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'serverLiveNoticeProvider';
+}
+
+/// How long the WebSocket may be down before screens say so.
+
+@ProviderFor(socketDownGrace)
+final socketDownGraceProvider = SocketDownGraceProvider._();
+
+/// How long the WebSocket may be down before screens say so.
+
+final class SocketDownGraceProvider
+    extends $FunctionalProvider<Duration, Duration, Duration>
+    with $Provider<Duration> {
+  /// How long the WebSocket may be down before screens say so.
+  SocketDownGraceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'socketDownGraceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$socketDownGraceHash();
+
+  @$internal
+  @override
+  $ProviderElement<Duration> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Duration create(Ref ref) {
+    return socketDownGrace(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Duration value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Duration>(value),
+    );
+  }
+}
+
+String _$socketDownGraceHash() => r'89efc10d941f5b40079bbd116a680a554747c1db';
 
 /// What the server has stored on this device.
 

@@ -29,8 +29,18 @@ ServerInbox inbox({List<InboxItem> saved = const [], bool known = false}) =>
       known: {if (known) InboxFilter.saved},
     );
 
-HomeServer server(String name, {ServerInbox? inbox, SyncStatus? status}) =>
-    (name: name, host: '$name.example.test', inbox: inbox, status: status);
+HomeServer server(
+  String name, {
+  ServerInbox? inbox,
+  SyncStatus? status,
+  String? liveNotice,
+}) => (
+  name: name,
+  host: '$name.example.test',
+  inbox: inbox,
+  status: status,
+  liveNotice: liveNotice,
+);
 
 final offline = SyncFailed(cause: const Unreachable(), at: DateTime.utc(2026));
 
@@ -100,5 +110,39 @@ void main() {
       server('two'),
     ]);
     expect((state as HomeReady).items.single.postId, 'p');
+  });
+
+  test('a live connection that is down is named, after a failed refresh', () {
+    String? notice(List<HomeServer> servers) =>
+        (homeState(InboxFilter.saved, servers) as HomeReady).notice;
+    final known = inbox(known: true);
+    HomeServer s(String name, {String? live, SyncStatus? status}) => server(
+      name,
+      inbox: known,
+      status: status ?? const SyncIdle(),
+      liveNotice: live,
+    );
+    expect(notice([s('one'), s('two')]), isNull);
+    expect(notice([s('one', live: 'Connecting…')]), 'Connecting…');
+    expect(
+      notice([s('one', live: 'Connecting…'), s('two', live: 'Connecting…')]),
+      'Connecting…',
+    );
+    expect(
+      notice([s('one'), s('two', live: 'Connecting…')]),
+      'two · Connecting…',
+    );
+    expect(
+      notice([
+        s('one', live: 'Connecting…'),
+        s('two', live: 'Connecting…'),
+        s('three'),
+      ]),
+      'Some servers · Connecting…',
+    );
+    expect(
+      notice([s('one', live: 'Connecting…', status: offline)]),
+      'Offline · showing saved data',
+    );
   });
 }

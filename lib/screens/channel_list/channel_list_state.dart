@@ -32,7 +32,7 @@ ChannelListState channelListState({
   required SyncStatus? status,
   required String serverName,
   required String host,
-  bool liveUpdatesDown = false,
+  String? liveNotice,
 }) {
   final stored = list != null && (list.synced || list.sections.isNotEmpty);
   if (!stored) {
@@ -49,8 +49,7 @@ ChannelListState channelListState({
     refreshing: status is SyncRefreshing,
     notice: switch (status) {
       SyncFailed(:final cause) => staleDataNotice(cause),
-      _ when liveUpdatesDown => 'Reconnecting…',
-      _ => null,
+      _ => liveNotice,
     },
   );
 }

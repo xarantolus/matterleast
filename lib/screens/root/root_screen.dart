@@ -155,7 +155,7 @@ class _ChannelListSlot extends ConsumerWidget {
       status: status,
       serverName: server.displayName,
       host: hostOf(server.url),
-      liveUpdatesDown: ref.watch(socketDownProvider(server.url)).value ?? false,
+      liveNotice: ref.watch(serverLiveNoticeProvider(server.url)),
     );
     if (teamId == null && state is! ChannelListFailed) {
       return status is SyncIdle && status.lastSuccess != null

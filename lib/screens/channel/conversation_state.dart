@@ -101,8 +101,10 @@ String? conversationSubtitle(
   ConversationState s, {
   UserProfile? partner,
   bool presenceKnown = false,
+  String? liveNotice,
 }) {
   if (staleFailure(s) case final cause?) return staleDataNotice(cause);
+  if (liveNotice != null) return liveNotice;
   switch (s.window?.channelType) {
     case 'D':
       if (partner == null) return null;
@@ -122,19 +124,32 @@ String? conversationSubtitle(
 
 /// The partner's custom status emoji, shown before the subtitle while it
 /// tells their status.
-String? conversationSubtitleEmoji(ConversationState s, {UserProfile? partner}) {
-  if (s.window?.channelType != 'D' || staleFailure(s) != null) return null;
+String? conversationSubtitleEmoji(
+  ConversationState s, {
+  UserProfile? partner,
+  String? liveNotice,
+}) {
+  if (s.window?.channelType != 'D' ||
+      staleFailure(s) != null ||
+      liveNotice != null) {
+    return null;
+  }
   final emoji = partner?.customStatus?.emoji ?? '';
   return emoji.isEmpty ? null : emoji;
 }
 
 /// The thread's subtitle: its channel, and why the shown replies may be
 /// stale.
-String threadSubtitle(ConversationState s, {required String channelName}) {
+String threadSubtitle(
+  ConversationState s, {
+  required String channelName,
+  String? liveNotice,
+}) {
   final stored = s.window?.channelName ?? '';
   final name = stored.isNotEmpty ? stored : channelName;
   return switch (staleFailure(s)) {
     final cause? => '$name · ${staleDataNotice(cause)}',
+    null when liveNotice != null => '$name · $liveNotice',
     null => name,
   };
 }
