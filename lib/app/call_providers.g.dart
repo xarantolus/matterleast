@@ -1355,7 +1355,7 @@ final class CallScreenOpenProvider
   }
 }
 
-String _$callScreenOpenHash() => r'4dc2758051dee03ad13f79ee0fc833e51568074f';
+String _$callScreenOpenHash() => r'8f4390066dce04612ed29d9fd781f1794b511956';
 
 /// Whether the call screen is the page the user looks at; the bar hides
 /// then.
