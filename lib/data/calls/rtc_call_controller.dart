@@ -140,6 +140,14 @@ class RtcCallController implements CallController {
   Future<void> setRoute(AudioRoute route) =>
       _session?.setRoute(route) ?? Future.value();
 
+  @override
+  Future<void> setHandRaised({required bool raised}) =>
+      _session?.setHandRaised(raised: raised) ?? Future.value();
+
+  @override
+  Future<void> react(String name, String character) =>
+      _session?.react(name, character) ?? Future.value();
+
   Future<void> dispose() async {
     await _session?.dispose();
     _current.dispose();

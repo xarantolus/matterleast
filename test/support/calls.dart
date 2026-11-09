@@ -40,8 +40,12 @@ Map<String, Object?> callsChannelJson(
 Map<String, Object?> callsConfigJson({
   bool defaultEnabled = true,
   bool? groupCallsAllowed,
+  bool? hostControls,
+  bool? ringing,
 }) => {
   'DefaultEnabled': defaultEnabled,
   'GroupCallsAllowed': ?groupCallsAllowed,
+  'HostControlsAllowed': ?hostControls,
+  'EnableRinging': ?ringing,
   'AllowEnableCalls': true,
 };

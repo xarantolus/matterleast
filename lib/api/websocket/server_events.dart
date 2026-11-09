@@ -663,6 +663,25 @@ final class CallStateEvent extends CallsEvent {
   final CallSnapshot call;
 }
 
+/// A person in the call reacted with an emoji, shown for a few seconds.
+final class CallReactionEvent extends CallsEvent {
+  const CallReactionEvent(
+    super.channelId, {
+    required this.sessionId,
+    required this.emoji,
+  });
+  final String sessionId;
+
+  /// The short name, or the character when it has none.
+  final String emoji;
+}
+
+/// The user dismissed the incoming-call notice of the call in the channel
+/// (on any device).
+final class CallNoticeDismissedEvent extends CallsEvent {
+  const CallNoticeDismissedEvent(super.channelId);
+}
+
 /// The host asks the session [sessionId] to mute.
 final class CallHostMuteEvent extends CallsEvent {
   const CallHostMuteEvent(super.channelId, {required this.sessionId});
@@ -887,6 +906,12 @@ ServerEvent decodeEvent(SocketFrame frame) {
 
 const _callsPrefix = 'custom_com.mattermost.calls_';
 
+String? _emojiText(CallEventData data) {
+  final emoji = data.emoji;
+  final text = (emoji?.name ?? '').isNotEmpty ? emoji!.name : emoji?.literal;
+  return text == null || text.isEmpty ? null : text;
+}
+
 ServerEvent _callsEvent(SocketFrame frame, String name) {
   final data = CallEventData.fromJson(frame.data);
   final broadcast = frame.broadcast['channel_id'];
@@ -963,6 +988,13 @@ ServerEvent _callsEvent(SocketFrame frame, String name) {
       channelId,
       data.call!,
     ),
+    'user_reacted' when session.isNotEmpty && _emojiText(data) != null =>
+      CallReactionEvent(
+        channelId,
+        sessionId: session,
+        emoji: _emojiText(data)!,
+      ),
+    'user_dismissed_notification' => CallNoticeDismissedEvent(channelId),
     'host_mute' when session.isNotEmpty => CallHostMuteEvent(
       channelId,
       sessionId: session,

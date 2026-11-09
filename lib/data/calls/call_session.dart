@@ -821,6 +821,12 @@ class CallSession {
     }
   }
 
+  Future<void> setHandRaised({required bool raised}) async =>
+      _line?.send(raised ? 'raise_hand' : 'unraise_hand');
+
+  Future<void> react(String name, String character) async =>
+      _line?.send('react', {'data': reactionJson(name, character)});
+
   Future<void> setRoute(AudioRoute route) async {
     if (_over) return;
     _pinned = route;

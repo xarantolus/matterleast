@@ -183,6 +183,7 @@ class CallEventData {
     this.userId,
     this.sessionId,
     this.raisedHand,
+    this.emoji,
     this.call,
   });
 
@@ -223,9 +224,39 @@ class CallEventData {
   @LenientInt()
   final int? raisedHand;
 
+  /// `user_reacted` carries the emoji.
+  @_EmojiIn()
+  final CallEmojiData? emoji;
+
   /// `call_state` sends the call as JSON in a string.
   @_CallInString()
   final CallSnapshot? call;
+}
+
+/// The emoji of a reaction in a call.
+@JsonSerializable(createToJson: false)
+class CallEmojiData {
+  const CallEmojiData({this.name, this.literal});
+
+  factory CallEmojiData.fromJson(Map<String, Object?> json) =>
+      _$CallEmojiDataFromJson(json);
+
+  @LenientString()
+  final String? name;
+
+  /// The character itself when the emoji has no short name.
+  @LenientString()
+  final String? literal;
+}
+
+class _EmojiIn implements JsonConverter<CallEmojiData?, Object?> {
+  const _EmojiIn();
+  @override
+  CallEmojiData? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, CallEmojiData.fromJson)
+      : null;
+  @override
+  Object? toJson(CallEmojiData? object) => throw UnsupportedError('decode');
 }
 
 class _CallInString implements JsonConverter<CallSnapshot?, Object?> {

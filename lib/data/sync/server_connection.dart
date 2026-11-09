@@ -61,6 +61,14 @@ class ServerConnection {
       actions: CallsActions(api: server, store: store),
       available: store.db.watchFeatures().map((f) => f.calls).distinct(),
       ensureUsers: users.ensure,
+      channelTypeOf: (id) async {
+        final db = store.db;
+        final row = await (db.select(
+          db.channels,
+        )..where((c) => c.id.equals(id))).getSingleOrNull();
+        return row?.type;
+      },
+      selfId: () async => (await store.db.watchMe().first)?.id,
     );
     events = EventApplier(
       server: server,

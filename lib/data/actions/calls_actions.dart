@@ -62,6 +62,36 @@ class CallsActions {
     return json == null ? null : CallsChannelState.fromJson(json);
   });
 
+  Future<void> _post(String channelId, String action, [Object? body]) =>
+      api.call(
+        () => api.dio.post<Object?>(
+          '$_route/calls/${Uri.encodeComponent(channelId)}/$action',
+          data: body,
+        ),
+      );
+
+  /// Ends the call for everyone; the host or an admin only.
+  Future<void> endForAll(String channelId) => _post(channelId, 'end');
+
+  Future<void> makeHost(String channelId, String userId) =>
+      _post(channelId, 'host/make', {'new_host_id': userId});
+
+  Future<void> hostMute(String channelId, String sessionId) =>
+      _post(channelId, 'host/mute', {'session_id': sessionId});
+
+  Future<void> hostMuteOthers(String channelId) =>
+      _post(channelId, 'host/mute-others');
+
+  Future<void> hostLowerHand(String channelId, String sessionId) =>
+      _post(channelId, 'host/lower-hand', {'session_id': sessionId});
+
+  Future<void> hostRemove(String channelId, String sessionId) =>
+      _post(channelId, 'host/remove', {'session_id': sessionId});
+
+  /// Tells the server this user ignores the incoming call.
+  Future<void> dismissNotification(String channelId) =>
+      _post(channelId, 'dismiss-notification');
+
   Future<T?> _unlessAbsent<T>(Future<T?> Function() fetch) async {
     try {
       return await fetch();
