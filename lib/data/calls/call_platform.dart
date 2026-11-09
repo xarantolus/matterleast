@@ -28,6 +28,11 @@ abstract interface class CallPlatform {
   Future<List<AudioRoute>> routes();
   Stream<void> get routesChanged;
   Future<void> setRoute(AudioRoute route);
+
+  /// The microphones and speakers a desktop offers; nothing on a phone,
+  /// which has routes instead.
+  Future<AudioDevices> devices();
+  Future<void> selectDevice({required bool input, required String id});
 }
 
 /// [CallPlatform] on the phone.
@@ -39,7 +44,6 @@ class PhoneCallPlatform implements CallPlatform {
   }
 
   void _watchDevices() {
-    if (isDesktop) return;
     navigator.mediaDevices.ondevicechange = (_) => _routesChanged.add(null);
   }
 
@@ -57,7 +61,6 @@ class PhoneCallPlatform implements CallPlatform {
 
   @override
   Future<bool> requestMicrophone() async {
-    if (isDesktop) return true;
     final status = await Permission.microphone.request();
     if (hasAndroidServices) {
       // Headsets need it on Android 12 and later; a refusal only hides them.
@@ -99,7 +102,6 @@ class PhoneCallPlatform implements CallPlatform {
 
   @override
   Future<List<AudioRoute>> routes() async {
-    if (isDesktop) return const [];
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return const [AudioRoute.earpiece, AudioRoute.speaker];
     }
@@ -139,4 +141,133 @@ class PhoneCallPlatform implements CallPlatform {
       Log.warn('calls', 'Switching the audio route failed', e);
     }
   }
+
+  @override
+  Future<AudioDevices> devices() async => noDevices;
+
+  @override
+  Future<void> selectDevice({required bool input, required String id}) async {}
+}
+
+/// Lists the audio devices the platform offers now.
+typedef DeviceLister = Future<AudioDevices> Function();
+
+/// Selects a device by the id the lister gave.
+typedef DeviceSelector = Future<void> Function({
+  required bool input,
+  required String id,
+});
+
+/// [CallPlatform] on the desktop: no permission, no service and no routes,
+/// but a choice of microphone and speaker. The platform gives no change
+/// events, so the list is polled while a call listens.
+class DesktopCallPlatform implements CallPlatform {
+  DesktopCallPlatform({
+    DeviceLister? lister,
+    DeviceSelector? selector,
+    this.pollEvery = const Duration(seconds: 3),
+  }) : _lister = lister ?? _listDevices,
+       _selector = selector ?? _selectDevice;
+
+  final DeviceLister _lister;
+  final DeviceSelector _selector;
+  final Duration pollEvery;
+
+  Timer? _timer;
+  var _polling = false;
+  AudioDevices _last = noDevices;
+
+  late final _changes = StreamController<void>.broadcast(
+    onListen: () =>
+        _timer = Timer.periodic(pollEvery, (_) => unawaited(_poll())),
+    onCancel: () {
+      _timer?.cancel();
+      _timer = null;
+    },
+  );
+
+  Future<void> _poll() async {
+    if (_polling) return;
+    _polling = true;
+    try {
+      final now = await _lister();
+      if (!listEquals(now.inputs, _last.inputs) ||
+          !listEquals(now.outputs, _last.outputs)) {
+        _last = now;
+        if (!_changes.isClosed) _changes.add(null);
+      }
+    } on Object catch (e) {
+      Log.warn('calls', 'Listing the audio devices failed', e);
+    } finally {
+      _polling = false;
+    }
+  }
+
+  @override
+  Stream<void> get routesChanged => _changes.stream;
+
+  @override
+  Stream<void> get hangUps => const Stream.empty();
+
+  @override
+  Future<bool> requestMicrophone() async => true;
+
+  @override
+  Future<void> startService({
+    required String title,
+    required String text,
+  }) async {}
+
+  @override
+  Future<void> stopService() async {}
+
+  @override
+  Future<void> prepareAudio() async {}
+
+  @override
+  Future<List<AudioRoute>> routes() async => const [];
+
+  @override
+  Future<void> setRoute(AudioRoute route) async {}
+
+  @override
+  Future<AudioDevices> devices() async {
+    try {
+      final now = await _lister();
+      _last = now;
+      return now;
+    } on Object catch (e) {
+      Log.warn('calls', 'Listing the audio devices failed', e);
+      return noDevices;
+    }
+  }
+
+  @override
+  Future<void> selectDevice({required bool input, required String id}) async {
+    try {
+      await _selector(input: input, id: id);
+    } on Object catch (e) {
+      Log.warn('calls', 'Selecting the audio device failed', e);
+    }
+  }
+
+  static Future<AudioDevices> _listDevices() async {
+    final all = await navigator.mediaDevices.enumerateDevices();
+    AudioDevice device(MediaDeviceInfo d) => (id: d.deviceId, label: d.label);
+    return (
+      inputs: [
+        for (final d in all)
+          if (d.kind == 'audioinput') device(d),
+      ],
+      outputs: [
+        for (final d in all)
+          if (d.kind == 'audiooutput') device(d),
+      ],
+    );
+  }
+
+  static Future<void> _selectDevice({
+    required bool input,
+    required String id,
+  }) => input ? Helper.selectAudioInput(id) : Helper.selectAudioOutput(id);
 }

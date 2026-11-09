@@ -122,7 +122,7 @@ class CallPostCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (live != null && url != null && controller != null)
+              if (live != null && url != null)
                 CallJoinButton(
                   controller: controller,
                   url: url,

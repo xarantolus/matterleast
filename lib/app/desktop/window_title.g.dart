@@ -117,4 +117,4 @@ final class WindowTitleTextProvider
   }
 }
 
-String _$windowTitleTextHash() => r'01ab379e95a40cf61b0e32f48e1ac085405fb0fd';
+String _$windowTitleTextHash() => r'4fa8fc8deac5a82a809b601f08a40f548c3888c1';

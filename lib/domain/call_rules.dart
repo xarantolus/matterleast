@@ -10,6 +10,7 @@ class CallTimings {
     this.answerTimeout = const Duration(seconds: 3),
     this.connectTimeout = const Duration(seconds: 15),
     this.joinTimeout = const Duration(seconds: 8),
+    this.roomConnectTimeout = const Duration(seconds: 30),
     this.lockWait = const Duration(seconds: 5),
     this.lockRetry = const Duration(milliseconds: 50),
     this.restartLockWait = const Duration(seconds: 1),
@@ -23,6 +24,9 @@ class CallTimings {
     this.missedPongs = 3,
     this.maxRestarts = 3,
   });
+
+  /// How long joining a LiveKit room may take.
+  final Duration roomConnectTimeout;
 
   /// How long after a drop the calls socket may take to be back.
   final Duration reconnectBudget;
@@ -176,3 +180,23 @@ AudioRoute? chooseRoute({
 /// gone.
 AudioRoute? keepPin(AudioRoute? pinned, List<AudioRoute> available) =>
     pinned != null && available.contains(pinned) ? pinned : null;
+
+/// The device to use: the user's pick while it is there, else the system
+/// default (the entry the platform names `default`), else the first.
+AudioDevice? chooseDevice({
+  required List<AudioDevice> available,
+  required String? pinned,
+}) {
+  if (available.isEmpty) return null;
+  for (final d in available) {
+    if (d.id == pinned) return d;
+  }
+  for (final d in available) {
+    if (d.id == 'default' || d.id.startsWith('default:')) return d;
+  }
+  return available.first;
+}
+
+/// Whether a pinned device stays pinned: it is dropped once it is gone.
+String? keepDevicePin(String? pinned, List<AudioDevice> available) =>
+    available.any((d) => d.id == pinned) ? pinned : null;

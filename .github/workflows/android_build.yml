@@ -141,7 +141,9 @@ jobs:
     needs: check
     if: needs.check.outputs.release == 'true' || inputs.platforms
     runs-on: ubuntu-26.04
-    environment: ${{ github.ref == 'refs/heads/main' && 'release' || '' }}
+    # Every APK is signed with the release key, so any build installs over
+    # a released one.
+    environment: release
 
     steps:
       - name: Check out the code
@@ -198,9 +200,7 @@ jobs:
       - name: Get packages
         run: flutter pub get
 
-      # Without key.properties Gradle signs with the debug key.
       - name: Set up signing
-        if: github.ref == 'refs/heads/main'
         env:
           SIGNING_KEYSTORE_CONTENT: ${{ secrets.SIGNING_KEYSTORE_CONTENT }}
           SIGNING_PROPERTIES_CONTENT: ${{ secrets.SIGNING_PROPERTIES_CONTENT }}

@@ -1378,18 +1378,17 @@ abstract class _$CallScreenOpen extends $Notifier<int> {
   }
 }
 
-/// Starts and joins calls; null where the app can't (the desktop).
+/// Starts and joins calls.
 
 @ProviderFor(callController)
 final callControllerProvider = CallControllerProvider._();
 
-/// Starts and joins calls; null where the app can't (the desktop).
+/// Starts and joins calls.
 
 final class CallControllerProvider
-    extends
-        $FunctionalProvider<CallController?, CallController?, CallController?>
-    with $Provider<CallController?> {
-  /// Starts and joins calls; null where the app can't (the desktop).
+    extends $FunctionalProvider<CallController, CallController, CallController>
+    with $Provider<CallController> {
+  /// Starts and joins calls.
   CallControllerProvider._()
     : super(
         from: null,
@@ -1406,21 +1405,21 @@ final class CallControllerProvider
 
   @$internal
   @override
-  $ProviderElement<CallController?> $createElement($ProviderPointer pointer) =>
+  $ProviderElement<CallController> $createElement($ProviderPointer pointer) =>
       $ProviderElement(pointer);
 
   @override
-  CallController? create(Ref ref) {
+  CallController create(Ref ref) {
     return callController(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(CallController? value) {
+  Override overrideWithValue(CallController value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<CallController?>(value),
+      providerOverride: $SyncValueProvider<CallController>(value),
     );
   }
 }
 
-String _$callControllerHash() => r'fe92696fa6919227078564b364ed77fd52528295';
+String _$callControllerHash() => r'362e97c812fd175bcf93d4a488e0c78e30f69926';

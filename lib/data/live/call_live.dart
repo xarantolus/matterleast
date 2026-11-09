@@ -11,7 +11,26 @@ import 'package:matterleast/log.dart';
 /// The calls running on one server and its Calls settings, kept in memory
 /// from the plugin's events and its answers. Every answer replaces what it
 /// describes; a failed one keeps what was there.
-class CallLive {
+/// Where the media room of the user's own call reports mute and raised
+/// hands.
+abstract interface class CallRoomFeed {
+  void apply(CallsEvent event);
+
+  /// What the room says about [sessionId]; it wins over the plugin's own
+  /// state until [clearMembers].
+  void setMember(
+    String channelId,
+    String sessionId, {
+    required bool muted,
+    required int raisedAt,
+  });
+  void clearMembers(String channelId);
+
+  /// Fetches the state of one channel again.
+  Future<void> refreshChannel(String id);
+}
+
+class CallLive implements CallRoomFeed {
   CallLive({
     required this.actions,
     required Stream<bool> available,
@@ -69,12 +88,60 @@ class CallLive {
     }
   }
 
+  /// What the media room says about each session; the plugin does not
+  /// track mute or hands for a LiveKit call.
+  final _members = <String, Map<String, ({bool muted, int raisedAt})>>{};
+
+  @override
+  void setMember(
+    String channelId,
+    String sessionId, {
+    required bool muted,
+    required int raisedAt,
+  }) {
+    if (_closed) return;
+    (_members[channelId] ??= {})[sessionId] = (
+      muted: muted,
+      raisedAt: raisedAt,
+    );
+    _publish(state.value);
+  }
+
+  @override
+  void clearMembers(String channelId) => _members.remove(channelId);
+
+  void _publish(CallsState next) {
+    final merged = _withMembers(next);
+    if (merged != state.value) state.value = merged;
+  }
+
+  CallsState _withMembers(CallsState next) {
+    if (_members.isEmpty) return next;
+    final calls = {...next.calls};
+    for (final entry in _members.entries) {
+      final call = calls[entry.key];
+      if (call == null) continue;
+      final sessions = {...call.sessions};
+      for (final member in entry.value.entries) {
+        final session = sessions[member.key];
+        if (session == null) continue;
+        sessions[member.key] = session.copyWith(
+          muted: member.value.muted,
+          raisedHand: member.value.raisedAt,
+        );
+      }
+      calls[entry.key] = call.copyWith(sessions: sessions);
+    }
+    return next.copyWith(calls: calls);
+  }
+
+  @override
   void apply(CallsEvent event) {
     if (_closed || !_available) return;
     if (event is! CallVoiceEvent) _changes++;
     final before = state.value;
     final after = applyCallEvent(before, event);
-    if (!identical(before, after)) state.value = after;
+    if (!identical(before, after)) _publish(after);
     if (event is CallJoinedEvent &&
         !before.calls.containsKey(event.channelId)) {
       unawaited(refreshChannel(event.channelId));
@@ -160,7 +227,7 @@ class CallLive {
         final channels = await actions.channels();
         if (_closed || channels == null) return;
         if (seen != _changes && round < 2) continue;
-        state.value = callsStateOf(channels);
+        _publish(callsStateOf(channels));
         unawaited(
           _people({
             for (final call in state.value.calls.values)
@@ -176,6 +243,7 @@ class CallLive {
 
   /// Fetches the state of one channel again, such as one that gained a
   /// person we know no call for.
+  @override
   Future<void> refreshChannel(String id) =>
       _channelsRefreshing[id] ??= _refreshChannel(id).whenComplete(() {
         _channelsRefreshing.remove(id);
@@ -196,7 +264,7 @@ class CallLive {
           calls.remove(id);
         }
         if (channel.enabled case final value?) enabled[id] = value;
-        state.value = state.value.copyWith(calls: calls, enabled: enabled);
+        _publish(state.value.copyWith(calls: calls, enabled: enabled));
         unawaited(_people(calls[id]?.participantUserIds ?? const []));
         return;
       }

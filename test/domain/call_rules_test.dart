@@ -162,4 +162,24 @@ void main() {
       expect(chooseRoute(available: [], pinned: null, direct: true), isNull);
     });
   });
+
+  group('choosing an audio device', () {
+    const a = (id: 'default: Built-in', label: 'Built-in');
+    const b = (id: 'usb', label: 'USB headset');
+
+    test('takes the pick while it is there', () {
+      expect(chooseDevice(available: [a, b], pinned: 'usb'), b);
+    });
+
+    test('falls back to the system default, then the first', () {
+      expect(chooseDevice(available: [b, a], pinned: 'gone'), a);
+      expect(chooseDevice(available: [b], pinned: null), b);
+      expect(chooseDevice(available: [], pinned: 'usb'), isNull);
+    });
+
+    test('drops a pin once its device is gone', () {
+      expect(keepDevicePin('usb', [a, b]), 'usb');
+      expect(keepDevicePin('usb', [a]), isNull);
+    });
+  });
 }

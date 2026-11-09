@@ -33,6 +33,9 @@ abstract interface class CallController {
   Future<void> setMuted({required bool muted});
   Future<void> setRoute(AudioRoute route);
 
+  /// Picks the microphone or speaker on a desktop.
+  Future<void> setDevice({required bool input, required String id});
+
   /// Raises or lowers the user's hand.
   Future<void> setHandRaised({required bool raised});
 
