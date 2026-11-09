@@ -141,6 +141,25 @@ void main() {
     expect((await session.db.features()).calls, isTrue);
   });
 
+  test('settings an admin changed arrive without a reconnect', () async {
+    final (other, quick) = await startServerSession(
+      callsRefreshEvery: const Duration(milliseconds: 100),
+    );
+    var ringing = false;
+    other.handle = (r) => switch (r.path) {
+      '$callsRoute/config' => ok(callsConfigJson(ringing: ringing)),
+      '$callsRoute/channels' => ok(<Object?>[]),
+      _ => emptyAnswer(r),
+    };
+    final live = quick.connection.calls;
+    await installCallsPlugin(quick);
+    await eventually(() => live.config.value != null);
+    expect(live.config.value?.enableRinging, isFalse);
+
+    ringing = true;
+    await eventually(() => live.config.value?.enableRinging == true);
+  });
+
   group('ringing', () {
     const dm = 'dm0000000000000000000000d1';
 
