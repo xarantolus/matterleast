@@ -1,12 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/app/call_providers.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
-import 'package:matterleast/domain/call_connection.dart';
-import 'package:matterleast/domain/call_controller.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 
 import '../support/calls.dart';
