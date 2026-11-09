@@ -11,8 +11,6 @@ import 'package:matterleast/ui/tokens.dart';
 String postingBlockText(PostingBlock block) => switch (block) {
   PostingBlock.archived =>
     'This channel is archived. You can read it but not post in it.',
-  PostingBlock.readOnly =>
-    'This channel is read-only. Only administrators can post here.',
   PostingBlock.notAllowed => "You don't have permission to post here.",
 };
 

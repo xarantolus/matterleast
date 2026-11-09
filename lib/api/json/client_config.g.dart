@@ -143,9 +143,6 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
   enableConfirmNotificationsToChannel: const LenientBool().fromJson(
     json['EnableConfirmNotificationsToChannel'],
   ),
-  experimentalTownSquareIsReadOnly: const LenientBool().fromJson(
-    json['ExperimentalTownSquareIsReadOnly'],
-  ),
   ldapFirstNameAttributeSet: const LenientBool().fromJson(
     json['LdapFirstNameAttributeSet'],
   ),

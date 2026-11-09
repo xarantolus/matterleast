@@ -216,15 +216,6 @@ void main() {
     );
   });
 
-  test('the read-only default channel needs a licence', () {
-    final config = {'ExperimentalTownSquareIsReadOnly': 'true'};
-    expect(features(config).townSquareReadOnly, isFalse);
-    expect(
-      features(config, license: {'IsLicensed': 'true'}).townSquareReadOnly,
-      isTrue,
-    );
-  });
-
   test('bookmarks need a licence; profile attributes only the flag or a '
       'version past it', () {
     const licensed = {'IsLicensed': 'true'};
