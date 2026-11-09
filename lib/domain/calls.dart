@@ -187,6 +187,10 @@ CallsState applyCallEvent(CallsState state, CallsEvent event) {
       return call.screenSharingSessionId == event.sessionId
           ? withCall(call.copyWith(screenSharingSessionId: ''))
           : state;
+    case CallHostMuteEvent() ||
+        CallHostLowerHandEvent() ||
+        CallHostRemovedEvent():
+      return state;
     case CallsEnabledEvent():
       return state.enabled[channel] == event.enabled
           ? state

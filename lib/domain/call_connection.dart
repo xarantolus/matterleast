@@ -67,6 +67,10 @@ abstract class CallConnection with _$CallConnection {
   const factory CallConnection({
     @Default(CallPhase.idle) CallPhase phase,
 
+    /// The call this is about: its server and channel; empty while idle.
+    @Default('') String url,
+    @Default('') String channelId,
+
     /// The user's session in the call; empty until the server accepted.
     @Default('') String sessionId,
     @Default(true) bool muted,

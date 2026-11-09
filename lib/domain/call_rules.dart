@@ -15,6 +15,7 @@ class CallTimings {
     this.pingInterval = const Duration(seconds: 1),
     this.turnTimeout = const Duration(seconds: 3),
     this.restartGap = const Duration(seconds: 2),
+    this.restartWait = const Duration(seconds: 6),
     this.missedPongs = 3,
     this.maxRestarts = 3,
   });
@@ -38,6 +39,9 @@ class CallTimings {
 
   /// The least time between two ICE restarts.
   final Duration restartGap;
+
+  /// How long a restart has to bring the path back before the next one.
+  final Duration restartWait;
 
   /// Pings in a row without an answer that mean the path is gone.
   final int missedPongs;
@@ -69,16 +73,14 @@ ReconnectStep reconnectStep(
     : ReconnectIn(timings.reconnectBackoff);
 
 /// A server `error` after our `reconnect` means the session is gone.
-CallFailure reconnectRefusal(String serverText) => CallFailure(
-  CallFailureKind.server,
-  switch (serverText) {
-    'no call ongoing' => 'The call ended while the connection was down.',
-    'session not found in call state' =>
-      'The connection was down too long and the call dropped you.',
-    final text when text.isNotEmpty => text,
-    _ => 'The call could not be resumed.',
-  },
-);
+CallFailure reconnectRefusal(String serverText) =>
+    CallFailure(CallFailureKind.server, switch (serverText) {
+      'no call ongoing' => 'The call ended while the connection was down.',
+      'session not found in call state' =>
+        'The connection was down too long and the call dropped you.',
+      final text when text.isNotEmpty => text,
+      _ => 'The call could not be resumed.',
+    });
 
 enum IceTrigger { peerDisconnected, peerFailed, networkChanged, missedPongs }
 

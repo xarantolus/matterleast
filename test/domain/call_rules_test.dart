@@ -119,11 +119,7 @@ void main() {
   });
 
   group('the audio route', () {
-    const all = [
-      AudioRoute.earpiece,
-      AudioRoute.speaker,
-      AudioRoute.bluetooth,
-    ];
+    const all = [AudioRoute.earpiece, AudioRoute.speaker, AudioRoute.bluetooth];
 
     test('is the earpiece in a direct message and the speaker elsewhere', () {
       const phone = [AudioRoute.earpiece, AudioRoute.speaker];
@@ -151,7 +147,11 @@ void main() {
       );
       const gone = [AudioRoute.earpiece, AudioRoute.speaker];
       expect(
-        chooseRoute(available: gone, pinned: AudioRoute.bluetooth, direct: true),
+        chooseRoute(
+          available: gone,
+          pinned: AudioRoute.bluetooth,
+          direct: true,
+        ),
         AudioRoute.earpiece,
       );
       expect(keepPin(AudioRoute.bluetooth, gone), isNull);

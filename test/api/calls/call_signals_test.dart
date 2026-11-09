@@ -11,8 +11,8 @@ void main() {
   group('the socket SDP frame', () {
     test('is a MessagePack map whose data is the zlib-compressed JSON', () {
       const json = '{"type":"offer","sdp":"v=0\\r\\n"}';
-      final map = PackReader(sdpSocketFrame(7, json)).read()!
-          as Map<String, Object?>;
+      final map =
+          PackReader(sdpSocketFrame(7, json)).read()! as Map<String, Object?>;
       expect(map['action'], 'custom_com.mattermost.calls_sdp');
       expect(map['seq'], 7);
       final data = map['data']! as Map<String, Object?>;
@@ -24,8 +24,8 @@ void main() {
         'type': 'offer',
         'sdp': List.generate(4000, (i) => 'a=line$i${i * 7919}').join('\r\n'),
       });
-      final frame = PackReader(sdpSocketFrame(300, json)).read()!
-          as Map<String, Object?>;
+      final frame =
+          PackReader(sdpSocketFrame(300, json)).read()! as Map<String, Object?>;
       expect(frame['seq'], 300);
       final data = frame['data']! as Map<String, Object?>;
       expect(inflateSdp(data['data']! as Uint8List), json);

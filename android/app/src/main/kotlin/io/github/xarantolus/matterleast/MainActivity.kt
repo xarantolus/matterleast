@@ -49,6 +49,9 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        // The call lives in this engine, so it ends with the activity.
+        CallService.onHangUp = null
+        if (isFinishing) CallService.stop(this)
         StayConnectedService.uiGone(this)
         super.onDestroy()
     }
@@ -77,6 +80,25 @@ class MainActivity : FlutterActivity() {
                     }
                 }
             }
+        val calls = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "matterleast/call_service")
+        CallService.onHangUp = { runOnUiThread { calls.invokeMethod("hangUp", null) } }
+        calls.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "start" -> {
+                    CallService.start(
+                        this,
+                        call.argument<String>("title"),
+                        call.argument<String>("text"),
+                    )
+                    result.success(null)
+                }
+                "stop" -> {
+                    CallService.stop(this)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "matterleast/stay_connected")
             .setMethodCallHandler { call, result ->
                 when (call.method) {

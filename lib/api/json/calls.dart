@@ -18,6 +18,9 @@ class CallsConfig {
     this.enableRinging,
     this.maxCallParticipants,
     this.allowEnableCalls,
+    this.iceServers = const [],
+    this.needsTurnCredentials,
+    this.enableDcSignaling,
   });
 
   factory CallsConfig.fromJson(Map<String, Object?> json) =>
@@ -42,7 +45,41 @@ class CallsConfig {
   final int? maxCallParticipants;
   @LenientBool()
   final bool? allowEnableCalls;
+
+  /// The STUN and TURN servers to connect through.
+  @JsonKey(name: 'ICEServersConfigs', fromJson: decodeCallsIceServers)
+  final List<CallsIceServer> iceServers;
+
+  /// The server hands out short-lived TURN credentials on request.
+  @LenientBool()
+  @JsonKey(name: 'NeedsTURNCredentials')
+  final bool? needsTurnCredentials;
+
+  /// Offers and answers travel over the data channel once it is open.
+  @LenientBool()
+  @JsonKey(name: 'EnableDCSignaling')
+  final bool? enableDcSignaling;
 }
+
+/// A STUN or TURN server for the media connection.
+@JsonSerializable(createToJson: false)
+class CallsIceServer {
+  const CallsIceServer({this.urls = const [], this.username, this.credential});
+
+  factory CallsIceServer.fromJson(Map<String, Object?> json) =>
+      _$CallsIceServerFromJson(json);
+
+  @LenientStringList()
+  final List<String> urls;
+  @LenientString()
+  final String? username;
+  @LenientString()
+  final String? credential;
+}
+
+/// The servers of `GET turn-credentials`; one that doesn't read is skipped.
+List<CallsIceServer> decodeCallsIceServers(Object? json) =>
+    decodeList(json, CallsIceServer.fromJson);
 
 /// One person's connection to a call. A user can be in a call from more
 /// than one device, each with its own session.

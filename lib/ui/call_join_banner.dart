@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/call_providers.dart';
+import 'package:matterleast/domain/call_connection.dart';
+import 'package:matterleast/domain/call_controller.dart';
+import 'package:matterleast/domain/call_presentation.dart';
 import 'package:matterleast/domain/calls.dart';
 import 'package:matterleast/ui/call_participants.dart';
 import 'package:matterleast/ui/call_post_card.dart';
@@ -24,12 +27,27 @@ class CallJoinBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final action = ref.watch(callActionInProvider(url, channelId, channelType));
     final call = ref.watch(callInChannelProvider(url, channelId));
-    if (action != CallAction.join || call == null) {
-      return const SizedBox.shrink();
-    }
     final controller = ref.watch(callControllerProvider);
+    return Column(
+      children: [
+        if (action == CallAction.join && call != null)
+          _banner(context, call.participantUserIds, controller),
+        if (controller != null)
+          CallConnectionStrip(
+            controller: controller,
+            url: url,
+            channelId: channelId,
+          ),
+      ],
+    );
+  }
+
+  Widget _banner(
+    BuildContext context,
+    List<String> people,
+    CallController? controller,
+  ) {
     final tokens = context.tokens;
-    final people = call.participantUserIds;
     return ColoredBox(
       color: tokens.accentWash,
       child: Padding(
@@ -61,4 +79,62 @@ class CallJoinBanner extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// What the call's connection is doing, with Mute and Leave; the call
+/// screen replaces it. Takes no room unless the user is in this call or
+/// the last one ended here.
+class CallConnectionStrip extends StatelessWidget {
+  const CallConnectionStrip({
+    required this.controller,
+    required this.url,
+    required this.channelId,
+    super.key,
+  });
+
+  final CallController controller;
+  final String url;
+  final String channelId;
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder(
+    valueListenable: controller.connection,
+    builder: (context, state, _) {
+      final text = callConnectionText(state);
+      if (state.url != url || state.channelId != channelId || text.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      final tokens = context.tokens;
+      final over =
+          state.phase == CallPhase.ended || state.phase == CallPhase.failed;
+      return ColoredBox(
+        color: tokens.accentWash,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+          child: Row(
+            spacing: Spacing.sm,
+            children: [
+              Expanded(
+                child: Text(
+                  text,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              if (!over && !state.listenOnly)
+                IconButton(
+                  tooltip: state.muted ? 'Unmute' : 'Mute',
+                  icon: Icon(state.muted ? Icons.mic_off : Icons.mic),
+                  onPressed: () => controller.setMuted(muted: !state.muted),
+                ),
+              IconButton(
+                tooltip: over ? 'Dismiss' : 'Leave call',
+                icon: Icon(over ? Icons.close : Icons.call_end),
+                onPressed: controller.leave,
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

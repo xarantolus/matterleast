@@ -5,6 +5,7 @@ import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/app/call_providers.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
+import 'package:matterleast/domain/call_connection.dart';
 import 'package:matterleast/domain/call_controller.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 
@@ -16,6 +17,8 @@ import '../support/test_session.dart';
 class _FakeCalls implements CallController {
   @override
   final current = ValueNotifier<CallRef?>(null);
+  @override
+  final connection = ValueNotifier(const CallConnection());
   final joined = <String>[];
   final started = <String>[];
 
@@ -30,6 +33,15 @@ class _FakeCalls implements CallController {
     String? title,
     String? rootId,
   }) async => started.add(channelId);
+
+  @override
+  Future<void> leave() async {}
+
+  @override
+  Future<void> setMuted({required bool muted}) async {}
+
+  @override
+  Future<void> setRoute(AudioRoute route) async {}
 }
 
 const _postId = 'cp000000000000000000000p01';
@@ -117,7 +129,7 @@ void main() {
       },
       seed: (session) => _seed(session, type: type, ended: ended),
       overrides: (url) => [
-        if (withController) callControllerProvider.overrideWithValue(calls),
+        callControllerProvider.overrideWithValue(withController ? calls : null),
       ],
       home: (url) =>
           ChannelScreen(url: url, channelId: channelId, title: 'Boats'),

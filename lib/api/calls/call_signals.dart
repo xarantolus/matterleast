@@ -104,7 +104,11 @@ Uint8List sdpSocketFrame(int seq, String sdpJson) {
 
 /// An action as a JSON text frame.
 String actionFrame(String name, int seq, [Map<String, Object?>? data]) =>
-    jsonEncode({'action': '$callsActionPrefix$name', 'seq': seq, 'data': ?data});
+    jsonEncode({
+      'action': '$callsActionPrefix$name',
+      'seq': seq,
+      'data': ?data,
+    });
 
 /// A message on the `calls-dc` data channel: a type, then its payload.
 sealed class DcMessage {
