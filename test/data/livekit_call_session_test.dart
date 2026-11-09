@@ -46,7 +46,10 @@ class FakeRoom implements CallRoom {
       log.add('react $name');
 
   @override
-  Future<void> close() async => closed = true;
+  Future<void> close() async {
+    closed = true;
+    await controller.close();
+  }
 }
 
 class FakeFeed implements CallRoomFeed {

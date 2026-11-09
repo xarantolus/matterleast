@@ -140,9 +140,16 @@ class LiveKitCallRoom implements CallRoom {
         await track.stop();
         return false;
       }
-      if (_wantMuted) await track.mute();
+      // Silent from the start; muting a track that is not yet published
+      // would release its capture, and there would be nothing to publish.
+      await track.disable();
       _microphone = track;
       await _room.localParticipant?.publishAudioTrack(track);
+      if (_wantMuted) {
+        await track.mute();
+      } else {
+        await track.unmute();
+      }
       return true;
     } on Object catch (e) {
       Log.warn('calls', 'The microphone could not be published', e);
