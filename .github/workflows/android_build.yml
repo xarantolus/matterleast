@@ -14,7 +14,7 @@ on:
       platforms:
         description: Build for every platform, without releasing
         type: boolean
-        default: false
+        default: true
 
 # A cancelled release run is safe: the next run on main still finds the
 # version untagged and releases it.
