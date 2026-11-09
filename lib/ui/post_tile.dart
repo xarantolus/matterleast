@@ -100,7 +100,8 @@ class PostTile extends StatelessWidget {
     final tokens = context.tokens;
     final density = context.density;
     final text = Theme.of(context).textTheme;
-    if (post.isSystem && !post.deleted) {
+    if ((post.isSystem || post.isEphemeral && post.userId.isEmpty) &&
+        !post.deleted) {
       return _SystemLine(
         post: post,
         combined: combined,
