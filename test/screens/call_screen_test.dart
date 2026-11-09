@@ -242,7 +242,7 @@ void main() {
     );
     final h = await open(tester);
 
-    expect(find.text('The call ended'), findsWidgets);
+    expect(find.text('Call ended'), findsWidgets);
     expect(find.text('Close'), findsOneWidget);
     expect(find.byTooltip('Mute'), findsNothing);
     await h.close(tester);
