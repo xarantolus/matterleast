@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:matterleast/api/calls/livekit_wire.dart';
+import 'package:matterleast/api/guarded_connectivity.dart';
 import 'package:matterleast/data/calls/call_room.dart';
 import 'package:matterleast/domain/call_livekit_rules.dart';
 import 'package:matterleast/log.dart';
@@ -13,6 +14,7 @@ const _reactionTopic = 'reaction';
 /// [CallRoom] on LiveKit's own SDK.
 class LiveKitCallRoom implements CallRoom {
   LiveKitCallRoom() : _room = _newRoom() {
+    GuardedConnectivity.install();
     _stopListening = _room.events.listen(_onEvent);
   }
 
