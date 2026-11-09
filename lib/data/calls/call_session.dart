@@ -774,7 +774,7 @@ class CallSession {
     if (event.channelId != channelId) return;
     switch (event) {
       case CallEndedEvent():
-        _finish(CallEnd.hostEnded);
+        _finish(CallEnd.ended);
       case CallHostRemovedEvent(:final sessionId) when sessionId == _sessionId:
         _finish(CallEnd.removed);
       case CallLeftEvent(:final sessionId) when sessionId == _sessionId:
