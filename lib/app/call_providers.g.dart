@@ -1378,18 +1378,18 @@ abstract class _$CallScreenOpen extends $Notifier<int> {
   }
 }
 
-/// Starts and joins calls; null where the app can't (the desktop).
+/// Starts and joins calls; null where the app can't.
 
 @ProviderFor(callController)
 final callControllerProvider = CallControllerProvider._();
 
-/// Starts and joins calls; null where the app can't (the desktop).
+/// Starts and joins calls; null where the app can't.
 
 final class CallControllerProvider
     extends
         $FunctionalProvider<CallController?, CallController?, CallController?>
     with $Provider<CallController?> {
-  /// Starts and joins calls; null where the app can't (the desktop).
+  /// Starts and joins calls; null where the app can't.
   CallControllerProvider._()
     : super(
         from: null,
@@ -1423,4 +1423,4 @@ final class CallControllerProvider
   }
 }
 
-String _$callControllerHash() => r'fe92696fa6919227078564b364ed77fd52528295';
+String _$callControllerHash() => r'a2e764d79079dc75835b78f4cf0438b951f45eb5';

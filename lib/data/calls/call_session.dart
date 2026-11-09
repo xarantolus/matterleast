@@ -9,6 +9,7 @@ import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/data/calls/call_line.dart';
 import 'package:matterleast/data/calls/call_peer.dart';
 import 'package:matterleast/data/calls/call_platform.dart';
+import 'package:matterleast/data/calls/call_run.dart';
 import 'package:matterleast/domain/call_connection.dart';
 import 'package:matterleast/domain/call_rules.dart';
 import 'package:matterleast/log.dart';
@@ -21,7 +22,7 @@ class _LockRequest {
 /// One call from the user's side: the calls socket, the media connection
 /// and what keeps them alive. It runs once; a finished call is replaced by
 /// a new session. [connection] is what the screens render.
-class CallSession {
+class CallSession implements CallRun {
   CallSession({
     required this.channelId,
     required this.direct,
@@ -60,6 +61,7 @@ class CallSession {
   final Stream<void>? networkChanges;
   final CallTimings timings;
 
+  @override
   final connection = ValueNotifier(const CallConnection());
 
   CallLine? _line;
@@ -121,6 +123,7 @@ class CallSession {
 
   /// Runs the join. Everything after the first await is guarded by
   /// [_over], since the user may leave at any point.
+  @override
   Future<void> start() async {
     _set((c) => c.copyWith(phase: CallPhase.preparing));
     _subscriptions
@@ -790,6 +793,7 @@ class CallSession {
 
   // What the user does
 
+  @override
   Future<void> setMuted({required bool muted}) async {
     if (_over || connection.value.listenOnly) return;
     _wantMuted = muted;
@@ -821,12 +825,15 @@ class CallSession {
     }
   }
 
+  @override
   Future<void> setHandRaised({required bool raised}) async =>
       _line?.send(raised ? 'raise_hand' : 'unraise_hand');
 
+  @override
   Future<void> react(String name, String character) async =>
       _line?.send('react', {'data': reactionJson(name, character)});
 
+  @override
   Future<void> setRoute(AudioRoute route) async {
     if (_over) return;
     _pinned = route;
@@ -862,6 +869,7 @@ class CallSession {
   }
 
   /// The user leaves.
+  @override
   Future<void> leave() async {
     if (_over) return;
     _line?.send('leave');
@@ -907,6 +915,7 @@ class CallSession {
     await _quietly(platform.stopService);
   }
 
+  @override
   Future<void> dispose() async {
     await _close((c) => c.copyWith(phase: CallPhase.ended));
     connection.dispose();
