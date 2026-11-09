@@ -7,7 +7,9 @@ import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/api/websocket/socket_rules.dart';
+import 'package:matterleast/data/actions/calls_actions.dart';
 import 'package:matterleast/data/live/agent_live.dart';
+import 'package:matterleast/data/live/call_live.dart';
 import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/data/live/typing.dart';
 import 'package:matterleast/data/store/server_store.dart';
@@ -55,6 +57,11 @@ class ServerConnection {
       runner: runner,
       users: users,
     );
+    calls = CallLive(
+      actions: CallsActions(api: server, store: store),
+      available: store.db.watchFeatures().map((f) => f.calls).distinct(),
+      ensureUsers: users.ensure,
+    );
     events = EventApplier(
       server: server,
       store: store,
@@ -87,6 +94,7 @@ class ServerConnection {
       probe: server.reach.probe,
       onResync: () {
         agents.reconnected();
+        calls.reconnected();
         if (_catchUp case final catchUp?) {
           _catchUpFor(catchUp);
           return;
@@ -137,6 +145,7 @@ class ServerConnection {
       return AgentConversation.fromJson(json);
     },
   );
+  late final CallLive calls;
   late final PresencePoller presence;
   late final ServerSocket socket;
 
@@ -257,6 +266,9 @@ class ServerConnection {
       case AgentConversationEvent(:final conversationId):
         agents.conversationUpdated(conversationId);
         return;
+      case CallsEvent():
+        calls.apply(event);
+        return;
       default:
     }
     unawaited(
@@ -348,6 +360,7 @@ class ServerConnection {
     typing.close();
     dialogs.close();
     agents.close();
+    calls.close();
     presence.dispose();
     _live.dispose();
     _catchingUp.dispose();

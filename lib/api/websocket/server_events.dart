@@ -1,6 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/json/agents.dart';
+import 'package:matterleast/api/json/calls.dart';
 import 'package:matterleast/api/json/lenient.dart';
 import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/api/websocket/encoded.dart';
@@ -566,6 +567,108 @@ final class AgentConversationEvent extends ServerEvent {
   final String conversationId;
 }
 
+/// An event of the Calls plugin (`custom_com.mattermost.calls_*`) about the
+/// call or the calling setting of [channelId].
+sealed class CallsEvent extends ServerEvent {
+  const CallsEvent(this.channelId);
+  final String channelId;
+}
+
+final class CallStartedEvent extends CallsEvent {
+  const CallStartedEvent(
+    super.channelId, {
+    required this.id,
+    this.startAt,
+    this.threadId,
+    this.postId,
+    this.ownerId,
+    this.hostId,
+  });
+  final String id;
+  final DateTime? startAt;
+  final String? threadId;
+  final String? postId;
+  final String? ownerId;
+  final String? hostId;
+}
+
+final class CallEndedEvent extends CallsEvent {
+  const CallEndedEvent(super.channelId);
+}
+
+final class CallJoinedEvent extends CallsEvent {
+  const CallJoinedEvent(
+    super.channelId, {
+    required this.sessionId,
+    required this.userId,
+  });
+  final String sessionId;
+  final String userId;
+}
+
+final class CallLeftEvent extends CallsEvent {
+  const CallLeftEvent(super.channelId, {required this.sessionId});
+  final String sessionId;
+}
+
+final class CallMutedEvent extends CallsEvent {
+  const CallMutedEvent(
+    super.channelId, {
+    required this.sessionId,
+    required this.muted,
+  });
+  final String sessionId;
+  final bool muted;
+}
+
+final class CallVoiceEvent extends CallsEvent {
+  const CallVoiceEvent(
+    super.channelId, {
+    required this.sessionId,
+    required this.speaking,
+  });
+  final String sessionId;
+  final bool speaking;
+}
+
+/// [raisedAt] is 0 once the hand is down.
+final class CallHandEvent extends CallsEvent {
+  const CallHandEvent(
+    super.channelId, {
+    required this.sessionId,
+    required this.raisedAt,
+  });
+  final String sessionId;
+  final int raisedAt;
+}
+
+final class CallHostEvent extends CallsEvent {
+  const CallHostEvent(super.channelId, {required this.hostId});
+  final String hostId;
+}
+
+final class CallScreenEvent extends CallsEvent {
+  const CallScreenEvent(
+    super.channelId, {
+    required this.sessionId,
+    required this.sharing,
+  });
+  final String sessionId;
+  final bool sharing;
+}
+
+/// The whole call as the plugin has it now.
+final class CallStateEvent extends CallsEvent {
+  const CallStateEvent(super.channelId, this.call);
+  final CallSnapshot call;
+}
+
+/// Calls were switched on or off in the channel.
+final class CallsEnabledEvent extends CallsEvent {
+  const CallsEnabledEvent(super.channelId, {required this.enabled});
+  final bool enabled;
+}
+
 /// `channel_bookmark_created/updated/sorted/deleted`: the bookmarks that
 /// changed, a deleted one with its delete time.
 final class BookmarksEvent extends ServerEvent {
@@ -715,6 +818,7 @@ ServerEvent decodeEvent(SocketFrame frame) {
     'custom_mattermost-ai_conversation_updated' => AgentConversationEvent(
       const LenientString().fromJson(frame.data['conversation_id']) ?? '',
     ),
+    final name? when name.startsWith(_callsPrefix) => _callsEvent(frame, name),
     'channel_bookmark_created' ||
     'channel_bookmark_deleted' => _bookmarks(frame, [frame.data['bookmark']]),
     'channel_bookmark_updated' => _bookmarks(frame, switch (decodeJsonString(
@@ -761,6 +865,91 @@ ServerEvent decodeEvent(SocketFrame frame) {
     },
     final name => UnknownEvent(name ?? ''),
   };
+}
+
+const _callsPrefix = 'custom_com.mattermost.calls_';
+
+ServerEvent _callsEvent(SocketFrame frame, String name) {
+  final data = CallEventData.fromJson(frame.data);
+  final broadcast = frame.broadcast['channel_id'];
+  final channelId = switch ((broadcast, data.channelId, data.channelIdStart)) {
+    (final String id, _, _) when id.isNotEmpty => id,
+    (_, final String id, _) when id.isNotEmpty => id,
+    (_, _, final String id) when id.isNotEmpty => id,
+    _ => '',
+  };
+  final session = data.sessionId ?? '';
+  final event = switch (name.substring(_callsPrefix.length)) {
+    'call_start' when (data.id ?? '').isNotEmpty => CallStartedEvent(
+      channelId,
+      id: data.id!,
+      startAt: data.startAt,
+      threadId: data.threadId,
+      postId: data.postId,
+      ownerId: data.ownerId,
+      hostId: data.hostId,
+    ),
+    'call_end' => CallEndedEvent(channelId),
+    'user_joined' when session.isNotEmpty => CallJoinedEvent(
+      channelId,
+      sessionId: session,
+      userId: data.userId ?? '',
+    ),
+    'user_left' when session.isNotEmpty => CallLeftEvent(
+      channelId,
+      sessionId: session,
+    ),
+    'user_muted' when session.isNotEmpty => CallMutedEvent(
+      channelId,
+      sessionId: session,
+      muted: true,
+    ),
+    'user_unmuted' when session.isNotEmpty => CallMutedEvent(
+      channelId,
+      sessionId: session,
+      muted: false,
+    ),
+    'user_voice_on' when session.isNotEmpty => CallVoiceEvent(
+      channelId,
+      sessionId: session,
+      speaking: true,
+    ),
+    'user_voice_off' when session.isNotEmpty => CallVoiceEvent(
+      channelId,
+      sessionId: session,
+      speaking: false,
+    ),
+    'user_raise_hand' when session.isNotEmpty => CallHandEvent(
+      channelId,
+      sessionId: session,
+      raisedAt: data.raisedHand ?? 1,
+    ),
+    'user_unraise_hand' when session.isNotEmpty => CallHandEvent(
+      channelId,
+      sessionId: session,
+      raisedAt: 0,
+    ),
+    'call_host_changed' when (data.hostIdChanged ?? '').isNotEmpty =>
+      CallHostEvent(channelId, hostId: data.hostIdChanged!),
+    'user_screen_on' when session.isNotEmpty => CallScreenEvent(
+      channelId,
+      sessionId: session,
+      sharing: true,
+    ),
+    'user_screen_off' when session.isNotEmpty => CallScreenEvent(
+      channelId,
+      sessionId: session,
+      sharing: false,
+    ),
+    'call_state' when data.call != null => CallStateEvent(
+      channelId,
+      data.call!,
+    ),
+    'channel_enable_voice' => CallsEnabledEvent(channelId, enabled: true),
+    'channel_disable_voice' => CallsEnabledEvent(channelId, enabled: false),
+    _ => null,
+  };
+  return channelId.isEmpty || event == null ? UnknownEvent(name) : event;
 }
 
 ServerEvent _bookmarks(SocketFrame frame, List<Object?> raw) {

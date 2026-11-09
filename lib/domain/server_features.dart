@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/json/client_config.dart';
+import 'package:matterleast/domain/calls.dart';
 
 part 'server_features.freezed.dart';
 
@@ -21,6 +22,7 @@ enum OptionalFeature {
   burnOnRead,
   bookmarks,
   profileAttributes,
+  calls,
 }
 
 /// Profile fields a directory (LDAP or SAML) can fill in, which the user
@@ -89,6 +91,9 @@ abstract class ServerFeatures with _$ServerFeatures {
 
     /// People have custom profile attributes the server defines.
     @Default(false) bool profileAttributes,
+
+    /// The Calls plugin runs and hasn't answered as unavailable.
+    @Default(false) bool calls,
 
     /// How long after posting a message can be edited; null for always.
     Duration? editTimeLimit,
@@ -206,6 +211,10 @@ ServerFeatures serverFeatures({
   final maxFileSize = config.maxFileSize;
   final typingMs = config.timeBetweenUserTypingUpdatesMilliseconds;
   final burnSeconds = config.burnOnReadDurationSeconds;
+  final installed = {
+    if (config.pluginsEnabled != false)
+      for (final p in plugins) p.id: p.version,
+  };
   return ServerFeatures(
     version: config.version?.trim() ?? '',
     buildNumber: config.buildNumber?.trim() ?? '',
@@ -309,11 +318,11 @@ ServerFeatures serverFeatures({
         ? config.customTermsOfServiceId
         : null,
     featureFlags: config.featureFlags,
+    calls:
+        installed.containsKey(callsPluginId) &&
+        !turnedOff.contains(OptionalFeature.calls),
     pluginsAllowed: config.pluginsEnabled != false,
-    plugins: {
-      if (config.pluginsEnabled != false)
-        for (final p in plugins) p.id: p.version,
-    },
+    plugins: installed,
   );
 }
 

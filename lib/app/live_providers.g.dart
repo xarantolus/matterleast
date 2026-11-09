@@ -124,7 +124,7 @@ final class ServerLiveProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$serverLiveHash() => r'a5908ce2f42127e177b00d326e199018eab5389e';
+String _$serverLiveHash() => r'26f7eeb49c109e1e3e8f19c4c02ff680ef09444b';
 
 /// Whether [url]'s server is live: its socket is connected and it answers.
 /// Each server decides for itself.
@@ -215,7 +215,7 @@ final class KnownPresenceProvider
   }
 }
 
-String _$knownPresenceHash() => r'4968eb4f2ddffa261ee54c62aaf8f6e2d85dc057';
+String _$knownPresenceHash() => r'175536b28eb482fd323efcf0fb5a66ed0b1c25e5';
 
 /// The people on [url]'s server whose presence came fresh from it since it
 /// last became live; empty while it isn't.
@@ -396,7 +396,7 @@ final class ServerCatchingUpProvider
   }
 }
 
-String _$serverCatchingUpHash() => r'561ccce4573261337e0539a744ca5fd027e548a8';
+String _$serverCatchingUpHash() => r'1da8181037f135a075dd58edf8e65419e3aa8c1e';
 
 /// Whether the app came back and [url]'s server is catching up on what
 /// it may have missed.

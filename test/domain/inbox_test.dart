@@ -13,6 +13,8 @@ InboxPost post(
   String rootId = '',
   String message = 'hello',
   bool unreadable = false,
+  String type = '',
+  bool callEnded = false,
 }) => (
   id: id,
   channelId: channelId,
@@ -21,11 +23,28 @@ InboxPost post(
   createAt: at(minute),
   message: message,
   deleted: false,
+  type: type,
+  callEnded: callEnded,
   unreadable: unreadable,
 );
 
 void main() {
   final people = {'me': person('alice'), 'bob': person('bob')};
+
+  test('a call previews as started or ended, not as its text', () {
+    expect(
+      postPreview(
+        post('p1', channelId: 'c1', message: '', type: 'custom_calls'),
+      ),
+      'Call started',
+    );
+    expect(
+      postPreview(
+        post('p2', channelId: 'c1', type: 'custom_calls', callEnded: true),
+      ),
+      'Call ended',
+    );
+  });
 
   test('a message the app could not read previews as such, not as blank', () {
     final broken = post('p1', channelId: 'c1', message: '', unreadable: true);

@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:matterleast/api/json/calls.dart';
 import 'package:matterleast/data/db/throttled_watch.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/views/channel_input.dart';
+import 'package:matterleast/domain/calls.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/forward.dart';
 import 'package:matterleast/domain/inbox.dart';
@@ -67,6 +69,10 @@ class SearchViews {
               createAt: p.createAt,
               message: p.message,
               deleted: p.deleteAt != null,
+              type: p.type,
+              callEnded:
+                  p.type == callPostType &&
+                  decodeCallPostProps(p.propsJson).endAt != null,
               unreadable: p.decodeProblem != null,
             ),
         },

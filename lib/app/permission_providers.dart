@@ -16,3 +16,10 @@ Stream<ChannelPermissions> channelRights(
   final session = await ref.watch(serverSessionProvider(url).future);
   yield* PermissionViews(session.db).watchChannel(channelId);
 }
+
+/// Whether the user is a system admin on [url]'s server.
+@riverpod
+Stream<bool> systemAdmin(Ref ref, String url) async* {
+  final session = await ref.watch(serverSessionProvider(url).future);
+  yield* PermissionViews(session.db).watchSystemAdmin();
+}

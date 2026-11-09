@@ -33,6 +33,11 @@ abstract final class Permission {
 const systemAdminRole = 'system_admin';
 
 /// Pure: whether a user's space-separated system [roles] make them a
+/// system admin.
+bool isSystemAdmin(String? roles) =>
+    roleNames([roles ?? '']).contains(systemAdminRole);
+
+/// Pure: whether a user's space-separated system [roles] make them a
 /// guest account.
 bool isGuest(String? roles) =>
     roleNames([roles ?? '']).contains('system_guest');
@@ -268,7 +273,7 @@ bool readOnlyChannel({
 }) =>
     townSquareReadOnly &&
     channelName == 'town-square' &&
-    !roleNames([systemRoles]).contains(systemAdminRole);
+    !isSystemAdmin(systemRoles);
 
 /// What the message menu offers for one message.
 typedef MessageRights = ({
