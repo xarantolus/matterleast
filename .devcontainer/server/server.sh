@@ -57,9 +57,13 @@ create_server() {
         "$MM_IMAGE" >/dev/null
 }
 
+# Mounted from the main checkout: a container started from a lane's
+# worktree would otherwise break when that worktree is removed.
 create_commands() {
+    local main
+    main=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
     podman run -d --name "$PREFIX-commands" --network host \
-        -v "$PWD/commands":/app:ro -w /app \
+        -v "$main/.devcontainer/server/commands":/app:ro -w /app \
         "$NODE_IMAGE" node responder.js >/dev/null
 }
 
