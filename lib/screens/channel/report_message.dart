@@ -69,7 +69,7 @@ class _ReportSheetState extends State<_ReportSheet> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return SingleChildScrollView(
+    return Padding(
       padding: EdgeInsets.fromLTRB(
         Spacing.lg,
         0,
@@ -112,32 +112,42 @@ class _ReportSheetState extends State<_ReportSheet> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Report message', style: text.titleMedium),
-              if (form.reasons.isNotEmpty)
-                RadioGroup<String>(
-                  groupValue: _reason,
-                  onChanged: (value) => setState(() => _reason = value),
+              Flexible(
+                child: SingleChildScrollView(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      for (final reason in form.reasons)
-                        RadioListTile<String>(
-                          contentPadding: EdgeInsets.zero,
-                          value: reason,
-                          title: Text(reason),
+                      if (form.reasons.isNotEmpty)
+                        RadioGroup<String>(
+                          groupValue: _reason,
+                          onChanged: (value) => setState(() => _reason = value),
+                          child: Column(
+                            children: [
+                              for (final reason in form.reasons)
+                                RadioListTile<String>(
+                                  contentPadding: EdgeInsets.zero,
+                                  value: reason,
+                                  title: Text(reason),
+                                ),
+                            ],
+                          ),
                         ),
+                      TextField(
+                        controller: _comment,
+                        minLines: 2,
+                        maxLines: 5,
+                        textCapitalization: TextCapitalization.sentences,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          labelText: form.commentRequired
+                              ? 'Comment'
+                              : 'Comment (optional)',
+                          border: const OutlineInputBorder(),
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              TextField(
-                controller: _comment,
-                minLines: 2,
-                maxLines: 5,
-                textCapitalization: TextCapitalization.sentences,
-                onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  labelText: form.commentRequired
-                      ? 'Comment'
-                      : 'Comment (optional)',
-                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: Spacing.md),
