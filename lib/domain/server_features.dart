@@ -341,7 +341,7 @@ ServerFeatures serverFeatures({
             dismissible: config.allowBannerDismissal == true,
           )
         : null,
-    channelBanners: advanced,
+    channelBanners: licensed && license.skuShortName == 'advanced',
     persistentNotifications:
         licensed &&
             config.postPriority == true &&
