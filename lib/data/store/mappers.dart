@@ -144,6 +144,7 @@ ChannelsCompanion channelCompanion(api.Channel c) => ChannelsCompanion(
   totalMsgCountRoot: _opt(c.totalMsgCountRoot),
   shared: _opt(c.shared),
   groupConstrained: _opt(c.groupConstrained),
+  bannerInfo: Value(c.bannerInfo),
 );
 
 /// [incoming] with the last-post times and message counts raised to what is

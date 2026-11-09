@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:matterleast/api/generated/export.dart'
-    show ChannelNotifyProps, FileInfo, PostPriority, Timezone;
+    show ChannelBanner, ChannelNotifyProps, FileInfo, PostPriority, Timezone;
 import 'package:matterleast/data/db/json_columns.dart';
 import 'package:matterleast/data/db/millis.dart';
 import 'package:matterleast/data/server_db/server_config.dart';
@@ -109,7 +109,7 @@ class ServerDatabase extends _$ServerDatabase {
       );
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -140,6 +140,9 @@ class ServerDatabase extends _$ServerDatabase {
         await m.database.customStatement(
           "DELETE FROM posts WHERE original_id != ''",
         );
+      },
+      from7To8: (m, schema) async {
+        await m.addColumn(schema.channels, schema.channels.bannerInfo);
       },
     ),
   );

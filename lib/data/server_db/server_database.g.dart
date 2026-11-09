@@ -2056,6 +2056,15 @@ class $ChannelsTable extends Channels
     requiredDuringInsert: false,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<ChannelBanner?, String>
+  bannerInfo = GeneratedColumn<String>(
+    'banner_info',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<ChannelBanner?>($ChannelsTable.$converterbannerInfo);
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     teamId,
@@ -2075,6 +2084,7 @@ class $ChannelsTable extends Channels
     shared,
     groupConstrained,
     memberCount,
+    bannerInfo,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2277,6 +2287,12 @@ class $ChannelsTable extends Channels
         DriftSqlType.int,
         data['${effectivePrefix}member_count'],
       ),
+      bannerInfo: $ChannelsTable.$converterbannerInfo.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}banner_info'],
+        ),
+      ),
     );
   }
 
@@ -2300,6 +2316,8 @@ class $ChannelsTable extends Channels
   static TypeConverter<DateTime, int> $converterlastRootPostAt = const Millis();
   static TypeConverter<DateTime?, int?> $converterlastRootPostAtn =
       NullAwareTypeConverter.wrap($converterlastRootPostAt);
+  static TypeConverter<ChannelBanner?, String?> $converterbannerInfo =
+      const ChannelBannerColumn();
 }
 
 class ChannelRow extends DataClass implements Insertable<ChannelRow> {
@@ -2325,6 +2343,9 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
 
   /// From the channel's stats, fetched when it is opened.
   final int? memberCount;
+
+  /// The banner a licensed server shows at the top of the channel.
+  final ChannelBanner? bannerInfo;
   const ChannelRow({
     required this.id,
     required this.teamId,
@@ -2344,6 +2365,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     required this.shared,
     required this.groupConstrained,
     this.memberCount,
+    this.bannerInfo,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2388,6 +2410,11 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     if (!nullToAbsent || memberCount != null) {
       map['member_count'] = Variable<int>(memberCount);
     }
+    if (!nullToAbsent || bannerInfo != null) {
+      map['banner_info'] = Variable<String>(
+        $ChannelsTable.$converterbannerInfo.toSql(bannerInfo),
+      );
+    }
     return map;
   }
 
@@ -2423,6 +2450,9 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
       memberCount: memberCount == null && nullToAbsent
           ? const Value.absent()
           : Value(memberCount),
+      bannerInfo: bannerInfo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bannerInfo),
     );
   }
 
@@ -2450,6 +2480,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
       shared: serializer.fromJson<bool>(json['shared']),
       groupConstrained: serializer.fromJson<bool>(json['groupConstrained']),
       memberCount: serializer.fromJson<int?>(json['memberCount']),
+      bannerInfo: serializer.fromJson<ChannelBanner?>(json['bannerInfo']),
     );
   }
   @override
@@ -2474,6 +2505,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
       'shared': serializer.toJson<bool>(shared),
       'groupConstrained': serializer.toJson<bool>(groupConstrained),
       'memberCount': serializer.toJson<int?>(memberCount),
+      'bannerInfo': serializer.toJson<ChannelBanner?>(bannerInfo),
     };
   }
 
@@ -2496,6 +2528,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     bool? shared,
     bool? groupConstrained,
     Value<int?> memberCount = const Value.absent(),
+    Value<ChannelBanner?> bannerInfo = const Value.absent(),
   }) => ChannelRow(
     id: id ?? this.id,
     teamId: teamId ?? this.teamId,
@@ -2517,6 +2550,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     shared: shared ?? this.shared,
     groupConstrained: groupConstrained ?? this.groupConstrained,
     memberCount: memberCount.present ? memberCount.value : this.memberCount,
+    bannerInfo: bannerInfo.present ? bannerInfo.value : this.bannerInfo,
   );
   ChannelRow copyWithCompanion(ChannelsCompanion data) {
     return ChannelRow(
@@ -2552,6 +2586,9 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
       memberCount: data.memberCount.present
           ? data.memberCount.value
           : this.memberCount,
+      bannerInfo: data.bannerInfo.present
+          ? data.bannerInfo.value
+          : this.bannerInfo,
     );
   }
 
@@ -2575,7 +2612,8 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
           ..write('totalMsgCountRoot: $totalMsgCountRoot, ')
           ..write('shared: $shared, ')
           ..write('groupConstrained: $groupConstrained, ')
-          ..write('memberCount: $memberCount')
+          ..write('memberCount: $memberCount, ')
+          ..write('bannerInfo: $bannerInfo')
           ..write(')'))
         .toString();
   }
@@ -2600,6 +2638,7 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
     shared,
     groupConstrained,
     memberCount,
+    bannerInfo,
   );
   @override
   bool operator ==(Object other) =>
@@ -2622,7 +2661,8 @@ class ChannelRow extends DataClass implements Insertable<ChannelRow> {
           other.totalMsgCountRoot == this.totalMsgCountRoot &&
           other.shared == this.shared &&
           other.groupConstrained == this.groupConstrained &&
-          other.memberCount == this.memberCount);
+          other.memberCount == this.memberCount &&
+          other.bannerInfo == this.bannerInfo);
 }
 
 class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
@@ -2644,6 +2684,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
   final Value<bool> shared;
   final Value<bool> groupConstrained;
   final Value<int?> memberCount;
+  final Value<ChannelBanner?> bannerInfo;
   final Value<int> rowid;
   const ChannelsCompanion({
     this.id = const Value.absent(),
@@ -2664,6 +2705,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     this.shared = const Value.absent(),
     this.groupConstrained = const Value.absent(),
     this.memberCount = const Value.absent(),
+    this.bannerInfo = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChannelsCompanion.insert({
@@ -2685,6 +2727,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     this.shared = const Value.absent(),
     this.groupConstrained = const Value.absent(),
     this.memberCount = const Value.absent(),
+    this.bannerInfo = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        type = Value(type),
@@ -2709,6 +2752,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     Expression<bool>? shared,
     Expression<bool>? groupConstrained,
     Expression<int>? memberCount,
+    Expression<String>? bannerInfo,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2730,6 +2774,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
       if (shared != null) 'shared': shared,
       if (groupConstrained != null) 'group_constrained': groupConstrained,
       if (memberCount != null) 'member_count': memberCount,
+      if (bannerInfo != null) 'banner_info': bannerInfo,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2753,6 +2798,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     Value<bool>? shared,
     Value<bool>? groupConstrained,
     Value<int?>? memberCount,
+    Value<ChannelBanner?>? bannerInfo,
     Value<int>? rowid,
   }) {
     return ChannelsCompanion(
@@ -2774,6 +2820,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
       shared: shared ?? this.shared,
       groupConstrained: groupConstrained ?? this.groupConstrained,
       memberCount: memberCount ?? this.memberCount,
+      bannerInfo: bannerInfo ?? this.bannerInfo,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2845,6 +2892,11 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
     if (memberCount.present) {
       map['member_count'] = Variable<int>(memberCount.value);
     }
+    if (bannerInfo.present) {
+      map['banner_info'] = Variable<String>(
+        $ChannelsTable.$converterbannerInfo.toSql(bannerInfo.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2872,6 +2924,7 @@ class ChannelsCompanion extends UpdateCompanion<ChannelRow> {
           ..write('shared: $shared, ')
           ..write('groupConstrained: $groupConstrained, ')
           ..write('memberCount: $memberCount, ')
+          ..write('bannerInfo: $bannerInfo, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -14286,6 +14339,7 @@ typedef $$ChannelsTableCreateCompanionBuilder = ChannelsCompanion Function({
   Value<bool> shared,
   Value<bool> groupConstrained,
   Value<int?> memberCount,
+  Value<ChannelBanner?> bannerInfo,
   Value<int> rowid,
 });
 typedef $$ChannelsTableUpdateCompanionBuilder = ChannelsCompanion Function({
@@ -14307,6 +14361,7 @@ typedef $$ChannelsTableUpdateCompanionBuilder = ChannelsCompanion Function({
   Value<bool> shared,
   Value<bool> groupConstrained,
   Value<int?> memberCount,
+  Value<ChannelBanner?> bannerInfo,
   Value<int> rowid,
 });
 
@@ -14413,6 +14468,12 @@ class $$ChannelsTableFilterComposer
     column: $table.memberCount,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<ChannelBanner?, ChannelBanner, String>
+  get bannerInfo => $composableBuilder(
+    column: $table.bannerInfo,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
 }
 
 class $$ChannelsTableOrderingComposer
@@ -14513,6 +14574,11 @@ class $$ChannelsTableOrderingComposer
     column: $table.memberCount,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get bannerInfo => $composableBuilder(
+    column: $table.bannerInfo,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ChannelsTableAnnotationComposer
@@ -14593,6 +14659,12 @@ class $$ChannelsTableAnnotationComposer
     column: $table.memberCount,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<ChannelBanner?, String> get bannerInfo =>
+      $composableBuilder(
+        column: $table.bannerInfo,
+        builder: (column) => column,
+      );
 }
 
 class $$ChannelsTableTableManager
@@ -14644,6 +14716,7 @@ class $$ChannelsTableTableManager
                 Value<bool> shared = const Value.absent(),
                 Value<bool> groupConstrained = const Value.absent(),
                 Value<int?> memberCount = const Value.absent(),
+                Value<ChannelBanner?> bannerInfo = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChannelsCompanion(
                 id: id,
@@ -14664,6 +14737,7 @@ class $$ChannelsTableTableManager
                 shared: shared,
                 groupConstrained: groupConstrained,
                 memberCount: memberCount,
+                bannerInfo: bannerInfo,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -14686,6 +14760,7 @@ class $$ChannelsTableTableManager
                 Value<bool> shared = const Value.absent(),
                 Value<bool> groupConstrained = const Value.absent(),
                 Value<int?> memberCount = const Value.absent(),
+                Value<ChannelBanner?> bannerInfo = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChannelsCompanion.insert(
                 id: id,
@@ -14706,6 +14781,7 @@ class $$ChannelsTableTableManager
                 shared: shared,
                 groupConstrained: groupConstrained,
                 memberCount: memberCount,
+                bannerInfo: bannerInfo,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

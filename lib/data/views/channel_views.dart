@@ -121,6 +121,13 @@ class ChannelViews {
       teamDisplayName: team?.displayName ?? '',
       purpose: channel.purpose,
       header: channel.header,
+      banner: switch (channel.bannerInfo) {
+        api.ChannelBanner(enabled: true, :final text?, :final backgroundColor)
+            when text.trim().isNotEmpty &&
+                (channel.type == 'O' || channel.type == 'P') =>
+          (text: text.trim(), colour: backgroundColor),
+        _ => null,
+      },
       archived: channel.deleteAt != null,
       joined: mine != null,
       favorite: favorites.isNotEmpty,

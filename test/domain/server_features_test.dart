@@ -280,4 +280,128 @@ void main() {
     expect(on.emailNotifications, isTrue);
     expect(on.automaticReplies, isTrue);
   });
+
+  group('the announcement banner', () {
+    const licence = {'IsLicensed': 'true'};
+    const banner = {
+      'EnableBanner': 'true',
+      'BannerText': '  Maintenance at **noon**  ',
+      'BannerColor': '#f2a52b',
+      'BannerTextColor': '#000000',
+      'AllowBannerDismissal': 'true',
+    };
+
+    test('shows on a licensed server that has it on, with its text', () {
+      final a = features(banner, license: licence).announcement!;
+      expect(a.text, 'Maintenance at **noon**');
+      expect(a.background, '#f2a52b');
+      expect(a.foreground, '#000000');
+      expect(a.dismissible, isTrue);
+    });
+
+    test('is absent when unlicensed, off, empty or never sent', () {
+      expect(features(banner).announcement, isNull);
+      expect(
+        features({
+          ...banner,
+          'EnableBanner': 'false',
+        }, license: licence).announcement,
+        isNull,
+      );
+      expect(
+        features({
+          ...banner,
+          'BannerText': '  ',
+        }, license: licence).announcement,
+        isNull,
+      );
+      expect(features({}, license: licence).announcement, isNull);
+    });
+
+    test('can be dismissed only when the server allows it', () {
+      expect(
+        features({
+          ...banner,
+          'AllowBannerDismissal': 'false',
+        }, license: licence).announcement!.dismissible,
+        isFalse,
+      );
+    });
+  });
+
+  test('channel banners need an advanced licence', () {
+    expect(features({}).channelBanners, isFalse);
+    expect(
+      features({}, license: {'IsLicensed': 'true'}).channelBanners,
+      isFalse,
+    );
+    expect(
+      features(
+        {},
+        license: {'IsLicensed': 'true', 'SkuShortName': 'advanced'},
+      ).channelBanners,
+      isTrue,
+    );
+    expect(
+      features(
+        {'BuildEnterpriseReady': 'false'},
+        license: {'IsLicensed': 'true', 'SkuShortName': 'advanced'},
+      ).channelBanners,
+      isTrue,
+    );
+  });
+
+  group('persistent notifications', () {
+    const licence = {'IsLicensed': 'true'};
+    const config = {
+      'PostPriority': 'true',
+      'AllowPersistentNotifications': 'true',
+      'PersistentNotificationMaxRecipients': '3',
+      'PersistentNotificationIntervalMinutes': '10',
+      'AllowPersistentNotificationsForGuests': 'true',
+    };
+
+    test('carry what the server allows', () {
+      final p = features(config, license: licence).persistentNotifications!;
+      expect(p.maxRecipients, 3);
+      expect(p.interval, const Duration(minutes: 10));
+      expect(p.forGuests, isTrue);
+    });
+
+    test('are off when unlicensed, without priority, off or turned off', () {
+      expect(features(config).persistentNotifications, isNull);
+      expect(
+        features({
+          ...config,
+          'PostPriority': 'false',
+        }, license: licence).persistentNotifications,
+        isNull,
+      );
+      expect(
+        features({
+          ...config,
+          'AllowPersistentNotifications': 'false',
+        }, license: licence).persistentNotifications,
+        isNull,
+      );
+      expect(
+        features(
+          config,
+          license: licence,
+          turnedOff: {OptionalFeature.persistentNotifications},
+        ).persistentNotifications,
+        isNull,
+      );
+    });
+
+    test('use the server defaults when it names no numbers', () {
+      final p = features({
+        'PostPriority': 'true',
+        'AllowPersistentNotifications': 'true',
+      }, license: licence).persistentNotifications!;
+      expect(p.maxRecipients, 5);
+      expect(p.interval, const Duration(minutes: 5));
+      expect(p.forGuests, isFalse);
+    });
+  });
 }

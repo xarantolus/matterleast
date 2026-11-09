@@ -23,6 +23,7 @@ enum OptionalFeature {
   bookmarks,
   profileAttributes,
   calls,
+  persistentNotifications,
 }
 
 /// Profile fields a directory (LDAP or SAML) can fill in, which the user
@@ -127,6 +128,16 @@ abstract class ServerFeatures with _$ServerFeatures {
     @Default(ServerFeatures.defaultBurnOnReadDuration)
     Duration burnOnReadDuration,
 
+    /// The banner the admin shows on every screen; null when off.
+    Announcement? announcement,
+
+    /// Channels can show a banner of their own.
+    @Default(false) bool channelBanners,
+
+    /// Urgent messages can notify recipients again and again until they
+    /// acknowledge or reply; null when off.
+    PersistentNotifications? persistentNotifications,
+
     /// Fields that sign-in through LDAP or SAML fills in.
     @Default({}) Set<ProfileField> ldapFields,
     @Default({}) Set<ProfileField> samlFields,
@@ -186,6 +197,33 @@ abstract class ServerFeatures with _$ServerFeatures {
     return (compareVersions(version, minVersion) ?? -1) >= 0;
   }
 }
+
+/// The admin's banner, with the colours as the server wrote them.
+typedef Announcement = ({
+  String text,
+  String? background,
+  String? foreground,
+  bool dismissible,
+});
+
+/// Pure: [announcement] unless the user dismissed this very text and the
+/// server lets them.
+Announcement? announcementToShow(
+  Announcement? announcement,
+  String? dismissed,
+) =>
+    announcement != null &&
+        announcement.dismissible &&
+        announcement.text == dismissed
+    ? null
+    : announcement;
+
+/// What the server allows for persistent notifications.
+typedef PersistentNotifications = ({
+  int maxRecipients,
+  Duration interval,
+  bool forGuests,
+});
 
 /// A webapp plugin as `GET /plugins/webapp` lists it.
 typedef PluginVersion = ({String id, String version});
@@ -297,6 +335,36 @@ ServerFeatures serverFeatures({
         : ServerFeatures.defaultBurnOnReadDuration,
     townSquareReadOnly:
         licensed && config.experimentalTownSquareIsReadOnly == true,
+    announcement:
+        licensed &&
+            config.enableBanner == true &&
+            (config.bannerText ?? '').trim().isNotEmpty
+        ? (
+            text: config.bannerText!.trim(),
+            background: config.bannerColor,
+            foreground: config.bannerTextColor,
+            dismissible: config.allowBannerDismissal == true,
+          )
+        : null,
+    channelBanners: advanced,
+    persistentNotifications:
+        licensed &&
+            config.postPriority == true &&
+            on(
+              OptionalFeature.persistentNotifications,
+              config.allowPersistentNotifications,
+            )
+        ? (
+            maxRecipients: config.persistentNotificationMaxRecipients ?? 5,
+            interval: Duration(
+              minutes: switch (config.persistentNotificationIntervalMinutes) {
+                final minutes? when minutes > 0 => minutes,
+                _ => 5,
+              },
+            ),
+            forGuests: config.allowPersistentNotificationsForGuests == true,
+          )
+        : null,
     ldapFields: {
       if (config.ldapFirstNameAttributeSet == true) ProfileField.firstName,
       if (config.ldapLastNameAttributeSet == true) ProfileField.lastName,

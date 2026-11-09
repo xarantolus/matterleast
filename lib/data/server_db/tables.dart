@@ -85,6 +85,10 @@ class Channels extends Table {
   /// From the channel's stats, fetched when it is opened.
   IntColumn get memberCount => integer().nullable()();
 
+  /// The banner a licensed server shows at the top of the channel.
+  TextColumn get bannerInfo =>
+      text().nullable().map(const ChannelBannerColumn())();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

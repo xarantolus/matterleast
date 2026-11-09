@@ -51,4 +51,5 @@ const _$OptionalFeatureEnumMap = {
   OptionalFeature.bookmarks: 'bookmarks',
   OptionalFeature.profileAttributes: 'profileAttributes',
   OptionalFeature.calls: 'calls',
+  OptionalFeature.persistentNotifications: 'persistentNotifications',
 };

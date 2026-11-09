@@ -7,6 +7,7 @@ import 'package:matterleast/domain/calls.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/bookmark_bar.dart';
+import 'package:matterleast/screens/channel/channel_banner_strip.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
@@ -135,6 +136,7 @@ class ChannelScreen extends ConsumerWidget {
       header: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          ChannelBannerStrip(url: url, channelId: channelId),
           HeaderStrip(url: url, channelId: channelId),
           CallJoinBanner(
             url: url,
