@@ -12,12 +12,15 @@ License 2.0. That data is based on emoji-data
 (https://github.com/iamcal/emoji-data), Copyright (c) 2013 Cal Henderson,
 licensed under the MIT License.
 
-Matterleast is an independent rebuild of the behaviour of Mattermost Mobile
+Matterleast rebuilds the behaviour of Mattermost Mobile
 (https://github.com/mattermost/mattermost-mobile), Copyright 2015-present
-Mattermost, Inc., licensed under the Apache License 2.0. No source code
-or assets from Mattermost Mobile are included; a few short interface texts
-use the same English wording as that app. Its NOTICE file lists the
-JavaScript packages that app bundles; Matterleast bundles none of them.
+Mattermost, Inc., licensed under the Apache License 2.0. Parts of
+Matterleast are adapted from that app's source code, translated from
+TypeScript to Dart (for example the message attachment and Block Kit
+translators and renderer), and some interface texts use the same English
+wording. No assets from Mattermost Mobile are included. Its NOTICE file
+lists the JavaScript packages that app bundles; Matterleast bundles none
+of them.
 
 The REST client in lib/api/generated/ is generated from the structure
 (paths, fields and types) of Mattermost's published API description at
