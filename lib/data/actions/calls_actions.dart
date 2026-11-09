@@ -1,4 +1,5 @@
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/api/calls/livekit_wire.dart';
 import 'package:matterleast/api/json/calls.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/store/server_store.dart';
@@ -36,6 +37,36 @@ class CallsActions {
       return decodeCallsChannels(response.data);
     }),
   );
+
+  /// The plugin's version, such as `2.0.1-dev`; null when it doesn't say.
+  Future<String?> version() async {
+    final json = await api.getJsonObject('$_route/version');
+    final version = json?['version'];
+    return version is String ? version : null;
+  }
+
+  /// Asks for a place in the LiveKit call of [channelId], starting the call
+  /// when none runs.
+  Future<LiveKitSession> liveKitSession(
+    String channelId, {
+    String? title,
+    String? threadId,
+  }) async {
+    final response = await api.call(
+      () => api.dio.post<Object?>(
+        '$_route/livekit-token',
+        data: {
+          'channel_id': channelId,
+          'title': ?title,
+          'thread_id': ?threadId,
+        },
+      ),
+    );
+    final data = response.data;
+    return data is Map<String, Object?>
+        ? LiveKitSession.fromJson(data)
+        : const LiveKitSession();
+  }
 
   /// The TURN servers with credentials that last for the call; empty when
   /// the server has none to give, which is not an error.

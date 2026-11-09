@@ -173,7 +173,7 @@ class CallScreenOpen extends _$CallScreenOpen {
 
 /// Starts and joins calls.
 @Riverpod(keepAlive: true)
-CallController? callController(Ref ref) {
+CallController callController(Ref ref) {
   final controller = RtcCallController(
     sessionOf: (url) => ref.read(serverSessionProvider(url).future),
     platform: isDesktop ? DesktopCallPlatform() : PhoneCallPlatform(),

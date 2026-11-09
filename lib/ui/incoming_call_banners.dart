@@ -24,9 +24,8 @@ class IncomingCallBanners extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final controller = ref.watch(callControllerProvider);
     final servers = ref.watch(serversProvider).value;
-    if (controller == null || servers == null) return const SizedBox.shrink();
+    if (servers == null) return const SizedBox.shrink();
     final size = MediaQuery.sizeOf(context);
     final margin = isDesktop ? Spacing.md : Spacing.lg;
     final top = isDesktop
@@ -144,7 +143,6 @@ class _IncomingCall extends ConsumerWidget {
 
   Future<void> _join(BuildContext context, WidgetRef ref) async {
     final controller = ref.read(callControllerProvider);
-    if (controller == null) return;
     final navigator = ref.read(conversationRoutesProvider).navigator;
     if (navigator == null || !navigator.mounted) return;
     await joinCall(

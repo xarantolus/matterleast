@@ -67,9 +67,6 @@ class _CallScreenState extends ConsumerState<CallScreen> {
       selfId: selfId,
       admin: ref.watch(systemAdminProvider(url)).value ?? false,
     );
-    if (controller == null) {
-      return ContentPage(title: Text(title), body: const SizedBox.shrink());
-    }
     return ValueListenableBuilder(
       valueListenable: controller.connection,
       builder: (context, state, _) {

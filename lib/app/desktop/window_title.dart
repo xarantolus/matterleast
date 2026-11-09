@@ -35,7 +35,6 @@ String windowTitleText(Ref ref) {
     conversation: open?.title,
     team: team,
     unread: ref.watch(unreadCountProvider),
-    inCall:
-        controller != null && followValue(ref, controller.connection).active,
+    inCall: followValue(ref, controller.connection).active,
   );
 }

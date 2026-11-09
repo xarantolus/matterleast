@@ -67,6 +67,27 @@ void main() {
     expect(live.state.value.calls, isEmpty);
   });
 
+  test('what the media room says about a session survives a refresh', () async {
+    final live = session.connection.calls;
+    await installCallsPlugin(session);
+    await eventually(() => live.state.value.calls.containsKey(channelId));
+
+    live.setMember(channelId, 's-ann', muted: false, raisedAt: 7);
+    final ann = live.state.value.calls[channelId]!.sessions['s-ann']!;
+    expect((ann.muted, ann.raisedHand), (false, 7));
+
+    live.reconnected();
+    await afterWork();
+    final after = live.state.value.calls[channelId]!.sessions['s-ann']!;
+    expect((after.muted, after.raisedHand), (false, 7));
+
+    live.clearMembers(channelId);
+    live.reconnected();
+    await eventually(
+      () => live.state.value.calls[channelId]!.sessions['s-ann']!.muted,
+    );
+  });
+
   test('after a reconnect the server\'s account replaces ours', () async {
     final live = session.connection.calls;
     await installCallsPlugin(session);

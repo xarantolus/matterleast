@@ -25,7 +25,6 @@ class CurrentCallBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.watch(callControllerProvider);
-    if (controller == null) return child;
     final onScreen = ref.watch(callScreenOpenProvider) > 0;
     return Actions(
       actions: {

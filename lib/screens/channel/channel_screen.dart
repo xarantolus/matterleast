@@ -120,7 +120,7 @@ class ChannelScreen extends ConsumerWidget {
         ),
       ),
       actions: [
-        if (calls != null && callAction != CallAction.none)
+        if (callAction != CallAction.none)
           IconButton(
             tooltip: callAction == CallAction.join ? 'Join call' : 'Start call',
             icon: const Icon(Icons.call_outlined),

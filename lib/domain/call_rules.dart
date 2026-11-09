@@ -10,6 +10,7 @@ class CallTimings {
     this.answerTimeout = const Duration(seconds: 3),
     this.connectTimeout = const Duration(seconds: 15),
     this.joinTimeout = const Duration(seconds: 8),
+    this.roomConnectTimeout = const Duration(seconds: 30),
     this.lockWait = const Duration(seconds: 5),
     this.lockRetry = const Duration(milliseconds: 50),
     this.restartLockWait = const Duration(seconds: 1),
@@ -23,6 +24,9 @@ class CallTimings {
     this.missedPongs = 3,
     this.maxRestarts = 3,
   });
+
+  /// How long joining a LiveKit room may take.
+  final Duration roomConnectTimeout;
 
   /// How long after a drop the calls socket may take to be back.
   final Duration reconnectBudget;
