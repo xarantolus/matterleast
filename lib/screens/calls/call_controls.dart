@@ -69,6 +69,9 @@ class CallControls extends ConsumerWidget {
                   ),
                   if (connection.routes.length > 1)
                     _RouteControl(controller: controller, state: connection),
+                  if (connection.inputs.length > 1 ||
+                      connection.outputs.length > 1)
+                    _DeviceControl(controller: controller, state: connection),
                   _Control(
                     label: handUp ? 'Lower hand' : 'Raise hand',
                     tooltip: handUp ? 'Lower hand' : 'Raise hand',
@@ -211,4 +214,48 @@ class _RouteControl extends StatelessWidget {
       Text('Audio', style: Theme.of(context).textTheme.labelSmall),
     ],
   );
+}
+
+/// The desktop's microphones and speakers, one menu for both.
+class _DeviceControl extends StatelessWidget {
+  const _DeviceControl({required this.controller, required this.state});
+
+  final CallController controller;
+  final CallConnection state;
+
+  @override
+  Widget build(BuildContext context) {
+    final heading = Theme.of(context).textTheme.labelMedium;
+    PopupMenuEntry<({bool input, String id})> title(String text) =>
+        PopupMenuItem(enabled: false, child: Text(text, style: heading));
+    PopupMenuEntry<({bool input, String id})> item(
+      AudioDevice device, {
+      required bool input,
+      required AudioDevice? chosen,
+    }) => CheckedPopupMenuItem(
+      value: (input: input, id: device.id),
+      checked: device == chosen,
+      child: Text(device.label),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PopupMenuButton<({bool input, String id})>(
+          tooltip: 'Microphone and speaker',
+          icon: const Icon(Icons.headset_mic),
+          onSelected: (pick) =>
+              controller.setDevice(input: pick.input, id: pick.id),
+          itemBuilder: (_) => [
+            if (state.inputs.isNotEmpty) title('Microphone'),
+            for (final d in state.inputs)
+              item(d, input: true, chosen: state.input),
+            if (state.outputs.isNotEmpty) title('Speaker'),
+            for (final d in state.outputs)
+              item(d, input: false, chosen: state.output),
+          ],
+        ),
+        Text('Devices', style: Theme.of(context).textTheme.labelSmall),
+      ],
+    );
+  }
 }

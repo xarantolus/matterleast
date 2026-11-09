@@ -107,9 +107,16 @@ CloseAction closeAction({required bool closeToTray, required bool hasTray}) =>
 
 /// Pure: the window's title, such as "(3) Town Square · Lighthouse Crew –
 /// Matterleast": unread [unread] mentions and direct messages first, then
-/// the open [conversation] and its [team].
-String windowTitle({String? conversation, String? team, int? unread}) {
+/// the open [conversation] and its [team]; "In a call" leads them while
+/// [inCall].
+String windowTitle({
+  String? conversation,
+  String? team,
+  int? unread,
+  bool inCall = false,
+}) {
   final place = [
+    if (inCall) 'In a call',
     if (conversation != null && conversation.isNotEmpty) conversation,
     if (team != null && team.isNotEmpty) team,
   ].join(' · ');
