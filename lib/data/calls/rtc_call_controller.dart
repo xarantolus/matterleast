@@ -144,6 +144,14 @@ class RtcCallController implements CallController {
   Future<void> setDevice({required bool input, required String id}) =>
       _session?.setDevice(input: input, id: id) ?? Future.value();
 
+  @override
+  Future<void> setHandRaised({required bool raised}) =>
+      _session?.setHandRaised(raised: raised) ?? Future.value();
+
+  @override
+  Future<void> react(String name, String character) =>
+      _session?.react(name, character) ?? Future.value();
+
   Future<void> dispose() async {
     await _session?.dispose();
     _current.dispose();

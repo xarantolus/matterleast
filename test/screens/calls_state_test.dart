@@ -1,51 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/app/call_providers.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
-import 'package:matterleast/domain/call_connection.dart';
-import 'package:matterleast/domain/call_controller.dart';
 import 'package:matterleast/screens/channel/channel_screen.dart';
 
 import '../support/calls.dart';
+import '../support/fake_call_controller.dart';
 import '../support/fake_server.dart';
 import '../support/pump_with_server.dart';
 import '../support/test_session.dart';
-
-class _FakeCalls implements CallController {
-  @override
-  final current = ValueNotifier<CallRef?>(null);
-  @override
-  final connection = ValueNotifier(const CallConnection());
-  final joined = <String>[];
-  final started = <String>[];
-
-  @override
-  Future<void> join(String url, String channelId) async =>
-      joined.add(channelId);
-
-  @override
-  Future<void> start(
-    String url,
-    String channelId, {
-    String? title,
-    String? rootId,
-  }) async => started.add(channelId);
-
-  @override
-  Future<void> leave() async {}
-
-  @override
-  Future<void> setMuted({required bool muted}) async {}
-
-  @override
-  Future<void> setRoute(AudioRoute route) async {}
-
-  @override
-  Future<void> setDevice({required bool input, required String id}) async {}
-}
 
 const _postId = 'cp000000000000000000000p01';
 
@@ -102,12 +67,12 @@ Future<void> _seed(
 }
 
 void main() {
-  late _FakeCalls calls;
+  late FakeCallController calls;
   var channels = <Object?>[];
   var config = callsConfigJson();
 
   setUp(() {
-    calls = _FakeCalls();
+    calls = FakeCallController();
     config = callsConfigJson();
     channels = [
       callsChannelJson(

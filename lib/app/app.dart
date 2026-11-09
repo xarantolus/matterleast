@@ -12,6 +12,7 @@ import 'package:matterleast/app/touchpad_navigation.dart';
 import 'package:matterleast/app/ui_zoom.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/ui/current_call_bar.dart';
 import 'package:matterleast/ui/keyboard_focus_rings.dart';
 import 'package:matterleast/ui/message_display.dart';
 import 'package:matterleast/ui/notice_banner_layer.dart';
@@ -51,9 +52,11 @@ class MatterleastApp extends ConsumerWidget {
                   child: AppShortcuts(
                     child: MouseNavigation(
                       child: TouchpadNavigation(
-                        child: isDesktop
-                            ? MiddleAutoscroll(child: child!)
-                            : child!,
+                        child: CurrentCallBar(
+                          child: isDesktop
+                              ? MiddleAutoscroll(child: child!)
+                              : child!,
+                        ),
                       ),
                     ),
                   ),

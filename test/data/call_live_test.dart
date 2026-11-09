@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 
@@ -12,6 +13,7 @@ void main() {
   late ServerSession session;
   var channels = <Object?>[];
   Reply? Function(SeenRequest)? failWith;
+  var config = callsConfigJson();
 
   setUp(() async {
     (server, session) = await startServerSession();
@@ -19,11 +21,12 @@ void main() {
       callsChannelJson(channelId, call: callJson(people: ['ann'])),
     ];
     failWith = null;
+    config = callsConfigJson(ringing: true);
     server.handle = (r) {
       final failure = failWith?.call(r);
       if (failure != null) return failure;
       return switch (r.path) {
-        '$callsRoute/config' => ok(callsConfigJson()),
+        '$callsRoute/config' => ok(config),
         '$callsRoute/channels' => ok(channels),
         _ => emptyAnswer(r),
       };
@@ -115,5 +118,91 @@ void main() {
     await afterWork();
     expect(live.state.value.calls.containsKey(channelId), isTrue);
     expect((await session.db.features()).calls, isTrue);
+  });
+
+  group('ringing', () {
+    const dm = 'dm0000000000000000000000d1';
+
+    Future<void> ready({String type = 'D'}) async {
+      await session.store.applyChannels(
+        channels: [
+          api.Channel.fromJson({'id': dm, 'type': type, 'name': 'a__b'}),
+        ],
+        members: const [],
+      );
+      await installCallsPlugin(session);
+      await eventually(() => session.connection.calls.config.value != null);
+    }
+
+    void started({String owner = 'ann'}) => session.connection.receive(
+      CallStartedEvent(dm, id: 'c1', ownerId: owner, hostId: owner),
+    );
+
+    test(
+      'a direct message call that starts live rings until it ends',
+      () async {
+        await ready();
+        final live = session.connection.calls;
+        started();
+        await eventually(() => live.incoming.value.containsKey(dm));
+
+        session.connection.receive(const CallEndedEvent(dm));
+        expect(live.incoming.value, isEmpty);
+      },
+    );
+
+    test('joining it or ignoring it stops the ring', () async {
+      await ready();
+      final live = session.connection.calls;
+      started();
+      await eventually(() => live.incoming.value.containsKey(dm));
+      session.connection.receive(
+        const CallJoinedEvent(dm, sessionId: 's-me', userId: meId),
+      );
+      await eventually(() => live.incoming.value.isEmpty);
+
+      started();
+      await eventually(() => live.incoming.value.containsKey(dm));
+      live.dismiss(dm);
+      expect(live.incoming.value, isEmpty);
+    });
+
+    test('a call the user started does not ring', () async {
+      await ready();
+      final live = session.connection.calls;
+      started(owner: meId);
+      await afterWork();
+      expect(live.incoming.value, isEmpty);
+    });
+
+    test('where ringing is off nothing rings', () async {
+      config = callsConfigJson(ringing: false);
+      await ready();
+      started();
+      await afterWork();
+      expect(session.connection.calls.incoming.value, isEmpty);
+    });
+
+    test('a call found by a refresh does not ring', () async {
+      channels = [
+        callsChannelJson(dm, call: callJson(people: ['ann'])),
+      ];
+      await ready();
+      await eventually(
+        () => session.connection.calls.state.value.calls.containsKey(dm),
+      );
+      expect(session.connection.calls.incoming.value, isEmpty);
+    });
+  });
+
+  test('a reaction shows on its person', () async {
+    final live = session.connection.calls;
+    await installCallsPlugin(session);
+    await eventually(() => live.state.value.calls.containsKey(channelId));
+
+    session.connection.receive(
+      const CallReactionEvent(channelId, sessionId: 's-ann', emoji: 'tada'),
+    );
+    expect(live.reactions.value, {'s-ann': 'tada'});
   });
 }

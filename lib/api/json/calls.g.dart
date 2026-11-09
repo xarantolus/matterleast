@@ -80,7 +80,14 @@ CallEventData _$CallEventDataFromJson(Map<String, dynamic> json) =>
       userId: const LenientString().fromJson(json['user_id']),
       sessionId: const LenientString().fromJson(json['session_id']),
       raisedHand: const LenientInt().fromJson(json['raised_hand']),
+      emoji: const _EmojiIn().fromJson(json['emoji']),
       call: const _CallInString().fromJson(json['call']),
+    );
+
+CallEmojiData _$CallEmojiDataFromJson(Map<String, dynamic> json) =>
+    CallEmojiData(
+      name: const LenientString().fromJson(json['name']),
+      literal: const LenientString().fromJson(json['literal']),
     );
 
 CallPostProps _$CallPostPropsFromJson(Map<String, dynamic> json) =>

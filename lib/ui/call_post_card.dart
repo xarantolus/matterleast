@@ -8,6 +8,7 @@ import 'package:matterleast/domain/call_controller.dart';
 import 'package:matterleast/domain/calls.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/time_labels.dart';
+import 'package:matterleast/ui/call_actions_ui.dart';
 import 'package:matterleast/ui/call_participants.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -154,9 +155,10 @@ class CallJoinButton extends StatelessWidget {
     builder: (context, current, _) {
       final here = current?.url == url && current?.channelId == channelId;
       return FilledButton.icon(
-        onPressed: here ? null : () => controller.join(url, channelId),
+        onPressed: () =>
+            joinCall(context, controller, url: url, channelId: channelId),
         icon: const Icon(Icons.call, size: 18),
-        label: Text(here ? 'Joined' : 'Join'),
+        label: Text(here ? 'Open' : 'Join'),
       );
     },
   );

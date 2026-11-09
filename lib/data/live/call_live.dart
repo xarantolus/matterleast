@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:matterleast/api/json/calls.dart';
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/data/actions/calls_actions.dart';
+import 'package:matterleast/domain/call_ui_rules.dart';
 import 'package:matterleast/domain/calls.dart';
 import 'package:matterleast/log.dart';
 
@@ -15,6 +16,9 @@ class CallLive {
     required this.actions,
     required Stream<bool> available,
     required this.ensureUsers,
+    required this.channelTypeOf,
+    required this.selfId,
+    this.reactionFor = const Duration(seconds: 5),
   }) {
     _availability = available.listen(_availabilityChanged);
   }
@@ -24,7 +28,24 @@ class CallLive {
   /// Fetches the people in calls so their names and pictures show.
   final Future<void> Function(Iterable<String> ids) ensureUsers;
 
+  /// The type of a channel (`D`, `G`, …) from the database; null if unknown.
+  final Future<String?> Function(String channelId) channelTypeOf;
+
+  /// The signed-in user's id; null before it is known.
+  final Future<String?> Function() selfId;
+
+  /// How long a reaction shows.
+  final Duration reactionFor;
+
   final state = ValueNotifier(const CallsState());
+
+  /// The emoji each session reacted with, until it expires.
+  final reactions = ValueNotifier(const <String, String>{});
+
+  /// Calls that ring the user, by channel, that the user didn't join or
+  /// dismiss; they exist from the live start of the call until it ends.
+  final incoming = ValueNotifier(const <String, ActiveCall>{});
+  final _reactionTimers = <String, Timer>{};
 
   /// The server's Calls settings; null until they arrived.
   final config = ValueNotifier<CallsConfig?>(null);
@@ -44,6 +65,7 @@ class CallLive {
     } else {
       state.value = const CallsState();
       config.value = null;
+      incoming.value = const {};
     }
   }
 
@@ -58,6 +80,59 @@ class CallLive {
       unawaited(refreshChannel(event.channelId));
     }
     if (event is CallJoinedEvent) unawaited(_people([event.userId]));
+    switch (event) {
+      case CallReactionEvent():
+        _react(event.sessionId, event.emoji);
+      case CallStartedEvent():
+        unawaited(_ring(event));
+      case CallEndedEvent() || CallNoticeDismissedEvent():
+        dismiss(event.channelId);
+      case CallJoinedEvent():
+        unawaited(_joined(event));
+      default:
+    }
+  }
+
+  void _react(String sessionId, String emoji) {
+    reactions.value = {...reactions.value, sessionId: emoji};
+    _reactionTimers[sessionId]?.cancel();
+    _reactionTimers[sessionId] = Timer(reactionFor, () {
+      _reactionTimers.remove(sessionId);
+      reactions.value = {
+        for (final e in reactions.value.entries)
+          if (e.key != sessionId) e.key: e.value,
+      };
+    });
+  }
+
+  Future<void> _ring(CallStartedEvent event) async {
+    try {
+      final rings = callRings(
+        config: config.value,
+        channelType: await channelTypeOf(event.channelId),
+        ownerId: event.ownerId,
+        selfId: await selfId(),
+      );
+      if (_closed || !rings) return;
+      final call = state.value.calls[event.channelId];
+      if (call == null || call.id != event.id) return;
+      incoming.value = {...incoming.value, event.channelId: call};
+    } on Object catch (e) {
+      Log.warn('calls', 'ring check failed: ${e.runtimeType}');
+    }
+  }
+
+  Future<void> _joined(CallJoinedEvent event) async {
+    if (event.userId == await selfId()) dismiss(event.channelId);
+  }
+
+  /// Stops offering the call in [channelId] as incoming.
+  void dismiss(String channelId) {
+    if (!incoming.value.containsKey(channelId)) return;
+    incoming.value = {
+      for (final e in incoming.value.entries)
+        if (e.key != channelId) e.key: e.value,
+    };
   }
 
   /// The socket is back after events may have been missed.
@@ -141,7 +216,12 @@ class CallLive {
   void close() {
     _closed = true;
     unawaited(_availability.cancel());
+    for (final t in _reactionTimers.values) {
+      t.cancel();
+    }
     state.dispose();
     config.dispose();
+    reactions.dispose();
+    incoming.dispose();
   }
 }

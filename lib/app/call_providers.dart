@@ -10,6 +10,7 @@ import 'package:matterleast/data/calls/call_peer.dart';
 import 'package:matterleast/data/calls/call_platform.dart';
 import 'package:matterleast/data/calls/rtc_call_controller.dart';
 import 'package:matterleast/domain/call_controller.dart';
+import 'package:matterleast/domain/call_ui_rules.dart';
 import 'package:matterleast/domain/calls.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -84,6 +85,90 @@ CallAction callActionIn(
     live: ref.watch(callInChannelProvider(url, channelId)) != null,
     admin: ref.watch(systemAdminProvider(url)).value ?? false,
   );
+}
+
+/// Who is in the call of [channelId], in the order they joined.
+@riverpod
+SessionIds callSessionIds(Ref ref, String url, String channelId) => ref.watch(
+  callsStateProvider(
+    url,
+  ).select((state) => SessionIds([...?state.calls[channelId]?.sessions.keys])),
+);
+
+/// One person's connection to the call of [channelId].
+@riverpod
+CallSession? callSessionOf(
+  Ref ref,
+  String url,
+  String channelId,
+  String sessionId,
+) => ref.watch(
+  callsStateProvider(url)
+      .select((state) => state.calls[channelId]?.sessions[sessionId]),
+);
+
+/// The host of the call of [channelId].
+@riverpod
+String? callHost(Ref ref, String url, String channelId) => ref.watch(
+  callsStateProvider(url).select((state) => state.calls[channelId]?.hostId),
+);
+
+/// How many hands are up in the call of [channelId].
+@riverpod
+int callHandsUp(Ref ref, String url, String channelId) => ref.watch(
+  callsStateProvider(url).select(
+    (state) =>
+        [...?state.calls[channelId]?.sessions.values]
+            .where((s) => s.raisedHand > 0)
+            .length,
+  ),
+);
+
+/// The session that shares its screen in the call of [channelId], if any.
+@riverpod
+String callScreenSharer(Ref ref, String url, String channelId) => ref.watch(
+  callsStateProvider(url)
+      .select((state) => state.calls[channelId]?.screenSharingSessionId ?? ''),
+);
+
+/// The emoji [sessionId] shows right now.
+@riverpod
+String? callReaction(Ref ref, String url, String sessionId) {
+  final session = ref.watch(serverSessionProvider(url)).value;
+  if (session == null) return null;
+  return ref.watch(
+    _reactionsProvider(url).select((reactions) => reactions[sessionId]),
+  );
+}
+
+@riverpod
+Map<String, String> _reactions(Ref ref, String url) {
+  final session = ref.watch(serverSessionProvider(url)).value;
+  return session == null
+      ? const {}
+      : followValue(ref, session.connection.calls.reactions);
+}
+
+/// The calls that ring the user on [url]'s server, by channel.
+@riverpod
+Map<String, ActiveCall> incomingCalls(Ref ref, String url) {
+  final session = ref.watch(serverSessionProvider(url)).value;
+  return session == null
+      ? const {}
+      : followValue(ref, session.connection.calls.incoming);
+}
+
+/// Whether the call screen is the page the user looks at; the bar hides
+/// then.
+@Riverpod(keepAlive: true)
+class CallScreenOpen extends _$CallScreenOpen {
+  @override
+  int build() => 0;
+
+  void opened() => state++;
+  void closed() {
+    if (ref.mounted) state--;
+  }
 }
 
 /// Starts and joins calls.

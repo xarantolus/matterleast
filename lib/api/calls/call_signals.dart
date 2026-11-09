@@ -214,3 +214,11 @@ DcMessage decodeDc(Uint8List bytes) {
     return const DcUnknown(0);
   }
 }
+
+/// The JSON the plugin wants for a reaction: the short name and the code
+/// points of the character, in hex joined by `-`.
+String reactionJson(String name, String character) => jsonEncode({
+  'name': name,
+  'unified': [for (final rune in character.runes) rune.toRadixString(16)]
+      .join('-'),
+});

@@ -189,7 +189,9 @@ CallsState applyCallEvent(CallsState state, CallsEvent event) {
           : state;
     case CallHostMuteEvent() ||
         CallHostLowerHandEvent() ||
-        CallHostRemovedEvent():
+        CallHostRemovedEvent() ||
+        CallReactionEvent() ||
+        CallNoticeDismissedEvent():
       return state;
     case CallsEnabledEvent():
       return state.enabled[channel] == event.enabled

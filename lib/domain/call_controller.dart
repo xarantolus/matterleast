@@ -35,4 +35,11 @@ abstract interface class CallController {
 
   /// Picks the microphone or speaker on a desktop.
   Future<void> setDevice({required bool input, required String id});
+
+  /// Raises or lowers the user's hand.
+  Future<void> setHandRaised({required bool raised});
+
+  /// Shows [name], a standard emoji's short name written as [character], to
+  /// everyone in the call.
+  Future<void> react(String name, String character);
 }
