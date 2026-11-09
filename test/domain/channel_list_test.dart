@@ -422,11 +422,11 @@ void main() {
         status: status,
         serverName: 'Harbour',
         host: 'chat.example.test',
-        liveUpdatesDown: true,
+        liveNotice: 'Connecting…',
       );
       expect(
         (down(const SyncIdle()) as ChannelListReady).notice,
-        'Reconnecting…',
+        'Connecting…',
       );
       expect(
         (down(offline) as ChannelListReady).notice,

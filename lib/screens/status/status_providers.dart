@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/views/status_views.dart';
+import 'package:matterleast/domain/live_notice.dart';
 import 'package:matterleast/domain/server_status.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -30,6 +31,7 @@ Stream<SocketState> socketState(Ref ref, String url) async* {
 Stream<bool> socketDown(Ref ref, String url) async* {
   final session = await ref.watch(serverSessionProvider(url).future);
   final state = session.connection.state;
+  final delay = ref.watch(socketDownGraceProvider);
   final changes = StreamController<bool>();
   Timer? grace;
   void push() {
@@ -38,7 +40,7 @@ Stream<bool> socketDown(Ref ref, String url) async* {
       grace = null;
       changes.add(false);
     } else {
-      grace ??= Timer(socketDownGrace, () => changes.add(true));
+      grace ??= Timer(delay, () => changes.add(true));
     }
   }
 
@@ -53,8 +55,16 @@ Stream<bool> socketDown(Ref ref, String url) async* {
   yield* changes.stream.distinct();
 }
 
-/// How long the WebSocket may be down before the list says so.
-const socketDownGrace = Duration(seconds: 5);
+/// What to say about the live connection, once it has been down a while.
+@riverpod
+String? serverLiveNotice(Ref ref, String url) => liveNotice(
+  socketDown: ref.watch(socketDownProvider(url)).value ?? false,
+  offline: ref.watch(offlineProvider),
+);
+
+/// How long the WebSocket may be down before screens say so.
+@riverpod
+Duration socketDownGrace(Ref ref) => const Duration(seconds: 5);
 
 /// What the server has stored on this device.
 @riverpod

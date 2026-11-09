@@ -8,6 +8,7 @@ import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/screens/thread/thread_providers.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/try_action.dart';
@@ -59,7 +60,11 @@ class ThreadScreen extends ConsumerWidget {
           child: Clickable(
             child: ConversationTitle(
               title: 'Thread',
-              subtitle: threadSubtitle(state, channelName: channelName),
+              subtitle: threadSubtitle(
+                state,
+                channelName: channelName,
+                liveNotice: ref.watch(serverLiveNoticeProvider(url)),
+              ),
               opensSubtitle: true,
             ),
           ),

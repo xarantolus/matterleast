@@ -16,6 +16,7 @@ import 'package:matterleast/screens/home/home_state.dart';
 import 'package:matterleast/screens/home/open_item.dart';
 import 'package:matterleast/screens/reopen_swipe.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
+import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/screens/threads/thread_options_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/empty_state.dart';
@@ -126,6 +127,7 @@ class _HomePaneState extends ConsumerState<HomePane> {
           host: hostOf(s.url),
           inbox: ref.watch(serverInboxProvider(s.url)).value,
           status: ref.watch(syncStatusProvider(s.url)).value,
+          liveNotice: ref.watch(serverLiveNoticeProvider(s.url)),
         ),
     ]);
     final names = {

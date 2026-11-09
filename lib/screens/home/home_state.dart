@@ -32,6 +32,7 @@ typedef HomeServer = ({
   String host,
   ServerInbox? inbox,
   SyncStatus? status,
+  String? liveNotice,
 });
 
 /// Pure: Home's state for [filter] from every server's rows and sync status.
@@ -60,8 +61,17 @@ HomeState homeState(InboxFilter filter, List<HomeServer> servers) {
       : status.offline
       ? 'offline'
       : "couldn't refresh";
+  final down = [
+    for (final s in servers)
+      if (s.liveNotice != null) s,
+  ];
   final notice = switch (failed) {
-    [] => null,
+    [] => switch (down) {
+      [] => null,
+      _ when down.length == servers.length => down.first.liveNotice,
+      [final only] => '${only.name} · ${only.liveNotice}',
+      _ => 'Some servers · ${down.first.liveNotice}',
+    },
     [final first, ...] when failed.length == servers.length =>
       '${_capitalised(problem(first.status))} · showing saved data',
     [final only] =>
