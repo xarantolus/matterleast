@@ -13,7 +13,8 @@ part 'live_providers.g.dart';
 @Riverpod(keepAlive: true)
 DateTime Function() wallClock(Ref ref) => DateTime.now;
 
-T _follow<T>(Ref ref, ValueListenable<T> value) {
+/// The value of [value] now; the provider rebuilds when it changes.
+T followValue<T>(Ref ref, ValueListenable<T> value) {
   value.addListener(ref.invalidateSelf);
   ref.onDispose(() => value.removeListener(ref.invalidateSelf));
   return value.value;
@@ -24,7 +25,7 @@ T _follow<T>(Ref ref, ValueListenable<T> value) {
 @riverpod
 bool serverLive(Ref ref, String url) {
   final session = ref.watch(serverSessionProvider(url)).value;
-  return session != null && _follow(ref, session.connection.live);
+  return session != null && followValue(ref, session.connection.live);
 }
 
 /// The people on [url]'s server whose presence came fresh from it since it
@@ -34,7 +35,7 @@ Set<String> knownPresence(Ref ref, String url) {
   final session = ref.watch(serverSessionProvider(url)).value;
   return session == null
       ? const {}
-      : _follow(ref, session.connection.presence.known);
+      : followValue(ref, session.connection.presence.known);
 }
 
 /// Whether [userId]'s presence on [url]'s server is current: it shows
@@ -48,7 +49,7 @@ bool presenceKnown(Ref ref, String url, String userId) =>
 @riverpod
 bool serverCatchingUp(Ref ref, String url) {
   final session = ref.watch(serverSessionProvider(url)).value;
-  return session != null && _follow(ref, session.connection.catchingUp);
+  return session != null && followValue(ref, session.connection.catchingUp);
 }
 
 /// Everyone's custom status on [url]'s server as stored, expired or not.

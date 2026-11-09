@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:matterleast/domain/calls.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/people.dart';
 import 'package:matterleast/domain/preview_text.dart';
@@ -93,6 +94,10 @@ typedef InboxPost = ({
   DateTime createAt,
   String message,
   bool deleted,
+  String type,
+
+  /// A call post whose call is over.
+  bool callEnded,
 
   /// The server's copy couldn't be read; there is no message to show.
   bool unreadable,
@@ -102,6 +107,9 @@ typedef InboxPost = ({
 String postPreview(InboxPost post) {
   if (post.deleted) return '(message deleted)';
   if (post.unreadable) return "(message couldn't be shown)";
+  if (post.type == callPostType) {
+    return post.callEnded ? 'Call ended' : 'Call started';
+  }
   return previewText(post.message);
 }
 

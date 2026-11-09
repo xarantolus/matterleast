@@ -8,6 +8,7 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/today_provider.dart';
 import 'package:matterleast/domain/agent_stream.dart';
 import 'package:matterleast/domain/burn_on_read.dart';
+import 'package:matterleast/domain/calls.dart';
 import 'package:matterleast/domain/post_details.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/post_list.dart';
@@ -20,6 +21,7 @@ import 'package:matterleast/screens/you/user_profile_sheet.dart';
 import 'package:matterleast/ui/acknowledge_button.dart';
 import 'package:matterleast/ui/agent_post.dart';
 import 'package:matterleast/ui/burn_on_read_view.dart';
+import 'package:matterleast/ui/call_post_card.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/custom_status_emoji.dart';
@@ -181,6 +183,7 @@ class PostTile extends StatelessWidget {
         !post.unreadable &&
         !(post.type == burnOnReadType && !post.deleted) &&
         !(agentPostTypes.contains(post.type) && !post.deleted) &&
+        !(post.type == callPostType && !post.deleted) &&
         !(post.type == agentMentionReminderType && !post.deleted);
     final spoken = textBody && !post.deleted && post.message.isNotEmpty
         ? spokenMessage(
@@ -315,6 +318,12 @@ class PostTile extends StatelessWidget {
           )
         else if (post.type == agentMentionReminderType && !post.deleted)
           AgentMentionReminder(post: post)
+        else if (post.type == callPostType && !post.deleted)
+          _Selectable(
+            onContextMenu: onContextMenu,
+            onTap: onTap,
+            child: CallPostCard(post: post),
+          )
         else
           ExcludeSemantics(
             excluding: mergedText,
