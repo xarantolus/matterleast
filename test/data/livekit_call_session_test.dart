@@ -268,7 +268,7 @@ void main() {
 
   test('the room ending, removing us or breaking says why', () {
     for (final (why, end, phase) in [
-      (RoomLeft.callEnded, CallEnd.hostEnded, CallPhase.ended),
+      (RoomLeft.callEnded, CallEnd.ended, CallPhase.ended),
       (RoomLeft.removed, CallEnd.removed, CallPhase.ended),
       (RoomLeft.other, null, CallPhase.failed),
     ]) {
