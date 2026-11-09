@@ -274,16 +274,14 @@ void main() {
     await h.close(tester);
   });
 
-  testWidgets('a call the host ended says so and only offers Close', (
-    tester,
-  ) async {
+  testWidgets('an ended call says so and only offers Close', (tester) async {
     calls.connectionState.value = inCall(
       phase: CallPhase.ended,
-      endedBy: CallEnd.hostEnded,
+      endedBy: CallEnd.ended,
     );
     final h = await open(tester);
 
-    expect(find.text('The host ended the call'), findsWidgets);
+    expect(find.text('Call ended'), findsWidgets);
     expect(find.text('Close'), findsOneWidget);
     expect(find.byTooltip('Mute'), findsNothing);
     await h.close(tester);
@@ -379,7 +377,7 @@ void main() {
     );
     final h = await open(tester, home: _elsewhere);
 
-    expect(find.text('The host removed you from the call'), findsOneWidget);
+    expect(find.text('You were removed from the call'), findsOneWidget);
     expect(find.byTooltip('Dismiss'), findsOneWidget);
     await h.close(tester);
   });
@@ -394,6 +392,24 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('ann'), findsOneWidget);
+    await h.close(tester);
+  });
+
+  testWidgets('the bar holds its text at three times the text size', (
+    tester,
+  ) async {
+    calls.connectionState.value = inCall();
+    tester.platformDispatcher.textScaleFactorTestValue = 3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final h = await open(tester, home: _elsewhere);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Boats'), findsOneWidget);
+    final barBottom = tester.getTopLeft(find.byType(Scaffold)).dy;
+    expect(
+      tester.getBottomLeft(find.text('In the call · muted')).dy,
+      lessThanOrEqualTo(barBottom),
+    );
     await h.close(tester);
   });
 }

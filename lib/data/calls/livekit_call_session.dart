@@ -161,7 +161,7 @@ class LiveKitCallSession implements CallRun {
       case RoomClosed(:final why):
         switch (why) {
           case RoomLeft.callEnded:
-            unawaited(_finish(CallEnd.hostEnded));
+            unawaited(_finish(CallEnd.ended));
           case RoomLeft.removed:
             unawaited(_finish(CallEnd.removed));
           case RoomLeft.other:

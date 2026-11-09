@@ -74,18 +74,15 @@ class _Bar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.paddingOf(context).top;
-    final scale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.3);
-    return SizedBox(
-      height: top + 56 * scale,
-      // Buttons with tooltips need an overlay, which only exists inside the
-      // navigator below.
-      child: Overlay(
-        initialEntries: [
-          OverlayEntry(
-            builder: (_) => _BarContent(controller: controller, top: top),
-          ),
-        ],
-      ),
+    // Buttons with tooltips need an overlay, which only exists inside the
+    // navigator below. Its one entry sizes it.
+    return Overlay(
+      initialEntries: [
+        OverlayEntry(
+          canSizeOverlay: true,
+          builder: (_) => _BarContent(controller: controller, top: top),
+        ),
+      ],
     );
   }
 }
@@ -124,61 +121,64 @@ class _BarContent extends ConsumerWidget {
             padding: EdgeInsets.only(top: top),
             child: InkWell(
               onTap: over ? null : open,
-              child: Padding(
-                padding: const EdgeInsets.only(left: Spacing.lg),
-                child: Row(
-                  spacing: Spacing.sm,
-                  children: [
-                    Icon(
-                      over ? Icons.call_end : Icons.call,
-                      size: 20,
-                      color: fg,
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (title != null)
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 56),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: Spacing.lg),
+                  child: Row(
+                    spacing: Spacing.sm,
+                    children: [
+                      Icon(
+                        over ? Icons.call_end : Icons.call,
+                        size: 20,
+                        color: fg,
+                      ),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (title != null)
+                              Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(color: fg),
+                              ),
                             Text(
-                              title,
+                              callConnectionText(state),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleSmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: fg),
                             ),
-                          Text(
-                            callConnectionText(state),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: fg),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    if (failed)
-                      TextButton(
-                        style: TextButton.styleFrom(foregroundColor: fg),
-                        onPressed: () =>
-                            controller.join(state.url, state.channelId),
-                        child: const Text('Retry'),
-                      ),
-                    if (!over && !state.listenOnly)
+                      if (failed)
+                        TextButton(
+                          style: TextButton.styleFrom(foregroundColor: fg),
+                          onPressed: () =>
+                              controller.join(state.url, state.channelId),
+                          child: const Text('Retry'),
+                        ),
+                      if (!over && !state.listenOnly)
+                        IconButton(
+                          style: button,
+                          tooltip: state.muted ? 'Unmute' : 'Mute',
+                          icon: Icon(state.muted ? Icons.mic_off : Icons.mic),
+                          onPressed: () =>
+                              controller.setMuted(muted: !state.muted),
+                        ),
                       IconButton(
                         style: button,
-                        tooltip: state.muted ? 'Unmute' : 'Mute',
-                        icon: Icon(state.muted ? Icons.mic_off : Icons.mic),
-                        onPressed: () =>
-                            controller.setMuted(muted: !state.muted),
+                        tooltip: over ? 'Dismiss' : 'Leave call',
+                        icon: Icon(over ? Icons.close : Icons.call_end),
+                        onPressed: controller.leave,
                       ),
-                    IconButton(
-                      style: button,
-                      tooltip: over ? 'Dismiss' : 'Leave call',
-                      icon: Icon(over ? Icons.close : Icons.call_end),
-                      onPressed: controller.leave,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

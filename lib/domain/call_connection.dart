@@ -27,7 +27,7 @@ enum CallPhase {
 }
 
 /// Why a call is over without the user leaving it.
-enum CallEnd { left, hostEnded, removed, sessionLost, signedOut }
+enum CallEnd { left, ended, removed, sessionLost, signedOut }
 
 enum CallFailureKind {
   /// The server said no, in its own words.

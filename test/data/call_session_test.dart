@@ -571,7 +571,7 @@ void main() {
         h.connect(async.flushMicrotasks);
         h.line.emit(LineCall(CallEndedEvent(CallHarness.channel)));
         async.flushMicrotasks();
-        expect(h.state.endedBy, CallEnd.hostEnded);
+        expect(h.state.endedBy, CallEnd.ended);
       });
     });
   });
