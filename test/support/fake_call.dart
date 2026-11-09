@@ -195,6 +195,16 @@ class FakeCallPlatform implements CallPlatform {
 
   @override
   Future<void> setRoute(AudioRoute route) async => appliedRoutes.add(route);
+
+  var deviceList = noDevices;
+  final selected = <({bool input, String id})>[];
+
+  @override
+  Future<AudioDevices> devices() async => deviceList;
+
+  @override
+  Future<void> selectDevice({required bool input, required String id}) async =>
+      selected.add((input: input, id: id));
 }
 
 /// A call session wired to fakes. [log] shows the order of what went to the

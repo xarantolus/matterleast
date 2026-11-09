@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/call_providers.dart';
+import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/domain/call_connection.dart';
 import 'package:matterleast/domain/call_controller.dart';
 import 'package:matterleast/domain/call_presentation.dart';
@@ -26,26 +27,39 @@ class CurrentCallBar extends ConsumerWidget {
     final controller = ref.watch(callControllerProvider);
     if (controller == null) return child;
     final onScreen = ref.watch(callScreenOpenProvider) > 0;
-    return ValueListenableBuilder(
-      valueListenable: controller.connection,
-      builder: (context, state, _) {
-        final show =
-            !onScreen && state.phase != CallPhase.idle && _text(state) != '';
-        return Column(
-          children: [
-            show
-                ? _Bar(controller: controller, state: state)
-                : const SizedBox.shrink(),
-            Expanded(
-              child: MediaQuery.removePadding(
-                context: context,
-                removeTop: show,
-                child: child,
-              ),
-            ),
-          ],
-        );
+    return Actions(
+      actions: {
+        ToggleMuteIntent: EnabledAction<ToggleMuteIntent>(
+          enabled: () {
+            final state = controller.connection.value;
+            return state.active && !state.listenOnly;
+          },
+          onInvoke: (_) => unawaited(
+            controller.setMuted(muted: !controller.connection.value.muted),
+          ),
+        ),
       },
+      child: ValueListenableBuilder(
+        valueListenable: controller.connection,
+        builder: (context, state, _) {
+          final show =
+              !onScreen && state.phase != CallPhase.idle && _text(state) != '';
+          return Column(
+            children: [
+              show
+                  ? _Bar(controller: controller, state: state)
+                  : const SizedBox.shrink(),
+              Expanded(
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeTop: show,
+                  child: child,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 

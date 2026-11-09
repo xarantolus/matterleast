@@ -90,6 +90,8 @@ class CallSession {
   var _muting = false;
   var _firstConnected = false;
   AudioRoute? _pinned;
+  String? _pinnedInput;
+  String? _pinnedOutput;
 
   var _remoteReady = false;
   final _remoteQueue = <CandidateInit>[];
@@ -833,19 +835,56 @@ class CallSession {
     await _syncRoutes();
   }
 
+  /// The user picks a microphone or speaker; it stays picked while it is
+  /// there.
+  Future<void> setDevice({required bool input, required String id}) async {
+    if (_over) return;
+    if (input) {
+      _pinnedInput = id;
+    } else {
+      _pinnedOutput = id;
+    }
+    await _syncRoutes();
+  }
+
   Future<void> _syncRoutes() async {
     if (_over || !_firstConnected) return;
     final routes = await platform.routes();
+    final devices = await platform.devices();
     if (_over) return;
     _pinned = keepPin(_pinned, routes);
+    _pinnedInput = keepDevicePin(_pinnedInput, devices.inputs);
+    _pinnedOutput = keepDevicePin(_pinnedOutput, devices.outputs);
     final chosen = chooseRoute(
       available: routes,
       pinned: _pinned,
       direct: direct,
     );
-    final previous = connection.value.route;
-    _set((c) => c.copyWith(routes: routes, route: chosen));
-    if (chosen != null && chosen != previous) await platform.setRoute(chosen);
+    final input = chooseDevice(available: devices.inputs, pinned: _pinnedInput);
+    final output = chooseDevice(
+      available: devices.outputs,
+      pinned: _pinnedOutput,
+    );
+    final before = connection.value;
+    _set(
+      (c) => c.copyWith(
+        routes: routes,
+        route: chosen,
+        inputs: devices.inputs,
+        outputs: devices.outputs,
+        input: input,
+        output: output,
+      ),
+    );
+    if (chosen != null && chosen != before.route) {
+      await platform.setRoute(chosen);
+    }
+    if (input != null && input != before.input) {
+      await platform.selectDevice(input: true, id: input.id);
+    }
+    if (output != null && output != before.output) {
+      await platform.selectDevice(input: false, id: output.id);
+    }
   }
 
   Future<void> _logStats() async {

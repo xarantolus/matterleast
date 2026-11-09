@@ -49,6 +49,12 @@ class FakeCallController implements CallController {
   @override
   Future<void> setRoute(AudioRoute route) async {}
 
+  final devices = <({bool input, String id})>[];
+
+  @override
+  Future<void> setDevice({required bool input, required String id}) async =>
+      devices.add((input: input, id: id));
+
   @override
   Future<void> setHandRaised({required bool raised}) async => hand.add(raised);
 

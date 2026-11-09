@@ -1,8 +1,10 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/websocket/server_events.dart';
 import 'package:matterleast/app/call_providers.dart';
+import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/domain/call_connection.dart';
 import 'package:matterleast/screens/calls/call_screen.dart';
 import 'package:matterleast/ui/current_call_bar.dart';
@@ -16,6 +18,11 @@ import '../support/test_session.dart';
 Widget _elsewhere(String url) => const CurrentCallBar(
   child: Scaffold(body: Center(child: Text('Elsewhere'))),
 );
+
+const desktopPlatforms = TargetPlatformVariant({
+  TargetPlatform.linux,
+  TargetPlatform.windows,
+});
 
 void main() {
   late FakeCallController calls;
@@ -165,6 +172,38 @@ void main() {
     await h.close(tester);
   });
 
+  testWidgets('on a desktop the microphone and speaker can be picked', (
+    tester,
+  ) async {
+    const builtIn = (id: 'default', label: 'Built-in audio');
+    const headset = (id: 'usb', label: 'USB headset');
+    calls.connectionState.value = inCall().copyWith(
+      routes: const [],
+      route: null,
+      inputs: const [builtIn],
+      outputs: const [builtIn, headset],
+      input: builtIn,
+      output: builtIn,
+    );
+    final h = await open(tester);
+
+    await tester.tap(find.byTooltip('Microphone and speaker'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('USB headset'));
+    await tester.pumpAndSettle();
+
+    expect(calls.devices, [(input: false, id: 'usb')]);
+    await h.close(tester);
+  });
+
+  testWidgets('a phone shows no device menu', (tester) async {
+    calls.connectionState.value = inCall();
+    final h = await open(tester);
+
+    expect(find.byTooltip('Microphone and speaker'), findsNothing);
+    await h.close(tester);
+  });
+
   testWidgets('the host can remove someone, after asking', (tester) async {
     people = [meId, 'ann'];
     calls.connectionState.value = inCall();
@@ -273,6 +312,56 @@ void main() {
     expect(find.byTooltip('Leave call'), findsOneWidget);
     await h.close(tester);
   });
+
+  testWidgets('Ctrl+Shift+Space mutes and unmutes from any screen', (
+    tester,
+  ) async {
+    calls.connectionState.value = inCall();
+    final h = await open(
+      tester,
+      home: (_) => AppShortcuts(
+        child: CurrentCallBar(
+          child: Focus(
+            autofocus: true,
+            child: const Scaffold(body: Text('Elsewhere')),
+          ),
+        ),
+      ),
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+
+    expect(calls.muting, [false]);
+    await h.close(tester);
+  }, variant: desktopPlatforms);
+
+  testWidgets('listening only, the mute shortcut does nothing', (tester) async {
+    calls.connectionState.value = inCall(listenOnly: true);
+    final h = await open(
+      tester,
+      home: (_) => AppShortcuts(
+        child: CurrentCallBar(
+          child: Focus(
+            autofocus: true,
+            child: const Scaffold(body: Text('Elsewhere')),
+          ),
+        ),
+      ),
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+
+    expect(calls.muting, isEmpty);
+    await h.close(tester);
+  }, variant: desktopPlatforms);
 
   testWidgets('the bar is gone while no call runs', (tester) async {
     final h = await open(tester, home: _elsewhere);
