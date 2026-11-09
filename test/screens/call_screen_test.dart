@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -18,6 +19,11 @@ import '../support/test_session.dart';
 Widget _elsewhere(String url) => const CurrentCallBar(
   child: Scaffold(body: Center(child: Text('Elsewhere'))),
 );
+
+const desktopPlatforms = TargetPlatformVariant({
+  TargetPlatform.linux,
+  TargetPlatform.windows,
+});
 
 void main() {
   late FakeCallController calls;
@@ -332,7 +338,7 @@ void main() {
 
     expect(calls.muting, [false]);
     await h.close(tester);
-  });
+  }, variant: desktopPlatforms);
 
   testWidgets('listening only, the mute shortcut does nothing', (tester) async {
     calls.connectionState.value = inCall(listenOnly: true);
@@ -356,7 +362,7 @@ void main() {
 
     expect(calls.muting, isEmpty);
     await h.close(tester);
-  });
+  }, variant: desktopPlatforms);
 
   testWidgets('the bar is gone while no call runs', (tester) async {
     final h = await open(tester, home: _elsewhere);

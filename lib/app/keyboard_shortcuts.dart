@@ -210,11 +210,6 @@ class AppShortcut {
 /// do).
 const appShortcuts = <AppShortcut>[
   AppShortcut(
-    'Mute or unmute in a call',
-    SingleActivator(LogicalKeyboardKey.space, control: true, shift: true),
-    ToggleMuteIntent(),
-  ),
-  AppShortcut(
     'Find a channel or person',
     SingleActivator(LogicalKeyboardKey.keyK, control: true),
     OpenSwitcherIntent(),
@@ -460,6 +455,11 @@ const appShortcuts = <AppShortcut>[
     SingleActivator(LogicalKeyboardKey.digit0, control: true),
     ZoomIntent(ZoomChange.reset),
     alsoKeys: [SingleActivator(LogicalKeyboardKey.numpad0, control: true)],
+  ),
+  AppShortcut(
+    'Mute or unmute in a call',
+    SingleActivator(LogicalKeyboardKey.space, control: true, shift: true),
+    ToggleMuteIntent(),
   ),
   AppShortcut(
     'Keyboard shortcuts',
