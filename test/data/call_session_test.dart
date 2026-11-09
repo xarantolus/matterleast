@@ -608,4 +608,52 @@ void main() {
       }, direct: false);
     });
   });
+
+  group('the audio devices', () {
+    const speakers = (id: 'default', label: 'Default');
+    const headset = (id: 'headset', label: 'Headset');
+    const mic = (id: 'default', label: 'Default');
+
+    test('are the system defaults until the user picks', () {
+      run((async, h) {
+        h.platform.routeList = [];
+        h.platform.deviceList = (inputs: [mic], outputs: [headset, speakers]);
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        expect(h.state.input, mic);
+        expect(h.state.output, speakers);
+        expect(h.platform.selected, [
+          (input: true, id: 'default'),
+          (input: false, id: 'default'),
+        ]);
+      });
+    });
+
+    test('a pick holds while it is there and falls back when it goes', () {
+      run((async, h) {
+        h.platform.routeList = [];
+        h.platform.deviceList = (inputs: [mic], outputs: [headset, speakers]);
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        unawaited(h.session.setDevice(input: false, id: 'headset'));
+        async.flushMicrotasks();
+        expect(h.state.output, headset);
+        expect(h.platform.selected.last, (input: false, id: 'headset'));
+        h.platform.deviceList = (inputs: [mic], outputs: [speakers]);
+        h.platform.routesChange.add(null);
+        async.flushMicrotasks();
+        expect(h.state.output, speakers);
+        expect(h.platform.selected.last, (input: false, id: 'default'));
+      });
+    });
+
+    test('a phone offers none and selects none', () {
+      run((async, h) {
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        expect(h.state.outputs, isEmpty);
+        expect(h.platform.selected, isEmpty);
+      });
+    });
+  });
 }

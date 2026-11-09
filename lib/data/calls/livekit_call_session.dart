@@ -54,6 +54,8 @@ class LiveKitCallSession implements CallRun {
   var _botUserId = '';
   var _speaking = <String>{};
   AudioRoute? _pinned;
+  String? _pinnedInput;
+  String? _pinnedOutput;
 
   void _set(CallConnection Function(CallConnection) edit) {
     final next = edit(connection.value);
@@ -300,19 +302,55 @@ class LiveKitCallSession implements CallRun {
     await _syncRoutes();
   }
 
+  @override
+  Future<void> setDevice({required bool input, required String id}) async {
+    if (_finished) return;
+    if (input) {
+      _pinnedInput = id;
+    } else {
+      _pinnedOutput = id;
+    }
+    await _syncRoutes();
+  }
+
   Future<void> _syncRoutes() async {
     if (_finished || connection.value.phase != CallPhase.connected) return;
     final routes = await platform.routes();
+    final devices = await platform.devices();
     if (_finished) return;
     _pinned = keepPin(_pinned, routes);
+    _pinnedInput = keepDevicePin(_pinnedInput, devices.inputs);
+    _pinnedOutput = keepDevicePin(_pinnedOutput, devices.outputs);
     final chosen = chooseRoute(
       available: routes,
       pinned: _pinned,
       direct: direct,
     );
-    final previous = connection.value.route;
-    _set((c) => c.copyWith(routes: routes, route: chosen));
-    if (chosen != null && chosen != previous) await platform.setRoute(chosen);
+    final input = chooseDevice(available: devices.inputs, pinned: _pinnedInput);
+    final output = chooseDevice(
+      available: devices.outputs,
+      pinned: _pinnedOutput,
+    );
+    final before = connection.value;
+    _set(
+      (c) => c.copyWith(
+        routes: routes,
+        route: chosen,
+        inputs: devices.inputs,
+        outputs: devices.outputs,
+        input: input,
+        output: output,
+      ),
+    );
+    if (chosen != null && chosen != before.route) {
+      await platform.setRoute(chosen);
+    }
+    if (input != null && input != before.input) {
+      await platform.selectDevice(input: true, id: input.id);
+    }
+    if (output != null && output != before.output) {
+      await platform.selectDevice(input: false, id: output.id);
+    }
   }
 
   @override

@@ -84,7 +84,6 @@ void main() {
 
   Future<ServerHarness> open(
     WidgetTester tester, {
-    bool withController = true,
     String type = 'O',
     bool ended = false,
   }) async {
@@ -96,9 +95,7 @@ void main() {
         _ => emptyAnswer(r),
       },
       seed: (session) => _seed(session, type: type, ended: ended),
-      overrides: (url) => [
-        callControllerProvider.overrideWithValue(withController ? calls : null),
-      ],
+      overrides: (url) => [callControllerProvider.overrideWithValue(calls)],
       home: (url) =>
           ChannelScreen(url: url, channelId: channelId, title: 'Boats'),
     );
@@ -147,17 +144,6 @@ void main() {
 
     expect(find.text('Call ended'), findsOneWidget);
     expect(find.textContaining('Lasted 5 minutes'), findsOneWidget);
-    await h.close(tester);
-  });
-
-  testWidgets('without a way to join, a call is shown but not joinable', (
-    tester,
-  ) async {
-    final h = await open(tester, withController: false);
-
-    expect(find.text('Call in progress · 2'), findsOneWidget);
-    expect(find.text('Join'), findsNothing);
-    expect(find.byTooltip('Join call'), findsNothing);
     await h.close(tester);
   });
 

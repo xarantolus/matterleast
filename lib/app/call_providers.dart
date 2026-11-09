@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:matterleast/api/json/calls.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/permission_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/calls/call_peer.dart';
 import 'package:matterleast/data/calls/call_platform.dart';
@@ -170,12 +171,12 @@ class CallScreenOpen extends _$CallScreenOpen {
   }
 }
 
-/// Starts and joins calls; null where the app can't.
+/// Starts and joins calls.
 @Riverpod(keepAlive: true)
-CallController? callController(Ref ref) {
+CallController callController(Ref ref) {
   final controller = RtcCallController(
     sessionOf: (url) => ref.read(serverSessionProvider(url).future),
-    platform: PhoneCallPlatform(),
+    platform: isDesktop ? DesktopCallPlatform() : PhoneCallPlatform(),
     createPeer: WebRtcPeer.new,
     network: ref.watch(networkStateProvider),
   );

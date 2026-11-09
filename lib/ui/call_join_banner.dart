@@ -37,7 +37,7 @@ class CallJoinBanner extends ConsumerWidget {
   Widget _banner(
     BuildContext context,
     List<String> people,
-    CallController? controller,
+    CallController controller,
   ) {
     final tokens = context.tokens;
     return ColoredBox(
@@ -60,12 +60,11 @@ class CallJoinBanner extends ConsumerWidget {
               ),
             ),
             CallParticipants(url: url, userIds: people),
-            if (controller != null)
-              CallJoinButton(
-                controller: controller,
-                url: url,
-                channelId: channelId,
-              ),
+            CallJoinButton(
+              controller: controller,
+              url: url,
+              channelId: channelId,
+            ),
           ],
         ),
       ),

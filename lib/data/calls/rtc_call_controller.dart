@@ -188,6 +188,10 @@ class RtcCallController implements CallController {
       _session?.setRoute(route) ?? Future.value();
 
   @override
+  Future<void> setDevice({required bool input, required String id}) =>
+      _session?.setDevice(input: input, id: id) ?? Future.value();
+
+  @override
   Future<void> setHandRaised({required bool raised}) =>
       _session?.setHandRaised(raised: raised) ?? Future.value();
 

@@ -85,6 +85,11 @@ class FocusComposerIntent extends AppIntent {
   const FocusComposerIntent();
 }
 
+/// Mutes or unmutes the microphone in the call the user is in.
+class ToggleMuteIntent extends AppIntent {
+  const ToggleMuteIntent();
+}
+
 enum Format { bold, italic, strike, link, code }
 
 /// Formats the composer's selection.
@@ -452,6 +457,11 @@ const appShortcuts = <AppShortcut>[
     alsoKeys: [SingleActivator(LogicalKeyboardKey.numpad0, control: true)],
   ),
   AppShortcut(
+    'Mute or unmute in a call',
+    SingleActivator(LogicalKeyboardKey.space, control: true, shift: true),
+    ToggleMuteIntent(),
+  ),
+  AppShortcut(
     'Keyboard shortcuts',
     SingleActivator(LogicalKeyboardKey.slash, control: true),
     ShowShortcutsIntent(),
@@ -472,6 +482,7 @@ final _keyNames = {
   LogicalKeyboardKey.escape: 'Esc',
   LogicalKeyboardKey.slash: '/',
   LogicalKeyboardKey.equal: '+',
+  LogicalKeyboardKey.space: 'Space',
 };
 
 /// Pure: [keys] as people write them, such as "Ctrl+Shift+A".

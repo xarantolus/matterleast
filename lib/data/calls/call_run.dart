@@ -12,6 +12,7 @@ abstract interface class CallRun {
   Future<void> leave();
   Future<void> setMuted({required bool muted});
   Future<void> setRoute(AudioRoute route);
+  Future<void> setDevice({required bool input, required String id});
   Future<void> setHandRaised({required bool raised});
   Future<void> react(String name, String character);
   Future<void> dispose();
