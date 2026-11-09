@@ -306,17 +306,21 @@ void main() {
     await h.close(tester);
   });
 
-  testWidgets('the bar holds its text at the largest text size', (
+  testWidgets('the bar holds its text at three times the text size', (
     tester,
   ) async {
     calls.connectionState.value = inCall();
-    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    tester.platformDispatcher.textScaleFactorTestValue = 3;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     final h = await open(tester, home: _elsewhere);
 
     expect(tester.takeException(), isNull);
-    expect(find.text('In the call · muted'), findsOneWidget);
-    expect(find.text('Elsewhere'), findsOneWidget);
+    expect(find.text('Boats'), findsOneWidget);
+    final barBottom = tester.getTopLeft(find.byType(Scaffold)).dy;
+    expect(
+      tester.getBottomLeft(find.text('In the call · muted')).dy,
+      lessThanOrEqualTo(barBottom),
+    );
     await h.close(tester);
   });
 }
