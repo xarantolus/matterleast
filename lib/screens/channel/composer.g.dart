@@ -8,27 +8,28 @@ part of 'composer.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Whether messages can be marked important or urgent, and whether they
-/// can ask for acknowledgement.
+/// Whether messages can be marked important or urgent, whether they can
+/// ask for acknowledgement, and the persistent notifications this person
+/// may use.
 
 @ProviderFor(postPriorityOptions)
 final postPriorityOptionsProvider = PostPriorityOptionsFamily._();
 
-/// Whether messages can be marked important or urgent, and whether they
-/// can ask for acknowledgement.
+/// Whether messages can be marked important or urgent, whether they can
+/// ask for acknowledgement, and the persistent notifications this person
+/// may use.
 
 final class PostPriorityOptionsProvider
     extends
         $FunctionalProvider<
-          AsyncValue<({bool acknowledgements, bool priority})>,
-          ({bool acknowledgements, bool priority}),
-          Stream<({bool acknowledgements, bool priority})>
+          AsyncValue<PriorityOptions>,
+          PriorityOptions,
+          Stream<PriorityOptions>
         >
-    with
-        $FutureModifier<({bool acknowledgements, bool priority})>,
-        $StreamProvider<({bool acknowledgements, bool priority})> {
-  /// Whether messages can be marked important or urgent, and whether they
-  /// can ask for acknowledgement.
+    with $FutureModifier<PriorityOptions>, $StreamProvider<PriorityOptions> {
+  /// Whether messages can be marked important or urgent, whether they can
+  /// ask for acknowledgement, and the persistent notifications this person
+  /// may use.
   PostPriorityOptionsProvider._({
     required PostPriorityOptionsFamily super.from,
     required String super.argument,
@@ -52,11 +53,12 @@ final class PostPriorityOptionsProvider
 
   @$internal
   @override
-  $StreamProviderElement<({bool acknowledgements, bool priority})>
-  $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
+  $StreamProviderElement<PriorityOptions> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
 
   @override
-  Stream<({bool acknowledgements, bool priority})> create(Ref ref) {
+  Stream<PriorityOptions> create(Ref ref) {
     final argument = this.argument as String;
     return postPriorityOptions(ref, argument);
   }
@@ -73,17 +75,14 @@ final class PostPriorityOptionsProvider
 }
 
 String _$postPriorityOptionsHash() =>
-    r'43d89998088f6aeb6b0382e65a2b16b801685a47';
+    r'c18efafe4b1dedbcb209eb7ea28f4af970edde2e';
 
-/// Whether messages can be marked important or urgent, and whether they
-/// can ask for acknowledgement.
+/// Whether messages can be marked important or urgent, whether they can
+/// ask for acknowledgement, and the persistent notifications this person
+/// may use.
 
 final class PostPriorityOptionsFamily extends $Family
-    with
-        $FunctionalFamilyOverride<
-          Stream<({bool acknowledgements, bool priority})>,
-          String
-        > {
+    with $FunctionalFamilyOverride<Stream<PriorityOptions>, String> {
   PostPriorityOptionsFamily._()
     : super(
         retry: null,
@@ -93,8 +92,9 @@ final class PostPriorityOptionsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Whether messages can be marked important or urgent, and whether they
-  /// can ask for acknowledgement.
+  /// Whether messages can be marked important or urgent, whether they can
+  /// ask for acknowledgement, and the persistent notifications this person
+  /// may use.
 
   PostPriorityOptionsProvider call(String url) =>
       PostPriorityOptionsProvider._(argument: url, from: this);

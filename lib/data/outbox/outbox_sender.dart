@@ -128,9 +128,11 @@ class OutboxSender {
     }
     await store.markSending(id);
     final metadata = _metadata(post.metadataJson);
+    final features = await db.features();
     final priority = _priority(
       metadata?.priority,
-      acknowledgements: (await db.features()).acknowledgements,
+      acknowledgements: features.acknowledgements,
+      persistent: features.persistentNotifications != null,
     );
     final api.Post created;
     try {
@@ -154,6 +156,9 @@ class OutboxSender {
     } on ApiError catch (e) {
       if (priority?.requestedAck == true && endpointUnavailable(e)) {
         await store.turnOff(OptionalFeature.acknowledgements);
+      }
+      if (priority?.persistentNotifications == true && endpointUnavailable(e)) {
+        await store.turnOff(OptionalFeature.persistentNotifications);
       }
       if (post.type == burnOnReadType && endpointUnavailable(e)) {
         await store.turnOff(OptionalFeature.burnOnRead);
@@ -213,18 +218,21 @@ class OutboxSender {
     }
   }
 
-  /// The priority to send; a request for acknowledgement goes only while
-  /// the server takes them, so a retry after it said no still sends.
+  /// The priority to send; a request for acknowledgement or persistent
+  /// notifications goes only while the server takes them, so a retry after
+  /// it said no still sends.
   static api.PostPriority? _priority(
     api.PostPriority? priority, {
     required bool acknowledgements,
+    required bool persistent,
   }) {
-    if (priority == null || acknowledgements || priority.requestedAck != true) {
-      return priority;
-    }
+    if (priority == null) return null;
     return api.PostPriority(
       priority: priority.priority,
-      persistentNotifications: priority.persistentNotifications,
+      requestedAck: acknowledgements ? priority.requestedAck : null,
+      persistentNotifications: persistent
+          ? priority.persistentNotifications
+          : null,
     );
   }
 
