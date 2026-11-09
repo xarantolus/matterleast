@@ -8,6 +8,7 @@ import 'package:matterleast/screens/channel/bookmark_bar.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
+import 'package:matterleast/screens/channel/channel_banner_strip.dart';
 import 'package:matterleast/screens/channel/header_strip.dart';
 import 'package:matterleast/screens/channel_info/channel_info_screen.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
@@ -119,6 +120,7 @@ class ChannelScreen extends ConsumerWidget {
       header: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          ChannelBannerStrip(url: url, channelId: channelId),
           HeaderStrip(url: url, channelId: channelId),
           BookmarkBar(url: url, channelId: channelId),
         ],

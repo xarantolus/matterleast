@@ -201,6 +201,18 @@ typedef Announcement = ({
   bool dismissible,
 });
 
+/// Pure: [announcement] unless the user dismissed this very text and the
+/// server lets them.
+Announcement? announcementToShow(
+  Announcement? announcement,
+  String? dismissed,
+) =>
+    announcement != null &&
+        announcement.dismissible &&
+        announcement.text == dismissed
+    ? null
+    : announcement;
+
 /// What the server allows for persistent notifications.
 typedef PersistentNotifications = ({
   int maxRecipients,
