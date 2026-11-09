@@ -149,12 +149,15 @@ CallsState applyCallEvent(CallsState state, CallsEvent event) {
       if (call == null || !call.sessions.containsKey(event.sessionId)) {
         return state;
       }
+      final rest = {
+        for (final e in call.sessions.entries)
+          if (e.key != event.sessionId) e.key: e.value,
+      };
+      // The plugin sends no call_end when the last person leaves.
+      if (rest.isEmpty) return withCall(null);
       return withCall(
         call.copyWith(
-          sessions: {
-            for (final e in call.sessions.entries)
-              if (e.key != event.sessionId) e.key: e.value,
-          },
+          sessions: rest,
           screenSharingSessionId: call.screenSharingSessionId == event.sessionId
               ? ''
               : call.screenSharingSessionId,

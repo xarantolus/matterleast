@@ -106,7 +106,7 @@ void main() {
     });
 
     test('screen sharing follows the session that shares', () {
-      var state = _joined(_started(), 's1', 'ann');
+      var state = _joined(_joined(_started(), 's1', 'ann'), 's2', 'bob');
       state = applyCallEvent(
         state,
         const CallScreenEvent(_channel, sessionId: 's1', sharing: true),
@@ -117,6 +117,15 @@ void main() {
         const CallLeftEvent(_channel, sessionId: 's1'),
       );
       expect(state.calls[_channel]!.screenSharingSessionId, '');
+    });
+
+    test('the call is over when the last person leaves', () {
+      var state = _joined(_started(), 's1', 'ann');
+      state = applyCallEvent(
+        state,
+        const CallLeftEvent(_channel, sessionId: 's1'),
+      );
+      expect(state.calls, isEmpty);
     });
 
     test('switching calls on and off is kept per channel', () {
