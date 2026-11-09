@@ -39,6 +39,7 @@ class ServerConnection {
     Duration pingInterval = const Duration(seconds: 30),
     Duration Function(int failCount) retryDelayOf = jitteredRetryDelay,
     this.catchUpLimit = const Duration(seconds: 20),
+    Duration callsRefreshEvery = const Duration(minutes: 20),
     this.online,
   }) {
     drafts = DraftSync(server: server, store: store);
@@ -69,6 +70,7 @@ class ServerConnection {
         return row?.type;
       },
       selfId: () async => (await store.db.watchMe().first)?.id,
+      refreshEvery: callsRefreshEvery,
     );
     events = EventApplier(
       server: server,

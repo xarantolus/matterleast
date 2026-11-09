@@ -44,6 +44,7 @@ class ServerSession {
     required this.token,
     Duration Function(int failCount) retryDelayOf = jitteredRetryDelay,
     Duration catchUpLimit = const Duration(seconds: 20),
+    Duration callsRefreshEvery = const Duration(minutes: 20),
     this.watchInterval = const Duration(milliseconds: 100),
     this.draftDelay = const Duration(milliseconds: 500),
     this.network,
@@ -58,6 +59,7 @@ class ServerSession {
       token: token,
       retryDelayOf: retryDelayOf,
       catchUpLimit: catchUpLimit,
+      callsRefreshEvery: callsRefreshEvery,
       online: network?.online,
     );
     outbox = OutboxSender(

@@ -38,6 +38,7 @@ class CallLive implements CallRoomFeed {
     required this.channelTypeOf,
     required this.selfId,
     this.reactionFor = const Duration(seconds: 5),
+    this.refreshEvery = const Duration(minutes: 20),
   }) {
     _availability = available.listen(_availabilityChanged);
   }
@@ -56,6 +57,10 @@ class CallLive implements CallRoomFeed {
   /// How long a reaction shows.
   final Duration reactionFor;
 
+  /// How often the settings and calls are fetched again while the plugin is
+  /// there, as the official app refreshes its copy of the settings.
+  final Duration refreshEvery;
+
   final state = ValueNotifier(const CallsState());
 
   /// The emoji each session reacted with, until it expires.
@@ -70,6 +75,7 @@ class CallLive implements CallRoomFeed {
   final config = ValueNotifier<CallsConfig?>(null);
 
   late final StreamSubscription<bool> _availability;
+  Timer? _refreshTimer;
   var _available = false;
   var _closed = false;
   var _changes = 0;
@@ -81,7 +87,9 @@ class CallLive implements CallRoomFeed {
     _available = available;
     if (available) {
       unawaited(refresh());
+      _refreshTimer = Timer.periodic(refreshEvery, (_) => unawaited(refresh()));
     } else {
+      _refreshTimer?.cancel();
       state.value = const CallsState();
       config.value = null;
       incoming.value = const {};
@@ -283,6 +291,7 @@ class CallLive implements CallRoomFeed {
 
   void close() {
     _closed = true;
+    _refreshTimer?.cancel();
     unawaited(_availability.cancel());
     for (final t in _reactionTimers.values) {
       t.cancel();
