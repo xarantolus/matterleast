@@ -26,6 +26,13 @@ Future<ComposerActions> composerActions(Ref ref, String url) async {
   return actions;
 }
 
+/// Why an unsent post failed, in the server's words; null when it said
+/// nothing.
+@riverpod
+Future<String?> sendFailure(Ref ref, String url, String pendingPostId) async =>
+    (await ref.watch(composerActionsProvider(url).future))
+        .sendFailure(pendingPostId);
+
 /// Posts the server refused for good, as they happen, to tell the user.
 @riverpod
 Stream<PostRejected> rejectedPosts(Ref ref, String url) async* {

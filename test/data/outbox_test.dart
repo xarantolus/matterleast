@@ -288,6 +288,45 @@ void main() {
     expect((await posts()).every((p) => p.sendState == null), isTrue);
   });
 
+  test('a request for persistent notifications the server lacks fails once, '
+      'stops being offered, and the retry goes without it', () async {
+    await session.store.applyConfig('client_config', {
+      'PostPriority': 'true',
+      'AllowPersistentNotifications': 'true',
+    });
+    await session.store.applyConfig('license', {'IsLicensed': 'true'});
+    answers.add((
+      status: 501,
+      json: {
+        'id': 'api.post.persistent_notification.license.app_error',
+        'message': 'Persistent notifications are not available.',
+      },
+      headers: const <String, String>{},
+    ));
+    final id = await actions.send(
+      channelId,
+      message: 'read this now',
+      priority: const api.PostPriority(
+        priority: api.PostPriorityPriority.urgent,
+        persistentNotifications: true,
+      ),
+    );
+    await sender.start();
+    final failed = await (db().select(
+      db().outbox,
+    )..where((o) => o.pendingPostId.equals(id))).getSingle();
+    expect(failed.state, 'failed');
+    expect(failed.lastError, 'Persistent notifications are not available.');
+    expect((await db().features()).persistentNotifications, isNull);
+
+    await actions.retry(id);
+    await sender.kick();
+    final retried = sends().last.body['metadata'] as Map<String, Object?>?;
+    final priority = retried?['priority'] as Map<String, Object?>?;
+    expect(priority?['priority'], 'urgent');
+    expect(priority?['persistent_notifications'], isNot(true));
+  });
+
   test('a post to a deleted thread is removed and reported', () async {
     answers.add(error(400, 'api.post.create_post.root_id.app_error'));
     final reported = sender.rejected.first;
