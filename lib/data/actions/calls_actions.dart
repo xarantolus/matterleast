@@ -37,6 +37,20 @@ class CallsActions {
     }),
   );
 
+  /// The TURN servers with credentials that last for the call; empty when
+  /// the server has none to give, which is not an error.
+  Future<List<CallsIceServer>> turnCredentials() async {
+    try {
+      final response = await api.call(
+        () => api.dio.get<Object?>('$_route/turn-credentials'),
+      );
+      return decodeCallsIceServers(response.data);
+    } on ServerError catch (e) {
+      if (e.statusCode == 403 || e.statusCode == 404) return const [];
+      rethrow;
+    }
+  }
+
   Future<CallsChannelState?> channel(String id) => _unlessAbsent(() async {
     final json = await api.coalesced(
       'calls-channel:$id',

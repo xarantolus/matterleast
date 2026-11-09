@@ -663,6 +663,24 @@ final class CallStateEvent extends CallsEvent {
   final CallSnapshot call;
 }
 
+/// The host asks the session [sessionId] to mute.
+final class CallHostMuteEvent extends CallsEvent {
+  const CallHostMuteEvent(super.channelId, {required this.sessionId});
+  final String sessionId;
+}
+
+/// The host lowers the hand of the session [sessionId].
+final class CallHostLowerHandEvent extends CallsEvent {
+  const CallHostLowerHandEvent(super.channelId, {required this.sessionId});
+  final String sessionId;
+}
+
+/// The host removed the session [sessionId] from the call.
+final class CallHostRemovedEvent extends CallsEvent {
+  const CallHostRemovedEvent(super.channelId, {required this.sessionId});
+  final String sessionId;
+}
+
 /// Calls were switched on or off in the channel.
 final class CallsEnabledEvent extends CallsEvent {
   const CallsEnabledEvent(super.channelId, {required this.enabled});
@@ -944,6 +962,18 @@ ServerEvent _callsEvent(SocketFrame frame, String name) {
     'call_state' when data.call != null => CallStateEvent(
       channelId,
       data.call!,
+    ),
+    'host_mute' when session.isNotEmpty => CallHostMuteEvent(
+      channelId,
+      sessionId: session,
+    ),
+    'host_lower_hand' when session.isNotEmpty => CallHostLowerHandEvent(
+      channelId,
+      sessionId: session,
+    ),
+    'host_removed' when session.isNotEmpty => CallHostRemovedEvent(
+      channelId,
+      sessionId: session,
     ),
     'channel_enable_voice' => CallsEnabledEvent(channelId, enabled: true),
     'channel_disable_voice' => CallsEnabledEvent(channelId, enabled: false),

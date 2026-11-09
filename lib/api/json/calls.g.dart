@@ -16,7 +16,23 @@ CallsConfig _$CallsConfigFromJson(Map<String, dynamic> json) => CallsConfig(
   enableRinging: const LenientBool().fromJson(json['EnableRinging']),
   maxCallParticipants: const LenientInt().fromJson(json['MaxCallParticipants']),
   allowEnableCalls: const LenientBool().fromJson(json['AllowEnableCalls']),
+  iceServers: json['ICEServersConfigs'] == null
+      ? const []
+      : decodeCallsIceServers(json['ICEServersConfigs']),
+  needsTurnCredentials: const LenientBool().fromJson(
+    json['NeedsTURNCredentials'],
+  ),
+  enableDcSignaling: const LenientBool().fromJson(json['EnableDCSignaling']),
 );
+
+CallsIceServer _$CallsIceServerFromJson(Map<String, dynamic> json) =>
+    CallsIceServer(
+      urls: json['urls'] == null
+          ? const []
+          : const LenientStringList().fromJson(json['urls']),
+      username: const LenientString().fromJson(json['username']),
+      credential: const LenientString().fromJson(json['credential']),
+    );
 
 SessionSnapshot _$SessionSnapshotFromJson(Map<String, dynamic> json) =>
     SessionSnapshot(

@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:matterleast/api/json/calls.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/permission_providers.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/calls/call_peer.dart';
+import 'package:matterleast/data/calls/call_platform.dart';
+import 'package:matterleast/data/calls/rtc_call_controller.dart';
 import 'package:matterleast/domain/call_controller.dart';
 import 'package:matterleast/domain/calls.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -80,6 +86,16 @@ CallAction callActionIn(
   );
 }
 
-/// Starts and joins calls; null while no part of the app registers one.
+/// Starts and joins calls; null where the app can't (the desktop).
 @Riverpod(keepAlive: true)
-CallController? callController(Ref ref) => null;
+CallController? callController(Ref ref) {
+  if (isDesktop) return null;
+  final controller = RtcCallController(
+    sessionOf: (url) => ref.read(serverSessionProvider(url).future),
+    platform: PhoneCallPlatform(),
+    createPeer: WebRtcPeer.new,
+    network: ref.watch(networkStateProvider),
+  );
+  ref.onDispose(() => unawaited(controller.dispose()));
+  return controller;
+}

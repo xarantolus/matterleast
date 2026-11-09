@@ -123,6 +123,24 @@ void main() {
     );
   });
 
+  test('the host acts on a session', () {
+    final mute = decode('host_mute', {
+      'channel_id': 'ch1',
+      'session_id': 's1',
+    }, channel: '') as CallHostMuteEvent;
+    expect((mute.channelId, mute.sessionId), ('ch1', 's1'));
+    expect(
+      decode('host_lower_hand', {'channel_id': 'ch1', 'session_id': 's1'}),
+      isA<CallHostLowerHandEvent>(),
+    );
+    final removed = decode('host_removed', {
+      'channel_id': 'ch1',
+      'session_id': 's1',
+      'user_id': 'ann',
+    }) as CallHostRemovedEvent;
+    expect(removed.sessionId, 's1');
+  });
+
   test('events we do not read stay unknown', () {
     expect(decode('call_job_state', {}), isA<UnknownEvent>());
   });

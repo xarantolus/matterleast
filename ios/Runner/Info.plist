@@ -71,6 +71,8 @@
 	<string>Take a photo to attach to a message.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Connect to Mattermost servers on your local network.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Talk in calls.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save pictures and videos from messages to your photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -100,6 +102,7 @@
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
+		<string>audio</string>
 		<string>fetch</string>
 	</array>
 	<key>UIFileSharingEnabled</key>

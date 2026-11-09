@@ -41,7 +41,7 @@ class ServerSession {
     required this.runner,
     required this.dbPath,
     required this.images,
-    required String? Function() token,
+    required this.token,
     Duration Function(int failCount) retryDelayOf = jitteredRetryDelay,
     Duration catchUpLimit = const Duration(seconds: 20),
     this.watchInterval = const Duration(milliseconds: 100),
@@ -72,6 +72,9 @@ class ServerSession {
   }
 
   final Uri url;
+
+  /// The session token as stored, for the sockets that carry their own.
+  final String? Function() token;
   final ServerApi api;
   final ServerDatabase db;
   final ServerStore store;
