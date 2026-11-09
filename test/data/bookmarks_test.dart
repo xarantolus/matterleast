@@ -164,6 +164,39 @@ void main() {
     expect(await bar(), ['Tides']);
   });
 
+  test('adding a file uploads it as a bookmark file and shows it', () async {
+    server.handle = (r) => switch ((r.method, r.path)) {
+      ('POST', '/api/v4/files') => ok({
+        'file_infos': [
+          {'id': 'f1', 'name': 'tides.txt', 'channel_id': channelId},
+        ],
+        'client_ids': ['c1'],
+      }),
+      ('POST', '/api/v4/channels/$channelId/bookmarks')
+          when r.body['file_id'] == 'f1' &&
+              server.seen.any(
+                (u) =>
+                    u.path == '/api/v4/files' &&
+                    u.raw.uri.queryParameters['bookmark'] == 'true',
+              ) =>
+        ok({
+          ...r.body,
+          'id': 'new1',
+          'channel_id': channelId,
+          'create_at': 5000,
+        }),
+      _ => error(500, 'unable_to_save_channel_bookmark'),
+    };
+    final bytes = utf8.encode('low at six');
+    await session.bookmarks.addFile(
+      channelId,
+      name: 'tides.txt',
+      open: () => Stream.value(bytes),
+      length: bytes.length,
+    );
+    expect(await bar(), ['tides.txt']);
+  });
+
   group('rights', () {
     BookmarkRights rights(
       String type, {

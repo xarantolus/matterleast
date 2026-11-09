@@ -16,8 +16,10 @@ Route<void> pdfRoute(
   File local, {
   required String url,
   required PostFile file,
+  required bool canCopy,
 }) => MaterialPageRoute<void>(
-  builder: (_) => PdfScreen(local: local, url: url, file: file),
+  builder: (_) =>
+      PdfScreen(local: local, url: url, file: file, canCopy: canCopy),
 );
 
 /// A downloaded PDF, page after page: pinch or double-tap zoom, text
@@ -28,12 +30,16 @@ class PdfScreen extends StatefulWidget {
     required this.local,
     required this.url,
     required this.file,
+    required this.canCopy,
     super.key,
   });
 
   final File local;
   final String url;
   final PostFile file;
+
+  /// False where the server keeps a file's contents in the app.
+  final bool canCopy;
 
   @override
   State<PdfScreen> createState() => _PdfScreenState();
@@ -218,7 +224,7 @@ class _PdfScreenState extends State<PdfScreen> {
       sizeDelegateProvider: const PdfViewerSizeDelegateProviderLegacy(
         calculateInitialZoom: _initialZoom,
       ),
-      textSelectionParams: const PdfTextSelectionParams(),
+      textSelectionParams: PdfTextSelectionParams(enabled: widget.canCopy),
       linkHandlerParams: PdfLinkHandlerParams(
         onLinkTap: _onLink,
         linkColor: colors.primary.withAlpha(24),

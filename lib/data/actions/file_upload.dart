@@ -13,7 +13,8 @@ class FileUpload {
   FileUpload._(this._cancel, this.progress, this.done);
 
   /// Starts uploading the [length] bytes [open] reads for [channelId]. [clientId] lets
-  /// the server's answer be matched to this file.
+  /// the server's answer be matched to this file; a [bookmark] file is stored
+  /// for a channel bookmark.
   factory FileUpload.start(
     ServerApi server, {
     required String channelId,
@@ -21,6 +22,7 @@ class FileUpload {
     required int length,
     required String name,
     required String clientId,
+    bool bookmark = false,
   }) {
     final cancel = CancelToken();
     final progress = StreamController<double>.broadcast();
@@ -34,6 +36,7 @@ class FileUpload {
               'client_ids': clientId,
               'files': MultipartFile.fromStream(open, length, filename: name),
             }),
+            queryParameters: bookmark ? {'bookmark': 'true'} : null,
             options: Options(
               contentType: 'multipart/form-data',
               sendTimeout: uploadTimeout,

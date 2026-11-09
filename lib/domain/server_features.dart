@@ -102,9 +102,6 @@ abstract class ServerFeatures with _$ServerFeatures {
     /// Ask before @all, @channel or @here notify a larger channel.
     @Default(false) bool confirmChannelMentions,
 
-    /// The default channel takes posts from admins only.
-    @Default(false) bool townSquareReadOnly,
-
     /// The server sends notification emails.
     @Default(false) bool emailNotifications,
 
@@ -333,8 +330,6 @@ ServerFeatures serverFeatures({
     burnOnReadDuration: burnSeconds != null && burnSeconds > 0
         ? Duration(seconds: burnSeconds)
         : ServerFeatures.defaultBurnOnReadDuration,
-    townSquareReadOnly:
-        licensed && config.experimentalTownSquareIsReadOnly == true,
     announcement:
         licensed &&
             config.enableBanner == true &&

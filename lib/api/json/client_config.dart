@@ -71,7 +71,6 @@ class ClientConfig {
     this.enableCrossTeamSearch,
     this.postEditTimeLimit,
     this.enableConfirmNotificationsToChannel,
-    this.experimentalTownSquareIsReadOnly,
     this.ldapFirstNameAttributeSet,
     this.ldapLastNameAttributeSet,
     this.ldapNicknameAttributeSet,
@@ -254,8 +253,6 @@ class ClientConfig {
   final int? postEditTimeLimit;
   @LenientBool()
   final bool? enableConfirmNotificationsToChannel;
-  @LenientBool()
-  final bool? experimentalTownSquareIsReadOnly;
   @LenientBool()
   final bool? ldapFirstNameAttributeSet;
   @LenientBool()
