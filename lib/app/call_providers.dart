@@ -89,7 +89,6 @@ CallAction callActionIn(
 /// Starts and joins calls.
 @Riverpod(keepAlive: true)
 CallController? callController(Ref ref) {
-  if (isDesktop) return null;
   final controller = RtcCallController(
     sessionOf: (url) => ref.read(serverSessionProvider(url).future),
     platform: isDesktop ? DesktopCallPlatform() : PhoneCallPlatform(),
