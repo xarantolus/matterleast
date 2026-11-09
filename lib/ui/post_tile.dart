@@ -349,10 +349,12 @@ class PostTile extends StatelessWidget {
             sentAt: post.createAt,
             leading: () => _textImages(context, details),
           ),
-        MessageImageOpener(
-          open: (url) => _openImage(context, url, details, name),
-          child: PostIntegration(post: post, details: details),
-        ),
+        // The plugin adds a text card for apps that don't know call posts.
+        if (post.type != callPostType)
+          MessageImageOpener(
+            open: (url) => _openImage(context, url, details, name),
+            child: PostIntegration(post: post, details: details),
+          ),
         ExcludeSemantics(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

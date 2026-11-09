@@ -66,6 +66,13 @@ Future<void> _seed(
           'type': 'custom_calls',
           'message': '',
           'props': {
+            'attachments': [
+              {
+                'fallback': 'Plugin card',
+                'title': 'Plugin card',
+                'text': 'Plugin card',
+              },
+            ],
             'start_at': DateTime.utc(2026, 10, 26, 8).millisecondsSinceEpoch,
             'end_at': ended
                 ? DateTime.utc(2026, 10, 26, 8, 5).millisecondsSinceEpoch
@@ -132,6 +139,7 @@ void main() {
 
     expect(find.text('Call in progress · 2'), findsOneWidget);
     expect(find.text('Call started'), findsOneWidget);
+    expect(find.text('Plugin card'), findsNothing);
     expect(find.text('Join'), findsNWidgets(2));
     await h.close(tester);
   });
