@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
@@ -11,6 +12,11 @@ import 'package:matterleast/data/calls/call_platform.dart';
 import 'package:matterleast/domain/call_connection.dart';
 import 'package:matterleast/domain/call_rules.dart';
 import 'package:matterleast/log.dart';
+
+class _LockRequest {
+  final reply = Completer<bool>();
+  var abandoned = false;
+}
 
 /// One call from the user's side: the calls socket, the media connection
 /// and what keeps them alive. It runs once; a finished call is replaced by
@@ -63,6 +69,7 @@ class CallSession {
   Timer? _joinTimer;
   Timer? _connectTimer;
   Timer? _restartWatch;
+  Timer? _networkTimer;
   Timer? _pingTimer;
   Timer? _statsTimer;
 
@@ -89,7 +96,15 @@ class CallSession {
   final _serverCandidates = <String>[];
   final _localQueue = <CandidateInit>[];
   Completer<SignalMessage>? _answer;
-  Completer<bool>? _lockReply;
+
+  /// Lock requests waiting for their answer, oldest first: the data channel
+  /// answers in order. An abandoned one still gets an answer when the path
+  /// comes back, and a grant nobody waits for is handed back at once, else
+  /// the server would keep the lock for us for good.
+  final _lockRequests = Queue<_LockRequest>();
+
+  /// A restart ran and the path has not had its time to come back yet.
+  var _awaitingRecovery = false;
   Future<void> _negotiation = Future.value();
   var _restarting = false;
   var _restarts = 0;
@@ -203,11 +218,7 @@ class CallSession {
     final began = clock.now();
     while (!_over) {
       try {
-        return await openLine(
-          connectionId: _resumeId,
-          expected: _resumeExpected,
-          originalId: _sessionId,
-        );
+        return await _openTimed();
       } on Object catch (e) {
         Log.info('calls', 'The calls socket did not open: ${e.runtimeType}');
       }
@@ -219,6 +230,23 @@ class CallSession {
       await Future<void>.delayed(step.delay);
     }
     return null;
+  }
+
+  /// A socket that is still connecting when the time is up is closed when
+  /// it arrives: a network that is coming up may stall a handshake.
+  Future<CallLine> _openTimed() {
+    final opening = openLine(
+      connectionId: _resumeId,
+      expected: _resumeExpected,
+      originalId: _sessionId,
+    );
+    return opening.timeout(
+      timings.socketOpenTimeout,
+      onTimeout: () {
+        unawaited(opening.then((line) => line.close(), onError: (Object _) {}));
+        throw TimeoutException('The calls socket did not open in time');
+      },
+    );
   }
 
   void _attach(CallLine line) {
@@ -280,6 +308,13 @@ class CallSession {
       });
       return;
     }
+    _resume(line);
+  }
+
+  /// The socket is back for the session: tells the server and catches up.
+  /// A socket that resumes the old connection gets no hello, so this runs
+  /// as soon as it opens, and a hello that follows changes nothing.
+  void _resume(CallLine line) {
     if (_afterReconnect) return;
     line.sendReconnect(
       channelId: channelId,
@@ -289,6 +324,8 @@ class CallSession {
     _afterReconnect = true;
     _droppedAt = null;
     _reconnecting = false;
+    _lineWaiter?.complete();
+    _lineWaiter = null;
     refreshState();
     _flushLocalCandidates();
     _set(
@@ -365,7 +402,7 @@ class CallSession {
       try {
         final answer = await peer.answer(sdp);
         await _flushRemote();
-        _sendSdp(sessionDescriptionJson('answer', answer));
+        await _sendSdp(sessionDescriptionJson('answer', answer));
       } on Object catch (e) {
         Log.warn('calls', 'Answering the server failed: ${e.runtimeType}');
       }
@@ -375,14 +412,29 @@ class CallSession {
   }
 
   /// Our offer goes over the data channel when the server asked for that
-  /// and it is open, else over the socket.
-  void _sendSdp(String json) {
+  /// and it is open, else over the socket, waiting for a new one while the
+  /// socket is down. False when it could not go.
+  Future<bool> _sendSdp(String json) async {
     if (_dcOpen && (_config.enableDcSignaling ?? false)) {
-      unawaited(_peer?.sendData(encodeDc(DcSdp(json))));
-    } else {
-      _line?.sendSdp(json);
+      await _peer?.sendData(encodeDc(DcSdp(json)));
+      return true;
     }
+    if (_line == null) {
+      final waiter = _lineWaiter ??= Completer<void>();
+      try {
+        await waiter.future.timeout(timings.reconnectBudget);
+      } on TimeoutException {
+        return false;
+      }
+    }
+    final line = _line;
+    if (line == null) return false;
+    line.sendSdp(json);
+    return true;
   }
+
+  /// Completes when the calls socket is back after a drop.
+  Completer<void>? _lineWaiter;
 
   Future<bool> _negotiate({bool first = false, bool iceRestart = false}) {
     final run = _negotiation.then(
@@ -400,14 +452,21 @@ class CallSession {
     for (var attempt = 0; attempt < tries && !_over; attempt++) {
       final peer = _peer;
       if (peer == null) return false;
-      final useLock = !first && _dcOpen;
-      if (useLock && !await _takeLock()) continue;
+      // A restart is for a path that may be dead, and a dead data channel
+      // grants nothing: it waits only briefly for the lock.
+      final locked =
+          !first &&
+          _dcOpen &&
+          await _takeLock(iceRestart ? timings.restartLockWait : null);
+      if (!first && _dcOpen && !locked && !iceRestart) continue;
       _remoteReady = false;
       try {
         if (iceRestart) await _refreshTurn(peer);
         final sdp = await peer.createOffer(iceRestart: iceRestart);
         final waiting = _answer = Completer<SignalMessage>();
-        _sendSdp(sessionDescriptionJson('offer', sdp));
+        if (!await _sendSdp(sessionDescriptionJson('offer', sdp))) {
+          throw TimeoutException('The calls socket did not come back');
+        }
         final reply = await waiting.future.timeout(timings.answerTimeout);
         await peer.setRemoteAnswer(reply.sdp);
         await _flushRemote();
@@ -420,7 +479,7 @@ class CallSession {
         if (!first) await _quietly(peer.rollback);
       } finally {
         _answer = null;
-        if (useLock) unawaited(_peer?.sendData(encodeDc(const DcUnlock())));
+        if (locked) unawaited(_peer?.sendData(encodeDc(const DcUnlock())));
       }
     }
     _remoteReady = true;
@@ -443,14 +502,18 @@ class CallSession {
 
   /// The signalling lock: asks until the server grants it or the wait is
   /// over.
-  Future<bool> _takeLock() async {
-    final deadline = clock.now().add(timings.lockWait);
+  Future<bool> _takeLock([Duration? wait]) async {
+    final deadline = clock.now().add(wait ?? timings.lockWait);
     while (!_over && clock.now().isBefore(deadline)) {
-      final reply = _lockReply = Completer<bool>();
+      final request = _LockRequest();
+      _lockRequests.add(request);
       unawaited(_peer?.sendData(encodeDc(const DcLockRequest())));
-      final granted = await reply.future.timeout(
+      final granted = await request.reply.future.timeout(
         deadline.difference(clock.now()),
-        onTimeout: () => false,
+        onTimeout: () {
+          request.abandoned = true;
+          return false;
+        },
       );
       if (granted) return true;
       await Future<void>.delayed(timings.lockRetry);
@@ -501,6 +564,7 @@ class CallSession {
         _peerUp = true;
         _connectTimer?.cancel();
         _restartWatch?.cancel();
+        _awaitingRecovery = false;
         _restarts = 0;
         if (_line != null || !_reconnecting) {
           _set((c) => c.copyWith(phase: CallPhase.connected));
@@ -534,8 +598,15 @@ class CallSession {
       case DcSdp(:final json):
         if (SignalMessage.parse(json) case final signal?) _onSignal(signal);
       case DcLockReply(:final granted):
-        final waiting = _lockReply;
-        if (waiting != null && !waiting.isCompleted) waiting.complete(granted);
+        if (_lockRequests.isEmpty) return;
+        final request = _lockRequests.removeFirst();
+        if (request.abandoned) {
+          if (granted) {
+            unawaited(_peer?.sendData(encodeDc(const DcUnlock())));
+          }
+        } else {
+          request.reply.complete(granted);
+        }
       case DcPing() ||
           DcLockRequest() ||
           DcUnlock() ||
@@ -566,7 +637,9 @@ class CallSession {
     final last = _lastRestart;
     switch (iceRestartStep(
       trigger: trigger,
-      restarting: _restarting,
+      restarting:
+          _restarting ||
+          (_awaitingRecovery && trigger != IceTrigger.peerFailed),
       attempts: _restarts,
       sinceLast: last == null ? null : clock.now().difference(last),
       timings: timings,
@@ -592,27 +665,43 @@ class CallSession {
     _restarting = false;
     if (_over) return;
     _restartWatch?.cancel();
+    _awaitingRecovery = true;
     _restartWatch = Timer(timings.restartWait, () {
+      _awaitingRecovery = false;
       if (!_peerUp) _trigger(IceTrigger.peerDisconnected);
     });
   }
 
+  /// Network reports come in bursts as a connection comes up; the call
+  /// acts once they stop.
   void _network() {
+    _networkTimer?.cancel();
+    _networkTimer = Timer(timings.networkSettle, _networkSettled);
+  }
+
+  Future<void> _networkSettled() async {
     final phase = connection.value.phase;
-    if (_over ||
-        phase == CallPhase.preparing ||
-        phase == CallPhase.joining ||
-        _line == null) {
+    if (_over || phase == CallPhase.preparing || phase == CallPhase.joining) {
       return;
     }
-    // The socket may be dead without knowing it; open a new one, then
-    // rebuild the media path on it.
+    // The path under the media is suspect either way; the socket is dropped
+    // only when it does not answer, since a fresh one would just start the
+    // server's clock for it again.
     _networkRestartPending = true;
-    final line = _line!;
-    _resumeId = line.connectionId;
-    _resumeExpected = line.expected;
-    _detachLine();
-    unawaited(line.close());
+    final line = _line;
+    if (line != null && await line.check(channelId, timings.socketCheck)) {
+      if (_over || line != _line) return;
+      _restartAfterNetwork();
+      return;
+    }
+    if (_over) return;
+    final dead = _line;
+    if (dead != null) {
+      _resumeId = dead.connectionId;
+      _resumeExpected = dead.expected;
+      _detachLine();
+      unawaited(dead.close());
+    }
     _beginReconnect();
   }
 
@@ -667,17 +756,13 @@ class CallSession {
       await Future<void>.delayed(step.delay);
       if (_over) return;
       try {
-        final line = await openLine(
-          connectionId: _resumeId,
-          expected: _resumeExpected,
-          originalId: _sessionId,
-        );
+        final line = await _openTimed();
         if (_over) {
           await line.close();
           return;
         }
-        _reconnecting = false;
         _attach(line);
+        _resume(line);
         return;
       } on Object catch (e) {
         Log.info('calls', 'Reconnecting failed: ${e.runtimeType}');
@@ -794,6 +879,7 @@ class CallSession {
       _joinTimer,
       _connectTimer,
       _restartWatch,
+      _networkTimer,
       _pingTimer,
       _statsTimer,
     ]) {

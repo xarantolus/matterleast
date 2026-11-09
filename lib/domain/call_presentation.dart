@@ -9,7 +9,7 @@ String callConnectionText(CallConnection state) => switch (state.phase) {
   CallPhase.connecting => 'Connecting…',
   CallPhase.connected =>
     state.listenOnly
-        ? 'In the call, listening only: the microphone is off limits'
+        ? 'In the call, listening only: no microphone access'
         : (state.muted ? 'In the call · muted' : 'In the call'),
   CallPhase.reconnecting => 'Reconnecting…',
   CallPhase.restartingIce => 'Restoring the audio connection…',

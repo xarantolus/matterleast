@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <application
         android:label="${applicationLabel}"
         android:name="${applicationName}"
@@ -87,7 +88,7 @@
         <service
             android:name=".CallService"
             android:exported="false"
-            android:foregroundServiceType="microphone" />
+            android:foregroundServiceType="microphone|mediaPlayback" />
         <!-- Opt-in "Stay connected": holds the WebSockets while the app is closed. -->
         <service
             android:name=".StayConnectedService"

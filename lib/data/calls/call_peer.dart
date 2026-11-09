@@ -224,7 +224,8 @@ class WebRtcPeer implements CallPeer {
 
   @override
   Future<void> rollback() =>
-      _connection.setLocalDescription(RTCSessionDescription(null, 'rollback'));
+      // An empty text, not null: a null one aborts the app inside libwebrtc.
+      _connection.setLocalDescription(RTCSessionDescription('', 'rollback'));
 
   @override
   Future<void> addCandidate(CandidateInit c) => _connection.addCandidate(

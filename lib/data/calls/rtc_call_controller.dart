@@ -19,6 +19,7 @@ class RtcCallController implements CallController {
     required this.platform,
     required this.createPeer,
     this.network,
+    this.lineOpener,
     this.timings = const CallTimings(),
   });
 
@@ -26,6 +27,9 @@ class RtcCallController implements CallController {
   final CallPlatform platform;
   final CallPeerFactory createPeer;
   final NetworkState? network;
+
+  /// Opens the calls socket of a server; the real one unless a test says.
+  final CallLineOpener Function(ServerSession server)? lineOpener;
   final CallTimings timings;
 
   final _current = ValueNotifier<CallRef?>(null);
@@ -71,6 +75,7 @@ class RtcCallController implements CallController {
         platform: platform,
         createPeer: createPeer,
         openLine:
+            lineOpener?.call(server) ??
             ({required connectionId, required expected, required originalId}) =>
                 CallSocket.open(
                   serverUrl: server.url,
@@ -89,9 +94,8 @@ class RtcCallController implements CallController {
       );
       _session = session;
       session.connection.addListener(() => _forward(session, url, channelId));
-      _current.value = (url: url, channelId: channelId);
-      _forward(session, url, channelId);
       unawaited(session.start());
+      _forward(session, url, channelId);
     } finally {
       _starting = false;
     }
@@ -112,7 +116,7 @@ class RtcCallController implements CallController {
       channelId: channelId,
     );
     _connection.value = state;
-    if (!state.active) _current.value = null;
+    _current.value = state.active ? (url: url, channelId: channelId) : null;
   }
 
   @override

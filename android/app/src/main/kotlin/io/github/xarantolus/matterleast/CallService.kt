@@ -1,5 +1,6 @@
 package io.github.xarantolus.matterleast
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,6 +8,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
@@ -14,7 +16,8 @@ import android.os.IBinder
 /**
  * Keeps the microphone and the call's connection alive while the app is in
  * the background during a call. Android stops a process that holds the
- * microphone without a foreground service of the microphone type.
+ * microphone without a foreground service of the microphone type, and one
+ * that plays audio without a media playback one.
  */
 class CallService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
@@ -53,7 +56,14 @@ class CallService : Service() {
             .addAction(Notification.Action.Builder(null, "Hang up", hangUp).build())
             .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+            // The microphone type needs the permission; a call that only
+            // listens runs as media playback.
+            val type = if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            } else {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+            }
+            startForeground(NOTIFICATION_ID, notification, type)
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }

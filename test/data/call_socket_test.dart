@@ -130,6 +130,22 @@ void main() {
     await socket.close();
   });
 
+  test('a check is answered by anything the server says', () async {
+    final (socket, _) = await open();
+    final asked = server.actions.first;
+    final check = socket.check('c1', const Duration(seconds: 5));
+    expect((await asked)['action'], '${_prefix}call_state');
+    server.event('${_prefix}call_end', 1, {'channelID': 'c1'});
+    expect(await check, isTrue);
+    await socket.close();
+  });
+
+  test('a check fails when the server stays silent', () async {
+    final (socket, _) = await open();
+    expect(await socket.check('c1', const Duration(milliseconds: 50)), isFalse);
+    await socket.close();
+  });
+
   test('tells when the server closes the socket', () async {
     final (socket, events) = await open();
     await server.connections.single.socket.close();

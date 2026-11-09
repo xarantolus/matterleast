@@ -105,6 +105,16 @@ void main() {
       });
     });
 
+    test('gives a socket that stalls only so long to open', () {
+      run((async, h) {
+        h.stallOpens = 1;
+        h.session.start();
+        async.elapse(const Duration(seconds: 4));
+        expect(h.opens, hasLength(2));
+        expect(h.lines, hasLength(1));
+      });
+    });
+
     test('fails when the socket never opens', () {
       run((async, h) {
         h.failOpens = 100;
@@ -256,6 +266,22 @@ void main() {
       });
     });
 
+    test(
+      'does not wait for a hello from a socket that resumes the old one',
+      () {
+        run((async, h) {
+          h.join(async.flushMicrotasks);
+          h.connect(async.flushMicrotasks);
+          h.line.drop();
+          async.elapse(const Duration(milliseconds: 600));
+          expect(h.lines, hasLength(2));
+          expect(h.line.reconnects, hasLength(1));
+          expect(h.refreshes, 1);
+          expect(h.state.phase, CallPhase.connected);
+        });
+      },
+    );
+
     test('is over when the server refuses the reconnect', () {
       run((async, h) {
         h.join(async.flushMicrotasks);
@@ -326,6 +352,66 @@ void main() {
       });
     });
 
+    test('goes without the lock when the data channel does not answer', () {
+      run((async, h) {
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        final before = h.peer.offers.length;
+        h.peer.link(PeerLink.disconnected);
+        async.elapse(const Duration(milliseconds: 900));
+        expect(h.peer.offers.length, before);
+        async.elapse(const Duration(milliseconds: 200));
+        expect(h.peer.offers.length, before + 1);
+        expect(h.peer.offers.last.iceRestart, isTrue);
+        answerNextOffer(async, h);
+        expect(h.peer.remoteAnswers.last, 'restart-answer');
+        expect(h.peer.data.whereType<DcUnlock>(), isEmpty);
+      });
+    });
+
+    test('hands back a lock the server grants after the wait is over', () {
+      run((async, h) {
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        h.peer.link(PeerLink.disconnected);
+        async.elapse(const Duration(seconds: 1, milliseconds: 100));
+        expect(h.peer.data.whereType<DcUnlock>(), isEmpty);
+        h.peer.emit(PeerChannelMessage(Uint8List.fromList([0xcc, 7, 0xc3])));
+        async.flushMicrotasks();
+        expect(h.peer.data.whereType<DcUnlock>(), hasLength(1));
+      });
+    });
+
+    test('lets a restart bring the path back before another starts', () {
+      run((async, h) {
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        h.peer.link(PeerLink.disconnected);
+        async.elapse(const Duration(seconds: 1, milliseconds: 100));
+        answerNextOffer(async, h);
+        final offers = h.peer.offers.length;
+        // Three silent seconds would count as lost pongs.
+        async.elapse(const Duration(seconds: 4));
+        expect(h.peer.offers.length, offers);
+        async.elapse(const Duration(seconds: 4));
+        expect(h.peer.offers.length, offers + 1);
+      });
+    });
+
+    test('a network change while the socket is down rebuilds the path', () {
+      run((async, h) {
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        h.line.drop();
+        async.flushMicrotasks();
+        h.network.add(null);
+        async.elapse(const Duration(milliseconds: 1600));
+        h.line.emit(const LineHello('conn2'));
+        async.elapse(const Duration(milliseconds: 100));
+        expect(h.peer.data.whereType<DcLockRequest>(), hasLength(1));
+      });
+    });
+
     test('sends the offer over the data channel when the server wants it', () {
       run((async, h) {
         h.join(async.flushMicrotasks);
@@ -380,14 +466,41 @@ void main() {
       run((async, h) {
         h.join(async.flushMicrotasks);
         h.connect(async.flushMicrotasks);
-        final first = h.line;
+        final first = h.line..alive = false;
         h.network.add(null);
-        async.elapse(const Duration(milliseconds: 600));
+        async.elapse(const Duration(milliseconds: 3600));
         expect(first.closed, isTrue);
         expect(h.lines, hasLength(2));
         h.line.emit(const LineHello('conn2'));
         async.flushMicrotasks();
         expect(h.line.reconnects, hasLength(1));
+        expect(h.peer.data.whereType<DcLockRequest>(), hasLength(1));
+      });
+    });
+
+    test('a network change keeps a socket that still answers', () {
+      run((async, h) {
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        final first = h.line;
+        h.network.add(null);
+        async.elapse(const Duration(milliseconds: 1200));
+        expect(first.closed, isFalse);
+        expect(h.lines, hasLength(1));
+        expect(h.peer.data.whereType<DcLockRequest>(), hasLength(1));
+      });
+    });
+
+    test('a burst of network reports is one change', () {
+      run((async, h) {
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        h.network.add(null);
+        async.elapse(const Duration(milliseconds: 500));
+        h.network.add(null);
+        async.elapse(const Duration(milliseconds: 500));
+        h.network.add(null);
+        async.elapse(const Duration(milliseconds: 1800));
         expect(h.peer.data.whereType<DcLockRequest>(), hasLength(1));
       });
     });

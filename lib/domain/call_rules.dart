@@ -12,10 +12,14 @@ class CallTimings {
     this.joinTimeout = const Duration(seconds: 8),
     this.lockWait = const Duration(seconds: 5),
     this.lockRetry = const Duration(milliseconds: 50),
+    this.restartLockWait = const Duration(seconds: 1),
     this.pingInterval = const Duration(seconds: 1),
     this.turnTimeout = const Duration(seconds: 3),
     this.restartGap = const Duration(seconds: 2),
     this.restartWait = const Duration(seconds: 6),
+    this.socketOpenTimeout = const Duration(seconds: 3),
+    this.networkSettle = const Duration(seconds: 1),
+    this.socketCheck = const Duration(seconds: 2),
     this.missedPongs = 3,
     this.maxRestarts = 3,
   });
@@ -34,6 +38,9 @@ class CallTimings {
   final Duration joinTimeout;
   final Duration lockWait;
   final Duration lockRetry;
+
+  /// How long a restart waits for the lock before it goes without.
+  final Duration restartLockWait;
   final Duration pingInterval;
   final Duration turnTimeout;
 
@@ -42,6 +49,15 @@ class CallTimings {
 
   /// How long a restart has to bring the path back before the next one.
   final Duration restartWait;
+
+  /// How long opening the calls socket may take.
+  final Duration socketOpenTimeout;
+
+  /// How long network reports must stay quiet before the call acts.
+  final Duration networkSettle;
+
+  /// How long the socket has to answer a check after a network change.
+  final Duration socketCheck;
 
   /// Pings in a row without an answer that mean the path is gone.
   final int missedPongs;

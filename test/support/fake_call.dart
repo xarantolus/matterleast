@@ -21,6 +21,9 @@ class FakeLine implements CallLine {
   var reconnects = <Map<String, String>>[];
   var closed = false;
 
+  /// Whether the server answers a check.
+  var alive = true;
+
   @override
   final String connectionId;
   @override
@@ -43,6 +46,13 @@ class FakeLine implements CallLine {
   void send(String action, [Map<String, Object?>? data]) {
     sent.add((action: action, data: data));
     _log.add('line:$action');
+  }
+
+  @override
+  Future<bool> check(String channelId, Duration within) async {
+    if (alive) return true;
+    await Future<void>.delayed(within);
+    return false;
   }
 
   @override
@@ -214,6 +224,10 @@ class CallHarness {
             required originalId,
           }) async {
             opens.add((connectionId: connectionId, originalId: originalId));
+            if (stallOpens > 0) {
+              stallOpens--;
+              await Completer<void>().future;
+            }
             if (failOpens > 0) {
               failOpens--;
               throw StateError('no connection');
@@ -247,6 +261,7 @@ class CallHarness {
   final network = StreamController<void>.broadcast(sync: true);
   late final CallSession session;
   var failOpens = 0;
+  var stallOpens = 0;
   var refreshes = 0;
 
   Future<void> close() async {

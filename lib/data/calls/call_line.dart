@@ -60,6 +60,10 @@ abstract interface class CallLine {
   void send(String action, [Map<String, Object?>? data]);
   void sendSdp(String json);
 
+  /// Whether the server answers within [within]: after a network change the
+  /// socket may be dead without knowing it.
+  Future<bool> check(String channelId, Duration within);
+
   /// Sends `reconnect` once; later calls do nothing.
   void sendReconnect({
     required String channelId,
@@ -168,7 +172,25 @@ class CallSocket implements CallLine {
     });
   }
 
+  /// Asks for the call's state, which the server answers on this socket.
+  @override
+  Future<bool> check(String channelId, Duration within) async {
+    if (_isClosed) return false;
+    final heard = _heard = Completer<void>();
+    send('call_state', {'channelID': channelId});
+    try {
+      await heard.future.timeout(within);
+      return true;
+    } on TimeoutException {
+      return false;
+    }
+  }
+
+  Completer<void>? _heard;
+
   void _onMessage(Object? message) {
+    final heard = _heard;
+    if (heard != null && !heard.isCompleted) heard.complete();
     if (message is! String) return;
     final Object? json;
     try {
