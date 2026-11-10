@@ -111,6 +111,16 @@ void main() {
     await socket.close();
   });
 
+  test(
+    'a resumed socket that gets no hello still names its connection',
+    () async {
+      final (socket, _) = await open(connectionId: 'old', expected: 7);
+      expect(socket.connectionId, 'old');
+      expect(socket.expected, 7);
+      await socket.close();
+    },
+  );
+
   test('sends reconnect once', () async {
     final (socket, _) = await open();
     final actions = <Map<String, Object?>>[];

@@ -85,7 +85,12 @@ typedef CallLineOpener = Future<CallLine> Function({
 /// The real calls socket: a second WebSocket to the server, with its own
 /// lifecycle. It sends text actions and, for SDP, binary frames.
 class CallSocket implements CallLine {
-  CallSocket._(this._channel, this._originalId) {
+  CallSocket._(
+    this._channel,
+    this._originalId,
+    this._connectionId,
+    this._expected,
+  ) {
     _subscription = _channel.stream.listen(
       _onMessage,
       onDone: _closed,
@@ -123,15 +128,16 @@ class CallSocket implements CallLine {
           : authorities.httpClient(serverUrl),
     );
     await channel.ready;
-    return CallSocket._(channel, originalId);
+    return CallSocket._(channel, originalId, connectionId, expected);
   }
 
   final IOWebSocketChannel _channel;
   final String _originalId;
   late final StreamSubscription<Object?> _subscription;
   final _events = StreamController<LineEvent>();
-  var _connectionId = '';
-  var _expected = 0;
+  // A resumed connection gets no hello, so it keeps the id it was opened with.
+  String _connectionId;
+  int _expected;
   var _seq = 1;
   var _reconnectSent = false;
   var _isClosed = false;
