@@ -241,7 +241,9 @@ class CallSession implements CallRun {
   /// it arrives: a network that is coming up may stall a handshake.
   Future<CallLine> _openTimed() {
     final opening = openLine(
-      connectionId: _resumeId,
+      // The server addresses its answers to the session's own connection, so
+      // that is the one to resume, however many sockets there were since.
+      connectionId: _sessionId,
       expected: _resumeExpected,
       originalId: _sessionId,
     );

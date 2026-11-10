@@ -266,6 +266,22 @@ void main() {
       });
     });
 
+    test('resumes the session\'s own connection after every drop', () {
+      run((async, h) {
+        h.join(async.flushMicrotasks);
+        h.connect(async.flushMicrotasks);
+        h.line.drop();
+        async.elapse(const Duration(milliseconds: 600));
+        h.line.emit(const LineHello('conn2'));
+        async.flushMicrotasks();
+        h.line.drop();
+        async.elapse(const Duration(milliseconds: 600));
+        expect(h.opens, hasLength(3));
+        expect(h.opens.last.connectionId, 'conn1');
+        expect(h.line.reconnects.single['previousId'], 'conn2');
+      });
+    });
+
     test(
       'does not wait for a hello from a socket that resumes the old one',
       () {
