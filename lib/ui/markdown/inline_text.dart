@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/markdown/links.dart';
@@ -310,7 +311,12 @@ class _InlineTextState extends State<InlineText> {
                 baseline: TextBaseline.alphabetic,
                 child: HoverTooltip(
                   message: ':$name:',
-                  child: Text(unicode, style: base.merge(styled(marks))),
+                  child: Text(
+                    unicode,
+                    style: base
+                        .merge(styled(marks))
+                        .copyWith(fontFamily: emojiFont),
+                  ),
                 ),
               ),
             );
@@ -318,7 +324,10 @@ class _InlineTextState extends State<InlineText> {
             spans.add(
               TextSpan(
                 text: unicode,
-                style: styled(marks, link: link),
+                style: styled(
+                  marks,
+                  link: link,
+                ).copyWith(fontFamily: emojiFont),
                 recognizer: named
                     ? (_recognizer<TapGestureRecognizer>((
                         'card',

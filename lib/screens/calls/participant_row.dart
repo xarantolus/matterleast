@@ -20,6 +20,7 @@ class ParticipantRow extends ConsumerWidget {
     required this.channelId,
     required this.sessionId,
     required this.selfId,
+    required this.selfSessionId,
     required this.hostOpen,
     required this.sharing,
     super.key,
@@ -29,6 +30,7 @@ class ParticipantRow extends ConsumerWidget {
   final String channelId;
   final String sessionId;
   final String? selfId;
+  final String selfSessionId;
   final bool hostOpen;
   final bool sharing;
 
@@ -42,7 +44,8 @@ class ParticipantRow extends ConsumerWidget {
     final reaction = ref.watch(callReactionProvider(url, sessionId));
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
-    final mine = session.userId == selfId;
+    final mine = sessionId == selfSessionId;
+    final otherDevice = !mine && session.userId == selfId;
     final name = profile?.name ?? '…';
     final manage = hostOpen && !mine;
     void profileSheet() =>
@@ -55,7 +58,7 @@ class ParticipantRow extends ConsumerWidget {
     );
     return Semantics(
       label:
-          '$name${mine ? ', you' : ''}${session.muted ? ', muted' : ''}'
+          '$name${mine ? ', you' : ''}${otherDevice ? ', other device' : ''}${session.muted ? ', muted' : ''}'
           '${session.raisedHand > 0 ? ', hand raised' : ''}',
       excludeSemantics: true,
       child: HoverTint(
@@ -128,7 +131,11 @@ class ParticipantRow extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        mine ? '$name (you)' : name,
+                        mine
+                            ? '$name (you)'
+                            : otherDevice
+                            ? '$name (other device)'
+                            : name,
                         style: text.titleMedium,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
