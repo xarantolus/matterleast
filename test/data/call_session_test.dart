@@ -512,10 +512,32 @@ void main() {
         h.peer.link(PeerLink.failed);
         async.elapse(const Duration(seconds: 90));
         expect(h.state.phase, CallPhase.failed);
-        expect(h.state.failure?.kind, CallFailureKind.media);
+        expect(h.state.failure?.kind, CallFailureKind.noConnection);
+        expect(h.state.failure?.message, isNot(contains('8445')));
         expect(h.peer.closed, isTrue);
       });
     });
+
+    test(
+      'a precautionary restart that leaves the link up ends as connected',
+      () {
+        run((async, h) {
+          h.join(async.flushMicrotasks);
+          h.connect(async.flushMicrotasks);
+          h.network.add(null);
+          async.elapse(const Duration(milliseconds: 1200));
+          expect(h.state.phase, CallPhase.restartingIce);
+          h.peer.emit(PeerChannelMessage(Uint8List.fromList([0xcc, 7, 0xc3])));
+          async.flushMicrotasks();
+          answerNextOffer(async, h);
+          for (var i = 0; i < 8; i++) {
+            async.elapse(const Duration(seconds: 1));
+            h.peer.emit(PeerChannelMessage(Uint8List.fromList([0xcc, 2])));
+          }
+          expect(h.state.phase, CallPhase.connected);
+        });
+      },
+    );
   });
 
   group('the call ending', () {

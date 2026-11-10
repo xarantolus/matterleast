@@ -352,7 +352,7 @@ class CallSession implements CallRun {
   Future<void> _firstOffer() async {
     _set((c) => c.copyWith(phase: CallPhase.connecting));
     _connectTimer = Timer(timings.connectTimeout, () {
-      if (!_peerUp) _fail(mediaFailure(mediaPortOf(_serverCandidates)));
+      if (!_peerUp) _fail(_mediaFailure());
     });
     if (!await _negotiate(first: true) && !_over && !_peerUp) {
       Log.warn('calls', 'The server did not answer the first offer');
@@ -563,6 +563,17 @@ class CallSession implements CallRun {
     _localQueue.clear();
   }
 
+  CallFailure _mediaFailure() => mediaFailure(
+    mediaPortOf(_serverCandidates),
+    wasConnected: _firstConnected,
+  );
+
+  void _showConnected() {
+    if (_line != null || !_reconnecting) {
+      _set((c) => c.copyWith(phase: CallPhase.connected));
+    }
+  }
+
   void _onLink(PeerLink link) {
     switch (link) {
       case PeerLink.connected:
@@ -571,9 +582,7 @@ class CallSession implements CallRun {
         _restartWatch?.cancel();
         _awaitingRecovery = false;
         _restarts = 0;
-        if (_line != null || !_reconnecting) {
-          _set((c) => c.copyWith(phase: CallPhase.connected));
-        }
+        _showConnected();
         if (!_firstConnected) {
           _firstConnected = true;
           _statsTimer = Timer.periodic(
@@ -590,7 +599,7 @@ class CallSession implements CallRun {
         _peerUp = false;
         _trigger(IceTrigger.peerFailed);
       case PeerLink.closed:
-        _fail(mediaFailure(mediaPortOf(_serverCandidates)));
+        _fail(_mediaFailure());
       case PeerLink.connecting:
     }
   }
@@ -652,7 +661,7 @@ class CallSession implements CallRun {
       case IceRestartStep.wait:
         return;
       case IceRestartStep.giveUp:
-        _fail(mediaFailure(mediaPortOf(_serverCandidates)));
+        _fail(_mediaFailure());
       case IceRestartStep.restart:
         unawaited(_restartIce());
     }
@@ -673,7 +682,14 @@ class CallSession implements CallRun {
     _awaitingRecovery = true;
     _restartWatch = Timer(timings.restartWait, () {
       _awaitingRecovery = false;
-      if (!_peerUp) _trigger(IceTrigger.peerDisconnected);
+      // A restart that was only a precaution leaves the link up, so no link
+      // event comes to say it is connected again.
+      if (_peerUp) {
+        _restarts = 0;
+        _showConnected();
+      } else {
+        _trigger(IceTrigger.peerDisconnected);
+      }
     });
   }
 
@@ -749,13 +765,7 @@ class CallSession implements CallRun {
       final since = clock.now().difference(_droppedAt ?? clock.now());
       final step = reconnectStep(since, timings: timings);
       if (step is! ReconnectIn) {
-        _fail(
-          const CallFailure(
-            CallFailureKind.noConnection,
-            'The connection to the call was lost and could not be '
-            'restored. Check the connection and join again.',
-          ),
-        );
+        _fail(connectionLost);
         return;
       }
       await Future<void>.delayed(step.delay);

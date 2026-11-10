@@ -148,15 +148,26 @@ MediaPort? mediaPortOf(Iterable<String> candidateLines) {
   return (counts.entries.toList()..sort((a, b) => b.value - a.value)).first.key;
 }
 
-/// What to say when the media path never came up.
-CallFailure mediaFailure(MediaPort? port) => CallFailure(
-  CallFailureKind.media,
-  port == null
-      ? "Couldn't set up the audio connection to the call server."
-      : "Couldn't reach the call server's media port "
-            '(${port.protocol.toUpperCase()} ${port.port}). '
-            'A firewall may block it.',
+/// What to say when a call that was up could not get its connection back.
+const connectionLost = CallFailure(
+  CallFailureKind.noConnection,
+  'The connection to the call was lost and could not be restored. '
+  'Check the connection and join again.',
 );
+
+/// What to say when the media path is gone: a port to name only if it never
+/// came up, since then a firewall is the likely cause.
+CallFailure mediaFailure(MediaPort? port, {required bool wasConnected}) =>
+    wasConnected
+    ? connectionLost
+    : CallFailure(
+        CallFailureKind.media,
+        port == null
+            ? "Couldn't set up the audio connection to the call server."
+            : "Couldn't reach the call server's media port "
+                  '(${port.protocol.toUpperCase()} ${port.port}). '
+                  'A firewall may block it.',
+      );
 
 /// The route to use: the user's pick while that device is there, else a
 /// headset, else the earpiece for a direct message and the speaker for
