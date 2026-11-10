@@ -19,10 +19,13 @@ Future<void> openPage(
   Widget page, {
   bool popout = false,
   PlaceView? view,
+  RouteSettings? settings,
 }) async {
   if (!navigator.mounted) return;
   if (InPopout.contains(navigator.context)) {
-    await navigator.push(SlideRoute<void>(builder: (_) => page));
+    await navigator.push(
+      SlideRoute<void>(builder: (_) => page, settings: settings),
+    );
     return;
   }
   if (popout && isDesktop) {
@@ -36,7 +39,9 @@ Future<void> openPage(
   final container = ProviderScope.containerOf(navigator.context, listen: false);
   final pane = container.read(paneRoutesProvider).navigator;
   final target = pane != null && pane.mounted ? pane : navigator;
-  await target.push(SlideRoute<void>(builder: (_) => page, view: view));
+  await target.push(
+    SlideRoute<void>(builder: (_) => page, view: view, settings: settings),
+  );
 }
 
 /// Popouts are as wide as a comfortable form and leave the window's edges

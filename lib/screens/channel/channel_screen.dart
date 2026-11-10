@@ -121,16 +121,27 @@ class ChannelScreen extends ConsumerWidget {
       ),
       actions: [
         if (callAction != CallAction.none)
-          IconButton(
-            tooltip: callAction == CallAction.join ? 'Join call' : 'Start call',
-            icon: const Icon(Icons.call_outlined),
-            onPressed: () => joinCall(
-              context,
-              calls,
-              url: url,
-              channelId: channelId,
-              start: callAction != CallAction.join,
-            ),
+          ValueListenableBuilder(
+            valueListenable: calls.current,
+            builder: (context, current, _) {
+              final here =
+                  current?.url == url && current?.channelId == channelId;
+              return IconButton(
+                tooltip: here
+                    ? 'Open call'
+                    : (callAction == CallAction.join
+                          ? 'Join call'
+                          : 'Start call'),
+                icon: Icon(here ? Icons.call : Icons.call_outlined),
+                onPressed: () => joinCall(
+                  context,
+                  calls,
+                  url: url,
+                  channelId: channelId,
+                  start: callAction != CallAction.join,
+                ),
+              );
+            },
           ),
         IconButton(
           tooltip: 'Details',

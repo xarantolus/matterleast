@@ -13,6 +13,8 @@ import 'package:matterleast/screens/calls/call_controls.dart';
 import 'package:matterleast/screens/calls/participant_row.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/open_page.dart';
+import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/ui/call_status_line.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/tokens.dart';
@@ -23,40 +25,22 @@ Future<void> openCallScreen(
   NavigatorState navigator,
   String url,
   String channelId,
-) => openPage(navigator, CallScreen(url: url, channelId: channelId));
+) => openPage(
+  navigator,
+  CallScreen(url: url, channelId: channelId),
+  settings: const RouteSettings(name: callScreenRoute),
+);
 
 /// The call the user is in: who is there, what they do, and the user's own
 /// controls. Leaving the screen keeps the call; Leave ends it.
-class CallScreen extends ConsumerStatefulWidget {
+class CallScreen extends ConsumerWidget {
   const CallScreen({required this.url, required this.channelId, super.key});
 
   final String url;
   final String channelId;
 
   @override
-  ConsumerState<CallScreen> createState() => _CallScreenState();
-}
-
-class _CallScreenState extends ConsumerState<CallScreen> {
-  late final CallScreenOpen _open;
-
-  @override
-  void initState() {
-    super.initState();
-    _open = ref.read(callScreenOpenProvider.notifier);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _open.opened());
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _open.closed());
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final url = widget.url;
-    final channelId = widget.channelId;
+  Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.watch(callControllerProvider);
     final title =
         ref.watch(channelInfoProvider(url, channelId)).value?.title ?? 'Call';
@@ -67,6 +51,8 @@ class _CallScreenState extends ConsumerState<CallScreen> {
       selfId: selfId,
       admin: ref.watch(systemAdminProvider(url)).value ?? false,
     );
+    final people = ref.watch(callSessionIdsProvider(url, channelId)).ids.length;
+    final hands = ref.watch(callHandsUpProvider(url, channelId));
     return ValueListenableBuilder(
       valueListenable: controller.connection,
       builder: (context, state, _) {
@@ -74,6 +60,9 @@ class _CallScreenState extends ConsumerState<CallScreen> {
         final connection = here ? state : const CallConnection();
         return ContentPage(
           title: Text(title),
+          subtitle: connection.active
+              ? callSubtitle(people: people, hands: hands)
+              : null,
           actions: [
             if (hostOpen && connection.active)
               _HostMenu(url: url, channelId: channelId),
@@ -88,12 +77,15 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                     onRetry: () => controller.join(url, channelId),
                   ),
                   Expanded(
-                    child: _Participants(
-                      url: url,
-                      channelId: channelId,
-                      selfId: selfId,
-                      hostOpen: hostOpen,
-                    ),
+                    child: connection.active
+                        ? _Participants(
+                            url: url,
+                            channelId: channelId,
+                            selfId: selfId,
+                            hostOpen: hostOpen,
+                            connected: connection.phase == CallPhase.connected,
+                          )
+                        : _Over(connection: connection),
                   ),
                   CallControls(
                     controller: controller,
@@ -111,8 +103,8 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   }
 }
 
-/// A line of room for what happened to the connection, kept even when
-/// there is nothing to say so the list below doesn't move.
+/// The room for what happened to the connection: always as tall as one
+/// line with a button, so the list below doesn't move.
 class _StatusLine extends StatelessWidget {
   const _StatusLine({required this.connection, required this.onRetry});
 
@@ -121,28 +113,89 @@ class _StatusLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = callConnectionText(connection);
     final failed = connection.phase == CallPhase.failed;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.lg,
-        vertical: Spacing.sm,
-      ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 48),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: context.tokens.muted),
-              ),
-            ),
-            if (failed)
-              TextButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+    final busy = switch (connection.phase) {
+      CallPhase.preparing ||
+      CallPhase.joining ||
+      CallPhase.connecting ||
+      CallPhase.reconnecting ||
+      CallPhase.restartingIce => true,
+      _ => false,
+    };
+    final style = Theme.of(context).textTheme.bodyLarge;
+    return Semantics(
+      liveRegion: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.lg,
+          vertical: Spacing.sm,
         ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Row(
+            spacing: Spacing.md,
+            children: [
+              SizedBox.square(
+                dimension: 20,
+                child: busy
+                    ? const CircularProgressIndicator(strokeWidth: 2)
+                    : null,
+              ),
+              Expanded(
+                child: connection.phase == CallPhase.ended
+                    ? const SizedBox.shrink()
+                    : failed
+                    ? Text(
+                        callConnectionText(connection),
+                        style: style?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      )
+                    : CallStatusLine(
+                        state: connection,
+                        style: style?.copyWith(color: context.tokens.muted),
+                      ),
+              ),
+              if (failed)
+                FilledButton.tonal(
+                  onPressed: onRetry,
+                  child: const Text('Retry'),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// What stands where the people were once the call is over.
+class _Over extends StatelessWidget {
+  const _Over({required this.connection});
+
+  final CallConnection connection;
+
+  @override
+  Widget build(BuildContext context) {
+    final failed = connection.phase == CallPhase.failed;
+    final muted = context.tokens.muted;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: Spacing.md,
+        children: [
+          Icon(
+            failed ? Icons.error_outline : Icons.call_end,
+            size: 64,
+            color: muted,
+          ),
+          if (!failed)
+            Text(
+              callConnectionText(connection),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(color: muted),
+            ),
+        ],
       ),
     );
   }
@@ -154,18 +207,20 @@ class _Participants extends ConsumerWidget {
     required this.channelId,
     required this.selfId,
     required this.hostOpen,
+    required this.connected,
   });
 
   final String url;
   final String channelId;
   final String? selfId;
   final bool hostOpen;
+  final bool connected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ids = ref.watch(callSessionIdsProvider(url, channelId)).ids;
     final sharer = ref.watch(callScreenSharerProvider(url, channelId));
-    final hands = ref.watch(callHandsUpProvider(url, channelId));
+    final alone = connected && ids.length < 2;
     Widget row(String id) => ParticipantRow(
       key: ValueKey(id),
       url: url,
@@ -175,36 +230,19 @@ class _Participants extends ConsumerWidget {
       hostOpen: hostOpen,
       sharing: id == sharer,
     );
-    return Column(
-      children: [
-        if (hands > 0)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
+    return ListView.builder(
+      itemCount: ids.length + (alone ? 1 : 0),
+      itemBuilder: (context, i) => i < ids.length
+          ? row(ids[i])
+          : Padding(
+              padding: const EdgeInsets.all(Spacing.xl),
               child: Text(
-                hands == 1 ? '1 hand raised' : '$hands hands raised',
-                style: Theme.of(context).textTheme.labelMedium,
+                'Nobody else is here yet.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge
+                    ?.copyWith(color: context.tokens.muted),
               ),
             ),
-          ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: ids.length + (ids.length < 2 ? 1 : 0),
-            itemBuilder: (context, i) => i < ids.length
-                ? row(ids[i])
-                : Padding(
-                    padding: const EdgeInsets.all(Spacing.xl),
-                    child: Text(
-                      'Nobody else is here yet.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium
-                          ?.copyWith(color: context.tokens.muted),
-                    ),
-                  ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -240,9 +278,15 @@ class _HostMenu extends ConsumerWidget {
       if (!sure || !context.mounted) return;
       await tryAction(context, host, () => session.calls.endForAll(channelId));
     },
-    itemBuilder: (_) => const [
-      PopupMenuItem(value: false, child: Text('Mute everyone else')),
-      PopupMenuItem(value: true, child: Text('End call for everyone')),
+    itemBuilder: (context) => [
+      const PopupMenuItem(value: false, child: Text('Mute everyone else')),
+      PopupMenuItem(
+        value: true,
+        child: Text(
+          'End call for everyone',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      ),
     ],
   );
 }

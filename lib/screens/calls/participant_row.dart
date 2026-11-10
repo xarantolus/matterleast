@@ -4,13 +4,13 @@ import 'package:matterleast/app/call_providers.dart';
 import 'package:matterleast/screens/calls/host_sheet.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
 import 'package:matterleast/screens/you/user_profile_sheet.dart';
-import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
+import 'package:matterleast/ui/hover_tint.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/user_avatar.dart';
 
-const _avatar = 44.0;
+const _avatar = 56.0;
 
 /// One person in the call. It watches only its own session, so a change
 /// to someone else's doesn't rebuild it.
@@ -58,7 +58,7 @@ class ParticipantRow extends ConsumerWidget {
           '$name${mine ? ', you' : ''}${session.muted ? ', muted' : ''}'
           '${session.raisedHand > 0 ? ', hand raised' : ''}',
       excludeSemantics: true,
-      child: Clickable(
+      child: HoverTint(
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: profileSheet,
@@ -129,7 +129,7 @@ class ParticipantRow extends ConsumerWidget {
                     children: [
                       Text(
                         mine ? '$name (you)' : name,
-                        style: text.titleSmall,
+                        style: text.titleMedium,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -139,16 +139,16 @@ class ParticipantRow extends ConsumerWidget {
                             if (isHost) 'Host',
                             if (sharing) 'Sharing their screen',
                           ].join(' · '),
-                          style: text.bodySmall?.copyWith(color: tokens.muted),
+                          style: text.bodyMedium?.copyWith(color: tokens.muted),
                         ),
                     ],
                   ),
                 ),
                 if (session.raisedHand > 0)
-                  Icon(Icons.back_hand, size: 20, color: tokens.away),
+                  Icon(Icons.back_hand, size: 24, color: tokens.away),
                 Icon(
                   session.muted ? Icons.mic_off : Icons.mic,
-                  size: 20,
+                  size: 24,
                   color: session.muted ? tokens.muted : tokens.online,
                 ),
                 if (manage)

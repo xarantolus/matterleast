@@ -7,8 +7,9 @@ import 'package:matterleast/ui/call_participants.dart';
 import 'package:matterleast/ui/call_post_card.dart';
 import 'package:matterleast/ui/tokens.dart';
 
-/// Under a channel's app bar while a call runs in it: who is in it, and
-/// Join when the app can join calls. Takes no room otherwise.
+/// Under a channel's app bar while a call runs in it that the user is not
+/// in: who is in it, and Join when the app can join calls. Takes no room
+/// otherwise; the user's own call shows in the bar or the dock.
 class CallJoinBanner extends ConsumerWidget {
   const CallJoinBanner({
     required this.url,
@@ -26,11 +27,17 @@ class CallJoinBanner extends ConsumerWidget {
     final action = ref.watch(callActionInProvider(url, channelId, channelType));
     final call = ref.watch(callInChannelProvider(url, channelId));
     final controller = ref.watch(callControllerProvider);
-    return Column(
-      children: [
-        if (action == CallAction.join && call != null)
-          _banner(context, call.participantUserIds, controller),
-      ],
+    return ValueListenableBuilder(
+      valueListenable: controller.current,
+      builder: (context, current, _) {
+        final here = current?.url == url && current?.channelId == channelId;
+        return Column(
+          children: [
+            if (action == CallAction.join && call != null && !here)
+              _banner(context, call.participantUserIds, controller),
+          ],
+        );
+      },
     );
   }
 
@@ -55,7 +62,8 @@ class CallJoinBanner extends ConsumerWidget {
               child: Text(
                 people.isEmpty
                     ? 'Call in progress'
-                    : 'Call in progress · ${people.length}',
+                    : 'Call in progress · ${people.length} '
+                          '${people.length == 1 ? 'person' : 'people'}',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),

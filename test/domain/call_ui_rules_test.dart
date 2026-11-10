@@ -73,4 +73,16 @@ void main() {
     expect(const SessionIds(['a', 'b']), const SessionIds(['a', 'b']));
     expect(const SessionIds(['a', 'b']), isNot(const SessionIds(['b', 'a'])));
   });
+
+  group('where a call shows', () {
+    test('a desktop window with panes docks it in the channel list', () {
+      expect(callSurface(desktop: true, panes: true), CallSurface.dock);
+    });
+
+    test('a narrow desktop window and every phone show the bar', () {
+      expect(callSurface(desktop: true, panes: false), CallSurface.bar);
+      expect(callSurface(desktop: false, panes: true), CallSurface.bar);
+      expect(callSurface(desktop: false, panes: false), CallSurface.bar);
+    });
+  });
 }

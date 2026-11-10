@@ -54,6 +54,9 @@ class RtcCallController implements CallController {
   ValueListenable<CallConnection> get connection => _connection;
 
   @override
+  Future<void> askForPermissions() => platform.requestMicrophone();
+
+  @override
   Future<void> join(String url, String channelId) => _begin(url, channelId);
 
   @override

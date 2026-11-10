@@ -31,6 +31,7 @@ Future<void> joinCall(
     if (!leave) return;
     await controller.leave();
   }
+  await controller.askForPermissions();
   if (start) {
     await controller.start(url, channelId);
   } else {

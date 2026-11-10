@@ -1,6 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:matterleast/api/json/calls.dart';
 
+/// Where a call the user is in shows while they look elsewhere.
+enum CallSurface {
+  /// A bar above the whole app.
+  bar,
+
+  /// A small panel at the foot of the channel list's pane.
+  dock,
+}
+
+/// Pure: a desktop window wide enough for panes docks the call in the
+/// channel list, which then stays in view; anything else shows the bar.
+CallSurface callSurface({required bool desktop, required bool panes}) =>
+    desktop && panes ? CallSurface.dock : CallSurface.bar;
+
 /// Pure: whether the user may use host controls: the server allows them
 /// and the user is the call's host or a system admin.
 bool hostControlsOpen({

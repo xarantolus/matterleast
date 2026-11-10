@@ -24,6 +24,7 @@ import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/ui/announcement_banner.dart';
+import 'package:matterleast/ui/call_dock.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
@@ -219,6 +220,7 @@ class _RootLayout extends ConsumerWidget {
                   if (bannerUrl case final url?)
                     AnnouncementBanner(url: url, teamId: teamId ?? ''),
                   Expanded(child: pane),
+                  const CallDock(),
                 ],
               ),
             ),
