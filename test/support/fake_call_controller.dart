@@ -19,9 +19,17 @@ class FakeCallController implements CallController {
   final joined = <String>[];
   final started = <String>[];
   final hand = <bool>[];
-  final reactions = <String>[];
+
+  /// The emoji shown, as `(name, character)`; the character is empty for a
+  /// custom emoji.
+  final reactions = <(String, String)>[];
   var left = 0;
   final muting = <bool>[];
+
+  var permissionAsks = 0;
+
+  @override
+  Future<void> askForPermissions() async => permissionAsks++;
 
   @override
   Future<void> join(String url, String channelId) async {
@@ -60,5 +68,5 @@ class FakeCallController implements CallController {
 
   @override
   Future<void> react(String name, String character) async =>
-      reactions.add(name);
+      reactions.add((name, character));
 }

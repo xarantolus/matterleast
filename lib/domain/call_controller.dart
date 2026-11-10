@@ -15,6 +15,10 @@ abstract interface class CallController {
   /// last one ended.
   ValueListenable<CallConnection> get connection;
 
+  /// Asks for what a call needs from the phone, the microphone, before
+  /// the call opens; a refusal only makes the call listen-only.
+  Future<void> askForPermissions();
+
   /// Joins the call in [channelId]; does nothing while in another call.
   Future<void> join(String url, String channelId);
 
@@ -39,7 +43,7 @@ abstract interface class CallController {
   /// Raises or lowers the user's hand.
   Future<void> setHandRaised({required bool raised});
 
-  /// Shows [name], a standard emoji's short name written as [character], to
-  /// everyone in the call.
+  /// Shows [name], an emoji's short name, to everyone in the call;
+  /// [character] is how a standard emoji is written, empty for a custom one.
   Future<void> react(String name, String character);
 }

@@ -158,19 +158,6 @@ Map<String, ActiveCall> incomingCalls(Ref ref, String url) {
       : followValue(ref, session.connection.calls.incoming);
 }
 
-/// Whether the call screen is the page the user looks at; the bar hides
-/// then.
-@Riverpod(keepAlive: true)
-class CallScreenOpen extends _$CallScreenOpen {
-  @override
-  int build() => 0;
-
-  void opened() => state++;
-  void closed() {
-    if (ref.mounted) state--;
-  }
-}
-
 /// Starts and joins calls.
 @Riverpod(keepAlive: true)
 CallController callController(Ref ref) {

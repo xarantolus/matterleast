@@ -1316,68 +1316,6 @@ final class IncomingCallsFamily extends $Family
   String toString() => r'incomingCallsProvider';
 }
 
-/// Whether the call screen is the page the user looks at; the bar hides
-/// then.
-
-@ProviderFor(CallScreenOpen)
-final callScreenOpenProvider = CallScreenOpenProvider._();
-
-/// Whether the call screen is the page the user looks at; the bar hides
-/// then.
-final class CallScreenOpenProvider
-    extends $NotifierProvider<CallScreenOpen, int> {
-  /// Whether the call screen is the page the user looks at; the bar hides
-  /// then.
-  CallScreenOpenProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'callScreenOpenProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$callScreenOpenHash();
-
-  @$internal
-  @override
-  CallScreenOpen create() => CallScreenOpen();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
-    );
-  }
-}
-
-String _$callScreenOpenHash() => r'8f4390066dce04612ed29d9fd781f1794b511956';
-
-/// Whether the call screen is the page the user looks at; the bar hides
-/// then.
-
-abstract class _$CallScreenOpen extends $Notifier<int> {
-  int build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<int, int>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<int, int>,
-              int,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
-
 /// Starts and joins calls.
 
 @ProviderFor(callController)

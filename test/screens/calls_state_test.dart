@@ -95,7 +95,10 @@ void main() {
         _ => emptyAnswer(r),
       },
       seed: (session) => _seed(session, type: type, ended: ended),
-      overrides: (url) => [callControllerProvider.overrideWithValue(calls)],
+      overrides: (url) {
+        calls.url = url;
+        return [callControllerProvider.overrideWithValue(calls)];
+      },
       home: (url) =>
           ChannelScreen(url: url, channelId: channelId, title: 'Boats'),
     );
@@ -114,7 +117,7 @@ void main() {
   ) async {
     final h = await open(tester);
 
-    expect(find.text('Call in progress · 2'), findsOneWidget);
+    expect(find.text('Call in progress · 2 people'), findsOneWidget);
     expect(find.text('Call started'), findsOneWidget);
     expect(find.text('Plugin card'), findsNothing);
     expect(find.text('Join'), findsNWidgets(2));
@@ -156,6 +159,8 @@ void main() {
     await tester.pump();
 
     expect(calls.joined, [channelId]);
+    // The microphone is asked for before the call screen opens.
+    expect(calls.permissionAsks, 1);
     await h.close(tester);
   });
 
@@ -167,6 +172,29 @@ void main() {
 
     expect(calls.joined, [channelId]);
     expect(find.byTooltip('Start call'), findsNothing);
+    await h.close(tester);
+  });
+
+  testWidgets('in this call, the channel offers Open call and no banner', (
+    tester,
+  ) async {
+    final h = await open(tester);
+    calls.currentCall.value = (url: calls.url, channelId: channelId);
+    await tester.pump();
+
+    expect(find.byTooltip('Open call'), findsOneWidget);
+    expect(find.byTooltip('Join call'), findsNothing);
+    expect(find.textContaining('Call in progress'), findsNothing);
+    await h.close(tester);
+  });
+
+  testWidgets('in another call, the channel still offers Join', (tester) async {
+    final h = await open(tester);
+    calls.currentCall.value = (url: calls.url, channelId: 'other');
+    await tester.pump();
+
+    expect(find.byTooltip('Join call'), findsOneWidget);
+    expect(find.textContaining('Call in progress'), findsOneWidget);
     await h.close(tester);
   });
 
