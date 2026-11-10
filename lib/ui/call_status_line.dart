@@ -10,10 +10,16 @@ import 'package:matterleast/domain/call_presentation.dart';
 /// One line about the call: how the connection is and, once connected, how
 /// long the call has run. Only this line ticks.
 class CallStatusLine extends ConsumerStatefulWidget {
-  const CallStatusLine({required this.state, this.style, super.key});
+  const CallStatusLine({
+    required this.state,
+    this.style,
+    this.maxLines = 1,
+    super.key,
+  });
 
   final CallConnection state;
   final TextStyle? style;
+  final int maxLines;
 
   @override
   ConsumerState<CallStatusLine> createState() => _CallStatusLineState();
@@ -64,7 +70,7 @@ class _CallStatusLineState extends ConsumerState<CallStatusLine> {
       running
           ? '$text · ${callTimerLabel(callElapsed(startAt, clock.now()))}'
           : text,
-      maxLines: 1,
+      maxLines: widget.maxLines,
       overflow: TextOverflow.ellipsis,
       style: widget.style,
     );

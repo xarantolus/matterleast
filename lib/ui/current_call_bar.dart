@@ -186,6 +186,7 @@ class _Bar extends ConsumerWidget {
                             ),
                           CallStatusLine(
                             state: state,
+                            maxLines: 2,
                             style: text.bodySmall?.copyWith(color: fg),
                           ),
                         ],

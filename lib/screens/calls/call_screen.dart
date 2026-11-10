@@ -142,7 +142,9 @@ class _StatusLine extends StatelessWidget {
                     : null,
               ),
               Expanded(
-                child: failed
+                child: connection.phase == CallPhase.ended
+                    ? const SizedBox.shrink()
+                    : failed
                     ? Text(
                         callConnectionText(connection),
                         style: style?.copyWith(
@@ -176,11 +178,24 @@ class _Over extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final failed = connection.phase == CallPhase.failed;
+    final muted = context.tokens.muted;
     return Center(
-      child: Icon(
-        failed ? Icons.error_outline : Icons.call_end,
-        size: 64,
-        color: context.tokens.muted,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: Spacing.md,
+        children: [
+          Icon(
+            failed ? Icons.error_outline : Icons.call_end,
+            size: 64,
+            color: muted,
+          ),
+          if (!failed)
+            Text(
+              callConnectionText(connection),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(color: muted),
+            ),
+        ],
       ),
     );
   }
