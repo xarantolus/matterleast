@@ -90,6 +90,13 @@ String? ufragOf(String candidate) {
   return at >= 0 && at + 1 < parts.length ? parts[at + 1] : null;
 }
 
+/// The constraints of our offer. flutter_webrtc reads only `mandatory` and
+/// `optional`; a restart named anywhere else is silently a plain offer that
+/// keeps the old credentials and ports.
+Map<String, Object> offerConstraints({required bool iceRestart}) => {
+  if (iceRestart) 'mandatory': {'IceRestart': true},
+};
+
 /// [CallPeer] on flutter_webrtc.
 class WebRtcPeer implements CallPeer {
   final _events = StreamController<PeerEvent>.broadcast();
@@ -200,7 +207,9 @@ class WebRtcPeer implements CallPeer {
   @override
   Future<String> createOffer({bool iceRestart = false}) async {
     final pc = _connection;
-    final offer = await pc.createOffer({if (iceRestart) 'iceRestart': true});
+    final offer = await pc.createOffer(
+      offerConstraints(iceRestart: iceRestart),
+    );
     await pc.setLocalDescription(offer);
     return offer.sdp ?? '';
   }

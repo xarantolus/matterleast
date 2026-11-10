@@ -109,12 +109,27 @@ void main() {
       expect(mediaPortOf(const []), isNull);
     });
 
-    test('is named in the failure text', () {
+    test('is named in the failure text when the media never came up', () {
       expect(
-        mediaFailure((protocol: 'udp', port: 8445)).message,
+        mediaFailure((
+          protocol: 'udp',
+          port: 8445,
+        ), wasConnected: false).message,
         contains('UDP 8445'),
       );
-      expect(mediaFailure(null).kind, CallFailureKind.media);
+      expect(
+        mediaFailure(null, wasConnected: false).kind,
+        CallFailureKind.media,
+      );
+    });
+
+    test('is not blamed once the call was connected', () {
+      final failure = mediaFailure((
+        protocol: 'udp',
+        port: 8445,
+      ), wasConnected: true);
+      expect(failure.kind, CallFailureKind.noConnection);
+      expect(failure.message, isNot(contains('8445')));
     });
   });
 
