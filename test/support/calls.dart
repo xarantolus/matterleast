@@ -16,6 +16,9 @@ Map<String, Object?> callJson({
   String id = 'call1',
   String postId = 'post1',
   List<String> people = const [],
+
+  /// People who are also in the call from a second device, on `s-<user>-2`.
+  List<String> alsoOnAnotherDevice = const [],
   int startAt = 1700000000000,
 }) => {
   'id': id,
@@ -27,6 +30,8 @@ Map<String, Object?> callJson({
   'sessions': [
     for (final user in people)
       {'session_id': 's-$user', 'user_id': user, 'unmuted': false},
+    for (final user in alsoOnAnotherDevice)
+      {'session_id': 's-$user-2', 'user_id': user, 'unmuted': false},
   ],
 };
 

@@ -32,11 +32,13 @@ const desktopPlatforms = TargetPlatformVariant({
 void main() {
   late FakeCallController calls;
   var people = <String>[];
+  var otherDevices = <String>[];
   var config = callsConfigJson();
 
   setUp(() {
     calls = FakeCallController();
     people = ['ann', meId];
+    otherDevices = [];
     config = callsConfigJson(hostControls: true);
   });
 
@@ -68,7 +70,10 @@ void main() {
       handle: (r) => switch (r.path) {
         '$callsRoute/config' => ok(config),
         '$callsRoute/channels' => ok([
-          callsChannelJson(channelId, call: callJson(people: people)),
+          callsChannelJson(
+            channelId,
+            call: callJson(people: people, alsoOnAnotherDevice: otherDevices),
+          ),
         ]),
         _ => emptyAnswer(r),
       },
@@ -111,6 +116,18 @@ void main() {
     expect(find.text('ann'), findsOneWidget);
     expect(find.text('Host'), findsOneWidget);
     expect(find.textContaining('(you)'), findsOneWidget);
+    await h.close(tester);
+  });
+
+  testWidgets('only this device is you, the same person elsewhere is not', (
+    tester,
+  ) async {
+    otherDevices = [meId];
+    calls.connectionState.value = inCall();
+    final h = await open(tester);
+
+    expect(find.textContaining('(you)'), findsOneWidget);
+    expect(find.textContaining('(other device)'), findsOneWidget);
     await h.close(tester);
   });
 

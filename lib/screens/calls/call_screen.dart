@@ -82,6 +82,7 @@ class CallScreen extends ConsumerWidget {
                             url: url,
                             channelId: channelId,
                             selfId: selfId,
+                            selfSessionId: connection.sessionId,
                             hostOpen: hostOpen,
                             connected: connection.phase == CallPhase.connected,
                           )
@@ -206,6 +207,7 @@ class _Participants extends ConsumerWidget {
     required this.url,
     required this.channelId,
     required this.selfId,
+    required this.selfSessionId,
     required this.hostOpen,
     required this.connected,
   });
@@ -213,6 +215,7 @@ class _Participants extends ConsumerWidget {
   final String url;
   final String channelId;
   final String? selfId;
+  final String selfSessionId;
   final bool hostOpen;
   final bool connected;
 
@@ -227,6 +230,7 @@ class _Participants extends ConsumerWidget {
       channelId: channelId,
       sessionId: id,
       selfId: selfId,
+      selfSessionId: selfSessionId,
       hostOpen: hostOpen,
       sharing: id == sharer,
     );
