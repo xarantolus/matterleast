@@ -37,6 +37,7 @@ import 'package:matterleast/screens/channel/composer_keys.dart';
 import 'package:matterleast/screens/channel/composer_preview.dart';
 import 'package:matterleast/screens/channel/format_bar.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/screens/channel/link_over_selection.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/posting_rules.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
@@ -842,6 +843,9 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                             child: TextField(
                                               controller: _text,
                                               onTap: _wake,
+                                              inputFormatters: const [
+                                                LinkOverSelection(),
+                                              ],
                                               focusNode: _focus,
                                               autofocus: _refocus,
                                               style: style,
