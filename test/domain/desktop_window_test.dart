@@ -113,6 +113,14 @@ void main() {
       );
     });
 
+    test('says when the user is in a call', () {
+      expect(windowTitle(inCall: true), 'In a call – Matterleast');
+      expect(
+        windowTitle(conversation: 'Town Square', unread: 2, inCall: true),
+        '(2) In a call · Town Square – Matterleast',
+      );
+    });
+
     test('leaves out what there is none of', () {
       expect(windowTitle(), 'Matterleast');
       expect(windowTitle(unread: 0), 'Matterleast');

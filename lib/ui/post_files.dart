@@ -554,9 +554,11 @@ Future<void> _runFileAction(
   final viewers = Navigator.of(context, rootNavigator: true);
   void say(String message) =>
       messenger.showSnackBar(SnackBar(content: Text(message)));
+  final features = await ref.read(featuresProvider(url).future);
   final inApp =
       action == _FileAction.view &&
-      (file.kind == FileKind.pdf || file.kind == FileKind.text);
+      (file.kind == FileKind.pdf ||
+          file.kind == FileKind.text && features.fileDownloads);
   if (isDesktop &&
       !inApp &&
       (action == _FileAction.view || action == _FileAction.openWith) &&
@@ -570,11 +572,14 @@ Future<void> _runFileAction(
     );
     return;
   }
-  final features = await ref.read(featuresProvider(url).future);
   if (!features.fileDownloads && !inApp) {
     say(
-      "This server doesn't allow taking files out of the app, so "
-      '${file.name} can only be shown here.',
+      file.kind == FileKind.pdf
+          ? "This server doesn't allow taking files out of the app, so "
+                '${file.name} can only be shown here.'
+          : "This server doesn't allow taking files out of the app, so "
+                '${file.name} can not be opened. Only PDF files can be '
+                'previewed.',
     );
     return;
   }
@@ -599,7 +604,16 @@ Future<void> _runFileAction(
   final handoff = (await downloads).handoffDirectory;
   switch (action) {
     case _FileAction.view when file.kind == FileKind.pdf:
-      unawaited(viewers.push(pdfRoute(local, url: url, file: file)));
+      unawaited(
+        viewers.push(
+          pdfRoute(
+            local,
+            url: url,
+            file: file,
+            canCopy: features.fileDownloads,
+          ),
+        ),
+      );
     case _FileAction.view when file.kind == FileKind.text:
       final text = await local.readAsString().catchError((_) => '');
       final code = text.endsWith('\n')

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 /// A loopback WebSocket endpoint at `/api/v4/websocket` standing in for a
 /// Mattermost server. Every connection is kept with the request that opened
@@ -12,6 +13,9 @@ class FakeSocketServer {
   final connections = <({Uri uri, HttpHeaders headers, WebSocket socket})>[];
   final _actions = StreamController<Map<String, Object?>>.broadcast();
   final _connected = StreamController<void>.broadcast();
+
+  /// Binary frames the client sent, in order.
+  final binary = <Uint8List>[];
 
   /// Answer `ping` actions with a pong, as the server does.
   var answerPings = true;
@@ -48,6 +52,10 @@ class FakeSocketServer {
 
   void _answer(WebSocket socket) {
     socket.listen((message) {
+      if (message is List<int>) {
+        binary.add(Uint8List.fromList(message));
+        return;
+      }
       final json = jsonDecode(message as String) as Map<String, Object?>;
       _actions.add(json);
       if (json['action'] == 'ping' && answerPings && !_closing) {

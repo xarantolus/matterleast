@@ -70,6 +70,7 @@ class BookmarkActions {
       open: open,
       length: length,
       name: name,
+      bookmark: true,
       clientId: 'bookmark-${DateTime.now().microsecondsSinceEpoch}',
     );
     final file = await upload.done;

@@ -33,6 +33,7 @@ void main() {
         local: File('test/fixtures/pdf/$name'),
         url: _server,
         file: PostFile(id: 'f1', name: name, extension: 'pdf'),
+        canCopy: true,
       ),
       overrides: [
         featuresProvider(_server).overrideWith((ref) => const Stream.empty()),

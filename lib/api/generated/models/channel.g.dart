@@ -27,6 +27,7 @@ Channel _$ChannelFromJson(Map<String, dynamic> json) => Channel(
   shared: const LenientBool().fromJson(json['shared']),
   schemeId: const LenientString().fromJson(json['scheme_id']),
   props: json['props'],
+  bannerInfo: const LenientChannelBanner().fromJson(json['banner_info']),
 );
 
 Map<String, dynamic> _$ChannelToJson(Channel instance) => <String, dynamic>{
@@ -50,4 +51,5 @@ Map<String, dynamic> _$ChannelToJson(Channel instance) => <String, dynamic>{
   'shared': const LenientBool().toJson(instance.shared),
   'scheme_id': const LenientString().toJson(instance.schemeId),
   'props': instance.props,
+  'banner_info': const LenientChannelBanner().toJson(instance.bannerInfo),
 };

@@ -162,6 +162,22 @@ Color _extremeFor(Color background) {
       : black;
 }
 
+/// The colours of a banner from the server's `#rrggbb` strings: the server's
+/// background (else [fallbackBg]) and a text colour that always reads on it,
+/// the server's own or else [fallbackFg].
+({Color background, Color foreground}) bannerColours(
+  String? bg,
+  String? fg, {
+  required Color fallbackBg,
+  required Color fallbackFg,
+}) {
+  final background = parseCssColor(bg) ?? fallbackBg;
+  return (
+    background: background,
+    foreground: readableOn(background, parseCssColor(fg) ?? fallbackFg),
+  );
+}
+
 /// [colour] moved towards black or white, keeping its hue, until it has
 /// [minimum] contrast on [background].
 Color adjustToRead(

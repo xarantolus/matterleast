@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/emoji_providers.dart';
+import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/ui/custom_emoji_image.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
@@ -33,7 +34,7 @@ class EmojiGlyph extends ConsumerWidget {
           child: Text(
             unicode,
             textScaler: TextScaler.noScaling,
-            style: TextStyle(fontSize: size, height: 1),
+            style: TextStyle(fontFamily: emojiFont, fontSize: size, height: 1),
           ),
         ),
       );

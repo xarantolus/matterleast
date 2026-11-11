@@ -2,6 +2,10 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'channel_info.freezed.dart';
 
+/// A channel's banner when it is switched on and has text; the colour is
+/// as the server wrote it.
+typedef ChannelBannerView = ({String text, String? colour});
+
 /// Everything the channel info screen shows about one channel.
 @freezed
 abstract class ChannelInfo with _$ChannelInfo {
@@ -17,6 +21,7 @@ abstract class ChannelInfo with _$ChannelInfo {
     required String teamDisplayName,
     required String purpose,
     required String header,
+    ChannelBannerView? banner,
     required bool archived,
     required bool joined,
     required bool favorite,

@@ -1,10 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/call_providers.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/platform.dart';
+import 'package:matterleast/domain/calls.dart';
 import 'package:matterleast/domain/conversation_open.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/screens/channel/bookmark_bar.dart';
+import 'package:matterleast/screens/channel/channel_banner_strip.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_scaffold.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
@@ -15,6 +18,8 @@ import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
 import 'package:matterleast/screens/you/profile_providers.dart';
+import 'package:matterleast/ui/call_actions_ui.dart';
+import 'package:matterleast/ui/call_join_banner.dart';
 import 'package:matterleast/ui/clickable.dart';
 
 /// A channel's messages, opened at the new-messages line, a message asked
@@ -66,6 +71,11 @@ class ChannelScreen extends ConsumerWidget {
     final liveNotice = ref.watch(serverLiveNoticeProvider(url));
     final presenceKnown =
         partnerId != null && ref.watch(presenceKnownProvider(url, partnerId));
+    final channelType = window?.channelType ?? '';
+    final callAction = channelType.isEmpty
+        ? CallAction.none
+        : ref.watch(callActionInProvider(url, channelId, channelType));
+    final calls = ref.watch(callControllerProvider);
     void openInfo() => openPage(
       Navigator.of(context),
       ChannelInfoScreen(
@@ -110,6 +120,29 @@ class ChannelScreen extends ConsumerWidget {
         ),
       ),
       actions: [
+        if (callAction != CallAction.none)
+          ValueListenableBuilder(
+            valueListenable: calls.current,
+            builder: (context, current, _) {
+              final here =
+                  current?.url == url && current?.channelId == channelId;
+              return IconButton(
+                tooltip: here
+                    ? 'Open call'
+                    : (callAction == CallAction.join
+                          ? 'Join call'
+                          : 'Start call'),
+                icon: Icon(here ? Icons.call : Icons.call_outlined),
+                onPressed: () => joinCall(
+                  context,
+                  calls,
+                  url: url,
+                  channelId: channelId,
+                  start: callAction != CallAction.join,
+                ),
+              );
+            },
+          ),
         IconButton(
           tooltip: 'Details',
           icon: const Icon(Icons.info_outline),
@@ -119,7 +152,13 @@ class ChannelScreen extends ConsumerWidget {
       header: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          ChannelBannerStrip(url: url, channelId: channelId),
           HeaderStrip(url: url, channelId: channelId),
+          CallJoinBanner(
+            url: url,
+            channelId: channelId,
+            channelType: channelType,
+          ),
           BookmarkBar(url: url, channelId: channelId),
         ],
       ),

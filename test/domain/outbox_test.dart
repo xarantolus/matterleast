@@ -90,6 +90,22 @@ void main() {
       expect((outcome as GiveUp).message, 'Not allowed here');
     });
 
+    test('a persistent notification the server finds invalid fails at once, '
+        'although it answers 500', () {
+      final outcome = classifySendError(
+        const ServerError(
+          statusCode: 500,
+          id: 'api.post.post_priority.persistent_notification_validation_error.request_error',
+          message: 'Persistent notification validation failed.',
+        ),
+        1,
+      );
+      expect(
+        (outcome as GiveUp).message,
+        'Persistent notification validation failed.',
+      );
+    });
+
     test('a deleted thread or a read-only channel drops the post', () {
       expect(
         classifySendError(

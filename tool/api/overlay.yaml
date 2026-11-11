@@ -106,6 +106,7 @@ actions:
       shared: {type: boolean}
       scheme_id: {type: string}
       props: {type: object, additionalProperties: true}
+      banner_info: {$ref: "#/components/schemas/ChannelBanner"}
   - target: "$.components.schemas.ChannelMember.properties"
     update:
       msg_count_root: {type: integer, format: int64}

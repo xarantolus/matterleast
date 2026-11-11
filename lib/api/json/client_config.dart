@@ -71,7 +71,6 @@ class ClientConfig {
     this.enableCrossTeamSearch,
     this.postEditTimeLimit,
     this.enableConfirmNotificationsToChannel,
-    this.experimentalTownSquareIsReadOnly,
     this.ldapFirstNameAttributeSet,
     this.ldapLastNameAttributeSet,
     this.ldapNicknameAttributeSet,
@@ -87,6 +86,15 @@ class ClientConfig {
     this.enableBurnOnRead,
     this.burnOnReadDurationSeconds,
     this.burnOnReadMaximumTimeToLiveSeconds,
+    this.enableBanner,
+    this.bannerText,
+    this.bannerColor,
+    this.bannerTextColor,
+    this.allowBannerDismissal,
+    this.allowPersistentNotifications,
+    this.allowPersistentNotificationsForGuests,
+    this.persistentNotificationMaxRecipients,
+    this.persistentNotificationIntervalMinutes,
     this.featureFlags = const {},
   });
 
@@ -110,6 +118,25 @@ class ClientConfig {
   final String? siteUrl;
   @LenientString()
   final String? diagnosticId;
+
+  @LenientBool()
+  final bool? enableBanner;
+  @LenientString()
+  final String? bannerText;
+  @LenientString()
+  final String? bannerColor;
+  @LenientString()
+  final String? bannerTextColor;
+  @LenientBool()
+  final bool? allowBannerDismissal;
+  @LenientBool()
+  final bool? allowPersistentNotifications;
+  @LenientBool()
+  final bool? allowPersistentNotificationsForGuests;
+  @LenientInt()
+  final int? persistentNotificationMaxRecipients;
+  @LenientInt()
+  final int? persistentNotificationIntervalMinutes;
 
   @LenientBool()
   final bool? enableSignInWithEmail;
@@ -226,8 +253,6 @@ class ClientConfig {
   final int? postEditTimeLimit;
   @LenientBool()
   final bool? enableConfirmNotificationsToChannel;
-  @LenientBool()
-  final bool? experimentalTownSquareIsReadOnly;
   @LenientBool()
   final bool? ldapFirstNameAttributeSet;
   @LenientBool()

@@ -19,7 +19,8 @@ finish-args:
   - --socket=wayland
   - --socket=fallback-x11
   - --device=dri
-  # Sound for video: libmpv speaks to PulseAudio, which PipeWire also serves.
+  # Sound for video and calls: libmpv and the call audio speak to PulseAudio,
+  # which PipeWire also serves; it covers the microphone too.
   - --socket=pulseaudio
   # The tray icon: the plugin speaks StatusNotifierItem itself, under the
   # name org.kde.StatusNotifierItem-<pid>-<n>; without a watcher it falls

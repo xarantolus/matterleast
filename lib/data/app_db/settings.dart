@@ -176,6 +176,15 @@ abstract final class Settings {
     _encodeOptionalText,
   );
 
+  /// The announcement text the user dismissed on each server, by URL; a
+  /// new text shows again.
+  static const dismissedAnnouncements = Setting<Map<String, String>>(
+    'dismissedAnnouncements',
+    {},
+    _decodeTextMap,
+    _encodeTextMap,
+  );
+
   /// The side pane widths of the wide layout, the same on every server.
   static const paneWidths = Setting<PaneWidths>(
     'paneWidths',
@@ -230,6 +239,7 @@ abstract final class Settings {
     lastUpdateCheck,
     latestRelease,
     dismissedRelease,
+    dismissedAnnouncements,
     paneWidths,
     uiZoom,
     homeFilter,
@@ -260,6 +270,21 @@ abstract final class Settings {
       value?.toUtc().toIso8601String() ?? '';
   static String? _decodeOptionalText(String raw) => raw.isEmpty ? null : raw;
   static String _encodeOptionalText(String? value) => value ?? '';
+  static Map<String, String> _decodeTextMap(String raw) {
+    try {
+      if (jsonDecode(raw) case final Map<String, Object?> json) {
+        return {
+          for (final MapEntry(:key, :value) in json.entries)
+            if (value is String) key: value,
+        };
+      }
+    } on Object {
+      // Falls through to the format error below.
+    }
+    throw FormatException('text map', raw);
+  }
+
+  static String _encodeTextMap(Map<String, String> value) => jsonEncode(value);
   static KnownRelease? _decodeRelease(String raw) {
     if (raw.isEmpty) return null;
     try {

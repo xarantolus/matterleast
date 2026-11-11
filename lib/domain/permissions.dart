@@ -33,6 +33,11 @@ abstract final class Permission {
 const systemAdminRole = 'system_admin';
 
 /// Pure: whether a user's space-separated system [roles] make them a
+/// system admin.
+bool isSystemAdmin(String? roles) =>
+    roleNames([roles ?? '']).contains(systemAdminRole);
+
+/// Pure: whether a user's space-separated system [roles] make them a
 /// guest account.
 bool isGuest(String? roles) =>
     roleNames([roles ?? '']).contains('system_guest');
@@ -193,9 +198,6 @@ bool canConvertGroupMessage({
 enum PostingBlock {
   archived,
 
-  /// Only admins post here (the server's read-only default channel).
-  readOnly,
-
   /// The user's roles don't include posting here.
   notAllowed,
 }
@@ -233,18 +235,15 @@ const ChannelPermissions noChannelRights = (
 /// permissions there.
 ChannelPermissions channelPermissions({
   required bool archived,
-  required bool readOnly,
   required Can can,
 }) {
-  final write = !archived && !readOnly;
+  final write = !archived;
   final post = can(Permission.createPost);
   final canEdit = write && post && can(Permission.editPost);
   final canDelete = write && post;
   return (
     block: archived
         ? PostingBlock.archived
-        : readOnly
-        ? PostingBlock.readOnly
         : post
         ? null
         : PostingBlock.notAllowed,
@@ -257,18 +256,6 @@ ChannelPermissions channelPermissions({
     groupMentions: can(Permission.useGroupMentions),
   );
 }
-
-/// Pure: whether the default channel is closed to a user with
-/// [systemRoles] because the server makes it read-only for everyone but
-/// system admins.
-bool readOnlyChannel({
-  required String channelName,
-  required bool townSquareReadOnly,
-  required String systemRoles,
-}) =>
-    townSquareReadOnly &&
-    channelName == 'town-square' &&
-    !roleNames([systemRoles]).contains(systemAdminRole);
 
 /// What the message menu offers for one message.
 typedef MessageRights = ({
@@ -292,7 +279,7 @@ MessageRights messageRights(
   required Duration? editTimeLimit,
 }) {
   final archived = channel.block == PostingBlock.archived;
-  final open = !archived && channel.block != PostingBlock.readOnly;
+  final open = !archived;
   final inTime =
       editTimeLimit == null || now.isBefore(createAt.add(editTimeLimit));
   return (

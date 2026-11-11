@@ -23,6 +23,8 @@ import 'package:matterleast/screens/search/quick_search.dart';
 import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/search/search_results_screen.dart';
 import 'package:matterleast/screens/status/status_providers.dart';
+import 'package:matterleast/ui/announcement_banner.dart';
+import 'package:matterleast/ui/call_dock.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/delayed_spinner.dart';
 import 'package:matterleast/ui/empty_state.dart';
@@ -110,6 +112,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       teamId: teamId,
       title: team.name ?? server.displayName,
       refreshingUrls: [server.url],
+      bannerUrl: server.url,
       actions: [
         MessageSearchButton(url: server.url, teamId: teamId ?? ''),
         QuickSearchAnchor(
@@ -179,6 +182,7 @@ class _RootLayout extends ConsumerWidget {
     required this.pane,
     required this.refreshingUrls,
     this.teamId,
+    this.bannerUrl,
     this.actions = const [],
   });
 
@@ -186,6 +190,9 @@ class _RootLayout extends ConsumerWidget {
   final String title;
   final Widget pane;
   final String? teamId;
+
+  /// The server whose announcement shows over the pane; none on Home.
+  final String? bannerUrl;
 
   /// The servers whose refreshing runs the progress bar.
   final List<String> refreshingUrls;
@@ -207,7 +214,16 @@ class _RootLayout extends ConsumerWidget {
               teamId: teamId,
             ),
             const VerticalDivider(width: 1),
-            Expanded(child: pane),
+            Expanded(
+              child: Column(
+                children: [
+                  if (bannerUrl case final url?)
+                    AnnouncementBanner(url: url, teamId: teamId ?? ''),
+                  Expanded(child: pane),
+                  const CallDock(),
+                ],
+              ),
+            ),
           ],
         ),
       ),

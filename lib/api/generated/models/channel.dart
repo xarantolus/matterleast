@@ -4,7 +4,10 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
+import 'channel_banner.dart';
+
 import 'package:matterleast/api/json/lenient.dart';
+import 'package:matterleast/api/json/lenient_models.dart';
 part 'channel.g.dart';
 
 @JsonSerializable()
@@ -30,6 +33,7 @@ class Channel {
     this.shared,
     this.schemeId,
     this.props,
+    this.bannerInfo,
   });
 
   factory Channel.fromJson(Map<String, Object?> json) =>
@@ -87,6 +91,9 @@ class Channel {
   @JsonKey(name: 'scheme_id')
   final String? schemeId;
   final Object? props;
+  @LenientChannelBanner()
+  @JsonKey(name: 'banner_info')
+  final ChannelBanner? bannerInfo;
 
   Map<String, Object?> toJson() => _$ChannelToJson(this);
 }

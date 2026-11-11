@@ -8,6 +8,7 @@ import 'package:matterleast/data/actions/account_actions.dart';
 import 'package:matterleast/data/actions/agent_actions.dart';
 import 'package:matterleast/data/actions/attribute_actions.dart';
 import 'package:matterleast/data/actions/bookmark_actions.dart';
+import 'package:matterleast/data/actions/calls_actions.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/content_flagging.dart';
@@ -40,9 +41,10 @@ class ServerSession {
     required this.runner,
     required this.dbPath,
     required this.images,
-    required String? Function() token,
+    required this.token,
     Duration Function(int failCount) retryDelayOf = jitteredRetryDelay,
     Duration catchUpLimit = const Duration(seconds: 20),
+    Duration callsRefreshEvery = const Duration(minutes: 20),
     this.watchInterval = const Duration(milliseconds: 100),
     this.draftDelay = const Duration(milliseconds: 500),
     this.network,
@@ -57,6 +59,7 @@ class ServerSession {
       token: token,
       retryDelayOf: retryDelayOf,
       catchUpLimit: catchUpLimit,
+      callsRefreshEvery: callsRefreshEvery,
       online: network?.online,
     );
     outbox = OutboxSender(
@@ -71,6 +74,9 @@ class ServerSession {
   }
 
   final Uri url;
+
+  /// The session token as stored, for the sockets that carry their own.
+  final String? Function() token;
   final ServerApi api;
   final ServerDatabase db;
   final ServerStore store;
@@ -120,6 +126,7 @@ class ServerSession {
   late final teams = TeamActions(this);
   late final settings = SettingsActions(this);
   late final agents = AgentActions(this);
+  CallsActions get calls => connection.calls.actions;
   late final bookmarks = BookmarkActions(this);
   late final attributes = AttributeActions(this);
   late final account = AccountActions(this);

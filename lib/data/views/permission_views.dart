@@ -75,18 +75,18 @@ class PermissionViews {
     interval: const Duration(milliseconds: 300),
   ).distinct();
 
+  Stream<bool> watchSystemAdmin() => throttledWatch(
+    db.tableUpdates(TableUpdateQuery.onAllTables([db.syncState])),
+    () async => isSystemAdmin(await systemRoles()),
+    interval: const Duration(milliseconds: 300),
+  ).distinct();
+
   Future<ChannelPermissions> channel(String channelId) async {
     final channel = await (db.select(
       db.channels,
     )..where((c) => c.id.equals(channelId))).getSingleOrNull();
-    final features = await db.features();
     return channelPermissions(
       archived: channel?.deleteAt != null,
-      readOnly: readOnlyChannel(
-        channelName: channel?.name ?? '',
-        townSquareReadOnly: features.townSquareReadOnly,
-        systemRoles: await systemRoles(),
-      ),
       can: await inChannel(channelId),
     );
   }

@@ -4,7 +4,10 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
+import 'channel_banner.dart';
+
 import 'package:matterleast/api/json/lenient.dart';
+import 'package:matterleast/api/json/lenient_models.dart';
 part 'channel_with_team_data.g.dart';
 
 @JsonSerializable()
@@ -30,6 +33,7 @@ class ChannelWithTeamData {
     this.shared,
     this.schemeId,
     this.props,
+    this.bannerInfo,
     this.teamDisplayName,
     this.teamName,
     this.teamUpdateAt,
@@ -91,6 +95,9 @@ class ChannelWithTeamData {
   @JsonKey(name: 'scheme_id')
   final String? schemeId;
   final Object? props;
+  @LenientChannelBanner()
+  @JsonKey(name: 'banner_info')
+  final ChannelBanner? bannerInfo;
   @LenientString()
   @JsonKey(name: 'team_display_name')
   final String? teamDisplayName;

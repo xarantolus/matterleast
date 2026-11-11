@@ -95,6 +95,17 @@ class ChannelNotifyPropsColumn extends _ModelColumn<api.ChannelNotifyProps> {
   Map<String, Object?> toJson(api.ChannelNotifyProps value) => value.toJson();
 }
 
+class ChannelBannerColumn extends _ModelColumn<api.ChannelBanner> {
+  const ChannelBannerColumn();
+
+  @override
+  api.ChannelBanner fromJson(Map<String, Object?> json) =>
+      api.ChannelBanner.fromJson(json);
+
+  @override
+  Map<String, Object?> toJson(api.ChannelBanner value) => value.toJson();
+}
+
 class TimezoneColumn extends _ModelColumn<api.Timezone> {
   const TimezoneColumn();
 

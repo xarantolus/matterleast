@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/call_providers.dart';
 import 'package:matterleast/app/desktop/window_title.dart';
 import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/app/theme.dart';
@@ -48,6 +49,7 @@ class ChannelTile extends ConsumerWidget {
         ? tokens.muted
         : tokens.text;
     final partner = item.kind == ChannelKind.direct ? item.userId : null;
+    final inCall = ref.watch(channelHasCallProvider(serverUrl, item.id));
     final presenceKnown =
         partner != null && ref.watch(presenceKnownProvider(serverUrl, partner));
     final name = Text(
@@ -81,6 +83,7 @@ class ChannelTile extends ConsumerWidget {
           item,
           markers: trailing == null,
           presenceKnown: presenceKnown,
+          inCall: inCall,
         ),
         onLongPressHint: onLongPress == null ? null : 'channel options',
         child: ExcludeSemantics(
@@ -101,7 +104,11 @@ class ChannelTile extends ConsumerWidget {
           ),
         ),
       ),
-      trailing: trailing ?? ExcludeSemantics(child: _Markers(item: item)),
+      trailing:
+          trailing ??
+          ExcludeSemantics(
+            child: _Markers(item: item, inCall: inCall),
+          ),
       onTap: onTap,
       onLongPress: onLongPress,
     );
@@ -137,6 +144,7 @@ String channelRowLabel(
   ChannelItem item, {
   bool markers = true,
   bool presenceKnown = false,
+  bool inCall = false,
 }) => [
   item.title,
   switch (item.kind) {
@@ -148,6 +156,7 @@ String channelRowLabel(
       presenceKnown ? presenceLabel(item.status).toLowerCase() : null,
   },
   if (markers) ...[
+    if (inCall) 'Call in progress',
     if (item.hasDraft) 'draft',
     if (item.muted) 'muted',
     if (item.mentions == 1)
@@ -160,15 +169,17 @@ String channelRowLabel(
 ].nonNulls.join(', ');
 
 class _Markers extends StatelessWidget {
-  const _Markers({required this.item});
+  const _Markers({required this.item, required this.inCall});
 
   final ChannelItem item;
+  final bool inCall;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final scheme = Theme.of(context).colorScheme;
     final markers = [
+      if (inCall) Icon(Icons.call, size: 16, color: tokens.online),
       if (item.hasDraft)
         Icon(Icons.edit_outlined, size: 16, color: tokens.muted),
       if (item.muted)

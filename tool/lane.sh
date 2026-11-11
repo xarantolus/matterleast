@@ -3,7 +3,8 @@
 # with `flutter run`, signed in to the local test server, hot reloaded when
 # lib/ changes. Run from inside the worktree.
 #
-#   tool/lane.sh up [user]      boot an emulator, run the app as user (alice);
+#   tool/lane.sh up [user]      boot an emulator, run the app as user (alice) on
+#                               $LANE_SERVER (default: the test server);
 #                               mobile-mcp sees it as device matterleast-<port>
 #   tool/lane.sh reload         hot reload now and print the result
 #   tool/lane.sh restart        hot restart now and print the result
@@ -98,7 +99,7 @@ up)
     # come in as signals through the pid file.
     (cd "$root" && exec flutter run -d "emulator-$port" --debug \
         --pid-file "$root/.lane.pid" \
-        --dart-define="MATTERLEAST_DEV_LOGIN=http://10.0.2.2:8165|$user|matterleast" \
+        --dart-define="MATTERLEAST_DEV_LOGIN=${LANE_SERVER:-http://10.0.2.2:8165}|$user|matterleast" \
         < <(tail -f /dev/null 2> /dev/null) >> "$log" 2>&1) > /dev/null 2>&1 &
     run_pid=$!
     # Reload a second after the last change under lib/.

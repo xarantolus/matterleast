@@ -1,4 +1,6 @@
+import 'package:matterleast/app/call_providers.dart';
 import 'package:matterleast/app/desktop/unread_count.dart';
+import 'package:matterleast/app/live_providers.dart';
 import 'package:matterleast/domain/conversation_restore.dart';
 import 'package:matterleast/domain/desktop_window.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -20,6 +22,7 @@ class OpenConversation extends _$OpenConversation {
 /// count.
 @riverpod
 String windowTitleText(Ref ref) {
+  final controller = ref.watch(callControllerProvider);
   final open = ref.watch(openConversationProvider);
   final teams = open == null
       ? null
@@ -32,5 +35,6 @@ String windowTitleText(Ref ref) {
     conversation: open?.title,
     team: team,
     unread: ref.watch(unreadCountProvider),
+    inCall: followValue(ref, controller.connection).active,
   );
 }

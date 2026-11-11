@@ -15,15 +15,8 @@ const _admin = {
   Permission.deleteOthersPosts,
 };
 
-ChannelPermissions _channel(
-  Set<String> granted, {
-  bool archived = false,
-  bool readOnly = false,
-}) => channelPermissions(
-  archived: archived,
-  readOnly: readOnly,
-  can: granted.contains,
-);
+ChannelPermissions _channel(Set<String> granted, {bool archived = false}) =>
+    channelPermissions(archived: archived, can: granted.contains);
 
 final _posted = DateTime.utc(2026, 5, 1, 12);
 
@@ -88,15 +81,6 @@ void main() {
     ], everyElement(isFalse));
   });
 
-  test('a read-only channel shows no write actions but can be marked '
-      'unread', () {
-    final channel = _channel(_member, readOnly: true);
-    expect(channel.block, PostingBlock.readOnly);
-    final r = _rights(channel, mine: false);
-    expect([r.react, r.reply, r.pin, r.edit, r.delete], everyElement(isFalse));
-    expect(r.markUnread, isTrue);
-  });
-
   test('without create_post the composer gives way to a notice', () {
     final channel = _channel(_member.difference({Permission.createPost}));
     expect(channel.block, PostingBlock.notAllowed);
@@ -112,17 +96,6 @@ void main() {
     final channel = _channel(_member);
     expect(_rights(channel).markUnread, isTrue);
     expect(_rights(channel, system: true).markUnread, isFalse);
-  });
-
-  test('the default channel is read-only for everyone but system admins', () {
-    bool readOnly(String name, String roles) => readOnlyChannel(
-      channelName: name,
-      townSquareReadOnly: true,
-      systemRoles: roles,
-    );
-    expect(readOnly('town-square', 'system_user'), isTrue);
-    expect(readOnly('town-square', 'system_user system_admin'), isFalse);
-    expect(readOnly('off-topic', 'system_user'), isFalse);
   });
 
   group('channel-wide mentions', () {

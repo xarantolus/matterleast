@@ -143,9 +143,6 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
   enableConfirmNotificationsToChannel: const LenientBool().fromJson(
     json['EnableConfirmNotificationsToChannel'],
   ),
-  experimentalTownSquareIsReadOnly: const LenientBool().fromJson(
-    json['ExperimentalTownSquareIsReadOnly'],
-  ),
   ldapFirstNameAttributeSet: const LenientBool().fromJson(
     json['LdapFirstNameAttributeSet'],
   ),
@@ -184,6 +181,25 @@ ClientConfig _$ClientConfigFromJson(Map<String, dynamic> json) => ClientConfig(
   ),
   burnOnReadMaximumTimeToLiveSeconds: const LenientInt().fromJson(
     json['BurnOnReadMaximumTimeToLiveSeconds'],
+  ),
+  enableBanner: const LenientBool().fromJson(json['EnableBanner']),
+  bannerText: const LenientString().fromJson(json['BannerText']),
+  bannerColor: const LenientString().fromJson(json['BannerColor']),
+  bannerTextColor: const LenientString().fromJson(json['BannerTextColor']),
+  allowBannerDismissal: const LenientBool().fromJson(
+    json['AllowBannerDismissal'],
+  ),
+  allowPersistentNotifications: const LenientBool().fromJson(
+    json['AllowPersistentNotifications'],
+  ),
+  allowPersistentNotificationsForGuests: const LenientBool().fromJson(
+    json['AllowPersistentNotificationsForGuests'],
+  ),
+  persistentNotificationMaxRecipients: const LenientInt().fromJson(
+    json['PersistentNotificationMaxRecipients'],
+  ),
+  persistentNotificationIntervalMinutes: const LenientInt().fromJson(
+    json['PersistentNotificationIntervalMinutes'],
   ),
   featureFlags: _featureFlags(json, 'FeatureFlags') == null
       ? const {}

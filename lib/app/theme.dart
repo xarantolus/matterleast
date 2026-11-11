@@ -42,14 +42,31 @@ void registerFontLicence() => LicenseRegistry.addLicense(() async* {
 });
 
 ThemeData buildTheme(Brightness brightness) {
-  final brand = brightness == Brightness.dark ? _brandDark : _brandLight;
+  final dark = brightness == Brightness.dark;
+  final brand = dark ? _brandDark : _brandLight;
+  final tokens = dark ? AppTokens.dark : AppTokens.light;
+  Color mix(double t) => Color.lerp(tokens.page, tokens.text, t)!;
   return _build(
     brightness: brightness,
-    tokens: brightness == Brightness.dark ? AppTokens.dark : AppTokens.light,
+    tokens: tokens,
     primary: brand,
     onPrimary: Colors.white,
     bar: brand,
     onBar: Colors.white,
+    // The seeded dark containers are darker than our page; sheets and
+    // menus must sit a step above it.
+    scheme: dark
+        ? ColorScheme.fromSeed(
+            seedColor: brand,
+            brightness: brightness,
+          ).copyWith(
+            surfaceContainerLowest: tokens.page,
+            surfaceContainerLow: mix(0.03),
+            surfaceContainer: mix(0.05),
+            surfaceContainerHigh: mix(0.08),
+            surfaceContainerHighest: tokens.panel,
+          )
+        : null,
   );
 }
 

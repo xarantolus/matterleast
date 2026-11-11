@@ -65,4 +65,26 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('an ephemeral message from no one reads as a system line', (
+    tester,
+  ) async {
+    await show(
+      tester,
+      PostItem(
+        id: 'e1',
+        key: 'e1',
+        userId: '',
+        authorName: 'Someone',
+        createAt: DateTime.utc(2026, 10, 20, 9),
+        message: 'The message from @bob has been quarantined.',
+        type: 'system_ephemeral',
+      ),
+    );
+    expect(find.text('Someone'), findsNothing);
+    expect(
+      find.textContaining('has been quarantined', findRichText: true),
+      findsOneWidget,
+    );
+  });
 }

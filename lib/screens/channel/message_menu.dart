@@ -681,7 +681,13 @@ Future<void> showFailedPostSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const ListTile(title: Text('This message was not sent.')),
+          ListTile(
+            title: const Text('This message was not sent.'),
+            subtitle: switch (ref.watch(sendFailureProvider(url, post.key))) {
+              AsyncData(value: final reason?) => Text(reason),
+              _ => null,
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.refresh),
             title: const Text('Try again'),

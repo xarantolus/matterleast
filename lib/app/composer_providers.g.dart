@@ -102,6 +102,89 @@ final class ComposerActionsFamily extends $Family
   String toString() => r'composerActionsProvider';
 }
 
+/// Why an unsent post failed, in the server's words; null when it said
+/// nothing.
+
+@ProviderFor(sendFailure)
+final sendFailureProvider = SendFailureFamily._();
+
+/// Why an unsent post failed, in the server's words; null when it said
+/// nothing.
+
+final class SendFailureProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// Why an unsent post failed, in the server's words; null when it said
+  /// nothing.
+  SendFailureProvider._({
+    required SendFailureFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'sendFailureProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$sendFailureHash();
+
+  @override
+  String toString() {
+    return r'sendFailureProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return sendFailure(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SendFailureProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$sendFailureHash() => r'858ae137102cc90f72e0c6e2fbc6d421186e0b5e';
+
+/// Why an unsent post failed, in the server's words; null when it said
+/// nothing.
+
+final class SendFailureFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String?>, (String, String)> {
+  SendFailureFamily._()
+    : super(
+        retry: null,
+        name: r'sendFailureProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Why an unsent post failed, in the server's words; null when it said
+  /// nothing.
+
+  SendFailureProvider call(String url, String pendingPostId) =>
+      SendFailureProvider._(argument: (url, pendingPostId), from: this);
+
+  @override
+  String toString() => r'sendFailureProvider';
+}
+
 /// Posts the server refused for good, as they happen, to tell the user.
 
 @ProviderFor(rejectedPosts)

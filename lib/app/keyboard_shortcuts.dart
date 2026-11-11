@@ -85,6 +85,18 @@ class FocusComposerIntent extends AppIntent {
   const FocusComposerIntent();
 }
 
+/// Mutes or unmutes the microphone in the call the user is in.
+class ToggleMuteIntent extends AppIntent {
+  const ToggleMuteIntent();
+}
+
+/// Indents or outdents the list items under the composer's selection.
+class IndentListIntent extends AppIntent {
+  const IndentListIntent({this.outdent = false});
+
+  final bool outdent;
+}
+
 enum Format { bold, italic, strike, link, code }
 
 /// Formats the composer's selection.
@@ -370,6 +382,16 @@ const appShortcuts = <AppShortcut>[
     FormatIntent(Format.code),
   ),
   AppShortcut(
+    'Indent list item',
+    SingleActivator(LogicalKeyboardKey.tab),
+    IndentListIntent(),
+  ),
+  AppShortcut(
+    'Outdent list item',
+    SingleActivator(LogicalKeyboardKey.tab, shift: true),
+    IndentListIntent(outdent: true),
+  ),
+  AppShortcut(
     'Show preview',
     SingleActivator(LogicalKeyboardKey.keyP, control: true, alt: true),
     TogglePreviewIntent(),
@@ -452,6 +474,11 @@ const appShortcuts = <AppShortcut>[
     alsoKeys: [SingleActivator(LogicalKeyboardKey.numpad0, control: true)],
   ),
   AppShortcut(
+    'Mute or unmute in a call',
+    SingleActivator(LogicalKeyboardKey.space, control: true, shift: true),
+    ToggleMuteIntent(),
+  ),
+  AppShortcut(
     'Keyboard shortcuts',
     SingleActivator(LogicalKeyboardKey.slash, control: true),
     ShowShortcutsIntent(),
@@ -472,6 +499,7 @@ final _keyNames = {
   LogicalKeyboardKey.escape: 'Esc',
   LogicalKeyboardKey.slash: '/',
   LogicalKeyboardKey.equal: '+',
+  LogicalKeyboardKey.space: 'Space',
 };
 
 /// Pure: [keys] as people write them, such as "Ctrl+Shift+A".

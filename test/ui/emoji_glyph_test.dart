@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/emoji_providers.dart';
 import 'package:matterleast/app/image_providers.dart';
+import 'package:matterleast/app/theme.dart';
 import 'package:matterleast/data/emoji/custom_emoji.dart';
 import 'package:matterleast/data/images/server_image_caches.dart';
 import 'package:matterleast/domain/post_list.dart';
@@ -56,6 +57,17 @@ void main() {
     );
     expect(find.text('🎉'), findsOneWidget);
     expect(tester.getSize(find.byType(EmojiGlyph)), const Size(20, 20));
+  });
+
+  testWidgets('a heart is drawn in the emoji font, not as a black glyph', (
+    tester,
+  ) async {
+    await _show(
+      tester,
+      const EmojiGlyph(name: 'heart', size: 20, serverUrl: _url),
+    );
+    final heart = tester.widget<Text>(find.text('\u2764\uFE0F'));
+    expect(heart.style?.fontFamily, emojiFont);
   });
 
   testWidgets("a custom emoji shows the server's image in its square", (

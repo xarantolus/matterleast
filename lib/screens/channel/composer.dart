@@ -21,8 +21,10 @@ import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/data/files/local_copies.dart';
+import 'package:matterleast/data/server_db/server_database.dart' show SyncKeys;
 import 'package:matterleast/domain/autocomplete.dart';
 import 'package:matterleast/domain/permissions.dart';
+import 'package:matterleast/domain/persistent_notifications.dart';
 import 'package:matterleast/domain/post_files.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/server_features.dart';
@@ -32,9 +34,11 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/composer_desktop.dart';
 import 'package:matterleast/screens/channel/composer_extras.dart';
 import 'package:matterleast/screens/channel/composer_keys.dart';
+import 'package:matterleast/screens/channel/composer_markdown.dart';
 import 'package:matterleast/screens/channel/composer_preview.dart';
 import 'package:matterleast/screens/channel/format_bar.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
+import 'package:matterleast/screens/channel/link_over_selection.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/posting_rules.dart';
 import 'package:matterleast/screens/drafts/drafts_providers.dart';
@@ -42,6 +46,7 @@ import 'package:matterleast/screens/drafts/schedule_picker.dart';
 import 'package:matterleast/screens/gallery/gallery_screen.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/clickable.dart';
+import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/density.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
@@ -56,18 +61,29 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'composer.g.dart';
 
-/// Whether messages can be marked important or urgent, and whether they
-/// can ask for acknowledgement.
+typedef PriorityOptions = ({
+  bool priority,
+  bool acknowledgements,
+  PersistentNotifications? persistent,
+});
+
+/// Whether messages can be marked important or urgent, whether they can
+/// ask for acknowledgement, and the persistent notifications this person
+/// may use.
 @riverpod
-Stream<({bool priority, bool acknowledgements})> postPriorityOptions(
-  Ref ref,
-  String url,
-) async* {
+Stream<PriorityOptions> postPriorityOptions(Ref ref, String url) async* {
   final db = (await ref.watch(serverSessionProvider(url).future)).db;
   yield* db
       .watchFeatures()
-      .map(
-        (f) => (priority: f.postPriority, acknowledgements: f.acknowledgements),
+      .asyncMap(
+        (f) async => (
+          priority: f.postPriority,
+          acknowledgements: f.acknowledgements,
+          persistent: persistentNotificationsFor(
+            f.persistentNotifications,
+            guest: isGuest(await db.syncText(SyncKeys.currentUserRoles)),
+          ),
+        ),
       )
       .distinct();
 }
@@ -554,6 +570,20 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
             enabled: () => _focus.hasFocus && !_preview,
             onInvoke: (intent) => _format(intent.format),
           ),
+          IndentListIntent: EnabledAction<IndentListIntent>(
+            enabled: () =>
+                _focus.hasFocus &&
+                !_preview &&
+                suggestions.isEmpty &&
+                onListItems(_text.value),
+            onInvoke: (intent) {
+              final indented = indentListItems(
+                _text.value,
+                outdent: intent.outdent,
+              );
+              if (indented != null) _text.value = indented;
+            },
+          ),
           // Typing keeps the page keys the field leaves unused to itself.
           ScrollMessagesIntent: EnabledAction<ScrollMessagesIntent>(
             enabled: () => _focus.hasFocus && _text.text.isNotEmpty,
@@ -682,7 +712,10 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                     alignment: AlignmentDirectional.centerStart,
                     child: PriorityChip(
                       priority: priority,
-                      onPressed: () => _pickPriority(options!.acknowledgements),
+                      onPressed: () => _pickPriority(
+                        options!.acknowledgements,
+                        options.persistent,
+                      ),
                       onDeleted: () =>
                           ref.read(_provider.notifier).setPriority(null),
                     ),
@@ -778,8 +811,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                     : () => _attach(
                                         anchor: globalRectOf(button),
                                         uploads: uploads,
-                                        acknowledgements: canPrioritize
-                                            ? options!.acknowledgements
+                                        priority: canPrioritize
+                                            ? options
                                             : null,
                                         burnOnRead: canBurn,
                                         schedule: canSchedule ? sendable : null,
@@ -825,6 +858,10 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                             child: TextField(
                                               controller: _text,
                                               onTap: _wake,
+                                              inputFormatters: const [
+                                                LinkOverSelection(),
+                                                ComposerMarkdown(),
+                                              ],
                                               focusNode: _focus,
                                               autofocus: _refocus,
                                               style: style,
@@ -943,7 +980,11 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     if (typing) _focus.requestFocus();
   }
 
-  Future<void> _pickPriority(bool acknowledgements, {Rect? anchor}) async {
+  Future<void> _pickPriority(
+    bool acknowledgements,
+    PersistentNotifications? persistent, {
+    Rect? anchor,
+  }) async {
     final draft = ref.read(_provider.notifier);
     final picked = await showAppSheet<api.PostPriority>(
       context: context,
@@ -952,6 +993,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       builder: (_) => PriorityPicker(
         initial: ref.read(_provider).priority,
         acknowledgements: acknowledgements,
+        persistent: persistent,
       ),
     );
     if (picked == null) return;
@@ -960,13 +1002,13 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     );
   }
 
-  /// Files only with [uploads]; priority unless [acknowledgements] is null;
+  /// Files only with [uploads]; priority unless [priority] is null;
   /// the burn-on-read switch with [burnOnRead]; scheduling unless
   /// [schedule] is null, usable once it is true.
   Future<void> _attach({
     required Rect? anchor,
     required bool uploads,
-    required bool? acknowledgements,
+    required PriorityOptions? priority,
     bool burnOnRead = false,
     bool? schedule,
     bool preview = false,
@@ -999,13 +1041,19 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                   _showPreview(true);
                 },
               ),
-            if (acknowledgements != null)
+            if (priority != null)
               ListTile(
                 leading: const Icon(Icons.flag_outlined),
                 title: const Text('Message priority'),
                 onTap: () {
                   Navigator.of(sheet).pop();
-                  unawaited(_pickPriority(acknowledgements, anchor: anchor));
+                  unawaited(
+                    _pickPriority(
+                      priority.acknowledgements,
+                      priority.persistent,
+                      anchor: anchor,
+                    ),
+                  );
                 },
               ),
             if (schedule != null)
@@ -1093,6 +1141,31 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     use24: MediaQuery.alwaysUse24HourFormatOf(context),
   );
 
+  /// Asks once before an urgent message goes out that notifies its
+  /// recipients again and again; true to send.
+  Future<bool> _confirmPersistent() async {
+    final draft = ref.read(_provider);
+    final interval = ref
+        .read(featuresProvider(widget.url))
+        .value
+        ?.persistentNotifications
+        ?.interval;
+    if (interval == null ||
+        widget.forward.isNotEmpty ||
+        widget.rootId.isNotEmpty ||
+        draft.priority?.persistentNotifications != true ||
+        draft.priority?.priority != api.PostPriorityPriority.urgent) {
+      return true;
+    }
+    if (!mounted) return false;
+    return confirm(
+      context,
+      title: 'Send persistent notifications?',
+      body: '${persistentNotificationsNote(interval)} Send?',
+      action: 'Send',
+    );
+  }
+
   /// Sends now, or at [at] where the server schedules it.
   Future<void> _send({DateTime? at}) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -1117,7 +1190,8 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                 widget.url,
                 widget.channelId,
                 message,
-              ),
+              ) &&
+              await _confirmPersistent(),
         );
     if (_preview && mounted) {
       setState(() {
@@ -1172,6 +1246,8 @@ class PriorityChip extends StatelessWidget {
         [
           if (urgent) 'Urgent' else 'Important',
           if (priority.requestedAck ?? false) 'acknowledgement requested',
+          if (urgent && (priority.persistentNotifications ?? false))
+            'persistent notifications',
         ].join(' · '),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -1189,11 +1265,15 @@ class PriorityPicker extends StatefulWidget {
   const PriorityPicker({
     required this.initial,
     required this.acknowledgements,
+    this.persistent,
     super.key,
   });
 
   final api.PostPriority? initial;
   final bool acknowledgements;
+
+  /// What the server allows; null hides the option.
+  final PersistentNotifications? persistent;
 
   @override
   State<PriorityPicker> createState() => _PriorityPickerState();
@@ -1202,6 +1282,7 @@ class PriorityPicker extends StatefulWidget {
 class _PriorityPickerState extends State<PriorityPicker> {
   late var _level = widget.initial?.priority ?? api.PostPriorityPriority.empty;
   late var _ack = widget.initial?.requestedAck ?? false;
+  late var _repeat = widget.initial?.persistentNotifications ?? false;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -1211,7 +1292,10 @@ class _PriorityPickerState extends State<PriorityPicker> {
         const SheetHeader('Message priority'),
         RadioGroup<api.PostPriorityPriority>(
           groupValue: _level,
-          onChanged: (v) => setState(() => _level = v ?? _level),
+          onChanged: (v) => setState(() {
+            _level = v ?? _level;
+            if (_level != api.PostPriorityPriority.urgent) _repeat = false;
+          }),
           child: Column(
             children: [
               for (final (level, icon, label) in const [
@@ -1237,6 +1321,14 @@ class _PriorityPickerState extends State<PriorityPicker> {
             onChanged: (v) => setState(() => _ack = v),
             title: const Text('Request acknowledgement'),
           ),
+        if (widget.persistent case final persistent?
+            when _level == api.PostPriorityPriority.urgent)
+          SwitchListTile.adaptive(
+            value: _repeat,
+            onChanged: (v) => setState(() => _repeat = v),
+            title: const Text('Send persistent notifications'),
+            subtitle: Text(persistentNotificationsNote(persistent.interval)),
+          ),
         Padding(
           padding: const EdgeInsets.all(Spacing.lg),
           child: Align(
@@ -1246,6 +1338,12 @@ class _PriorityPickerState extends State<PriorityPicker> {
                 api.PostPriority(
                   priority: _level,
                   requestedAck: widget.acknowledgements && _ack,
+                  persistentNotifications:
+                      widget.persistent != null &&
+                          _level == api.PostPriorityPriority.urgent &&
+                          _repeat
+                      ? true
+                      : null,
                 ),
               ),
               child: const Text('Apply'),

@@ -50,4 +50,6 @@ const _$OptionalFeatureEnumMap = {
   OptionalFeature.burnOnRead: 'burnOnRead',
   OptionalFeature.bookmarks: 'bookmarks',
   OptionalFeature.profileAttributes: 'profileAttributes',
+  OptionalFeature.calls: 'calls',
+  OptionalFeature.persistentNotifications: 'persistentNotifications',
 };

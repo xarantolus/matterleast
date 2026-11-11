@@ -146,6 +146,16 @@ class ComposerActions {
     }
   }
 
+  /// What the server said when it refused to take the unsent post, if it
+  /// said anything.
+  Future<String?> sendFailure(String pendingPostId) async {
+    final row = await (_db.select(
+      _db.outbox,
+    )..where((o) => o.pendingPostId.equals(pendingPostId))).getSingleOrNull();
+    final reason = row?.lastError?.trim();
+    return reason == null || reason.isEmpty ? null : reason;
+  }
+
   /// Deletes an unsent post.
   Future<void> discard(String pendingPostId) =>
       _store.discardPost(pendingPostId);

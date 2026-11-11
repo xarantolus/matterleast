@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/json/client_config.dart';
+import 'package:matterleast/domain/calls.dart';
 
 part 'server_features.freezed.dart';
 
@@ -21,6 +22,8 @@ enum OptionalFeature {
   burnOnRead,
   bookmarks,
   profileAttributes,
+  calls,
+  persistentNotifications,
 }
 
 /// Profile fields a directory (LDAP or SAML) can fill in, which the user
@@ -90,14 +93,14 @@ abstract class ServerFeatures with _$ServerFeatures {
     /// People have custom profile attributes the server defines.
     @Default(false) bool profileAttributes,
 
+    /// The Calls plugin runs and hasn't answered as unavailable.
+    @Default(false) bool calls,
+
     /// How long after posting a message can be edited; null for always.
     Duration? editTimeLimit,
 
     /// Ask before @all, @channel or @here notify a larger channel.
     @Default(false) bool confirmChannelMentions,
-
-    /// The default channel takes posts from admins only.
-    @Default(false) bool townSquareReadOnly,
 
     /// The server sends notification emails.
     @Default(false) bool emailNotifications,
@@ -121,6 +124,16 @@ abstract class ServerFeatures with _$ServerFeatures {
     /// How long a revealed burn-on-read message stays.
     @Default(ServerFeatures.defaultBurnOnReadDuration)
     Duration burnOnReadDuration,
+
+    /// The banner the admin shows on every screen; null when off.
+    Announcement? announcement,
+
+    /// Channels can show a banner of their own.
+    @Default(false) bool channelBanners,
+
+    /// Urgent messages can notify recipients again and again until they
+    /// acknowledge or reply; null when off.
+    PersistentNotifications? persistentNotifications,
 
     /// Fields that sign-in through LDAP or SAML fills in.
     @Default({}) Set<ProfileField> ldapFields,
@@ -182,6 +195,33 @@ abstract class ServerFeatures with _$ServerFeatures {
   }
 }
 
+/// The admin's banner, with the colours as the server wrote them.
+typedef Announcement = ({
+  String text,
+  String? background,
+  String? foreground,
+  bool dismissible,
+});
+
+/// Pure: [announcement] unless the user dismissed this very text and the
+/// server lets them.
+Announcement? announcementToShow(
+  Announcement? announcement,
+  String? dismissed,
+) =>
+    announcement != null &&
+        announcement.dismissible &&
+        announcement.text == dismissed
+    ? null
+    : announcement;
+
+/// What the server allows for persistent notifications.
+typedef PersistentNotifications = ({
+  int maxRecipients,
+  Duration interval,
+  bool forGuests,
+});
+
 /// A webapp plugin as `GET /plugins/webapp` lists it.
 typedef PluginVersion = ({String id, String version});
 
@@ -206,6 +246,10 @@ ServerFeatures serverFeatures({
   final maxFileSize = config.maxFileSize;
   final typingMs = config.timeBetweenUserTypingUpdatesMilliseconds;
   final burnSeconds = config.burnOnReadDurationSeconds;
+  final installed = {
+    if (config.pluginsEnabled != false)
+      for (final p in plugins) p.id: p.version,
+  };
   return ServerFeatures(
     version: config.version?.trim() ?? '',
     buildNumber: config.buildNumber?.trim() ?? '',
@@ -286,8 +330,36 @@ ServerFeatures serverFeatures({
     burnOnReadDuration: burnSeconds != null && burnSeconds > 0
         ? Duration(seconds: burnSeconds)
         : ServerFeatures.defaultBurnOnReadDuration,
-    townSquareReadOnly:
-        licensed && config.experimentalTownSquareIsReadOnly == true,
+    announcement:
+        licensed &&
+            config.enableBanner == true &&
+            (config.bannerText ?? '').trim().isNotEmpty
+        ? (
+            text: config.bannerText!.trim(),
+            background: config.bannerColor,
+            foreground: config.bannerTextColor,
+            dismissible: config.allowBannerDismissal == true,
+          )
+        : null,
+    channelBanners: licensed && license.skuShortName == 'advanced',
+    persistentNotifications:
+        licensed &&
+            config.postPriority == true &&
+            on(
+              OptionalFeature.persistentNotifications,
+              config.allowPersistentNotifications,
+            )
+        ? (
+            maxRecipients: config.persistentNotificationMaxRecipients ?? 5,
+            interval: Duration(
+              minutes: switch (config.persistentNotificationIntervalMinutes) {
+                final minutes? when minutes > 0 => minutes,
+                _ => 5,
+              },
+            ),
+            forGuests: config.allowPersistentNotificationsForGuests == true,
+          )
+        : null,
     ldapFields: {
       if (config.ldapFirstNameAttributeSet == true) ProfileField.firstName,
       if (config.ldapLastNameAttributeSet == true) ProfileField.lastName,
@@ -309,11 +381,11 @@ ServerFeatures serverFeatures({
         ? config.customTermsOfServiceId
         : null,
     featureFlags: config.featureFlags,
+    calls:
+        installed.containsKey(callsPluginId) &&
+        !turnedOff.contains(OptionalFeature.calls),
     pluginsAllowed: config.pluginsEnabled != false,
-    plugins: {
-      if (config.pluginsEnabled != false)
-        for (final p in plugins) p.id: p.version,
-    },
+    plugins: installed,
   );
 }
 

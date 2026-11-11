@@ -27,6 +27,7 @@ Future<ServerSession> testSession(
   QueryInterceptor? interceptor,
   NetworkState? network,
   Duration catchUpLimit = const Duration(seconds: 20),
+  Duration callsRefreshEvery = const Duration(minutes: 20),
   Duration watchInterval = const Duration(milliseconds: 100),
   Duration draftDelay = const Duration(milliseconds: 500),
 }) async {
@@ -59,6 +60,7 @@ Future<ServerSession> testSession(
     token: () => 'token',
     retryDelayOf: (_) => const Duration(milliseconds: 50),
     catchUpLimit: catchUpLimit,
+    callsRefreshEvery: callsRefreshEvery,
     watchInterval: watchInterval,
     draftDelay: draftDelay,
   );
@@ -134,6 +136,7 @@ Future<(FakeServer, ServerSession)> startServerSession({
   NetworkState? network,
   Duration watchInterval = const Duration(milliseconds: 100),
   Duration draftDelay = const Duration(milliseconds: 500),
+  Duration callsRefreshEvery = const Duration(minutes: 20),
 }) async {
   final server = await FakeServer.start();
   final session = await testSession(
@@ -142,6 +145,7 @@ Future<(FakeServer, ServerSession)> startServerSession({
     network: network,
     watchInterval: watchInterval,
     draftDelay: draftDelay,
+    callsRefreshEvery: callsRefreshEvery,
   );
   addTearDown(() async {
     await closeTestSession(session);

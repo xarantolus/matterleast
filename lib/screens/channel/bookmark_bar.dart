@@ -246,13 +246,20 @@ class _BookmarkChip extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     Future<void> Function(BookmarkActions) action,
-  ) => unawaited(runBookmarkAction(context, ref, url, action));
+  ) => unawaited(
+    runBookmarkAction(
+      context,
+      ProviderScope.containerOf(context, listen: false),
+      url,
+      action,
+    ),
+  );
 }
 
 /// Runs a bookmark change and says what the server answered when it fails.
 Future<void> runBookmarkAction(
   BuildContext context,
-  WidgetRef ref,
+  ProviderContainer container,
   String url,
   Future<void> Function(BookmarkActions) action,
 ) async {
@@ -260,7 +267,8 @@ Future<void> runBookmarkAction(
     context,
     hostOf(url),
     failure: "Couldn't change the bookmark.",
-    () async => action(await ref.read(bookmarkActionsProvider(url).future)),
+    () async =>
+        action(await container.read(bookmarkActionsProvider(url).future)),
   );
 }
 
@@ -300,7 +308,7 @@ Future<void> showAddBookmark(
                   if (first == null || !context.mounted) return;
                   await runBookmarkAction(
                     context,
-                    ref,
+                    ProviderScope.containerOf(context, listen: false),
                     url,
                     (a) => a.addFile(
                       channelId,

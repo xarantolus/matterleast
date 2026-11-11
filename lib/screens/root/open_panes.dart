@@ -30,6 +30,9 @@ class OpenPanes extends _$OpenPanes {
   void set(Panes panes) => state = panes;
 }
 
+/// The name of the call screen's route.
+const callScreenRoute = 'call';
+
 /// The conversation routes and content views on the app's navigator,
 /// oldest first.
 @Riverpod(keepAlive: true)
@@ -67,6 +70,10 @@ class ConversationRoutes extends NavigatorObserver {
         final SlideRoute<dynamic> r => r.wholePage,
         _ => true,
       };
+
+  /// Whether the call screen is among the pages.
+  bool get callScreenOpen =>
+      _stack.any((r) => r.settings.name == callScreenRoute);
 
   /// The conversation routes, oldest first.
   List<ConversationRoute<dynamic>> get live =>
@@ -131,9 +138,11 @@ Route<void> Function() reopened(
       builder: builder,
       instant: instant,
     ),
-  SlideRoute(:final builder, :final view) => () => SlideRoute<void>(
-    builder: builder,
-    view: view,
-    instant: instant,
-  ),
+  SlideRoute(:final builder, :final view, :final settings) =>
+    () => SlideRoute<void>(
+      builder: builder,
+      view: view,
+      instant: instant,
+      settings: settings,
+    ),
 };
