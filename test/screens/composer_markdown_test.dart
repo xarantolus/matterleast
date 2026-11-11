@@ -90,6 +90,7 @@ void main() {
       expect(_format(_v(''), _v('a\tb\n1')).text, 'a\tb\n1');
       expect(_format(_v(''), _v('a\tb')).text, 'a\tb');
       expect(_format(_v(''), _v('a\nb')).text, 'a\nb');
+      expect(_format(_v(''), _v('\tx = 1\n\ty = 2')).text, '\tx = 1\n\ty = 2');
     });
   });
 

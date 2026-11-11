@@ -129,7 +129,12 @@ TextEditingValue? pasteTable(TextEditingValue old, TextEditingValue next) {
     rows.removeLast();
   }
   final width = rows.first.length;
-  if (rows.length < 2 || rows.any((row) => row.length != width)) return null;
+  if (rows.length < 2 ||
+      rows.any((row) => row.length != width) ||
+      // Tab-indented code, not a sheet.
+      rows.every((row) => row.first.isEmpty)) {
+    return null;
+  }
   String line(List<String> cells) =>
       '| ${cells.map((c) => c.trim().replaceAll('|', r'\|')).join(' | ')} |';
   final table = [
