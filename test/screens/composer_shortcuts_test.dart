@@ -157,17 +157,9 @@ void main() {
     );
     await tester.pump();
 
-    Actions.invoke(
-      tester.element(
-        find
-            .descendant(
-              of: find.byType(EditableText),
-              matching: find.byType(Scrollable),
-            )
-            .first,
-      ),
-      const PasteTextIntent(SelectionChangedCause.toolbar),
-    );
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await h.settle(tester);
 
     expect(
@@ -175,5 +167,5 @@ void main() {
       findsOneWidget,
     );
     await h.close(tester);
-  }, variant: desktop);
+  });
 }
