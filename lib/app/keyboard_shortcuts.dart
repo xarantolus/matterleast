@@ -90,6 +90,13 @@ class ToggleMuteIntent extends AppIntent {
   const ToggleMuteIntent();
 }
 
+/// Indents or outdents the list items under the composer's selection.
+class IndentListIntent extends AppIntent {
+  const IndentListIntent({this.outdent = false});
+
+  final bool outdent;
+}
+
 enum Format { bold, italic, strike, link, code }
 
 /// Formats the composer's selection.
@@ -373,6 +380,16 @@ const appShortcuts = <AppShortcut>[
     'Code',
     SingleActivator(LogicalKeyboardKey.keyC, control: true, alt: true),
     FormatIntent(Format.code),
+  ),
+  AppShortcut(
+    'Indent list item',
+    SingleActivator(LogicalKeyboardKey.tab),
+    IndentListIntent(),
+  ),
+  AppShortcut(
+    'Outdent list item',
+    SingleActivator(LogicalKeyboardKey.tab, shift: true),
+    IndentListIntent(outdent: true),
   ),
   AppShortcut(
     'Show preview',
