@@ -125,6 +125,27 @@ void main() {
     expect(isJumbo(blocks(':tada: yes')), isFalse);
   });
 
+  test('typed emoji of every kind make a message large', () {
+    List<Block> blocks(String text) =>
+        (parsePost(text, const ParseOptions()) as ParsedPost).blocks;
+    for (final text in [
+      '😀😀😀',
+      '👍🏽',
+      '👨‍👩‍👧‍👦',
+      '🇩🇪',
+      '1️⃣',
+      '❤️',
+      '🎉 🎉',
+      ':tada: 🎉',
+      '😀' * 30,
+    ]) {
+      expect(isJumbo(blocks(text)), isTrue, reason: text);
+    }
+    for (final text in ['😀' * 31, '😀 hi', '**😀**', '[😀](https://a.test)']) {
+      expect(isJumbo(blocks(text)), isFalse, reason: text);
+    }
+  });
+
   testWidgets('an image at an address no image comes from shows its alt '
       'text and is never fetched', (tester) async {
     final fetched = <String>[];
