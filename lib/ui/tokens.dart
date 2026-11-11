@@ -78,15 +78,15 @@ class AppTokens extends ThemeExtension<AppTokens> {
   );
 
   static const dark = AppTokens(
-    page: Color(0xFF131514),
+    page: Color(0xFF1E2120),
     text: Color(0xFFE6EAE8),
-    muted: Color(0xFFC3CAC7),
-    hairline: Color(0xFF323735),
+    muted: Color(0xFFC8CFCC),
+    hairline: Color(0xFF3A3F3D),
     divider: Color(0xFF5F6764),
     accent: Color(0xFF5FD3C4),
     accentWash: Color(0xFF17332F),
-    codeBackground: Color(0xFF1D201F),
-    panel: Color(0xFF262B29),
+    codeBackground: Color(0xFF252927),
+    panel: Color(0xFF2A2E2C),
     unread: Color(0xFFE6EAE8),
     online: Color(0xFF66BB6A),
     away: Color(0xFFFFB74D),
