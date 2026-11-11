@@ -168,4 +168,95 @@ void main() {
     );
     await h.close(tester);
   });
+
+  Future<void> typeInto(
+    WidgetTester tester,
+    String text, [
+    int? a,
+    int? b,
+  ]) async {
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: text,
+        selection: TextSelection(
+          baseOffset: a ?? text.length,
+          extentOffset: b ?? a ?? text.length,
+        ),
+      ),
+    );
+    await tester.pump();
+  }
+
+  testWidgets('a new line after a list item starts the next item', (
+    tester,
+  ) async {
+    final h = await _pumpComposer(tester);
+    await typeInto(tester, '- one');
+    await typeInto(tester, '- one\n');
+    expect(find.text('- one\n- '), findsOneWidget);
+    await typeInto(tester, '- one\n- \n');
+    expect(find.text('- one\n'), findsOneWidget);
+    await h.close(tester);
+  });
+
+  testWidgets('typing a marker over selected text wraps it', (tester) async {
+    final h = await _pumpComposer(tester);
+    await typeInto(tester, 'see the docs now', 8, 12);
+    await typeInto(tester, 'see the * now', 9);
+    expect(find.text('see the *docs* now'), findsOneWidget);
+    await h.close(tester);
+  });
+
+  testWidgets('pasting spreadsheet rows makes a table', (tester) async {
+    final h = await _pumpComposer(tester);
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => call.method == 'Clipboard.getData'
+          ? <String, Object>{'text': 'a\tb\n1\t2'}
+          : null,
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await _press(tester, LogicalKeyboardKey.keyV);
+    await h.settle(tester);
+    expect(find.text('| a | b |\n| --- | --- |\n| 1 | 2 |'), findsOneWidget);
+    await h.close(tester);
+  });
+
+  testWidgets('Tab indents a list item and Shift+Tab takes it back', (
+    tester,
+  ) async {
+    final h = await _pumpComposer(tester);
+    await typeInto(tester, '- one');
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(find.text('  - one'), findsOneWidget);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    expect(find.text('- one'), findsOneWidget);
+    await h.close(tester);
+  }, variant: desktop);
+
+  testWidgets('Tab on a plain line or outside the composer moves focus', (
+    tester,
+  ) async {
+    final h = await _pumpComposer(tester);
+    final field = tester.widget<TextField>(find.byType(TextField)).focusNode!;
+    await typeInto(tester, 'plain');
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(find.text('plain'), findsOneWidget);
+    expect(field.hasFocus, isFalse);
+    final outside = FocusManager.instance.primaryFocus;
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus, isNot(outside));
+    await h.close(tester);
+  }, variant: desktop);
 }

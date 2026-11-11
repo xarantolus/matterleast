@@ -34,6 +34,7 @@ import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/composer_desktop.dart';
 import 'package:matterleast/screens/channel/composer_extras.dart';
 import 'package:matterleast/screens/channel/composer_keys.dart';
+import 'package:matterleast/screens/channel/composer_markdown.dart';
 import 'package:matterleast/screens/channel/composer_preview.dart';
 import 'package:matterleast/screens/channel/format_bar.dart';
 import 'package:matterleast/screens/channel/link_opener.dart';
@@ -569,6 +570,20 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
             enabled: () => _focus.hasFocus && !_preview,
             onInvoke: (intent) => _format(intent.format),
           ),
+          IndentListIntent: EnabledAction<IndentListIntent>(
+            enabled: () =>
+                _focus.hasFocus &&
+                !_preview &&
+                suggestions.isEmpty &&
+                onListItems(_text.value),
+            onInvoke: (intent) {
+              final indented = indentListItems(
+                _text.value,
+                outdent: intent.outdent,
+              );
+              if (indented != null) _text.value = indented;
+            },
+          ),
           // Typing keeps the page keys the field leaves unused to itself.
           ScrollMessagesIntent: EnabledAction<ScrollMessagesIntent>(
             enabled: () => _focus.hasFocus && _text.text.isNotEmpty,
@@ -845,6 +860,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
                                               onTap: _wake,
                                               inputFormatters: const [
                                                 LinkOverSelection(),
+                                                ComposerMarkdown(),
                                               ],
                                               focusNode: _focus,
                                               autofocus: _refocus,
