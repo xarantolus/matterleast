@@ -134,4 +134,46 @@ void main() {
     expect(find.text('Search emoji'), findsOneWidget);
     await h.close(tester);
   }, variant: desktop);
+
+  testWidgets('pasting a URL over selected text makes a link', (tester) async {
+    final h = await _pumpComposer(tester);
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => call.method == 'Clipboard.getData'
+          ? <String, Object>{'text': 'https://a.example/x'}
+          : null,
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'see the docs now',
+        selection: TextSelection(baseOffset: 8, extentOffset: 12),
+      ),
+    );
+    await tester.pump();
+
+    Actions.invoke(
+      tester.element(
+        find
+            .descendant(
+              of: find.byType(EditableText),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      ),
+      const PasteTextIntent(SelectionChangedCause.toolbar),
+    );
+    await h.settle(tester);
+
+    expect(
+      find.text('see the [docs](https://a.example/x) now'),
+      findsOneWidget,
+    );
+    await h.close(tester);
+  }, variant: desktop);
 }
