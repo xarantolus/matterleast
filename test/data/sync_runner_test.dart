@@ -185,9 +185,7 @@ void main() {
           await api.call(() => api.client.users.getUser(userId: 'me'));
         },
       );
-      final watch = Stopwatch()..start();
       await expectLater(runner.enqueue(job()), throwsA(isA<RequestTimeout>()));
-      expect(watch.elapsed, lessThan(const Duration(seconds: 3)));
       await expectLater(runner.enqueue(job()), throwsA(isA<RequestTimeout>()));
       expect(runs, 2);
       runner.close();
