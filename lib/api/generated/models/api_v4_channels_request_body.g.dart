@@ -13,6 +13,11 @@ ApiV4ChannelsRequestBody _$ApiV4ChannelsRequestBodyFromJson(
   name: json['name'] as String,
   displayName: json['display_name'] as String,
   type: json['type'] as String,
+  propertyValues:
+      (json['property_values'] as List<dynamic>?)
+          ?.map((e) => PropertyValues.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   purpose: const LenientString().fromJson(json['purpose']),
   header: const LenientString().fromJson(json['header']),
   managedCategoryName: const LenientString().fromJson(
@@ -38,4 +43,5 @@ Map<String, dynamic> _$ApiV4ChannelsRequestBodyToJson(
   'default_category_name': const LenientString().toJson(
     instance.defaultCategoryName,
   ),
+  'property_values': instance.propertyValues,
 };

@@ -37,6 +37,9 @@ class DialogForm {
     this.submitLabel,
     this.notifyOnCancel,
     this.state,
+    this.sourceUrl,
+    this.submitButtons,
+    this.refreshOnReturn,
   });
 
   factory DialogForm.fromJson(Map<String, Object?> json) =>
@@ -64,6 +67,19 @@ class DialogForm {
   /// Opaque to us; sent back with the submission.
   @LenientString()
   final String? state;
+
+  /// Where the integration is asked for this dialog again.
+  @LenientString()
+  final String? sourceUrl;
+
+  /// The name of a select whose options are shown as the submit buttons.
+  @LenientString()
+  final String? submitButtons;
+
+  /// Ask [sourceUrl] for the dialog again when a dialog opened over this
+  /// one closes.
+  @LenientBool()
+  final bool? refreshOnReturn;
 }
 
 enum DialogElementType {
@@ -78,10 +94,15 @@ enum DialogElementType {
 
   /// A moment, sent as UTC `YYYY-MM-DDTHH:MM:SSZ`.
   datetime,
+
+  /// A button that asks the integration to open another dialog.
+  actionButton,
   unknown;
 
   static DialogElementType parse(Object? json) => values.firstWhere(
-    (t) => t.name == json && t != unknown,
+    (t) =>
+        t != unknown &&
+        (t == actionButton ? json == 'action_button' : t.name == json),
     orElse: () => unknown,
   );
 }
@@ -105,6 +126,7 @@ class DialogElement {
     this.legacyMinDate,
     this.legacyMaxDate,
     this.legacyTimeInterval,
+    this.actionButton,
   });
 
   factory DialogElement.fromJson(Map<String, Object?> json) =>
@@ -145,6 +167,9 @@ class DialogElement {
   @JsonKey(fromJson: _datetimeConfig)
   final DialogDateTimeConfig? datetimeConfig;
 
+  @JsonKey(fromJson: _button)
+  final DialogActionButton? actionButton;
+
   // Servers before 12.0 sent these next to the other fields.
   @LenientString()
   @JsonKey(name: 'min_date')
@@ -166,6 +191,60 @@ class DialogElement {
     final minutes = datetimeConfig?.timeInterval ?? legacyTimeInterval ?? 0;
     return minutes > 0 && minutes <= 1440 && 1440 % minutes == 0 ? minutes : 60;
   }
+}
+
+/// What an `action_button` element asks for when pressed.
+@JsonSerializable(createToJson: false)
+class DialogActionButton {
+  const DialogActionButton({this.url = '', this.context = const {}});
+
+  factory DialogActionButton.fromJson(Map<String, Object?> json) =>
+      _$DialogActionButtonFromJson(json);
+
+  @JsonKey(fromJson: stringOrEmpty)
+  final String url;
+  @JsonKey(fromJson: _strings)
+  final Map<String, String> context;
+}
+
+/// The body of `POST /actions/dialogs/submit` when it asks the integration
+/// for the dialog again instead of sending answers.
+@JsonSerializable(
+  createFactory: false,
+  includeIfNull: false,
+  fieldRename: FieldRename.snake,
+)
+class DialogRefreshBody {
+  const DialogRefreshBody({
+    required this.url,
+    required this.channelId,
+    required this.submission,
+    this.teamId,
+    this.callbackId,
+    this.state,
+  });
+
+  final String url;
+  final String channelId;
+  final String? teamId;
+  final String? callbackId;
+  final String? state;
+  final Map<String, Object?> submission;
+  final String type = 'refresh';
+
+  Map<String, Object?> toJson() => _$DialogRefreshBodyToJson(this);
+}
+
+/// The answer to asking for a dialog again.
+@JsonSerializable(createToJson: false)
+class DialogRefreshAnswer {
+  const DialogRefreshAnswer({this.form});
+
+  factory DialogRefreshAnswer.fromJson(Map<String, Object?> json) =>
+      _$DialogRefreshAnswerFromJson(json);
+
+  @JsonKey(fromJson: _formOrNull)
+  final DialogForm? form;
 }
 
 @JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
@@ -216,6 +295,19 @@ class DialogOption {
   @JsonKey(fromJson: stringOrEmpty)
   final String value;
 }
+
+DialogActionButton? _button(Object? json) =>
+    json is Map<String, Object?> ? DialogActionButton.fromJson(json) : null;
+
+Map<String, String> _strings(Object? json) => json is Map<String, Object?>
+    ? {
+        for (final e in json.entries)
+          if (e.value case final String value) e.key: value,
+      }
+    : const {};
+
+DialogForm? _formOrNull(Object? json) =>
+    json is Map<String, Object?> ? DialogForm.fromJson(json) : null;
 
 DialogForm _dialog(Object? json) => json is Map<String, Object?>
     ? DialogForm.fromJson(json)

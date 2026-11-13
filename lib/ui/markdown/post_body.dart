@@ -178,7 +178,10 @@ List<PostFile> messageImages(
   ];
 }
 
-/// Pure: a message of nothing but up to eight emoji is shown large.
+/// Most emoji a message can hold and still be shown large.
+const jumboLimit = 30;
+
+/// Pure: a message of nothing but emoji, up to [jumboLimit], is shown large.
 bool isJumbo(List<Block> blocks) {
   if (blocks case [Paragraph(:final inlines)]) {
     var emoji = 0;
@@ -192,7 +195,7 @@ bool isJumbo(List<Block> blocks) {
           return false;
       }
     }
-    return emoji > 0 && emoji <= 8;
+    return emoji > 0 && emoji <= jumboLimit;
   }
   return false;
 }

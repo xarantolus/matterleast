@@ -8,7 +8,6 @@ import 'package:matterleast/domain/call_livekit_rules.dart';
 import 'package:matterleast/log.dart';
 
 const _handKey = 'raised_hand';
-const _botKey = 'bot';
 const _reactionTopic = 'reaction';
 
 /// [CallRoom] on LiveKit's own SDK.
@@ -36,8 +35,6 @@ class LiveKitCallRoom implements CallRoom {
   @override
   Stream<RoomNote> get notes => _notes.stream;
 
-  bool _bot(lk.Participant p) => p.attributes[_botKey] == 'true';
-
   bool _muted(lk.Participant p) =>
       p.getTrackPublicationBySource(lk.TrackSource.microphone)?.muted ?? true;
 
@@ -57,7 +54,7 @@ class LiveKitCallRoom implements CallRoom {
           ?_room.localParticipant,
           ..._room.remoteParticipants.values,
         ])
-          if (!_bot(p)) _member(p),
+          _member(p),
       ]),
     );
     _hostFrom(_room.metadata);
@@ -84,9 +81,9 @@ class LiveKitCallRoom implements CallRoom {
           }),
         );
       case lk.ParticipantConnectedEvent(:final participant):
-        if (!_bot(participant)) _notes.add(MemberEntered(_member(participant)));
+        _notes.add(MemberEntered(_member(participant)));
       case lk.ParticipantDisconnectedEvent(:final participant):
-        if (!_bot(participant)) _notes.add(MemberLeft(participant.identity));
+        _notes.add(MemberLeft(participant.identity));
       case lk.TrackMutedEvent(:final participant, :final publication):
         _muteChanged(participant, publication, muted: true);
       case lk.TrackUnmutedEvent(:final participant, :final publication):
@@ -97,16 +94,11 @@ class LiveKitCallRoom implements CallRoom {
         :final participant,
         :final attributes,
       ):
-        if (attributes.containsKey(_handKey) && !_bot(participant)) {
+        if (attributes.containsKey(_handKey)) {
           _notes.add(MemberHand(participant.identity, _hand(participant)));
         }
       case lk.ActiveSpeakersChangedEvent(:final speakers):
-        _notes.add(
-          RoomSpeakers({
-            for (final p in speakers)
-              if (!_bot(p)) p.identity,
-          }),
-        );
+        _notes.add(RoomSpeakers({for (final p in speakers) p.identity}));
       case lk.DataReceivedEvent(:final participant, :final data, :final topic):
         if (topic != _reactionTopic || participant == null) {
           return;
@@ -126,7 +118,7 @@ class LiveKitCallRoom implements CallRoom {
     lk.TrackPublication<lk.Track> publication, {
     required bool muted,
   }) {
-    if (publication.source != lk.TrackSource.microphone || _bot(participant)) {
+    if (publication.source != lk.TrackSource.microphone) {
       return;
     }
     _notes.add(MemberMuted(participant.identity, muted: muted));

@@ -4,6 +4,8 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
+import 'property_values.dart';
+
 import 'package:matterleast/api/json/lenient.dart';
 part 'api_v4_channels_request_body.g.dart';
 
@@ -14,6 +16,7 @@ class ApiV4ChannelsRequestBody {
     required this.name,
     required this.displayName,
     required this.type,
+    this.propertyValues = const [],
     this.purpose,
     this.header,
     this.managedCategoryName,
@@ -39,6 +42,8 @@ class ApiV4ChannelsRequestBody {
   @LenientString()
   @JsonKey(name: 'default_category_name')
   final String? defaultCategoryName;
+  @JsonKey(name: 'property_values')
+  final List<PropertyValues>? propertyValues;
 
   Map<String, Object?> toJson() => _$ApiV4ChannelsRequestBodyToJson(this);
 }

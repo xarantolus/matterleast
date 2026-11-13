@@ -1,4 +1,6 @@
+import 'package:characters/characters.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:matterleast/data/emoji/emoji.dart';
 import 'package:matterleast/markdown/mention_keys.dart';
 import 'package:matterleast/markdown/post_doc.dart';
 import 'package:matterleast/markdown/syntaxes.dart';
@@ -203,15 +205,13 @@ class _Converter {
     count++;
     if (node is md.Text) {
       if (link != null) {
-        out.add(Inline.text(node.text, marks: marks, link: link));
+        _withEmoji(node.text, marks, link, out);
         return;
       }
       var from = 0;
       for (final r in highlightRanges(node.text, options.mentions)) {
         if (r.start > from) {
-          out.add(
-            Inline.text(node.text.substring(from, r.start), marks: marks),
-          );
+          _withEmoji(node.text.substring(from, r.start), marks, null, out);
         }
         out.add(
           Inline.text(
@@ -223,7 +223,7 @@ class _Converter {
         from = r.end;
       }
       if (from < node.text.length) {
-        out.add(Inline.text(node.text.substring(from), marks: marks));
+        _withEmoji(node.text.substring(from), marks, null, out);
       }
       return;
     }
@@ -304,6 +304,22 @@ class _Converter {
         }
       default:
         children(marks, link);
+    }
+  }
+
+  /// Unicode emoji typed in [text] become emoji parts, like `:name:` ones.
+  void _withEmoji(String text, int marks, String? link, List<Inline> out) {
+    if (text.codeUnits.every((unit) => unit < 0xA9)) {
+      out.add(Inline.text(text, marks: marks, link: link));
+      return;
+    }
+    for (final grapheme in text.characters) {
+      final name = nameForUnicode(grapheme);
+      out.add(
+        name == null
+            ? Inline.text(grapheme, marks: marks, link: link)
+            : Inline.emoji(name, grapheme, marks: marks, link: link),
+      );
     }
   }
 

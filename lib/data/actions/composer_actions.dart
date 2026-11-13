@@ -50,6 +50,14 @@ class ComposerActions {
     clock: _clock,
   );
 
+  /// Joins the public channel when the user is not in it yet.
+  Future<void> joinIfNeeded(String channelId) async {
+    final mine = await (_db.select(
+      _db.myChannels,
+    )..where((m) => m.channelId.equals(channelId))).getSingleOrNull();
+    if (mine == null) await session.channels.join(channelId);
+  }
+
   /// Queues a post and returns its pending id. It shows in the conversation
   /// at once (dimmed while unsent) and the conversation's draft is cleared.
   /// [files] are already uploaded.
@@ -163,6 +171,10 @@ class ComposerActions {
   /// The conversation's draft, read once when it opens.
   Future<Draft?> loadDraft(String channelId, {String rootId = ''}) =>
       _drafts.load(channelId, rootId);
+
+  /// The stored draft each time it changes.
+  Stream<Draft?> draftChanges(String channelId, {String rootId = ''}) =>
+      _drafts.changes(channelId, rootId);
 
   /// Saves the draft 500 ms after the last change; an empty one is deleted.
   void saveDraft(Draft draft) => _drafts.save(draft);
@@ -341,6 +353,57 @@ class ComposerActions {
       error: error.isEmpty ? null : error,
       fieldErrors: fieldErrors,
     );
+  }
+
+  /// Presses a dialog's action button; the integration answers by opening
+  /// another dialog, which shows because its trigger is expected here.
+  Future<void> pressDialogButton(
+    DialogActionButton button, {
+    required String channelId,
+    String teamId = '',
+  }) async {
+    final answer = await session.api.call(
+      () => session.api.client.integrationActions.executeDialogAction(
+        body: api.ApiV4ActionsDialogsExecuteRequestBody(
+          url: button.url,
+          channelId: channelId,
+          teamId: teamId.isEmpty ? null : teamId,
+          context: button.context.isEmpty ? null : button.context,
+        ),
+      ),
+    );
+    final trigger = answer.triggerId;
+    if (trigger != null && trigger.isNotEmpty) {
+      session.connection.dialogs.expect(trigger);
+    }
+  }
+
+  /// Asks the integration for [dialog] again from its `source_url`, with
+  /// what was entered so far. Null when it sent no form.
+  Future<DialogForm?> refreshDialog(
+    OpenDialog dialog, {
+    required String channelId,
+    String teamId = '',
+    Map<String, Object?> values = const {},
+  }) async {
+    final form = dialog.dialog;
+    final response = await session.api.call(
+      () => session.api.dio.post<Object?>(
+        '/api/v4/actions/dialogs/submit',
+        data: DialogRefreshBody(
+          url: form.sourceUrl ?? '',
+          channelId: channelId,
+          teamId: teamId.isEmpty ? null : teamId,
+          callbackId: form.callbackId,
+          state: form.state,
+          submission: dialogSubmission(form, values),
+        ).toJson(),
+      ),
+    );
+    final json = response.data;
+    return json is Map<String, Object?>
+        ? DialogRefreshAnswer.fromJson(json).form
+        : null;
   }
 }
 

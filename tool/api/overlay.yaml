@@ -390,3 +390,30 @@ actions:
             properties:
               termsOfServiceId: {type: string}
               accepted: {type: boolean}
+  # --- post and channel attributes (property fields and values) ---
+  - target: "$.components.schemas.PostMetadata.properties"
+    update:
+      property_values: {type: array, items: {$ref: "#/components/schemas/PropertyValue"}}
+      property_values_unavailable: {type: boolean}
+  - target: "$.paths['/api/v4/channels/{channel_id}/posts'].get.parameters"
+    update: [{name: propertyGroup, in: query, required: false, schema: {type: string}}]
+  - target: "$.paths['/api/v4/posts/{post_id}/thread'].get.parameters"
+    update: [{name: propertyGroup, in: query, required: false, schema: {type: string}}]
+  - target: "$.paths['/api/v4/posts/{post_id}'].get.parameters"
+    update: [{name: propertyGroup, in: query, required: false, schema: {type: string}}]
+  - target: "$.paths['/api/v4/channels'].post.requestBody.content['application/json'].schema.properties"
+    update:
+      property_values:
+        type: array
+        nullable: true
+        items:
+          type: object
+          required: [field_id, value]
+          properties:
+            field_id: {type: string}
+            value: {}
+  - target: "$.components.schemas.PropertyValue.properties.value"
+    remove: true
+  - target: "$.components.schemas.PropertyValue.properties"
+    update:
+      value: {}

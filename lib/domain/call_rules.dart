@@ -21,9 +21,13 @@ class CallTimings {
     this.socketOpenTimeout = const Duration(seconds: 3),
     this.networkSettle = const Duration(seconds: 1),
     this.socketCheck = const Duration(seconds: 2),
+    this.reactionGap = const Duration(milliseconds: 200),
     this.missedPongs = 3,
     this.maxRestarts = 3,
   });
+
+  /// The least time between two reactions we take from one session.
+  final Duration reactionGap;
 
   /// How long joining a LiveKit room may take.
   final Duration roomConnectTimeout;

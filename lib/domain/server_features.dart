@@ -186,6 +186,12 @@ abstract class ServerFeatures with _$ServerFeatures {
     return featureFlags[name] == 'true';
   }
 
+  /// Posts can carry attributes.
+  bool get postAttributes => flag('PostAttributes');
+
+  /// Channels can carry attributes, some required when one is created.
+  bool get channelAttributes => flag('ChannelAttributes');
+
   /// Whether the plugin [id] is enabled, at [minVersion] or newer if given.
   bool hasPlugin(String id, {(int, int, int)? minVersion}) {
     final version = plugins[id];

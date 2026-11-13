@@ -4,7 +4,7 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
-import 'type2.dart';
+import 'type3.dart';
 
 import 'package:matterleast/api/json/lenient.dart';
 part 'embeds.g.dart';
@@ -15,7 +15,7 @@ class Embeds {
 
   factory Embeds.fromJson(Map<String, Object?> json) => _$EmbedsFromJson(json);
 
-  final Type2? type;
+  final Type3? type;
   @LenientString()
   final String? url;
   @JsonMap()

@@ -25,6 +25,7 @@ class LiveKitCallSession implements CallRun {
     required this.feed,
     required this.platform,
     required this.requestSession,
+    required this.serverUrl,
     required this.failureText,
     this.title,
     this.threadId,
@@ -40,6 +41,9 @@ class LiveKitCallSession implements CallRun {
   /// Asks the plugin for a place in the call.
   final Future<LiveKitSession> Function({String? title, String? threadId})
   requestSession;
+
+  /// The server's address; decides whether the room's may be unencrypted.
+  final String serverUrl;
   final String Function(Object error) failureText;
   final String? title;
   final String? threadId;
@@ -52,6 +56,7 @@ class LiveKitCallSession implements CallRun {
   var _finished = false;
   var _sessionId = '';
   var _botUserId = '';
+  final _lastReaction = <String, DateTime>{};
   var _speaking = <String>{};
   AudioRoute? _pinned;
   String? _pinnedInput;
@@ -90,6 +95,15 @@ class LiveKitCallSession implements CallRun {
         const CallFailure(
           CallFailureKind.server,
           'The server did not give a place in the call.',
+        ),
+      );
+      return;
+    }
+    if (!liveKitUrlAllowed(session.url, serverUrl)) {
+      _fail(
+        const CallFailure(
+          CallFailureKind.server,
+          'The server gave an unsafe address for the call.',
         ),
       );
       return;
@@ -143,8 +157,27 @@ class LiveKitCallSession implements CallRun {
     }
   }
 
+  bool _isBot(String identity) => isCallBot(identity, _botUserId);
+
+  bool _reactionTooSoon(String sessionId) {
+    final now = clock.now();
+    final last = _lastReaction[sessionId];
+    if (last != null && now.difference(last) < timings.reactionGap) return true;
+    _lastReaction[sessionId] = now;
+    return false;
+  }
+
   void _onNote(RoomNote note) {
     if (_finished) return;
+    switch (note) {
+      case MemberLeft(:final identity) ||
+              MemberMuted(:final identity) ||
+              MemberHand(:final identity) ||
+              MemberReacted(:final identity)
+          when _isBot(identity):
+        return;
+      default:
+    }
     switch (note) {
       case RoomEntered(:final members):
         _set((c) => c.copyWith(phase: CallPhase.connected));
@@ -191,7 +224,8 @@ class LiveKitCallSession implements CallRun {
         _handsBy[who.sessionId] = raisedAt;
       case RoomSpeakers(:final identities):
         final now = {
-          for (final id in identities) parseCallIdentity(id).sessionId,
+          for (final id in identities)
+            if (!_isBot(id)) parseCallIdentity(id).sessionId,
         };
         final change = speakingChanges(_speaking, now);
         _speaking = now;
@@ -202,12 +236,10 @@ class LiveKitCallSession implements CallRun {
           feed.apply(CallVoiceEvent(channelId, sessionId: id, speaking: false));
         }
       case MemberReacted(:final identity, :final emoji):
+        final sessionId = parseCallIdentity(identity).sessionId;
+        if (_reactionTooSoon(sessionId)) return;
         feed.apply(
-          CallReactionEvent(
-            channelId,
-            sessionId: parseCallIdentity(identity).sessionId,
-            emoji: emoji,
-          ),
+          CallReactionEvent(channelId, sessionId: sessionId, emoji: emoji),
         );
       case RoomHost(:final hostId):
         feed.apply(CallHostEvent(channelId, hostId: hostId));

@@ -5,6 +5,12 @@ import 'package:matterleast/domain/time_labels.dart';
 /// The clock a field's dates are read on.
 typedef ClockFor = DialogClock Function(DialogElement element);
 
+/// How many dialogs may be open over each other.
+const maxOpenDialogs = 3;
+
+/// Pure: whether one more dialog may open with [open] already showing.
+bool canOpenDialog(int open) => open < maxOpenDialogs;
+
 /// Pure: the values [form] starts with, by element name.
 Map<String, Object?> dialogInitialValues(DialogForm form, ClockFor clockFor) =>
     {
@@ -28,6 +34,7 @@ Map<String, String> dialogErrors(
 }) {
   final errors = <String, String>{};
   for (final element in form.elements) {
+    if (element.type == DialogElementType.actionButton) continue;
     final error = _elementError(
       element,
       values[element.name],
@@ -94,7 +101,9 @@ String? _elementError(
             'earlier.';
       }
       return null;
-    case DialogElementType.bool || DialogElementType.unknown:
+    case DialogElementType.bool ||
+        DialogElementType.actionButton ||
+        DialogElementType.unknown:
       return null;
   }
 }
@@ -118,6 +127,48 @@ bool _isWebUrl(String value) {
       uri.host.isNotEmpty;
 }
 
+/// Pure: the select whose options are the submit buttons, when the dialog
+/// names one that has options to show.
+DialogElement? submitButtonsElement(DialogForm form) {
+  final name = form.submitButtons;
+  if (name == null || name.isEmpty) return null;
+  for (final e in form.elements) {
+    if (e.name == name &&
+        e.type == DialogElementType.select &&
+        e.options.isNotEmpty) {
+      return e;
+    }
+  }
+  return null;
+}
+
+/// Pure: the values of a dialog asked for again: the new form's own, with
+/// what was entered kept where it still fits the same kind of field.
+Map<String, Object?> keepEnteredValues(
+  DialogForm form,
+  Map<String, Object?> entered,
+  ClockFor clockFor,
+) {
+  final values = dialogInitialValues(form, clockFor);
+  for (final e in form.elements) {
+    if (e.type == DialogElementType.actionButton ||
+        !entered.containsKey(e.name)) {
+      continue;
+    }
+    final value = entered[e.name];
+    final fits = switch (e.type) {
+      DialogElementType.select || DialogElementType.radio =>
+        value is String &&
+            (e.options.any((o) => o.value == value) ||
+                (e.dataSource?.isNotEmpty ?? false)),
+      DialogElementType.bool => value is bool,
+      _ => value is String,
+    };
+    if (fits) values[e.name] = value;
+  }
+  return values;
+}
+
 /// Pure: [values] as the integration expects them: numbers for number
 /// fields, the rest as entered.
 Map<String, Object?> dialogSubmission(
@@ -125,7 +176,8 @@ Map<String, Object?> dialogSubmission(
   Map<String, Object?> values,
 ) => {
   for (final element in form.elements)
-    if (values.containsKey(element.name))
+    if (element.type != DialogElementType.actionButton &&
+        values.containsKey(element.name))
       element.name: switch ((element.subtype, values[element.name])) {
         ('number', final String text) => num.tryParse(text) ?? text,
         (_, final value) => value,

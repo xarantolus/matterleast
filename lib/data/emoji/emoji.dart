@@ -75,6 +75,10 @@ class _Table {
 
   final Map<String, _Emoji> byName;
   final List<String> baseNames;
+
+  late final Map<String, String> nameByUnicode = {
+    for (final emoji in byName.values) emoji.unicode: emoji.name,
+  };
 }
 
 String _decode(String codePoints) => String.fromCharCodes(
@@ -88,6 +92,13 @@ _Emoji? _lookup(String name) => _table.byName[name.toLowerCase()];
 
 /// The emoji for a short name or alias, with or without a skin-tone suffix.
 String? unicodeForName(String name) => _lookup(name)?.unicode;
+
+/// The primary short name of a single emoji [grapheme], or null when it is not
+/// a system emoji. A bare `©` stays text; only `©\uFE0F` is the emoji.
+String? nameForUnicode(String grapheme) {
+  final names = _table.nameByUnicode;
+  return names[grapheme] ?? names[grapheme.replaceAll('\uFE0F', '')];
+}
 
 bool isKnownEmoji(String name) => _lookup(name) != null;
 

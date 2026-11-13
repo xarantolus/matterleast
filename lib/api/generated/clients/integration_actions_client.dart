@@ -5,8 +5,10 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
+import '../models/api_v4_actions_dialogs_execute_request_body.dart';
 import '../models/api_v4_actions_dialogs_lookup_request_body.dart';
 import '../models/api_v4_actions_dialogs_submit_request_body.dart';
+import '../models/post_api_v4_actions_dialogs_execute_response.dart';
 import '../models/post_api_v4_actions_dialogs_lookup_response.dart';
 import '../models/post_api_v4_actions_dialogs_submit_response.dart';
 
@@ -25,5 +27,10 @@ abstract class IntegrationActionsClient {
   @POST('/api/v4/actions/dialogs/lookup')
   Future<PostApiV4ActionsDialogsLookupResponse> lookupInteractiveDialog({
     @Body() required ApiV4ActionsDialogsLookupRequestBody body,
+  });
+
+  @POST('/api/v4/actions/dialogs/execute')
+  Future<PostApiV4ActionsDialogsExecuteResponse> executeDialogAction({
+    @Body() required ApiV4ActionsDialogsExecuteRequestBody body,
   });
 }

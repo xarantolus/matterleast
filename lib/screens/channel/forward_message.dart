@@ -18,6 +18,7 @@ const _destinations = {
   SwitchKind.privateChannel,
   SwitchKind.direct,
   SwitchKind.group,
+  SwitchKind.joinable,
 };
 
 Future<SwitchItem?> _pickDestination(BuildContext context, String url) =>
@@ -162,6 +163,7 @@ class _ForwardSheetState extends ConsumerState<_ForwardSheet> {
             hint: 'Add a comment',
             autofocus: true,
             forward: widget.permalink,
+            unjoined: to.kind == SwitchKind.joinable,
             onForwarded: () => Navigator.of(context).pop(to),
           ),
         ],

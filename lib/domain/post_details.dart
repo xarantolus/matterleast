@@ -5,6 +5,7 @@ import 'package:matterleast/api/json/integration_props.dart';
 import 'package:matterleast/api/json/post_extras.dart';
 import 'package:matterleast/domain/integration_blocks.dart';
 import 'package:matterleast/domain/post_files.dart';
+import 'package:matterleast/domain/profile_attributes.dart';
 
 /// What a post row shows beyond its text, decoded from the stored props and
 /// metadata JSON once per version.
@@ -21,6 +22,8 @@ class PostDetails {
     this.permalink,
     this.ackRequested = false,
     this.acknowledgements = const [],
+    this.attributes = const {},
+    this.attributesUnavailable = false,
   });
 
   /// Pure: decodes [propsJson] and [metadataJson]; anything malformed is
@@ -91,6 +94,12 @@ class PostDetails {
           if (a.userId case final userId? when userId.isNotEmpty)
             (userId: userId, at: a.acknowledgedAt),
       ],
+      attributes: {
+        for (final v in meta?.propertyValues ?? const <api.PropertyValue>[])
+          if (v.fieldId case final id? when id.isNotEmpty && v.deleteAt == null)
+            id: attributeValues(v.value),
+      },
+      attributesUnavailable: meta?.propertyValuesUnavailable ?? false,
     );
   }
 
@@ -118,6 +127,12 @@ class PostDetails {
   /// The author asked readers to acknowledge the message.
   final bool ackRequested;
   final List<({String userId, DateTime? at})> acknowledgements;
+
+  /// Attribute values by field id.
+  final Map<String, List<String>> attributes;
+
+  /// The server could not look the attribute values up.
+  final bool attributesUnavailable;
 
   bool get fromWebhook => props.fromWebhook == 'true';
   bool get unsafeLinks => props.unsafeLinks == 'true';

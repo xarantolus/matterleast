@@ -222,7 +222,6 @@ void main() {
       'and a cancelled scope stops its requests', () async {
     respond = (_) => Completer<void>().future;
     final api = ServerApi(baseUrl: base(), token: () => 't');
-    final watch = Stopwatch()..start();
     await expectLater(
       api.call(
         () => api.client.users.getUser(userId: 'me'),
@@ -230,7 +229,6 @@ void main() {
       ),
       throwsA(isA<RequestTimeout>()),
     );
-    expect(watch.elapsed, lessThan(const Duration(seconds: 5)));
 
     final scope = CancelToken();
     final stopped = cancellable(

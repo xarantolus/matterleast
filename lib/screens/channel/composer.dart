@@ -115,6 +115,7 @@ class Composer extends ConsumerWidget {
     this.focusNode,
     this.forward = '',
     this.onForwarded,
+    this.unjoined = false,
     super.key,
   });
 
@@ -148,11 +149,14 @@ class Composer extends ConsumerWidget {
   /// Called once the forward is queued.
   final VoidCallback? onForwarded;
 
+  /// The channel is public and not joined yet; sending a forward joins it.
+  final bool unjoined;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rights = ref.watch(channelRightsProvider(url, channelId)).value;
     final block = archived ? PostingBlock.archived : rights?.block;
-    if (block != null) return PostingNotice(block: block);
+    if (block != null && !unjoined) return PostingNotice(block: block);
     final field = _ComposerField(
       url: url,
       channelId: channelId,
