@@ -11,6 +11,9 @@ PostMetadata _$PostMetadataFromJson(Map<String, dynamic> json) => PostMetadata(
   priority: const LenientPostPriority().fromJson(json['priority']),
   expireAt: const MillisDateTime().fromJson(json['expire_at']),
   redactedFileCount: const LenientInt().fromJson(json['redacted_file_count']),
+  propertyValuesUnavailable: const LenientBool().fromJson(
+    json['property_values_unavailable'],
+  ),
   embeds: json['embeds'] == null
       ? const []
       : const LenientListOfEmbeds().fromJson(json['embeds']),
@@ -31,6 +34,9 @@ PostMetadata _$PostMetadataFromJson(Map<String, dynamic> json) => PostMetadata(
   recipients: json['recipients'] == null
       ? const []
       : const LenientStringList().fromJson(json['recipients']),
+  propertyValues: json['property_values'] == null
+      ? const []
+      : const LenientListOfPropertyValue().fromJson(json['property_values']),
 );
 
 Map<String, dynamic> _$PostMetadataToJson(
@@ -48,4 +54,10 @@ Map<String, dynamic> _$PostMetadataToJson(
   'expire_at': const MillisDateTime().toJson(instance.expireAt),
   'recipients': const LenientStringList().toJson(instance.recipients),
   'redacted_file_count': const LenientInt().toJson(instance.redactedFileCount),
+  'property_values': const LenientListOfPropertyValue().toJson(
+    instance.propertyValues,
+  ),
+  'property_values_unavailable': const LenientBool().toJson(
+    instance.propertyValuesUnavailable,
+  ),
 };
