@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
+import 'package:matterleast/app/post_attribute_providers.dart';
 import 'package:matterleast/domain/channel_info.dart';
+import 'package:matterleast/domain/post_attributes.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/screens/channel_info/channel_attribute_inputs.dart';
 import 'package:matterleast/screens/channel_info/channel_providers.dart';
 import 'package:matterleast/screens/open_channel.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
@@ -36,6 +39,7 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
   late final _header = TextEditingController(text: widget.channel?.header);
   var _private = false;
   var _saving = false;
+  final _attributes = <String, List<String>>{};
   String? _error;
 
   bool get _creating => widget.channel == null;
@@ -73,7 +77,19 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
     return onlyPrivate || _private;
   }
 
-  bool get _valid => _headerOnly || _name.text.trim().isNotEmpty;
+  List<PostAttributeField> get _asked {
+    if (!_creating) return const [];
+    final setup = ref
+        .watch(channelAttributeSetupProvider(widget.url, widget.teamId))
+        .value;
+    return setup == null
+        ? const []
+        : askedAttributes(setup.fields, systemAdmin: setup.systemAdmin);
+  }
+
+  bool get _valid =>
+      _headerOnly ||
+      (_name.text.trim().isNotEmpty && attributesFilled(_asked, _attributes));
 
   Future<void> _save() async {
     final navigator = Navigator.of(context);
@@ -96,6 +112,7 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
           private: _isPrivate,
           purpose: _purpose.text.trim(),
           header: _header.text.trim(),
+          attributes: attributesToSend(_asked, _attributes),
         );
         if (!mounted) return;
         // This screen goes first, so the conversation opens over the list.
@@ -123,6 +140,8 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
       setState(() {
         _saving = false;
         _error = switch (e) {
+          ServerError(:final id?) when id.contains('missing_required') =>
+            'Fill in the required attributes.',
           ServerError(:final id?) when id.contains('exists') =>
             'A channel with this name already exists. Pick another name.',
           _ => requestProblemText(e, hostOf(widget.url)),
@@ -228,6 +247,15 @@ class _EditChannelScreenState extends ConsumerState<EditChannelScreen> {
               border: OutlineInputBorder(),
             ),
           ),
+          if (_asked.isNotEmpty) ...[
+            const SizedBox(height: Spacing.md),
+            ChannelAttributeInputs(
+              fields: _asked,
+              values: _attributes,
+              enabled: !_saving,
+              onChanged: (id, value) => setState(() => _attributes[id] = value),
+            ),
+          ],
           if (_error case final error?) ...[
             const SizedBox(height: Spacing.md),
             Text(

@@ -7,7 +7,7 @@ part of 'embeds.dart';
 // **************************************************************************
 
 Embeds _$EmbedsFromJson(Map<String, dynamic> json) => Embeds(
-  type: json['type'] == null ? null : Type2.fromJson(json['type'] as String),
+  type: json['type'] == null ? null : Type3.fromJson(json['type'] as String),
   url: const LenientString().fromJson(json['url']),
   data: const JsonMap().fromJson(json['data']),
 );

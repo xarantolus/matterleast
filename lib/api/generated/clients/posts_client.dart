@@ -41,6 +41,7 @@ abstract class PostsClient {
   @GET('/api/v4/posts/{post_id}')
   Future<Post> getPost({
     @Path('post_id') required String postId,
+    @Query('propertyGroup') String? propertyGroup,
     @Query('include_deleted') bool? includeDeleted = false,
   });
 
@@ -69,6 +70,7 @@ abstract class PostsClient {
   @GET('/api/v4/posts/{post_id}/thread')
   Future<PostList> getPostThread({
     @Path('post_id') required String postId,
+    @Query('propertyGroup') String? propertyGroup,
     @Query('perPage') int? perPage = 0,
     @Query('fromPost') String? fromPost = '',
     @Query('fromCreateAt') int? fromCreateAt = 0,
@@ -110,6 +112,7 @@ abstract class PostsClient {
     @Query('before') String? before,
     @Query('after') String? after,
     @Query('type') String? type,
+    @Query('propertyGroup') String? propertyGroup,
     @Query('page') int? page = 0,
     @Query('per_page') int? perPage = 60,
     @Query('include_deleted') bool? includeDeleted = false,

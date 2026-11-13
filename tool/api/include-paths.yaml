@@ -76,6 +76,8 @@
 - "/api/v4/posts/{post_id}/reveal"
 - "/api/v4/posts/{post_id}/thread"
 - "/api/v4/posts/{post_id}/unpin"
+- "/api/v4/properties/groups/{group_name}/{object_type}/fields"
+- "/api/v4/properties/groups/{group_name}/{object_type}/values/{target_id}"
 - "/api/v4/reactions"
 - "/api/v4/remotecluster"
 - "/api/v4/remotecluster/{remote_id}/channels/{channel_id}/invite"

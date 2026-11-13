@@ -1092,16 +1092,17 @@ class ServerStore {
     }
   }
 
-  /// [rows] with the link preview each stored copy has kept, where the new
-  /// copy came without one and its text and props are unchanged.
-  Future<List<PostsCompanion>> _keepingPreviews(
+  /// [rows] with the link preview and attribute values each stored copy has kept,
+  /// where the new copy came without them and its text and props are unchanged.
+  Future<List<PostsCompanion>> _keepingExtras(
     List<api.Post> posts,
     List<PostsCompanion> rows,
   ) async {
     final withoutPreview = {
       for (final p in posts)
         if (p.metadata case final m?
-            when m.embeds.every((e) => e.type?.json == 'link'))
+            when m.embeds.every((e) => e.type?.json == 'link') ||
+                m.propertyValues.isEmpty)
           p.id,
     };
     final bare = {
@@ -1123,7 +1124,7 @@ class ServerStore {
           (final was?, final incoming?)
               when was.message == r.message.value &&
                   was.propsJson == r.propsJson.value =>
-            switch (metadataKeepingPreview(
+            switch (metadataKeepingExtras(
               incoming: incoming,
               stored: was.metadataJson,
             )) {
@@ -1157,7 +1158,7 @@ class ServerStore {
         .where((id) => id != null && id.isNotEmpty)
         .cast<String>()
         .toList();
-    final rows = await _keepingPreviews(posts, [
+    final rows = await _keepingExtras(posts, [
       for (final p in posts) safePostCompanion(p),
     ]);
     await db.batch((b) {

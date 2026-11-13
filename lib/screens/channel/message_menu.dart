@@ -23,6 +23,7 @@ import 'package:matterleast/ui/context_menu.dart';
 import 'package:matterleast/ui/emoji_glyph.dart';
 import 'package:matterleast/ui/emoji_picker.dart';
 import 'package:matterleast/ui/picker_modes.dart';
+import 'package:matterleast/ui/post_attributes.dart';
 import 'package:matterleast/ui/tokens.dart';
 import 'package:matterleast/ui/try_action.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -107,6 +108,7 @@ enum MessageActionKind {
   edit,
   burn,
   delete,
+  attributes,
   report,
 }
 
@@ -184,6 +186,8 @@ List<MessageAction> messageActions(
         (_) => Clipboard.setData(ClipboardData(text: permalink)),
       ),
     if (onQuote != null &&
+        rights.reply &&
+        !burns &&
         !unsent &&
         !post.isEphemeral &&
         !post.isSystem &&
@@ -208,6 +212,13 @@ List<MessageAction> messageActions(
           'Remind me',
           Icons.alarm_outlined,
           (context) => _remind(context, url, post),
+        ),
+      if (facts.attributes)
+        MessageAction(
+          MessageActionKind.attributes,
+          'Post attributes',
+          Icons.label_outline,
+          (context) => showPostAttributes(context, url, post),
         ),
       MessageAction(
         MessageActionKind.save,

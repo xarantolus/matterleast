@@ -50,6 +50,14 @@ class ComposerActions {
     clock: _clock,
   );
 
+  /// Joins the public channel when the user is not in it yet.
+  Future<void> joinIfNeeded(String channelId) async {
+    final mine = await (_db.select(
+      _db.myChannels,
+    )..where((m) => m.channelId.equals(channelId))).getSingleOrNull();
+    if (mine == null) await session.channels.join(channelId);
+  }
+
   /// Queues a post and returns its pending id. It shows in the conversation
   /// at once (dimmed while unsent) and the conversation's draft is cleared.
   /// [files] are already uploaded.

@@ -6,6 +6,7 @@ import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/domain/conversation_open.dart';
+import 'package:matterleast/domain/post_attributes.dart';
 
 /// Fetches the history of an open channel or thread through the sync
 /// runner and stores it; the screen follows from the database. Each fetch
@@ -29,6 +30,10 @@ class ConversationActions {
 
   Future<T> _call<T>(Future<T> Function() request) => session.api.call(request);
 
+  /// The group whose values the server adds to posts; null when it has none.
+  Future<String?> _attributes() async =>
+      (await _db.features()).postAttributes ? postAttributeGroup : null;
+
   /// Brings the channel up to date: changes since the last fetch, or the
   /// newest page when nothing is stored. Returns true when more changed
   /// than one answer holds, so the newest page went into a range of its
@@ -42,12 +47,14 @@ class ConversationActions {
         postsFetchedAt: await _postsFetchedAt(channelId),
       );
       final crt = await _db.collapsedThreads();
+      final group = await _attributes();
       switch (plan) {
         case FetchNewestPage():
           await _newestPage(channelId, crt);
         case FetchSince(:final since):
           final page = await _call(
             () => _client.posts.getPostsForChannel(
+              propertyGroup: group,
               channelId: channelId,
               since: since.millisecondsSinceEpoch,
               page: null,
@@ -72,8 +79,10 @@ class ConversationActions {
   }
 
   Future<void> _newestPage(String channelId, bool crt) async {
+    final group = await _attributes();
     final page = await _call(
       () => _client.posts.getPostsForChannel(
+        propertyGroup: group,
         channelId: channelId,
         perPage: pageSize,
         collapsedThreads: crt,
@@ -96,8 +105,10 @@ class ConversationActions {
     Object? owner,
   }) => _run('channel-older:$channelId', owner, () async {
     final crt = await _db.collapsedThreads();
+    final group = await _attributes();
     final page = await _call(
       () => _client.posts.getPostsForChannel(
+        propertyGroup: group,
         channelId: channelId,
         before: oldestId,
         perPage: pageSize,
@@ -123,8 +134,10 @@ class ConversationActions {
     Object? owner,
   }) => _run('channel-newer:$channelId', owner, () async {
     final crt = await _db.collapsedThreads();
+    final group = await _attributes();
     final page = await _call(
       () => _client.posts.getPostsForChannel(
+        propertyGroup: group,
         channelId: channelId,
         after: newestId,
         perPage: pageSize,
@@ -152,12 +165,14 @@ class ConversationActions {
     DateTime? at;
     await _run('channel-around:$postId', owner, () async {
       final crt = await _db.collapsedThreads();
+      final group = await _attributes();
       final post = await _call(() => _client.posts.getPost(postId: postId));
       at = post.createAt;
       final pages = await Future.wait([
         for (final (before, after) in [(postId, null), (null, postId)])
           _call(
             () => _client.posts.getPostsForChannel(
+              propertyGroup: group,
               channelId: channelId,
               before: before,
               after: after,
@@ -187,10 +202,12 @@ class ConversationActions {
   Future<void> refreshThread(String rootId, {Object? owner}) =>
       _run('thread-refresh:$rootId', owner, () async {
         final crt = await _db.collapsedThreads();
+        final group = await _attributes();
         final api.PostList page;
         try {
           page = await _call(
             () => _client.posts.getPostThread(
+              propertyGroup: group,
               postId: rootId,
               perPage: pageSize,
               direction: 'up',
@@ -221,8 +238,10 @@ class ConversationActions {
     Object? owner,
   }) => _run('thread-older:$rootId', owner, () async {
     final crt = await _db.collapsedThreads();
+    final group = await _attributes();
     final page = await _call(
       () => _client.posts.getPostThread(
+        propertyGroup: group,
         postId: rootId,
         perPage: pageSize,
         fromPost: oldestId,

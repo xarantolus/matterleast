@@ -39,6 +39,8 @@ import 'package:matterleast/api/generated/models/api_v4_posts_post_id_patch_requ
 import 'package:matterleast/api/generated/models/api_v4_posts_post_id_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_posts_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_posts_search_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_properties_groups_group_name_object_type_fields_request_body.dart';
+import 'package:matterleast/api/generated/models/api_v4_properties_groups_group_name_object_type_values_target_id_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_remotecluster_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_teams_search_request_body.dart';
@@ -128,6 +130,8 @@ import 'package:matterleast/api/generated/models/post_metadata.dart';
 import 'package:matterleast/api/generated/models/post_priority.dart';
 import 'package:matterleast/api/generated/models/preference.dart';
 import 'package:matterleast/api/generated/models/property_field.dart';
+import 'package:matterleast/api/generated/models/property_value.dart';
+import 'package:matterleast/api/generated/models/property_values.dart';
 import 'package:matterleast/api/generated/models/put_api_v4_users_user_id_teams_team_id_read_response.dart';
 import 'package:matterleast/api/generated/models/reaction.dart';
 import 'package:matterleast/api/generated/models/remote_cluster.dart';
@@ -2303,6 +2307,173 @@ class LenientMapOfApiV4PostsSearchRequestBody
   @override
   Object? toJson(Map<String, ApiV4PostsSearchRequestBody>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody
+    implements
+        JsonConverter<
+          ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody?,
+          Object?
+        > {
+  const LenientApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody();
+  @override
+  ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? decodeOrSkip(
+          json,
+          ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody.fromJson,
+        )
+      : null;
+  @override
+  Object? toJson(
+    ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody? object,
+  ) => object?.toJson();
+}
+
+class LenientListOfApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody
+    implements
+        JsonConverter<
+          List<ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody>,
+          Object?
+        > {
+  const LenientListOfApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody();
+  @override
+  List<ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody> fromJson(
+    Object? json,
+  ) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody
+                    .fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(
+    List<ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody> object,
+  ) => [for (final e in object) e.toJson()];
+}
+
+class LenientMapOfApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody
+    implements
+        JsonConverter<
+          Map<
+            String,
+            ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody
+          >?,
+          Object?
+        > {
+  const LenientMapOfApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody();
+  @override
+  Map<String, ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody>?
+  fromJson(Object? json) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody
+                    .fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<String, ApiV4PropertiesGroupsGroupNameObjectTypeFieldsRequestBody>?
+    object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+    implements
+        JsonConverter<
+          ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody?,
+          Object?
+        > {
+  const LenientApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody();
+  @override
+  ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody? fromJson(
+    Object? json,
+  ) => json is Map<String, Object?>
+      ? decodeOrSkip(
+          json,
+          ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+              .fromJson,
+        )
+      : null;
+  @override
+  Object? toJson(
+    ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody? object,
+  ) => object?.toJson();
+}
+
+class LenientListOfApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+    implements
+        JsonConverter<
+          List<
+            ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+          >,
+          Object?
+        > {
+  const LenientListOfApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody();
+  @override
+  List<ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody>
+  fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(
+                e,
+                ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+                    .fromJson,
+              ),
+        ]
+      : const [];
+  @override
+  Object? toJson(
+    List<ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody>
+    object,
+  ) => [for (final e in object) e.toJson()];
+}
+
+class LenientMapOfApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+    implements
+        JsonConverter<
+          Map<
+            String,
+            ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+          >?,
+          Object?
+        > {
+  const LenientMapOfApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody();
+  @override
+  Map<
+    String,
+    ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+  >?
+  fromJson(Object? json) => json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+                    .fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(
+    Map<
+      String,
+      ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody
+    >?
+    object,
+  ) => object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
 class LenientApiV4RemoteclusterRequestBody
@@ -6799,6 +6970,94 @@ class LenientMapOfPropertyField
       : null;
   @override
   Object? toJson(Map<String, PropertyField>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientPropertyValue implements JsonConverter<PropertyValue?, Object?> {
+  const LenientPropertyValue();
+  @override
+  PropertyValue? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, PropertyValue.fromJson)
+      : null;
+  @override
+  Object? toJson(PropertyValue? object) => object?.toJson();
+}
+
+class LenientListOfPropertyValue
+    implements JsonConverter<List<PropertyValue>, Object?> {
+  const LenientListOfPropertyValue();
+  @override
+  List<PropertyValue> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, PropertyValue.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<PropertyValue> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfPropertyValue
+    implements JsonConverter<Map<String, PropertyValue>?, Object?> {
+  const LenientMapOfPropertyValue();
+  @override
+  Map<String, PropertyValue>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PropertyValue.fromJson),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, PropertyValue>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientPropertyValues implements JsonConverter<PropertyValues?, Object?> {
+  const LenientPropertyValues();
+  @override
+  PropertyValues? fromJson(Object? json) => json is Map<String, Object?>
+      ? decodeOrSkip(json, PropertyValues.fromJson)
+      : null;
+  @override
+  Object? toJson(PropertyValues? object) => object?.toJson();
+}
+
+class LenientListOfPropertyValues
+    implements JsonConverter<List<PropertyValues>, Object?> {
+  const LenientListOfPropertyValues();
+  @override
+  List<PropertyValues> fromJson(Object? json) => json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, PropertyValues.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<PropertyValues> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfPropertyValues
+    implements JsonConverter<Map<String, PropertyValues>?, Object?> {
+  const LenientMapOfPropertyValues();
+  @override
+  Map<String, PropertyValues>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(m, PropertyValues.fromJson),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, PropertyValues>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 

@@ -32,6 +32,9 @@ typedef PostMenuFacts = ({
 
   /// The server can remind the user of the message later.
   bool reminders,
+
+  /// The server has post attributes to show and set.
+  bool attributes,
 });
 
 /// The reads of an open channel or thread: one batched query each, re-run
@@ -105,6 +108,7 @@ class ConversationViews {
         editTimeLimit: features.editTimeLimit,
       ),
       reminders: features.postReminders && !post.isSystem,
+      attributes: features.postAttributes && !post.isSystem,
     );
   }
 

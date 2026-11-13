@@ -35,6 +35,7 @@ import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/moment_tooltip.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/permalink_card.dart';
+import 'package:matterleast/ui/post_attributes.dart';
 import 'package:matterleast/ui/post_files.dart';
 import 'package:matterleast/ui/post_semantics.dart';
 import 'package:matterleast/ui/reactions_bar.dart';
@@ -355,6 +356,12 @@ class PostTile extends StatelessWidget {
           MessageImageOpener(
             open: (url) => _openImage(context, url, details, name),
             child: PostIntegration(post: post, details: details),
+          ),
+        if (env != null && !post.deleted)
+          PostAttributeChips(
+            url: env.server.toString(),
+            post: post,
+            details: details,
           ),
         ExcludeSemantics(
           child: Column(

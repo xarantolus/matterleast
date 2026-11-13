@@ -6,6 +6,7 @@ import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/store/server_store.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
+import 'package:matterleast/domain/post_attributes.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_features.dart';
 
@@ -185,6 +186,76 @@ class PostActions {
       },
       () =>
           _store.setPostMessage(postId, before.message, editAt: before.editAt),
+    );
+  }
+
+  /// The attribute fields posts in [channelId] can carry; none when the
+  /// server has no post attributes.
+  Future<List<PostAttributeField>> attributeFields(String channelId) {
+    final known = _attributeFields[channelId];
+    if (known != null) return known;
+    final fetch = _fetchAttributeFields(channelId);
+    _attributeFields[channelId] = fetch;
+    return fetch.catchError((Object e) {
+      _attributeFields.remove(channelId);
+      throw e;
+    });
+  }
+
+  final _attributeFields = <String, Future<List<PostAttributeField>>>{};
+
+  Future<List<PostAttributeField>> _fetchAttributeFields(
+    String channelId,
+  ) async {
+    if (!(await _db.features()).postAttributes) return const [];
+    try {
+      final fields = await _call(
+        () => _client.properties.getPropertyFields(
+          groupName: postAttributeGroup,
+          objectType: 'post',
+          channelId: channelId,
+        ),
+      );
+      return [
+        for (final f in fields)
+          if (f.id != null && f.deleteAt == null)
+            ?postAttributeField(
+              id: f.id!,
+              name: f.name ?? '',
+              type: f.type?.json,
+              attrs: f.attrs ?? const {},
+              permissionValues: f.permissionValues?.json,
+            ),
+      ];
+    } on ServerError catch (e) {
+      if (const {403, 404, 501}.contains(e.statusCode)) return const [];
+      rethrow;
+    }
+  }
+
+  /// Sets one attribute of a post (a string, or a list of strings for
+  /// several choices) and stores the post as the server now has it.
+  Future<void> setAttribute(String postId, String fieldId, Object value) async {
+    await _call(
+      () => _client.properties.updatePropertyValues(
+        groupName: postAttributeGroup,
+        objectType: 'post',
+        targetId: postId,
+        body: [
+          api.ApiV4PropertiesGroupsGroupNameObjectTypeValuesTargetIdRequestBody(
+            fieldId: fieldId,
+            value: value,
+          ),
+        ],
+      ),
+    );
+    await _store.applyEdit(
+      await _call(
+        () => _client.posts.getPost(
+          postId: postId,
+          propertyGroup: postAttributeGroup,
+        ),
+      ),
     );
   }
 

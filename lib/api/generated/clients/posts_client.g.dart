@@ -89,10 +89,12 @@ class _PostsClient implements PostsClient {
   @override
   Future<Post> getPost({
     required String postId,
+    String? propertyGroup,
     bool? includeDeleted = false,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
+      r'propertyGroup': propertyGroup,
       r'include_deleted': includeDeleted,
     };
     queryParameters.removeWhere((k, v) => v == null);
@@ -244,6 +246,7 @@ class _PostsClient implements PostsClient {
   @override
   Future<PostList> getPostThread({
     required String postId,
+    String? propertyGroup,
     int? perPage = 0,
     String? fromPost = '',
     int? fromCreateAt = 0,
@@ -256,6 +259,7 @@ class _PostsClient implements PostsClient {
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
+      r'propertyGroup': propertyGroup,
       r'perPage': perPage,
       r'fromPost': fromPost,
       r'fromCreateAt': fromCreateAt,
@@ -427,6 +431,7 @@ class _PostsClient implements PostsClient {
     String? before,
     String? after,
     String? type,
+    String? propertyGroup,
     int? page = 0,
     int? perPage = 60,
     bool? includeDeleted = false,
@@ -439,6 +444,7 @@ class _PostsClient implements PostsClient {
       r'before': before,
       r'after': after,
       r'type': type,
+      r'propertyGroup': propertyGroup,
       r'page': page,
       r'per_page': perPage,
       r'include_deleted': includeDeleted,

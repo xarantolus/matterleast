@@ -6,18 +6,18 @@ import 'package:json_annotation/json_annotation.dart';
 
 @JsonEnum()
 enum Type2 {
-  @JsonValue('image')
-  image('image'),
-  @JsonValue('message_attachment')
-  messageAttachment('message_attachment'),
-  @JsonValue('opengraph')
-  opengraph('opengraph'),
-  @JsonValue('link')
-  link('link'),
-  @JsonValue('permalink')
-  permalink('permalink'),
-  @JsonValue('boards')
-  boards('boards'),
+  @JsonValue('text')
+  text('text'),
+  @JsonValue('select')
+  select('select'),
+  @JsonValue('multiselect')
+  multiselect('multiselect'),
+  @JsonValue('date')
+  date('date'),
+  @JsonValue('user')
+  user('user'),
+  @JsonValue('multiuser')
+  multiuser('multiuser'),
 
   $unknown(null);
 

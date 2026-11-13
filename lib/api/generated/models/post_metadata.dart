@@ -9,6 +9,7 @@ import 'emoji.dart';
 import 'file_info.dart';
 import 'post_acknowledgement.dart';
 import 'post_priority.dart';
+import 'property_value.dart';
 import 'reaction.dart';
 
 import 'package:matterleast/api/json/lenient.dart';
@@ -22,12 +23,14 @@ class PostMetadata {
     this.priority,
     this.expireAt,
     this.redactedFileCount,
+    this.propertyValuesUnavailable,
     this.embeds = const [],
     this.emojis = const [],
     this.files = const [],
     this.reactions = const [],
     this.acknowledgements = const [],
     this.recipients = const [],
+    this.propertyValues = const [],
   });
 
   factory PostMetadata.fromJson(Map<String, Object?> json) =>
@@ -55,6 +58,12 @@ class PostMetadata {
   @LenientInt()
   @JsonKey(name: 'redacted_file_count')
   final int? redactedFileCount;
+  @LenientListOfPropertyValue()
+  @JsonKey(name: 'property_values')
+  final List<PropertyValue> propertyValues;
+  @LenientBool()
+  @JsonKey(name: 'property_values_unavailable')
+  final bool? propertyValuesUnavailable;
 
   Map<String, Object?> toJson() => _$PostMetadataToJson(this);
 }
