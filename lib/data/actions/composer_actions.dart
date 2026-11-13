@@ -164,6 +164,10 @@ class ComposerActions {
   Future<Draft?> loadDraft(String channelId, {String rootId = ''}) =>
       _drafts.load(channelId, rootId);
 
+  /// The stored draft each time it changes.
+  Stream<Draft?> draftChanges(String channelId, {String rootId = ''}) =>
+      _drafts.changes(channelId, rootId);
+
   /// Saves the draft 500 ms after the last change; an empty one is deleted.
   void saveDraft(Draft draft) => _drafts.save(draft);
 

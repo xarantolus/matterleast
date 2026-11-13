@@ -137,6 +137,18 @@ class ComposerValue {
   final List<Suggestion> suggestions;
 }
 
+/// The conversation's stored draft, each time it changes.
+@riverpod
+Stream<Draft?> storedDraft(
+  Ref ref,
+  String url,
+  String channelId,
+  String rootId,
+) async* {
+  final actions = await ref.watch(composerActionsProvider(url).future);
+  yield* actions.draftChanges(channelId, rootId: rootId);
+}
+
 /// The composer of one conversation. Lives as long as the conversation is
 /// on screen, so rebuilds and the drawer keep what was typed; the draft
 /// keeps it after that. With a [forward] link it writes the comment for
@@ -170,12 +182,22 @@ class ComposerDraft extends _$ComposerDraft {
         u.cancel();
       }
     });
-    if (forward.isEmpty) unawaited(_restore());
+    if (forward.isEmpty) {
+      unawaited(_restore());
+      // A draft from another device fills a composer that is still empty;
+      // it never replaces what is being typed.
+      ref.listen(
+        storedDraftProvider(url, channelId, rootId),
+        (_, next) => _take(next.value),
+      );
+    }
     return const ComposerValue();
   }
 
-  Future<void> _restore() async {
-    final draft = await (await _actions).loadDraft(channelId, rootId: rootId);
+  Future<void> _restore() async =>
+      _take(await (await _actions).loadDraft(channelId, rootId: rootId));
+
+  void _take(Draft? draft) {
     if (!ref.mounted || draft == null || state.text.text.isNotEmpty) return;
     final length = draft.message.length;
     state = ComposerValue(

@@ -8,6 +8,84 @@ part of 'composer_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// The conversation's stored draft, each time it changes.
+
+@ProviderFor(storedDraft)
+final storedDraftProvider = StoredDraftFamily._();
+
+/// The conversation's stored draft, each time it changes.
+
+final class StoredDraftProvider
+    extends $FunctionalProvider<AsyncValue<Draft?>, Draft?, Stream<Draft?>>
+    with $FutureModifier<Draft?>, $StreamProvider<Draft?> {
+  /// The conversation's stored draft, each time it changes.
+  StoredDraftProvider._({
+    required StoredDraftFamily super.from,
+    required (String, String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'storedDraftProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$storedDraftHash();
+
+  @override
+  String toString() {
+    return r'storedDraftProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Draft?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Draft?> create(Ref ref) {
+    final argument = this.argument as (String, String, String);
+    return storedDraft(ref, argument.$1, argument.$2, argument.$3);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is StoredDraftProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$storedDraftHash() => r'953c64b948e078f5d043103f5b107b3499264701';
+
+/// The conversation's stored draft, each time it changes.
+
+final class StoredDraftFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Draft?>, (String, String, String)> {
+  StoredDraftFamily._()
+    : super(
+        retry: null,
+        name: r'storedDraftProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The conversation's stored draft, each time it changes.
+
+  StoredDraftProvider call(String url, String channelId, String rootId) =>
+      StoredDraftProvider._(argument: (url, channelId, rootId), from: this);
+
+  @override
+  String toString() => r'storedDraftProvider';
+}
+
 /// The composer of one conversation. Lives as long as the conversation is
 /// on screen, so rebuilds and the drawer keep what was typed; the draft
 /// keeps it after that. With a [forward] link it writes the comment for
@@ -73,7 +151,7 @@ final class ComposerDraftProvider
   }
 }
 
-String _$composerDraftHash() => r'c62fd2ef38d4420ae64d8348f5b8c140529e4e86';
+String _$composerDraftHash() => r'0b84203dccfe64927f29b72c8b899eb7f9b06f9c';
 
 /// The composer of one conversation. Lives as long as the conversation is
 /// on screen, so rebuilds and the drawer keep what was typed; the draft
