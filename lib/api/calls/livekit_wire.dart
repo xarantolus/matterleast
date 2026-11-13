@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:matterleast/api/json/calls.dart';
 import 'package:matterleast/api/json/lenient.dart';
+import 'package:matterleast/domain/call_livekit_rules.dart';
 
 part 'livekit_wire.g.dart';
 
@@ -81,11 +82,8 @@ class LiveKitReaction {
   }
 
   /// The text of a reaction: its short name, else the character.
-  String? get emoji {
-    final data = emojiData;
-    final text = (data?.name ?? '').isNotEmpty ? data!.name : data?.literal;
-    return text == null || text.isEmpty ? null : text;
-  }
+  String? get emoji =>
+      acceptedReaction(name: emojiData?.name, literal: emojiData?.literal);
 
   @JsonKey(fromJson: _emojiIn)
   final CallEmojiData? emojiData;

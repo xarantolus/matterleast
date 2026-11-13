@@ -342,6 +342,57 @@ class ComposerActions {
       fieldErrors: fieldErrors,
     );
   }
+
+  /// Presses a dialog's action button; the integration answers by opening
+  /// another dialog, which shows because its trigger is expected here.
+  Future<void> pressDialogButton(
+    DialogActionButton button, {
+    required String channelId,
+    String teamId = '',
+  }) async {
+    final answer = await session.api.call(
+      () => session.api.client.integrationActions.executeDialogAction(
+        body: api.ApiV4ActionsDialogsExecuteRequestBody(
+          url: button.url,
+          channelId: channelId,
+          teamId: teamId.isEmpty ? null : teamId,
+          context: button.context.isEmpty ? null : button.context,
+        ),
+      ),
+    );
+    final trigger = answer.triggerId;
+    if (trigger != null && trigger.isNotEmpty) {
+      session.connection.dialogs.expect(trigger);
+    }
+  }
+
+  /// Asks the integration for [dialog] again from its `source_url`, with
+  /// what was entered so far. Null when it sent no form.
+  Future<DialogForm?> refreshDialog(
+    OpenDialog dialog, {
+    required String channelId,
+    String teamId = '',
+    Map<String, Object?> values = const {},
+  }) async {
+    final form = dialog.dialog;
+    final response = await session.api.call(
+      () => session.api.dio.post<Object?>(
+        '/api/v4/actions/dialogs/submit',
+        data: DialogRefreshBody(
+          url: form.sourceUrl ?? '',
+          channelId: channelId,
+          teamId: teamId.isEmpty ? null : teamId,
+          callbackId: form.callbackId,
+          state: form.state,
+          submission: dialogSubmission(form, values),
+        ).toJson(),
+      ),
+    );
+    final json = response.data;
+    return json is Map<String, Object?>
+        ? DialogRefreshAnswer.fromJson(json).form
+        : null;
+  }
 }
 
 sealed class DialogOutcome {

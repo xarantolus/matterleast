@@ -90,6 +90,7 @@ class RtcCallController implements CallController {
           platform: platform,
           room: createRoom(),
           feed: server.connection.calls,
+          serverUrl: url,
           requestSession: ({title, threadId}) => server.calls.liveKitSession(
             channelId,
             title: title,

@@ -455,6 +455,90 @@ final class TypingIdsFamily extends $Family
   String toString() => r'typingIdsProvider';
 }
 
+/// The inbox dialogs arrive in, and which of them are on screen.
+
+@ProviderFor(dialogInbox)
+final dialogInboxProvider = DialogInboxFamily._();
+
+/// The inbox dialogs arrive in, and which of them are on screen.
+
+final class DialogInboxProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<DialogInbox>,
+          DialogInbox,
+          FutureOr<DialogInbox>
+        >
+    with $FutureModifier<DialogInbox>, $FutureProvider<DialogInbox> {
+  /// The inbox dialogs arrive in, and which of them are on screen.
+  DialogInboxProvider._({
+    required DialogInboxFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'dialogInboxProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$dialogInboxHash();
+
+  @override
+  String toString() {
+    return r'dialogInboxProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<DialogInbox> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<DialogInbox> create(Ref ref) {
+    final argument = this.argument as String;
+    return dialogInbox(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DialogInboxProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$dialogInboxHash() => r'33b514ae6c488567d1f2264898c42b0447b57ffd';
+
+/// The inbox dialogs arrive in, and which of them are on screen.
+
+final class DialogInboxFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<DialogInbox>, String> {
+  DialogInboxFamily._()
+    : super(
+        retry: null,
+        name: r'dialogInboxProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  /// The inbox dialogs arrive in, and which of them are on screen.
+
+  DialogInboxProvider call(String url) =>
+      DialogInboxProvider._(argument: url, from: this);
+
+  @override
+  String toString() => r'dialogInboxProvider';
+}
+
 /// Dialogs integrations open in answer to this device's commands, to show
 /// as they come.
 

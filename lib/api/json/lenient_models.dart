@@ -7,6 +7,7 @@ import 'package:matterleast/api/generated/models/action_search_request.dart';
 import 'package:matterleast/api/generated/models/action_search_response.dart';
 import 'package:matterleast/api/generated/models/action_search_result.dart';
 import 'package:matterleast/api/generated/models/action_search_subject.dart';
+import 'package:matterleast/api/generated/models/api_v4_actions_dialogs_execute_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_actions_dialogs_lookup_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_actions_dialogs_submit_request_body.dart';
 import 'package:matterleast/api/generated/models/api_v4_channels_channel_id_bookmarks_bookmark_id_request_body.dart';
@@ -108,6 +109,7 @@ import 'package:matterleast/api/generated/models/patch_api_v4_users_user_id_cust
 import 'package:matterleast/api/generated/models/plugin_manifest_webapp.dart';
 import 'package:matterleast/api/generated/models/post.dart';
 import 'package:matterleast/api/generated/models/post_acknowledgement.dart';
+import 'package:matterleast/api/generated/models/post_api_v4_actions_dialogs_execute_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_actions_dialogs_lookup_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_actions_dialogs_submit_response.dart';
 import 'package:matterleast/api/generated/models/post_api_v4_channels_members_user_id_mark_read_response.dart';
@@ -463,6 +465,62 @@ class LenientMapOfActionSearchSubject
       : null;
   @override
   Object? toJson(Map<String, ActionSearchSubject>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientApiV4ActionsDialogsExecuteRequestBody
+    implements JsonConverter<ApiV4ActionsDialogsExecuteRequestBody?, Object?> {
+  const LenientApiV4ActionsDialogsExecuteRequestBody();
+  @override
+  ApiV4ActionsDialogsExecuteRequestBody? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, ApiV4ActionsDialogsExecuteRequestBody.fromJson)
+      : null;
+  @override
+  Object? toJson(ApiV4ActionsDialogsExecuteRequestBody? object) =>
+      object?.toJson();
+}
+
+class LenientListOfApiV4ActionsDialogsExecuteRequestBody
+    implements
+        JsonConverter<List<ApiV4ActionsDialogsExecuteRequestBody>, Object?> {
+  const LenientListOfApiV4ActionsDialogsExecuteRequestBody();
+  @override
+  List<ApiV4ActionsDialogsExecuteRequestBody> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, ApiV4ActionsDialogsExecuteRequestBody.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<ApiV4ActionsDialogsExecuteRequestBody> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfApiV4ActionsDialogsExecuteRequestBody
+    implements
+        JsonConverter<
+          Map<String, ApiV4ActionsDialogsExecuteRequestBody>?,
+          Object?
+        > {
+  const LenientMapOfApiV4ActionsDialogsExecuteRequestBody();
+  @override
+  Map<String, ApiV4ActionsDialogsExecuteRequestBody>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                ApiV4ActionsDialogsExecuteRequestBody.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, ApiV4ActionsDialogsExecuteRequestBody>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 
@@ -5767,6 +5825,62 @@ class LenientMapOfPostAcknowledgement
       : null;
   @override
   Object? toJson(Map<String, PostAcknowledgement>? object) =>
+      object?.map((k, v) => MapEntry(k, v.toJson()));
+}
+
+class LenientPostApiV4ActionsDialogsExecuteResponse
+    implements JsonConverter<PostApiV4ActionsDialogsExecuteResponse?, Object?> {
+  const LenientPostApiV4ActionsDialogsExecuteResponse();
+  @override
+  PostApiV4ActionsDialogsExecuteResponse? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? decodeOrSkip(json, PostApiV4ActionsDialogsExecuteResponse.fromJson)
+      : null;
+  @override
+  Object? toJson(PostApiV4ActionsDialogsExecuteResponse? object) =>
+      object?.toJson();
+}
+
+class LenientListOfPostApiV4ActionsDialogsExecuteResponse
+    implements
+        JsonConverter<List<PostApiV4ActionsDialogsExecuteResponse>, Object?> {
+  const LenientListOfPostApiV4ActionsDialogsExecuteResponse();
+  @override
+  List<PostApiV4ActionsDialogsExecuteResponse> fromJson(Object? json) =>
+      json is List
+      ? [
+          for (final e in json)
+            if (e is Map<String, Object?>)
+              ?decodeOrSkip(e, PostApiV4ActionsDialogsExecuteResponse.fromJson),
+        ]
+      : const [];
+  @override
+  Object? toJson(List<PostApiV4ActionsDialogsExecuteResponse> object) => [
+    for (final e in object) e.toJson(),
+  ];
+}
+
+class LenientMapOfPostApiV4ActionsDialogsExecuteResponse
+    implements
+        JsonConverter<
+          Map<String, PostApiV4ActionsDialogsExecuteResponse>?,
+          Object?
+        > {
+  const LenientMapOfPostApiV4ActionsDialogsExecuteResponse();
+  @override
+  Map<String, PostApiV4ActionsDialogsExecuteResponse>? fromJson(Object? json) =>
+      json is Map<String, Object?>
+      ? {
+          for (final e in json.entries)
+            if (e.value case final Map<String, Object?> m)
+              e.key: ?decodeOrSkip(
+                m,
+                PostApiV4ActionsDialogsExecuteResponse.fromJson,
+              ),
+        }
+      : null;
+  @override
+  Object? toJson(Map<String, PostApiV4ActionsDialogsExecuteResponse>? object) =>
       object?.map((k, v) => MapEntry(k, v.toJson()));
 }
 

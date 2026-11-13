@@ -168,6 +168,8 @@ export 'models/api_v4_actions_dialogs_submit_request_body.dart';
 export 'models/options.dart';
 export 'models/post_api_v4_actions_dialogs_lookup_response.dart';
 export 'models/api_v4_actions_dialogs_lookup_request_body.dart';
+export 'models/post_api_v4_actions_dialogs_execute_response.dart';
+export 'models/api_v4_actions_dialogs_execute_request_body.dart';
 export 'models/api_v4_channels_channel_id_bookmarks_request_body.dart';
 export 'models/api_v4_channels_channel_id_bookmarks_bookmark_id_request_body.dart';
 export 'models/options2.dart';
