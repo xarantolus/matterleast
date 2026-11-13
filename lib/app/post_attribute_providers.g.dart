@@ -67,7 +67,7 @@ final class PostAttributeSetupProvider
 }
 
 String _$postAttributeSetupHash() =>
-    r'13ac50eed1ad7faa1649b4e9b595e1a1cbdf65f0';
+    r'588e34376d74544786b26b1c9fc08e2c58088271';
 
 final class PostAttributeSetupFamily extends $Family
     with
