@@ -185,11 +185,14 @@ class ComposerDraft extends _$ComposerDraft {
     if (forward.isEmpty) {
       unawaited(_restore());
       // A draft from another device fills a composer that is still empty;
-      // it never replaces what is being typed.
-      ref.listen(
-        storedDraftProvider(url, channelId, rootId),
-        (_, next) => _take(next.value),
-      );
+      // it never replaces what is being typed. The stream also repeats an
+      // unchanged row on unrelated writes, which must not bring back text
+      // the user has just deleted.
+      ref.listen(storedDraftProvider(url, channelId, rootId), (previous, next) {
+        if (next.value?.message != previous?.value?.message) {
+          _take(next.value);
+        }
+      });
     }
     return const ComposerValue();
   }
