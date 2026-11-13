@@ -15,7 +15,7 @@ String storedJson(Object? value) => jsonEncode(value, toEncodable: _encodable);
 // Generated enums throw on toJson for values the spec does not list (a newer
 // server's embed type, say); those are stored as null instead.
 Object? _encodable(Object? value) => switch (value) {
-  api.Type2(:final json) => json,
+  api.Type3(:final json) => json,
   api.PostPriorityPriority(:final json) => json,
   final api.Post v => v.toJson(),
   final api.PostMetadata v => v.toJson(),
