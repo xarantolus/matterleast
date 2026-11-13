@@ -1,4 +1,5 @@
 - "/api/v4/access_control/decisions/actions/search"
+- "/api/v4/actions/dialogs/execute"
 - "/api/v4/actions/dialogs/lookup"
 - "/api/v4/actions/dialogs/submit"
 - "/api/v4/channels"
