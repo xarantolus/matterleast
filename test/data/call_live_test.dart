@@ -245,4 +245,15 @@ void main() {
     );
     expect(live.reactions.value, {'s-ann': 'tada'});
   });
+
+  test('a reaction without an emoji shows nothing', () async {
+    final live = session.connection.calls;
+    await installCallsPlugin(session);
+    await eventually(() => live.state.value.calls.containsKey(channelId));
+
+    session.connection.receive(
+      const CallReactionEvent(channelId, sessionId: 's-ann', emoji: ''),
+    );
+    expect(live.reactions.value, isEmpty);
+  });
 }

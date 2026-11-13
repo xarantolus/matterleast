@@ -169,6 +169,7 @@ class CallLive implements CallRoomFeed {
   }
 
   void _react(String sessionId, String emoji) {
+    if (emoji.isEmpty) return;
     reactions.value = {...reactions.value, sessionId: emoji};
     _reactionTimers[sessionId]?.cancel();
     _reactionTimers[sessionId] = Timer(reactionFor, () {

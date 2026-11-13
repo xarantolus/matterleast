@@ -80,6 +80,7 @@ const _channel = 'ch000000000000000000000001';
 
 class Harness {
   Harness({
+    this.serverUrl = 'http://chat.test',
     this.session = const LiveKitSession(
       sessionId: 's-me',
       token: 't',
@@ -96,10 +97,12 @@ class Harness {
         if (refusal != null) throw refusal!;
         return session;
       },
+      serverUrl: serverUrl,
       failureText: (e) => 'failed: $e',
     );
   }
 
+  final String serverUrl;
   final LiveKitSession session;
   final room = FakeRoom();
   final feed = FakeFeed();
@@ -225,6 +228,64 @@ void main() {
         'me',
       ]);
       expect(h.feed.members.keys, isNot(contains('s-bot')));
+      h.close();
+    });
+  });
+
+  test('the bot stays out of speakers, hands and reactions, and an '
+      'attribute-flagged person does not', () {
+    fakeAsync((async) {
+      final h = Harness(
+        session: const LiveKitSession(
+          sessionId: 's-me',
+          token: 't',
+          url: 'ws://media',
+          botUserId: 'robot',
+        ),
+      );
+      h.join(
+        async.flushMicrotasks,
+        others: [(identity: 'bob___s-bob', muted: true, raisedAt: 0)],
+      );
+      h.room.controller
+        ..add(const RoomSpeakers({'robot___s-bot', 'bob___s-bob'}))
+        ..add(const MemberHand('robot___s-bot', 9))
+        ..add(const MemberReacted('robot___s-bot', 'tada'))
+        ..add(const MemberLeft('robot___s-bot'));
+      expect(
+        h.feed.events.whereType<CallVoiceEvent>().map((e) => e.sessionId),
+        ['s-bob'],
+      );
+      expect(h.feed.events.whereType<CallReactionEvent>(), isEmpty);
+      expect(h.feed.events.whereType<CallLeftEvent>(), isEmpty);
+      expect(h.feed.members.keys, isNot(contains('s-bot')));
+      h.close();
+    });
+  });
+
+  test('a peer reacting again within the gap is ignored', () {
+    run((async, h) {
+      h.join(async.flushMicrotasks);
+      void react(String who) => h.room.controller.add(MemberReacted(who, 'a'));
+      react('bob___s-bob');
+      async.elapse(const Duration(milliseconds: 199));
+      react('bob___s-bob');
+      react('cy___s-cy');
+      expect(h.feed.events.whereType<CallReactionEvent>().length, 2);
+      async.elapse(const Duration(milliseconds: 1));
+      react('bob___s-bob');
+      expect(h.feed.events.whereType<CallReactionEvent>().length, 3);
+    });
+  });
+
+  test('a room address that would send the token unencrypted is refused', () {
+    fakeAsync((async) {
+      final h = Harness(serverUrl: 'https://chat.test');
+      unawaited(h.call.start());
+      async.flushMicrotasks();
+      expect(h.state.phase, CallPhase.failed);
+      expect(h.state.failure?.kind, CallFailureKind.server);
+      expect(h.room.log, isEmpty);
       h.close();
     });
   });
