@@ -66,6 +66,13 @@ class DraftSaver {
     return row == null ? null : _draftOf(row);
   }
 
+  Stream<Draft?> changes(String channelId, String rootId) =>
+      (store.db.select(store.db.drafts)..where(
+            (d) => d.channelId.equals(channelId) & d.rootId.equals(rootId),
+          ))
+          .watchSingleOrNull()
+          .map((row) => row == null ? null : _draftOf(row));
+
   void save(Draft draft) {
     final key = (draft.channelId, draft.rootId);
     _waiting[key] = draft;
