@@ -145,6 +145,7 @@ void main() {
               markUnread: false,
             ),
             reminders: false,
+            attributes: false,
           ),
         ),
       ],

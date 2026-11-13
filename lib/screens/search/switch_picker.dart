@@ -113,12 +113,13 @@ class _SwitchPickerState extends ConsumerState<SwitchPicker> {
             if (item.kind == SwitchKind.person) item,
       ], limit: 100);
       final remote = <SwitchItem>[];
-      if (people) {
+      if (url != null &&
+          (people || widget.kinds.contains(SwitchKind.joinable))) {
         searching = !ref.watch(offlineProvider) && _remoteTerm.trim() != term;
         final answer = ref.watch(switchRemoteProvider(url, _remoteTerm));
         if (answer.isLoading) searching = true;
         for (final item in answer.value ?? const <SwitchItem>[]) {
-          if (item.kind == SwitchKind.person ||
+          if (people && item.kind == SwitchKind.person ||
               widget.kinds.contains(item.kind)) {
             remote.add(item);
           }

@@ -32,6 +32,7 @@ Future<void> _open(
   PostItem post, {
   MessageRights rights = _all,
   bool reminders = false,
+  bool attributes = false,
   ValueChanged<String?>? onQuote,
 }) async {
   await pumpApp(
@@ -64,6 +65,7 @@ Future<void> _open(
           teamName: 'crew',
           rights: rights,
           reminders: reminders,
+          attributes: attributes,
         ),
       ),
       recentEmojiProvider(_url).overrideWith((ref) async => const []),
@@ -105,6 +107,7 @@ void main() {
               teamName: 'crew',
               rights: _all,
               reminders: false,
+              attributes: false,
             ),
           ),
           recentEmojiProvider(_url).overrideWith((ref) async => const []),
@@ -176,6 +179,18 @@ void main() {
     expect(find.text('Quote'), findsNothing);
   });
 
+  testWidgets('Quote is not offered where the user cannot post', (
+    tester,
+  ) async {
+    await _open(
+      tester,
+      postItem(userId: 'other'),
+      rights: _readOnly,
+      onQuote: (_) {},
+    );
+    expect(find.text('Quote'), findsNothing);
+  });
+
   for (final (name, rights) in [('all', _all), ('read-only', _readOnly)]) {
     testWidgets('a right click offers what the sheet offers ($name rights)', (
       tester,
@@ -221,6 +236,7 @@ void main() {
               teamName: 'crew',
               rights: rights,
               reminders: true,
+              attributes: false,
             ),
           ),
           recentEmojiProvider(_url).overrideWith((ref) async => const []),

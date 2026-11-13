@@ -490,6 +490,7 @@ class ComposerDraft extends _$ComposerDraft {
         if (!await confirmMention(message) || !ref.mounted) {
           return const SubmitDone();
         }
+        await actions.joinIfNeeded(channelId);
         await actions.send(channelId, message: forwardText(message, forward));
         return const SubmitForwarded();
       }

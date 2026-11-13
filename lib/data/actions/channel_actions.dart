@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart';
+import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
@@ -10,6 +11,7 @@ import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/views/switch_views.dart';
 import 'package:matterleast/data/wait_limited.dart';
 import 'package:matterleast/domain/category_moves.dart';
+import 'package:matterleast/domain/post_attributes.dart';
 import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/log.dart';
@@ -433,6 +435,35 @@ class ChannelActions {
     );
   }
 
+  /// The attribute fields a channel in [teamId] takes when it is created;
+  /// none when the server has no channel attributes or won't say.
+  Future<List<PostAttributeField>> attributeFields(String teamId) async {
+    if (!(await _db.features()).channelAttributes) return const [];
+    try {
+      final fields = await session.api.call(
+        () => _client.properties.getPropertyFields(
+          groupName: channelAttributeGroup,
+          objectType: 'channel',
+          teamId: teamId,
+        ),
+      );
+      return [
+        for (final f in fields)
+          if (f.id != null && f.deleteAt == null)
+            ?postAttributeField(
+              id: f.id!,
+              name: f.name ?? '',
+              type: f.type?.json,
+              attrs: f.attrs ?? const {},
+              permissionValues: f.permissionValues?.json,
+            ),
+      ];
+    } on ServerError catch (e) {
+      if (const {403, 404, 501}.contains(e.statusCode)) return const [];
+      rethrow;
+    }
+  }
+
   /// Creates a channel in [teamId] and returns its id.
   Future<String> create({
     required String teamId,
@@ -441,10 +472,17 @@ class ChannelActions {
     required bool private,
     String purpose = '',
     String header = '',
+    Map<String, Object> attributes = const {},
   }) async {
     final channel = await session.api.call(
       () => _client.channels.createChannel(
         body: api.ApiV4ChannelsRequestBody(
+          propertyValues: attributes.isEmpty
+              ? null
+              : [
+                  for (final MapEntry(:key, :value) in attributes.entries)
+                    api.PropertyValues(fieldId: key, value: value),
+                ],
           teamId: teamId,
           name: name,
           displayName: displayName,

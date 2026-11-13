@@ -118,6 +118,92 @@ void main() {
     await h.close(tester);
   });
 
+  const reefId = 'ch000000000000000000000c09';
+  Map<String, Object?> reef() => {
+    'id': reefId,
+    'team_id': teamId,
+    'type': 'O',
+    'name': 'reef',
+    'display_name': 'Reef',
+  };
+
+  Reply? reefHandler(SeenRequest r, {bool canJoin = true}) => switch (r.path) {
+    '/api/v4/teams/$teamId/channels/autocomplete' => ok([reef()]),
+    '/api/v4/channels/group/search' => ok(const <Object?>[]),
+    '/api/v4/users/search' => ok(const <Object?>[]),
+    '/api/v4/channels/$reefId/members' when r.method == 'POST' =>
+      canJoin
+          ? ok({'channel_id': reefId, 'user_id': meId})
+          : (
+              status: 403,
+              json: {
+                'id': 'no',
+                'message': 'No joining here',
+                'status_code': 403,
+              },
+              headers: const <String, String>{},
+            ),
+    '/api/v4/channels/$reefId' => ok(reef()),
+    _ => flaggingOn(r),
+  };
+
+  testWidgets('forwarding to a public channel not joined joins it first', (
+    tester,
+  ) async {
+    await openMenu(tester, _post('someone'), handle: reefHandler);
+    await tester.tap(find.text('Forward'));
+    await h.settle(tester);
+    await tester.enterText(find.byType(TextField), 'reef');
+    await h.settle(
+      tester,
+      until: () => find.text('Reef').evaluate().isNotEmpty,
+    );
+    await tester.tap(find.text('Reef'));
+    await h.settle(tester);
+    await tester.tap(find.byTooltip('Send'));
+    await h.settle(tester);
+    final paths = [
+      for (final r in h.server.seen)
+        if (r.method == 'POST') r.path,
+    ];
+    expect(
+      paths.where(
+        (p) => p == '/api/v4/channels/$reefId/members' || p == '/api/v4/posts',
+      ),
+      ['/api/v4/channels/$reefId/members', '/api/v4/posts'],
+    );
+    await h.close(tester);
+  });
+
+  testWidgets('a refused join forwards nothing and shows the server message', (
+    tester,
+  ) async {
+    await openMenu(
+      tester,
+      _post('someone'),
+      handle: (r) => reefHandler(r, canJoin: false),
+    );
+    await tester.tap(find.text('Forward'));
+    await h.settle(tester);
+    await tester.enterText(find.byType(TextField), 'reef');
+    await h.settle(
+      tester,
+      until: () => find.text('Reef').evaluate().isNotEmpty,
+    );
+    await tester.tap(find.text('Reef'));
+    await h.settle(tester);
+    await tester.tap(find.byTooltip('Send'));
+    await h.settle(tester);
+    expect(
+      h.server.seen.where(
+        (r) => r.method == 'POST' && r.path == '/api/v4/posts',
+      ),
+      isEmpty,
+    );
+    expect(find.text('No joining here'), findsOneWidget);
+    await h.close(tester);
+  });
+
   testWidgets('forwarding without a comment posts only the link', (
     tester,
   ) async {

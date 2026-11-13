@@ -60,6 +60,12 @@ bool _hasPreview(Map<String, Object?> metadata) =>
       (e) => e is Map && (e['type'] == 'opengraph' || e['type'] == 'image'),
     );
 
+bool _hasValues(Map<String, Object?> metadata) =>
+    switch (metadata['property_values']) {
+      final List<Object?> values => values.isNotEmpty,
+      _ => false,
+    };
+
 Map<String, Object?>? _jsonObject(String? json) {
   if (json == null) return null;
   try {
@@ -74,24 +80,32 @@ Map<String, Object?>? _jsonObject(String? json) {
 /// unchanged. The server answers with no preview when fetching the linked
 /// page timed out, and with it again on a later request; a preview already
 /// stored stays meanwhile, with the image sizes it needs, so the card
-/// doesn't vanish and come back under the reader. Null when [incoming]
-/// stays as it is.
-String? metadataKeepingPreview({
+/// doesn't vanish and come back under the reader. Attribute values stay
+/// when the new copy carries none (live events don't hydrate them). Null
+/// when [incoming] stays as it is.
+String? metadataKeepingExtras({
   required String incoming,
   required String? stored,
 }) {
   final now = _jsonObject(incoming);
   final was = _jsonObject(stored);
-  if (now == null || was == null || _hasPreview(now) || !_hasPreview(was)) {
-    return null;
-  }
+  if (now == null || was == null) return null;
+  final keepPreview = !_hasPreview(now) && _hasPreview(was);
+  final keepValues =
+      !_hasValues(now) &&
+      now['property_values_unavailable'] != true &&
+      _hasValues(was);
+  if (!keepPreview && !keepValues) return null;
   return storedJson({
     ...now,
-    'embeds': was['embeds'],
-    'images': {
-      if (was['images'] case final Map<String, Object?> images) ...images,
-      if (now['images'] case final Map<String, Object?> images) ...images,
+    if (keepPreview) ...{
+      'embeds': was['embeds'],
+      'images': {
+        if (was['images'] case final Map<String, Object?> images) ...images,
+        if (now['images'] case final Map<String, Object?> images) ...images,
+      },
     },
+    if (keepValues) 'property_values': was['property_values'],
   });
 }
 
