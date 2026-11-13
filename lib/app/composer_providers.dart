@@ -6,6 +6,7 @@ import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
+import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/data/outbox/outbox_sender.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -91,6 +92,11 @@ Stream<List<String>> typingIds(
   final session = await ref.watch(serverSessionProvider(url).future);
   yield* session.connection.typing.watch(channelId, rootId: rootId);
 }
+
+/// The inbox dialogs arrive in, and which of them are on screen.
+@Riverpod(keepAlive: true)
+Future<DialogInbox> dialogInbox(Ref ref, String url) async =>
+    (await ref.watch(serverSessionProvider(url).future)).connection.dialogs;
 
 /// Dialogs integrations open in answer to this device's commands, to show
 /// as they come.

@@ -21,6 +21,9 @@ DialogForm _$DialogFormFromJson(Map<String, dynamic> json) => DialogForm(
   submitLabel: const LenientString().fromJson(json['submit_label']),
   notifyOnCancel: const LenientBool().fromJson(json['notify_on_cancel']),
   state: const LenientString().fromJson(json['state']),
+  sourceUrl: const LenientString().fromJson(json['source_url']),
+  submitButtons: const LenientString().fromJson(json['submit_buttons']),
+  refreshOnReturn: const LenientBool().fromJson(json['refresh_on_return']),
 );
 
 DialogElement _$DialogElementFromJson(Map<String, dynamic> json) =>
@@ -43,7 +46,28 @@ DialogElement _$DialogElementFromJson(Map<String, dynamic> json) =>
       legacyMinDate: const LenientString().fromJson(json['min_date']),
       legacyMaxDate: const LenientString().fromJson(json['max_date']),
       legacyTimeInterval: const LenientInt().fromJson(json['time_interval']),
+      actionButton: _button(json['action_button']),
     );
+
+DialogActionButton _$DialogActionButtonFromJson(Map<String, dynamic> json) =>
+    DialogActionButton(
+      url: json['url'] == null ? '' : stringOrEmpty(json['url']),
+      context: json['context'] == null ? const {} : _strings(json['context']),
+    );
+
+Map<String, dynamic> _$DialogRefreshBodyToJson(DialogRefreshBody instance) =>
+    <String, dynamic>{
+      'url': instance.url,
+      'channel_id': instance.channelId,
+      'team_id': ?instance.teamId,
+      'callback_id': ?instance.callbackId,
+      'state': ?instance.state,
+      'submission': instance.submission,
+      'type': instance.type,
+    };
+
+DialogRefreshAnswer _$DialogRefreshAnswerFromJson(Map<String, dynamic> json) =>
+    DialogRefreshAnswer(form: _formOrNull(json['form']));
 
 DialogDateTimeConfig _$DialogDateTimeConfigFromJson(
   Map<String, dynamic> json,

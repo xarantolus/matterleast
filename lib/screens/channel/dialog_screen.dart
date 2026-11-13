@@ -7,6 +7,7 @@ import 'package:matterleast/api/websocket/dialog.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/dialog_clock.dart';
+import 'package:matterleast/data/live/dialogs.dart';
 import 'package:matterleast/domain/dialog_dates.dart';
 import 'package:matterleast/domain/dialog_rules.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
@@ -24,23 +25,53 @@ void listenForDialogs(
   required String url,
   required String channelId,
   required String teamId,
-}) => ref.listen(openDialogsProvider(url), (_, next) {
-  final dialog = next.value;
-  if (dialog == null || !(ModalRoute.of(context)?.isCurrent ?? false)) return;
-  unawaited(
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (_) => DialogScreen(
-          url: url,
-          dialog: dialog,
-          channelId: channelId,
-          teamId: teamId,
-        ),
+}) {
+  final inbox = ref.watch(dialogInboxProvider(url)).value;
+  ref.listen(openDialogsProvider(url), (_, next) {
+    final dialog = next.value;
+    if (dialog == null ||
+        inbox == null ||
+        !inbox.canOpen ||
+        !(ModalRoute.of(context)?.isCurrent ?? false)) {
+      return;
+    }
+    unawaited(
+      _openOver(
+        context,
+        inbox,
+        url: url,
+        dialog: dialog,
+        channelId: channelId,
+        teamId: teamId,
       ),
-    ),
-  );
-});
+    );
+  });
+}
+
+/// Puts [dialog] over the current screen; completes when it is closed.
+Future<void> _openOver(
+  BuildContext context,
+  DialogInbox inbox, {
+  required String url,
+  required OpenDialog dialog,
+  required String channelId,
+  required String teamId,
+}) {
+  inbox.opened();
+  return Navigator.of(context, rootNavigator: true)
+      .push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (_) => DialogScreen(
+            url: url,
+            dialog: dialog,
+            channelId: channelId,
+            teamId: teamId,
+          ),
+        ),
+      )
+      .whenComplete(inbox.closed);
+}
 
 /// An integration's form: its fields, checked before sending, with the
 /// integration's own complaints shown under them.
@@ -63,15 +94,96 @@ class DialogScreen extends ConsumerStatefulWidget {
 }
 
 class _DialogScreenState extends ConsumerState<DialogScreen> {
-  late final Map<String, Object?> _values = dialogInitialValues(
-    widget.dialog.dialog,
+  late OpenDialog _dialog = widget.dialog;
+  late Map<String, Object?> _values = dialogInitialValues(
+    _form,
     clockForElement,
   );
   var _errors = const <String, String>{};
   String? _error;
   var _sending = false;
+  var _pressing = const <String>{};
 
-  DialogForm get _form => widget.dialog.dialog;
+  /// Changes whenever the integration sends the form again, so fields start
+  /// over from their values.
+  var _version = 0;
+
+  DialogForm get _form => _dialog.dialog;
+
+  String _problem(ApiError e) => switch (e) {
+    ServerError(:final message?) when message.isNotEmpty => message,
+    _ => connectionProblemText(e, hostOf(widget.url)),
+  };
+
+  Future<void> _showChild(OpenDialog child, DialogInbox inbox) async {
+    await _openOver(
+      context,
+      inbox,
+      url: widget.url,
+      dialog: child,
+      channelId: widget.channelId,
+      teamId: widget.teamId,
+    );
+    if (mounted && (_form.refreshOnReturn ?? false)) await _refresh();
+  }
+
+  Future<void> _refresh() async {
+    if ((_form.sourceUrl ?? '').isEmpty) return;
+    setState(() => _sending = true);
+    try {
+      final actions = await ref.read(
+        composerActionsProvider(widget.url).future,
+      );
+      final form = await actions.refreshDialog(
+        _dialog,
+        channelId: widget.channelId,
+        teamId: widget.teamId,
+        values: _values,
+      );
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        if (form == null) return;
+        _values = keepEnteredValues(form, _values, clockForElement);
+        _dialog = OpenDialog(
+          triggerId: _dialog.triggerId,
+          url: _dialog.url,
+          dialog: form,
+        );
+        _errors = const {};
+        _version++;
+      });
+    } on ApiError catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _error = _problem(e);
+      });
+    }
+  }
+
+  Future<void> _press(DialogElement e, DialogActionButton button) async {
+    setState(() {
+      _pressing = {..._pressing, e.name};
+      _errors = {..._errors}..remove(e.name);
+    });
+    try {
+      final actions = await ref.read(
+        composerActionsProvider(widget.url).future,
+      );
+      await actions.pressDialogButton(
+        button,
+        channelId: widget.channelId,
+        teamId: widget.teamId,
+      );
+    } on ApiError catch (error) {
+      if (mounted) {
+        setState(() => _errors = {..._errors, e.name: _problem(error)});
+      }
+    } finally {
+      if (mounted) setState(() => _pressing = {..._pressing}..remove(e.name));
+    }
+  }
 
   Future<void> _submit({bool cancelled = false}) async {
     final navigator = Navigator.of(context);
@@ -93,7 +205,7 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
         composerActionsProvider(widget.url).future,
       );
       final outcome = await actions.submitDialog(
-        widget.dialog,
+        _dialog,
         channelId: widget.channelId,
         teamId: widget.teamId,
         values: _values,
@@ -122,10 +234,7 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
       if (!mounted) return;
       setState(() {
         _sending = false;
-        _error = switch (e) {
-          ServerError(:final message?) when message.isNotEmpty => message,
-          _ => connectionProblemText(e, hostOf(widget.url)),
-        };
+        _error = _problem(e);
       });
     }
   }
@@ -134,6 +243,18 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final intro = _form.introductionText ?? '';
+    final inbox = ref.watch(dialogInboxProvider(widget.url)).value;
+    ref.listen(openDialogsProvider(widget.url), (_, next) {
+      final child = next.value;
+      if (child == null ||
+          inbox == null ||
+          !inbox.canOpen ||
+          !(ModalRoute.of(context)?.isCurrent ?? false)) {
+        return;
+      }
+      unawaited(_showChild(child, inbox));
+    });
+    final buttons = submitButtonsElement(_form);
     return PopScope(
       canPop: !(_form.notifyOnCancel ?? false),
       onPopInvokedWithResult: (popped, _) {
@@ -143,15 +264,16 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
         appBar: AppBar(
           title: Text(_form.title ?? 'Form'),
           actions: [
-            TextButton(
-              style: context.barButtonStyle,
-              onPressed: _sending ? null : _submit,
-              child: Text(
-                _form.submitLabel?.isNotEmpty ?? false
-                    ? _form.submitLabel!
-                    : 'Submit',
+            if (buttons == null)
+              TextButton(
+                style: context.barButtonStyle,
+                onPressed: _sending ? null : _submit,
+                child: Text(
+                  _form.submitLabel?.isNotEmpty ?? false
+                      ? _form.submitLabel!
+                      : 'Submit',
+                ),
               ),
-            ),
           ],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(3),
@@ -175,10 +297,27 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
               ),
               const SizedBox(height: Spacing.lg),
             ],
-            for (final element in _form.elements) ...[
-              _field(element),
-              const SizedBox(height: Spacing.lg),
-            ],
+            for (final element in _form.elements)
+              if (element != buttons) ...[
+                KeyedSubtree(
+                  key: ValueKey((_version, element.name)),
+                  child: _field(element),
+                ),
+                const SizedBox(height: Spacing.lg),
+              ],
+            if (buttons != null)
+              for (final option in buttons.options) ...[
+                FilledButton(
+                  onPressed: _sending
+                      ? null
+                      : () {
+                          _values[buttons.name] = option.value;
+                          unawaited(_submit());
+                        },
+                  child: Text(option.text),
+                ),
+                const SizedBox(height: Spacing.sm),
+              ],
           ],
         ),
       ),
@@ -209,6 +348,42 @@ class _DialogScreenState extends ConsumerState<DialogScreen> {
                       : TextStyle(color: Theme.of(context).colorScheme.error),
                 )
               : null,
+        );
+      case DialogElementType.actionButton:
+        final button = e.actionButton;
+        final pressing = _pressing.contains(e.name);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (help != null)
+                  Expanded(child: Text(help))
+                else
+                  const Spacer(),
+                FilledButton.tonal(
+                  onPressed:
+                      _sending ||
+                          pressing ||
+                          button == null ||
+                          button.url.isEmpty
+                      ? null
+                      : () => unawaited(_press(e, button)),
+                  child: pressing
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(e.displayName ?? e.name),
+                ),
+              ],
+            ),
+            if (error != null)
+              Text(
+                error,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+          ],
         );
       case DialogElementType.radio:
         return InputDecorator(
