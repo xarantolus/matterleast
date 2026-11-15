@@ -11,6 +11,7 @@ import 'package:matterleast/domain/conversation_read.dart';
 import 'package:matterleast/domain/post_list.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/markdown/task_list.dart';
 import 'package:matterleast/screens/channel/composer_controller.dart';
 import 'package:matterleast/screens/channel/conversation_controller.dart';
 import 'package:matterleast/screens/channel/conversation_state.dart';
@@ -18,6 +19,7 @@ import 'package:matterleast/screens/channel/message_environment.dart';
 import 'package:matterleast/screens/channel/message_hover.dart';
 import 'package:matterleast/screens/channel/message_menu.dart';
 import 'package:matterleast/screens/channel/reading_places.dart';
+import 'package:matterleast/screens/channel/task_ticks.dart';
 import 'package:matterleast/screens/channel/typing_line.dart';
 import 'package:matterleast/ui/anchored_list.dart';
 import 'package:matterleast/ui/clickable.dart';
@@ -497,53 +499,59 @@ extension on _ConversationViewState {
     // With a mouse the toolbar and the right click take over what a long
     // press does on a phone; a click still opens the thread, a drag selects.
     final desktop = isDesktop;
-    final tile = PostTile(
-      post: post,
-      compact: compact,
-      combined: combined,
-      highlighted: highlighted,
-      onOpenThread: threads ? openThread : null,
-      onDismiss: post.isEphemeral
-          ? () async =>
-                (await ref.read(composerActionsProvider(widget.url).future))
-                    .dismissEphemeral(post.id)
-          : null,
-      onToggleReaction: reacts
-          ? (name) => unawaited(toggleReaction(context, widget.url, post, name))
-          : null,
-      onAddReaction: reacts
-          ? (anchor) => unawaited(
-              pickReaction(context, widget.url, post, anchor: anchor),
-            )
-          : null,
-      onAcknowledge: reacts ? () => _toggleAcknowledged(post) : null,
-      onTap: failed
-          ? () => showFailedPostSheet(context, url: widget.url, post: post)
-          : tappable
-          ? openThread
-          : null,
-      tapHint: failed ? 'try again or delete' : 'open thread',
-      onLongPress: menu && !failed && !desktop ? open : null,
-      onContextMenu: menu && !failed && desktop
-          ? (position, selection) => unawaited(
-              showMessageContextMenu(
-                context,
-                target,
-                position,
-                selection: selection,
-              ),
-            )
-          : null,
-      actions: usable && post.sendState == null
-          ? {
-              if (threads) _replyAction: reply,
-              if (reacts)
-                _reactAction: () =>
-                    unawaited(pickReaction(context, widget.url, post)),
-              _menuAction: open,
-            }
-          : const {},
-    );
+    PostTile tileWith(Map<CustomSemanticsAction, VoidCallback> tasks) =>
+        PostTile(
+          post: post,
+          compact: compact,
+          combined: combined,
+          highlighted: highlighted,
+          onOpenThread: threads ? openThread : null,
+          onDismiss: post.isEphemeral
+              ? () async =>
+                    (await ref.read(composerActionsProvider(widget.url).future))
+                        .dismissEphemeral(post.id)
+              : null,
+          onToggleReaction: reacts
+              ? (name) =>
+                    unawaited(toggleReaction(context, widget.url, post, name))
+              : null,
+          onAddReaction: reacts
+              ? (anchor) => unawaited(
+                  pickReaction(context, widget.url, post, anchor: anchor),
+                )
+              : null,
+          onAcknowledge: reacts ? () => _toggleAcknowledged(post) : null,
+          onTap: failed
+              ? () => showFailedPostSheet(context, url: widget.url, post: post)
+              : tappable
+              ? openThread
+              : null,
+          tapHint: failed ? 'try again or delete' : 'open thread',
+          onLongPress: menu && !failed && !desktop ? open : null,
+          onContextMenu: menu && !failed && desktop
+              ? (position, selection) => unawaited(
+                  showMessageContextMenu(
+                    context,
+                    target,
+                    position,
+                    selection: selection,
+                  ),
+                )
+              : null,
+          actions: usable && post.sendState == null
+              ? {
+                  if (threads) _replyAction: reply,
+                  if (reacts)
+                    _reactAction: () =>
+                        unawaited(pickReaction(context, widget.url, post)),
+                  _menuAction: open,
+                  ...tasks,
+                }
+              : const {},
+        );
+    final tile = usable && post.sendState == null && mayHaveTasks(post.message)
+        ? TaskTicks(target: target, builder: (_, tasks) => tileWith(tasks))
+        : tileWith(const {});
     if (failed || !menu) return tile;
     if (desktop) return MessageHover(target: target, child: tile);
     return SwipeToOpen(onOpen: open, child: tile);

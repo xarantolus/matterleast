@@ -66,6 +66,7 @@ class _Converter {
 
   final ParseOptions options;
   int count = 0;
+  int tasks = 0;
 
   List<Block> blocks(List<md.Node> nodes) {
     final result = <Block>[];
@@ -138,34 +139,32 @@ class _Converter {
 
   ListItem _item(List<md.Node> children) {
     count++;
-    final content = blocks(children);
-    if (content.firstOrNull case Paragraph(:final inlines)) {
-      if (inlines.firstOrNull case TextPart(
-        :final text,
-        :final marks,
-        :final link,
-        :final highlight,
-      )) {
-        final task = _taskPrefix.firstMatch(text);
-        if (task != null) {
-          final rest = text.substring(task.end);
-          return ListItem([
-            Block.paragraph([
-              if (rest.isNotEmpty)
-                Inline.text(
-                  rest,
-                  marks: marks,
-                  link: link,
-                  highlight: highlight,
-                ),
-              ...inlines.skip(1),
-            ]),
-            ...content.skip(1),
-          ], checked: task[1] == 'x');
-        }
-      }
+    final task = _task(children);
+    if (task == null) return ListItem(blocks(children));
+    final index = tasks++;
+    return ListItem(blocks(task.rest), checked: task.done, taskIndex: index);
+  }
+
+  /// The item's content without its `[ ]` or `[x]` when it is a task.
+  ({bool done, List<md.Node> rest})? _task(List<md.Node> children) {
+    final first = children.firstOrNull;
+    final paragraph = first is md.Element && first.tag == 'p' ? first : null;
+    final lead = paragraph == null
+        ? children
+        : paragraph.children ?? const <md.Node>[];
+    if (lead.firstOrNull case md.Text(:final text)) {
+      final match = _taskPrefix.firstMatch(text);
+      if (match == null) return null;
+      final rest = text.substring(match.end);
+      final content = [if (rest.isNotEmpty) md.Text(rest), ...lead.skip(1)];
+      return (
+        done: match[1] != ' ',
+        rest: paragraph == null
+            ? content
+            : [md.Element('p', content), ...children.skip(1)],
+      );
     }
-    return ListItem(content);
+    return null;
   }
 
   Block _table(md.Element table) {
