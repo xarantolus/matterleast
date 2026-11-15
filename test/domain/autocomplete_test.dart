@@ -133,6 +133,24 @@ void main() {
       expect(groupDetails(ranked[2] as GroupSuggestion), '');
     });
 
+    test('the middle of a name matches after prefixes and words', () {
+      final ranked = rankUsers('lic', [
+        user('1', 'malice'),
+        user('2', 'zed', nick: 'the alicorn'),
+        user('3', 'lic.rod'),
+        user('4', 'bob', first: 'Felicity'),
+        user('5', 'otto'),
+      ], specialMentions: false);
+      expect(
+        [for (final s in ranked) s.replacement],
+        ['@lic.rod', '@bob', '@malice', '@zed'],
+      );
+      expect(
+        rankUsers('rod', [user('1', 'lic.rod')]).first.replacement,
+        '@lic.rod',
+      );
+    });
+
     test('a last name or a word of the nickname matches', () {
       expect(
         rankUsers('sto', [user('1', 'r1', last: 'Stone')]).first.replacement,
@@ -163,6 +181,16 @@ void main() {
     ]);
     expect([for (final c in ranked) c.replacement], ['~old-harbour', '~boats']);
     expect(ranked.last.member, isFalse);
+    expect(
+      [
+        for (final c in rankChannels('yard', [
+          channel('1', 'boatyard', 'Boatyard'),
+          channel('2', 'yard-sale', 'Yard sale'),
+        ]))
+          c.replacement,
+      ],
+      ['~yard-sale', '~boatyard'],
+    );
   });
 
   test('emoji: recent ones first, then by name start, then later words', () {
@@ -179,6 +207,18 @@ void main() {
     );
     expect(ranked.first.replacement, 'U(smirk)');
     expect(ranked[3].replacement, ':smugcat:');
+  });
+
+  test('emoji: a later word, then any part of the name', () {
+    final ranked = rankEmoji(
+      'thx',
+      systemNames: ['thx_you', 'blobthx', 'a-thx', 'thxbye', 'heart'],
+      unicodeOf: (_) => null,
+    );
+    expect(
+      [for (final e in ranked) e.name],
+      ['thxbye', 'thx_you', 'a-thx', 'blobthx'],
+    );
   });
 
   test('commands match the start of their trigger', () {

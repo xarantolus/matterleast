@@ -223,10 +223,24 @@ typedef GroupCandidate = ({
 
 const _listLimit = 25;
 
-bool _startsWithWord(String text, String prefix) {
+bool _startsWithWord(String text, String prefix, {String splitOn = r'\s+'}) {
   final lower = text.toLowerCase();
   return lower.startsWith(prefix) ||
-      lower.split(RegExp(r'\s+')).any((w) => w.startsWith(prefix));
+      lower.split(RegExp(splitOn)).any((w) => w.startsWith(prefix));
+}
+
+/// 0 prefix, 1 a later word starts with it, 2 it appears anywhere, else null.
+int? _matchTier(String prefix, String name, [String displayName = '']) {
+  final lower = name.toLowerCase();
+  if (lower.startsWith(prefix)) return 0;
+  if (_startsWithWord(displayName, prefix) ||
+      _startsWithWord(name, prefix, splitOn: r'[.\-_\s]+')) {
+    return 1;
+  }
+  if (lower.contains(prefix) || displayName.toLowerCase().contains(prefix)) {
+    return 2;
+  }
+  return null;
 }
 
 /// Pure: people matching [prefix] by username, first or last name or
@@ -242,12 +256,8 @@ List<Suggestion> rankUsers(
 }) {
   final p = prefix.toLowerCase();
   int? score(UserCandidate u) {
-    if (u.username.toLowerCase().startsWith(p)) return 0;
-    if (_startsWithWord(fullName(u.firstName, u.lastName), p) ||
-        _startsWithWord(u.nickname, p)) {
-      return 1;
-    }
-    return null;
+    final names = '${fullName(u.firstName, u.lastName)}\n${u.nickname}';
+    return _matchTier(p, u.username, names);
   }
 
   final seen = <String>{};
@@ -284,10 +294,7 @@ List<Suggestion> rankUsers(
       [
         for (final g in groups)
           if (seenGroups.add(g.id))
-            if (g.name.toLowerCase().startsWith(p))
-              (g, 0)
-            else if (_startsWithWord(g.displayName, p))
-              (g, 1),
+            if (_matchTier(p, g.name, g.displayName) case final t?) (g, t),
       ]..sort(
         (a, b) => a.$2 != b.$2
             ? a.$2.compareTo(b.$2)
@@ -332,16 +339,21 @@ List<ChannelSuggestion> rankChannels(
         for (final c in candidates)
           if ((c.type == 'O' || c.type == 'P') &&
               seen.add(c.id) &&
-              (c.name.toLowerCase().startsWith(p) ||
-                  _startsWithWord(c.displayName, p)))
+              _matchTier(p, c.name, c.displayName) != null)
             c,
-      ]..sort(
-        (a, b) => a.member != b.member
-            ? (a.member ? -1 : 1)
+      ]..sort((a, b) {
+        if (a.member != b.member) return a.member ? -1 : 1;
+        final byTier = _matchTier(
+          p,
+          a.name,
+          a.displayName,
+        )!.compareTo(_matchTier(p, b.name, b.displayName)!);
+        return byTier != 0
+            ? byTier
             : a.displayName.toLowerCase().compareTo(
                 b.displayName.toLowerCase(),
-              ),
-      );
+              );
+      });
   return [
     for (final c in matches.take(_listLimit))
       ChannelSuggestion(
@@ -355,7 +367,7 @@ List<ChannelSuggestion> rankChannels(
 }
 
 /// Pure: emoji whose name or alias starts with [prefix], then those with a
-/// later word (after `_`) starting with it; recently used ones lead.
+/// later word (after `_` or `-`) starting with it, then any containing it; recently used ones lead.
 /// [systemNames] include aliases; [unicodeOf] gives a system emoji's
 /// character.
 List<EmojiSuggestion> rankEmoji(
@@ -369,7 +381,8 @@ List<EmojiSuggestion> rankEmoji(
   final p = prefix.toLowerCase();
   int? score(String name) {
     if (name.startsWith(p)) return 1;
-    if (name.contains('_$p')) return 2;
+    if (RegExp('[_-]${RegExp.escape(p)}').hasMatch(name)) return 2;
+    if (name.contains(p)) return 3;
     return null;
   }
 

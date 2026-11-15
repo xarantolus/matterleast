@@ -73,6 +73,24 @@ bool typesIntoComposer({
   return true;
 }
 
+/// The composers on screen that belong to a thread. Typing with nothing
+/// focused goes to a thread's composer before the channel's.
+class ThreadComposers {
+  final _threads = <Object>{};
+
+  void sync(Object composer, bool isThread) {
+    if (isThread) {
+      _threads.add(composer);
+    } else {
+      _threads.remove(composer);
+    }
+  }
+
+  /// Whether another composer is a thread's and [composer] is not.
+  bool isOutranked(Object composer) =>
+      !_threads.contains(composer) && _threads.isNotEmpty;
+}
+
 /// [value] with [text] typed at its cursor, or at the end.
 TextEditingValue typedInto(TextEditingValue value, String text) {
   final selection = value.selection.isValid

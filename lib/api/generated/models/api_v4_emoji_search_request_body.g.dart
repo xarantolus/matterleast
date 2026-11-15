@@ -10,12 +10,12 @@ ApiV4EmojiSearchRequestBody _$ApiV4EmojiSearchRequestBodyFromJson(
   Map<String, dynamic> json,
 ) => ApiV4EmojiSearchRequestBody(
   term: json['term'] as String,
-  prefixOnly: const LenientString().fromJson(json['prefix_only']),
+  prefixOnly: const LenientBool().fromJson(json['prefix_only']),
 );
 
 Map<String, dynamic> _$ApiV4EmojiSearchRequestBodyToJson(
   ApiV4EmojiSearchRequestBody instance,
 ) => <String, dynamic>{
   'term': instance.term,
-  'prefix_only': const LenientString().toJson(instance.prefixOnly),
+  'prefix_only': const LenientBool().toJson(instance.prefixOnly),
 };

@@ -260,6 +260,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
     _text.addListener(_typed);
     _wake();
     _focus.onKeyEvent = _onKey;
+    _threadComposers.sync(this, widget.rootId.isNotEmpty);
     if (isDesktop) HardwareKeyboard.instance.addHandler(_typeToFocus);
     ref.read(_provider.notifier).inTeam(widget.teamId);
     // Taken once the field is in the tree, after anything that closed on
@@ -270,6 +271,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   @override
   void didUpdateWidget(_ComposerField old) {
     super.didUpdateWidget(old);
+    _threadComposers.sync(this, widget.rootId.isNotEmpty);
     if (old.channelId != widget.channelId || old.rootId != widget.rootId) {
       _preview = false;
     }
@@ -387,6 +389,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   }
 
   static KeyEvent? _typedEvent;
+  static final _threadComposers = ThreadComposers();
 
   /// Typing while no text field has the focus starts the message.
   bool _typeToFocus(KeyEvent event) {
@@ -402,10 +405,15 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
       otherFocused: focus != null && focus is! FocusScopeNode,
       routeCurrent: ModalRoute.isCurrentOf(context) ?? true,
     );
-    if (!typed || !_focus.canRequestFocus || identical(event, _typedEvent)) {
+    final yields = _threadComposers.isOutranked(this);
+    if (!typed ||
+        yields ||
+        !_focus.canRequestFocus ||
+        identical(event, _typedEvent)) {
       return false;
     }
-    // Every composer on screen hears the key; only the first takes it.
+    // Every composer on screen hears the key; a thread's composer outranks
+    // the channel's, and among equals the first takes it.
     _typedEvent = event;
     _focus.requestFocus();
     _text.value = typedInto(_text.value, event.character!);
@@ -472,6 +480,7 @@ class _ComposerFieldState extends ConsumerState<_ComposerField> {
   void dispose() {
     _blinkStop?.cancel();
     _blinking.dispose();
+    _threadComposers.sync(this, false);
     if (isDesktop) HardwareKeyboard.instance.removeHandler(_typeToFocus);
     _text.removeListener(_typed);
     _text.dispose();
