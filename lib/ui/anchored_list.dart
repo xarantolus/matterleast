@@ -207,8 +207,8 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     final initial = widget.initialAnchor;
     final known = initial != null && _indexOf.containsKey(initial.key);
     _anchor = known ? initial.key : _newestKey;
-    _scroll = ScrollController(
-      keepScrollOffset: false,
+    _scroll = _AnchoredController(
+      splitPending: () => _splitPending,
       initialScrollOffset: known ? -initial.offset : 0,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _settle());
@@ -835,6 +835,49 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
           : scrollView,
     );
   }
+}
+
+/// Until the layout after an anchor change, the range is that of the old
+/// anchor, which would clamp the next wheel turn (it clamps in the position,
+/// before the physics) and throw the view a screen away.
+class _AnchoredController extends ScrollController {
+  _AnchoredController({required this.splitPending, super.initialScrollOffset})
+    : super(keepScrollOffset: false);
+
+  final bool Function() splitPending;
+
+  @override
+  ScrollPosition createScrollPosition(
+    ScrollPhysics physics,
+    ScrollContext context,
+    ScrollPosition? oldPosition,
+  ) => _AnchoredPosition(
+    splitPending: splitPending,
+    physics: physics,
+    context: context,
+    initialPixels: initialScrollOffset,
+    keepScrollOffset: keepScrollOffset,
+    oldPosition: oldPosition,
+    debugLabel: debugLabel,
+  );
+}
+
+class _AnchoredPosition extends ScrollPositionWithSingleContext {
+  _AnchoredPosition({
+    required this.splitPending,
+    required super.physics,
+    required super.context,
+    super.initialPixels,
+    super.keepScrollOffset,
+    super.oldPosition,
+    super.debugLabel,
+  });
+
+  final bool Function() splitPending;
+
+  @override
+  double get minScrollExtent =>
+      splitPending() ? double.negativeInfinity : super.minScrollExtent;
 }
 
 /// Keeps the offset inside the content: after rows change while nothing
