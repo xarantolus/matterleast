@@ -367,7 +367,8 @@ List<ChannelSuggestion> rankChannels(
 }
 
 /// Pure: emoji whose name or alias starts with [prefix], then those with a
-/// later word (after `_` or `-`) starting with it, then any containing it; recently used ones lead.
+/// later word (after `_` or `-`) starting with it, then any containing it;
+/// recently used ones lead.
 /// [systemNames] include aliases; [unicodeOf] gives a system emoji's
 /// character.
 List<EmojiSuggestion> rankEmoji(
@@ -379,9 +380,10 @@ List<EmojiSuggestion> rankEmoji(
   int limit = 50,
 }) {
   final p = prefix.toLowerCase();
+  final laterWord = RegExp('[_-]${RegExp.escape(p)}');
   int? score(String name) {
     if (name.startsWith(p)) return 1;
-    if (RegExp('[_-]${RegExp.escape(p)}').hasMatch(name)) return 2;
+    if (laterWord.hasMatch(name)) return 2;
     if (name.contains(p)) return 3;
     return null;
   }
