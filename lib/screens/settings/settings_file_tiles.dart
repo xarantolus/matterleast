@@ -109,4 +109,8 @@ Future<void> _import(BuildContext context, WidgetRef ref) async {
   if (plan.stayConnected case final on?) {
     await setStayConnected(ref.read(notifierProvider), on);
   }
+  if (context.mounted) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Settings imported.')));
+  }
 }

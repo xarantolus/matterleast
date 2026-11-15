@@ -69,7 +69,6 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
   @override
   Widget build(BuildContext context) {
     final store = ref.read(settingsStoreProvider);
-    final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
     final textSize =
         ref.watch(messageTextSizeProvider).value ?? MessageTextSize.normal;
     final wrapCode = ref.watch(wrapCodeProvider).value ?? false;
@@ -80,28 +79,6 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
       body: ListView(
         padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
         children: [
-          if (server != null)
-            ListTile(
-              title: const Text('Clock'),
-              subtitle: Text(_clockLabel(use24)),
-              onTap: () async {
-                final picked = await pickOne(
-                  context,
-                  title: 'Clock',
-                  options: const [false, true],
-                  current: use24,
-                  label: _clockLabel,
-                );
-                if (picked != null) {
-                  await _save(
-                    server,
-                    (url) async =>
-                        (await ref.read(settingsActionsProvider(url).future))
-                            .setMilitaryTime(picked),
-                  );
-                }
-              },
-            ),
           ListTile(
             title: const Text('Message text size'),
             subtitle: Text(
@@ -146,8 +123,30 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
         ref.watch(wallpaperPaletteProvider).value == null;
     final prefs = ref.watch(displayPrefsProvider(url)).value;
     final zone = ref.watch(zoneSettingProvider(url)).value;
+    final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
     return [
       SettingsHeader('Saved on the server · ${server.displayName}'),
+      ListTile(
+        title: const Text('Clock'),
+        subtitle: Text(_clockLabel(use24)),
+        onTap: () async {
+          final picked = await pickOne(
+            context,
+            title: 'Clock',
+            options: const [false, true],
+            current: use24,
+            label: _clockLabel,
+          );
+          if (picked != null) {
+            await _save(
+              server,
+              (url) async =>
+                  (await ref.read(settingsActionsProvider(url).future))
+                      .setMilitaryTime(picked),
+            );
+          }
+        },
+      ),
       ListTile(
         title: const Text('Colours'),
         subtitle: Text(
