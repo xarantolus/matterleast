@@ -12,6 +12,7 @@ import 'package:matterleast/app/touchpad_navigation.dart';
 import 'package:matterleast/app/ui_zoom.dart';
 import 'package:matterleast/domain/message_text_size.dart';
 import 'package:matterleast/screens/root/open_panes.dart';
+import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/ui/current_call_bar.dart';
 import 'package:matterleast/ui/keyboard_focus_rings.dart';
 import 'package:matterleast/ui/message_display.dart';

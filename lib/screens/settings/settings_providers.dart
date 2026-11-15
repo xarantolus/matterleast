@@ -4,7 +4,9 @@ import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/cache_usage.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/data/views/settings_views.dart';
+import 'package:matterleast/domain/clock_preference.dart';
 import 'package:matterleast/domain/notify_props.dart';
+import 'package:matterleast/domain/preference_keys.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_theme.dart';
 import 'package:matterleast/domain/user_profile.dart';
@@ -29,6 +31,19 @@ ServerEntry? settingsServer(Ref ref) {
       signedIn.reduce(
         (a, b) => b.lastActiveAt!.isAfter(a.lastActiveAt!) ? b : a,
       );
+}
+
+/// The clock of the server being looked at; null follows the phone until
+/// that server has the preference.
+@riverpod
+Stream<bool?> use24HourClock(Ref ref) async* {
+  final server = ref.watch(settingsServerProvider);
+  if (server == null) {
+    yield null;
+    return;
+  }
+  final db = (await ref.watch(serverSessionProvider(server.url).future)).db;
+  yield* db.watchPreference(Prefs.militaryTime).map(clockFrom).distinct();
 }
 
 @riverpod

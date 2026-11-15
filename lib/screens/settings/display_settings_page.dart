@@ -16,22 +16,8 @@ import 'package:matterleast/screens/settings/time_zone_page.dart';
 import 'package:matterleast/ui/content_page.dart';
 import 'package:matterleast/ui/try_action.dart';
 
-enum _Clock {
-  system(null),
-  twelve(false),
-  twentyFour(true);
-
-  const _Clock(this.use24);
-  final bool? use24;
-
-  String get label => switch (this) {
-    system => isDesktop ? 'Use system setting' : 'Like the phone',
-    twelve => '12-hour (1:30 PM)',
-    twentyFour => '24-hour (13:30)',
-  };
-
-  static _Clock of(bool? use24) => values.firstWhere((c) => c.use24 == use24);
-}
+String _clockLabel(bool use24) =>
+    use24 ? '24-hour (13:30)' : '12-hour (1:30 PM)';
 
 String _textSizeLabel(MessageTextSize size) => switch (size) {
   MessageTextSize.small => 'Small',
@@ -83,7 +69,6 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
   @override
   Widget build(BuildContext context) {
     final store = ref.read(settingsStoreProvider);
-    final clock = _Clock.of(ref.watch(use24HourClockProvider).value);
     final textSize =
         ref.watch(messageTextSizeProvider).value ?? MessageTextSize.normal;
     final wrapCode = ref.watch(wrapCodeProvider).value ?? false;
@@ -94,22 +79,6 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
       body: ListView(
         padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
         children: [
-          ListTile(
-            title: const Text('Clock'),
-            subtitle: Text(clock.label),
-            onTap: () async {
-              final picked = await pickOne(
-                context,
-                title: 'Clock',
-                options: _Clock.values,
-                current: clock,
-                label: (c) => c.label,
-              );
-              if (picked != null) {
-                await store.write(Settings.use24HourClock, picked.use24);
-              }
-            },
-          ),
           ListTile(
             title: const Text('Message text size'),
             subtitle: Text(
@@ -154,8 +123,30 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
         ref.watch(wallpaperPaletteProvider).value == null;
     final prefs = ref.watch(displayPrefsProvider(url)).value;
     final zone = ref.watch(zoneSettingProvider(url)).value;
+    final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
     return [
       SettingsHeader('Saved on the server · ${server.displayName}'),
+      ListTile(
+        title: const Text('Clock'),
+        subtitle: Text(_clockLabel(use24)),
+        onTap: () async {
+          final picked = await pickOne(
+            context,
+            title: 'Clock',
+            options: const [false, true],
+            current: use24,
+            label: _clockLabel,
+          );
+          if (picked != null) {
+            await _save(
+              server,
+              (url) async =>
+                  (await ref.read(settingsActionsProvider(url).future))
+                      .setMilitaryTime(picked),
+            );
+          }
+        },
+      ),
       ListTile(
         title: const Text('Colours'),
         subtitle: Text(

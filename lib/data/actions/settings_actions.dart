@@ -103,6 +103,9 @@ class SettingsActions {
   Future<void> setCollapsedThreads(bool on) =>
       savePreference(Prefs.collapsedThreads, on ? 'on' : 'off');
 
+  Future<void> setMilitaryTime(bool on) =>
+      savePreference(Prefs.militaryTime, on.toString());
+
   Future<void> setNameFormat(NameFormat format) =>
       savePreference(Prefs.nameFormat, format.value);
 }
