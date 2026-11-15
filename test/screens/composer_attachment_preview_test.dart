@@ -21,8 +21,14 @@ final _thumbnail = find.descendant(
   matching: find.byType(Image),
 );
 
+// Deleted after the last test: an image still decoding from one test's
+// folder must not fail the next one.
+final _temps = <Directory>[];
+
 Future<ServerHarness> _pasteAnImage(WidgetTester tester) async {
-  final temp = Directory.systemTemp.createTempSync().path;
+  final dir = Directory.systemTemp.createTempSync();
+  _temps.add(dir);
+  final temp = dir.path;
   final messenger = tester.binding.defaultBinaryMessenger;
   messenger.setMockMethodCallHandler(
     const MethodChannel('plugins.flutter.io/path_provider'),
@@ -38,7 +44,6 @@ Future<ServerHarness> _pasteAnImage(WidgetTester tester) async {
       null,
     );
     messenger.setMockMethodCallHandler(const MethodChannel('pasteboard'), null);
-    Directory(temp).deleteSync(recursive: true);
   });
   final h = await pumpWithServer(
     tester,
@@ -89,6 +94,12 @@ Future<void> _until(WidgetTester tester, ServerHarness h, Finder finder) async {
 }
 
 void main() {
+  tearDownAll(() {
+    for (final dir in _temps) {
+      dir.deleteSync(recursive: true);
+    }
+  });
+
   testWidgets('a pasted image shows as a thumbnail', (tester) async {
     final h = await _pasteAnImage(tester);
 
