@@ -44,6 +44,8 @@ actions:
   - target: "$.paths['/api/v4/files/search'].post"
     update: {operationId: SearchFilesAllTeams}
   # --- wrong request shapes, checked against a 12.0 server ---
+  - target: "$.paths['/api/v4/emoji/search'].post.requestBody.content['application/json'].schema.properties.prefix_only"
+    update: {type: boolean}
   - target: "$.paths['/api/v4/teams/members/invite'].post.parameters"
     remove: true
   - target: "$.paths['/api/v4/teams/members/invite'].post"

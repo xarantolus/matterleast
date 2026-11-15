@@ -355,6 +355,40 @@ void main() {
       await tester.pump(Duration.zero);
     }, variant: desktop);
 
+    testWidgets('typing with nothing focused goes to the open thread\'s '
+        'composer, not the channel\'s', (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await start(tester, panes: true, keys: true);
+      await mayPost(tester);
+      await open(tester);
+      await open(tester, rootId: 'old1');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyH, character: 'h');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyH);
+      await tester.pump();
+      expect(
+        find.descendant(
+          of: find.byType(ThreadScreen),
+          matching: find.text('h'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(ChannelScreen),
+          matching: find.text('h'),
+        ),
+        findsNothing,
+      );
+      closeConversations(navigator(tester));
+      await h.settle(tester);
+      await h.close(tester);
+      await tester.pump(Duration.zero);
+    }, variant: desktop);
+
     testWidgets('from an empty composer the first Esc leaves it, the second '
         'closes the thread', (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
