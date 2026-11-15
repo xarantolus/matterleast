@@ -55,20 +55,13 @@ class _PhoneNotificationsState extends ConsumerState<PhoneNotifications> {
   }
 
   Future<void> _allow() async {
-    final notifier = ref.read(notifierProvider);
-    // Android stops asking after the second refusal; its settings still work.
-    if (!await notifier.requestPermission()) await notifier.openSettings();
+    await allowNotifications(ref.read(notifierProvider));
     await _load();
   }
 
   Future<void> _setStayConnected(bool on) async {
     setState(() => _stayConnected = on);
-    if (on) {
-      if (!await ref.read(notifierProvider).permitted()) await _allow();
-      await StayConnected.enable();
-    } else {
-      await StayConnected.disable();
-    }
+    await setStayConnected(ref.read(notifierProvider), on);
     await _load();
   }
 

@@ -1,5 +1,3 @@
-import 'package:drift/drift.dart' show DatabaseConnection;
-import 'package:drift/native.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -7,11 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/app.dart';
-import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/theme.dart';
-import 'package:matterleast/data/app_db/app_database.dart';
 import 'package:matterleast/markdown/post_doc.dart';
-import 'package:matterleast/screens/settings/display_settings_page.dart';
 import 'package:matterleast/ui/clickable.dart';
 import 'package:matterleast/ui/emoji_card.dart';
 import 'package:matterleast/ui/keyboard_focus_rings.dart';
@@ -20,8 +15,6 @@ import 'package:matterleast/ui/markdown/code_block.dart';
 import 'package:matterleast/ui/markdown/inline_text.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
 import 'package:matterleast/ui/moment_tooltip.dart';
-
-import '../support/settle.dart';
 
 Widget _app(
   Widget child, {
@@ -417,24 +410,6 @@ void main() {
       await tester.tap(find.byTooltip('Copy code'));
       await tester.pump();
       expect(copied, code);
-    }, variant: desktop);
-
-    testWidgets('the clock follows the "system setting", not the phone', (
-      tester,
-    ) async {
-      final db = AppDatabase(DatabaseConnection(NativeDatabase.memory()));
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [appDatabaseProvider.overrideWithValue(db)],
-          child: const MaterialApp(home: DisplaySettingsPage(server: null)),
-        ),
-      );
-      await settleApp(tester);
-      expect(find.text('Use system setting'), findsOneWidget);
-      expect(find.textContaining('phone'), findsNothing);
-      await tester.pumpWidget(const SizedBox());
-      await tester.pump(Duration.zero);
-      await db.close();
     }, variant: desktop);
   });
 

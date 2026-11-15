@@ -32,6 +32,16 @@ class Setting<T> {
     }
   }
 
+  /// Whether [raw] is a value this setting can hold.
+  bool accepts(String raw) {
+    try {
+      _decode(raw);
+      return true;
+    } on FormatException {
+      return false;
+    }
+  }
+
   String encode(T value) => _encode(value);
 }
 
@@ -85,13 +95,6 @@ abstract final class Settings {
     200,
     int.parse,
     _encodeInt,
-  );
-
-  static const use24HourClock = Setting<bool?>(
-    'use24HourClock',
-    null,
-    _decodeOptionalBool,
-    _encodeOptionalBool,
   );
 
   static const messageTextSize = Setting<MessageTextSize>(
@@ -220,6 +223,37 @@ abstract final class Settings {
     _encodeName,
   );
 
+  /// Preferences that go into the settings file and come back with it.
+  static const exported = <Setting<Object?>>[
+    messageTextSize,
+    wrapCode,
+    imagesOnMobileData,
+    gifsOnMobileData,
+    linkPicturesOnMobileData,
+    mediaCacheBytes,
+    filesCacheBytes,
+    keepDays,
+    keepPostsPerChannel,
+    closeToTray,
+    paneWidths,
+    uiZoom,
+  ];
+
+  /// State of this device or of what was last open; never in the file.
+  static const deviceOnly = <Setting<Object?>>[
+    notificationsAsked,
+    lastRailTarget,
+    openConversations,
+    windowPlacement,
+    lastUpdateCheck,
+    latestRelease,
+    dismissedRelease,
+    dismissedAnnouncements,
+    homeFilter,
+    searchTab,
+    threadsTab,
+  ];
+
   static const all = <Setting<Object?>>[
     imagesOnMobileData,
     gifsOnMobileData,
@@ -228,7 +262,6 @@ abstract final class Settings {
     filesCacheBytes,
     keepDays,
     keepPostsPerChannel,
-    use24HourClock,
     messageTextSize,
     wrapCode,
     notificationsAsked,
@@ -253,10 +286,6 @@ abstract final class Settings {
     _ => throw FormatException('bool', raw),
   };
   static String _encodeBool(bool value) => value.toString();
-  static bool? _decodeOptionalBool(String raw) =>
-      raw == 'system' ? null : _decodeBool(raw);
-  static String _encodeOptionalBool(bool? value) =>
-      value == null ? 'system' : value.toString();
   static String _encodeInt(int value) => value.toString();
   static int _decodeZoom(String raw) {
     final percent = int.parse(raw);

@@ -57,6 +57,47 @@ final class SettingsServerProvider
 
 String _$settingsServerHash() => r'a7faa4fdb26944e6a9650b01ac618c3d3f86456e';
 
+/// The clock of the server being looked at; null follows the phone until
+/// that server has the preference.
+
+@ProviderFor(use24HourClock)
+final use24HourClockProvider = Use24HourClockProvider._();
+
+/// The clock of the server being looked at; null follows the phone until
+/// that server has the preference.
+
+final class Use24HourClockProvider
+    extends $FunctionalProvider<AsyncValue<bool?>, bool?, Stream<bool?>>
+    with $FutureModifier<bool?>, $StreamProvider<bool?> {
+  /// The clock of the server being looked at; null follows the phone until
+  /// that server has the preference.
+  Use24HourClockProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'use24HourClockProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$use24HourClockHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool?> create(Ref ref) {
+    return use24HourClock(ref);
+  }
+}
+
+String _$use24HourClockHash() => r'c21f84d050bad994a2dc3eaf7bc845156e47a3f1';
+
 @ProviderFor(settingsActions)
 final settingsActionsProvider = SettingsActionsFamily._();
 

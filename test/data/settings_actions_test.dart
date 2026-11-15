@@ -5,7 +5,9 @@ import 'package:matterleast/data/actions/profile_actions.dart';
 import 'package:matterleast/data/actions/settings_actions.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
 import 'package:matterleast/data/servers/server_session.dart';
+import 'package:matterleast/domain/clock_preference.dart';
 import 'package:matterleast/domain/notify_props.dart';
+import 'package:matterleast/domain/preference_keys.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
@@ -208,4 +210,37 @@ void main() {
     await actions.setCollapsedThreads(false);
     expect(await session.db.select(session.db.posts).get(), isNotEmpty);
   });
+
+  test(
+    'picking the 24-hour clock saves the shared server preference',
+    () async {
+      expect(clockFrom(await _clock(session)), isNull);
+
+      await actions.setMilitaryTime(true);
+
+      final sent = server.seen.firstWhere((r) => r.method == 'PUT').json;
+      expect(sent, [
+        {
+          'user_id': meId,
+          'category': 'display_settings',
+          'name': 'use_military_time',
+          'value': 'true',
+        },
+      ]);
+      expect(clockFrom(await _clock(session)), isTrue);
+
+      await actions.setMilitaryTime(false);
+      expect(clockFrom(await _clock(session)), isFalse);
+    },
+  );
+
+  test('only true and false in the preference pick a clock', () {
+    expect(clockFrom('true'), isTrue);
+    expect(clockFrom('false'), isFalse);
+    expect(clockFrom(null), isNull);
+    expect(clockFrom('maybe'), isNull);
+  });
 }
+
+Future<String?> _clock(ServerSession session) async =>
+    session.db.preference(Prefs.militaryTime.$1, Prefs.militaryTime.$2);
