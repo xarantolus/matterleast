@@ -188,4 +188,26 @@ void main() {
     );
     await h.close(tester);
   });
+
+  testWidgets(
+    'a signed-out server stays in the rail and leads to its sign-in',
+    (tester) async {
+      await start(tester);
+      await appDb.upsertServer(
+        ServersCompanion.insert(
+          url: 'https://signedout.example.test',
+          displayName: 'Imported',
+          dbFile: 'db9',
+          sortOrder: const Value(5),
+          addedAt: DateTime(2026),
+        ),
+      );
+      await h.settle(tester);
+      await tester.tap(find.text('IM'));
+      await h.settle(tester);
+      expect(find.text('Add a server'), findsOneWidget);
+      expect(find.text('https://signedout.example.test'), findsOneWidget);
+      await h.close(tester);
+    },
+  );
 }
