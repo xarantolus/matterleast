@@ -61,6 +61,8 @@ void main() {
   late ServerHarness harness;
   late ProviderContainer container;
   late _Toasts toasts;
+  // What the server holds for the direct channel from the start.
+  final missed = <Map<String, Object?>>[];
 
   Future<void> start(WidgetTester tester, {TargetPlatform? platform}) async {
     toasts = _Toasts();
@@ -69,6 +71,12 @@ void main() {
       platform: platform,
       trackRoutes: true,
       handle: (r) {
+        if (r.path.endsWith('/channels/$_directId/posts')) {
+          return ok({
+            'order': [for (final p in missed) p['id']],
+            'posts': {for (final p in missed) p['id']! as String: p},
+          });
+        }
         if (r.path.endsWith('/users/me')) {
           return ok({'id': meId, 'username': 'me', 'roles': 'system_user'});
         }
@@ -306,22 +314,24 @@ void main() {
     await harness.close(tester);
   });
 
-  /// A post by Pat in the direct channel, stored without a check.
-  Future<void> stores(WidgetTester tester, String text, DateTime at) =>
-      tester.runAsync(
-        () => harness.session.store.applyLivePost(
-          api.Post.fromJson({
-            'id': 'st${text.hashCode}',
-            'channel_id': _directId,
-            'user_id': _patId,
-            'create_at': at.millisecondsSinceEpoch,
-            'message': text,
-          }),
-          fromSelf: false,
-          mentionsMe: false,
-        ),
-      ) ??
-      Future.value();
+  /// A post by Pat the server has, which the catch-up stores too.
+  Future<void> missedWhileAway(WidgetTester tester, String text) async {
+    final post = <String, Object?>{
+      'id': 'st${text.hashCode}',
+      'channel_id': _directId,
+      'user_id': _patId,
+      'create_at': _later.millisecondsSinceEpoch,
+      'message': text,
+    };
+    missed.add(post);
+    await tester.runAsync(
+      () => harness.session.store.applyLivePost(
+        api.Post.fromJson(post),
+        fromSelf: false,
+        mentionsMe: false,
+      ),
+    );
+  }
 
   Future<void> catchesUp(WidgetTester tester) async {
     var caughtUp = false;
@@ -330,16 +340,23 @@ void main() {
     );
     harness.session.connection.refreshAll(quiet: true);
     await harness.settle(tester, until: () => caughtUp);
-    await tester.pump(const Duration(seconds: 3));
+    await harness.settle(tester);
+    await tester.pump(const Duration(milliseconds: 200));
   }
 
   testWidgets('what arrived while the app was closed gives no banner after '
       'the first catch-up, but a post arriving live does', (tester) async {
     await start(tester);
-    await stores(tester, 'from while you were away', _later);
-    await container.read(inAppNotificationsProvider).follow([
-      testServerEntry(harness.url),
-    ]);
+    final engine = InAppNotifications(
+      _Manager(harness.session),
+      toasts,
+      delay: Duration.zero,
+      route: container.read(noticeRouterProvider),
+      banner: container.read(noticeBannersProvider.notifier).show,
+    );
+    addTearDown(engine.dispose);
+    await tester.runAsync(() => engine.follow([testServerEntry(harness.url)]));
+    await missedWhileAway(tester, 'from while you were away');
     await open(tester, channelId, 'Boats');
     await catchesUp(tester);
     expect(banner('from while you were away'), findsNothing);

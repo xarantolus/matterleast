@@ -88,7 +88,7 @@ class LiveNotifications {
 
   Future<void> _settleHistory() async {
     if (!_historyPending) return;
-    _historyPending = history != null;
+    _historyPending = false;
     final liveFrom = _liveFrom;
     final sawLive = _sawLive;
     _liveFrom = null;

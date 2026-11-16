@@ -95,6 +95,7 @@ class InAppNotifications {
     this._notifier, {
     required this.route,
     required this.banner,
+    this.delay = const Duration(seconds: 2),
   }) {
     _changes = _manager.changed.listen((url) {
       // A new sign-in replaced the session; its check follows it.
@@ -108,6 +109,9 @@ class InAppNotifications {
   final Notifier _notifier;
   final NoticeRouter route;
   final void Function(ConversationNotice notice) banner;
+
+  /// How long a burst of posts is given before one check covers it.
+  final Duration delay;
 
   final _attached = <String, LiveNotifications>{};
   final _labels = <String, String?>{};
@@ -162,6 +166,7 @@ class InAppNotifications {
         session.db,
         liveFrom?.subtract(const Duration(milliseconds: 1)),
       ),
+      delay: delay,
       active: () => route(url, null) != NoticeRoute.none,
       applied: session.connection.applied,
       caughtUp: session.connection.caughtUp,
