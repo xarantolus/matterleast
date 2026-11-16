@@ -157,11 +157,20 @@ class InAppNotifications {
       serverName: label,
     );
     _labels[url] = label;
-    _attached[url] = LiveNotifications(
+    late final LiveNotifications live;
+    live = _attached[url] = LiveNotifications(
+      history: (liveFrom) => markSeen(
+        session.db,
+        liveFrom?.subtract(const Duration(milliseconds: 1)),
+      ),
       applied: session.connection.applied,
       caughtUp: session.connection.caughtUp,
       check: ({required afterGap}) async {
-        if (route(url, null) == NoticeRoute.none) return;
+        if (route(url, null) == NoticeRoute.none) {
+          // Skipped while hidden: what was stored meanwhile is history.
+          live.rearm();
+          return;
+        }
         await check.run(refresh: false, fetch: afterGap);
       },
     )..start();

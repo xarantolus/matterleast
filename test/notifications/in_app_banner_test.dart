@@ -133,14 +133,19 @@ void main() {
   }
 
   /// A message from Pat arrives in [channel], which the check looks at.
-  Future<void> arrives(WidgetTester tester, String channel, String text) async {
+  Future<void> arrives(
+    WidgetTester tester,
+    String channel,
+    String text, {
+    DateTime? at,
+  }) async {
     await tester.runAsync(
       () => harness.session.store.applyLivePost(
         api.Post.fromJson({
           'id': 'new${text.hashCode}',
           'channel_id': channel,
           'user_id': _patId,
-          'create_at': _later.millisecondsSinceEpoch,
+          'create_at': (at ?? _later).millisecondsSinceEpoch,
           'message': text,
         }),
         fromSelf: false,
@@ -278,6 +283,39 @@ void main() {
     ]) {
       tester.binding.handleAppLifecycleStateChanged(state);
     }
+    await harness.close(tester);
+  });
+
+  testWidgets('what was stored before the first catch-up is history: no '
+      'banner, the cursor moves past it, and a later post still shows', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.runAsync(
+      () => harness.session.store.applyLivePost(
+        api.Post.fromJson({
+          'id': 'old1',
+          'channel_id': _directId,
+          'user_id': _patId,
+          'create_at': _later.millisecondsSinceEpoch,
+          'message': 'from while you were away',
+        }),
+        fromSelf: false,
+        mentionsMe: false,
+      ),
+    );
+    await tester.runAsync(() => markSeen(harness.session.db, _later));
+    await open(tester, channelId, 'Boats');
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(banner('from while you were away'), findsNothing);
+    await arrives(
+      tester,
+      _directId,
+      'just now',
+      at: _later.add(const Duration(minutes: 1)),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(banner('just now'), findsOneWidget);
     await harness.close(tester);
   });
 }

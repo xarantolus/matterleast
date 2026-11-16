@@ -10,8 +10,9 @@ class LiveNotifications {
     required this._applied,
     required this._caughtUp,
     required this._check,
+    this.history,
     this.delay = const Duration(seconds: 2),
-  });
+  }) : _historyPending = history != null;
 
   final Stream<ServerEvent> _applied;
   final Stream<void> _caughtUp;
@@ -20,28 +21,78 @@ class LiveNotifications {
   /// server instead of the database.
   final Future<void> Function({required bool afterGap}) _check;
 
+  /// Given, the first catch-up after [start] (or [rearm]) is history: it is
+  /// called with the server time of the first post that arrived live before
+  /// it, or null, and must treat everything older as seen. Only what arrives
+  /// from then on gets checked.
+  final Future<void> Function(DateTime? liveFrom)? history;
+
   /// Posts often come in bursts; one check covers them.
   final Duration delay;
 
   final _subscriptions = <StreamSubscription<Object?>>[];
   Timer? _debounce;
   var _gap = false;
+  bool _historyPending;
+  DateTime? _liveFrom;
+  var _sawLive = false;
+
+  /// The next catch-up is history again, for when checks were skipped.
+  void rearm() {
+    if (history == null) return;
+    _historyPending = true;
+    _liveFrom = null;
+    _sawLive = false;
+  }
 
   void start() {
     if (_subscriptions.isNotEmpty) return;
     _subscriptions
-      ..add(_applied.where((e) => e is PostedEvent).listen((_) => _soon()))
       ..add(
-        _caughtUp.listen((_) {
-          _gap = true;
-          _soon();
+        _applied.listen((e) {
+          if (e is PostedEvent) _posted(e);
         }),
-      );
+      )
+      ..add(_caughtUp.listen((_) => unawaited(_caughtUpNow())));
+  }
+
+  void _posted(PostedEvent e) {
+    if (_historyPending) {
+      _sawLive = true;
+      final at = e.post?.createAt;
+      if (at != null && (_liveFrom == null || at.isBefore(_liveFrom!))) {
+        _liveFrom = at;
+      }
+    }
+    _soon();
+  }
+
+  Future<void> _caughtUpNow() async {
+    if (_historyPending) {
+      final live = _sawLive;
+      await _settleHistory();
+      if (!live) return;
+    }
+    _gap = true;
+    _soon();
+  }
+
+  Future<void> _settleHistory() async {
+    if (!_historyPending) return;
+    _historyPending = false;
+    final liveFrom = _liveFrom;
+    final sawLive = _sawLive;
+    _liveFrom = null;
+    _sawLive = false;
+    if (sawLive && liveFrom == null) return;
+    await history!(liveFrom);
   }
 
   void _soon() {
     _debounce?.cancel();
-    _debounce = Timer(delay, () {
+    _debounce = Timer(delay, () async {
+      await _settleHistory();
+      if (_subscriptions.isEmpty) return;
       final afterGap = _gap;
       _gap = false;
       unawaited(_check(afterGap: afterGap).catchError((Object _) {}));
