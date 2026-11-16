@@ -82,16 +82,28 @@ class BackgroundApp {
     for (final MapEntry(key: url, value: label) in (await signedIn()).entries) {
       try {
         final session = await manager.session(url);
-        await NotificationCheck(
-          session,
-          notifier,
-          shownNow: (_) => AppVisibility.visible,
-          serverName: label,
-        ).run(refresh: refresh);
+        await checkSession(session, notifier, label, refresh: refresh);
       } on Object catch (e) {
         Log.warn('notify', 'Checking a server failed', e);
       }
     }
+  }
+
+  /// Sends what the user left waiting, then checks for notifications.
+  @visibleForTesting
+  static Future<void> checkSession(
+    ServerSession session,
+    Notifier notifier,
+    String? label, {
+    required bool refresh,
+  }) async {
+    await session.outbox.drain();
+    await NotificationCheck(
+      session,
+      notifier,
+      shownNow: (_) => AppVisibility.visible,
+      serverName: label,
+    ).run(refresh: refresh);
   }
 
   Future<void> close() async {
@@ -132,10 +144,8 @@ Future<void> onNoticeAction(NotificationResponse response) async {
     final session = await app.manager.session(action.target.serverUrl);
     await runNoticeAction(session, action);
     if (action.kind == NoticeActionKind.reply) {
-      // The session may still be starting its outbox; this waits for the
-      // post to be tried before the engine goes away.
-      await session.outbox.start();
-      await session.outbox.kick();
+      // This waits for the post to be tried before the engine goes away.
+      await session.outbox.drain();
     }
   });
 }

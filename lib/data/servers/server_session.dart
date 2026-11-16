@@ -68,12 +68,13 @@ class ServerSession {
       offline: () => network?.offline ?? false,
     );
     connection.state.addListener(_onSocketState);
-    network?.online.addListener(_onNetwork);
+    _reports = network?.reports.listen((_) => _onNetwork());
     api.reach.reachable.addListener(_onReach);
     api.reach.checkSocket = connection.socket.checkAlive;
   }
 
   final Uri url;
+  StreamSubscription<Object?>? _reports;
 
   /// The session token as stored, for the sockets that carry their own.
   final String? Function() token;
@@ -145,6 +146,8 @@ class ServerSession {
     }
   }
 
+  /// Every report counts, not only coming back from none: switching from
+  /// wifi to mobile data kills connections without ever going offline.
   void _onNetwork() {
     if (network?.offline == false) unawaited(outbox.wake());
   }
@@ -201,7 +204,7 @@ class ServerSession {
   }
 
   Future<void> close() async {
-    network?.online.removeListener(_onNetwork);
+    await _reports?.cancel();
     api.reach.reachable.removeListener(_onReach);
     api.reach.checkSocket = null;
     connection.state.removeListener(_onSocketState);
