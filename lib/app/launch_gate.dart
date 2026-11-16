@@ -4,6 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:conversation_shortcuts/conversation_shortcuts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:matterleast/app/data_saver.dart';
 import 'package:matterleast/app/dev_sign_in.dart';
 import 'package:matterleast/app/image_memory.dart';
 import 'package:matterleast/app/image_providers.dart';
@@ -21,6 +22,7 @@ import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
 import 'package:matterleast/domain/sso_callback.dart';
+import 'package:matterleast/log.dart';
 import 'package:matterleast/notifications/app_visibility.dart';
 import 'package:matterleast/notifications/in_app_notifications.dart';
 import 'package:matterleast/notifications/notification_launch.dart';
@@ -33,12 +35,16 @@ import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/terms/terms_gate.dart';
 import 'package:matterleast/ui/slide_route.dart';
+import 'package:matterleast/ui/tokens.dart';
 
 /// Picks the first screen from the server list on disk: the root with the
 /// rail when any server is signed in, else Add server. Also tells the user
 /// when a server ended their session.
 class LaunchGate extends ConsumerStatefulWidget {
-  const LaunchGate({super.key});
+  const LaunchGate({super.key, this.stallAfter = const Duration(seconds: 10)});
+
+  /// How long the start-up inputs may take before Retry is offered.
+  final Duration stallAfter;
 
   @override
   ConsumerState<LaunchGate> createState() => _LaunchGateState();
@@ -52,6 +58,8 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
   GoneChannels? _gone;
   final _shortcuts = const ConversationShortcuts();
   late final _shortcutFollower = ShortcutFollower(ref);
+  Timer? _stallTimer;
+  var _stalled = false;
 
   /// The conversation of a shortcut id, if it is one of the user's.
   Future<SwitchItem?> _shortcutTarget(String? id) async {
@@ -89,14 +97,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     final manager = ref.read(serverManagerProvider);
     // After the first frame, so the token read never delays painting.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final servers = ref.read(serversProvider.future);
-      unawaited(
-        servers
-            .then((all) => devSignIn(manager, [for (final s in all) s.url]))
-            .then((_) => manager.checkTokens())
-            .then((_) => AppVisibility.shown())
-            .then((_) => manager.setForeground(true)),
-      );
+      unawaited(_startServers());
       if (!mounted) return;
       final navigator = Navigator.of(context);
       ref.read(placeReconcilerProvider);
@@ -140,6 +141,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
       unawaited(_openShortcut(navigator));
     });
     _shortcutFollower.start();
+    _startStallTimer();
     _lifecycle = AppLifecycleListener(
       onShow: () => unawaited(
         AppVisibility.shown().then((_) {
@@ -152,6 +154,7 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
 
   @override
   void dispose() {
+    _stallTimer?.cancel();
     unawaited(_links?.cancel());
     _shares?.dispose();
     _shortcutFollower.dispose();
@@ -159,6 +162,50 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
     _lifecycle.dispose();
     _imageMemory.dispose();
     super.dispose();
+  }
+
+  Future<void> _startServers() async {
+    final manager = ref.read(serverManagerProvider);
+    try {
+      final all = await ref.read(serversProvider.future);
+      await devSignIn(manager, [for (final s in all) s.url]);
+      await manager.checkTokens();
+      await AppVisibility.shown();
+      await manager.setForeground(true);
+    } on Object catch (e) {
+      Log.warn('start', 'Starting the servers failed', e);
+    }
+  }
+
+  void _startStallTimer() {
+    _stallTimer?.cancel();
+    _stallTimer = Timer(widget.stallAfter, () {
+      final missing = _missingInputs();
+      if (missing.isEmpty || !mounted) return;
+      Log.warn('start', 'Still waiting for ${missing.join(', ')}');
+      setState(() => _stalled = true);
+    });
+  }
+
+  List<String> _missingInputs() => [
+    if (ref.read(serversProvider).value == null) 'servers',
+    if (ref.read(savedRailTargetProvider).isLoading) 'saved place',
+    if (ref.read(homeFilterSettingProvider).isLoading) 'home filter',
+    if (ref.read(searchTabProvider).isLoading) 'search tab',
+    if (ref.read(threadsTabProvider).isLoading) 'threads tab',
+    if (ref.read(autoLoadProvider(DataKind.linkPicture)) == null)
+      'picture loading',
+  ];
+
+  void _retryStart() {
+    ref
+      ..invalidate(appDatabaseProvider)
+      ..invalidate(serversProvider)
+      ..invalidate(networkStateProvider)
+      ..invalidate(dataSaverProvider);
+    setState(() => _stalled = false);
+    _startStallTimer();
+    unawaited(_startServers());
   }
 
   void _retryKeyring() {
@@ -214,7 +261,8 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         }
       }
     });
-    final servers = ref.watch(serversProvider).value;
+    final serversState = ref.watch(serversProvider);
+    final servers = serversState.value;
     final saved = ref.watch(savedRailTargetProvider);
     // Saved choices are known before the first frame, so none shows its
     // default and then switches.
@@ -230,7 +278,11 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
         saved.isLoading ||
         choices.any((c) => c.isLoading) ||
         loadsPictures == null) {
-      return const Scaffold();
+      return StartupWait(
+        problem: serversState.error,
+        stalled: _stalled,
+        onRetry: _retryStart,
+      );
     }
     final signedIn = [
       for (final s in servers)
@@ -247,6 +299,47 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
                   signedIn.first.url,
               child: RootScreen(servers: signedIn),
             ),
+    );
+  }
+}
+
+/// Blank for the brief normal start-up; when it fails or takes too long,
+/// says so and offers Retry.
+class StartupWait extends StatelessWidget {
+  const StartupWait({
+    super.key,
+    required this.problem,
+    required this.stalled,
+    required this.onRetry,
+  });
+
+  final Object? problem;
+  final bool stalled;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final failure = problem;
+    if (failure == null && !stalled) return const Scaffold();
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(Spacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                failure == null
+                    ? 'Still starting…'
+                    : startupProblemText(failure),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: Spacing.lg),
+              FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

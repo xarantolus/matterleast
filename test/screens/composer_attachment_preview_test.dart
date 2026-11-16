@@ -21,8 +21,14 @@ final _thumbnail = find.descendant(
   matching: find.byType(Image),
 );
 
+// Deleted after the last test: an image still decoding from one test's
+// folder must not fail the next one.
+final _temps = <Directory>[];
+
 Future<ServerHarness> _pasteAnImage(WidgetTester tester) async {
-  final temp = Directory.systemTemp.createTempSync().path;
+  final dir = Directory.systemTemp.createTempSync();
+  _temps.add(dir);
+  final temp = dir.path;
   final messenger = tester.binding.defaultBinaryMessenger;
   messenger.setMockMethodCallHandler(
     const MethodChannel('plugins.flutter.io/path_provider'),
@@ -38,7 +44,6 @@ Future<ServerHarness> _pasteAnImage(WidgetTester tester) async {
       null,
     );
     messenger.setMockMethodCallHandler(const MethodChannel('pasteboard'), null);
-    Directory(temp).deleteSync(recursive: true);
   });
   final h = await pumpWithServer(
     tester,
@@ -76,19 +81,29 @@ Future<ServerHarness> _pasteAnImage(WidgetTester tester) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
   await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
   await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-  await _until(tester, h, _thumbnail);
+  await _until(tester, h, () => _thumbnail.evaluate().isNotEmpty);
   return h;
 }
 
-/// Settles in short rounds until [finder] matches; the paste writes a file,
-/// which takes as long as the machine is busy.
-Future<void> _until(WidgetTester tester, ServerHarness h, Finder finder) async {
-  for (var i = 0; i < 100 && finder.evaluate().isEmpty; i++) {
+/// Settles in short rounds until [done]; the paste writes a file and the
+/// gallery reads it, which takes as long as the machine is busy.
+Future<void> _until(
+  WidgetTester tester,
+  ServerHarness h,
+  bool Function() done,
+) async {
+  for (var i = 0; i < 100 && !done(); i++) {
     await h.settle(tester);
   }
 }
 
 void main() {
+  tearDownAll(() {
+    for (final dir in _temps) {
+      dir.deleteSync(recursive: true);
+    }
+  });
+
   testWidgets('a pasted image shows as a thumbnail', (tester) async {
     final h = await _pasteAnImage(tester);
 
@@ -102,9 +117,21 @@ void main() {
     final h = await _pasteAnImage(tester);
 
     await tester.tap(_thumbnail, warnIfMissed: false);
-    await _until(tester, h, find.byType(GalleryScreen));
+    final gallery = find.byType(GalleryScreen);
+    final loading = find.descendant(
+      of: gallery,
+      matching: find.byType(CircularProgressIndicator),
+    );
+    // Closing the composer deletes its pasted copy, so the gallery must have
+    // read it first.
+    await _until(
+      tester,
+      h,
+      () => gallery.evaluate().isNotEmpty && loading.evaluate().isEmpty,
+    );
 
-    expect(find.byType(GalleryScreen), findsOneWidget);
+    expect(gallery, findsOneWidget);
+    expect(loading, findsNothing);
     await h.close(tester);
   });
 }

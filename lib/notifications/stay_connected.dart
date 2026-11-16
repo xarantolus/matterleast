@@ -11,6 +11,7 @@ import 'package:matterleast/notifications/app_visibility.dart';
 import 'package:matterleast/notifications/background.dart';
 import 'package:matterleast/notifications/live_notifications.dart';
 import 'package:matterleast/notifications/notification_check.dart';
+import 'package:matterleast/notifications/notifier.dart';
 
 /// The opt-in foreground service, switched from the settings. Its state
 /// lives with the service (so its notification's Stop action and this
@@ -33,6 +34,19 @@ abstract final class StayConnected {
     if (!hasAndroidServices) return;
     await _channel.invokeMethod<void>(method);
   }
+}
+
+/// Asks for the notification permission; when the system won't ask again,
+/// opens its settings.
+Future<void> allowNotifications(Notifier notifier) async {
+  if (!await notifier.requestPermission()) await notifier.openSettings();
+}
+
+/// Switches Stay connected, asking for the notification permission first.
+Future<void> setStayConnected(Notifier notifier, bool on) async {
+  if (!on) return StayConnected.disable();
+  if (!await notifier.permitted()) await allowNotifications(notifier);
+  await StayConnected.enable();
 }
 
 /// The service's own engine. It holds the WebSockets of the signed-in

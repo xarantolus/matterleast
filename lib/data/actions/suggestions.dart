@@ -136,7 +136,12 @@ class SuggestionSource {
         yield ranked(custom);
         if (!await _customEmojiOn()) return;
         final remote = await _ask(
-          () => server.client.emoji.autocompleteEmoji(name: prefix),
+          () => server.client.emoji.searchEmoji(
+            body: api.ApiV4EmojiSearchRequestBody(
+              term: prefix,
+              prefixOnly: false,
+            ),
+          ),
           feature: OptionalFeature.customEmoji,
         );
         if (remote == null) return;
@@ -224,8 +229,7 @@ class SuggestionSource {
       prefix.replaceAllMapped(RegExp(r'[\\%_]'), (m) => '\\${m[0]}');
 
   Future<List<UserCandidate>> _localUsers(String prefix) async {
-    final like = '${_escape(prefix)}%';
-    final word = '% ${_escape(prefix)}%';
+    final like = '%${_escape(prefix)}%';
     final me = await _db.syncText(SyncKeys.currentUserId);
     final rows =
         await (_db.select(_db.users)
@@ -236,8 +240,7 @@ class SuggestionSource {
                     (u.username.like(like, escapeChar: r'\') |
                         u.firstName.like(like, escapeChar: r'\') |
                         u.lastName.like(like, escapeChar: r'\') |
-                        u.nickname.like(like, escapeChar: r'\') |
-                        u.nickname.like(word, escapeChar: r'\')),
+                        u.nickname.like(like, escapeChar: r'\')),
               )
               ..limit(100))
             .get();

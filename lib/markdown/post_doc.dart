@@ -62,6 +62,9 @@ abstract class ListItem with _$ListItem {
 
     /// A task list item: done or not.
     bool? checked,
+
+    /// Which task of the message this is, counting in reading order.
+    int? taskIndex,
   }) = _ListItem;
 }
 

@@ -1391,7 +1391,8 @@ String toString() {
 mixin _$ListItem {
 
  List<Block> get blocks;/// A task list item: done or not.
- bool? get checked;
+ bool? get checked;/// Which task of the message this is, counting in reading order.
+ int? get taskIndex;
 /// Create a copy of ListItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1403,20 +1404,20 @@ $ListItemCopyWith<ListItem> get copyWith => _$ListItemCopyWithImpl<ListItem>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as ListItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ListItem&&const DeepCollectionEquality().equals(other.blocks, _this.blocks)&&(identical(other.checked, _this.checked) || other.checked == _this.checked));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ListItem&&const DeepCollectionEquality().equals(other.blocks, _this.blocks)&&(identical(other.checked, _this.checked) || other.checked == _this.checked)&&(identical(other.taskIndex, _this.taskIndex) || other.taskIndex == _this.taskIndex));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ListItem;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.blocks),_this.checked);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.blocks),_this.checked,_this.taskIndex);
 }
 
 @override
 String toString() {
   final _this = this as ListItem;
-  return 'ListItem(blocks: ${_this.blocks}, checked: ${_this.checked})';
+  return 'ListItem(blocks: ${_this.blocks}, checked: ${_this.checked}, taskIndex: ${_this.taskIndex})';
 }
 
 
@@ -1427,7 +1428,7 @@ abstract mixin class $ListItemCopyWith<$Res>  {
   factory $ListItemCopyWith(ListItem value, $Res Function(ListItem) _then) = _$ListItemCopyWithImpl;
 @useResult
 $Res call({
- List<Block> blocks, bool? checked
+ List<Block> blocks, bool? checked, int? taskIndex
 });
 
 
@@ -1444,11 +1445,12 @@ class _$ListItemCopyWithImpl<$Res>
 
 /// Create a copy of ListItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? blocks = null,Object? checked = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? blocks = null,Object? checked = freezed,Object? taskIndex = freezed,}) {
   return _then(ListItem(
 null == blocks ? _self.blocks : blocks // ignore: cast_nullable_to_non_nullable
 as List<Block>,checked: freezed == checked ? _self.checked : checked // ignore: cast_nullable_to_non_nullable
-as bool?,
+as bool?,taskIndex: freezed == taskIndex ? _self.taskIndex : taskIndex // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -1533,10 +1535,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Block> blocks,  bool? checked)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Block> blocks,  bool? checked,  int? taskIndex)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ListItem() when $default != null:
-return $default(_that.blocks,_that.checked);case _:
+return $default(_that.blocks,_that.checked,_that.taskIndex);case _:
   return orElse();
 
 }
@@ -1554,10 +1556,10 @@ return $default(_that.blocks,_that.checked);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Block> blocks,  bool? checked)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Block> blocks,  bool? checked,  int? taskIndex)  $default,) {final _that = this;
 switch (_that) {
 case _ListItem():
-return $default(_that.blocks,_that.checked);case _:
+return $default(_that.blocks,_that.checked,_that.taskIndex);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1574,10 +1576,10 @@ return $default(_that.blocks,_that.checked);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Block> blocks,  bool? checked)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Block> blocks,  bool? checked,  int? taskIndex)?  $default,) {final _that = this;
 switch (_that) {
 case _ListItem() when $default != null:
-return $default(_that.blocks,_that.checked);case _:
+return $default(_that.blocks,_that.checked,_that.taskIndex);case _:
   return null;
 
 }
@@ -1589,7 +1591,7 @@ return $default(_that.blocks,_that.checked);case _:
 
 
 class _ListItem implements ListItem {
-  const _ListItem( List<Block> blocks, {this.checked}): _blocks = blocks;
+  const _ListItem( List<Block> blocks, {this.checked, this.taskIndex}): _blocks = blocks;
   
 
  final  List<Block> _blocks;
@@ -1601,6 +1603,8 @@ class _ListItem implements ListItem {
 
 /// A task list item: done or not.
 @override final  bool? checked;
+/// Which task of the message this is, counting in reading order.
+@override final  int? taskIndex;
 
 /// Create a copy of ListItem
 /// with the given fields replaced by the non-null parameter values.
@@ -1612,18 +1616,18 @@ _$ListItemCopyWith<_ListItem> get copyWith => __$ListItemCopyWithImpl<_ListItem>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ListItem&&const DeepCollectionEquality().equals(other.blocks, _blocks)&&(identical(other.checked, checked) || other.checked == checked));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ListItem&&const DeepCollectionEquality().equals(other.blocks, _blocks)&&(identical(other.checked, checked) || other.checked == checked)&&(identical(other.taskIndex, taskIndex) || other.taskIndex == taskIndex));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_blocks),checked);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_blocks),checked,taskIndex);
 }
 
 @override
 String toString() {
-    return 'ListItem(blocks: $blocks, checked: $checked)';
+    return 'ListItem(blocks: $blocks, checked: $checked, taskIndex: $taskIndex)';
 }
 
 
@@ -1634,7 +1638,7 @@ abstract mixin class _$ListItemCopyWith<$Res> implements $ListItemCopyWith<$Res>
   factory _$ListItemCopyWith(_ListItem value, $Res Function(_ListItem) _then) = __$ListItemCopyWithImpl;
 @override @useResult
 $Res call({
- List<Block> blocks, bool? checked
+ List<Block> blocks, bool? checked, int? taskIndex
 });
 
 
@@ -1651,11 +1655,12 @@ class __$ListItemCopyWithImpl<$Res>
 
 /// Create a copy of ListItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? blocks = null,Object? checked = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? blocks = null,Object? checked = freezed,Object? taskIndex = freezed,}) {
   return _then(_ListItem(
 null == blocks ? _self._blocks : blocks // ignore: cast_nullable_to_non_nullable
 as List<Block>,checked: freezed == checked ? _self.checked : checked // ignore: cast_nullable_to_non_nullable
-as bool?,
+as bool?,taskIndex: freezed == taskIndex ? _self.taskIndex : taskIndex // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

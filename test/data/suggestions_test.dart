@@ -105,7 +105,7 @@ void main() {
     await session.store.applyConfig('client_config', {
       'EnableCustomEmoji': 'true',
     });
-    server.handle = (r) => r.path == '/api/v4/emoji/autocomplete'
+    server.handle = (r) => r.path == '/api/v4/emoji/search'
         ? ok([
             {'id': 'e1', 'name': 'thumbsup_parrot', 'creator_id': 'u2'},
           ])
@@ -113,6 +113,28 @@ void main() {
     final lists = await suggest('ok :thumbsu');
     expect(lists.first, contains('👍'));
     expect(lists.last, contains(':thumbsup_parrot:'));
+  });
+
+  test('emoji: a name that only contains the typed text is found', () async {
+    await session.store.applyConfig('client_config', {
+      'EnableCustomEmoji': 'true',
+    });
+    server.handle = (r) => r.path == '/api/v4/emoji/search'
+        ? ok([
+            {'id': 'e2', 'name': 'blobthx', 'creator_id': 'u2'},
+          ])
+        : error(404, 'not_found');
+    final lists = await suggest(':thx');
+    expect(lists.last, contains(':blobthx:'));
+    expect(server.seen.single.body['term'], 'thx');
+    expect(server.seen.single.body['prefix_only'], false);
+  });
+
+  test('people are found by the middle of a name, here too', () async {
+    server.handle = (r) => error(500, 'boom');
+    expect(await suggest('@abe'), [
+      ['@mabel'],
+    ]);
   });
 
   test('emoji used in a sent message are suggested first next time', () async {

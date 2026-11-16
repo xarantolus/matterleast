@@ -36,6 +36,7 @@ class PostBody extends StatelessWidget {
     this.collapsible = true,
     this.style,
     this.onEditHistory,
+    this.onToggleTask,
     super.key,
   });
 
@@ -56,6 +57,9 @@ class PostBody extends StatelessWidget {
   /// Opens the message's edit history when "(edited)" is tapped; false
   /// when there is none to show. Null where the reader can't see it.
   final Future<bool> Function()? onEditHistory;
+
+  /// Flips the task with that index; null leaves task boxes read-only.
+  final ValueChanged<int>? onToggleTask;
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +105,7 @@ class PostBody extends StatelessWidget {
         trailing: editedSpan,
         images: imageSizes,
         channelNames: channelNames,
+        onToggleTask: onToggleTask,
       ),
     };
     return collapsible ? ShowMore(id: postId, child: content) : content;
@@ -207,6 +212,7 @@ class _Blocks extends StatelessWidget {
     required this.style,
     required this.images,
     required this.channelNames,
+    required this.onToggleTask,
     this.trailing,
   });
 
@@ -216,6 +222,7 @@ class _Blocks extends StatelessWidget {
   final InlineSpan? trailing;
   final Map<String, ImageSize> images;
   final Map<String, String> channelNames;
+  final ValueChanged<int>? onToggleTask;
 
   @override
   Widget build(BuildContext context) {
@@ -282,6 +289,7 @@ class _Blocks extends StatelessWidget {
             style: style.copyWith(color: tokens.muted),
             images: images,
             channelNames: channelNames,
+            onToggleTask: onToggleTask,
           ),
         );
       case ListBlock(:final items, :final ordered, :final start):
@@ -298,12 +306,17 @@ class _Blocks extends StatelessWidget {
                       width: MediaQuery.textScalerOf(context)
                           .scale(24 * MessageDisplay.of(context).textScale),
                       child: switch (item.checked) {
-                        final bool done => Icon(
-                          done
-                              ? Icons.check_box
-                              : Icons.check_box_outline_blank,
+                        final bool done => _TaskBox(
+                          done: done,
                           size: (style.fontSize ?? 14) * 1.3,
-                          color: done ? tokens.accent : tokens.muted,
+                          lineHeight:
+                              (style.fontSize ?? 14) * (style.height ?? 1.4),
+                          onToggle: switch ((onToggleTask, item.taskIndex)) {
+                            (final toggle?, final index?) => () => toggle(
+                              index,
+                            ),
+                            _ => null,
+                          },
                         ),
                         null => Text(
                           ordered ? '${start + i}.' : '•',
@@ -318,6 +331,7 @@ class _Blocks extends StatelessWidget {
                         style: style,
                         images: images,
                         channelNames: channelNames,
+                        onToggleTask: onToggleTask,
                       ),
                     ),
                   ],
@@ -415,4 +429,44 @@ class EditedMark extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// A task item's box; ticks on a tap when [onToggle] is given.
+class _TaskBox extends StatelessWidget {
+  const _TaskBox({
+    required this.done,
+    required this.size,
+    required this.lineHeight,
+    required this.onToggle,
+  });
+
+  final bool done;
+  final double size;
+  final double lineHeight;
+  final VoidCallback? onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final box = SizedBox(
+      height: lineHeight < size ? size : lineHeight,
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Icon(
+          done ? Icons.check_box : Icons.check_box_outline_blank,
+          size: size,
+          color: done ? tokens.accent : tokens.muted,
+        ),
+      ),
+    );
+    if (onToggle == null) return box;
+    return Semantics(
+      checked: done,
+      child: Tooltip(
+        message: done ? 'Mark not done' : 'Mark done',
+        triggerMode: TooltipTriggerMode.manual,
+        child: InkResponse(onTap: onToggle, radius: size, child: box),
+      ),
+    );
+  }
 }

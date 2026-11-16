@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/network_state.dart';
 
@@ -78,5 +79,24 @@ void main() {
     expect(network.last, [ConnectivityResult.wifi]);
     expect(network.online.value, isTrue);
     await network.close();
+  });
+
+  test('a current state that never arrives counts as unknown after the '
+      'timeout', () {
+    fakeAsync((async) {
+      final network = NetworkState(
+        NetworkState.deviceReports(
+          () => Completer<List<ConnectivityResult>>().future,
+          () => const Stream.empty(),
+          firstReadTimeout: const Duration(seconds: 3),
+        ),
+      );
+      async.elapse(const Duration(seconds: 2));
+      expect(network.last, isNull);
+      async.elapse(const Duration(seconds: 1));
+      expect(network.last, isEmpty);
+      expect(network.online.value, isTrue);
+      unawaited(network.close());
+    });
   });
 }

@@ -32,6 +32,7 @@ import 'package:matterleast/ui/link_preview_card.dart';
 import 'package:matterleast/ui/markdown/image_box.dart';
 import 'package:matterleast/ui/markdown/post_body.dart';
 import 'package:matterleast/ui/markdown/post_environment.dart';
+import 'package:matterleast/ui/markdown/task_toggle.dart';
 import 'package:matterleast/ui/moment_tooltip.dart';
 import 'package:matterleast/ui/motion.dart';
 import 'package:matterleast/ui/permalink_card.dart';
@@ -990,6 +991,7 @@ class PostText extends StatelessWidget {
       editAt: post.editAt,
       edited: post.edited,
       onEditHistory: onHistory,
+      onToggleTask: TaskToggle.maybeOf(context),
       imageSizes: details.imageSizes,
       channelNames: details.props.channelMentions,
       unsafeLinks: details.unsafeLinks,

@@ -189,11 +189,6 @@ Future<String> appVersion(Ref ref) async {
   return '${info.version} (${info.buildNumber})';
 }
 
-/// The clock the user picked; null follows the phone.
-@Riverpod(keepAlive: true)
-Stream<bool?> use24HourClock(Ref ref) =>
-    ref.watch(settingsStoreProvider).watch(Settings.use24HourClock);
-
 @Riverpod(keepAlive: true)
 Stream<MessageTextSize> messageTextSize(Ref ref) =>
     ref.watch(settingsStoreProvider).watch(Settings.messageTextSize);

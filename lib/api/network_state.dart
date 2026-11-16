@@ -39,27 +39,58 @@ class NetworkState {
   }
 
   /// The current state, then the changes. When the current state can't be
-  /// read the changes aren't watched either. The Linux plugin's D-Bus setup
-  /// fails in a future nobody awaits, so the read runs in a guarded zone
+  /// read (or isn't within [firstReadTimeout]) the changes aren't watched
+  /// either. The Linux plugin's D-Bus setup fails in a future nobody awaits, so the read runs in a guarded zone
   /// that turns such an escape into its error.
   static Stream<List<ConnectivityResult>> deviceReports(
     Future<List<ConnectivityResult>> Function() current,
-    Stream<List<ConnectivityResult>> Function() changes,
-  ) async* {
-    final first = Completer<List<ConnectivityResult>>();
+    Stream<List<ConnectivityResult>> Function() changes, {
+    Duration firstReadTimeout = const Duration(seconds: 3),
+  }) {
+    final out = StreamController<List<ConnectivityResult>>();
+    Timer? timer;
+    StreamSubscription<List<ConnectivityResult>>? later;
+    var answered = false;
     void fail(Object error, StackTrace stack) {
-      if (!first.isCompleted) first.completeError(error, stack);
+      if (answered) return;
+      answered = true;
+      timer?.cancel();
+      out
+        ..addError(error, stack)
+        ..close();
     }
 
-    runZonedGuarded(() {
-      unawaited(
-        current().then((report) {
-          if (!first.isCompleted) first.complete(report);
-        }, onError: fail),
+    out.onListen = () {
+      // A plugin that never answers counts as an error, so nothing waits
+      // on it.
+      timer = Timer(
+        firstReadTimeout,
+        () => fail(
+          TimeoutException('No connectivity report', firstReadTimeout),
+          StackTrace.current,
+        ),
       );
-    }, fail);
-    yield await first.future;
-    yield* changes();
+      runZonedGuarded(() {
+        unawaited(
+          current().then((report) {
+            if (answered) return;
+            answered = true;
+            timer?.cancel();
+            out.add(report);
+            later = changes().listen(
+              out.add,
+              onError: out.addError,
+              onDone: out.close,
+            );
+          }, onError: fail),
+        );
+      }, fail);
+    };
+    out.onCancel = () {
+      timer?.cancel();
+      return later?.cancel();
+    };
+    return out.stream;
   }
 
   late final StreamSubscription<List<ConnectivityResult>> _subscription;

@@ -15,6 +15,7 @@ abstract final class Prefs {
   static const nameFormat = ('display_settings', 'name_format');
   static const flaggedPost = 'flagged_post';
   static const skinTone = ('emoji', 'emoji_skintone');
+  static const militaryTime = ('display_settings', 'use_military_time');
   static const linkPreviews = ('display_settings', 'link_previews');
 
   /// `false` keeps drafts on this device; anything else syncs them where
