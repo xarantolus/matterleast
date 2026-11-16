@@ -218,15 +218,15 @@ void main() {
     test(
       'a check on a dead connection reconnects and waits for a pong',
       () async {
-        open();
-        await until(() => server.connections.length == 1);
+        server.answerPings = false;
         var pings = 0;
         server.actions.listen((a) {
-          if (a['action'] != 'ping') return;
-          // The first ping of the check goes unanswered, like on a dead link.
-          if (++pings == 1) server.answerPings = true;
+          // The server is back after the check's own ping, which got no
+          // pong, like on a dead link.
+          if (a['action'] == 'ping' && ++pings == 2) server.answerPings = true;
         });
-        server.answerPings = false;
+        open();
+        await until(() => pings == 1);
         await socket.ensureAlive(within: const Duration(milliseconds: 50));
         expect(server.connections, hasLength(2));
         expect(socket.state.value, SocketState.connected);
