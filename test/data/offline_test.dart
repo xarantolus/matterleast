@@ -111,6 +111,37 @@ void main() {
     });
   });
 
+  test('a send hanging on a connection a network switch killed goes again '
+      'without the device ever being offline', () async {
+    final held = Completer<Reply?>();
+    addTearDown(() {
+      if (!held.isCompleted) held.complete(error(500, 'late'));
+    });
+    var posts = 0;
+    server.handle = (r) {
+      if (r.path != '/api/v4/posts') return error(404, 'not_found');
+      return ++posts == 1
+          ? held.future
+          : ok({
+              'id': 'srv1',
+              'channel_id': channelId,
+              'user_id': meId,
+              'create_at': 1,
+              'message': r.body['message'],
+              'pending_post_id': r.body['pending_post_id'],
+            });
+    };
+    await report(wifi);
+    await session.outbox.start();
+    await session.composer.send(channelId, message: 'on the move');
+    unawaited(session.outbox.kick());
+    await eventually(() => posts == 1);
+
+    await report(const [ConnectivityResult.mobile]);
+    await eventually(() async => (await session.store.outboxRows()).isEmpty);
+    expect(posts, 2);
+  });
+
   test('when the network comes back the socket connects and the data '
       'refreshes at once, not after the backoff', () async {
     await report(none);

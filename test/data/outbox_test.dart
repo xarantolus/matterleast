@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
@@ -10,6 +12,7 @@ import 'package:matterleast/data/views/conversation_views.dart';
 
 import '../support/fake_server.dart';
 import '../support/test_session.dart';
+import '../support/wait.dart';
 
 void main() {
   late FakeServer server;
@@ -387,4 +390,74 @@ void main() {
       expect((await shownKeys()).first, id);
     },
   );
+
+  group('a send stuck on a dead connection', () {
+    late Completer<Reply?> held;
+
+    setUp(() {
+      held = Completer<Reply?>();
+      var first = true;
+      server.handle = (r) {
+        if (r.method == 'POST' && r.path == '/api/v4/posts') {
+          if (first) {
+            first = false;
+            return held.future;
+          }
+          return ok(createdPost(r));
+        }
+        return error(404, 'not_found');
+      };
+    });
+
+    tearDown(() {
+      if (!held.isCompleted) held.complete(error(500, 'late'));
+    });
+
+    test('is sent again at once when the connection returns', () async {
+      final id = await actions.send(channelId, message: 'hello');
+      final starting = sender.start();
+      await eventually(() => sends().length == 1);
+      now = now.add(const Duration(seconds: 5));
+      await sender.wake();
+      await starting;
+      expect(sends().map((r) => r.body['pending_post_id']), [id, id]);
+      expect((await posts()).map((p) => p.id), ['old1', 'srv1']);
+      expect(await session.store.outboxRows(), isEmpty);
+    });
+
+    test('is left alone by a reconnect right after it started', () async {
+      await actions.send(channelId, message: 'hello');
+      final starting = sender.start();
+      await eventually(() => sends().length == 1);
+      final waking = sender.wake();
+      await afterWork();
+      expect(sends(), hasLength(1));
+      held.complete(ok(createdPost(sends().first)));
+      await starting;
+      await waking;
+      expect(sends(), hasLength(1));
+      expect(await session.store.outboxRows(), isEmpty);
+    });
+
+    test('Send now replaces it whatever its age', () async {
+      final id = await actions.send(channelId, message: 'hello');
+      final starting = sender.start();
+      await eventually(() => sends().length == 1);
+      await sender.sendNow(id);
+      await starting;
+      expect(sends(), hasLength(2));
+      expect(await session.store.outboxRows(), isEmpty);
+    });
+  });
+
+  test('Send now skips the backoff of a waiting post', () async {
+    answers.add(error(500, 'server.broke'));
+    final id = await actions.send(channelId, message: 'hello');
+    await sender.start();
+    expect(sends(), hasLength(1));
+    expect((await session.store.outboxRows()).single.state, 'queued');
+    await sender.sendNow(id);
+    expect(sends(), hasLength(2));
+    expect(await session.store.outboxRows(), isEmpty);
+  });
 }

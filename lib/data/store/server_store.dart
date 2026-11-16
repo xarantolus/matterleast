@@ -1622,6 +1622,21 @@ class ServerStore {
       (db.update(db.outbox)..where((o) => o.state.equals(OutboxStates.queued)))
           .write(const OutboxCompanion(nextAttemptAt: Value(null)));
 
+  /// One waiting post goes now, its backoff and failures forgotten.
+  Future<void> sendPostNow(String pendingPostId) =>
+      (db.update(db.outbox)..where(
+            (o) =>
+                o.pendingPostId.equals(pendingPostId) &
+                o.state.equals(OutboxStates.queued),
+          ))
+          .write(
+            const OutboxCompanion(
+              attempts: Value(0),
+              nextAttemptAt: Value(null),
+              lastError: Value(null),
+            ),
+          );
+
   Future<void> markSending(String pendingPostId) =>
       (db.update(db.outbox)
             ..where((o) => o.pendingPostId.equals(pendingPostId)))

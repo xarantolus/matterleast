@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dio/dio.dart' show CancelToken;
+
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/api/server_api.dart';
@@ -38,6 +40,7 @@ class OutboxSender {
     required this.store,
     DateTime Function()? clock,
     bool Function()? offline,
+    this.stuckAfter = defaultStuckAfter,
   }) : _clock = clock ?? (() => DateTime.now().toUtc()),
        _offline = offline ?? _never;
 
@@ -47,6 +50,12 @@ class OutboxSender {
   /// again; each try costs one short ping.
   static const serverDownRetry = Duration(seconds: 15);
 
+  /// How long a send may be out before a reconnect, rather than its own
+  /// timeout, replaces it. A request on a connection that died with the
+  /// network would otherwise wait out the whole request deadline.
+  static const defaultStuckAfter = Duration(seconds: 4);
+
+  final Duration stuckAfter;
   final ServerApi server;
   final ServerStore store;
   final DateTime Function() _clock;
@@ -54,6 +63,7 @@ class OutboxSender {
 
   final _rejected = StreamController<PostRejected>.broadcast();
   Timer? _timer;
+  _Flight? _flight;
   Future<void>? _running;
   var _again = false;
   var _started = false;
@@ -69,10 +79,37 @@ class OutboxSender {
     await kick();
   }
 
-  /// The connection is back: waiting posts go at once.
+  /// The connection is back: waiting posts go at once, and a send that has
+  /// been out for [stuckAfter] is stopped and sent again. The server
+  /// answers a repeated `pending_post_id` with the post it already made.
   Future<void> wake() async {
     if (!_started || _closed) return;
+    if (_flight case final flight?) {
+      final age = _clock().difference(flight.since);
+      if (age >= stuckAfter) {
+        flight.restart();
+      } else {
+        flight.restartIn(stuckAfter - age);
+      }
+    }
     await store.sendWaitingNow();
+    await kick();
+  }
+
+  /// For background work: starts the queue and tries every waiting post now,
+  /// backoff or not, and completes once that try is over.
+  Future<void> drain() async {
+    await start();
+    await wake();
+  }
+
+  /// The user asks for this post to go now: its backoff is forgotten, and a
+  /// send of it in flight is replaced.
+  Future<void> sendNow(String pendingPostId) async {
+    if (!_started || _closed) return;
+    await store.sendPostNow(pendingPostId);
+    final flight = _flight;
+    if (flight != null && flight.id == pendingPostId) flight.restart();
     await kick();
   }
 
@@ -135,25 +172,38 @@ class OutboxSender {
       persistent: features.persistentNotifications != null,
     );
     final api.Post created;
+    final flight = _flight = _Flight(id, _clock());
     try {
-      created = await server.call(
-        () => server.client.posts.createPost(
-          body: api.ApiV4PostsRequestBody(
-            channelId: post.channelId,
-            message: post.message,
-            rootId: post.rootId.isEmpty ? null : post.rootId,
-            fileIds: [
-              for (final f in metadata?.files ?? const <api.FileInfo>[]) ?f.id,
-            ],
-            metadata: priority == null
-                ? null
-                : api.Metadata(priority: priority),
-            pendingPostId: id,
-            type: post.type.isEmpty ? null : post.type,
+      created = await cancellable(
+        flight.cancel,
+        () => server.call(
+          () => server.client.posts.createPost(
+            body: api.ApiV4PostsRequestBody(
+              channelId: post.channelId,
+              message: post.message,
+              rootId: post.rootId.isEmpty ? null : post.rootId,
+              fileIds: [
+                for (final f in metadata?.files ?? const <api.FileInfo>[])
+                  ?f.id,
+              ],
+              metadata: priority == null
+                  ? null
+                  : api.Metadata(priority: priority),
+              pendingPostId: id,
+              type: post.type.isEmpty ? null : post.type,
+            ),
           ),
         ),
       );
     } on ApiError catch (e) {
+      if (flight.restarted) {
+        await store.markSendRetry(
+          id,
+          attempts: row.attempts,
+          nextAttemptAt: _clock(),
+        );
+        return;
+      }
       if (priority?.requestedAck == true && endpointUnavailable(e)) {
         await store.turnOff(OptionalFeature.acknowledgements);
       }
@@ -165,6 +215,9 @@ class OutboxSender {
       }
       await _failed(row, e);
       return;
+    } finally {
+      flight.done();
+      _flight = null;
     }
     if (_closed) return;
     await store.applySent(id, created);
@@ -250,4 +303,28 @@ class OutboxSender {
     await _running;
     await _rejected.close();
   }
+}
+
+/// A send in progress, which can be stopped to send again.
+class _Flight {
+  _Flight(this.id, this.since);
+
+  final String id;
+  final DateTime since;
+  final cancel = CancelToken();
+  var restarted = false;
+  Timer? _timer;
+
+  void restart() {
+    _timer?.cancel();
+    restarted = true;
+    if (!cancel.isCancelled) cancel.cancel();
+  }
+
+  /// Stops the send in [after] unless it is over by then.
+  void restartIn(Duration after) {
+    _timer ??= Timer(after, restart);
+  }
+
+  void done() => _timer?.cancel();
 }
