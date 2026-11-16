@@ -215,6 +215,63 @@ void main() {
       await until(() => server.connections.length >= 2);
     });
 
+    test(
+      'a check on a dead connection reconnects and waits for a pong',
+      () async {
+        open();
+        await until(() => server.connections.length == 1);
+        var pings = 0;
+        server.actions.listen((a) {
+          if (a['action'] != 'ping') return;
+          // The first ping of the check goes unanswered, like on a dead link.
+          if (++pings == 1) server.answerPings = true;
+        });
+        server.answerPings = false;
+        await socket.ensureAlive(within: const Duration(milliseconds: 50));
+        expect(server.connections, hasLength(2));
+        expect(socket.state.value, SocketState.connected);
+      },
+    );
+
+    test('a check on a live connection keeps it', () async {
+      open();
+      await until(() => server.connections.length == 1);
+      await socket.ensureAlive(within: const Duration(milliseconds: 50));
+      await afterWork();
+      expect(server.connections, hasLength(1));
+    });
+
+    test(
+      'a check connects at once instead of waiting for the backoff',
+      () async {
+        socket = ServerSocket(
+          serverUrl: server.url,
+          token: () => 's3cret',
+          onEvent: events.add,
+          onResync: () => resyncs++,
+          retryDelayOf: (_) => const Duration(hours: 1),
+        )..start();
+        await until(() => server.connections.length == 1);
+        await server.connections.first.socket.close();
+        await until(() => socket.state.value == SocketState.disconnected);
+        await socket.ensureAlive();
+        expect(server.connections, hasLength(2));
+      },
+    );
+
+    test('reconnect resumes the connection on a fresh network', () async {
+      open();
+      await until(() => server.connections.length == 1);
+      server.event('hello', 0, {'connection_id': 'kept'});
+      await until(() => events.isNotEmpty);
+      socket.reconnect();
+      await until(() => server.connections.length == 2);
+      expect(
+        server.connections.last.uri.queryParameters['connection_id'],
+        'kept',
+      );
+    });
+
     test('a gap in the sequence reconnects fresh and resyncs', () async {
       open();
       await until(() => server.connections.length == 1);

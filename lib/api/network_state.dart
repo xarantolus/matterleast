@@ -9,6 +9,18 @@ import 'package:matterleast/log.dart';
 bool hasNetwork(List<ConnectivityResult> report) =>
     report.isEmpty || report.any((r) => r != ConnectivityResult.none);
 
+/// Pure: whether the networks in use differ, such as Wi-Fi to mobile data,
+/// which kills open connections without the device ever being offline.
+bool networkSwitched(
+  List<ConnectivityResult>? before,
+  List<ConnectivityResult> after,
+) {
+  if (before == null || !hasNetwork(after)) return false;
+  final was = before.toSet();
+  final now = after.toSet();
+  return was.length != now.length || !was.containsAll(now);
+}
+
 /// Whether the device has a network at all, from the system's connectivity
 /// reports. A network doesn't mean the server answers (captive portals,
 /// VPNs, dead mobile data), so only "no network" is acted on; being online
