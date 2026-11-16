@@ -5,6 +5,7 @@ import 'package:matterleast/domain/server_entry.dart';
 import 'package:matterleast/domain/server_url.dart';
 import 'package:matterleast/screens/add_server/add_server_controller.dart';
 import 'package:matterleast/screens/login/login_screen.dart';
+import 'package:matterleast/screens/settings/settings_file_tiles.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
 import 'package:matterleast/ui/initials_badge.dart';
 import 'package:matterleast/ui/narrow_page.dart';
@@ -162,6 +163,16 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
             style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
             child: Text(state.checking ? 'Checking server…' : 'Connect'),
           ),
+          if (widget.isRoot) ...[
+            const SizedBox(height: Spacing.sm),
+            TextButton.icon(
+              onPressed: state.checking
+                  ? null
+                  : () => importSettings(context, ref),
+              icon: const Icon(Icons.download),
+              label: const Text('Import settings'),
+            ),
+          ],
           if (signedOut.isNotEmpty) ...[
             const SizedBox(height: Spacing.xxl),
             Text('SIGNED OUT', style: context.tokens.smallCaps),
