@@ -42,28 +42,25 @@ Stream<bool> linkPicturesOnMobileData(Ref ref) =>
     ref.watch(settingsStoreProvider).watch(Settings.linkPicturesOnMobileData);
 
 /// Whether [kind] loads without a tap; null until the connection and the
-/// settings are known.
+/// settings are known. An input that fails counts as its default, so a
+/// broken one never holds the app back.
 @riverpod
 bool? autoLoad(Ref ref, DataKind kind) {
-  final connection = ref.watch(connectionProvider).value;
-  final images = ref.watch(imagesOnMobileDataProvider).value;
-  final gifs = ref.watch(gifsOnMobileDataProvider).value;
-  final linkPictures = ref.watch(linkPicturesOnMobileDataProvider).value;
-  final dataSaver = ref.watch(dataSaverProvider).value;
-  if (connection == null ||
-      images == null ||
-      gifs == null ||
-      linkPictures == null ||
-      dataSaver == null) {
-    return null;
-  }
+  final connection = ref.watch(connectionProvider);
+  final images = ref.watch(imagesOnMobileDataProvider);
+  final gifs = ref.watch(gifsOnMobileDataProvider);
+  final linkPictures = ref.watch(linkPicturesOnMobileDataProvider);
+  final dataSaver = ref.watch(dataSaverProvider);
+  final inputs = [connection, images, gifs, linkPictures, dataSaver];
+  if (inputs.any((input) => input.isLoading)) return null;
   return loadsAutomatically(
     kind,
-    connection: connection,
-    dataSaver: dataSaver,
-    images: images,
-    gifs: gifs,
-    linkPictures: linkPictures,
+    connection: connection.value ?? const [],
+    dataSaver: dataSaver.value ?? false,
+    images: images.value ?? Settings.imagesOnMobileData.defaultValue,
+    gifs: gifs.value ?? Settings.gifsOnMobileData.defaultValue,
+    linkPictures:
+        linkPictures.value ?? Settings.linkPicturesOnMobileData.defaultValue,
     dataSaverCoversWifi: dataSaverCoversWifi,
   );
 }
