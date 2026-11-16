@@ -10,6 +10,7 @@ import 'package:matterleast/screens/settings/display_settings_page.dart';
 import 'package:matterleast/screens/settings/mobile_data_settings_page.dart';
 import 'package:matterleast/screens/settings/notification_settings_page.dart';
 import 'package:matterleast/screens/settings/sessions_page.dart';
+import 'package:matterleast/screens/settings/settings_file_tiles.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/screens/settings/two_factor_page.dart';
@@ -96,6 +97,7 @@ class SettingsPage extends ConsumerWidget {
             subtitle: const Text('Connections, refreshes and saved data'),
             onTap: () => push(const StatusPage()),
           ),
+          const SettingsFileTiles(),
           const SettingsHeader('About'),
           ListTile(
             leading: const Icon(Icons.info_outline),
