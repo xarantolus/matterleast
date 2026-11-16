@@ -15,8 +15,8 @@ class Millis extends TypeConverter<DateTime, int> {
 }
 
 void configureConnection(CommonDatabase db) {
-  db.execute('PRAGMA journal_mode = WAL');
   db.execute('PRAGMA busy_timeout = 5000');
+  db.execute('PRAGMA journal_mode = WAL');
   db.execute('PRAGMA synchronous = NORMAL');
   db.execute('PRAGMA foreign_keys = ON');
 }

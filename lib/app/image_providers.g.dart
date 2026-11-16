@@ -320,18 +320,21 @@ String _$linkPicturesOnMobileDataHash() =>
     r'1dfee27cc634f5c5cc3120ce289a0def08f1660f';
 
 /// Whether [kind] loads without a tap; null until the connection and the
-/// settings are known.
+/// settings are known. An input that fails counts as its default, so a
+/// broken one never holds the app back.
 
 @ProviderFor(autoLoad)
 final autoLoadProvider = AutoLoadFamily._();
 
 /// Whether [kind] loads without a tap; null until the connection and the
-/// settings are known.
+/// settings are known. An input that fails counts as its default, so a
+/// broken one never holds the app back.
 
 final class AutoLoadProvider extends $FunctionalProvider<bool?, bool?, bool?>
     with $Provider<bool?> {
   /// Whether [kind] loads without a tap; null until the connection and the
-  /// settings are known.
+  /// settings are known. An input that fails counts as its default, so a
+  /// broken one never holds the app back.
   AutoLoadProvider._({
     required AutoLoadFamily super.from,
     required DataKind super.argument,
@@ -383,10 +386,11 @@ final class AutoLoadProvider extends $FunctionalProvider<bool?, bool?, bool?>
   }
 }
 
-String _$autoLoadHash() => r'4667135019d532a50c141c474cc02d25a0d6babe';
+String _$autoLoadHash() => r'86020183cc517d1ae8cb306843935f3085154372';
 
 /// Whether [kind] loads without a tap; null until the connection and the
-/// settings are known.
+/// settings are known. An input that fails counts as its default, so a
+/// broken one never holds the app back.
 
 final class AutoLoadFamily extends $Family
     with $FunctionalFamilyOverride<bool?, DataKind> {
@@ -400,7 +404,8 @@ final class AutoLoadFamily extends $Family
       );
 
   /// Whether [kind] loads without a tap; null until the connection and the
-  /// settings are known.
+  /// settings are known. An input that fails counts as its default, so a
+  /// broken one never holds the app back.
 
   AutoLoadProvider call(DataKind kind) =>
       AutoLoadProvider._(argument: kind, from: this);
