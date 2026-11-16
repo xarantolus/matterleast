@@ -91,6 +91,10 @@ class _TeamRailState extends ConsumerState<TeamRail> {
     );
     final target = widget.target;
     final current = servers.where((s) => s.url == target?.url).firstOrNull;
+    final signedOut = [
+      for (final s in ref.watch(serversProvider).value ?? const <ServerEntry>[])
+        if (!s.signedIn) s,
+    ];
     final dragging = isDesktop || _reordering;
     final moveServers = dragging && servers.length > 1;
     return FocusRegion(
@@ -142,6 +146,21 @@ class _TeamRailState extends ConsumerState<TeamRail> {
                 ],
               ),
             ),
+            for (final server in signedOut)
+              _RailButton(
+                tooltip: server.displayName,
+                details: 'Signed out · tap to sign in',
+                selected: false,
+                onPressed: () => Navigator.of(context).push(
+                  SlideRoute<void>.page(
+                    builder: (_) => AddServerScreen(
+                      initialUrl: server.url,
+                      initialName: server.displayName,
+                    ),
+                  ),
+                ),
+                child: InitialsBadge(name: server.displayName, faded: true),
+              ),
             if (_reordering)
               IconButton(
                 tooltip: 'Done',
