@@ -130,7 +130,8 @@ class RootViews {
   }
 
   /// Per team, over the followed threads with replies in its live
-  /// channels; direct and group messages belong to no team.
+  /// channels; mentions count only in unread threads, as the Threads entry
+  /// does; direct and group messages belong to no team.
   Future<Map<String, ({int mentions, bool unread})>>
   _followedThreadCounts() async {
     final rows =
@@ -152,7 +153,8 @@ class RootViews {
       final team = row.readTable(db.channels).teamId;
       final before = counts[team] ?? (mentions: 0, unread: false);
       counts[team] = (
-        mentions: before.mentions + t.unreadMentions,
+        mentions:
+            before.mentions + (t.unreadReplies > 0 ? t.unreadMentions : 0),
         unread: before.unread || t.unreadReplies > 0,
       );
     }

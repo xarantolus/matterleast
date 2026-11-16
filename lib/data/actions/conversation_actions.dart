@@ -262,8 +262,10 @@ class ConversationActions {
 
   /// Marks the thread read up to its newest reply, here and on the server.
   Future<void> markThreadRead(String teamId, String rootId) async {
-    final now = await _db.newestPostAt(rootId: rootId);
-    if (now == null) return;
+    final newest = await _db.newestPostAt(rootId: rootId);
+    if (newest == null) return;
+    // The server counts a mention at exactly the viewed time as unread.
+    final now = newest.add(const Duration(milliseconds: 1));
     await _store.applyThreadRead(
       teamId: teamId,
       threadId: rootId,
