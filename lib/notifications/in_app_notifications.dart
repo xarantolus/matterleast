@@ -157,23 +157,26 @@ class InAppNotifications {
       serverName: label,
     );
     _labels[url] = label;
-    late final LiveNotifications live;
-    live = _attached[url] = LiveNotifications(
+    _attached[url] = LiveNotifications(
       history: (liveFrom) => markSeen(
         session.db,
         liveFrom?.subtract(const Duration(milliseconds: 1)),
       ),
+      active: () => route(url, null) != NoticeRoute.none,
       applied: session.connection.applied,
       caughtUp: session.connection.caughtUp,
       check: ({required afterGap}) async {
-        if (route(url, null) == NoticeRoute.none) {
-          // Skipped while hidden: what was stored meanwhile is history.
-          live.rearm();
-          return;
-        }
         await check.run(refresh: false, fetch: afterGap);
       },
     )..start();
+  }
+
+  /// The app went away on a phone, where the background engines take over:
+  /// whatever the next catch-up brings is history.
+  void rearmAll() {
+    for (final live in _attached.values) {
+      live.rearm();
+    }
   }
 
   Future<void> _detach(String url) async {

@@ -11,6 +11,7 @@ class LiveNotifications {
     required this._caughtUp,
     required this._check,
     this.history,
+    this.active = _always,
     this.delay = const Duration(seconds: 2),
   }) : _historyPending = history != null;
 
@@ -27,6 +28,12 @@ class LiveNotifications {
   /// from then on gets checked.
   final Future<void> Function(DateTime? liveFrom)? history;
 
+  /// Whether checking makes sense now. While not, events are ignored, and
+  /// the app is expected to [rearm] when it goes inactive.
+  final bool Function() active;
+
+  static bool _always() => true;
+
   /// Posts often come in bursts; one check covers them.
   final Duration delay;
 
@@ -37,7 +44,7 @@ class LiveNotifications {
   DateTime? _liveFrom;
   var _sawLive = false;
 
-  /// The next catch-up is history again, for when checks were skipped.
+  /// The next catch-up is history again, for when the app was away.
   void rearm() {
     if (history == null) return;
     _historyPending = true;
@@ -57,6 +64,7 @@ class LiveNotifications {
   }
 
   void _posted(PostedEvent e) {
+    if (!active()) return;
     if (_historyPending) {
       _sawLive = true;
       final at = e.post?.createAt;
@@ -68,6 +76,7 @@ class LiveNotifications {
   }
 
   Future<void> _caughtUpNow() async {
+    if (!active()) return;
     if (_historyPending) {
       final live = _sawLive;
       await _settleHistory();
@@ -79,7 +88,7 @@ class LiveNotifications {
 
   Future<void> _settleHistory() async {
     if (!_historyPending) return;
-    _historyPending = false;
+    _historyPending = history != null;
     final liveFrom = _liveFrom;
     final sawLive = _sawLive;
     _liveFrom = null;
@@ -91,6 +100,7 @@ class LiveNotifications {
   void _soon() {
     _debounce?.cancel();
     _debounce = Timer(delay, () async {
+      if (!active()) return;
       await _settleHistory();
       if (_subscriptions.isEmpty) return;
       final afterGap = _gap;

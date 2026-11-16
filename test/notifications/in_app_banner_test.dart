@@ -7,6 +7,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/data/servers/server_manager.dart';
+import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/notifications/in_app_notifications.dart';
 import 'package:matterleast/notifications/notice_banner.dart';
@@ -37,6 +39,19 @@ class _Toasts extends Notifier {
   Future<List<ShownConversation>> shown(String serverUrl) async => const [];
 }
 
+/// Serves the harness's session, as the manager does for a signed-in server.
+class _Manager extends Fake implements ServerManager {
+  _Manager(this._session);
+
+  final ServerSession _session;
+
+  @override
+  Stream<String> get changed => const Stream.empty();
+
+  @override
+  Future<ServerSession> session(String url) async => _session;
+}
+
 const _directId = 'dm000000000000000000000d01';
 const _patId = 'pt000000000000000000000p01';
 final _earlier = DateTime.utc(2026, 10, 25, 10);
@@ -53,8 +68,13 @@ void main() {
       tester,
       platform: platform,
       trackRoutes: true,
-      handle: (r) =>
-          r.path.contains('/users/') ? ok(<Object?>[]) : emptyAnswer(r),
+      handle: (r) {
+        if (r.path.endsWith('/users/me')) {
+          return ok({'id': meId, 'username': 'me', 'roles': 'system_user'});
+        }
+        final lists = ['/users/', '/preferences', '/teams', '/members'];
+        return lists.any(r.path.contains) ? ok(<Object?>[]) : emptyAnswer(r);
+      },
       home: (_) =>
           const NoticeBannerOverlay(child: Scaffold(body: SizedBox.expand())),
       overrides: (url) => [
@@ -286,27 +306,42 @@ void main() {
     await harness.close(tester);
   });
 
-  testWidgets('what was stored before the first catch-up is history: no '
-      'banner, the cursor moves past it, and a later post still shows', (
-    tester,
-  ) async {
-    await start(tester);
-    await tester.runAsync(
-      () => harness.session.store.applyLivePost(
-        api.Post.fromJson({
-          'id': 'old1',
-          'channel_id': _directId,
-          'user_id': _patId,
-          'create_at': _later.millisecondsSinceEpoch,
-          'message': 'from while you were away',
-        }),
-        fromSelf: false,
-        mentionsMe: false,
-      ),
+  /// A post by Pat in the direct channel, stored without a check.
+  Future<void> stores(WidgetTester tester, String text, DateTime at) =>
+      tester.runAsync(
+        () => harness.session.store.applyLivePost(
+          api.Post.fromJson({
+            'id': 'st${text.hashCode}',
+            'channel_id': _directId,
+            'user_id': _patId,
+            'create_at': at.millisecondsSinceEpoch,
+            'message': text,
+          }),
+          fromSelf: false,
+          mentionsMe: false,
+        ),
+      ) ??
+      Future.value();
+
+  Future<void> catchesUp(WidgetTester tester) async {
+    var caughtUp = false;
+    unawaited(
+      harness.session.connection.caughtUp.first.then((_) => caughtUp = true),
     );
-    await tester.runAsync(() => markSeen(harness.session.db, _later));
+    harness.session.connection.refreshAll(quiet: true);
+    await harness.settle(tester, until: () => caughtUp);
+    await tester.pump(const Duration(seconds: 3));
+  }
+
+  testWidgets('what arrived while the app was closed gives no banner after '
+      'the first catch-up, but a post arriving live does', (tester) async {
+    await start(tester);
+    await stores(tester, 'from while you were away', _later);
+    await container.read(inAppNotificationsProvider).follow([
+      testServerEntry(harness.url),
+    ]);
     await open(tester, channelId, 'Boats');
-    await tester.pump(const Duration(milliseconds: 200));
+    await catchesUp(tester);
     expect(banner('from while you were away'), findsNothing);
     await arrives(
       tester,

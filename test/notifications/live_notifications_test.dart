@@ -83,11 +83,13 @@ class _Run {
       applied: applied.stream,
       caughtUp: caughtUp.stream,
       history: (liveFrom) async => marks.add(liveFrom),
+      active: () => visible,
       check: ({required afterGap}) async => checks.add(afterGap),
     );
   }
 
   late final LiveNotifications live;
+  var visible = true;
   final marks = <DateTime?>[];
   final checks = <bool>[];
 }
@@ -155,6 +157,30 @@ void historyTests() {
       time.elapse(const Duration(seconds: 5));
       expect(r.marks, [null, null]);
       expect(r.checks, isEmpty);
+    });
+  });
+
+  test('while the app is away events are ignored, and the catch-up after it '
+      'returns is history, then a live post checks', () {
+    fakeAsync((time) {
+      final r = _Run(applied, caughtUp)..live.start();
+      caughtUp.add(null);
+      time.elapse(const Duration(seconds: 5));
+      r
+        ..visible = false
+        ..live.rearm();
+      applied.add(live);
+      caughtUp.add(null);
+      time.elapse(const Duration(seconds: 5));
+      expect(r.checks, isEmpty);
+      r.visible = true;
+      caughtUp.add(null);
+      time.elapse(const Duration(seconds: 5));
+      expect(r.marks, [null, null]);
+      expect(r.checks, isEmpty);
+      applied.add(live);
+      time.elapse(const Duration(seconds: 5));
+      expect(r.checks, [false]);
     });
   });
 }
