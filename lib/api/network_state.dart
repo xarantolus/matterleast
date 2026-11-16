@@ -40,8 +40,7 @@ class NetworkState {
 
   /// The current state, then the changes. When the current state can't be
   /// read (or isn't within [firstReadTimeout]) the changes aren't watched
-  /// either. The Linux plugin's D-Bus setup
-  /// fails in a future nobody awaits, so the read runs in a guarded zone
+  /// either. The Linux plugin's D-Bus setup fails in a future nobody awaits, so the read runs in a guarded zone
   /// that turns such an escape into its error.
   static Stream<List<ConnectivityResult>> deviceReports(
     Future<List<ConnectivityResult>> Function() current,

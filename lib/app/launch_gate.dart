@@ -35,6 +35,7 @@ import 'package:matterleast/screens/search/search_providers.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/terms/terms_gate.dart';
 import 'package:matterleast/ui/slide_route.dart';
+import 'package:matterleast/ui/tokens.dart';
 
 /// Picks the first screen from the server list on disk: the root with the
 /// rail when any server is signed in, else Add server. Also tells the user
@@ -323,7 +324,7 @@ class StartupWait extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Spacing.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -333,7 +334,7 @@ class StartupWait extends StatelessWidget {
                     : startupProblemText(failure),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.lg),
               FilledButton(onPressed: onRetry, child: const Text('Retry')),
             ],
           ),

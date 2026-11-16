@@ -98,7 +98,7 @@ String staleDataNotice(ApiError error) => switch (error) {
 
 /// Words for a failure to open the app's own saved data at start-up.
 String startupProblemText(Object error) =>
-    "Couldn't open the saved data. Try again.\n$error";
+    "Couldn't open the saved data.\n$error";
 
 /// The host part of a server [url].
 String hostOf(String url) => Uri.parse(url).host;
