@@ -65,6 +65,7 @@ class ServerSocket {
   var _actionSeq = 1;
   var _failCount = 0;
   var _waitingForPong = false;
+  final _pongWaiters = <Completer<void>>[];
   var _running = false;
   var _attempt = 0;
 
@@ -175,6 +176,43 @@ class ServerSocket {
     });
   }
 
+  /// Drops the connection and connects again, resuming where it left off.
+  /// For when the network changed under it, which the periodic ping would
+  /// only notice later.
+  void reconnect() {
+    if (_running && _state.value == SocketState.connected) {
+      unawaited(_reconnect());
+    }
+  }
+
+  /// A check for the moments the device wakes up: ping and wait for the
+  /// pong ([within], else reconnect), or connect at once when the socket
+  /// is down instead of waiting for the backoff. Returns once a pong has
+  /// come on a live connection, or after [settle].
+  Future<void> ensureAlive({
+    Duration within = const Duration(seconds: 5),
+    Duration settle = const Duration(seconds: 20),
+  }) async {
+    if (!_running) return;
+    final waiter = Completer<void>();
+    _pongWaiters.add(waiter);
+    switch (_state.value) {
+      case SocketState.connected:
+        checkAlive(within: within);
+      case SocketState.disconnected:
+        if (!_offline) {
+          _retryTimer?.cancel();
+          unawaited(_open());
+        }
+      case SocketState.connecting:
+    }
+    try {
+      await waiter.future.timeout(settle);
+    } on TimeoutException {
+      _pongWaiters.remove(waiter);
+    }
+  }
+
   /// Tells the channel (or the thread [parentId]) that the user is writing.
   /// Returns false when not connected.
   bool sendTyping(String channelId, String parentId) {
@@ -206,7 +244,13 @@ class ServerSocket {
       TrafficLog.event(frame.event ?? 'unknown', message.length);
     }
     if (frame.isReply) {
-      if (frame.isPong) _waitingForPong = false;
+      if (frame.isPong) {
+        _waitingForPong = false;
+        for (final waiter in _pongWaiters) {
+          if (!waiter.isCompleted) waiter.complete();
+        }
+        _pongWaiters.clear();
+      }
       if (frame.status == 'FAIL') Log.warn('socket', 'Action failed');
       return;
     }

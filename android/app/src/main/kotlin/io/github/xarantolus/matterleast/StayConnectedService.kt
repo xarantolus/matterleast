@@ -2,6 +2,7 @@ package io.github.xarantolus.matterleast
 
 import android.app.Notification
 import android.app.NotificationChannel
+import android.app.AlarmManager
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -11,6 +12,8 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
+import android.os.SystemClock
 import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -33,6 +36,7 @@ class StayConnectedService : Service() {
         startInForeground()
         if (intent?.action == ACTION_STOP || !isEnabled(this)) {
             setEnabled(this, false)
+            cancelCheck()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
@@ -52,6 +56,10 @@ class StayConnectedService : Service() {
                 )
             }
         }
+        scheduleCheck()
+        if (intent?.action == ACTION_CHECK) {
+            checkSocket()
+        }
         if (intent?.action == ACTION_UI_GONE) {
             engine?.let {
                 MethodChannel(it.dartExecutor.binaryMessenger, ENGINE_CHANNEL)
@@ -62,10 +70,60 @@ class StayConnectedService : Service() {
     }
 
     override fun onDestroy() {
+        cancelCheck()
         engine?.destroy()
         engine = null
         running = false
         super.onDestroy()
+    }
+
+    private fun checkIntent(): PendingIntent = PendingIntent.getForegroundService(
+        this,
+        2,
+        Intent(this, StayConnectedService::class.java).setAction(ACTION_CHECK),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
+    /**
+     * While the device dozes, Dart's timers sleep with the CPU, so a socket
+     * that a router dropped goes unnoticed. This inexact alarm (no
+     * permission, allowed while idle, which the system limits to about one
+     * per nine minutes) wakes the engine to ping the sockets.
+     */
+    private fun scheduleCheck() {
+        getSystemService(AlarmManager::class.java).setAndAllowWhileIdle(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            SystemClock.elapsedRealtime() + CHECK_INTERVAL_MS,
+            checkIntent(),
+        )
+    }
+
+    private fun cancelCheck() {
+        getSystemService(AlarmManager::class.java).cancel(checkIntent())
+    }
+
+    /** Keeps the CPU awake only until Dart has pinged, reconnected and answered. */
+    private fun checkSocket() {
+        val wakeLock = getSystemService(PowerManager::class.java)
+            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "matterleast:socket-check")
+        wakeLock.acquire(WAKE_LOCK_MS)
+        val release = {
+            if (wakeLock.isHeld) wakeLock.release()
+        }
+        val messenger = engine?.dartExecutor?.binaryMessenger
+        if (messenger == null) {
+            release()
+            return
+        }
+        MethodChannel(messenger, ENGINE_CHANNEL).invokeMethod(
+            "check",
+            null,
+            object : MethodChannel.Result {
+                override fun success(result: Any?) = release()
+                override fun error(code: String, message: String?, details: Any?) = release()
+                override fun notImplemented() = release()
+            },
+        )
     }
 
     private fun startInForeground() {
@@ -112,6 +170,9 @@ class StayConnectedService : Service() {
         private const val ACTION_UI_GONE = "io.github.xarantolus.matterleast.UI_GONE"
         private const val ENGINE_CHANNEL = "matterleast/stay_connected_engine"
         const val SYNC_CHANNEL = "sync"
+        private const val ACTION_CHECK = "io.github.xarantolus.matterleast.CHECK_SOCKET"
+        private const val CHECK_INTERVAL_MS = 5 * 60 * 1000L
+        private const val WAKE_LOCK_MS = 30 * 1000L
         private const val NOTIFICATION_ID = 0x5c
         private const val PREFS = "stay_connected"
         private const val KEY_ENABLED = "enabled"

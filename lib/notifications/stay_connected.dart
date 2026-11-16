@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:matterleast/api/websocket/server_socket.dart';
 import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/log.dart';
@@ -12,6 +13,7 @@ import 'package:matterleast/notifications/background.dart';
 import 'package:matterleast/notifications/live_notifications.dart';
 import 'package:matterleast/notifications/notification_check.dart';
 import 'package:matterleast/notifications/notifier.dart';
+import 'package:matterleast/notifications/notify_rules.dart';
 
 /// The opt-in foreground service, switched from the settings. Its state
 /// lives with the service (so its notification's Stop action and this
@@ -66,9 +68,14 @@ Future<void> stayConnectedMain() async {
   final engine = _ServiceEngine();
   // Android destroyed the UI, which may not have said goodbye.
   _engineChannel.setMethodCallHandler((call) async {
-    if (call.method != 'uiGone') return;
-    AppVisibility.forgetUi();
-    await engine.uiVisible(false);
+    switch (call.method) {
+      case 'uiGone':
+        AppVisibility.forgetUi();
+        await engine.uiVisible(false);
+      // The service's alarm: the device woke, so is the socket still alive?
+      case 'check':
+        await engine.checkAlive();
+    }
   });
   port.listen((message) {
     if (AppVisibility.answerPing(message)) return;
@@ -83,11 +90,36 @@ Future<void> stayConnectedMain() async {
   if (!await AppVisibility.stillVisible()) await engine.connect();
 }
 
+/// Notifies what arrives on [session] from now on, and first what arrived
+/// since the notification cursor, so a restarted service catches up. The
+/// caller starts the socket.
+LiveNotifications watchServer(
+  ServerSession session,
+  Notifier notifier,
+  String? label, {
+  required bool Function(ConversationKey key) shownNow,
+}) {
+  final check = NotificationCheck(
+    session,
+    notifier,
+    shownNow: shownNow,
+    serverName: label,
+  );
+  session.connection.withoutUi(check.run);
+  unawaited(check.run().catchError((Object _) {}));
+  return LiveNotifications(
+    applied: session.connection.applied,
+    caughtUp: session.connection.caughtUp,
+    check: ({required afterGap}) => check.run(refresh: false, fetch: afterGap),
+  )..start();
+}
+
 const _engineChannel = MethodChannel('matterleast/stay_connected_engine');
 
 class _ServiceEngine {
   BackgroundApp? _app;
   final _live = <LiveNotifications>[];
+  final _sockets = <ServerSocket>[];
   var _busy = Future<void>.value();
 
   /// One step at a time: connecting and letting go never overlap.
@@ -113,25 +145,21 @@ class _ServiceEngine {
         Log.warn('notify', 'Opening a server failed', e);
         continue;
       }
-      final check = NotificationCheck(
-        session,
-        app.notifier,
-        shownNow: (_) => AppVisibility.visible,
-        serverName: label,
-      );
-      session.connection.withoutUi(check.run);
       _live.add(
-        LiveNotifications(
-          applied: session.connection.applied,
-          caughtUp: session.connection.caughtUp,
-          check: ({required afterGap}) =>
-              check.run(refresh: false, fetch: afterGap),
-        )..start(),
+        watchServer(
+          session,
+          app.notifier,
+          label,
+          shownNow: (_) => AppVisibility.visible,
+        ),
       );
-      session.connection.socket.start();
-      unawaited(check.run().catchError((Object _) {}));
+      _sockets.add(session.connection.socket..start());
     }
   });
+
+  /// Pings every server's socket and reconnects the ones that don't answer.
+  Future<void> checkAlive() =>
+      Future.wait([..._sockets].map((s) => s.ensureAlive()));
 
   /// Lets go even when a step fails, so the next [connect] opens afresh
   /// instead of thinking it is still connected.
@@ -140,6 +168,7 @@ class _ServiceEngine {
     final live = [..._live];
     _app = null;
     _live.clear();
+    _sockets.clear();
     for (final l in live) {
       await _quietly(l.stop);
     }
