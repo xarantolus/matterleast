@@ -84,6 +84,66 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
+  for (final fromBelow in [false, true]) {
+    testWidgets(
+      'the Unread chip ${fromBelow ? 'above' : 'below'} brings a channel '
+      'several categories away on screen',
+      (tester) async {
+        await pumpApp(
+          tester,
+          Scaffold(
+            body: ChannelListPane(
+              url: _url,
+              teamId: 't1',
+              serverLabel: 'Example',
+              state: ChannelListReady(
+                ChannelList(
+                  teamName: 'Harbour',
+                  sections: [
+                    for (var s = 0; s < 30; s++)
+                      _section('Group $s', [
+                        for (var i = 0; i < 6; i++)
+                          _row('g$s-$i', unread: s == 20 && i == 4),
+                      ]),
+                  ],
+                  unreadThreads: 0,
+                  drafts: 0,
+                  synced: true,
+                ),
+                refreshing: false,
+              ),
+            ),
+          ),
+          overrides: [
+            teamScheduledProvider(
+              _url,
+              't1',
+            ).overrideWith((ref) => Stream.value([])),
+            agentsAvailableProvider(_url).overrideWithValue(true),
+          ],
+        );
+        await tester.pump();
+        final list = find.byType(CustomScrollView);
+        if (fromBelow) {
+          await tester.fling(list, const Offset(0, -20000), 5000);
+          await tester.pumpAndSettle();
+        }
+        await tester.pump();
+        expect(find.text('g20-4'), findsNothing);
+        await tester.tap(
+          find.widgetWithIcon(
+            ActionChip,
+            fromBelow ? Icons.arrow_upward : Icons.arrow_downward,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final box = tester.getRect(find.text('g20-4'));
+        final view = tester.getRect(list);
+        expect(view.contains(box.center), isTrue);
+      },
+    );
+  }
+
   testWidgets('a direct message moves up while the list is scrolled but idle, '
       'and waits while it is being dragged', (tester) async {
     ChannelListReady ready(List<String> order) => ChannelListReady(

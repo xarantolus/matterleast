@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/agent_providers.dart';
@@ -202,48 +203,72 @@ class _ChannelListViewState extends ConsumerState<_ChannelListView> {
     });
   }
 
-  /// Brings the channel [id] into view: at once when its row is laid out,
-  /// else first close by, from the rows' average height.
+  static const _revealSteps = 6;
+
+  /// Brings the channel [id] into view. While its row isn't built, moves
+  /// towards it from the built row nearest to it in list order, by that row's
+  /// height per step, and looks again; the last step is always ensureVisible.
   Future<void> _reveal(String id) async {
-    final row = _rows[id];
-    if (row != null && row.mounted) {
-      await Scrollable.ensureVisible(
-        row,
-        alignment: 0.3,
-        duration: motion(context, const Duration(milliseconds: 250)),
-        curve: Curves.easeOutCubic,
-      );
-      return;
-    }
     final order = [
       for (final section in _shown)
         for (final r in section.shown) r.id,
     ];
-    final known = _rows.entries.where((e) => e.value.mounted).toList();
-    if (known.isEmpty || !_scroll.hasClients) return;
-    final anchor = known.first;
-    final box = anchor.value.findRenderObject();
-    if (box is! RenderBox || !box.hasSize) return;
-    final rows = order.indexOf(id) - order.indexOf(anchor.key);
-    final position = _scroll.position;
-    final target = (position.pixels + rows * box.size.height).clamp(
-      position.minScrollExtent,
-      position.maxScrollExtent,
-    );
-    await _scroll.animateTo(
-      target,
+    final target = order.indexOf(id);
+    if (target < 0) return;
+    for (var step = 0; step < _revealSteps; step++) {
+      final row = _rows[id];
+      if (row != null && row.mounted) break;
+      if (!_scroll.hasClients) return;
+      final anchor = _nearestMounted(order, target);
+      final box = anchor?.value.findRenderObject();
+      if (anchor == null || box is! RenderBox || !box.hasSize) return;
+      final position = _scroll.position;
+      final gap = target - order.indexOf(anchor.key);
+      final at = RenderAbstractViewport.of(box)
+          .getOffsetToReveal(box, 0)
+          .offset;
+      final to = (at + gap * box.size.height).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      );
+      if (to == position.pixels) break;
+      await _scroll.animateTo(
+        to,
+        duration: motion(context, const Duration(milliseconds: 150)),
+        curve: Curves.easeOutCubic,
+      );
+      if (!mounted) return;
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+    }
+    final row = _rows[id];
+    if (row == null || !row.mounted) return;
+    await Scrollable.ensureVisible(
+      row,
+      alignment: 0.3,
       duration: motion(context, const Duration(milliseconds: 250)),
       curve: Curves.easeOutCubic,
     );
-    if (!mounted) return;
-    final now = _rows[id];
-    if (now != null && now.mounted) {
-      await Scrollable.ensureVisible(
-        now,
-        alignment: 0.3,
-        duration: motion(context, const Duration(milliseconds: 150)),
-      );
+    if (mounted) _checkUnread();
+  }
+
+  MapEntry<String, BuildContext>? _nearestMounted(
+    List<String> order,
+    int target,
+  ) {
+    MapEntry<String, BuildContext>? best;
+    var bestGap = 1 << 30;
+    for (final e in _rows.entries) {
+      if (!e.value.mounted) continue;
+      final at = order.indexOf(e.key);
+      if (at < 0) continue;
+      final gap = (at - target).abs();
+      if (gap < bestGap) {
+        best = e;
+        bestGap = gap;
+      }
     }
+    return best;
   }
 
   Future<void> _open(ChannelItem item) => openConversation(
