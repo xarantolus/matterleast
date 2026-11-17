@@ -326,7 +326,7 @@ class _NewMenu extends ConsumerWidget {
         ),
       (
         icon: Icons.edit_outlined,
-        label: 'New message',
+        label: 'Direct or group message',
         open: () => open(newMessageScreen(url: url, teamId: teamId)),
       ),
     ];

@@ -5,6 +5,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/data/actions/channel_actions.dart';
 import 'package:matterleast/domain/channel_list.dart';
 import 'package:matterleast/domain/sign_in_problems.dart';
+import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
+import 'package:matterleast/screens/open_page.dart';
 import 'package:matterleast/screens/root/root_providers.dart';
 import 'package:matterleast/ui/app_sheet.dart';
 import 'package:matterleast/ui/confirm_dialog.dart';
@@ -41,6 +43,21 @@ Future<void> showCategoryMenu(
           mainAxisSize: MainAxisSize.min,
           children: [
             SheetHeader(section.title),
+            if (kind == CategoryKind.directMessages)
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Direct or group message'),
+                subtitle: const Text('One person, or up to 7 for a group'),
+                onTap: () => close(
+                  () => unawaited(
+                    openPage(
+                      Navigator.of(context),
+                      newMessageScreen(url: url, teamId: teamId),
+                      popout: true,
+                    ),
+                  ),
+                ),
+              ),
             if (unread.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.done_all),

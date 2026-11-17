@@ -169,7 +169,7 @@ Widget newMessageScreen({required String url, required String teamId}) =>
     Consumer(
       builder: (context, ref, _) => PeoplePickerScreen(
         url: url,
-        title: 'New message',
+        title: 'Direct or group message',
         action: 'Start',
         limit: 7,
         limitText: 'Group messages are limited to 7 people besides you.',
