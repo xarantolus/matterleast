@@ -128,11 +128,18 @@ class StayConnectedService : Service() {
 
     private fun startInForeground() {
         val manager = getSystemService(NotificationManager::class.java)
-        if (manager.getNotificationChannel(SYNC_CHANNEL) == null) {
-            manager.createNotificationChannel(
-                NotificationChannel(SYNC_CHANNEL, "Sync", NotificationManager.IMPORTANCE_MIN),
-            )
-        }
+        // Creating it again updates the name and description only; the
+        // user's own choices for the channel stay.
+        manager.createNotificationChannel(
+            NotificationChannel(
+                SYNC_CHANNEL,
+                "Stay connected",
+                NotificationManager.IMPORTANCE_MIN,
+            ).apply {
+                description = "Shown while Stay connected runs. Turning it off " +
+                    "only hides it; new messages still arrive."
+            },
+        )
         val open = PendingIntent.getActivity(
             this,
             0,
@@ -148,7 +155,8 @@ class StayConnectedService : Service() {
         val notification = Notification.Builder(this, SYNC_CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Staying connected")
-            .setContentText("New messages arrive right away")
+            .setContentText(SAFE_TO_HIDE)
+            .setStyle(Notification.BigTextStyle().bigText(SAFE_TO_HIDE))
             .setContentIntent(open)
             .setOngoing(true)
             .setShowWhen(false)
@@ -170,6 +178,8 @@ class StayConnectedService : Service() {
         private const val ACTION_UI_GONE = "io.github.xarantolus.matterleast.UI_GONE"
         private const val ENGINE_CHANNEL = "matterleast/stay_connected_engine"
         const val SYNC_CHANNEL = "sync"
+        private const val SAFE_TO_HIDE = "New messages arrive right away. " +
+            "You can hide this notification; it keeps working."
         private const val ACTION_CHECK = "io.github.xarantolus.matterleast.CHECK_SOCKET"
         private const val CHECK_INTERVAL_MS = 5 * 60 * 1000L
         private const val WAKE_LOCK_MS = 30 * 1000L
