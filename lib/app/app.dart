@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/app/desktop/autoscroll.dart';
+import 'package:matterleast/app/desktop/right_drag_scroll.dart';
 import 'package:matterleast/app/keyboard_shortcuts.dart';
 import 'package:matterleast/app/launch_gate.dart';
 import 'package:matterleast/app/mouse_navigation.dart';
@@ -55,7 +56,9 @@ class MatterleastApp extends ConsumerWidget {
                       child: TouchpadNavigation(
                         child: CurrentCallBar(
                           child: isDesktop
-                              ? MiddleAutoscroll(child: child!)
+                              ? RightDragScroll(
+                                  child: MiddleAutoscroll(child: child!),
+                                )
                               : child!,
                         ),
                       ),
