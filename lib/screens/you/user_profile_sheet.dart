@@ -116,17 +116,15 @@ class UserProfileSheet extends ConsumerWidget {
               _Detail(label: 'Position', value: profile.position),
             if (profile.timezone case final zone?) _LocalTime(zone: zone),
             ProfileAttributesList(url: url, userId: userId),
-            if (!profile.isMe) ...[
-              const SizedBox(height: Spacing.lg),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.chat_bubble_outline),
-                  label: const Text('Message'),
-                  onPressed: () => _message(context, ref, profile),
-                ),
+            const SizedBox(height: Spacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: const Text('Message'),
+                onPressed: () => _message(context, ref, profile),
               ),
-            ],
+            ),
           ],
         ),
       ),
