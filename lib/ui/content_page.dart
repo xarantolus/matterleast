@@ -215,7 +215,7 @@ class SlidingBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final body = Material(
       color: color ?? Theme.of(context).scaffoldBackgroundColor,
-      child: child,
+      child: SizedBox.expand(child: child),
     );
     final route = ModalRoute.of(context);
     if (route is! SlideRoute || route.wholePage) return body;
