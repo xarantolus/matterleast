@@ -145,6 +145,12 @@ void main() {
       await sync.run();
       await settled();
       server.seen.clear();
+      server.handle = (r) => r.path.endsWith('/teams/unread')
+          ? ok([
+              for (final team in [lighthouse, harbor])
+                {'team_id': team, 'msg_count': 0, 'msg_count_root': 0},
+            ])
+          : recordedServer(r);
 
       await sync.run(light: true);
       await settled();

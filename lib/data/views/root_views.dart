@@ -80,7 +80,7 @@ class RootViews {
     };
     final threads = crt
         ? await _followedThreadCounts()
-        : const <String, ({int mentions, bool unread})>{};
+        : const <String, ({int mentions, int unread})>{};
     final iconUpdates = {
       for (final row in teams)
         row.readTable(db.teams).id: row.readTable(db.teams).lastTeamIconUpdate,
@@ -102,7 +102,7 @@ class RootViews {
                       (crt ? c.input.mentionCountRoot : c.input.mentionCount),
                 ),
             anyChannelUnread: own.any(
-              (c) => !c.input.muted && _unreadCount(c.input, crt) > 0,
+              (c) => !c.input.muted && unreadMessages(c.input, crt) > 0,
             ),
             teamMentions: crt
                 ? mine[team.id]!.mentionCountRoot
@@ -111,7 +111,7 @@ class RootViews {
                 ? mine[team.id]!.msgCountRoot
                 : mine[team.id]!.msgCount,
             threadMentions: threads[team.id]?.mentions ?? 0,
-            anyThreadUnread: threads[team.id]?.unread ?? false,
+            anyThreadUnread: (threads[team.id]?.unread ?? 0) > 0,
             channelUrgent: own
                 .where((c) => !c.input.muted)
                 .fold(0, (sum, c) => sum + c.input.urgentMentionCount),
@@ -129,10 +129,35 @@ class RootViews {
     ];
   }
 
+  /// What the server's unread counts should say per team, from the stored
+  /// channels and followed threads.
+  Future<Map<String, TeamCounts>> teamCounts() async {
+    final crt = await db.collapsedThreads();
+    final channels = await _myChannels((c) => c.teamId.equals('').not());
+    final threads = crt
+        ? await _followedThreadCounts()
+        : const <String, ({int mentions, int unread})>{};
+    final byTeam = <String, List<ChannelInput>>{};
+    for (final c in channels) {
+      (byTeam[c.teamId] ??= []).add(c.input);
+    }
+    final counts = <String, TeamCounts>{};
+    for (final id in {...byTeam.keys, ...threads.keys}) {
+      final own = channelCounts(byTeam[id] ?? const [], crt: crt);
+      counts[id] = (
+        messages: own.messages,
+        mentions: own.mentions,
+        threads: threads[id]?.unread ?? 0,
+        threadMentions: threads[id]?.mentions ?? 0,
+      );
+    }
+    return counts;
+  }
+
   /// Per team, over the followed threads with replies in its live
   /// channels; mentions count only in unread threads, as the Threads entry
   /// does; direct and group messages belong to no team.
-  Future<Map<String, ({int mentions, bool unread})>>
+  Future<Map<String, ({int mentions, int unread})>>
   _followedThreadCounts() async {
     final rows =
         await (db.select(db.threads).join([
@@ -147,22 +172,19 @@ class RootViews {
                   db.channels.teamId.equals('').not(),
             ))
             .get();
-    final counts = <String, ({int mentions, bool unread})>{};
+    final counts = <String, ({int mentions, int unread})>{};
     for (final row in rows) {
       final t = row.readTable(db.threads);
       final team = row.readTable(db.channels).teamId;
-      final before = counts[team] ?? (mentions: 0, unread: false);
+      final before = counts[team] ?? (mentions: 0, unread: 0);
       counts[team] = (
         mentions:
             before.mentions + (t.unreadReplies > 0 ? t.unreadMentions : 0),
-        unread: before.unread || t.unreadReplies > 0,
+        unread: before.unread + (t.unreadReplies > 0 ? 1 : 0),
       );
     }
     return counts;
   }
-
-  int _unreadCount(ChannelInput c, bool crt) =>
-      crt ? c.totalMsgCountRoot - c.msgCountRoot : c.totalMsgCount - c.msgCount;
 
   Future<List<({String teamId, ChannelInput input})>> _myChannels(
     Expression<bool> Function($ChannelsTable c) filter,

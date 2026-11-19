@@ -223,34 +223,9 @@ class NotificationCheck {
 
   /// The unread counts, then the channels of the current team (which
   /// include every direct message) and of teams whose counts changed.
-  Future<void> _refresh() async {
-    final entry = session.connection.entry;
-    final before = {
-      for (final t in await _db.select(_db.myTeams).get())
-        t.teamId: (t.msgCount, t.mentionCount),
-    };
-    final unreads = await session.api.call(
-      () => _client.teams.getTeamsUnreadForUser(
-        userId: 'me',
-        includeCollapsedThreads: true,
-      ),
-    );
-    await session.store.applyTeamUnreads(unreads);
-    final teams = {
-      ?await _db.syncText(SyncKeys.currentTeamId),
-      for (final u in unreads)
-        if (u.teamId case final id?
-            when before[id] != (u.msgCount ?? 0, u.mentionCount ?? 0))
-          id,
-    };
-    final crt = await _db.collapsedThreads();
-    await Future.wait([
-      for (final team in teams) ...[
-        entry.refreshTeam(team, priority: SyncPriority.p1),
-        if (crt) entry.unreadThreads(team),
-      ],
-    ]);
-  }
+  Future<void> _refresh() async => session.connection.entry.refreshUnreadTeams(
+    also: await _db.syncText(SyncKeys.currentTeamId),
+  );
 
   Future<NotifyUser> _user(String myId) async {
     final me = await (_db.select(

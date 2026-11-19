@@ -268,11 +268,14 @@ ChannelList buildChannelList(ChannelListSource source) {
   );
 }
 
+/// How many messages of [c] the user hasn't read; root posts only with
+/// collapsed threads ([crt]).
+int unreadMessages(ChannelInput c, bool crt) =>
+    crt ? c.totalMsgCountRoot - c.msgCountRoot : c.totalMsgCount - c.msgCount;
+
 ChannelItem _item(ChannelListSource source, ChannelInput c, bool favorite) {
   final crt = source.collapsedThreads;
-  final unreadCount = crt
-      ? c.totalMsgCountRoot - c.msgCountRoot
-      : c.totalMsgCount - c.msgCount;
+  final unreadCount = unreadMessages(c, crt);
   final kind = switch (c.type) {
     'D' => ChannelKind.direct,
     'G' => ChannelKind.group,
