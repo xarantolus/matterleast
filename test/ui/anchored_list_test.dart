@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/ui/anchored_list.dart';
@@ -465,6 +468,43 @@ void main() {
       TargetPlatform.linux,
     }),
   );
+
+  for (final count in [3, 6, 9]) {
+    testWidgets('the mouse wheel never scrolls $count rows past either end', (
+      tester,
+    ) async {
+      await tester.pumpWidget(list(rowsFrom(count, 1)));
+      await tester.pumpAndSettle();
+      final wheel = TestPointer(1, PointerDeviceKind.mouse);
+      final total = rowsFrom(count, 1).fold(0.0, (sum, r) => sum + r.height);
+      // A row that isn't built is off screen, so it leaves no gap.
+      void expectInRange() {
+        if (find.text('row 1').evaluate().isNotEmpty) {
+          expect(
+            topOf(tester, 1),
+            lessThanOrEqualTo(math.max(0, 600 - total) + 0.5),
+          );
+        }
+        if (find.text('row $count').evaluate().isNotEmpty) {
+          expect(
+            tester.getBottomLeft(find.text('row $count')).dy,
+            greaterThanOrEqualTo(599.5),
+          );
+        }
+      }
+
+      for (final dy in [-100.0, 100.0]) {
+        for (var i = 0; i < 30; i++) {
+          await tester.sendEventToBinding(wheel.hover(const Offset(400, 300)));
+          await tester.sendEventToBinding(wheel.scroll(Offset(0, dy)));
+          await tester.pump();
+          expectInRange();
+        }
+        await tester.pumpAndSettle();
+        expectInRange();
+      }
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+  }
 
   testWidgets('a scroll up from the bottom stays where it stopped', (
     tester,
