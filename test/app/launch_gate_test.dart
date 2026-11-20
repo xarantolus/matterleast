@@ -69,4 +69,26 @@ void main() {
     never.add(const []);
     await closeApp(tester);
   });
+
+  testWidgets('the first screen, with no server yet, offers to import '
+      'settings', (tester) async {
+    await pumpApp(
+      tester,
+      const LaunchGate(),
+      overrides: [
+        serversProvider.overrideWith(
+          (ref) => Stream.value(const <ServerEntry>[]),
+        ),
+        autoLoadProvider(DataKind.linkPicture).overrideWith((ref) => true),
+        networkStateProvider.overrideWith(
+          (ref) => NetworkState(Stream.value([ConnectivityResult.wifi])),
+        ),
+      ],
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Connect to your server'), findsOneWidget);
+    expect(find.text('Import settings'), findsOneWidget);
+    await closeApp(tester);
+  });
 }

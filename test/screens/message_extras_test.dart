@@ -362,4 +362,58 @@ void main() {
     expect(asked, 1);
     expect(find.textContaining('Edited'), findsOneWidget);
   });
+
+  Future<void> queueWaitingPost() => h.session.store.queuePost(
+    pendingPostId: 'me:1',
+    channelId: channelId,
+    rootId: '',
+    userId: meId,
+    message: 'waiting boats',
+    createAt: DateTime.utc(2026, 10, 25, 11),
+  );
+
+  Iterable<SeenRequest> created() => h.server.seen.where(
+    (r) => r.method == 'POST' && r.path == '/api/v4/posts',
+  );
+
+  testWidgets('a message waiting to be sent offers Send now, which sends it', (
+    tester,
+  ) async {
+    await openMenu(
+      tester,
+      postItem(
+        id: 'me:1',
+        userId: meId,
+        authorName: 'River',
+      ).copyWith(sendState: 'pending'),
+      handle: flaggingOn,
+    );
+    await queueWaitingPost();
+    expect(find.text('Copy text'), findsOneWidget);
+    await tester.tap(find.text('Send now'));
+    await h.settle(tester);
+    expect(created().single.body['pending_post_id'], 'me:1');
+    expect(await h.session.store.outboxRows(), isEmpty);
+    await h.close(tester);
+  });
+
+  testWidgets('a message waiting to be sent can be deleted instead', (
+    tester,
+  ) async {
+    await openMenu(
+      tester,
+      postItem(
+        id: 'me:1',
+        userId: meId,
+        authorName: 'River',
+      ).copyWith(sendState: 'pending'),
+      handle: flaggingOn,
+    );
+    await queueWaitingPost();
+    await tester.tap(find.text('Delete'));
+    await h.settle(tester);
+    expect(created(), isEmpty);
+    expect(await h.session.store.outboxRows(), isEmpty);
+    await h.close(tester);
+  });
 }

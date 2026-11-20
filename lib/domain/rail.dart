@@ -116,3 +116,57 @@ bool placeChanged(RailTarget? before, RailTarget? after) {
     ),
   );
 }
+
+/// The numbers a server reports per team in its unread counts; with
+/// collapsed threads the root-only message and mention counts, plus its
+/// followed threads.
+typedef TeamCounts = ({
+  int messages,
+  int mentions,
+  int threads,
+  int threadMentions,
+});
+
+const noTeamCounts = (messages: 0, mentions: 0, threads: 0, threadMentions: 0);
+
+/// A team's channel counts as the server adds them up: unread messages of
+/// channels that aren't muted or archived, mentions of every live channel,
+/// muted ones too.
+({int messages, int mentions}) channelCounts(
+  Iterable<ChannelInput> channels, {
+  required bool crt,
+}) {
+  var messages = 0;
+  var mentions = 0;
+  for (final c in channels) {
+    if (c.archived) continue;
+    mentions += crt ? c.mentionCountRoot : c.mentionCount;
+    if (!c.muted) messages += unreadMessages(c, crt);
+  }
+  return (messages: messages, mentions: mentions);
+}
+
+/// The teams whose channels, and whose followed threads, must be fetched
+/// because the server's counts differ from the [local] ones derived from
+/// what is stored. A team without fetched channels ([unsynced]) always
+/// differs.
+({Set<String> channels, Set<String> threads}) staleTeams({
+  required Map<String, TeamCounts> server,
+  required Map<String, TeamCounts> local,
+  Set<String> unsynced = const {},
+}) {
+  final channels = <String>{};
+  final threads = <String>{};
+  for (final MapEntry(key: id, value: s) in server.entries) {
+    final l = local[id] ?? noTeamCounts;
+    if (unsynced.contains(id) ||
+        s.messages != l.messages ||
+        s.mentions != l.mentions) {
+      channels.add(id);
+    }
+    if (s.threads != l.threads || s.threadMentions != l.threadMentions) {
+      threads.add(id);
+    }
+  }
+  return (channels: channels, threads: threads);
+}

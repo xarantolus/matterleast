@@ -10,6 +10,7 @@ import 'package:matterleast/app/image_memory.dart';
 import 'package:matterleast/app/image_providers.dart';
 import 'package:matterleast/app/incoming_links.dart';
 import 'package:matterleast/app/incoming_shares.dart';
+import 'package:matterleast/app/platform.dart';
 import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/app/restore_conversation.dart';
 import 'package:matterleast/app/share_receiver.dart';
@@ -148,7 +149,10 @@ class _LaunchGateState extends ConsumerState<LaunchGate> {
           if (AppVisibility.visible) return manager.setForeground(true);
         }),
       ),
-      onHide: () => unawaited(appHidden(manager)),
+      onHide: () {
+        if (!isDesktop) ref.read(inAppNotificationsProvider).rearmAll();
+        unawaited(appHidden(manager));
+      },
     );
   }
 

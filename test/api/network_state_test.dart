@@ -99,4 +99,32 @@ void main() {
       unawaited(network.close());
     });
   });
+
+  group('network switch', () {
+    test('another network in use is a switch', () {
+      expect(
+        networkSwitched([ConnectivityResult.wifi], [ConnectivityResult.mobile]),
+        isTrue,
+      );
+      expect(
+        networkSwitched(
+          [ConnectivityResult.wifi],
+          [ConnectivityResult.wifi, ConnectivityResult.vpn],
+        ),
+        isTrue,
+      );
+    });
+
+    test('the same, the first report and losing the network are not', () {
+      expect(
+        networkSwitched([ConnectivityResult.wifi], [ConnectivityResult.wifi]),
+        isFalse,
+      );
+      expect(networkSwitched(null, [ConnectivityResult.wifi]), isFalse);
+      expect(
+        networkSwitched([ConnectivityResult.wifi], [ConnectivityResult.none]),
+        isFalse,
+      );
+    });
+  });
 }

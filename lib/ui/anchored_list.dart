@@ -175,6 +175,23 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     return top;
   }
 
+  /// How far the wheel may turn towards the oldest and the newest row.
+  /// The newest end is only measured while the range is unknown.
+  ({double older, double newer}) _wheelRoom() {
+    final top = _oldestTop();
+    final older = top == null ? double.infinity : top - _scroll.position.pixels;
+    final height = _viewportHeight;
+    final newest = _newestKey;
+    if (!_splitPending || height == null || newest == null) {
+      return (older: older, newer: double.infinity);
+    }
+    final row = _rowAt(newest);
+    return (
+      older: older,
+      newer: row == null ? double.infinity : row.bottom - height,
+    );
+  }
+
   /// The view's position when a row was opened, under its anchor.
   ({Object? anchor, double pixels})? _openedAt;
 
@@ -209,6 +226,7 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
     _anchor = known ? initial.key : _newestKey;
     _scroll = _AnchoredController(
       splitPending: () => _splitPending,
+      wheelRoom: _wheelRoom,
       initialScrollOffset: known ? -initial.offset : 0,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _settle());
@@ -841,10 +859,14 @@ class _AnchoredListState<T> extends State<AnchoredList<T>> {
 /// anchor, which would clamp the next wheel turn (it clamps in the position,
 /// before the physics) and throw the view a screen away.
 class _AnchoredController extends ScrollController {
-  _AnchoredController({required this.splitPending, super.initialScrollOffset})
-    : super(keepScrollOffset: false);
+  _AnchoredController({
+    required this.splitPending,
+    required this.wheelRoom,
+    super.initialScrollOffset,
+  }) : super(keepScrollOffset: false);
 
   final bool Function() splitPending;
+  final ({double older, double newer}) Function() wheelRoom;
 
   @override
   ScrollPosition createScrollPosition(
@@ -853,6 +875,7 @@ class _AnchoredController extends ScrollController {
     ScrollPosition? oldPosition,
   ) => _AnchoredPosition(
     splitPending: splitPending,
+    wheelRoom: wheelRoom,
     physics: physics,
     context: context,
     initialPixels: initialScrollOffset,
@@ -865,6 +888,7 @@ class _AnchoredController extends ScrollController {
 class _AnchoredPosition extends ScrollPositionWithSingleContext {
   _AnchoredPosition({
     required this.splitPending,
+    required this.wheelRoom,
     required super.physics,
     required super.context,
     super.initialPixels,
@@ -874,10 +898,24 @@ class _AnchoredPosition extends ScrollPositionWithSingleContext {
   });
 
   final bool Function() splitPending;
+  final ({double older, double newer}) Function() wheelRoom;
 
   @override
   double get minScrollExtent =>
       splitPending() ? double.negativeInfinity : super.minScrollExtent;
+
+  /// The wheel clamps to the viewport's range and skips the physics, so it
+  /// would scroll into the empty space above a short list's oldest row, or,
+  /// while the range is unknown, past the newest row.
+  @override
+  void pointerScroll(double delta) {
+    final room = wheelRoom();
+    super.pointerScroll(
+      delta > 0
+          ? math.min(delta, math.max(0.0, room.older))
+          : math.max(delta, -math.max(0.0, room.newer)),
+    );
+  }
 }
 
 /// Keeps the offset inside the content: after rows change while nothing

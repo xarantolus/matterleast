@@ -10,8 +10,10 @@ import 'package:matterleast/data/sync/draft_sync.dart';
 import 'package:matterleast/data/sync/scheduled_sync.dart';
 import 'package:matterleast/data/sync/sync_runner.dart';
 import 'package:matterleast/data/users/user_loader.dart';
+import 'package:matterleast/data/views/root_views.dart';
 import 'package:matterleast/domain/permissions.dart';
 import 'package:matterleast/domain/preference_keys.dart';
+import 'package:matterleast/domain/rail.dart';
 import 'package:matterleast/domain/server_features.dart';
 import 'package:matterleast/domain/teams.dart';
 import 'package:matterleast/log.dart';
@@ -62,15 +64,6 @@ class EntrySync {
     SyncPriority priority = SyncPriority.p0,
   }) => runner.enqueue(
     SyncJob(key: 'team:$teamId', priority: priority, run: () => _team(teamId)),
-  );
-
-  /// The followed threads of [teamId] with unread replies.
-  Future<void> unreadThreads(String teamId) => runner.enqueue(
-    SyncJob(
-      key: 'threads:$teamId',
-      visible: false,
-      run: () => _threads(teamId),
-    ),
   );
 
   /// The server's enabled webapp plugins, as far as it lets us see them.
@@ -177,7 +170,7 @@ class EntrySync {
       await _team(teamId);
     }
     await _db.setSyncInt(SyncKeys.lastFullSync, started.millisecondsSinceEpoch);
-    _deferred(teamId, joined, (await me).roles ?? '', light: light);
+    _deferred(teamId, (await me).roles ?? '', light: light);
   }
 
   Future<List<TeamName>> _joinedTeams() async {
@@ -226,12 +219,7 @@ class EntrySync {
     );
   }
 
-  void _deferred(
-    String? currentTeam,
-    List<TeamName> teams,
-    String myRoles, {
-    required bool light,
-  }) {
+  void _deferred(String? currentTeam, String myRoles, {required bool light}) {
     void later(String key, SyncPriority priority, Future<void> Function() run) {
       unawaited(
         runner
@@ -241,13 +229,11 @@ class EntrySync {
     }
 
     later('profiles', SyncPriority.p1, _directProfiles);
-    later('team_unreads', SyncPriority.p1, () async {
-      final changed = await _teamUnreads();
-      if (!light) return;
-      for (final team in changed) {
-        if (team != currentTeam) await _team(team);
-      }
-    });
+    later(
+      'team_unreads',
+      SyncPriority.p1,
+      () => _unreadTeams(skip: currentTeam, all: !light),
+    );
     if (currentTeam != null) {
       later(
         'threads:$currentTeam',
@@ -270,12 +256,6 @@ class EntrySync {
       }
     }
     later('burned', SyncPriority.p3, () => store.removeBurnedPosts(_clock()));
-    if (!light) {
-      for (final team in teams) {
-        if (team.id == currentTeam) continue;
-        later('team:${team.id}', SyncPriority.p1, () => _team(team.id));
-      }
-    }
     later('roles', SyncPriority.p3, () => _roles(myRoles));
     unawaited(refreshPlugins().catchError((Object _) {}));
   }
@@ -296,12 +276,23 @@ class EntrySync {
     await store.applyPlugins(plugins);
   }
 
-  /// The teams whose counts differ from what was stored.
-  Future<Set<String>> _teamUnreads() async {
-    final before = {
-      for (final t in await _db.select(_db.myTeams).get())
-        t.teamId: (t.msgCount, t.mentionCount),
-    };
+  /// The server's unread counts, then the channels and followed threads of
+  /// the teams where they differ from what is stored, plus [also]. At
+  /// entry every team but the current one ([skip]) is fetched with [all].
+  /// The foreground sync and the background check share it.
+  Future<void> refreshUnreadTeams({String? also}) => runner.enqueue(
+    SyncJob(
+      key: 'team_unreads',
+      priority: SyncPriority.p1,
+      run: () => _unreadTeams(also: also),
+    ),
+  );
+
+  Future<void> _unreadTeams({
+    String? skip,
+    String? also,
+    bool all = false,
+  }) async {
     final unreads = await server.call(
       () => _client.teams.getTeamsUnreadForUser(
         userId: 'me',
@@ -309,12 +300,38 @@ class EntrySync {
       ),
     );
     await store.applyTeamUnreads(unreads);
-    return {
-      for (final u in unreads)
-        if (u.teamId case final id?
-            when before[id] != (u.msgCount ?? 0, u.mentionCount ?? 0))
-          id,
+    final crt = await _db.collapsedThreads();
+    final synced = {
+      for (final s in await (_db.select(
+        _db.syncState,
+      )..where((s) => s.key.like('${SyncKeys.channelsSince('')}%'))).get())
+        s.key.substring(SyncKeys.channelsSince('').length),
     };
+    final stale = staleTeams(
+      server: {
+        for (final u in unreads)
+          ?u.teamId: (
+            messages: (crt ? u.msgCountRoot : u.msgCount) ?? 0,
+            mentions: (crt ? u.mentionCountRoot : u.mentionCount) ?? 0,
+            threads: crt ? u.threadCount ?? 0 : 0,
+            threadMentions: crt ? u.threadMentionCount ?? 0 : 0,
+          ),
+      },
+      local: await RootViews(_db).teamCounts(),
+      unsynced: {
+        for (final u in unreads)
+          if (u.teamId case final id? when !synced.contains(id)) id,
+      },
+    );
+    final every = all
+        ? [for (final t in await _joinedTeams()) t.id]
+        : <String>[];
+    final channels = {...stale.channels, ...every, ?also}..remove(skip);
+    final threads = {...stale.threads, ...every, ?also}..remove(skip);
+    await Future.wait([
+      for (final team in channels) _team(team),
+      for (final team in threads) _threads(team),
+    ]);
   }
 
   /// Profiles of direct message partners we don't have yet, so their rows

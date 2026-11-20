@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/domain/channel_list.dart';
+import 'package:matterleast/screens/channel_info/people_picker_screen.dart';
 import 'package:matterleast/screens/channel_list/category_menu.dart';
 
 import '../../support/fake_server.dart';
@@ -119,6 +120,21 @@ void main() {
     await open(tester, section(CategoryKind.directMessages));
     expect(find.text('Show recent messages'), findsOneWidget);
     expect(find.text('Mute category'), findsNothing);
+    await h.close(tester);
+  });
+
+  testWidgets('direct messages start a direct or group message', (
+    tester,
+  ) async {
+    await open(tester, section(CategoryKind.directMessages));
+    await tapText(tester, 'Direct or group message');
+    expect(find.byType(PeoplePickerScreen), findsOneWidget);
+    await h.close(tester);
+  });
+
+  testWidgets('a custom category offers no new message', (tester) async {
+    await open(tester, section(CategoryKind.custom));
+    expect(find.text('Direct or group message'), findsNothing);
     await h.close(tester);
   });
 

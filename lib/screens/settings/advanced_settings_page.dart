@@ -4,7 +4,6 @@ import 'package:matterleast/app/providers.dart';
 import 'package:matterleast/data/app_db/settings.dart';
 import 'package:matterleast/data/images/cache_usage.dart';
 import 'package:matterleast/domain/post_files.dart';
-import 'package:matterleast/screens/settings/settings_file_tiles.dart';
 import 'package:matterleast/screens/settings/settings_providers.dart';
 import 'package:matterleast/screens/settings/settings_widgets.dart';
 import 'package:matterleast/ui/content_page.dart';
@@ -87,8 +86,6 @@ class AdvancedSettingsPage extends ConsumerWidget {
                 _filesBudgets,
               ),
             ),
-          const SettingsHeader('Settings file'),
-          const SettingsFileTiles(),
         ],
       ),
     );

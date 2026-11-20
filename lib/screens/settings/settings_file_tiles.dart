@@ -35,12 +35,16 @@ class SettingsFileTiles extends ConsumerWidget {
           leading: const Icon(Icons.download),
           title: const Text('Import settings'),
           subtitle: const Text('From a file exported by Matterleast'),
-          onTap: () => _guard(context, () => _import(context, ref)),
+          onTap: () => importSettings(context, ref),
         ),
       ],
     );
   }
 }
+
+/// Picks a settings file and, after the user confirms, applies it.
+Future<void> importSettings(BuildContext context, WidgetRef ref) =>
+    _guard(context, () => _import(context, ref));
 
 Future<void> _guard(BuildContext context, Future<void> Function() run) async {
   final messenger = ScaffoldMessenger.of(context);

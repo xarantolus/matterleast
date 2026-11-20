@@ -7,6 +7,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/generated/export.dart' as api;
 import 'package:matterleast/app/desktop/desktop_shell.dart';
 import 'package:matterleast/data/server_db/server_database.dart';
+import 'package:matterleast/data/servers/server_manager.dart';
+import 'package:matterleast/data/servers/server_session.dart';
 import 'package:matterleast/domain/quick_switch.dart';
 import 'package:matterleast/notifications/in_app_notifications.dart';
 import 'package:matterleast/notifications/notice_banner.dart';
@@ -37,6 +39,19 @@ class _Toasts extends Notifier {
   Future<List<ShownConversation>> shown(String serverUrl) async => const [];
 }
 
+/// Serves the harness's session, as the manager does for a signed-in server.
+class _Manager extends Fake implements ServerManager {
+  _Manager(this._session);
+
+  final ServerSession _session;
+
+  @override
+  Stream<String> get changed => const Stream.empty();
+
+  @override
+  Future<ServerSession> session(String url) async => _session;
+}
+
 const _directId = 'dm000000000000000000000d01';
 const _patId = 'pt000000000000000000000p01';
 final _earlier = DateTime.utc(2026, 10, 25, 10);
@@ -46,6 +61,8 @@ void main() {
   late ServerHarness harness;
   late ProviderContainer container;
   late _Toasts toasts;
+  // What the server holds for the direct channel from the start.
+  final missed = <Map<String, Object?>>[];
 
   Future<void> start(WidgetTester tester, {TargetPlatform? platform}) async {
     toasts = _Toasts();
@@ -53,8 +70,19 @@ void main() {
       tester,
       platform: platform,
       trackRoutes: true,
-      handle: (r) =>
-          r.path.contains('/users/') ? ok(<Object?>[]) : emptyAnswer(r),
+      handle: (r) {
+        if (r.path.endsWith('/channels/$_directId/posts')) {
+          return ok({
+            'order': [for (final p in missed) p['id']],
+            'posts': {for (final p in missed) p['id']! as String: p},
+          });
+        }
+        if (r.path.endsWith('/users/me')) {
+          return ok({'id': meId, 'username': 'me', 'roles': 'system_user'});
+        }
+        final lists = ['/users/', '/preferences', '/teams', '/members'];
+        return lists.any(r.path.contains) ? ok(<Object?>[]) : emptyAnswer(r);
+      },
       home: (_) =>
           const NoticeBannerOverlay(child: Scaffold(body: SizedBox.expand())),
       overrides: (url) => [
@@ -133,14 +161,19 @@ void main() {
   }
 
   /// A message from Pat arrives in [channel], which the check looks at.
-  Future<void> arrives(WidgetTester tester, String channel, String text) async {
+  Future<void> arrives(
+    WidgetTester tester,
+    String channel,
+    String text, {
+    DateTime? at,
+  }) async {
     await tester.runAsync(
       () => harness.session.store.applyLivePost(
         api.Post.fromJson({
           'id': 'new${text.hashCode}',
           'channel_id': channel,
           'user_id': _patId,
-          'create_at': _later.millisecondsSinceEpoch,
+          'create_at': (at ?? _later).millisecondsSinceEpoch,
           'message': text,
         }),
         fromSelf: false,
@@ -278,6 +311,63 @@ void main() {
     ]) {
       tester.binding.handleAppLifecycleStateChanged(state);
     }
+    await harness.close(tester);
+  });
+
+  /// A post by Pat the server has, which the catch-up stores too.
+  Future<void> missedWhileAway(WidgetTester tester, String text) async {
+    final post = <String, Object?>{
+      'id': 'st${text.hashCode}',
+      'channel_id': _directId,
+      'user_id': _patId,
+      'create_at': _later.millisecondsSinceEpoch,
+      'message': text,
+    };
+    missed.add(post);
+    await tester.runAsync(
+      () => harness.session.store.applyLivePost(
+        api.Post.fromJson(post),
+        fromSelf: false,
+        mentionsMe: false,
+      ),
+    );
+  }
+
+  Future<void> catchesUp(WidgetTester tester) async {
+    var caughtUp = false;
+    unawaited(
+      harness.session.connection.caughtUp.first.then((_) => caughtUp = true),
+    );
+    harness.session.connection.refreshAll(quiet: true);
+    await harness.settle(tester, until: () => caughtUp);
+    await harness.settle(tester);
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+
+  testWidgets('what arrived while the app was closed gives no banner after '
+      'the first catch-up, but a post arriving live does', (tester) async {
+    await start(tester);
+    final engine = InAppNotifications(
+      _Manager(harness.session),
+      toasts,
+      delay: Duration.zero,
+      route: container.read(noticeRouterProvider),
+      banner: container.read(noticeBannersProvider.notifier).show,
+    );
+    addTearDown(engine.dispose);
+    await tester.runAsync(() => engine.follow([testServerEntry(harness.url)]));
+    await missedWhileAway(tester, 'from while you were away');
+    await open(tester, channelId, 'Boats');
+    await catchesUp(tester);
+    expect(banner('from while you were away'), findsNothing);
+    await arrives(
+      tester,
+      _directId,
+      'just now',
+      at: _later.add(const Duration(minutes: 1)),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(banner('just now'), findsOneWidget);
     await harness.close(tester);
   });
 }

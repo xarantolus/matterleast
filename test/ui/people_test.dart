@@ -118,6 +118,30 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Message'), findsOneWidget);
   });
 
+  testWidgets('your own profile offers Message too, for notes to yourself', (
+    tester,
+  ) async {
+    await _show(
+      tester,
+      PostTile(post: _post()),
+      profile: const UserProfile(
+        id: 'u-pat',
+        name: 'Pat Doe',
+        username: 'pat',
+        nickname: '',
+        firstName: 'Pat',
+        lastName: 'Doe',
+        position: 'Harbour master',
+        status: 'online',
+        isBot: false,
+        isMe: true,
+      ),
+    );
+    await tester.tap(find.text('Pat Doe'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(FilledButton, 'Message'), findsOneWidget);
+  });
+
   testWidgets('tapping the name inside a tappable row opens the profile only', (
     tester,
   ) async {

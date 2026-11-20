@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matterleast/api/api_error.dart';
 import 'package:matterleast/app/composer_providers.dart';
 import 'package:matterleast/app/providers.dart';
+import 'package:matterleast/data/actions/composer_actions.dart';
 import 'package:matterleast/data/actions/post_actions.dart';
 import 'package:matterleast/data/views/conversation_views.dart';
 import 'package:matterleast/domain/burn_on_read.dart';
@@ -107,6 +108,8 @@ enum MessageActionKind {
   follow,
   edit,
   burn,
+  sendNow,
+  discard,
   delete,
   attributes,
   report,
@@ -178,6 +181,21 @@ List<MessageAction> messageActions(
       Icons.content_copy,
       (_) => Clipboard.setData(ClipboardData(text: post.message)),
     ),
+    if (post.sendState == 'pending') ...[
+      MessageAction(
+        MessageActionKind.sendNow,
+        'Send now',
+        Icons.send_outlined,
+        (context) => _unsent(context, url, (a) => a.sendNow(post.key)),
+      ),
+      MessageAction(
+        MessageActionKind.discard,
+        'Delete',
+        Icons.delete_outline,
+        (context) => _unsent(context, url, (a) => a.discard(post.key)),
+        destructive: true,
+      ),
+    ],
     if (permalink != null && !unsent && !post.isEphemeral)
       MessageAction(
         MessageActionKind.copyLink,
@@ -677,6 +695,18 @@ Future<DateTime?> askReminderTime(BuildContext context) async {
   );
   if (time == null) return null;
   return DateTime(day.year, day.month, day.day, time.hour, time.minute);
+}
+
+Future<void> _unsent(
+  BuildContext context,
+  String url,
+  Future<void> Function(ComposerActions actions) action,
+) async {
+  final actions = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(composerActionsProvider(url).future);
+  await action(await actions);
 }
 
 /// A message that couldn't be sent: send it again or throw it away.

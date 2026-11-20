@@ -154,6 +154,10 @@ class ComposerActions {
     }
   }
 
+  /// Sends a waiting post at once instead of after its backoff.
+  Future<void> sendNow(String pendingPostId) =>
+      session.outbox.sendNow(pendingPostId);
+
   /// What the server said when it refused to take the unsent post, if it
   /// said anything.
   Future<String?> sendFailure(String pendingPostId) async {

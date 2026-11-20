@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:matterleast/api/network_state.dart';
 import 'package:matterleast/api/server_api.dart';
 import 'package:matterleast/api/websocket/server_socket.dart';
@@ -68,12 +69,15 @@ class ServerSession {
       offline: () => network?.offline ?? false,
     );
     connection.state.addListener(_onSocketState);
-    network?.online.addListener(_onNetwork);
+    _networks = network?.last;
+    _reports = network?.reports.listen(_onNetwork);
     api.reach.reachable.addListener(_onReach);
     api.reach.checkSocket = connection.socket.checkAlive;
   }
 
   final Uri url;
+  StreamSubscription<Object?>? _reports;
+  List<ConnectivityResult>? _networks;
 
   /// The session token as stored, for the sockets that carry their own.
   final String? Function() token;
@@ -145,7 +149,12 @@ class ServerSession {
     }
   }
 
-  void _onNetwork() {
+  /// Every report counts, not only coming back from none: switching from
+  /// wifi to mobile data kills connections without ever going offline.
+  void _onNetwork(List<ConnectivityResult> report) {
+    final switched = networkSwitched(_networks, report);
+    _networks = report;
+    if (switched) connection.socket.reconnect();
     if (network?.offline == false) unawaited(outbox.wake());
   }
 
@@ -201,7 +210,7 @@ class ServerSession {
   }
 
   Future<void> close() async {
-    network?.online.removeListener(_onNetwork);
+    await _reports?.cancel();
     api.reach.reachable.removeListener(_onReach);
     api.reach.checkSocket = null;
     connection.state.removeListener(_onSocketState);

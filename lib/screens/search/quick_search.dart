@@ -124,7 +124,7 @@ class _QuickSearchAnchorState extends ConsumerState<QuickSearchAnchor> {
                   width: 40,
                   child: Icon(Icons.edit_outlined),
                 ),
-                title: const Text('New message'),
+                title: const Text('Direct or group message'),
                 onTap: () => _push(
                   context,
                   newMessageScreen(url: target.url, teamId: target.teamId),

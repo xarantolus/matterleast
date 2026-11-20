@@ -26,6 +26,7 @@ Future<ServerSession> testSession(
   ServerDatabase? db,
   QueryInterceptor? interceptor,
   NetworkState? network,
+  Uri? url,
   Duration catchUpLimit = const Duration(seconds: 20),
   Duration callsRefreshEvery = const Duration(minutes: 20),
   Duration watchInterval = const Duration(milliseconds: 100),
@@ -35,14 +36,14 @@ Future<ServerSession> testSession(
   if (interceptor != null) connection = connection.interceptWith(interceptor);
   final database = db ?? ServerDatabase(connection);
   final http = ServerApi(
-    baseUrl: server.url,
+    baseUrl: url ?? server.url,
     token: () => 'token',
     probeTimeout: const Duration(milliseconds: 500),
     probeMemory: const Duration(milliseconds: 300),
     network: network,
   );
   final session = ServerSession(
-    url: server.url,
+    url: url ?? server.url,
     api: http,
     db: database,
     network: network,
